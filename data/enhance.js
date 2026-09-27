@@ -227,17 +227,52 @@ function decomposeEquip(equipId) {
     updateUI();
 }
 
-// 依勾選品級一鍵分解（只作用於背包、略過鎖定；橙色以上不會出現在選項中）
+// 一批裝備分解的總產出文字（碎鐵＋星允鐵）
+function formatBulkYield(shards, iron) {
+    let out = [];
+    if (shards) out.push(`🔩 碎鐵 ×${shards}`);
+    if (iron) out.push(`🌠 星允鐵 ×${iron}`);
+    return out.join('、');
+}
+
+// 依勾選品級一鍵分解（只作用於背包、略過鎖定與「保留屬性」；白～紫得碎鐵、橙色得星允鐵；白金不在選項中，請逐件分解）
 function bulkDecomposeEquipment() {
-    let selected = getCheckedBulkQualities('bulk-equip-quality').filter(q => DECOMPOSE_SHARDS[q]);
-    if (selected.length === 0) { alert("請先勾選要分解的品級（白～紫；橙色以上請逐件手動分解）！"); return; }
-    let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && eq.category !== 'artifact' && !isEquipLocked(eq));
-    if (targets.length === 0) { alert("背包內沒有符合勾選品級且未鎖定的裝備。"); return; }
-    let shards = targets.reduce((s, eq) => s + getDecomposeYield(eq).shards, 0);
-    if (!confirm(`確定分解背包內 ${targets.length} 件【${selected.join('、')}】裝備？\n可得 🔩 碎鐵 ×${shards}（每 ${SHARDS_PER_IRON} 個合成 1 顆星允鐵）。`)) return;
+    let selected = getCheckedBulkQualities('bulk-equip-quality').filter(q => DECOMPOSE_SHARDS[q] || q === "橙色");
+    if (selected.length === 0) { alert("請先勾選要分解的品級！"); return; }
+    let keep = getCheckedBulkQualities('bulk-keep-element');
+    let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && eq.category !== 'artifact' && !isEquipLocked(eq) && !keep.includes(eq.element));
+    if (targets.length === 0) { alert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
+    let shards = 0, iron = 0;
+    targets.forEach(eq => { let y = getDecomposeYield(eq); shards += y.shards; iron += y.iron; });
+    if (!confirm(`確定分解背包內 ${targets.length} 件【${selected.join('、')}】裝備？${keep.length ? '（保留屬性：' + keep.join('') + '）' : ''}\n可得 ${formatBulkYield(shards, iron)}，鑲嵌的符寶會一起消失。`)) return;
     player.equipInventory = player.equipInventory.filter(eq => !targets.includes(eq));
-    addIronShards(shards);
-    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 🔩 碎鐵 ×${shards}。`, "equip");
+    if (shards) addIronShards(shards);
+    if (iron) player.starIron = (player.starIron || 0) + iron;
+    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 ${formatBulkYield(shards, iron)}。`, "equip");
+    renderBag();
+    updateUI();
+}
+
+// 暫存區一鍵分解／毀棄：只處理橙色（白金請逐件處理），略過鎖定與「保留屬性」
+function getStashBulkTargets() {
+    let keep = getCheckedBulkQualities('stash-keep-element');
+    return { keep, targets: (player.gearStash || []).filter(eq => eq.quality === "橙色" && eq.category !== 'artifact' && !isEquipLocked(eq) && !keep.includes(eq.element)) };
+}
+
+function bulkStashEquip(mode) {
+    let { keep, targets } = getStashBulkTargets();
+    if (targets.length === 0) { alert("暫存區沒有未鎖定、且不在保留屬性內的橙色裝備。"); return; }
+    let keepTxt = keep.length ? '（保留屬性：' + keep.join('') + '）' : '';
+    let iron = mode === 'decompose' ? targets.reduce((s, eq) => s + getDecomposeYield(eq).iron, 0) : 0;
+    let msg = mode === 'decompose'
+        ? `確定分解暫存區 ${targets.length} 件橙色裝備？${keepTxt}\n可得 🌠 星允鐵 ×${iron}，鑲嵌的符寶會一起消失。`
+        : `確定毀棄暫存區 ${targets.length} 件橙色裝備？${keepTxt}\n毀棄不會得到星允鐵（建議改用分解），此操作無法復原。`;
+    if (!confirm(msg)) return;
+    player.gearStash = player.gearStash.filter(eq => !targets.includes(eq));
+    if (iron) player.starIron = (player.starIron || 0) + iron;
+    addLog(mode === 'decompose'
+        ? `🔨 一鍵分解暫存區 ${targets.length} 件橙色裝備，獲得 🌠 星允鐵 ×${iron}。`
+        : `🗑️ 一鍵毀棄了暫存區 ${targets.length} 件橙色裝備。`, "equip");
     renderBag();
     updateUI();
 }
@@ -319,9 +354,20 @@ function renderStashSection() {
         </div>`;
     }).join('');
     let full = isGearStashFull();
+    let orangeCount = stash.filter(eq => eq.quality === "橙色" && !isEquipLocked(eq)).length;
+    let bulk = orangeCount === 0 ? '' : `
+        <div class="bulk-bar">
+            <div class="bulk-title">🗑️ 暫存區一鍵處理（橙色 ${orangeCount} 件未鎖定）</div>
+            ${renderKeepElementRow('stash-keep-element')}
+            <div class="bulk-actions">
+                <button class="sys-btn" onclick="bulkStashEquip('decompose')">一鍵分解橙色</button>
+                <button style="border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,0.12);" onclick="bulkStashEquip('delete')">一鍵毀棄橙色</button>
+            </div>
+            <div style="font-size:0.75em; color:#6b7280; text-align:center; margin-top:6px;">※ 🔒 鎖定、勾選「保留屬性」的不受影響；白金請逐件處理。分解每件得 🌠 星允鐵 ×${DECOMPOSE_IRON["橙色"]}</div>
+        </div>`;
     return `<div style="grid-column: 1 / -1; text-align: center; font-size: 0.9em; color: ${full ? '#ef4444' : '#fb923c'};">
                 📦 暫存區：${stash.length} / ${GEAR_STASH_MAX} 件${full ? '（已滿，處理完之前無法外出練功）' : '（背包滿時新掉落的橙色以上裝備）'}
-            </div>${cards}
+            </div>${bulk}${cards}
             <div style="grid-column: 1 / -1; border-top: 1px dashed rgba(255,255,255,0.1);"></div>`;
 }
 

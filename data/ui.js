@@ -468,10 +468,19 @@ function toggleAllBulkQualities(className) {
     boxes.forEach(b => { b.checked = !allChecked; });
 }
 
+// 「保留屬性」勾選列（背包／暫存區一鍵刪除、分解用）：勾選的五行屬性裝備不會被處理
+function renderKeepElementRow(className) {
+    const boxes = wuxingElements.map(el =>
+        `<label><input type="checkbox" class="${className}" value="${el}"> <span class="elem-${el}">${el}</span></label>`
+    ).join("");
+    return `<div class="bulk-qualities"><span style="color:#9ca3af; font-size:0.85em;">🛡️ 保留屬性：</span>${boxes}</div>`;
+}
+
 // 產生「依品級勾選 + 刪除」的工具列
 // qualityNames: 品級名稱陣列；counts: { 品級: 數量 }
 // extraButtons：額外按鈕的 HTML（例：背包的「分解勾選品級」）
-function renderBulkDeleteBar(title, className, qualityNames, counts, deleteFn, note, extraButtons = '') {
+// extraRow：品級列下方額外一列的 HTML（例：背包的「保留屬性」）
+function renderBulkDeleteBar(title, className, qualityNames, counts, deleteFn, note, extraButtons = '', extraRow = '') {
     const boxes = qualityNames.map(name =>
         `<label><input type="checkbox" class="${className}" value="${name}">
             <span class="quality-${name}">${name}</span> (${counts[name] || 0})</label>`
@@ -480,6 +489,7 @@ function renderBulkDeleteBar(title, className, qualityNames, counts, deleteFn, n
         <div class="bulk-bar">
             <div class="bulk-title">🗑️ ${title}</div>
             <div class="bulk-qualities">${boxes}</div>
+            ${extraRow}
             <div class="bulk-actions">
                 <button class="sys-btn" onclick="toggleAllBulkQualities('${className}')">全選 / 全不選</button>
                 <button style="border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,0.12);" onclick="${deleteFn}()">刪除勾選品級</button>

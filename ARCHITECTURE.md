@@ -314,7 +314,7 @@ combatTick() 每秒執行 [combat.js]
 | `openSettingsModal`（洞府右上 ⚙️、PC 版「設置」）、`setDisplayMode(mode)`、`toggleFullscreen`、`setFontScale('s'/'m'/'l')`（後三者由 `renderSettingsModal()` 動態產生） | `data/settings.js` |
 | `openSpellModal`（修仙分頁「📜 武學密典」）、`setSpellFilter`/`selectSpell`/`equipSpell`/`unequipSpell`（密典內動態產生） | `data/spells.js` |
 | `openAvatarModal`（點洞府頭像）、`selectAvatar(id)`（選擇視窗內動態產生） | `data/avatar.js` |
-| `openEnhanceModal(id)`（背包、角色裝備卡片「🔨 強化」）、`enhanceEquip(untilSuccess)`/`evolveEquip`（強化視窗內）、`decomposeEquip(id)`、`bulkDecomposeEquipment`、`moveStashToBag(id)`/`deleteStashEquip(id)`（暫存區）、`buyStarIron(qty)`（千寶閣） | `data/enhance.js` |
+| `openEnhanceModal(id)`（背包、角色裝備卡片「🔨 強化」）、`enhanceEquip(untilSuccess)`/`evolveEquip`（強化視窗內）、`decomposeEquip(id)`、`bulkDecomposeEquipment`、`moveStashToBag(id)`/`deleteStashEquip(id)`/`bulkStashEquip(mode)`（暫存區）、`buyStarIron(qty)`（千寶閣） | `data/enhance.js` |
 | `openCodexModal(tab)`（洞府寶塔右側山峰「天磯錄」，手機熱點與 PC 的 `pcStageButtons`）、`setCodexTab`/`setCodexSlot`/`setActiveTitle`（視窗內動態產生） | `data/codex.js` |
 | `chooseProfession(id)`（天磯錄「職業」分頁） | `data/profession.js` |
 | `openLeaderboardModal`（洞府 HUD 手機 `#hud-name`／PC `#pc-hud-name` 的「戰力 🏆」、洞府「大道石碑」熱點：手機寫在 index.html、PC 在 `pcStageButtons` 的 `stele`）、`refreshLeaderboard(true)`（榜單視窗「重新整理」）、`switchLeaderboardTab('power'/'defense')`（榜單視窗分頁：戰力榜／死守天南城通關榜） | `data/leaderboard.js` |
@@ -1311,7 +1311,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930b`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930c`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -1789,13 +1789,14 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - **+20 系統通知**（2026-09-26）：`enhanceEquip()` 強化成功且 `canEvolve(eq)` 時呼叫 `promptEvolveEquip(eq)`：寫一筆日誌，
     資源足夠 → `confirm` 詢問是否進階先天道器，確定就 `evolveEquip(true)`（`skipConfirm`，不再問第二次）；
     資源不足 → `alert` 列出缺少的星允鐵／靈石。選取消或不足時，之後仍可在強化視窗按「✨ 進化為先天道器」（`evolveEquip()` 無參數 = 照常確認）。
-- 分解：白～紫 → 碎鐵（10/20/40/80，每 500 自動合成 1 顆星允鐵，可一鍵分解勾選品級）；橙 3 顆、白金 15 顆星允鐵，**只能逐件手動**（白金要按兩次確認）。穿戴中、🔒 鎖定中的不能分解（一鍵分解會略過鎖定，見第 9 節「裝備鎖定」）。
+- 分解：白～紫 → 碎鐵（10/20/40/80，每 500 自動合成 1 顆星允鐵）；橙 3 顆、白金 15 顆星允鐵。白～橙都可一鍵分解勾選品級（`bulkDecomposeEquipment`，2026-09-28 起含橙色）；**白金只能逐件手動**（要按兩次確認）。
+- **保留屬性**（2026-09-28，版本 `20260930c`）：背包一鍵刪除／分解列多一列五行勾選（`ui.js` 的 `renderKeepElementRow(className)`，背包用 class `bulk-keep-element`，由 `renderBulkDeleteBar` 的第 8 個參數 `extraRow` 帶入），勾選的屬性（`eq.element`）不會被刪除或分解。穿戴中、🔒 鎖定中的不能分解（一鍵分解會略過鎖定，見第 9 節「裝備鎖定」）。
 
 ### 暫存區（`player.gearStash`，上限 50）
 - 只有**奪寶掉落**走 `receiveLootEquip()`：背包有空位 → 背包；背包滿 → 橙色以下自動分解成碎鐵、橙色以上進暫存區。
   鍛造、千寶閣、卸下裝備仍是背包滿就擋（`hasEquipInventorySpace`）。
 - **暫存區滿了不能外出練功**：`changeMap` 擋下、`combatTick` 每秒 `enforceGearStashLimit()` 送回宗門、離線結算改在宗門靜修（`settleIdleSeconds`）。
-- 背包頂端顯示暫存區（移入背包／分解／毀棄）。
+- 背包頂端顯示暫存區（移入背包／分解／毀棄）。有未鎖定的橙色時上方多一條「暫存區一鍵處理」：保留屬性勾選（class `stash-keep-element`）＋「一鍵分解橙色／一鍵毀棄橙色」→ `bulkStashEquip('decompose' | 'delete')`（`getStashBulkTargets()` 只取橙色、略過鎖定與保留屬性；白金仍逐件處理）。
 
 ### 星允鐵來源
 | 來源 | 數值 | 位置 |

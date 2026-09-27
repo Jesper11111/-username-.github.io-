@@ -57,8 +57,9 @@ function renderBag() {
             equipQualities.map(q => q.name),
             counts,
             "bulkDeleteEquipment",
-            `※ 只作用於背包內未鎖定的裝備（數量不含鎖定），已穿戴、🔒 鎖定的不受影響。分解只處理白～紫（得碎鐵，每 ${SHARDS_PER_IRON} 個合成 1 顆星允鐵），橙色請逐件分解`,
-            `<button class="sys-btn" onclick="bulkDecomposeEquipment()">分解勾選品級</button>`
+            `※ 只作用於背包內未鎖定的裝備（數量不含鎖定），已穿戴、🔒 鎖定、勾選「保留屬性」的不受影響。分解白～紫得碎鐵（每 ${SHARDS_PER_IRON} 個合成 1 顆星允鐵），橙色得星允鐵 ×${DECOMPOSE_IRON["橙色"]}`,
+            `<button class="sys-btn" onclick="bulkDecomposeEquipment()">分解勾選品級</button>`,
+            renderKeepElementRow('bulk-keep-element')
         ));
     }
 
@@ -188,10 +189,11 @@ function bulkDeleteEquipment() {
     let selected = getCheckedBulkQualities('bulk-equip-quality');
     if (selected.length === 0) { alert("請先勾選要刪除的品級！"); return; }
 
-    let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && !isEquipLocked(eq));
-    if (targets.length === 0) { alert("背包內沒有符合勾選品級且未鎖定的裝備。"); return; }
+    let keep = getCheckedBulkQualities('bulk-keep-element');
+    let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && !isEquipLocked(eq) && !keep.includes(eq.element));
+    if (targets.length === 0) { alert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
 
-    if (!confirm(`確定要刪除背包內 ${targets.length} 件【${selected.join('、')}】裝備嗎？（🔒 鎖定的不會刪除）\n此操作無法復原。`)) return;
+    if (!confirm(`確定要刪除背包內 ${targets.length} 件【${selected.join('、')}】裝備嗎？（🔒 鎖定的不會刪除${keep.length ? '；保留屬性：' + keep.join('') : ''}）\n此操作無法復原。`)) return;
 
     player.equipInventory = player.equipInventory.filter(eq => !targets.includes(eq));
     addLog(`🗑️ 一鍵刪除了 ${targets.length} 件裝備（${selected.join('、')}）。`, "equip");
