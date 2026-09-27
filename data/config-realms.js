@@ -20,9 +20,9 @@ const realmPacing = [
     { hours: 5,    map: "天南",     expMult: 2.2 },    // 元嬰      5 小時
     { hours: 10,   map: "亂星海",   expMult: 2.2 },    // 化神      10 小時
     { hours: 20,   map: "鬼谷八荒", expMult: 2.2 },    // 煉虛      20 小時
-    { hours: 48,   map: "鬼谷八荒", expMult: 2.2 },    // 合體      2 天
-    { hours: 240,  map: "鬼谷八荒", expMult: 2.2 },    // 大乘      10 天
-    { hours: 720,  map: "鬼谷八荒", expMult: 2.2 },    // 渡劫      30 天
+    { hours: 48,   map: "崑吾山",   expMult: 2.2 },    // 合體      2 天（2026-09-28 由鬼谷八荒改為新地圖，時數不變）
+    { hours: 240,  map: "雷鳴大陸", expMult: 2.2 },    // 大乘      10 天
+    { hours: 720,  map: "天淵戰場", expMult: 2.2 },    // 渡劫      30 天
     { hours: 1200, map: "荒古禁地", expMult: 5.28 },   // 仙人初境  50 天
     { hours: 2400, map: "上蒼（葬天島）", expMult: 5.28 }, // 天仙  100 天
     { hours: 3600, map: "冥界",     expMult: 5.28 },   // 真仙      150 天

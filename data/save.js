@@ -132,6 +132,10 @@ function settleIdleSeconds(offlineSeconds, label) {
     }
     msg = prefix + msg;
 
+    // 離線期間的門派任務（僕從照常工作；身在宗門時自己的任務也推進，servant.js）
+    let questText = settleIdleQuests(offlineSeconds);
+    if (questText) msg += `\n${questText}`;
+
     // 離線期間的歲月流逝（半速，同樣受底線保護）
     let aged = ageLifespan(offlineSeconds, LIFESPAN_OFFLINE_RATE);
     if (aged >= 1) msg += `\n⏳ 歲月流逝，壽元減少 ${formatLifespan(aged)} 年（剩餘 ${formatLifespan(player.lifespan)} 年）。`;

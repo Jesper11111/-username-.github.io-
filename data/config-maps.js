@@ -35,26 +35,31 @@ const maps = [
     { category: "二、開放世界大區域 (高難度戰鬥)", isSafe: false, items: [
         { name: "天南", expRate: 100, diff: 40000, coins: 1000, nv2L: 4, suit: [4, 4] },      // 116 萬
         { name: "亂星海", expRate: 300, diff: 100000, coins: 1650, nv2L: 5, suit: [5, 5] },    // 191 萬（上限 200 萬）
-        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 9] } // 284 萬（上限 300 萬）
+        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] } // 284 萬（上限 300 萬）
     ]},
     { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
-        { name: "荒古禁地", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [10, 10] },      // 389 萬（上限 400 萬）
-        { name: "太初古礦", expRate: 4000, diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [10, 11] },      // 487 萬（上限 500 萬）
-        { name: "上蒼（葬天島）", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [11, 11] } // 800 萬
+        // 合體／大乘／渡劫各一張（2026-09-28 使用者要求；原本這三個境界都只有鬼谷八荒）。經驗、靈石介於鬼谷八荒與荒古禁地之間，修煉節奏表（config-realms.js）改指向這三張
+        { name: "崑吾山", expRate: 1400, diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 313 萬
+        { name: "雷鳴大陸", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 342 萬
+        { name: "天淵戰場", expRate: 2500, diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 365 萬
+        // nv2L 2026-09-28 對齊 suit（原 7／8／9 被上面三張取代）
+        { name: "荒古禁地", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 389 萬（上限 400 萬）
+        { name: "太初古礦", expRate: 4000, diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 487 萬（上限 500 萬）
+        { name: "上蒼（葬天島）", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 800 萬
     ]},
     // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
     { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
-        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 10, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
-        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 11, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
-        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
-        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 13, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
+        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
+        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 12.3, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
+        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12.6, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
+        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 12.9, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
     ]},
     // 上蒼之後（含諸天戰場）一律維持在每小時 800～1000 萬，不再隨難度放大；
     // 這幾張圖的差異改由經驗與聲望體現，靈石封頂。
     { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
-        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
-        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
-        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.9, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
+        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
+        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
+        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
     ]}
 ];
 

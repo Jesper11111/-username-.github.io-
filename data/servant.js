@@ -218,3 +218,59 @@ function tickServantQuests() {
 
     if (anyCompleted) updateUI();
 }
+
+// 離線／背景補發（save.js 的 settleIdleSeconds）：一次推進 seconds 秒的門派任務進度（2026-09-28 修正：原本離線期間僕從與自己的任務完全停擺）
+//   僕從：不論玩家在哪裡都照常工作（同 tickServantQuests），每趟結束扣下一趟的靈石，付不起就停工
+//   自己：身在宗門時才會推進（同 combatTick）
+//   逐趟的日誌不寫（避免洗版），改回傳一行彙總文字；獎勵以前後差額計算
+function settleIdleQuests(seconds) {
+    if (!(seconds > 0)) return '';
+    const tier = getSectTier();
+    const fields = Object.values(questRewardInfo).map(info => info.field);
+    const before = {};
+    fields.concat(['starIron']).forEach(f => { before[f] = player[f] || 0; });
+    let servantTrips = 0, ownTrips = 0, stopped = 0;
+    const savedLog = window.addLog;
+    window.addLog = () => {};   // 逐趟日誌（含星允鐵、每日任務）不寫，最後彙總
+    try {
+        (player.servants || []).forEach(s => {
+            if (!s.quest) return;
+            const def = getQuestDef(s.quest, tier);
+            if (!canServantTakeQuest(s, def)) { s.quest = null; s.timer = 0; return; }
+            s.timer = (s.timer || 0) + getQuestSpeed(def, s) * seconds;
+            const required = getQuestRequiredProgress(def);
+            while (s.quest && s.timer >= required) {
+                s.timer -= required;
+                grantQuestRewards(def);
+                addDailyProgress('sectQuest');
+                servantTrips++;
+                if (s.quest === 'mine' && Math.random() < IRON_MINE_CHANCE) addStarIron(randInt(IRON_MINE_AMOUNT[0], IRON_MINE_AMOUNT[1]), '');
+                if (!payServantTrip(s)) { s.quest = null; s.timer = 0; stopped++; }
+            }
+        });
+        if (player.activeQuest && isInSect()) {
+            const def = getQuestDef(player.activeQuest, tier);
+            if (!def || def.requiredQuality) { player.activeQuest = null; player.questTimer = 0; }
+            else {
+                player.questTimer = (player.questTimer || 0) + getQuestSpeed(def, null) * seconds;
+                const required = getQuestRequiredProgress(def);
+                while (player.questTimer >= required) {
+                    player.questTimer -= required;
+                    grantQuestRewards(def);
+                    addDailyProgress('sectQuest');
+                    ownTrips++;
+                }
+            }
+        }
+    } finally {
+        window.addLog = savedLog;
+    }
+    if (!servantTrips && !ownTrips) return '';
+    const gains = Object.values(questRewardInfo)
+        .map(info => [info.label, (player[info.field] || 0) - before[info.field]]).filter(([, v]) => v > 0)
+        .map(([label, v]) => `${v.toWan()} ${label}`);
+    const iron = (player.starIron || 0) - before.starIron;
+    if (iron > 0) gains.push(`${iron} 星允鐵`);
+    return `📜 門派任務：${servantTrips ? `僕從完成 ${servantTrips.toWan()} 趟` : ''}${servantTrips && ownTrips ? '、' : ''}${ownTrips ? `你完成 ${ownTrips.toWan()} 趟` : ''}`
+        + (gains.length ? `，獲得 ${gains.join('、')}` : '') + (stopped ? `（${stopped} 名僕從因靈石不足停工）` : '') + '。';
+}
