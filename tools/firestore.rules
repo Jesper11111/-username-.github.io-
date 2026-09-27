@@ -5,6 +5,8 @@ rules_version = '2';
 // 防作弊：只能寫自己的那筆（匿名登入 uid）、欄位型別與範圍檢查、戰力不可超過「同境界同階基礎值 × 200」、
 // 上傳至少間隔 60 秒、被封鎖（banned/{uid}）的不能再上傳、每筆保留最近 24 次上傳的戰力歷史 hist（GM 比對暴增）。擋得住隨手改數字，擋不住會改存檔的高手（戰力是玩家端算的）。
 //
+// 死守天南城通關榜：玩家送審到 defenseSubmit/{uid}，GM 審核通過才寫入 defenseBoard/{uid}（玩家不能直接上榜）。
+//
 // 管理者：在主控台手動建立 admins/{管理者的 Google 登入 uid}（任意欄位）。只有管理者能刪除榜單、讀取完整榜單、管理黑名單。
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -29,14 +31,50 @@ service cloud.firestore {
       allow list, create, update, delete: if isAdmin();
     }
 
+    // 死守天南城送審（data/leaderboard.js 的 flushDefenseSubmit）：玩家只能寫自己的一筆個人最佳；
+    // 審核結果 status／reason／reviewedAt 只有管理者能寫（玩家的欄位白名單不含），玩家重新送審（set 整筆覆寫）時審核狀態自動清除
+    match /defenseSubmit/{uid} {
+      allow get: if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow list, delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == uid && !isBanned(uid) && validDefense();
+      allow update: if isAdmin()
+                    || (request.auth != null && request.auth.uid == uid && !isBanned(uid) && validDefense()
+                        && request.time > resource.data.updatedAt + duration.value(60, 's'));
+
+      function validDefense() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['name', 'best', 'atk', 'power', 'realm', 'stage', 'level', 'kills', 'runAt', 'updatedAt'])
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 12
+          && d.best is int && d.best >= 1 && d.best <= 100
+          && d.atk is number && d.atk >= 0 && d.power is number && d.power >= 0
+          && d.realm is int && d.realm >= 0 && d.realm <= 15
+          && d.stage is int && d.stage >= 1 && d.stage <= 10
+          && d.level is int && d.level >= 1 && d.level <= 10000
+          && d.kills is int && d.kills >= 0
+          && d.runAt is int
+          // 與戰力榜相同的戰力上限；攻擊（取物攻、術攻較高者）給 5 倍空間
+          && d.power <= math.pow(10, d.realm) * d.stage * 7 * 200 + d.level * 200000
+          && d.atk <= (math.pow(10, d.realm) * d.stage * 7 * 200 + d.level * 200000) * 5
+          && d.updatedAt == request.time;
+      }
+    }
+
+    // 死守天南城通關榜：所有人可讀（單次最多 100 筆），只有管理者（gm.html 審核通過）能寫
+    match /defenseBoard/{uid} {
+      allow get: if true;
+      allow list: if request.query.limit <= 100 || isAdmin();
+      allow write: if isAdmin();
+    }
+
     match /leaderboard/{uid} {
       allow get: if true;
       allow list: if request.query.limit <= 100 || isAdmin();
       allow create: if request.auth != null && request.auth.uid == uid && !isBanned(uid) && validEntry()
-                    && request.resource.data.get('hist', []) == [];
+                    && request.resource.data.get('hist', []) == [] && request.resource.data.get('hist2', []) == [];
       allow update: if request.auth != null && request.auth.uid == uid && !isBanned(uid) && validEntry()
                     && request.time > resource.data.updatedAt + duration.value(60, 's')
-                    && request.resource.data.hist == nextHist(resource.data);
+                    && request.resource.data.hist == nextHist(resource.data)
+                    && request.resource.data.hist2 == nextHist2(resource.data);
       allow delete: if isAdmin();
 
       // 上傳歷史（GM 後台比對戰力暴增用，第 50 節）：每次更新都必須把「上一筆的戰力 p 與時間 t」原封不動接到尾端，只留最近 24 筆
@@ -45,10 +83,18 @@ service cloud.firestore {
         let full = o.get('hist', []).concat([{'p': o.power, 't': o.updatedAt}]);
         return full.size() > 24 ? full[full.size() - 24:full.size()] : full;
       }
+      // 兩日紀錄（2026-09-27）：上一筆距 hist2 最後一筆 ≥ 30 分鐘才接上，只留最近 96 筆（約 2 天）；否則原封不動
+      // （1800 秒／96 = config-leaderboard.js 的 LEADERBOARD_HISTORY2_GAP_SEC／LEADERBOARD_HISTORY2_SIZE）
+      function nextHist2(o) {
+        let h = o.get('hist2', []);
+        let due = h.size() == 0 || o.updatedAt >= h[h.size() - 1].t + duration.value(1800, 's');
+        let kept = h.size() >= 96 ? h[h.size() - 95:h.size()] : h;
+        return due ? kept.concat([{'p': o.power, 't': o.updatedAt}]) : h;
+      }
 
       function validEntry() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['name', 'power', 'realm', 'stage', 'level', 'sect', 'hist', 'updatedAt'])
+        return d.keys().hasOnly(['name', 'power', 'realm', 'stage', 'level', 'sect', 'hist', 'hist2', 'updatedAt'])
           && d.name is string && d.name.size() >= 1 && d.name.size() <= 12
           && d.sect is string && d.sect.size() <= 20
           && d.realm is int && d.realm >= 0 && d.realm <= 15

@@ -1,5 +1,5 @@
 // 懸賞榜與一對一對決（ARCHITECTURE.md 第 36 節），設定在 config-bounty.js
-//   存檔：player.bountyBoard（當期 6 名）、bountyRefreshAt、bountyFaction（榜單列的是哪個陣營）、activeBountyId（已接取）、bountyKills
+//   存檔：player.bountyBoard（當期 6 名）、bountyRefreshAt、bountyFaction（榜單列的是哪個陣營）、activeBountyIds（已接取，可多名）、bountyKills
 //   執行期（不存檔，state.js）：inBountyDuel、duelOpponent、duelWeakenTimer/duelWeakenMult、duelSilenceTimer、duelArmorTimer
 // 流程：活動「獵殺邪修」→ 接取懸賞 → 野外每刷新一波有 BOUNTY_ENCOUNTER_CHANCE 機率遇上（combat.js 呼叫 tryStartBountyDuel）
 //       → combatTick 由 bountyDuelTick 接管，直到一方倒下、對方遁走或玩家換地圖逃離
@@ -42,7 +42,7 @@ function refreshBountyIfDue(force) {
     }
     player.bountyBoard = rollBountyBoard(foe);
     player.bountyFaction = foe;
-    player.activeBountyId = null;
+    player.activeBountyIds = [];
     player.bountyRefreshAt = now + BOUNTY_REFRESH_HOURS * 3600 * 1000;
     addLog(factionChanged
         ? `📜 你的陣營已改變，懸賞榜改列 ${getFactionLabel(foe)} 人物！`
@@ -55,7 +55,7 @@ function paidRefreshBounty() {
     if (inBountyDuel) { alert("對決進行中，無法刷新懸賞榜！"); return; }
     // 次數或靈石不足就不必先問要不要取消追蹤（payForRefresh 會跳對應提示）
     let canPay = getPaidRefreshLeft('bounty', BOUNTY_PAID_REFRESH_DAILY) > 0 && (player.coins || 0) >= BOUNTY_PAID_REFRESH_COST;
-    if (canPay && getActiveBounty() && !confirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？")) return;
+    if (canPay && getActiveBounties().length && !confirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？")) return;
     if (!payForRefresh('bounty', BOUNTY_PAID_REFRESH_COST, BOUNTY_PAID_REFRESH_DAILY, '懸賞榜')) return;
     let keepAt = player.bountyRefreshAt;
     refreshBountyIfDue(true);
@@ -94,31 +94,50 @@ function rollBountyBoard(faction) {
     return board;
 }
 
-function getActiveBounty() {
-    if (!player.activeBountyId || !Array.isArray(player.bountyBoard)) return null;
-    let entry = player.bountyBoard.find(b => b.id === player.activeBountyId);
-    return entry && entry.status === "open" ? entry : null;
+// 追蹤中的懸賞 id 清單（2026-09-27 起可同時追蹤多名）；舊存檔的單一 activeBountyId 在這裡轉換
+function getTrackedBountyIds() {
+    if (!Array.isArray(player.activeBountyIds)) player.activeBountyIds = [];
+    if (player.activeBountyId) {
+        if (!player.activeBountyIds.includes(player.activeBountyId)) player.activeBountyIds.push(player.activeBountyId);
+        delete player.activeBountyId;
+    }
+    return player.activeBountyIds;
+}
+
+// 追蹤中、尚未伏誅的懸賞
+function getActiveBounties() {
+    let ids = getTrackedBountyIds();
+    return (player.bountyBoard || []).filter(b => ids.includes(b.id) && b.status === "open");
 }
 
 function acceptBounty(id) {
     refreshBountyIfDue();
     let entry = (player.bountyBoard || []).find(b => b.id === id);
     if (!entry || entry.status !== "open") return;
-    let current = getActiveBounty();
-    if (current && current.id !== id) {
-        let npc = getBountyNpc(current);
-        if (!confirm(`同時只能追蹤一名懸賞人物。\n要放棄目前追蹤的【${npc ? npc.name : '?'}】，改接取新的懸賞嗎？`)) return;
-    }
-    player.activeBountyId = id;
+    let ids = getTrackedBountyIds();
+    if (!ids.includes(id)) ids.push(id);
     let npc = getBountyNpc(entry);
     addLog(`📜 接取懸賞：【${BOUNTY_RANKS[entry.rank].name}】${npc.title}・${npc.name}（${realms[entry.realmIndex]} ${entry.stage}階）。前往野外歷練，便有機會遇上此人！`, "quest");
     renderEvilHunt();
 }
 
-function abandonBounty() {
+// 一次接取榜上所有尚未伏誅、尚未追蹤的懸賞
+function acceptAllBounties() {
+    refreshBountyIfDue();
+    let ids = getTrackedBountyIds();
+    let add = (player.bountyBoard || []).filter(b => b.status === "open" && !ids.includes(b.id));
+    if (!add.length) return;
+    add.forEach(b => ids.push(b.id));
+    addLog(`📜 一次接取 ${add.length} 份懸賞：${add.map(b => { let npc = getBountyNpc(b); return npc ? npc.name : '?'; }).join('、')}。前往野外歷練，便有機會遇上其中一人！`, "quest");
+    renderEvilHunt();
+}
+
+// id 不給 = 放棄全部追蹤
+function abandonBounty(id) {
     if (inBountyDuel) { alert("對決進行中，無法放棄懸賞！"); return; }
-    player.activeBountyId = null;
-    addLog(`📜 你放棄了追蹤中的懸賞。`, "system");
+    let ids = getTrackedBountyIds();
+    player.activeBountyIds = id ? ids.filter(x => x !== id) : [];
+    addLog(id ? `📜 你放棄了一份追蹤中的懸賞。` : `📜 你放棄了所有追蹤中的懸賞。`, "system");
     renderEvilHunt();
 }
 
@@ -127,20 +146,21 @@ function renderBountyBoard() {
     refreshBountyIfDue();
     let myAtk = Math.max(1, getPhysAttack());
     let myHp = Math.max(1, getMaxHp());
+    let ids = getTrackedBountyIds();
     let cards = (player.bountyBoard || []).map(entry => {
         let npc = getBountyNpc(entry);
         if (!npc) return '';
         let rank = BOUNTY_RANKS[entry.rank];
         let st = getBountyStats(entry);
         let done = entry.status === "done";
-        let tracking = player.activeBountyId === entry.id && !done;
+        let tracking = ids.includes(entry.id) && !done;
         let ratio = st.attack / myAtk;
         let ratioColor = ratio >= 1.5 ? '#f87171' : ratio >= 0.8 ? '#facc15' : '#4ade80';
         let skillNames = entry.skills.map(k => bountySkills[k] ? bountySkills[k].name : k).join('、');
         let affix = combatAttrInfo[entry.affix];
         let btn = done ? `<button class="shop-btn" disabled>☠️ 已伏誅</button>`
             : tracking ? `<button class="shop-btn" disabled>🔍 追蹤中（野外歷練時可能遇上）</button>
-                          <button class="sys-btn" style="margin-top: 4px;" onclick="abandonBounty()">放棄懸賞</button>`
+                          <button class="sys-btn" style="margin-top: 4px;" onclick="abandonBounty('${entry.id}')">放棄懸賞</button>`
             : `<button class="shop-btn" onclick="acceptBounty('${entry.id}')">📜 接取懸賞</button>`;
         return `
             <div class="card bounty-card" style="border-color: ${done ? 'rgba(255,255,255,0.07)' : tracking ? 'var(--accent)' : rank.color}; opacity: ${done ? 0.45 : 1};">
@@ -160,17 +180,34 @@ function renderBountyBoard() {
             <span style="color: var(--accent);">下次刷新：${formatCountdown(player.bountyRefreshAt - Date.now())}</span>
         </div>
         ${renderPaidRefreshButton('bounty', BOUNTY_PAID_REFRESH_COST, BOUNTY_PAID_REFRESH_DAILY, 'paidRefreshBounty')}
+        ${renderBountyBulkButtons()}
         <div class="grid-container">${cards}</div>`;
+}
+
+// 一次接取全部／放棄全部追蹤（榜單上方）
+function renderBountyBulkButtons() {
+    let ids = getTrackedBountyIds();
+    let open = (player.bountyBoard || []).filter(b => b.status === "open");
+    let untracked = open.filter(b => !ids.includes(b.id)).length;
+    let tracked = open.length - untracked;
+    if (!open.length) return '';
+    return `
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 4px 0 10px;">
+            ${untracked ? `<button class="shop-btn" style="width: auto; padding: 6px 16px;" onclick="acceptAllBounties()">📜 一次接取全部（${untracked} 份）</button>` : ''}
+            ${tracked ? `<button class="sys-btn" style="width: auto; padding: 6px 16px;" onclick="abandonBounty()">放棄全部追蹤（${tracked} 份）</button>` : ''}
+        </div>
+        ${tracked > 1 ? `<p style="text-align: center; font-size: 0.78em; color: #9ca3af; margin: 0 0 8px;">追蹤 ${tracked} 份懸賞：野外遇上的機率不變，遇上時從追蹤中隨機一人現身</p>` : ''}`;
 }
 
 // ---- 對決 ----
 // combat.js 在野外刷新新一波之前呼叫；遇上懸賞目標就開打並回傳 true（本波不刷妖獸）
 function tryStartBountyDuel() {
     if (inBountyDuel || inTribulation || player.currentMapIsSafe) return false;
-    let entry = getActiveBounty();
+    let list = getActiveBounties();
     // 每波機率乘 KILL_REWARD_MULT：怪物刷新變慢、波數變少，遇上的平均時間維持原設計（config-maps.js）
-    if (!entry || Math.random() >= BOUNTY_ENCOUNTER_CHANCE * KILL_REWARD_MULT) return false;
-    startBountyDuel(entry);
+    // 同時追蹤多名時機率不變（不會因為接越多遇越快），遇上時隨機其中一人
+    if (!list.length || Math.random() >= BOUNTY_ENCOUNTER_CHANCE * KILL_REWARD_MULT) return false;
+    startBountyDuel(list[Math.floor(Math.random() * list.length)]);
     return true;
 }
 
@@ -318,7 +355,7 @@ function endBountyDuel(result) {
 
     if (result === "win") {
         if (entry) entry.status = "done";
-        if (player.activeBountyId === opp.entryId) player.activeBountyId = null;
+        player.activeBountyIds = getTrackedBountyIds().filter(x => x !== opp.entryId);
         let merit = Math.floor((BOUNTY_MERIT_MIN + Math.floor(Math.random() * (BOUNTY_MERIT_MAX - BOUNTY_MERIT_MIN + 1)))
                                * (1 + gearFx("積德")));   // 積德（裝備特效，gear.js）
         player.merit = (player.merit || 0) + merit;

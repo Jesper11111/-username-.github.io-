@@ -82,6 +82,7 @@
 
     <div class="tabs">
         <button data-tab="board" class="on">📋 戰力榜</button>
+        <button data-tab="defense">🏯 守城審核</button>
         <button data-tab="bans">⛔ 黑名單</button>
         <button data-tab="patrol">🛡️ 自動巡檢</button>
     </div>
@@ -125,8 +126,49 @@
         <p class="note">
             基礎值 = 同境界同階修為圓滿的基礎戰力（7 × 階 × 10^境界）。規則上限 = 基礎值 × 200 ＋ 等級 × 20 萬（與 <code>tools/firestore.rules</code> 相同）。<br>
             🔴 超過上限：新規則下已無法再上傳，但既有資料仍在榜上，需要手動（或巡檢）清除。🟡 佔上限 15% 以上（2026-09-27 正常玩家最高約 4.7%），或等級明顯高於境界，建議人工確認。<br>
-            🟠 戰力暴增：比對該玩家最近 24 次上傳（約 2 小時，規則強制保留、玩家改不了）的戰力與時間，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
+            🟠 戰力暴增：比對該玩家的上傳歷史（最近 24 次＋每 30 分鐘一筆的兩日紀錄，共約 2 天，規則強制保留、玩家改不了）的戰力與時間，時數最多可設 48，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
             離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。
+        </p>
+    </section>
+
+    <!-- 守城審核：死守天南城排行榜（玩家送審 defenseSubmit → 通過才寫入 defenseBoard） -->
+    <section id="tab-defense" hidden>
+        <div class="stats" id="def-stats"></div>
+        <div class="toolbar">
+            <button id="btn-def-reload">🔄 重新讀取</button>
+            <label>顯示 <select id="def-filter">
+                <option value="todo">待審核</option>
+                <option value="all">全部</option>
+                <option value="pass">✅ 判定通過</option>
+                <option value="fail">❌ 判定不通過</option>
+                <option value="manual">❔ 無法比對</option>
+                <option value="ok">已登錄</option>
+                <option value="rejected">已駁回</option>
+            </select></label>
+            <span class="spacer" style="flex:1"></span>
+            <button id="btn-def-approve-pass" class="primary admin-only">✅ 登錄全部判定通過</button>
+            <button id="btn-def-reject-fail" class="danger admin-only">❌ 駁回全部判定不通過</button>
+        </div>
+        <div class="toolbar jumpbar">
+            <b>🏯 判定設定：</b>
+            <label>攻擊 ≥ 該波強度 <input type="number" id="def-min-pct" min="0" step="1"> %</label>
+            <label>比對戰力榜 ±<input type="number" id="def-window" min="1" step="5"> 分鐘</label>
+            <label>送審戰力 ≤ 同時段戰力榜 × <input type="number" id="def-power-tol" min="1" step="0.1"></label>
+            <label>攻擊 ≤ 戰力 × <input type="number" id="def-atk-mult" min="1" step="0.5"></label>
+        </div>
+        <div class="tablewrap"><table>
+            <thead><tr>
+                <th>道號</th><th>送審</th><th>境界（當時）</th><th class="num">攻擊</th><th class="num">該波強度</th><th class="num">攻擊÷強度</th>
+                <th class="num">送審戰力</th><th>戰力榜同時段（前 → 後）</th><th>達成</th><th>判定</th><th>狀態</th><th class="admin-only">操作</th>
+            </tr></thead>
+            <tbody id="def-rows"><tr><td colspan="12" class="note">登入管理者後才能查看。</td></tr></tbody>
+        </table></div>
+        <p class="note">
+            玩家在秘境「魔屠天南」刷新個人最佳時自動送審（送審的是<b>最後守住那一波開打時</b>的攻擊與戰力，已扣掉禁術等暫時增益）。判定三項全過才算「✅ 通過」：<br>
+            ① <b>前後對比</b>：從戰力榜該玩家的上傳歷史（hist＋兩日紀錄 hist2，規則強制、玩家改不了）找達成時間前後 ±N 分鐘的紀錄，送審戰力不可高於其中最高值 × 倍數；兩日紀錄每 30 分鐘一筆，所以 N 建議 ≥ 30。找不到紀錄（超過約 2 天、或沒上傳戰力榜）為「❔ 無法比對」，需人工決定。<br>
+            ② <b>能否守住</b>：攻擊（物攻、術攻較高者）÷ 該波妖潮強度（config-defense.js 的 defenseWaveAtk）。2026-09-27 以守城模擬實測：裸裝約需 95～125%、中等裝備 40～47%、減傷閃避異屬性全滿的強力配置 13～18%（氣血 3 倍時 9～11%），預設 10% 不會誤擋正常玩家；偽造的高波數通常只有 0.01% 以下。<br>
+            ③ <b>數值一致</b>：攻擊不可低於戰力（攻擊取較高者），也不可超過戰力 × 倍數（術修的術攻可高於物攻）。另外被封鎖、或戰力榜標記 🔴 超標／🟠 暴增的玩家一律不通過。<br>
+            「登錄」寫入公開的守城榜（大道石碑顯示）；「駁回」只記原因給玩家看，榜上保留他之前通過的紀錄。
         </p>
     </section>
 
@@ -149,11 +191,13 @@
                 <label>每 <input type="number" id="patrol-min" value="10" min="1"> 分鐘</label>
                 <label><input type="checkbox" id="patrol-stale"> 同時刪除久未更新的紀錄</label>
                 <label><input type="checkbox" id="patrol-jump"> 自動封鎖戰力暴增</label>
+                <label><input type="checkbox" id="patrol-defense"> 自動審核守城紀錄</label>
                 <button id="btn-patrol-now" class="admin-only">▶ 立即巡檢一次</button>
             </div>
             <p class="note">
                 每次巡檢：重新讀取完整榜單 → 🔴 超過上限的紀錄自動「封鎖＋移除」（原因記為「自動巡檢：超過規則上限」）→ 勾選時再封鎖 🟠 戰力暴增（依「戰力榜」分頁的判定設定，原因會記下幾分鐘內從多少漲到多少）→ 勾選時再刪除久未更新的紀錄。🟡 只標記、不自動處理。<br>
-                暴增的證據會在玩家之後 24 次上傳（約 2 小時）後被擠掉，巡檢間隔請小於 2 小時。<br>
+                戰力歷史保留約 2 天（最近 2 小時每 5 分鐘一筆、更早的每 30 分鐘一筆），巡檢或人工審核請在 2 天內做；1 小時內的暴增在 2 小時後只剩每 30 分鐘一筆的粗略紀錄，仍抓得到但時間較不精確。<br>
+                勾「自動審核守城紀錄」時，待審核的守城紀錄：✅ 判定通過自動登錄守城榜、❌ 不通過自動駁回（原因給玩家看）、❔ 無法比對留給人工。<br>
                 真正「關掉網頁也會定時執行」需要伺服器排程（Firebase Cloud Functions，需升級 Blaze 付費方案），目前不做；新規則已擋下超標上傳，巡檢主要清理舊資料。
             </p>
         </div>
@@ -167,6 +211,10 @@
 
 <script src="data/config-realms.js"></script>
 <script src="data/config-leaderboard.js"></script>
+<!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
+<script src="data/config-bounty.js"></script>
+<script src="data/bounty.js"></script>
+<script src="data/config-defense.js"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 const CAP_BASE_MULT = 200;       // 規則：基礎值 × 200
@@ -178,11 +226,15 @@ const FULL_LIMIT = 1000;         // 管理者一次讀取的筆數
 // 2026-09-27 依公式估算：正常修煉 1 小時最多約 4～10 倍（戰力 ≥ 100 萬時），加上換宗門／一次換裝可再 ×6～13，所以取 30 倍
 const JUMP_DEFAULTS = { hours: 1, ratio: 30, minWan: 100 };   // 1 小時內成長 30 倍以上、且新戰力 ≥ 100 萬
 const JUMP_STORE_KEY = 'gm_jump_settings';
+// 守城審核的預設值（頁面上可改，存在本瀏覽器 localStorage）；minPct 依據見頁面下方說明與 ARCHITECTURE.md 第 50 節
+const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 5 };
+const DEF_STORE_KEY = 'gm_defense_settings';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => { n = Number(n) || 0; const u = [['兆', 1e12], ['億', 1e8], ['萬', 1e4]]; for (const [s, v] of u) if (n >= v) return (n / v).toFixed(n / v >= 100 ? 0 : 2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') + s; return n.toLocaleString(); };
 let app, auth, db, user = null, isAdmin = false, rows = [], bans = [], patrolTimer = null;
+let defSubs = [], defBoard = {};   // 守城送審（defenseSubmit）、已登錄的守城榜（defenseBoard，依 uid）
 
 function log(msg, cls) {
     const d = document.createElement('div'); d.className = cls || '';
@@ -213,6 +265,7 @@ async function onAuth(u) {
     renderAuth();
     await reloadBoard();
     if (isAdmin) await reloadBans();
+    await reloadDefense();
 }
 
 function renderAuth() {
@@ -250,7 +303,7 @@ function analyze(r) {
                               _red: use > 1, _yellow: !(use > 1) && flags.length > 0 });
 }
 
-// ================== 戰力暴增（比對 hist：規則強制保留的最近 24 次上傳）==================
+// ================== 戰力暴增（比對 hist＋hist2：規則強制保留的最近 24 次上傳與約 2 天的每 30 分鐘紀錄）==================
 function loadJumpSettings() {
     let s = {};
     try { s = JSON.parse(localStorage.getItem(JUMP_STORE_KEY) || '{}') || {}; } catch (e) {}
@@ -271,11 +324,19 @@ function saveJumpSettings() {
     try { localStorage.setItem(JUMP_STORE_KEY, JSON.stringify(jumpSettings())); } catch (e) {}
 }
 const tsMs = t => t && t.toMillis ? t.toMillis() : 0;
+// 一筆戰力榜紀錄的所有歷史點：hist2（每 30 分鐘、約 2 天）＋ hist（最近 24 次）＋目前這筆，依時間排序、去掉重複時間
+function histPoints(r) {
+    const seen = new Set();
+    return [].concat(Array.isArray(r.hist2) ? r.hist2 : [], Array.isArray(r.hist) ? r.hist : [])
+        .map(h => ({ p: Number(h.p) || 0, t: tsMs(h.t) }))
+        .concat([{ p: r._power, t: tsMs(r.updatedAt) }])
+        .filter(x => x.t && !seen.has(x.t) && seen.add(x.t))
+        .sort((a, b) => a.t - b.t);
+}
 // 任兩次上傳相隔 ≤ 時窗時，後者 ÷ 前者 的最大值（含目前這筆）；_growth 不論是否達標都記下，方便校準門檻
 function computeJump(r) {
     const s = jumpSettings(), win = s.hours * 3600000, min = s.minWan * 1e4;
-    const pts = (Array.isArray(r.hist) ? r.hist : []).map(h => ({ p: Number(h.p) || 0, t: tsMs(h.t) }))
-        .concat([{ p: r._power, t: tsMs(r.updatedAt) }]).filter(x => x.t);
+    const pts = histPoints(r);
     let best = null;
     for (let j = 1; j < pts.length; j++) {
         for (let i = j - 1; i >= 0 && pts[j].t - pts[i].t <= win; i--) {
@@ -291,6 +352,148 @@ function jumpReason(r) {
     const g = r._growth;
     return `戰力暴增：${Math.max(1, Math.round(g.mins))} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}（${g.ratio.toFixed(1)} 倍）`;
 }
+
+// ================== 守城審核（死守天南城排行榜）==================
+function loadDefSettings() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(DEF_STORE_KEY) || '{}') || {}; } catch (e) {}
+    $('def-min-pct').value = s.minPct != null ? s.minPct : DEF_DEFAULTS.minPct;
+    $('def-window').value = s.window || DEF_DEFAULTS.window;
+    $('def-power-tol').value = s.powerTol || DEF_DEFAULTS.powerTol;
+    $('def-atk-mult').value = s.atkMult || DEF_DEFAULTS.atkMult;
+    $('patrol-defense').checked = !!s.patrol;
+}
+function defSettings() {
+    return {
+        minPct: Math.max(0, Number($('def-min-pct').value) || 0),
+        window: Math.max(1, Number($('def-window').value) || DEF_DEFAULTS.window),
+        powerTol: Math.max(1, Number($('def-power-tol').value) || DEF_DEFAULTS.powerTol),
+        atkMult: Math.max(1, Number($('def-atk-mult').value) || DEF_DEFAULTS.atkMult),
+        patrol: $('patrol-defense').checked
+    };
+}
+function saveDefSettings() { try { localStorage.setItem(DEF_STORE_KEY, JSON.stringify(defSettings())); } catch (e) {} }
+
+async function reloadDefense() {
+    if (!isAdmin) { $('def-rows').innerHTML = '<tr><td colspan="12" class="note">登入管理者後才能查看。</td></tr>'; $('def-stats').innerHTML = ''; return; }
+    try {
+        const [subSnap, boardSnap] = await Promise.all([
+            db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).get(),
+            db.collection(LEADERBOARD_DEFENSE_BOARD_COLLECTION).get()
+        ]);
+        defSubs = subSnap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        defBoard = Object.fromEntries(boardSnap.docs.map(d => [d.id, d.data()]));
+    } catch (e) { defSubs = []; defBoard = {}; log('讀取守城紀錄失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    renderDefense();
+}
+
+// 判定一筆送審：checks = [{ ok: true／false／null(無法判斷), text }]；verdict = 'pass'／'fail'／'manual'
+function verifyDefense(s) {
+    const cfg = defSettings(), checks = [];
+    const best = Number(s.best) || 0, atk = Number(s.atk) || 0, power = Number(s.power) || 0, runAt = Number(s.runAt) || 0;
+    const r = rows.find(x => x.id === s.id);
+    // 帳號狀態
+    if (bans.some(b => b.id === s.id)) checks.push({ ok: false, text: '已被封鎖' });
+    else if (r && (r._red || r._jump)) checks.push({ ok: false, text: r._red ? '戰力榜紀錄超過規則上限' : '戰力榜紀錄戰力暴增' });
+    // 達成時間要落在送出時間附近（送審失敗會在之後重送，最多容許 3 天）
+    const upMs = tsMs(s.updatedAt);
+    if (upMs && (runAt > upMs + 5 * 60000 || runAt < upMs - 3 * 86400000)) checks.push({ ok: false, text: '達成時間異常' });
+    // ① 前後對比：戰力榜 hist＋目前這筆，找達成時間 ±N 分鐘內的紀錄
+    let near = null;
+    if (!r) checks.push({ ok: null, text: '戰力榜找不到此玩家，無法比對' });
+    else {
+        const pts = histPoints(r);
+        const win = cfg.window * 60000;
+        const inWin = pts.filter(x => Math.abs(x.t - runAt) <= win);
+        const before = pts.filter(x => x.t <= runAt && runAt - x.t <= win).pop();
+        const after = pts.find(x => x.t >= runAt && x.t - runAt <= win);
+        near = { before, after, max: inWin.length ? Math.max(...inWin.map(x => x.p)) : 0 };
+        if (!inWin.length) checks.push({ ok: null, text: `戰力榜沒有 ±${cfg.window} 分鐘內的紀錄` });
+        else if (power > near.max * cfg.powerTol) checks.push({ ok: false, text: `送審戰力 ${fmt(power)} 高於同時段戰力榜 ${fmt(near.max)}` });
+        else checks.push({ ok: true, text: '戰力與戰力榜相符' });
+    }
+    // ② 能否守住：攻擊 ÷ 該波妖潮強度
+    const need = defenseWaveAtk(Math.max(1, best));
+    const ratio = atk / need;
+    if (ratio * 100 < cfg.minPct) checks.push({ ok: false, text: `攻擊只有第 ${best} 波強度的 ${(ratio * 100).toPrecision(2)}%，守不住` });
+    else checks.push({ ok: true, text: '攻擊足以守住' });
+    // ③ 數值一致：攻擊（物攻、術攻取高）≥ 戰力（物攻），且不超過戰力 × 倍數
+    if (atk < power * 0.99) checks.push({ ok: false, text: '攻擊低於戰力（數值不一致）' });
+    else if (atk > power * cfg.atkMult) checks.push({ ok: false, text: `攻擊超過戰力 ${cfg.atkMult} 倍` });
+    const verdict = checks.some(c => c.ok === false) ? 'fail' : checks.some(c => c.ok === null) ? 'manual' : 'pass';
+    return { checks, verdict, need, ratio, near };
+}
+function defFailReason(v) { return v.checks.filter(c => c.ok === false).map(c => c.text).join('；'); }
+
+function renderDefense() {
+    if (!isAdmin) return;
+    defSubs.forEach(s => { s._v = verifyDefense(s); s._listed = defBoard[s.id] && Number(defBoard[s.id].best) >= Number(s.best); });
+    const f = $('def-filter').value;
+    const todo = s => !s.status;
+    const shown = defSubs.filter(s => f === 'all' ? true : f === 'todo' ? todo(s) : f === 'ok' ? s.status === 'ok' : f === 'rejected' ? s.status === 'rejected'
+                                     : s._v.verdict === f && todo(s))
+        .sort((a, b) => (Number(b.best) - Number(a.best)) || (tsMs(b.updatedAt) - tsMs(a.updatedAt)));
+    $('def-stats').innerHTML = [
+        ['', defSubs.length, '筆送審'], ['', defSubs.filter(todo).length, '待審核'],
+        ['', defSubs.filter(s => todo(s) && s._v.verdict === 'pass').length, '✅ 待審・判定通過'],
+        ['red', defSubs.filter(s => todo(s) && s._v.verdict === 'fail').length, '❌ 待審・不通過'],
+        ['yellow', defSubs.filter(s => todo(s) && s._v.verdict === 'manual').length, '❔ 待審・無法比對'],
+        ['', Object.keys(defBoard).length, '已在守城榜']
+    ].map(([c, n, t]) => `<div class="stat ${c}"><b>${n}</b><small>${t}</small></div>`).join('');
+    const when = ms => ms ? new Date(ms).toLocaleString('zh-TW', { hour12: false, month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    $('def-rows').innerHTML = shown.length ? shown.map(s => {
+        const v = s._v, n = v.near;
+        const verdict = { pass: '<span class="flag grey" style="color:var(--green)">✅ 通過</span>', fail: '<span class="flag red">❌ 不通過</span>', manual: '<span class="flag yellow">❔ 無法比對</span>' }[v.verdict];
+        const detail = v.checks.filter(c => c.ok !== true).map(c => `<div class="note">${esc(c.text)}</div>`).join('');
+        const status = s.status === 'ok' ? '已登錄' : s.status === 'rejected' ? `已駁回<div class="note">${esc(s.reason || '')}</div>` : '待審核';
+        return `<tr class="${v.verdict === 'fail' ? 'red' : v.verdict === 'manual' ? 'yellow' : ''}">
+            <td>${esc(s.name)}<div class="uid">${esc(s.id.slice(0, 10))}…</div></td>
+            <td>第 ${Number(s.best) || 0} 波</td><td>${esc(realms[s.realm] || '？')} ${Number(s.stage) || 1} 階・Lv.${Number(s.level) || 1}</td>
+            <td class="num">${fmt(s.atk)}</td><td class="num">${fmt(Math.round(v.need))}</td><td class="num">${(v.ratio * 100).toPrecision(3)}%</td>
+            <td class="num">${fmt(s.power)}</td>
+            <td>${n ? `${n.before ? fmt(n.before.p) : '—'} → ${n.after ? fmt(n.after.p) : '—'}` : '—'}</td>
+            <td>${when(Number(s.runAt))}</td><td>${verdict}${detail}</td><td>${status}${s._listed ? '<div class="note">榜上：第 ' + Number(defBoard[s.id].best) + ' 波</div>' : ''}</td>
+            <td class="rowbtns">${isAdmin ? `<button class="primary" onclick="defApprove('${esc(s.id)}')">登錄</button><button class="danger" onclick="defReject('${esc(s.id)}')">駁回</button>` : '—'}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="12" class="note">沒有符合的紀錄。</td></tr>';
+}
+
+// 登錄：寫入公開守城榜＋標記送審為已登錄（同一批次）；榜上已有更高波數時只標記不覆寫
+async function approveDefense(list) {
+    await commitInChunks(list.flatMap(s => {
+        const ops = [];
+        const cur = defBoard[s.id];
+        if (!cur || Number(cur.best) < Number(s.best)) ops.push(b => b.set(db.collection(LEADERBOARD_DEFENSE_BOARD_COLLECTION).doc(s.id), {
+            name: String(s.name || ''), best: Number(s.best) || 0, power: Number(s.power) || 0, atk: Number(s.atk) || 0,
+            realm: Number(s.realm) || 0, stage: Number(s.stage) || 1, level: Number(s.level) || 1, runAt: Number(s.runAt) || 0,
+            approvedBy: user.uid, approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }));
+        ops.push(b => b.update(db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).doc(s.id), { status: 'ok', reason: '', reviewedAt: firebase.firestore.FieldValue.serverTimestamp() }));
+        return ops;
+    }));
+    log(`守城榜已登錄 ${list.length} 筆：${list.slice(0, 5).map(s => `${s.name} 第 ${s.best} 波`).join('、')}${list.length > 5 ? '…' : ''}`, 'ok');
+}
+async function rejectDefense(list, reasonOf) {
+    await commitInChunks(list.map(s => b => b.update(db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).doc(s.id),
+        { status: 'rejected', reason: String(reasonOf(s) || '審核未通過').slice(0, 200), reviewedAt: firebase.firestore.FieldValue.serverTimestamp() })));
+    log(`守城紀錄已駁回 ${list.length} 筆`, 'warn');
+}
+async function defGuarded(fn) {
+    if (!isAdmin) { log('需要管理者權限', 'err'); return; }
+    try { await fn(); } catch (e) { log('操作失敗：' + e.message, 'err'); }
+    await reloadDefense();
+}
+window.defApprove = id => {
+    const s = defSubs.find(x => x.id === id); if (!s) return;
+    const v = s._v;
+    const warn = v.verdict === 'pass' ? '' : `\n\n⚠️ 判定${v.verdict === 'fail' ? '不通過' : '無法比對'}：${v.checks.filter(c => c.ok !== true).map(c => c.text).join('；')}\n仍要登錄嗎？`;
+    if (confirm(`登錄「${s.name}」守住第 ${s.best} 波到守城榜？${warn}`)) defGuarded(() => approveDefense([s]));
+};
+window.defReject = id => {
+    const s = defSubs.find(x => x.id === id); if (!s) return;
+    const reason = prompt(`駁回「${s.name}」第 ${s.best} 波的紀錄。原因（玩家看得到）：`, defFailReason(s._v) || '');
+    if (reason !== null) defGuarded(() => rejectDefense([s], () => reason || '審核未通過'));
+};
 
 function markDuplicates() {
     // 同道號＋境界＋階＋等級＋戰力完全一樣的多筆（多半是同一人換瀏覽器／清資料留下的舊紀錄）：保留最新一筆，其餘標「重複」
@@ -370,6 +573,9 @@ async function banIds(ids, reason) {
             reason: String(reason || ''), bannedBy: user.uid, bannedAt: firebase.firestore.FieldValue.serverTimestamp()
         }));
         ops.push(b => b.delete(db.collection(LEADERBOARD_COLLECTION).doc(id)));
+        // 封鎖同時移出守城榜與送審紀錄
+        ops.push(b => b.delete(db.collection(LEADERBOARD_DEFENSE_BOARD_COLLECTION).doc(id)));
+        ops.push(b => b.delete(db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).doc(id)));
     });
     await commitInChunks(ops);
     log(`已封鎖並移除 ${ids.length} 筆（原因：${reason}）`, 'ok');
@@ -378,7 +584,7 @@ function selectedIds() { return [...document.querySelectorAll('.chk:checked')].m
 async function guarded(fn) {
     if (!isAdmin) { log('需要管理者權限', 'err'); return; }
     try { await fn(); } catch (e) { log('操作失敗：' + e.message, 'err'); }
-    await reloadBoard(); await reloadBans();
+    await reloadBoard(); await reloadBans(); await reloadDefense();
 }
 window.delOne = id => { const r = rows.find(x => x.id === id); if (confirm(`刪除「${r ? r.name : id}」這筆紀錄？\n（玩家下次上線會重新上傳；要永久阻擋請用「封鎖」）`)) guarded(() => deleteIds([id], '手動')); };
 window.banOne = id => {
@@ -421,6 +627,19 @@ async function patrol() {
         if (!red.length && !jump.length && !stale.length) log('巡檢完成：沒有需要處理的紀錄', 'ok');
     } catch (e) { log('巡檢失敗：' + e.message, 'err'); }
     await reloadBoard(); await reloadBans();
+    // 守城審核：用剛重讀的戰力榜（含封鎖結果）判定待審核的紀錄
+    if ($('patrol-defense').checked) {
+        await reloadDefense();
+        const todo = defSubs.filter(s => !s.status);
+        const pass = todo.filter(s => s._v.verdict === 'pass'), fail = todo.filter(s => s._v.verdict === 'fail');
+        const manual = todo.length - pass.length - fail.length;
+        try {
+            if (pass.length) await approveDefense(pass);
+            if (fail.length) await rejectDefense(fail, s => '自動審核：' + defFailReason(s._v));
+            log(`守城審核：登錄 ${pass.length}、駁回 ${fail.length}、無法比對留待人工 ${manual}`, 'ok');
+        } catch (e) { log('守城審核失敗：' + e.message, 'err'); }
+        await reloadDefense();
+    }
 }
 function setPatrol(on) {
     clearInterval(patrolTimer); patrolTimer = null;
@@ -435,7 +654,7 @@ function setPatrol(on) {
 // ================== 事件 ==================
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-    ['board', 'bans', 'patrol'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
+    ['board', 'defense', 'bans', 'patrol'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
 });
 $('btn-login').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => log('登入失敗：' + e.message + '（主控台需啟用 Google 登入方式）', 'err'));
 $('btn-logout').onclick = () => { setPatrol(false); $('patrol-on').checked = false; auth.signOut(); };
@@ -457,12 +676,25 @@ $('btn-ban-jump').onclick = () => { const list = rows.filter(r => r._jump); if (
         guarded(async () => { for (const r of list) await banIds([r.id], jumpReason(r)); }); };
 ['jump-hours', 'jump-ratio', 'jump-min'].forEach(id => $(id).onchange = () => { saveJumpSettings(); renderBoard(); });
 $('patrol-jump').onchange = saveJumpSettings;
+$('btn-def-reload').onclick = async () => { await reloadBoard(); await reloadDefense(); };   // 前後對比要用最新的戰力榜
+$('def-filter').onchange = renderDefense;
+['def-min-pct', 'def-window', 'def-power-tol', 'def-atk-mult'].forEach(id => $(id).onchange = () => { saveDefSettings(); renderDefense(); });
+$('patrol-defense').onchange = saveDefSettings;
+$('btn-def-approve-pass').onclick = () => {
+    const list = defSubs.filter(s => !s.status && s._v.verdict === 'pass'); if (!list.length) return log('沒有待審核且判定通過的守城紀錄', 'ok');
+    if (confirm(`登錄 ${list.length} 筆判定通過的守城紀錄到守城榜？`)) defGuarded(() => approveDefense(list));
+};
+$('btn-def-reject-fail').onclick = () => {
+    const list = defSubs.filter(s => !s.status && s._v.verdict === 'fail'); if (!list.length) return log('沒有待審核且判定不通過的守城紀錄', 'ok');
+    if (confirm(`駁回 ${list.length} 筆判定不通過的守城紀錄？（原因會自動填入判定結果）`)) defGuarded(() => rejectDefense(list, s => defFailReason(s._v)));
+};
 $('btn-del-stale').onclick = () => { const ids = rows.filter(r => r._stale).map(r => r.id); if (!ids.length) return log(`沒有 ${staleDays()} 天未更新的紀錄`, 'ok');
     if (confirm(`刪除 ${ids.length} 筆 ${staleDays()} 天以上未更新的紀錄？（不封鎖，玩家回來會重新上傳）`)) guarded(() => deleteIds(ids, `${staleDays()} 天未更新`)); };
 $('patrol-on').onchange = e => setPatrol(e.target.checked);
 $('btn-patrol-now').onclick = patrol;
 
 loadJumpSettings();
+loadDefSettings();
 init().catch(e => { $('who').textContent = '初始化失敗：' + e.message; log(e.message, 'err'); });
 </script>
 </body>

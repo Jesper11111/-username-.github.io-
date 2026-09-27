@@ -61,29 +61,43 @@ function rollAuctionItem() {
     return rollAuctionEquip();
 }
 
-// 依機率抽出品質，再依玩家境界決定屬性與售價
+// 依機率抽出品質，再依人物等級決定裝備等級（config-daily-quests.js 的 AUCTION_GEAR_* ／ AUCTION_PLATINUM_*）
 function rollAuctionEquip() {
-    let rand = Math.random();
-    let cumulative = 0;
-    let qualityName = auctionQualityOdds[auctionQualityOdds.length - 1].quality;
-    for (let odd of auctionQualityOdds) {
-        cumulative += odd.chance;
-        if (rand <= cumulative) { qualityName = odd.quality; break; }
+    // 當前檔 = 不超過人物等級的最高 EQUIP_LEVELS（最低 10 級）
+    const cur = Math.max(0, EQUIP_LEVELS.filter(l => l <= player.level).length - 1);
+    const platinum = Math.random() < AUCTION_PLATINUM_CHANCE;
+    let qualityObj, tier;
+    if (platinum) {
+        qualityObj = PLATINUM_QUALITY;
+        tier = Math.max(0, cur - AUCTION_PLATINUM_TIERS_BELOW);
+    } else {
+        let rand = Math.random();
+        let cumulative = 0;
+        let qualityName = auctionQualityOdds[auctionQualityOdds.length - 1].quality;
+        for (let odd of auctionQualityOdds) {
+            cumulative += odd.chance;
+            if (rand <= cumulative) { qualityName = odd.quality; break; }
+        }
+        qualityObj = equipQualities.find(q => q.name === qualityName);
+        tier = Math.max(0, cur - (Math.random() < AUCTION_GEAR_PREV_TIER_CHANCE ? 1 : 0));
     }
-    const qualityObj = equipQualities.find(q => q.name === qualityName);
+    const level = EQUIP_LEVELS[tier];
 
-    // 只從可鍛造部位中挑選（神器不在拍賣場流通），再從該部位的「拍賣」清單抽一種（gear.js）
+    // 只從可鍛造部位中挑選（神器不在拍賣場流通），再從該部位的「拍賣」清單抽一種（gear.js）；套裝部件一律不賣
     const slots = Object.keys(equipTypes).filter(name => !NON_FORGEABLE_SLOTS.includes(name));
-    const slotName = slots[Math.floor(Math.random() * slots.length)];
-    const def = pickGearDef(slotName, 'auction');
+    let def = null;
+    for (let i = 0; i < 20 && (!def || def.set); i++) def = pickGearDef(slots[Math.floor(Math.random() * slots.length)], 'auction');
+
+    // 四維與鍛造／奪寶同公式；拍賣屬外界管道，buildGearStats 會再 × GEAR_EXTERNAL_MULT
+    // 橙裝上架時就決定孔數（createGearEquip → ensureSockets），買家看得到；白金比照橙裝進化而來的也有孔
+    const eq = createGearEquip(def, qualityObj, level * EQUIP_LEVEL_STAT_MULT * qualityObj.mult, level, true);   // 買下才記入天磯錄
+    if (platinum && !Array.isArray(eq.sockets)) eq.sockets = Array(SOCKET_MIN + Math.floor(Math.random() * (SOCKET_MAX - SOCKET_MIN + 1))).fill(null);
 
     return {
         id: Date.now() + "_" + Math.floor(Math.random() * 100000),
-        price: Math.floor(800 * qualityObj.mult * (player.realmIndex + 1)),
+        price: platinum ? AUCTION_PLATINUM_PRICE : Math.floor(800 * qualityObj.mult * (player.realmIndex + 1)),
         sold: false,
-        // 四維基數依境界；拍賣屬外界管道，buildGearStats 會再 × GEAR_EXTERNAL_MULT（≈ 舊版的「高一成」）
-        // 橙裝上架時就決定孔數（createGearEquip → ensureSockets），買家看得到
-        equip: createGearEquip(def, qualityObj, Math.floor((player.realmIndex + 1) * 10 * qualityObj.mult), null)
+        equip: eq
     };
 }
 
@@ -161,6 +175,8 @@ function completeAuctionPurchase(item, price) {
         addLog(`🏺 於千寶閣以 ${price.toWan()} 靈石＋${item.repPrice.toWan()} 聲望購得【星允鐵袋】，星允鐵 +${item.amount}！（持有 ${player.starIron.toWan()}）`, "level-up", false, "item");
     } else {
         player.equipInventory.push(item.equip);   // 孔位在上架時就決定；更新前上架的舊商品沒有孔，也不補
+        recordGearCollected(item.equip);          // 天磯錄：買下才算收藏（上架時不記）
+        checkTitleUnlocks();
         addLog(`🏺 ${contested}於千寶閣以 ${price.toWan()} 靈石標下【${item.equip.quality}·${item.equip.element}屬性】的【${getEquipDisplayName(item.equip)}】！`, "equip");
     }
     renderAuction();
@@ -279,8 +295,10 @@ function renderAuction() {
                 ${renderAuctionBuyArea(item, '購買')}
             </div>`;
         const eq = item.equip;
+        const plat = eq.quality === PLATINUM_QUALITY.name;
         return `
-            <div class="card" style="border-color: ${item.sold ? 'rgba(255,255,255,0.07)' : 'var(--accent)'}; opacity: ${item.sold ? 0.45 : 1};">
+            <div class="card" style="border-color: ${item.sold ? 'rgba(255,255,255,0.07)' : plat ? PLATINUM_QUALITY.color : 'var(--accent)'}; opacity: ${item.sold ? 0.45 : 1};${plat && !item.sold ? ' box-shadow: 0 0 12px rgba(229,231,235,0.35);' : ''}">
+                ${plat ? `<p style="font-size: 0.75em; color: ${PLATINUM_QUALITY.color}; margin: 0 0 2px;">✨ 千寶閣鎮閣之寶・${PLATINUM_QUALITY.label}</p>` : ''}
                 <h3 class="quality-${eq.quality}">${formatEquipTitle(eq)}</h3>
                 <p style="font-size: 0.82em; color: #9ca3af;">${formatGearSubline(eq)} | <span class="quality-${eq.quality}">${eq.quality}</span> | 屬性: <span class="elem-${eq.element}">${eq.element}</span></p>
                 ${formatEquipDetails(eq)}

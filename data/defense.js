@@ -32,21 +32,8 @@ const DefenseBattle = (() => {
     const clipOf = id => DEFENSE_CLIPS.find(c => c.id === id);
 
     // ================== 強度（config-defense.js 的 DEFENSE_MILESTONES）==================
-    // 某境界某階修士的攻擊：與懸賞人物同一條曲線（bounty.js 的 getBountyStats：修為圓滿基礎戰力 × 該境界一般宗門倍率）
-    function realmAtk(r, s) {
-        const base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
-        return base * getBountyRefSectMult(r);
-    }
-    const MILES = DEFENSE_MILESTONES.map(m => ({ w: m.wave, a: realmAtk(m.realm, m.stage || DEFENSE_MILESTONE_STAGE) }));
-    // 第 w 波的基準攻擊：里程碑之間等比例遞增；最後一個里程碑之後沿用最後一段的每波倍率
-    function waveAtk(w) {
-        for (let i = 0; i < MILES.length - 1; i++) {
-            const a = MILES[i], b = MILES[i + 1];
-            if (w <= b.w) return a.a * Math.pow(b.a / a.a, (Math.max(w, a.w) - a.w) / (b.w - a.w));
-        }
-        const a = MILES[MILES.length - 2], b = MILES[MILES.length - 1];
-        return b.a * Math.pow(b.a / a.a, (w - b.w) / (b.w - a.w));
-    }
+    // 強度曲線在 config-defense.js（gm.html 審核排行榜也要用）
+    const realmAtk = defenseRealmAtk, waveAtk = defenseWaveAtk;
     // 換算成「相當於某境界某階」（顯示用）；超過混沌道祖 10 階顯示倍數
     function waveRealmLabel(w) {
         // 里程碑波次直接顯示指定的境界（某境界 10 階與下一境界 1 階數值相同，比對會混淆）
@@ -133,6 +120,7 @@ const DefenseBattle = (() => {
         opened = true;
         $('defense-scene').style.display = 'block';
         $('defense-result').classList.remove('on');
+        closeRecords();
         $('defense-feed').innerHTML = '';
         D.active = false; D.wave = 0; D.kills = 0;
         spec = waveSpec(1); updateWaveBox();
@@ -211,7 +199,8 @@ const DefenseBattle = (() => {
             if (el.src !== blobUrls[c.id]) el.src = blobUrls[c.id];
             el.pause(); el.classList.remove('on'); el.playbackRate = baseRate;
         });
-        D.active = true; D.kills = 0; D.cleared = 0; D.lost = false; D.partnerMet = false;
+        D.active = true; D.kills = 0; D.cleared = 0; D.lost = false; D.partnerMet = false; D.snap = null;
+        closeRecords();
         D.gain = { coins: 0, merit: 0, shards: 0, iron: 0, gear: [], titles: [], partners: [] };
         D.titlesBefore = (player.titles || []).slice();
         parts = []; caption = null;
@@ -226,6 +215,8 @@ const DefenseBattle = (() => {
         D.wave = w; spec = waveSpec(w);
         spec.result = simulateWave(w);                  // 這一波守不守得住（以玩家當下數值，在背後打一場）
         spec.realmLabel = waveRealmLabel(w);
+        // 這一波開打時的數值（守住後記入通關紀錄、送守城排行榜審核；扣掉禁術等暫時增益，與戰力榜同一標準）
+        spec.snap = { power: getRankPower(), atk: getRankAttack(), realm: player.realmIndex, stage: player.stage, level: player.level };
         $('defense-vwrap').style.filter = spec.th.filter;
         updateWaveBox();
         $('defense-bn1').textContent = spec.boss ? `第 ${w} 波・首領來襲` : `第 ${w} 波`;
@@ -296,7 +287,7 @@ const DefenseBattle = (() => {
                 feed(`💞 天驕【${p.title}・${p.name}】前來助陣，結識了！`, 'kill');
             }
         }
-        D.cleared = w;
+        D.cleared = w; D.snap = spec.snap;
         if (w > (player.defenseBest || 0)) { player.defenseBest = w; checkTitleUnlocks(); }
         if (boss) settleMeritStones();   // 功德滿額自動凝結七彩補天石（merit.js）
     }
@@ -333,7 +324,35 @@ const DefenseBattle = (() => {
             + `${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.gear.length ? `、裝備 ${g.gear.length} 件` : ''}`
             + `${g.partners.length ? `、結識 ${g.partners.join('、')}` : ''}`, 'level-up', true, 'item');
         D.gain = null;   // 只記一次（離開時不重複）
+        recordRun(win);
     }
+
+    // ================== 通關紀錄（player.defenseRuns，最新在前）＋送守城排行榜審核（leaderboard.js）==================
+    // 數值取「最後守住的那一波開打時」的快照；一波都沒守住則取當下數值（不送排行榜）
+    function recordRun(win) {
+        const s = D.snap || { power: getRankPower(), atk: getRankAttack(), realm: player.realmIndex, stage: player.stage, level: player.level };
+        const run = { at: Date.now(), cleared: D.cleared || 0, win: !!win, kills: D.kills || 0,
+                      power: s.power, atk: s.atk, realm: s.realm, stage: s.stage, level: s.level };
+        player.defenseRuns = [run].concat(player.defenseRuns || []).slice(0, DEFENSE_RUN_LOG_MAX);
+        if (run.cleared > 0) submitDefenseRecord(run);
+    }
+    function openRecords() {
+        const runs = player.defenseRuns || [];
+        const two = n => String(n).padStart(2, '0');
+        const when = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${two(d.getHours())}:${two(d.getMinutes())}`; };
+        $('defense-records-body').innerHTML =
+            `<div class="dr-best">歷史最高：守住第 <b>${player.defenseBest || 0}</b> 波</div>`
+            + `<div class="dr-rank">${getDefenseRankStatusText()}</div>`
+            + (runs.length ? runs.map(r => `<div class="dr-row${r.win ? ' win' : ''}">
+                    <span class="dr-when">${when(r.at)}</span>
+                    <span class="dr-res">${r.win ? `🏆 全數守住 ${r.cleared} 波` : r.cleared ? `守住 ${r.cleared} 波` : '一波未守住'}</span>
+                    <small>${realms[r.realm] || '？'} ${r.stage} 階・戰力 ${Number(r.power || 0).toWan()}・斬殺 ${Number(r.kills || 0).toWan()}</small>
+                </div>`).join('')
+              : '<div class="dr-empty">尚無守城紀錄</div>')
+            + `<div class="dr-note">保留最近 ${DEFENSE_RUN_LOG_MAX} 場。刷新個人最佳時自動送審，審核通過才會登上洞府「大道石碑」的守城排行榜。</div>`;
+        $('defense-records').classList.add('on');
+    }
+    function closeRecords() { $('defense-records').classList.remove('on'); }
     function playClip(id) {
         const next = clipEls[id], prev = video;
         next.currentTime = 0; next.playbackRate = baseRate; next.play().catch(() => {});
@@ -608,7 +627,7 @@ const DefenseBattle = (() => {
         return maxParts;
     }
 
-    return { open, close, setSpeed, retry: startLoading, waveSpec, waveAtk, waveRealmLabel, waveEnemy, simulateWave, _sim,
+    return { open, close, setSpeed, retry: startLoading, openRecords, closeRecords, waveSpec, waveAtk, waveRealmLabel, waveEnemy, simulateWave, _sim,
              _grantWave: grantWave, _settle: settle, _setWave: setWave,   // 測試用：直接發某一波的獎勵／結算／切波（不播影片）
              _state: () => ({ D, spec, parts: parts.length, video: video && video.dataset.clip }) };
 })();
@@ -617,3 +636,5 @@ const DefenseBattle = (() => {
 function openDefenseBattle(realmId) { DefenseBattle.open(realmId); }
 function closeDefenseBattle() { DefenseBattle.close(); }
 function setDefenseSpeed(r) { DefenseBattle.setSpeed(r); }
+function openDefenseRecords() { DefenseBattle.openRecords(); }
+function closeDefenseRecords() { DefenseBattle.closeRecords(); }

@@ -57,8 +57,9 @@ function buildGearStats(def, qualityObj, base) {
     return stats;
 }
 
-// 產生一件圖鑑裝備（尚未放進背包）；level 為 null 時不帶裝備等級（千寶閣）
-function createGearEquip(def, qualityObj, base, level) {
+// 產生一件圖鑑裝備（尚未放進背包）；level 為 null 時不帶裝備等級（2026-09-27 前的千寶閣商品）
+// noRecord：不記入天磯錄（千寶閣上架時；買下才記，見 auction.js）
+function createGearEquip(def, qualityObj, base, level, noRecord) {
     let eq = {
         // 連續開爐會在同一毫秒產生多件，隨機段需夠長以免 id 重複
         id: Date.now() + "_" + Math.random().toString(36).slice(2, 10),
@@ -72,7 +73,7 @@ function createGearEquip(def, qualityObj, base, level) {
         enhance: 0
     };
     if (level) eq.level = level;   // 裝備等級：穿戴需人物等級 ≥ level
-    recordGearCollected(eq);       // 天磯錄收藏紀錄（codex.js）
+    if (!noRecord) recordGearCollected(eq);   // 天磯錄收藏紀錄（codex.js）
     return ensureSockets(eq);      // 橙裝隨機 1~3 孔（talisman.js）
 }
 

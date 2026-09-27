@@ -94,3 +94,24 @@ const DEFENSE_REWARDS = {
 };
 // 稱號：config-titles.js 的 defenseWave 條件（10／30／50／80／100 波，依歷史最高守住波數 player.defenseBest）
 
+// ==================== 通關紀錄與排行榜（第 49、50 節）====================
+const DEFENSE_RUN_LOG_MAX = 20;      // 守城介面「📜 通關紀錄」保留最近幾場（player.defenseRuns）
+
+// ==================== 強度曲線（defense.js 與 gm.html 共用，gm.html 審核排行榜時用來判斷「這個攻擊守不守得住這一波」）====================
+// ⚠️ 例外：本檔尾端有函式（與 config-sects.js 相同），需要 bounty.js 的 getBountyRefSectMult（呼叫時才用，載入順序不受影響）
+// 某境界某階修士的攻擊：與懸賞人物同一條曲線（bounty.js 的 getBountyStats：修為圓滿基礎戰力 × 該境界一般宗門倍率）
+function defenseRealmAtk(r, s) {
+    const base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
+    return base * getBountyRefSectMult(r);
+}
+// 第 w 波的基準攻擊：里程碑之間等比例遞增；最後一個里程碑之後沿用最後一段的每波倍率
+function defenseWaveAtk(w) {
+    const miles = DEFENSE_MILESTONES.map(m => ({ w: m.wave, a: defenseRealmAtk(m.realm, m.stage || DEFENSE_MILESTONE_STAGE) }));
+    for (let i = 0; i < miles.length - 1; i++) {
+        const a = miles[i], b = miles[i + 1];
+        if (w <= b.w) return a.a * Math.pow(b.a / a.a, (Math.max(w, a.w) - a.w) / (b.w - a.w));
+    }
+    const a = miles[miles.length - 2], b = miles[miles.length - 1];
+    return b.a * Math.pow(b.a / a.a, (w - b.w) / (b.w - a.w));
+}
+

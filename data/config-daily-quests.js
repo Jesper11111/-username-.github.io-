@@ -30,6 +30,14 @@ const AUCTION_REFRESH_HOURS = 3;   // 每 3 小時刷新
 const AUCTION_ITEM_COUNT = 5;      // 每次只刷新 5 件商品
 const AUCTION_PAID_REFRESH_COST = 100000;   // 花靈石立即刷新（不改變定時刷新的時間）
 const AUCTION_PAID_REFRESH_DAILY = 5;       // 每日可付費刷新次數（與懸賞榜分開計）
+// 裝備等級（2026-09-27）：「當前檔」= EQUIP_LEVELS 中不超過人物等級的最高檔；有 AUCTION_GEAR_PREV_TIER_CHANCE 機率改賣前一檔
+// 四維與鍛造／奪寶同公式（等級 × EQUIP_LEVEL_STAT_MULT × 品質倍率，拍賣屬外界管道再 × GEAR_EXTERNAL_MULT），穿戴需人物等級 ≥ 裝備等級
+const AUCTION_GEAR_PREV_TIER_CHANCE = 0.3;
+// 低等白金（先天道器）：每個裝備商品欄位有機率改賣白金，等級比當前檔低 AUCTION_PLATINUM_TIERS_BELOW 檔（最低 10 級），固定價格、不會被搶拍
+// 不賣套裝（拍賣清單本來就沒有套裝部件，auction.js 另有防呆）
+const AUCTION_PLATINUM_CHANCE = 0.05;
+const AUCTION_PLATINUM_TIERS_BELOW = 2;
+const AUCTION_PLATINUM_PRICE = 100000000;   // 1 億靈石
 
 // 拍賣場的品質機率（由高到低累進判斷），比鍛造閣更容易出高品質
 const auctionQualityOdds = [

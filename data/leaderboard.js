@@ -15,7 +15,13 @@ function isLeaderboardConfigured() {
 
 // 榜上的戰力：與畫面「戰力」同一個數字（getPhysAttack），但扣掉暫時性的增益（禁術、靈寵增益、對決化功），避免開技能瞬間灌分
 function getRankPower() {
-    let p = getPhysAttack();
+    return lbStripTempBuffs(getPhysAttack());
+}
+// 守城排行榜用的攻擊：死守天南城以 max(物攻, 術攻) 判定勝負（defense.js 的 simulateWave），同樣扣掉暫時性增益
+function getRankAttack() {
+    return lbStripTempBuffs(Math.max(getPhysAttack(), getMagAttack()));
+}
+function lbStripTempBuffs(p) {
     if (player.buffTimer > 0 && player.buffMult) p /= player.buffMult;
     if (petBuffTimer > 0 && petBuffMult) p /= petBuffMult;
     p /= getDuelWeakenMult() || 1;
@@ -69,10 +75,16 @@ async function uploadLeaderboard() {
         // 一定要讀伺服器版本，快取的舊值會被規則擋下；斷線時讀不到就跳過這次上傳
         const ref = db.collection(LEADERBOARD_COLLECTION).doc(uid);
         const prev = await ref.get({ source: 'server' });
-        let hist = [];
+        let hist = [], hist2 = [];
         if (prev.exists) {
-            const o = prev.data();
-            hist = (Array.isArray(o.hist) ? o.hist : []).concat([{ p: o.power, t: o.updatedAt }]).slice(-LEADERBOARD_HISTORY_SIZE);
+            const o = prev.data(), entry = { p: o.power, t: o.updatedAt };
+            hist = (Array.isArray(o.hist) ? o.hist : []).concat([entry]).slice(-LEADERBOARD_HISTORY_SIZE);
+            // 兩日紀錄：距最後一筆 ≥ 30 分鐘才接上（用秒＋奈秒精確比較，與規則的時間戳比較一致）
+            hist2 = Array.isArray(o.hist2) ? o.hist2 : [];
+            const last = hist2[hist2.length - 1];
+            if (!last || lbTsDiffNanos(o.updatedAt, last.t) >= LEADERBOARD_HISTORY2_GAP_SEC * 1e9) {
+                hist2 = hist2.slice(-(LEADERBOARD_HISTORY2_SIZE - 1)).concat([entry]);
+            }
         }
         await ref.set({
             name: sanitizePlayerName(player.name) || "無名修士",
@@ -82,11 +94,101 @@ async function uploadLeaderboard() {
             level: Math.floor(player.level) || 1,
             sect: player.sect ? String(player.sect.name || "").slice(0, 20) : "",
             hist,
+            hist2,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {
         console.warn("戰力榜上傳失敗：", e);
     }
+    flushDefenseSubmit();   // 上次送審失敗（斷線、60 秒內重複）的守城紀錄順便補送
+}
+
+// ================== 死守天南城排行榜（第 49、50 節）==================
+// 守城刷新個人最佳 → submitDefenseRecord() 寫入 defenseSubmit/{uid}（送審）→ GM 後台比對戰力榜紀錄與該波強度，通過才寫入 defenseBoard/{uid}
+// player.defensePending：尚未送出的最佳紀錄；player.defenseSubmitted：已送審的最高波數（不重複送同樣或更低的）
+let lbDefenseRows = null;      // 最近一次讀到的守城榜
+let lbDefenseMine = null;      // 自己送審紀錄的審核狀態（defenseSubmit/{uid}：status 'ok'／'rejected'／沒有 = 審核中）
+let lbTab = 'power';
+
+function submitDefenseRecord(run) {
+    if (run.cleared <= (player.defenseSubmitted || 0)) return;
+    if (player.defensePending && player.defensePending.cleared >= run.cleared) return;
+    player.defensePending = run;
+    flushDefenseSubmit();
+}
+
+async function flushDefenseSubmit() {
+    const run = player.defensePending;
+    if (!run || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
+    if (flushDefenseSubmit.busy) return;
+    flushDefenseSubmit.busy = true;
+    try {
+        const { db, uid } = await initLeaderboardBackend();
+        if (lbBanned === null) await checkLeaderboardBan(db, uid);
+        if (lbBanned) return;
+        await db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).doc(uid).set({
+            name: sanitizePlayerName(player.name) || "無名修士",
+            best: Math.min(DEFENSE_TOTAL_WAVES, Math.floor(run.cleared)),
+            atk: Math.floor(run.atk) || 0,
+            power: Math.floor(run.power) || 0,
+            realm: Math.floor(run.realm) || 0,
+            stage: Math.floor(run.stage) || 1,
+            level: Math.floor(run.level) || 1,
+            kills: Math.floor(run.kills) || 0,
+            runAt: Math.floor(run.at) || Date.now(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        player.defenseSubmitted = run.cleared;
+        if (player.defensePending === run) player.defensePending = null;
+        lbDefenseMine = null;
+    } catch (e) {
+        console.warn("守城紀錄送審失敗（下次上傳戰力時重試）：", e);
+    } finally {
+        flushDefenseSubmit.busy = false;
+    }
+}
+
+// 守城介面「通關紀錄」上的一行狀態
+function getDefenseRankStatusText() {
+    if (!isLeaderboardConfigured()) return '';
+    if (lbBanned) return '⛔ 已被移出排行榜';
+    if (player.defensePending) return `🏯 守城排行榜：第 ${player.defensePending.cleared} 波紀錄等待上傳`;
+    if (!player.defenseSubmitted) return '🏯 守城排行榜：尚未送審（守住至少 1 波後自動送審）';
+    const m = lbDefenseMine;
+    if (m && m.best === player.defenseSubmitted && m.status === 'ok') return `🏯 守城排行榜：第 ${m.best} 波已登錄`;
+    if (m && m.best === player.defenseSubmitted && m.status === 'rejected') return `🏯 守城排行榜：第 ${m.best} 波未通過審核`;
+    return `🏯 守城排行榜：第 ${player.defenseSubmitted} 波審核中（通過後登上大道石碑）`;
+}
+
+async function fetchDefenseBoard() {
+    const { db, uid } = await initLeaderboardBackend();
+    const snap = await db.collection(LEADERBOARD_DEFENSE_BOARD_COLLECTION)
+        .orderBy('best', 'desc').limit(LEADERBOARD_TOP_N).get();
+    // 同波數：先達成的排前面
+    const rows = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
+        .sort((a, b) => (b.best - a.best) || ((a.runAt || 0) - (b.runAt || 0)));
+    try {
+        const mine = await db.collection(LEADERBOARD_DEFENSE_SUBMIT_COLLECTION).doc(uid).get();
+        lbDefenseMine = mine.exists ? mine.data() : null;
+    } catch (e) { /* 查不到審核狀態不影響榜單 */ }
+    return rows;
+}
+
+function switchLeaderboardTab(tab) {
+    applyLeaderboardTab(tab);
+    renderLeaderboard(false);
+    if (lbTab === 'defense' ? !lbDefenseRows : !lbRows) refreshLeaderboard(false);
+}
+function applyLeaderboardTab(tab) {
+    lbTab = tab === 'defense' ? 'defense' : 'power';
+    document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => b.classList.toggle('on', b.dataset.lbTab === lbTab));
+    const title = document.getElementById('leaderboard-title');
+    if (title) title.textContent = lbTab === 'defense' ? '🏯 死守天南城・通關榜' : '🏆 天下戰力榜';
+}
+
+// 兩個 Firestore Timestamp 相差幾奈秒（a − b）；BigInt 以免奈秒精度被浮點數吃掉
+function lbTsDiffNanos(a, b) {
+    return Number((BigInt(a.seconds) - BigInt(b.seconds)) * 1000000000n + BigInt(a.nanoseconds - b.nanoseconds));
 }
 
 // 查自己有沒有被 GM 封鎖（規則允許玩家讀自己的 banned/{uid}）；查不到（斷線等）先當作沒被封，下次再查
@@ -113,8 +215,10 @@ async function fetchLeaderboard() {
     return snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
 }
 
-function openLeaderboardModal() {
+// tab：'power'（戰力榜，預設）／'defense'（死守天南城通關榜）；不給就停在上次看的分頁
+function openLeaderboardModal(tab) {
     document.getElementById('leaderboard-modal').style.display = 'flex';
+    applyLeaderboardTab(tab || lbTab);
     refreshLeaderboard(false);
 }
 
@@ -128,7 +232,8 @@ async function refreshLeaderboard(manual) {
         // 先交自己的最新戰力，名次才準（60 秒內已上傳過會自動略過）。
         // 斷線時 Firestore 的寫入要等連回伺服器才會完成，最多等 LEADERBOARD_TIMEOUT_MS，避免視窗卡在「讀取中」
         await lbWithTimeout(uploadLeaderboard()).catch(() => {});
-        lbRows = await lbWithTimeout(fetchLeaderboard());
+        if (lbTab === 'defense') lbDefenseRows = await lbWithTimeout(fetchDefenseBoard());
+        else lbRows = await lbWithTimeout(fetchLeaderboard());
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         lbError = "連線失敗，請稍後再試。";
@@ -163,6 +268,7 @@ function renderLeaderboard(loading) {
         box.innerHTML = `<p class="lb-note">戰力榜尚未開通（管理者需在 data/config-leaderboard.js 填入 Firebase 設定）。</p>`;
         return;
     }
+    if (lbTab === 'defense') { box.innerHTML = defenseBoardHtml(loading); return; }
     const myPower = getRankPower();
     let myUid = null;
     try { myUid = firebase.auth().currentUser.uid; } catch (e) { /* SDK 還沒載入 */ }
@@ -191,4 +297,35 @@ function renderLeaderboard(loading) {
     }
     html += `<p class="lb-note">在線時每 5 分鐘自動回報一次戰力（不含禁術等暫時增益）。</p>`;
     box.innerHTML = html;
+}
+
+// 死守天南城通關榜（defenseBoard：GM 審核通過的紀錄）
+function defenseBoardHtml(loading) {
+    let myUid = null;
+    try { myUid = firebase.auth().currentUser.uid; } catch (e) { /* SDK 還沒載入 */ }
+    let html = `<div class="lb-me">你的最佳：守住第 <b>${player.defenseBest || 0}</b> 波`;
+    if (lbDefenseRows && myUid) {
+        const idx = lbDefenseRows.findIndex(r => r.id === myUid);
+        if (idx >= 0) html += `　目前第 <b>${idx + 1}</b> 名`;
+    }
+    html += `</div><p class="lb-note">${getDefenseRankStatusText()}</p>`;
+    if (lbDefenseMine && lbDefenseMine.status === 'rejected' && lbDefenseMine.best === player.defenseSubmitted && lbDefenseMine.reason) {
+        html += `<p class="lb-note" style="color:#fca5a5;">未通過原因：${lbEscape(lbDefenseMine.reason)}</p>`;
+    }
+    if (loading) html += `<p class="lb-note">讀取中…</p>`;
+    if (lbError) html += `<p class="lb-note" style="color:#f87171;">${lbError}</p>`;
+    if (lbDefenseRows) {
+        if (!lbDefenseRows.length) html += `<p class="lb-note">目前還沒有通過審核的守城紀錄。</p>`;
+        html += `<div class="lb-list">` + lbDefenseRows.map((r, i) => {
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+            const d = r.runAt ? new Date(r.runAt) : null;
+            return `<div class="lb-row${r.id === myUid ? ' lb-self' : ''}">
+                <span class="lb-rank">${medal}</span>
+                <span class="lb-name">${lbEscape(r.name)}<small>${lbEscape(realms[r.realm] || "？")} ${Number(r.stage) || 1}階・戰力 ${Number(r.power || 0).toWan()}</small></span>
+                <span class="lb-power">${Number(r.best) >= DEFENSE_TOTAL_WAVES ? '🏆 全破' : `第 ${Number(r.best) || 0} 波`}<small>${d ? `${d.getMonth() + 1}/${d.getDate()} 達成` : ''}</small></span>
+            </div>`;
+        }).join("") + `</div>`;
+    }
+    html += `<p class="lb-note">秘境「魔屠天南」刷新個人最佳時自動送審；管理者比對當時戰力與該波強度，確認能守住才登錄。</p>`;
+    return html;
 }

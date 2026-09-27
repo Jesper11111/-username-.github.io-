@@ -18,7 +18,7 @@ let player = {
     bountyBoard: [],             // 當期懸賞榜 6 名（bounty.js）
     bountyRefreshAt: 0,          // 懸賞榜下次刷新的時間戳
     bountyFaction: null,         // 目前榜單列的是哪個陣營（"正"/"邪"），陣營改變時重抽
-    activeBountyId: null,        // 已接取、追蹤中的懸賞
+    activeBountyIds: [],         // 已接取、追蹤中的懸賞（可同時追蹤多名，2026-09-27；舊存檔的 activeBountyId 由 bounty.js 的 getTrackedBountyIds 轉換）
     bountyKills: 0,              // 累計懸賞伏誅數
     hp: 100, maxHp: 100, mp: 100, maxMp: 100, coins: 0, reputation: 0,
     stats: { str: 10, con: 10, int: 10, spr: 10, cha: 10 },
