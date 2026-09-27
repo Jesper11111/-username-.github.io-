@@ -183,10 +183,12 @@ const ZhenmoTower = (() => {
 
     // ================== BOSS 房：開門 → BOSS 介紹 ==================
     function bossStats(boss) {
-        const atk = defenseRealmAtk(boss.realm, boss.stage) * (boss.atkMult || 1);
+        // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
+        const baseAtk = defenseRealmAtk(boss.realm, boss.stage);
+        const atk = baseAtk * (boss.atkMult || 1);
         const attrs = { def: boss.def || 0, eva: boss.eva || 0, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: boss.element || null };
         if (boss.affix) attrs[boss.affix] = boss.affixVal || 0;
-        return { atk, hp: atk * (boss.hpPerAtk || 20), attrs };
+        return { atk, hp: baseAtk * (boss.hpPerAtk || 300) * (boss.hpMult || 1), attrs };   // 氣血預設基準攻擊 × 300（2026-09-27 玩家指定）
     }
     function playerStats() {
         return { atk: Math.max(getPhysAttack(), getMagAttack()) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs() };
@@ -274,7 +276,7 @@ const ZhenmoTower = (() => {
             if (!instant) {
                 popNum('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
                 bossFlash();
-                if (f.round % 3 === 2) fightLog(`⚡ ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${Math.floor(hit.dmg).toWan()} 傷害`}`, 'boss');
+                if (f.round % 3 === 2) fightLog(`${f.boss.icon || '⚡'} ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${Math.floor(hit.dmg).toWan()} 傷害`}`, 'boss');
             }
         }
         if (P.hp <= 0) return endFight(false, `被${f.boss.name}擊倒`);
@@ -369,6 +371,7 @@ const ZhenmoTower = (() => {
     }
     function bossFlash() {
         const el = $('zm-fight');
+        el.style.setProperty('--zm-flash', fight && fight.boss.flash || 'rgba(191, 219, 254, 0.35)');   // BOSS 出手閃光顏色（config 的 flash）
         el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
     }
     function fightLog(text, cls) {
@@ -377,7 +380,7 @@ const ZhenmoTower = (() => {
         d.className = cls || '';
         d.textContent = text;
         box.appendChild(d);
-        while (box.children.length > 4) box.firstChild.remove();
+        while (box.children.length > 3) box.firstChild.remove();   // 戰況在右上、BOSS 血條下方，最多 3 行以免遮住畫面
     }
 
     function escapeZm(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

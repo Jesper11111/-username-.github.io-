@@ -26,12 +26,16 @@ const ZHENMO_MAX_ROUNDS = 150;         // 超過回合數 BOSS 未倒 = 挑戰�
 const ZHENMO_ROUND_MS = 650;           // 每回合演出時間（×1 速；可切 ×2／×4 或跳過）
 
 // 各層 BOSS（key = 樓層）。強度以「某境界某階修士」為基準（config-defense.js 的 defenseRealmAtk，與死守天南城同一條曲線）：
-//   攻擊 = defenseRealmAtk(realm, stage) × atkMult；氣血 = 攻擊 × hpPerAtk；減傷／閃避 %；affix 異屬性（ice／fire／poison／metal／thunder）
+//   攻擊 = defenseRealmAtk(realm, stage) × atkMult；氣血 = defenseRealmAtk(realm, stage) × hpPerAtk（沒填 = 300）× hpMult（沒填 = 1）；減傷／閃避 %；affix 異屬性（ice／fire／poison／metal／thunder）
 // img：戰鬥背景（橫圖，手機以 imgPos 對準 BOSS）；rewards 為基礎獎勵，實際 × 本層問答倍率
+// 選填 icon（戰況中 BOSS 出招的圖示，預設 ⚡）、flash（BOSS 出手時畫面閃光的顏色，預設淡藍雷光）
+// 強度建議：第 n 層 = 煉虛起每層一階（1～10 層煉虛 1～10 階、11～20 層合體…91～100 層混沌道祖），特別層再用 atkMult 調整
 const ZHENMO_BOSSES = {
     1: {
-        name: "棄天神", title: "塔底魔神", img: "images/zhenmo/boss-qitianshen.jpg", imgPos: "60% 30%",   // 玩家提供（1408×768，圖上已有「棄天神」字樣）
-        realm: 6, stage: 1, atkMult: 1,   // 入門關：煉虛 1 階（2026-09-27 測：裸裝煉虛 5 階以上、有宗門或裝備的煉虛初期即可過） hpPerAtk: 30, def: 20, eva: 10, affix: "thunder", affixVal: 15, element: "金",
+        name: "棄天神", title: "塔底魔神", img: "images/zhenmo/boss-qitianshen.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；左上有「棄天神」字樣）
+        realm: 6, stage: 1, atkMult: 1,   // 入門關：煉虛 1 階
+        hpPerAtk: 300,                    // 氣血 = 攻擊 × 300（2026-09-27 玩家指定，原 30）
+        def: 20, eva: 10, affix: "thunder", affixVal: 15, element: "金",
         intro: "被諸天大能棄於塔底的上古魔神，手持雷紋魔劍，一聲怒嘯引動九天劫雷。",
         skills: ["棄天雷劍", "劫雷貫空", "魔神怒嘯", "萬雷鎖魂"],   // 戰鬥演出用的招式名稱
         rewards: {
@@ -40,5 +44,35 @@ const ZHENMO_BOSSES = {
             shards: [3, 6],           // 異火碎片
             iron: [4, 8]              // 星允鐵
         }
+    },
+    2: {
+        name: "不滅骨", title: "皇道殭屍", img: "images/zhenmo/boss-bumiegu.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；龍虎山石階上的龍袍屍王）
+        realm: 6, stage: 2, atkMult: 1,   // 樓層 n = 煉虛起每層一階（第 2 層 = 煉虛 2 階）
+        hpPerAtk: 300,
+        def: 25, eva: 5, affix: "poison", affixVal: 15, element: "土",   // 殭屍：皮糙肉厚（減傷高、閃避低）、屍毒
+        intro: "前朝帝王死後不腐，龍袍裹屍、骨化金剛，以皇陵屍氣鎮守塔中第二層，屍毒入體者皆化為枯骨。",
+        skills: ["屍王裂爪", "龍袍屍氣", "不滅骨咒", "皇陵腐毒"],
+        icon: "☠️", flash: "rgba(132, 204, 22, 0.3)",   // 戰況圖示、出手時的屍毒綠光
+        rewards: { coinMinutes: 11, merit: [130, 260], shards: [3, 6], iron: [4, 8] }
+    },
+    3: {
+        name: "主咒之王", title: "束縛幽冥", img: "images/zhenmo/boss-zhuzhou.jpg", imgPos: "50% 30%",   // 玩家提供直式（848×1264，符咒王座）
+        realm: 6, stage: 3, atkMult: 1.5,   // 煉虛 3 階，攻擊 ×1.5（2026-09-27 玩家指定）
+        hpPerAtk: 300,                      // 氣血 = 基準攻擊 × 300（atkMult 只放大攻擊；要加血用 hpMult）
+        def: 15, eva: 15, affix: "ice", affixVal: 18, element: "水",   // 咒術師：束縛咒（冰凍＝定身，玩家該回合無法出手）、身法飄忽
+        intro: "端坐符咒王座的幽冥咒主，袍上刻滿束縛真言，萬道符籙隨念而動，被咒言纏身者動彈不得。",
+        skills: ["束縛真言", "萬符焚身", "幽冥咒印", "奪魂符陣"],
+        icon: "📜", flash: "rgba(168, 85, 247, 0.32)",   // 符咒紫光
+        rewards: { coinMinutes: 13, merit: [150, 300], shards: [4, 7], iron: [5, 9] }
+    },
+    4: {
+        name: "幽冥鬼虎", title: "冥火凶獸", img: "images/zhenmo/boss-guihu.jpg", imgPos: "60% 40%",   // 玩家提供直式（848×1264，虎頭在右側中段）
+        realm: 6, stage: 4, atkMult: 1,     // 煉虛 4 階（每層一階）
+        hpPerAtk: 300,
+        def: 10, eva: 20, affix: "metal", affixVal: 18, element: "金",   // 凶獸：身法迅捷（閃避高、減傷低）、利爪撕咬易暴擊；白虎屬金
+        intro: "幽冥鬼林中吞噬萬千亡魂的凶虎，周身燃著冥火，一聲虎嘯引來百鬼夜行，利爪所及魂飛魄散。",
+        skills: ["冥火虎嘯", "裂魂虎爪", "百鬼夜行", "幽冥撲殺"],
+        icon: "🐯", flash: "rgba(129, 140, 248, 0.32)",   // 冥火藍紫光
+        rewards: { coinMinutes: 14, merit: [160, 320], shards: [4, 7], iron: [5, 10] }
     }
 };
