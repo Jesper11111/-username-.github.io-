@@ -109,6 +109,7 @@ function combatTick() {
         let ms = getMapMonsterStats(player.currentMap);
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
+        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
         for (let i = 0; i < count; i++) {
             enemies.push({ hp: ms.hp, maxHp: ms.hp, attack: ms.atk,
                            icon: monsterIcons[Math.floor(Math.random() * monsterIcons.length)],
@@ -306,8 +307,10 @@ function getMapMonsterStats(map) {
 }
 
 // 每隻擊殺收益的補償倍率：舊制為刷新變慢的 KILL_REWARD_MULT（config-maps.js）；新制妖獸要打很多下，改用 nv2KillRewardMult（numeric.js）
+// 新制另乘 waveRewardAdj：殺得比同境界一般玩家快太多時打折，每小時收益最多 NV2.rewardSpeedCap 倍（numeric.js 的 nv2RewardSpeedAdj）
+let waveRewardAdj = 1;
 function getKillRewardMult() {
-    return NUMERIC_V2 ? nv2KillRewardMult(player.currentMap) : KILL_REWARD_MULT;
+    return NUMERIC_V2 ? nv2KillRewardMult(player.currentMap) * waveRewardAdj : KILL_REWARD_MULT;
 }
 // 「每波」遭遇機率（野外修士、暗殺者、懸賞人物）的補償倍率：每小時波數變少多少就放大多少
 function getWaveChanceMult() {

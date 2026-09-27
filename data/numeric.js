@@ -216,6 +216,15 @@ function nv2EstimateIdleCombat() {
     const maxHp = getMaxHp();
     return { hits, rateMult, waveDamage, maxHp, survivable: waveDamage < maxHp };
 }
+// 收益速度上限（2026-09-28 修正「經驗過高」：強力配置每小時經驗曾達設計的 3.9 倍，線上有人很快衝到 Lv.1000 以上）：
+//   每小時收益 ∝ (刷新間隔 + 隻數 × 一般玩家每隻回合) ÷ (刷新間隔 + 隻數 × 自己每隻回合)，殺得越快越高、沒有上限（舊制最多一擊一隻，天生有上限）。
+//   每波開打時算一次自己的每隻回合數（nv2EstimateIdleCombat 的 hits），超過 NV2.rewardSpeedCap 倍的部分，每隻收益按比例打折
+function nv2RewardSpeedAdj(map) {
+    const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
+    const mine = nv2EstimateIdleCombat().hits, typ = nv2TypRoundsPerKill(map);
+    const speed = (gap + n * typ) / (gap + n * mine);   // 相對一般玩家的每小時收益倍數
+    return Math.min(1, NV2.rewardSpeedCap / speed);
+}
 // 「每波」遭遇機率的補償：舊制設計每波 6＋3 秒，新制一般玩家每波 = 刷新間隔 + 每波隻數 × 每隻回合數
 function nv2WaveChanceMult(map) {
     return (IDLE_WAVE_GAP_TICKS + NV2.waveAvg * nv2TypRoundsPerKill(map)) / (6 + IDLE_WAVE_AVG_MONSTERS);
