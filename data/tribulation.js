@@ -188,7 +188,9 @@ function tribulationTick() {
     let r = resolveHit(demonDmg, { attrs: heartDemon.attrs, power: heartDemon.attack }, { attrs: getPlayerCombatAttrs(), status: playerStatus });
     let taken = applyGearDefense(r, heartDemon, true, r.tags);   // 心魔的魔功算術法（化勁）；反震、閃擊反擊（gear.js）
     if (r.tags.length > 0) addLog(`🧍 心魔攻勢：${summarizeTags(r.tags, "💨你閃避了")}`, "combat");
-    player.hp -= applyPetDamageReduction(taken);
+    let tribTaken = applyPetDamageReduction(taken);
+    player.hp -= tribTaken;
+    battleFxHurt(tribTaken, r.tags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
 
     if (player.hp <= 0 && !tryGearUndying()) { resolvePlayerFall(); return; }
 

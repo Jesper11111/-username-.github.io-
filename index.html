@@ -109,40 +109,168 @@
             letter-spacing: 0.5px;
         }
 
+        /* ---- 戰場實況（第 59 節）：人物立繪＋敵方爆擊血條＋玩家 HUD＋飄字（battle-fx.js） ---- */
         #combat-visual-panel {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(20, 30, 48, 0.9));
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 8px;
-            padding: 14px;
+            position: relative; overflow: hidden;
+            height: 300px;
+            background: #07080d;
+            border: 1px solid rgba(212, 162, 76, 0.55);
+            border-radius: 10px;
             margin-bottom: 12px;
-            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.15), 0 4px 15px rgba(0,0,0,0.6);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 4px 18px rgba(0,0,0,0.7), 0 0 12px rgba(251, 146, 60, 0.18);
         }
-        .battle-view-grid {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
-            gap: 12px;
+        /* 左右對戰：我方立繪佔左、敵方佔右，交界是 (56%,0)→(44%,100%) 的斜線 */
+        .bf-hero {
+            position: absolute; left: 0; top: 0; width: 56%; height: 100%;
+            object-fit: cover; object-position: 50% 25%;
+            clip-path: polygon(0 0, 100% 0, 78.6% 100%, 0 100%);
+            filter: brightness(0.95) saturate(1.1);
+            animation: bf-breathe 9s ease-in-out infinite alternate;
+            transform-origin: 30% 50%;
         }
-        .battle-side {
-            flex: 1;
-            text-align: center;
-            background: rgba(10, 14, 24, 0.7);
-            padding: 10px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.06);
+        .bf-hero-female { object-position: 36% 20%; }
+        .bf-foe {
+            position: absolute; right: 0; top: 0; width: 56%; height: 100%; overflow: hidden;
+            clip-path: polygon(21.4% 0, 100% 0, 100% 100%, 0 100%);
+            background: radial-gradient(ellipse at 62% 50%, rgba(160, 20, 20, 0.55), rgba(40, 6, 8, 0.95) 65%), #120406;
         }
-        
-        .fighter-avatar {
-            margin: 6px 0;
-            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.6));
-            animation: float-avatar 3s ease-in-out infinite alternate;
+        .bf-foe img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: none; filter: brightness(0.85); }
+        .bf-foe.has-img img { display: block; }
+        .bf-foe-emoji {
+            position: absolute; left: 21%; right: 0; top: 18%; bottom: 22%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4.2em; filter: drop-shadow(0 0 18px rgba(255, 70, 50, 0.75));
+            animation: float-avatar 2.6s ease-in-out infinite alternate;
         }
+        .bf-foe.has-img .bf-foe-emoji { display: none; }
+        .bf-foe.bf-foe-hit { animation: bf-foe-hit 0.3s ease-out; }
+        .bf-foe.bf-foe-in img { animation: bf-foe-in 0.45s ease-out; }
+        @keyframes bf-foe-in { from { opacity: 0; transform: scale(1.12); } to { opacity: 1; transform: none; } }
+        @keyframes bf-foe-hit { 0% { filter: brightness(1.6) saturate(0.7); transform: translateX(6px); } 50% { transform: translateX(-3px); } 100% { filter: none; transform: none; } }
+        .bf-divider { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+        .bf-divider line { stroke: #f5c56b; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(255, 170, 60, 0.9)); stroke-width: 2px; }
+        .bf-vs {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            font-weight: 900; font-style: italic; font-size: 1.5em; letter-spacing: 1px;
+            color: #ffd98a; text-shadow: 0 0 10px rgba(255, 90, 30, 0.9), 0 2px 0 #3b0a02; pointer-events: none;
+        }
+        @keyframes bf-breathe { from { transform: scale(1.02); } to { transform: scale(1.08); } }
+        .bf-hero.bf-lunge { animation: bf-lunge 0.28s ease-out, bf-breathe 9s ease-in-out infinite alternate; }
+        @keyframes bf-lunge { 0% { transform: scale(1.05); } 40% { transform: scale(1.1) translateX(1.5%); } 100% { transform: scale(1.05); } }
+        .bf-shade {
+            position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(to bottom, rgba(5,6,10,0.88) 0%, rgba(5,6,10,0.35) 28%, rgba(5,6,10,0) 45%, rgba(5,6,10,0.2) 58%, rgba(5,6,10,0.92) 88%);
+        }
+        /* 徽章：血條參考圖裁出的金紅圓環（images/battle/emblem.jpg），黑底用 screen 混色去掉 */
+        .bf-emblem {
+            position: relative; flex: 0 0 auto;
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .bf-emblem::before {
+            content: ""; position: absolute; inset: -8px;
+            background: url(images/battle/emblem.jpg) center / cover;
+            mix-blend-mode: screen; border-radius: 50%;
+            -webkit-mask-image: radial-gradient(circle, #000 60%, transparent 71%); mask-image: radial-gradient(circle, #000 60%, transparent 71%);
+            animation: bf-emblem-glow 2.4s ease-in-out infinite alternate;
+        }
+        @keyframes bf-emblem-glow { from { filter: brightness(0.9); } to { filter: brightness(1.25); } }
+        .bf-emblem > * { position: relative; z-index: 1; }
         .monster-avatar {
-            font-size: 2.8em;
-            margin: 6px 0;
-            filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.6));
-            animation: float-avatar 3s ease-in-out infinite alternate;
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6em; background: radial-gradient(circle, #1a0a0a 55%, rgba(26,10,10,0.6) 100%);
+            filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.7));
+        }
+        #battle-player-icon { display: flex; justify-content: center; }
+        #battle-player-icon .framed-avatar { width: 40px !important; height: 40px !important; }
+
+        .bf-enemy { position: absolute; top: 6px; left: 8px; right: 10px; display: flex; align-items: center; gap: 6px; }
+        .bf-enemy-body, .bf-player-body { flex: 1; min-width: 0; }
+        .bf-enemy-title { color: #fde2b0; font-weight: bold; font-size: 0.92em; text-shadow: 0 1px 3px #000, 0 0 8px rgba(248,113,113,0.6); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bf-enemy-info { font-size: 0.72em; color: #d1d5db; text-shadow: 0 1px 2px #000; margin-top: 3px; min-height: 1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* 血條：金框＋右端箭頭；fill 立即變、trail（殘影）延遲跟上 */
+        .bf-bar {
+            position: relative; height: 14px; margin-top: 3px;
+            background: rgba(8, 6, 6, 0.78);
+            border: 1px solid rgba(232, 190, 110, 0.85);
+            box-shadow: 0 0 6px rgba(251, 191, 36, 0.35), inset 0 0 6px rgba(0,0,0,0.9);
+            clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+        }
+        .bf-fill, .bf-trail { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
+        .bf-fill { transition: width 0.15s ease-out; }
+        .bf-trail { transition: width 0.6s ease-in 0.35s; background: linear-gradient(to bottom, #fff4cf, #ffb347 55%, #ff7a1a); }
+        .bf-bar-text {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7em; font-weight: bold; color: #fff; letter-spacing: 0.5px;
+            text-shadow: 0 0 3px #000, 0 1px 2px #000; white-space: nowrap;
+        }
+        .bf-bar-enemy { height: 20px; }
+        .bf-bar-enemy .bf-fill { background: linear-gradient(to bottom, #ff7a6b, #e0241b 45%, #8e0d12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35); }
+        .bf-bar-enemy .bf-bar-text { font-size: 0.8em; }
+        .bf-bar-hp .bf-fill { background: linear-gradient(to bottom, #ff6b5e, #d4161b 50%, #7f0b10); }
+        .bf-bar-mp .bf-fill { background: linear-gradient(to bottom, #6fc3ff, #1d6ff2 50%, #0b3a8f); }
+        .bf-bar-exp .bf-fill { background: linear-gradient(to bottom, #ffd27a, #f59e0b 50%, #b45309); }
+        /* 爆點：暴擊／重擊時在血條切口炸開 */
+        .bf-spark {
+            position: absolute; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+            background: radial-gradient(circle, #fff 0%, rgba(255,230,160,0.95) 18%, rgba(255,120,30,0.6) 42%, transparent 70%);
+            opacity: 0; pointer-events: none;
+        }
+        .bf-spark.on { animation: bf-spark 0.45s ease-out; }
+        @keyframes bf-spark { 0% { opacity: 1; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0; transform: scale(1.8); } }
+        /* clip-path 會把爆點切掉，所以敵方血條只切框、不切爆點：外層放寬 */
+        .bf-bar-enemy { clip-path: none; border-right: none; }
+        .bf-bar-enemy::after {
+            content: ""; position: absolute; right: -9px; top: -1px; bottom: -1px; width: 9px;
+            background: rgba(232, 190, 110, 0.85); clip-path: polygon(0 0, 100% 50%, 0 100%);
+        }
+
+        .bf-player { position: absolute; left: 8px; right: 12px; bottom: 24px; display: flex; align-items: center; gap: 6px; }
+        .bf-player-name { color: var(--sect-color); font-weight: bold; font-size: 0.9em; text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bf-desc {
+            position: absolute; left: 0; right: 0; bottom: 5px; text-align: center;
+            font-size: 0.78em; font-weight: bold; color: #7dd3fc; text-shadow: 0 1px 3px #000;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 8px;
+        }
+
+        /* 飄字 */
+        .bf-float { position: absolute; inset: 0; pointer-events: none; }
+        .bf-num {
+            position: absolute; transform: translate(-50%, 0);
+            font-weight: 900; font-style: italic; white-space: nowrap; line-height: 1;
+            text-shadow: 0 2px 0 #3b0a02, 0 0 6px rgba(0,0,0,0.9);
+            animation: bf-rise 1s ease-out forwards;
+        }
+        .bf-num small { display: block; font-size: 0.5em; font-style: normal; letter-spacing: 2px; text-align: center; margin-bottom: 1px; }
+        .bf-hit { font-size: 1.15em; color: #ffe7c2; }
+        .bf-heavy { font-size: 1.5em; color: #ffc53d; }
+        .bf-heavy small { color: #fde68a; }
+        .bf-crit {
+            font-size: 2.4em; color: #ff8a2a;
+            background: linear-gradient(to bottom, #fffbe6 0%, #ffd36b 35%, #ff7a1a 65%, #d7261e 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: none; filter: drop-shadow(0 2px 0 #3b0a02) drop-shadow(0 0 10px rgba(255,90,20,0.8));
+            animation: bf-crit 1.3s cubic-bezier(.2,1.4,.4,1) forwards;
+        }
+        .bf-crit small { -webkit-text-fill-color: #fff1c1; font-size: 0.42em; }
+        .bf-num.bf-hurt {font-size: 1.25em; color: #ff4d4d; }
+        .bf-miss, .bf-dodge { font-size: 0.95em; color: #cbd5e1; font-style: normal; }
+        @keyframes bf-rise { 0% { opacity: 0; transform: translate(-50%, 8px) scale(0.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.1); } 30% { transform: translate(-50%, -4px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -34px) scale(1); } }
+        @keyframes bf-crit { 0% { opacity: 0; transform: translate(-50%, 0) scale(2.6) rotate(-8deg); } 18% { opacity: 1; transform: translate(-50%, 0) scale(0.9) rotate(-4deg); } 30% { transform: translate(-50%, 0) scale(1.05) rotate(-4deg); } 75% { opacity: 1; transform: translate(-50%, -12px) scale(1) rotate(-4deg); } 100% { opacity: 0; transform: translate(-50%, -30px) scale(0.95) rotate(-4deg); } }
+
+        /* 爆擊閃光、受傷紅框、震屏 */
+        .bf-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at 65% 22%, rgba(255,210,120,0.55), rgba(255,90,20,0.18) 40%, transparent 70%); }
+        .bf-flash.on { animation: bf-flash 0.4s ease-out; }
+        @keyframes bf-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+        /* 注意：.bf-hurt 是受傷紅框層（div#bf-hurt）；飄字的受傷數字是 .bf-num.bf-hurt，上面已另外設定 */
+        div#bf-hurt { position: absolute; inset: 0; pointer-events: none; opacity: 0; box-shadow: inset 0 0 40px rgba(220, 20, 20, 0.85); }
+        div#bf-hurt.on { animation: bf-flash 0.45s ease-out; }
+        #combat-visual-panel.bf-shake { animation: bf-shake 0.32s linear; }
+        @keyframes bf-shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-3px, -1px); } 80% { transform: translate(2px, 1px); } }
+        @media (prefers-reduced-motion: reduce) {
+            #combat-visual-panel.bf-shake, .bf-hero, .bf-hero.bf-lunge { animation: none; }
         }
         @keyframes float-avatar {
             0% { transform: translateY(0px) scale(1); }
@@ -949,12 +1077,11 @@
             .panel { padding: 12px; }
             .panel-title { font-size: 0.98em; margin-bottom: 10px; }
 
-            /* 戰鬥實況：縮小頭像與字級，讓「我方 VS 敵方」仍能並排不換行 */
-            #combat-visual-panel { padding: 10px; }
-            .battle-view-grid { gap: 6px; font-size: 0.85em; }
-            .battle-side { padding: 8px 4px; }
-            .monster-avatar { font-size: 2.2em; }
-            #battle-player-icon .framed-avatar { width: 48px !important; height: 48px !important; }
+            /* 戰場實況：手機版矮一點、徽章縮小 */
+            #combat-visual-panel { height: 260px; }
+            .bf-emblem { width: 54px; height: 54px; }
+            .monster-avatar { width: 32px; height: 32px; font-size: 1.35em; }
+            #battle-player-icon .framed-avatar { width: 34px !important; height: 34px !important; }
 
             .log-box { height: 210px; font-size: 0.94em; }
             .log-tab { padding: 8px 2px; margin: 0; }
@@ -1003,9 +1130,8 @@
             .grid-container { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 8px; }
             .modal-content { width: 96%; padding: 14px 10px; }
 
-            .battle-view-grid { font-size: 0.8em; }
-            .monster-avatar { font-size: 1.9em; }
-            #battle-player-icon .framed-avatar { width: 42px !important; height: 42px !important; }
+            #combat-visual-panel { height: 240px; font-size: 0.92em; }
+            .bf-num.bf-crit { font-size: 2em; }
 
             .auto-settings { font-size: 0.8em; }
             .auto-settings input[type="number"] { width: 46px; }
@@ -1097,7 +1223,6 @@
         /* 光環的翅膀、冠冕會延伸到旁邊，名字框要疊在光環上面才不會被蓋住文字 */
         #hud-avatar-frame, #pc-hud-avatar-frame { position: absolute; display: none; pointer-events: none; z-index: 1; }
         #hud-name, #pc-hud-name { z-index: 2; }
-        #battle-player-icon { display: flex; justify-content: center; padding: 10px 0; }
         #hud-name {
             position: absolute; left: 22.6%; top: 3.1%; width: 28.4%; height: 7%;
             display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u) * 3);
@@ -1205,7 +1330,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20260930c"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20260930f"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -1602,25 +1727,39 @@
     <!-- 戰鬥分頁：玩家與怪物圖像的戰鬥實況＋渡劫＋日誌 -->
     <div id="battle-panel" class="panel" data-tab="battle">
         <div class="panel-title">⚔️ 仙魔戰場實況</div>
+        <!-- 戰場：人物立繪（依性別）＋上方敵方爆擊血條＋下方玩家 HUD＋飄字（battle-fx.js，第 59 節） -->
         <div id="combat-visual-panel">
-            <div class="battle-view-grid">
-                <div class="battle-side">
-                    <div style="color: var(--sect-color); font-weight: bold; font-size: 0.95em; margin-bottom: 2px;" id="battle-player-name">韓立</div>
-                    <div class="fighter-avatar" id="battle-player-icon">
-                        <!-- 動態根據性別載入圖片 -->
+            <img id="bf-hero" class="bf-hero" alt="">
+            <div class="bf-foe" id="bf-foe"><img id="bf-foe-img" alt=""><div class="bf-foe-emoji" id="bf-foe-emoji"></div></div>
+            <svg class="bf-divider" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="56" y1="0" x2="44" y2="100"></line></svg>
+            <div class="bf-vs">VS</div>
+            <div class="bf-shade"></div>
+            <div class="bf-enemy">
+                <div class="bf-emblem bf-emblem-enemy"><div class="monster-avatar" id="battle-enemy-icon">🐉</div></div>
+                <div class="bf-enemy-body">
+                    <div class="bf-enemy-title" id="battle-enemy-title">索敵中</div>
+                    <div class="bf-bar bf-bar-enemy" id="bf-enemy-bar">
+                        <div class="bf-trail" id="bf-enemy-trail"></div>
+                        <div class="bf-fill" id="bf-enemy-fill"></div>
+                        <div class="bf-spark" id="bf-enemy-spark"></div>
+                        <span class="bf-bar-text" id="bf-enemy-hptext"></span>
                     </div>
-                    <div style="font-size: 0.8em; color: #9ca3af;" id="battle-player-hp">氣血: 100/100</div>
-                </div>
-                <div style="text-align: center; font-weight: bold; color: #f87171; font-size: 1.2em; text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);">VS</div>
-                <div class="battle-side">
-                    <div style="color: #f87171; font-weight: bold; font-size: 0.95em; margin-bottom: 2px;" id="battle-enemy-title">上古巨獸</div>
-                    <div class="monster-avatar" id="battle-enemy-icon">🐉</div>
-                    <div style="font-size: 0.8em; color: #9ca3af;" id="battle-enemy-info">無敵意目標</div>
+                    <div class="bf-enemy-info" id="battle-enemy-info">無敵意目標</div>
                 </div>
             </div>
-            <div style="text-align: center; font-size: 0.85em; color: #38bdf8; margin-top: 8px; font-weight: bold;" id="battle-action-desc">
-                劍氣縱橫，天地元氣激盪...
+            <div class="bf-float" id="bf-float"></div>
+            <div class="bf-flash" id="bf-flash"></div>
+            <div class="bf-hurt" id="bf-hurt"></div>
+            <div class="bf-player">
+                <div class="bf-emblem"><div id="battle-player-icon"></div></div>
+                <div class="bf-player-body">
+                    <div class="bf-player-name" id="battle-player-name">韓立</div>
+                    <div class="bf-bar bf-bar-hp"><div class="bf-trail" id="bf-hp-trail"></div><div class="bf-fill" id="bf-hp-fill"></div><span class="bf-bar-text" id="battle-player-hp"></span></div>
+                    <div class="bf-bar bf-bar-mp"><div class="bf-fill" id="bf-mp-fill"></div><span class="bf-bar-text" id="bf-mp-text"></span></div>
+                    <div class="bf-bar bf-bar-exp"><div class="bf-fill" id="bf-exp-fill"></div><span class="bf-bar-text" id="bf-exp-text"></span></div>
+                </div>
             </div>
+            <div class="bf-desc" id="battle-action-desc">劍氣縱橫，天地元氣激盪...</div>
         </div>
 
         <!-- 渡劫按鈕：僅在小境界滿 10 階、修為圓滿時由 updateTribulationUI() 顯示 -->
@@ -1699,7 +1838,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20260930c" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20260930f" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-name">
@@ -2042,7 +2181,7 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20260930c" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20260930f" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -2537,102 +2676,103 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20260930c"></script>
-<script src="data/config-realms.js?v=20260930c"></script>
-<script src="data/config-level.js?v=20260930c"></script>
-<script src="data/config-lifespan.js?v=20260930c"></script>
-<script src="data/config-maps.js?v=20260930c"></script>
-<script src="data/config-sects.js?v=20260930c"></script>
-<script src="data/config-lingbao.js?v=20260930c"></script>
-<script src="data/config-shop.js?v=20260930c"></script>
-<script src="data/config-beasts.js?v=20260930c"></script>
-<script src="data/config-servants.js?v=20260930c"></script>
-<script src="data/config-equipment.js?v=20260930c"></script>
-<script src="data/config-gear-catalog.js?v=20260930c"></script>
-<script src="data/config-gear.js?v=20260930c"></script>
-<script src="data/config-enhance.js?v=20260930c"></script>
-<script src="data/config-sets.js?v=20260930c"></script>
-<script src="data/config-profession.js?v=20260930c"></script>
-<script src="data/config-aptitude.js?v=20260930c"></script>
-<script src="data/config-golden-core.js?v=20260930c"></script>
-<script src="data/config-mailbox.js?v=20260930c"></script>
-<script src="data/config-titles.js?v=20260930c"></script>
-<script src="data/config-tribulation.js?v=20260930c"></script>
-<script src="data/config-quests.js?v=20260930c"></script>
-<script src="data/config-activities.js?v=20260930c"></script>
-<script src="data/config-daily-quests.js?v=20260930c"></script>
-<script src="data/config-elements.js?v=20260930c"></script>
-<script src="data/config-merit.js?v=20260930c"></script>
-<script src="data/config-bounty.js?v=20260930c"></script>
-<script src="data/config-talisman.js?v=20260930c"></script>
-<script src="data/config-avatars.js?v=20260930c"></script>
-<script src="data/config-avatar-frames.js?v=20260930c"></script>
-<script src="data/config-spells.js?v=20260930c"></script>
-<script src="data/config-strange-fire.js?v=20260930c"></script>
-<script src="data/config-partners.js?v=20260930c"></script>
-<script src="data/config-towns.js?v=20260930c"></script>
-<script src="data/config-casino.js?v=20260930c"></script>
-<script src="data/config-leaderboard.js?v=20260930c"></script>
-<script src="data/config-secret-realms.js?v=20260930c"></script>
-<script src="data/config-defense.js?v=20260930c"></script>
-<script src="data/config-zhenmo.js?v=20260930c"></script>
-<script src="data/config-zhenmo-questions.js?v=20260930c"></script>
-<script src="data/config-numeric.js?v=20260930c"></script>
-<script src="data/state.js?v=20260930c"></script>
-<script src="data/stats.js?v=20260930c"></script>
-<script src="data/numeric.js?v=20260930c"></script>
-<script src="data/elements.js?v=20260930c"></script>
-<script src="data/ui.js?v=20260930c"></script>
-<script src="data/map.js?v=20260930c"></script>
-<script src="data/town.js?v=20260930c"></script>
-<script src="data/casino.js?v=20260930c"></script>
-<script src="data/combat.js?v=20260930c"></script>
-<script src="data/leveling.js?v=20260930c"></script>
-<script src="data/lifespan.js?v=20260930c"></script>
-<script src="data/tribulation.js?v=20260930c"></script>
-<script src="data/sect.js?v=20260930c"></script>
-<script src="data/shop.js?v=20260930c"></script>
-<script src="data/bag.js?v=20260930c"></script>
-<script src="data/equipment.js?v=20260930c"></script>
-<script src="data/gear.js?v=20260930c"></script>
-<script src="data/enhance.js?v=20260930c"></script>
-<script src="data/profession.js?v=20260930c"></script>
-<script src="data/aptitude.js?v=20260930c"></script>
-<script src="data/golden-core.js?v=20260930c"></script>
-<script src="data/codex.js?v=20260930c"></script>
-<script src="data/lingbao-shop.js?v=20260930c"></script>
-<script src="data/artifact.js?v=20260930c"></script>
-<script src="data/servant.js?v=20260930c"></script>
-<script src="data/quest.js?v=20260930c"></script>
-<script src="data/activity.js?v=20260930c"></script>
-<script src="data/daily-quest.js?v=20260930c"></script>
-<script src="data/auction.js?v=20260930c"></script>
-<script src="data/merit.js?v=20260930c"></script>
-<script src="data/bounty.js?v=20260930c"></script>
-<script src="data/talisman.js?v=20260930c"></script>
-<script src="data/strange-fire.js?v=20260930c"></script>
-<script src="data/partner.js?v=20260930c"></script>
-<script src="data/field.js?v=20260930c"></script>
-<script src="data/beast-combat.js?v=20260930c"></script>
-<script src="data/spells.js?v=20260930c"></script>
-<script src="data/beast.js?v=20260930c"></script>
-<script src="data/library.js?v=20260930c"></script>
-<script src="data/alchemy.js?v=20260930c"></script>
-<script src="data/player-profile.js?v=20260930c"></script>
-<script src="data/save.js?v=20260930c"></script>
-<script src="data/config-home-pc.js?v=20260930c"></script>
-<script src="data/home-ui.js?v=20260930c"></script>
-<script src="data/settings.js?v=20260930c"></script>
-<script src="data/avatar.js?v=20260930c"></script>
-<script src="data/leaderboard.js?v=20260930c"></script>
-<script src="data/mailbox.js?v=20260930c"></script>
-<script src="data/msgboard.js?v=20260930c"></script>
-<script src="data/market.js?v=20260930c"></script>
-<script src="data/secret-realm.js?v=20260930c"></script>
-<script src="data/defense.js?v=20260930c"></script>
-<script src="data/zhenmo.js?v=20260930c"></script>
-<script src="data/title-screen.js?v=20260930c"></script>
-<script src="data/main.js?v=20260930c"></script>
+<script src="data/format.js?v=20260930f"></script>
+<script src="data/config-realms.js?v=20260930f"></script>
+<script src="data/config-level.js?v=20260930f"></script>
+<script src="data/config-lifespan.js?v=20260930f"></script>
+<script src="data/config-maps.js?v=20260930f"></script>
+<script src="data/config-sects.js?v=20260930f"></script>
+<script src="data/config-lingbao.js?v=20260930f"></script>
+<script src="data/config-shop.js?v=20260930f"></script>
+<script src="data/config-beasts.js?v=20260930f"></script>
+<script src="data/config-servants.js?v=20260930f"></script>
+<script src="data/config-equipment.js?v=20260930f"></script>
+<script src="data/config-gear-catalog.js?v=20260930f"></script>
+<script src="data/config-gear.js?v=20260930f"></script>
+<script src="data/config-enhance.js?v=20260930f"></script>
+<script src="data/config-sets.js?v=20260930f"></script>
+<script src="data/config-profession.js?v=20260930f"></script>
+<script src="data/config-aptitude.js?v=20260930f"></script>
+<script src="data/config-golden-core.js?v=20260930f"></script>
+<script src="data/config-mailbox.js?v=20260930f"></script>
+<script src="data/config-titles.js?v=20260930f"></script>
+<script src="data/config-tribulation.js?v=20260930f"></script>
+<script src="data/config-quests.js?v=20260930f"></script>
+<script src="data/config-activities.js?v=20260930f"></script>
+<script src="data/config-daily-quests.js?v=20260930f"></script>
+<script src="data/config-elements.js?v=20260930f"></script>
+<script src="data/config-merit.js?v=20260930f"></script>
+<script src="data/config-bounty.js?v=20260930f"></script>
+<script src="data/config-talisman.js?v=20260930f"></script>
+<script src="data/config-avatars.js?v=20260930f"></script>
+<script src="data/config-avatar-frames.js?v=20260930f"></script>
+<script src="data/config-spells.js?v=20260930f"></script>
+<script src="data/config-strange-fire.js?v=20260930f"></script>
+<script src="data/config-partners.js?v=20260930f"></script>
+<script src="data/config-towns.js?v=20260930f"></script>
+<script src="data/config-casino.js?v=20260930f"></script>
+<script src="data/config-leaderboard.js?v=20260930f"></script>
+<script src="data/config-secret-realms.js?v=20260930f"></script>
+<script src="data/config-defense.js?v=20260930f"></script>
+<script src="data/config-zhenmo.js?v=20260930f"></script>
+<script src="data/config-zhenmo-questions.js?v=20260930f"></script>
+<script src="data/config-numeric.js?v=20260930f"></script>
+<script src="data/state.js?v=20260930f"></script>
+<script src="data/stats.js?v=20260930f"></script>
+<script src="data/numeric.js?v=20260930f"></script>
+<script src="data/elements.js?v=20260930f"></script>
+<script src="data/battle-fx.js?v=20260930f"></script>
+<script src="data/ui.js?v=20260930f"></script>
+<script src="data/map.js?v=20260930f"></script>
+<script src="data/town.js?v=20260930f"></script>
+<script src="data/casino.js?v=20260930f"></script>
+<script src="data/combat.js?v=20260930f"></script>
+<script src="data/leveling.js?v=20260930f"></script>
+<script src="data/lifespan.js?v=20260930f"></script>
+<script src="data/tribulation.js?v=20260930f"></script>
+<script src="data/sect.js?v=20260930f"></script>
+<script src="data/shop.js?v=20260930f"></script>
+<script src="data/bag.js?v=20260930f"></script>
+<script src="data/equipment.js?v=20260930f"></script>
+<script src="data/gear.js?v=20260930f"></script>
+<script src="data/enhance.js?v=20260930f"></script>
+<script src="data/profession.js?v=20260930f"></script>
+<script src="data/aptitude.js?v=20260930f"></script>
+<script src="data/golden-core.js?v=20260930f"></script>
+<script src="data/codex.js?v=20260930f"></script>
+<script src="data/lingbao-shop.js?v=20260930f"></script>
+<script src="data/artifact.js?v=20260930f"></script>
+<script src="data/servant.js?v=20260930f"></script>
+<script src="data/quest.js?v=20260930f"></script>
+<script src="data/activity.js?v=20260930f"></script>
+<script src="data/daily-quest.js?v=20260930f"></script>
+<script src="data/auction.js?v=20260930f"></script>
+<script src="data/merit.js?v=20260930f"></script>
+<script src="data/bounty.js?v=20260930f"></script>
+<script src="data/talisman.js?v=20260930f"></script>
+<script src="data/strange-fire.js?v=20260930f"></script>
+<script src="data/partner.js?v=20260930f"></script>
+<script src="data/field.js?v=20260930f"></script>
+<script src="data/beast-combat.js?v=20260930f"></script>
+<script src="data/spells.js?v=20260930f"></script>
+<script src="data/beast.js?v=20260930f"></script>
+<script src="data/library.js?v=20260930f"></script>
+<script src="data/alchemy.js?v=20260930f"></script>
+<script src="data/player-profile.js?v=20260930f"></script>
+<script src="data/save.js?v=20260930f"></script>
+<script src="data/config-home-pc.js?v=20260930f"></script>
+<script src="data/home-ui.js?v=20260930f"></script>
+<script src="data/settings.js?v=20260930f"></script>
+<script src="data/avatar.js?v=20260930f"></script>
+<script src="data/leaderboard.js?v=20260930f"></script>
+<script src="data/mailbox.js?v=20260930f"></script>
+<script src="data/msgboard.js?v=20260930f"></script>
+<script src="data/market.js?v=20260930f"></script>
+<script src="data/secret-realm.js?v=20260930f"></script>
+<script src="data/defense.js?v=20260930f"></script>
+<script src="data/zhenmo.js?v=20260930f"></script>
+<script src="data/title-screen.js?v=20260930f"></script>
+<script src="data/main.js?v=20260930f"></script>
 
 </body>
 </html>

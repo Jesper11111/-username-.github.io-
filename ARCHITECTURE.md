@@ -30,6 +30,8 @@ images/               圖片素材
                       npc-fengxi.png 亂星海第一大善人・風希人偶（252×400 透明 PNG，由玩家提供的插畫手動描邊去背）
   maps/               修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
+  monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）
+  battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（玩家提供，縮成 480 寬，480×531／480×439），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
   frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
@@ -61,6 +63,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
+  battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏（第 59 節）
   ui.js               畫面渲染共用函式（頂部狀態列、戰鬥實況、日誌與日誌分頁（第 44 節）、彈窗開關與右上角 ✕（第 46 節））
   map.js / combat.js / leveling.js / tribulation.js
                       地圖切換、戰鬥 tick、境界與人物等級成長、渡劫
@@ -1311,7 +1314,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930c`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930f`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2652,3 +2655,18 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   **有人出價的拍賣品被刪時，出價者的靈石不會自動退回**（之後若要 GM 強制下架，需要加「GM 建立退款單」的規則與後台按鈕）。
 - 驗證（本機，模擬雲端）：上架圖紙 ×2（存檔扣 2）→ A 出價 1000（扣靈石）→ B 出 1020 被擋「至少 1,050」→ B 出 1100 → A 的退款單 1000、領回 → 結標後 B 領到圖紙 ×2、重複領取被擋 → 賣家領 1,045（95%）→ 兩邊領完拍賣品自動刪除；
   裝備寄售卡片正常；Console 無錯誤。**雲端規則需發布後線上實測**。
+
+## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
+- 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。
+- 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
+  **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
+  `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
+  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
+  敵方飄字落在右半（暴擊固定在 76～79%，避開中央 VS）、受傷字落在左半。
+  上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。
+  舊的 id（`battle-player-name`、`battle-player-hp`、`battle-enemy-title/icon/info`、`battle-action-desc`）都保留，`ui.js` 的 `updateCombatVisualPanel()` 照舊填字，另外呼叫 `setBattleBar()` 更新血條。
+- 爆擊血條：`.bf-fill` 立刻縮、`.bf-trail`（橘白殘影）延遲 0.35 秒再跟上，看得到被打掉的那一截；暴擊／重擊／雷擊時切口 `#bf-enemy-spark` 爆光。多隻怪時是總血量；安全區／休整／索敵時整條隱藏。回血或換波時殘影直接對齊（不倒放）。
+- 飄字：戰鬥程式只排佇列——`combat.js` 的 `playerAttackTurn` 內 `hitTarget` 呼叫 `battleFxHit(dealt, r.tags)`；怪物回合、懸賞對手（`bounty.js`）、心魔（`tribulation.js`）扣玩家血後呼叫 `battleFxHurt(dmg, dodged)`。
+  `updateCombatVisualPanel()` 最後呼叫 `flushBattleFx()` 播放：一次最多約 4～5 個字，多的合併成「×N」；暴擊（tag `crit`，新制敏捷）大字漸層＋「暴擊」＋震屏＋閃光，重擊（`metal`）／雷擊（`thunder`）中字＋爆點，受傷紅字＋畫面紅框，閃避灰字。
+  面板看不到（`document.hidden` 或面板 `offsetParent === null`）時不排佇列，只影響畫面、不影響結算。`prefers-reduced-motion` 時不震屏、立繪不動。
+- 鎮魔塔（第 51 節）、死守天南城（第 49 節）有各自的戰鬥畫面，不受影響。

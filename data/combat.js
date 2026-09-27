@@ -110,9 +110,13 @@ function combatTick() {
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
         waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
+        // 外觀（名稱／圖示／圖片）從 FIELD_MONSTERS 抽（config-maps.js），幽冥禁域只出鬼怪
+        let isDarkMap = DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name));
+        let pool = FIELD_MONSTERS.filter(m => !isDarkMap || m.dark);
         for (let i = 0; i < count; i++) {
+            let look = pool[Math.floor(Math.random() * pool.length)];
             enemies.push({ hp: ms.hp, maxHp: ms.hp, attack: ms.atk,
-                           icon: monsterIcons[Math.floor(Math.random() * monsterIcons.length)],
+                           name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
                            attrs: rollMonsterAttrs(), status: newStatus() });
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
@@ -284,7 +288,9 @@ function fieldCombatRound() {
             totalDmg += applyGearDefense(r, e, !!e.cultivator, r.tags);
             enemyTags = enemyTags.concat(r.tags);
         });
-        player.hp -= applyPetDamageReduction(totalDmg);
+        let taken = applyPetDamageReduction(totalDmg);
+        player.hp -= taken;
+        battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
         if (enemyTags.length > 0 || frozenCount > 0) {
             let parts = [];
             if (frozenCount > 0) parts.push(`${frozenCount} 隻妖獸被凍結無法出手`);
@@ -356,6 +362,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
         r.tags.forEach(t => tags.push(t));
         let dealt = r.dmg + applyGearHitChain(fx, target, targets, r, tags);
         dealtTotal += dealt;
+        battleFxHit(dealt, r.tags);   // 戰鬥面板飄字／爆擊特效（battle-fx.js）
         // 變異屬性（config-elements.js）：聖光回復最大氣血、暗蝕吸取該擊傷害
         if (r.tags.includes("light") && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * LIGHT_HEAL);
         if (r.tags.includes("dark") && player.hp > 0 && r.dmg > 0) player.hp = Math.min(player.maxHp, player.hp + r.dmg * DARK_LIFESTEAL);

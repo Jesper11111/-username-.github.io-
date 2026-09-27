@@ -335,6 +335,7 @@ function bountyDuelTick() {
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
     let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags));
     player.hp -= dealt;
+    battleFxHurt(dealt, r.tags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
     if (sk && dealt > 0) {
         if (sk.type === "lifesteal") opp.hp = Math.min(opp.maxHp, opp.hp + dealt * sk.steal);
         if (sk.type === "poison" && !getAptitudeSpecial().poisonImmune) {   // 萬毒不侵體（aptitude.js）

@@ -50,11 +50,18 @@ function updateCombatVisualPanel() {
     document.getElementById('battle-player-name').innerText = (player.name || (player.gender === 'female' ? "南宮婉" : "韓立"))
         + (playerElem ? `【${playerElem}】` : '');
     let playerSt = formatStatus(playerStatus);
-    document.getElementById('battle-player-hp').innerText = `氣血: ${Math.floor(player.hp)}/${player.maxHp}${playerSt ? ' ' + playerSt : ''}${player.weakened ? ' 😵虛弱' : ''}`;
+    // 玩家 HUD（battle-fx.js 的血條）：氣血／法力／修為三條
+    document.getElementById('battle-player-hp').innerText = `${fmtFxNum(Math.max(0, player.hp))} / ${fmtFxNum(player.maxHp)}${playerSt ? ' ' + playerSt : ''}${player.weakened ? ' 😵虛弱' : ''}`;
+    setBattleBar('bf-hp-fill', 'bf-hp-trail', player.hp, player.maxHp);
+    document.getElementById('bf-mp-text').innerText = `${fmtFxNum(Math.max(0, player.mp))} / ${fmtFxNum(player.maxMp)}`;
+    setBattleBar('bf-mp-fill', null, player.mp, player.maxMp);
+    document.getElementById('bf-exp-text').innerText = player.pendingTribulation ? '⚡ 修為圓滿・待渡劫' : `${Math.floor(player.exp).toWan()} / ${getNextExp().toWan()}`;
+    setBattleBar('bf-exp-fill', null, player.exp, getNextExp());
+    updateBattleHero();
 
     const avatarContainer = document.getElementById('battle-player-icon');
     const avatar = getPlayerAvatar();   // 玩家選用的頭像（avatar.js），未選則依性別
-    // 帶頭像光環（avatar.js）；大小由 CSS 的 #battle-player-icon .framed-avatar 決定（手機版會縮小）。
+    // 帶頭像光環（avatar.js），放在 HUD 徽章中央；大小由 CSS 的 #battle-player-icon .framed-avatar 決定。
     // 內容沒變就不重寫，避免每秒重新載入圖片
     const battleAvatarHtml = renderFramedAvatar(avatar, getPlayerFrame(), '60px', 'battle-avatar');
     if (avatarContainer.dataset.html !== battleAvatarHtml) {
@@ -62,11 +69,21 @@ function updateCombatVisualPanel() {
         avatarContainer.dataset.html = battleAvatarHtml;
     }
 
+    // 敵方爆擊血條：有對手時顯示氣血，沒有時整條隱藏
+    const enemyBar = document.getElementById('bf-enemy-bar');
+    const showEnemyBar = (cur, max) => {
+        enemyBar.style.visibility = 'visible';
+        setBattleBar('bf-enemy-fill', 'bf-enemy-trail', cur, max);
+        document.getElementById('bf-enemy-hptext').innerText = `${fmtFxNum(Math.max(0, cur))} / ${fmtFxNum(max)}`;
+    };
+    enemyBar.style.visibility = 'hidden';
+
     if (inTribulation && heartDemon) {
         document.getElementById('battle-enemy-title').innerText = "心魔";
         document.getElementById('battle-enemy-icon').innerText = heartDemon.icon;
         let demonSt = formatStatus(heartDemon.status);
-        document.getElementById('battle-enemy-info').innerText = `氣血: ${Math.floor(heartDemon.hp)}/${heartDemon.maxHp}${demonSt ? ' ' + demonSt : ''}`;
+        showEnemyBar(heartDemon.hp, heartDemon.maxHp);
+        document.getElementById('battle-enemy-info').innerText = demonSt;
         document.getElementById('battle-action-desc').innerText = `☯️ 渡劫中！正在與心魔生死對決...`;
     } else if (inBountyDuel && duelOpponent) {
         let o = duelOpponent;
@@ -74,7 +91,8 @@ function updateCombatVisualPanel() {
         document.getElementById('battle-enemy-title').innerText = `${BOUNTY_RANKS[o.rank].name}・${o.name}`;
         document.getElementById('battle-enemy-icon').innerText = o.icon;
         let oppSt = formatStatus(o.status);
-        document.getElementById('battle-enemy-info').innerText = `氣血: ${Math.floor(o.hp).toWan()}/${o.maxHp.toWan()}${oppSt ? ' ' + oppSt : ''}\n「${o.title}」五行 ${o.attrs.element}｜第 ${o.turn}/${BOUNTY_MAX_TURNS} 回合`;
+        showEnemyBar(o.hp, o.maxHp);
+        document.getElementById('battle-enemy-info').innerText = `${oppSt ? oppSt + ' ' : ''}「${o.title}」五行 ${o.attrs.element}｜第 ${o.turn}/${BOUNTY_MAX_TURNS} 回合`;
         document.getElementById('battle-action-desc').innerText = `⚔️ 懸賞對決中！${debuffs.length ? `你身中：${debuffs.join('、')}` : '生死一線，全力以赴！'}`;
     } else if (player.currentMapIsSafe) {
         document.getElementById('battle-enemy-title').innerText = "安全區域";
@@ -94,8 +112,11 @@ function updateCombatVisualPanel() {
             totalMaxEnemyHp += e.maxHp;
         });
         let cultN = enemies.filter(e => e.cultivator).length;
-        document.getElementById('battle-enemy-title').innerText = `上古巨獸 (${enemies.length}隻${cultN ? `｜修士×${cultN}` : ''})`;
-        document.getElementById('battle-enemy-icon').innerText = enemies[0].icon || "🐉";
+        // 標題與圖示跟著「目前在打的那隻」（第一隻還活著的）；妖獸名稱來自 FIELD_MONSTERS（config-maps.js）
+        let front = enemies.find(e => e.hp > 0) || enemies[0];
+        let frontName = front.name || (front.ambush ? "暗殺者" : front.cultivator ? `${front.cultivator}道修士` : "妖獸");
+        document.getElementById('battle-enemy-title').innerText = `${frontName}${enemies.length > 1 ? `（共 ${enemies.length} 隻${cultN ? `｜修士×${cultN}` : ''}）` : ''}`;
+        document.getElementById('battle-enemy-icon').innerText = front.icon || "🐉";
         // 彙整全體怪物身上的狀態：凍結隻數、燒傷/中毒總層數
         let frozenN = enemies.filter(e => e.status && e.status.frozen > 0).length;
         let burnN = enemies.reduce((s, e) => s + (e.status && e.status.burn ? e.status.burn.stacks : 0), 0);
@@ -106,8 +127,8 @@ function updateCombatVisualPanel() {
         let affixCounts = MONSTER_AFFIX_TYPES.map(k => [k, enemies.filter(e => e.attrs && e.attrs[k] > 0).length]).filter(([, c]) => c > 0);
         let enemyAttrText = (elemCounts.length ? '五行 ' + elemCounts.map(([el, c]) => `${el}×${c}`).join(' ') : '')
             + (affixCounts.length ? '｜' + affixCounts.map(([k, c]) => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label.charAt(0)}×${c}`).join(' ') : '');
-        document.getElementById('battle-enemy-info').innerText = `總血量: ${Math.floor(totalEnemyHp)}/${Math.floor(totalMaxEnemyHp)}${enemySt ? ' ' + enemySt : ''}`
-            + (enemyAttrText ? `\n${enemyAttrText}` : '');
+        showEnemyBar(totalEnemyHp, totalMaxEnemyHp);   // 多隻時為總血量
+        document.getElementById('battle-enemy-info').innerText = [enemySt, enemyAttrText].filter(Boolean).join('｜');
         document.getElementById('battle-action-desc').innerText = `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;
     } else {
         document.getElementById('battle-enemy-title').innerText = "索敵中";
@@ -115,6 +136,8 @@ function updateCombatVisualPanel() {
         document.getElementById('battle-enemy-info').innerText = "尋找目標";
         document.getElementById('battle-action-desc').innerText = `🔍 正在 ${player.currentMap.name} 探索四周...`;
     }
+    updateBattleFoe();   // 右半邊敵方圖片／大 emoji（battle-fx.js）
+    flushBattleFx();   // 播放這段期間累積的飄字／爆擊特效（battle-fx.js）
 }
 
 function updateUI() {
