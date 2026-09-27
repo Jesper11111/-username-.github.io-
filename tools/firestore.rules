@@ -112,6 +112,116 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.expiresAt > request.time);
     }
 
+    // ---- 修仙留言板（data/msgboard.js、gm.html「💬 留言板」，ARCHITECTURE.md 第 57 節）----
+    // 留言：所有人可讀（單次最多 50 筆）；建立時必須同一批次把 boardLimit/{自己} 更新成現在（見下），所以每人每 60 秒最多一則
+    // 本人可刪自己的留言；GM 可刪任何留言；被封鎖（banned）或禁言（muted）的帳號不能留言；不能修改
+    match /board/{msgId} {
+      allow get: if true;
+      allow list: if request.query.limit <= 50 || isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create: if request.auth != null && !isBanned(request.auth.uid)
+        && !exists(/databases/$(database)/documents/muted/$(request.auth.uid))
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'realm', 'stage', 'text', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 12
+        && request.resource.data.realm is int && request.resource.data.realm >= 0 && request.resource.data.realm <= 15
+        && request.resource.data.stage is int && request.resource.data.stage >= 1 && request.resource.data.stage <= 10
+        && request.resource.data.text is string && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 100
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/boardLimit/$(request.auth.uid)).data.lastAt == request.time;
+    }
+    // 每人最後留言時間：只能寫自己的；更新時距上次必須超過 60 秒
+    match /boardLimit/{uid} {
+      allow get: if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow list, delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['lastAt']) && request.resource.data.lastAt == request.time;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['lastAt']) && request.resource.data.lastAt == request.time
+        && request.time > resource.data.lastAt + duration.value(60, 's');
+    }
+    // 禁言名單：玩家只能查自己有沒有被禁言；GM 管理
+    match /muted/{uid} {
+      allow get: if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow list, write: if isAdmin();
+    }
+
+    // ---- 寄售拍賣（data/market.js，ARCHITECTURE.md 第 58 節）----
+    // 拍賣品：所有人可讀（清單單次 ≤ 50；查自己賣的／自己出價的不限）
+    match /market/{lid} {
+      allow get: if true;
+      allow list: if request.query.limit <= 50 || isAdmin()
+        || (request.auth != null && (resource.data.seller == request.auth.uid || resource.data.bidder == request.auth.uid));
+      // 上架：賣家是自己、沒有出價、結束時間在 12～48 小時之間（多留 1 分鐘誤差）
+      allow create: if request.auth != null && !isBanned(request.auth.uid)
+        && request.resource.data.keys().hasOnly(['seller', 'sellerName', 'kind', 'item', 'label', 'startPrice', 'bid', 'bidder', 'bidderName', 'bidCount', 'createdAt', 'endsAt'])
+        && request.resource.data.seller == request.auth.uid
+        && request.resource.data.sellerName is string && request.resource.data.sellerName.size() >= 1 && request.resource.data.sellerName.size() <= 12
+        && request.resource.data.kind in ['blueprint', 'equip', 'material', 'item']
+        && request.resource.data.item is map
+        && request.resource.data.label is string && request.resource.data.label.size() <= 80
+        && request.resource.data.startPrice is int && request.resource.data.startPrice >= 1 && request.resource.data.startPrice <= 1000000000000
+        && request.resource.data.bid == 0 && request.resource.data.bidder == null && request.resource.data.bidderName == '' && request.resource.data.bidCount == 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.endsAt >= request.time + duration.value(12 * 3600 - 60, 's')
+        && request.resource.data.endsAt <= request.time + duration.value(48 * 3600 + 60, 's');
+      // 出價：不是賣家、不是目前最高出價者、還沒結束；只能改出價相關欄位；至少多 5%；
+      // 最後 5 分鐘可把結束時間延到「現在 + 5 分鐘」（多留 1 分鐘誤差）；有前一位出價者時，同一交易必須寫好他的退款單
+      allow update: if request.auth != null && !isBanned(request.auth.uid)
+        && request.auth.uid != resource.data.seller && request.auth.uid != resource.data.bidder
+        && request.time < resource.data.endsAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bid', 'bidder', 'bidderName', 'bidCount', 'endsAt'])
+        && request.resource.data.bidder == request.auth.uid
+        && request.resource.data.bidderName is string && request.resource.data.bidderName.size() >= 1 && request.resource.data.bidderName.size() <= 12
+        && request.resource.data.bidCount == resource.data.bidCount + 1
+        && request.resource.data.bid is int && request.resource.data.bid <= 1000000000000
+        && request.resource.data.bid >= resource.data.startPrice
+        && request.resource.data.bid >= resource.data.bid + 1 && request.resource.data.bid >= resource.data.bid * 1.05
+        && (request.resource.data.endsAt == resource.data.endsAt
+            || (request.resource.data.endsAt > resource.data.endsAt && request.resource.data.endsAt <= request.time + duration.value(360, 's')))
+        && (resource.data.bidder == null
+            || existsAfter(/databases/$(database)/documents/marketRefunds/$(lid + '_' + string(resource.data.bidCount))));
+      // 刪除：沒人出價時賣家可下架（結標前後皆可）；成交且兩邊都領完時賣家或得標者可刪；GM 可刪
+      allow delete: if isAdmin()
+        || (request.auth != null && resource.data.seller == request.auth.uid && resource.data.bidder == null)
+        || (request.auth != null && (resource.data.seller == request.auth.uid || resource.data.bidder == request.auth.uid)
+            && exists(/databases/$(database)/documents/marketClaims/$(lid + '_item'))
+            && exists(/databases/$(database)/documents/marketClaims/$(lid + '_coins')));
+    }
+    // 退款單：只能在出價交易中、為「被超過的前一位出價者」建立（金額＝他的出價）；本人刪除＝領回
+    match /marketRefunds/{rid} {
+      allow get, list, delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'amount', 'listingId', 'label', 'at'])
+        && request.resource.data.at == request.time
+        && request.resource.data.listingId is string
+        && request.resource.data.label is string && request.resource.data.label.size() <= 80
+        && rid == request.resource.data.listingId + '_' + string(get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidCount)
+        && request.resource.data.uid == get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidder
+        && request.resource.data.amount == get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bid
+        && getAfter(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidder == request.auth.uid
+        && getAfter(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidCount
+           == get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidCount + 1;
+    }
+    // 結標領取：得標者建立 {id}_item、賣家建立 {id}_coins；拍賣品要已結束且有人出價；每種只能建立一次
+    match /marketClaims/{cid} {
+      allow get: if request.auth != null;
+      allow list, delete: if isAdmin();
+      allow update: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'listingId', 'type', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time
+        && request.resource.data.type in ['item', 'coins']
+        && cid == request.resource.data.listingId + '_' + request.resource.data.type
+        && request.time > get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.endsAt
+        && get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidder != null
+        && ((request.resource.data.type == 'item' && get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.bidder == request.auth.uid)
+            || (request.resource.data.type == 'coins' && get(/databases/$(database)/documents/market/$(request.resource.data.listingId)).data.seller == request.auth.uid));
+    }
+
     match /leaderboard/{uid} {
       allow get: if true;
       allow list: if request.query.limit <= 100 || isAdmin();

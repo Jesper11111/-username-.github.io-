@@ -186,13 +186,14 @@ async function fetchDefenseBoard() {
 function switchLeaderboardTab(tab) {
     applyLeaderboardTab(tab);
     renderLeaderboard(false);
-    if (lbTab === 'defense' ? !lbDefenseRows : !lbRows) refreshLeaderboard(false);
+    if (lbTab === 'defense' ? !lbDefenseRows : lbTab === 'board' ? !mbBoardRows : lbTab === 'market' ? !mkActive : !lbRows) refreshLeaderboard(false);
 }
+// 分頁：power 戰力榜／defense 守城榜／board 修仙留言板（msgboard.js，第 57 節）／market 寄售拍賣（market.js，第 58 節）
 function applyLeaderboardTab(tab) {
-    lbTab = tab === 'defense' ? 'defense' : 'power';
+    lbTab = ['defense', 'board', 'market'].includes(tab) ? tab : 'power';
     document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => b.classList.toggle('on', b.dataset.lbTab === lbTab));
     const title = document.getElementById('leaderboard-title');
-    if (title) title.textContent = lbTab === 'defense' ? '🏯 死守天南城・通關榜' : '🏆 天下戰力榜';
+    if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '💬 修仙留言板', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
 }
 
 // 兩個 Firestore Timestamp 相差幾奈秒（a − b）；BigInt 以免奈秒精度被浮點數吃掉
@@ -242,12 +243,14 @@ async function refreshLeaderboard(manual) {
         // 斷線時 Firestore 的寫入要等連回伺服器才會完成，最多等 LEADERBOARD_TIMEOUT_MS，避免視窗卡在「讀取中」
         await lbWithTimeout(uploadLeaderboard()).catch(() => {});
         if (lbTab === 'defense') lbDefenseRows = await lbWithTimeout(fetchDefenseBoard());
+        else if (lbTab === 'board') mbBoardRows = await lbWithTimeout(fetchMsgBoard());
+        else if (lbTab === 'market') await lbWithTimeout(fetchMarket());
         else lbRows = await lbWithTimeout(fetchLeaderboard());
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
         lbError = e && e.code === 'permission-denied'
-            ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
+            ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "留言板尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
             : "連線失敗，請稍後再試。";
     }
     renderLeaderboard(false);
@@ -281,6 +284,15 @@ function renderLeaderboard(loading) {
         return;
     }
     if (lbTab === 'defense') { box.innerHTML = defenseBoardHtml(loading); return; }
+    if (lbTab === 'market') { box.innerHTML = marketHtml(loading); return; }
+    if (lbTab === 'board') {
+        // 重繪時保留正在輸入的留言
+        const draft = document.getElementById('board-input') ? document.getElementById('board-input').value : '';
+        box.innerHTML = msgBoardHtml(loading);
+        const input = document.getElementById('board-input');
+        if (input && draft) { input.value = draft; updateBoardCounter(); }
+        return;
+    }
     const myPower = getRankPower();
     let myUid = null;
     try { myUid = firebase.auth().currentUser.uid; } catch (e) { /* SDK 還沒載入 */ }

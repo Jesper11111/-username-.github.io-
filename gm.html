@@ -86,6 +86,7 @@
         <button data-tab="bans">⛔ 黑名單</button>
         <button data-tab="patrol">🛡️ 自動巡檢</button>
         <button data-tab="reward">📮 發放獎勵</button>
+        <button data-tab="msgboard">💬 留言板</button>
     </div>
 
     <!-- 戰力榜 -->
@@ -264,24 +265,43 @@
         </div>
     </section>
 
+    <!-- 修仙留言板（data/msgboard.js，ARCHITECTURE.md 第 57 節）：刪除留言、禁言 -->
+    <section id="tab-msgboard" hidden>
+        <div class="card">
+            <h2>💬 最新留言 <button id="bd-reload" style="float:right;">🔄 重新讀取</button></h2>
+            <div class="tablewrap"><table>
+                <thead><tr><th>時間</th><th>道號</th><th>境界</th><th>內容</th><th>uid</th><th>操作</th></tr></thead>
+                <tbody id="bd-rows"><tr><td colspan="6" class="note">登入管理者後才能管理（非管理者只能看遊戲內的最新 50 則）。</td></tr></tbody>
+            </table></div>
+            <p class="note">禁言後該帳號不能再留言（雲端規則擋下），既有留言保留，需要的話另外刪除。玩家換瀏覽器會變新 uid，需再禁一次；要一併移出排行榜請到戰力榜分頁「封鎖」。</p>
+        </div>
+        <div class="card">
+            <h2>🔇 禁言名單</h2>
+            <div class="tablewrap"><table>
+                <thead><tr><th>道號（禁言時）</th><th>原因</th><th>時間</th><th>uid</th><th>操作</th></tr></thead>
+                <tbody id="bd-mute-rows"><tr><td colspan="5" class="note">登入管理者後才能查看。</td></tr></tbody>
+            </table></div>
+        </div>
+    </section>
+
     <div class="card">
         <h2>操作紀錄</h2>
         <div id="log"></div>
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20260929y"></script>
+<script src="data/config-realms.js?v=20260930b"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20260929y"></script>
-<script src="data/numeric.js?v=20260929y"></script>
-<script src="data/config-leaderboard.js?v=20260929y"></script>
-<script src="data/config-mailbox.js?v=20260929y"></script>
+<script src="data/config-numeric.js?v=20260930b"></script>
+<script src="data/numeric.js?v=20260930b"></script>
+<script src="data/config-leaderboard.js?v=20260930b"></script>
+<script src="data/config-mailbox.js?v=20260930b"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20260929y"></script>
+<script src="data/config-aptitude.js?v=20260930b"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20260929y"></script>
-<script src="data/bounty.js?v=20260929y"></script>
-<script src="data/config-defense.js?v=20260929y"></script>
+<script src="data/config-bounty.js?v=20260930b"></script>
+<script src="data/bounty.js?v=20260930b"></script>
+<script src="data/config-defense.js?v=20260930b"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同，2026-09-28）：400 ＋ 境界 × 40；理論最高約佔 40～46%（凡人 163、混沌道祖 463）
@@ -879,9 +899,50 @@ window.countCode = async code => {
 };
 rwInit();
 
+// ================== 💬 修仙留言板：刪除留言、禁言（第 57 節）==================
+let bdRows = [], bdMuted = [];
+async function reloadBoardMsgs() {
+    if (!isAdmin) return;
+    try {
+        const [ms, mu] = await Promise.all([
+            db.collection(MSGBOARD_COLLECTION).orderBy('createdAt', 'desc').limit(200).get(),
+            db.collection(MSGBOARD_MUTED_COLLECTION).get()
+        ]);
+        bdRows = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        bdMuted = mu.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    } catch (e) { bdRows = []; bdMuted = []; log('讀取留言板失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';
+    const mutedSet = new Set(bdMuted.map(m => m.id));
+    $('bd-rows').innerHTML = bdRows.length ? bdRows.map(r => `<tr><td>${dt(r.createdAt)}</td><td>${esc(r.name)}${mutedSet.has(r.uid) ? ' <span class="flag grey">已禁言</span>' : ''}</td>
+        <td>${esc(realms[r.realm] || '？')} ${Number(r.stage) || 1} 階</td><td style="white-space:normal; max-width:420px;">${esc(r.text)}</td>
+        <td class="uid">${esc(String(r.uid || '').slice(0, 10))}…</td>
+        <td class="rowbtns"><button class="danger" onclick="bdDelete('${esc(r.id)}')">刪除</button>${mutedSet.has(r.uid) ? '' : `<button class="danger" onclick="bdMute('${esc(r.id)}')">禁言</button>`}</td></tr>`).join('')
+        : '<tr><td colspan="6" class="note">還沒有留言。</td></tr>';
+    $('bd-mute-rows').innerHTML = bdMuted.length ? bdMuted.map(m => `<tr><td>${esc(m.name || '')}</td><td>${esc(m.reason || '')}</td><td>${dt(m.mutedAt)}</td>
+        <td class="uid">${esc(m.id.slice(0, 10))}…</td><td class="rowbtns"><button onclick="bdUnmute('${esc(m.id)}')">解除禁言</button></td></tr>`).join('')
+        : '<tr><td colspan="5" class="note">沒有被禁言的玩家。</td></tr>';
+}
+window.bdDelete = id => { const r = bdRows.find(x => x.id === id);
+    if (confirm(`刪除「${r ? r.name : ''}」的留言？\n${r ? r.text : ''}`)) db.collection(MSGBOARD_COLLECTION).doc(id).delete().then(() => { log('已刪除留言', 'ok'); reloadBoardMsgs(); }).catch(e => log('刪除失敗：' + e.message, 'err')); };
+window.bdMute = id => {
+    const r = bdRows.find(x => x.id === id); if (!r) return;
+    const reason = prompt(`禁言「${r.name}」（之後不能再留言）。\n原因：`, '不當留言');
+    if (reason === null) return;
+    const del = confirm('要一併刪除這則留言嗎？');
+    const b = db.batch();
+    b.set(db.collection(MSGBOARD_MUTED_COLLECTION).doc(r.uid), { name: String(r.name || ''), reason: String(reason || ''), mutedBy: user.uid, mutedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if (del) b.delete(db.collection(MSGBOARD_COLLECTION).doc(id));
+    b.commit().then(() => { log(`已禁言 ${r.name}${del ? '並刪除留言' : ''}`, 'ok'); reloadBoardMsgs(); }).catch(e => log('禁言失敗：' + e.message, 'err'));
+};
+window.bdUnmute = uid => { if (confirm('解除禁言？')) db.collection(MSGBOARD_MUTED_COLLECTION).doc(uid).delete().then(() => { log('已解除禁言', 'ok'); reloadBoardMsgs(); }).catch(e => log('解除失敗：' + e.message, 'err')); };
+$('bd-reload').onclick = reloadBoardMsgs;
+
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
     ['board', 'defense', 'bans', 'patrol', 'reward'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
+    // 留言板分頁的 id 是 tab-msgboard（tab-board 已被戰力榜使用）
+    $('tab-msgboard').hidden = b.dataset.tab !== 'msgboard';
+    if (b.dataset.tab === 'msgboard') reloadBoardMsgs();
 });
 $('btn-login').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => log('登入失敗：' + e.message + '（主控台需啟用 Google 登入方式）', 'err'));
 $('btn-logout').onclick = () => { setPatrol(false); $('patrol-on').checked = false; auth.signOut(); };

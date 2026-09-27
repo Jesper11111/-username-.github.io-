@@ -30,3 +30,35 @@ const LEADERBOARD_HISTORY2_GAP_SEC = 30 * 60;
 const LEADERBOARD_TOP_N = 100;                        // 榜單顯示前 N 名（規則限制單次最多讀 100 筆）
 const LEADERBOARD_REFRESH_COOLDOWN_MS = 10 * 1000;     // 視窗內「重新整理」按鈕冷卻
 const LEADERBOARD_TIMEOUT_MS = 8 * 1000;               // 開榜單時上傳／讀取最多等幾毫秒（斷線時不會卡在「讀取中」）
+
+// ---- 修仙留言板（msgboard.js、gm.html「💬 留言板」，ARCHITECTURE.md 第 57 節；2026-09-28）----
+const MSGBOARD_COLLECTION = "board";              // 留言（自動 id）：{ uid, name, realm, stage, text, createdAt }
+const MSGBOARD_LIMIT_COLLECTION = "boardLimit";   // 每人最後留言時間（文件 id = uid），規則用它限制每 60 秒一則
+const MSGBOARD_MUTED_COLLECTION = "muted";        // GM 禁言名單（文件 id = uid）
+const MSGBOARD_SHOW_N = 50;                       // 打開時讀最新幾則（規則限制單次最多 50）
+const MSGBOARD_MAX_LEN = 100;                     // 每則字數上限（規則同樣限制，改這裡要一起改規則）
+const MSGBOARD_COOLDOWN_SEC = 60;                 // 每人留言間隔（規則同樣限制）
+// ---- 寄售拍賣（market.js，大道石碑「🏪 寄售」分頁，ARCHITECTURE.md 第 58 節；2026-09-28 使用者選定規則）----
+const MARKET_COLLECTION = "market";               // 拍賣品（自動 id）：賣家、物品、起標價、目前最高價與出價者、結束時間
+const MARKET_REFUND_COLLECTION = "marketRefunds"; // 被超過出價時的退款（id = 拍賣品id_第幾次出價），本人刪除＝領回
+const MARKET_CLAIM_COLLECTION = "marketClaims";   // 結標領取紀錄（id = 拍賣品id_item 或 _coins），每種只能建立一次
+const MARKET_HOURS = [12, 24, 48];                // 賣家可選的拍賣時間
+const MARKET_MIN_RAISE = 0.05;                    // 每次出價至少比目前最高價多 5%（規則同樣限制）
+const MARKET_FEE = 0.05;                          // 成交抽 5%，賣家拿 95%
+const MARKET_EXTEND_SEC = 300;                    // 最後 5 分鐘有人出價，結束時間延到出價後 5 分鐘（避免最後一秒搶標）
+const MARKET_MAX_ACTIVE = 5;                      // 每人同時最多掛幾件（玩家端檢查）
+const MARKET_SHOW_N = 50;                         // 拍賣中的清單最多讀幾件（規則限制單次最多 50）
+const MARKET_MAX_PRICE = 1e12;
+// 可寄售的數量型物品（使用者選：材料＋珍貴道具；另有鍛造圖紙、背包裝備）
+const MARKET_STACKS = [
+    { key: "starIron",      label: "星允鐵",     icon: "🌠", kind: "material" },
+    { key: "butianStones",  label: "七彩補天石", icon: "🌈", kind: "material" },
+    { key: "fireShards",    label: "異火碎片",   icon: "🔥", kind: "material" },
+    { key: "rootPills",     label: "洗髓丹",     icon: "🧪", kind: "item" },
+    { key: "physiquePills", label: "伐骨丹",     icon: "🦴", kind: "item" },
+    { key: "spiritFruits",  label: "化神靈果",   icon: "🍑", kind: "item" },
+    { key: "breakPills",    label: "破障丹",     icon: "🔮", kind: "item" }
+];
+
+// 髒話過濾（玩家端，送出前把這些詞換成＊；可自行增減）
+const MSGBOARD_BLOCKED_WORDS = ["幹你娘", "操你", "肏", "靠北", "機掰", "雞掰", "白癡", "智障", "垃圾人", "去死", "fuck", "shit"];

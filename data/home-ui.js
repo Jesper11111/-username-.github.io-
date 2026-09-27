@@ -66,6 +66,7 @@ function renderPcStage() {
         el.setAttribute('onclick', b.action);
         place(el, b.rect);
         if (b.plaque) el.innerHTML = `<span id="pc-plaque-${b.id}" class="plaque plaque-${b.plaque}">${b.label}</span>`;
+        if (b.cover) el.innerHTML = `<span class="nav-label-cover stage-label-cover">${b.cover}</span>`;   // 圖上的字改名：深色底蓋掉原字（config-home-pc.js 的 cover）
         (b.kind === 'hotspot' ? hotspots : buttons).appendChild(el);
     });
     document.documentElement.style.setProperty('--pc-sheet-left', pct(PC_SHEET_RECT[0], PC_STAGE_IMG_W));

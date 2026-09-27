@@ -6,15 +6,16 @@ function calcOfflineProgress() {
     let now = Date.now();
     let offlineSeconds = Math.floor((now - player.lastSaveTime) / 1000);
 
-    // 離線上限 24 小時 (86400 秒)
-    let maxOfflineSeconds = 86400;
-    if (offlineSeconds > maxOfflineSeconds) {
-        offlineSeconds = maxOfflineSeconds;
+    // 離線上限 OFFLINE_MAX_SECONDS（12 小時，config-maps.js）
+    let rawSeconds = offlineSeconds;
+    if (offlineSeconds > OFFLINE_MAX_SECONDS) {
+        offlineSeconds = OFFLINE_MAX_SECONDS;
     }
 
     if (offlineSeconds < 10) return; // 離線小於10秒不觸發
 
-    let msg = settleIdleSeconds(offlineSeconds, "離線");
+    let msg = settleIdleSeconds(offlineSeconds, "離線", true);   // true = 真正離線：練功收益約為線上 50%
+    if (rawSeconds > OFFLINE_MAX_SECONDS) msg += `\n⏰ 離線 ${formatIdleDuration(rawSeconds)}，最多結算 ${OFFLINE_MAX_SECONDS / 3600} 小時。`;
     player.lastSaveTime = Date.now();
     addLog(`🌙 ${msg}`, "system");
     setTimeout(() => { alert(`【離線掛機收益結算】\n${msg}`); }, 500);
@@ -40,14 +41,15 @@ function checkBackgroundCatchUp() {
     let seconds = Math.floor(missedTickMs / 1000);
     if (seconds < BACKGROUND_SETTLE_MIN_SECONDS) return;
     missedTickMs -= seconds * 1000;
-    seconds = Math.min(seconds, 86400);   // 與離線上限相同
+    seconds = Math.min(seconds, OFFLINE_MAX_SECONDS);   // 與離線上限相同
     addLog(`🌙 ${settleIdleSeconds(seconds, "背景掛機時")}`, "system");
     updateUI();
 }
 
 // 離線／背景共用的收益結算：依秒數給經驗、靈石、聲望、功德、救僕從，並扣壽元與靈寵維持費；回傳結算說明
 // label 只影響文字（"離線"／"背景掛機時"）
-function settleIdleSeconds(offlineSeconds, label) {
+// isOffline：true = 關掉遊戲的離線（練功收益打折，OFFLINE_REWARD_MULT）；背景補發不傳，維持原比例
+function settleIdleSeconds(offlineSeconds, label, isOffline) {
     let expEarned = 0;
     let coinsEarned = 0;
     let msg = "";
@@ -88,7 +90,7 @@ function settleIdleSeconds(offlineSeconds, label) {
     } else {
         // OFFLINE_COMBAT_RATE = 離線每秒的戰鬥次數（見 config-maps.js，刻意低於線上滿速的每秒 0.32 隻）
         // 再乘上實力效率 est.rateMult（能秒殺 = 1；打得越久越低）
-        let combatTicks = Math.floor(offlineSeconds * OFFLINE_COMBAT_RATE * est.rateMult);
+        let combatTicks = Math.floor(offlineSeconds * OFFLINE_COMBAT_RATE * est.rateMult * (isOffline ? OFFLINE_REWARD_MULT : 1));
         expEarned = combatTicks * (player.currentMap.expRate * 15);
         coinsEarned = combatTicks * (typeof player.currentMap.coins === 'number' ? player.currentMap.coins : player.currentMap.diff * 10);
 
@@ -98,7 +100,7 @@ function settleIdleSeconds(offlineSeconds, label) {
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
-        let repEarned = Math.floor(combatTicks * ((repMax + 1) / 2) * OFFLINE_REPUTATION_RATE);
+        let repEarned = Math.floor(combatTicks * ((repMax + 1) / 2) * (isOffline ? OFFLINE_REPUTATION_RATE_OFFLINE : OFFLINE_REPUTATION_RATE));
         player.reputation = (player.reputation || 0) + repEarned;
 
         // 離線拯救僕從機率發放
@@ -182,7 +184,10 @@ function estimateIdleCombat() {
 }
 
 function formatIdleDuration(seconds) {
-    return seconds < 60 ? `${seconds} 秒` : `${Math.floor(seconds / 60)} 分鐘`;
+    if (seconds < 60) return `${seconds} 秒`;
+    const min = Math.floor(seconds / 60);
+    if (min < 60) return `${min} 分鐘`;
+    return `${Math.floor(min / 60)} 小時${min % 60 ? ` ${min % 60} 分鐘` : ''}`;
 }
 
 // 舊存檔相容：早期版本是「一份 activeQuest + assignedServantIds 共同加速」，
