@@ -13,7 +13,7 @@ const secretRealmList = [
         name: "鎮魔塔",
         img: "images/secret/zhenmo-tower.jpg",   // 768×1365（9:16），玩家提供的水墨海報（圖上已有「鎮魔塔」標題與底部標語）
         minRealmIndex: 6,                         // 同活動「秘境」的開放境界（煉虛）
-        implemented: true,                        // 2026-09-27：100 層＋知識問答＋BOSS 房入口（BOSS 待新增，config-zhenmo.js 的 ZHENMO_BOSS_READY）
+        implemented: true,                        // 2026-09-27：100 層＋知識問答＋BOSS 戰（BOSS 資料在 config-zhenmo.js 的 ZHENMO_BOSSES，目前只有第 1 層）
         mode: "tower",                            // 按鈕直接進入鎮魔塔塔廳（zhenmo.js，第 51 節）
         tagline: "諸天鎮魔！凡人速速離去",
         desc: "上古諸天大能合力鎮壓群魔之塔，塔中魔頭層層盤踞。傳聞塔頂封存著異火與諸天遺寶，亦有域外高人在此出沒。",

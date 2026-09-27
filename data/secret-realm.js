@@ -29,9 +29,7 @@ function refreshSecretRealmEnterLabel() {
     if (!r) return;
     const left = getSecretRealmAttemptsLeft(r.id);
     const enter = document.getElementById('secret-realm-enter');
-    // 鎮魔塔 BOSS 開放前不扣次數，不顯示（config-zhenmo.js 的 ZHENMO_BOSS_READY）
-    const counts = r.implemented && !(r.mode === 'tower' && !ZHENMO_BOSS_READY);
-    enter.textContent = `${r.enterLabel || '⚔️ 入塔挑戰'}${counts ? `（今日 ${left}/${SECRET_REALM_DAILY_ATTEMPTS}）` : ''}`;
+    enter.textContent = `${r.enterLabel || '⚔️ 入塔挑戰'}${r.implemented ? `（今日 ${left}/${SECRET_REALM_DAILY_ATTEMPTS}）` : ''}`;
 }
 
 // 活動選單的 openFn（config-activities.js）
@@ -50,7 +48,7 @@ function renderSecretRealmList() {
                 <img src="${r.img}" alt="">
                 <span class="secret-card-info">
                     <b>${r.name}</b>
-                    <small>${locked ? `🔒 需【${realms[r.minRealmIndex]}】以上` : r.mode === 'tower' && !ZHENMO_BOSS_READY ? '可入塔・問答試煉' : r.implemented ? `可挑戰・今日 ${getSecretRealmAttemptsLeft(r.id)}/${SECRET_REALM_DAILY_ATTEMPTS}` : '🚧 即將開放'}</small>
+                    <small>${locked ? `🔒 需【${realms[r.minRealmIndex]}】以上` : r.implemented ? `可挑戰・今日 ${getSecretRealmAttemptsLeft(r.id)}/${SECRET_REALM_DAILY_ATTEMPTS}` : '🚧 即將開放'}</small>
                 </span>
             </button>`;
     }).join("");
@@ -100,7 +98,7 @@ function challengeSecretRealm() {
         openDefenseBattle(r.id);
         return;
     }
-    if (r.mode === 'tower') {     // 鎮魔塔：進塔廳（zhenmo.js）；次數在開始問答時才扣（BOSS 開放後）
+    if (r.mode === 'tower') {     // 鎮魔塔：進塔廳（zhenmo.js）；次數在「有 BOSS 的樓層」開始問答時才扣
         openZhenmoTower();
         return;
     }

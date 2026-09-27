@@ -351,6 +351,23 @@ function refreshCombatStatusText() {
 
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+// 「製作成功」提示（2026-09-27）：煉丹（alchemy.js）、鍛造（equipment.js）、符寶（talisman.js）成功時在畫面中央跳出，約 2 秒後淡出，點一下提早關閉
+// title 為純文字；detail 可含遊戲內部產生的 HTML（品質顏色 span），不可放玩家輸入的文字
+function showCraftSuccess(title, detail) {
+    let box = document.getElementById('craft-toast');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'craft-toast';
+        box.onclick = () => box.classList.remove('on');
+        document.body.appendChild(box);
+    }
+    box.innerHTML = `<div class="ct-head">✅ 製作成功</div><div class="ct-title"></div>${detail ? `<div class="ct-detail">${detail}</div>` : ''}`;
+    box.querySelector('.ct-title').textContent = title;
+    box.classList.remove('on'); void box.offsetWidth; box.classList.add('on');
+    clearTimeout(showCraftSuccess.t);
+    showCraftSuccess.t = setTimeout(() => box.classList.remove('on'), 2200);
+}
+
 // 彈窗右上角 ✕（2026-09-28）：啟動時替每個 .modal-content 插入一顆，按下去等同按底部的關閉鈕
 // （最後一個 .close-btn 或 [data-modal-close]），所以各視窗原本的關閉行為不變。
 // 沒有關閉鈕的視窗（讀檔失敗、選性別、情緣對話）不會加。

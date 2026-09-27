@@ -258,6 +258,10 @@ function forgeEquipment(qty = 1) {
             + `五行：${byElement.map(([e, c]) => `<span class="elem-${e}">${e}</span>×${c}`).join('、')}`
             + (best.length ? `；橙色：<span class="quality-橙色">${best.join('、')}</span>` : ''), "equip");
     }
+    // 製作成功提示（ui.js）：1 件顯示品質名稱，多件顯示品質分布
+    if (n === 1) showCraftSuccess(`鍛造成功`, `<span class="quality-${results[0].quality}">Lv.${level}・${results[0].quality}・${getEquipDisplayName(results[0])}</span>`);
+    else showCraftSuccess(`鍛造成功 ×${n}`, equipQualities.map(q => [q.name, results.filter(r => r.quality === q.name).length])
+        .filter(([, c]) => c > 0).map(([q, c]) => `<span class="quality-${q}">${q}×${c}</span>`).join('　'));
     updateUI();
 }
 

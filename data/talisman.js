@@ -171,6 +171,7 @@ function craftTalisman(qty = 1) {
     }
     let summary = Object.keys(got).map(k => { let [type, grade] = k.split("_"); return `${formatTalisman(type, +grade)}×${got[k]}`; }).join("、");
     addLog(`🔥 於符寶坊煉製 ${n} 次（消耗 ${(c.ore * n).toWan()} 礦石、${(c.coins * n).toWan()} 靈石），煉成：${summary}`, "equip");
+    showCraftSuccess(`符寶煉製成功${n > 1 ? ` ×${n}` : ''}`, summary);   // 製作成功提示（ui.js）
     renderTalismanWorkshop();
     updateUI();
 }

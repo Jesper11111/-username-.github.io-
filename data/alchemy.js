@@ -1,4 +1,5 @@
 // 煉丹房彈窗：消耗高階靈草煉製神丹，永久提升單項屬性（可 ×1 / ×10 / 最高 批次煉製）
+// 每張丹藥卡片顯示已服用顆數（#pill-used-{類型}）；煉成時跳「製作成功」提示（ui.js 的 showCraftSuccess）
 
 const pillRecipes = {
     str: { name: "大力神丸",       herb: "mortal",   herbName: "凡品靈草", coins: 0,    stat: "str", gain: 10,  statName: "力量" },
@@ -10,7 +11,21 @@ const pillRecipes = {
 
 function openAlchemyModal() {
     if (!checkSectJoined()) return;
+    renderPillUsed();
     document.getElementById('alchemy-modal').style.display = 'flex';
+}
+
+// 各丹藥累計服用顆數（player.pillUsed = { str, con, int, spr, cha }；2026-09-27 起記錄，之前服用的不回溯）
+function getPillUsed() {
+    if (!player.pillUsed || typeof player.pillUsed !== 'object') player.pillUsed = {};
+    return player.pillUsed;
+}
+function renderPillUsed() {
+    let used = getPillUsed();
+    Object.keys(pillRecipes).forEach(k => {
+        let el = document.getElementById(`pill-used-${k}`);
+        if (el) el.textContent = `已服用 ${(used[k] || 0).toWan()} 顆（累計 ${pillRecipes[k].statName} +${((used[k] || 0) * pillRecipes[k].gain).toWan()}）`;
+    });
 }
 
 // qty：1、10 或 'max'
@@ -30,7 +45,11 @@ function craftPill(type, qty = 1) {
     player.herbs[r.herb] -= n;
     player.coins -= r.coins * n;
     player.stats[r.stat] += r.gain * n;
+    let used = getPillUsed();
+    used[type] = (used[type] || 0) + n;
     addDailyProgress('craft', n);
     addLog(`🧪 煉製並服用 ${n} 顆【${r.name}】，${r.statName} +${(r.gain * n).toWan()}！`, "heal");
+    showCraftSuccess(`煉成【${r.name}】×${n.toWan()}`, `已服用，${r.statName} +${(r.gain * n).toWan()}（累計服用 ${used[type].toWan()} 顆）`);
+    renderPillUsed();
     updateUI();
 }
