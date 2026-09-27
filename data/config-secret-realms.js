@@ -3,7 +3,7 @@
 // 新增秘境：在 secretRealmList 加一筆即可出現在列表（img 建議 9:16 直式海報，重要內容放中間）。
 // 選填欄位：size [寬, 高]（海報像素，決定場景比例；沒填 = 768×1365）、imgPc＋sizePc（橫向螢幕改用的海報）、
 //           sceneTitle／sceneSub（海報上沒有字時疊上標題）、enterLabel（按鈕文字）、enterPos: 'bottom'（按鈕在海報下方置中）、
-//           mode: 'defense'（按鈕直接開啟守城玩法 openDefenseBattle，defense.js）
+//           mode: 'defense'（按鈕直接開啟守城玩法 openDefenseBattle，defense.js）／'tower'（鎮魔塔塔廳 openZhenmoTower，zhenmo.js）
 
 const SECRET_REALM_DAILY_ATTEMPTS = 3;   // 每個秘境各自每日可挑戰次數（開始挑戰即扣，失敗或中途離開也算；2026-09-27 由 5 改 3）
 
@@ -13,7 +13,8 @@ const secretRealmList = [
         name: "鎮魔塔",
         img: "images/secret/zhenmo-tower.jpg",   // 768×1365（9:16），玩家提供的水墨海報（圖上已有「鎮魔塔」標題與底部標語）
         minRealmIndex: 6,                         // 同活動「秘境」的開放境界（煉虛）
-        implemented: false,
+        implemented: true,                        // 2026-09-27：100 層＋知識問答＋BOSS 房入口（BOSS 待新增，config-zhenmo.js 的 ZHENMO_BOSS_READY）
+        mode: "tower",                            // 按鈕直接進入鎮魔塔塔廳（zhenmo.js，第 51 節）
         tagline: "諸天鎮魔！凡人速速離去",
         desc: "上古諸天大能合力鎮壓群魔之塔，塔中魔頭層層盤踞。傳聞塔頂封存著異火與諸天遺寶，亦有域外高人在此出沒。",
         // 預定獎勵（顯示用；玩法實作時接上：異火碎片 addFireShards、秘境裝備 gear.js 的 realm 管道、夥伴 meetPartner、基本資源）

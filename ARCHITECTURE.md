@@ -46,7 +46,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -85,6 +85,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   leaderboard.js      天下戰力榜：定時上傳戰力到 Firebase Firestore、榜單視窗（第 42 節）；死守天南城通關榜的送審與分頁（第 49 節）
   secret-realm.js     秘境入口：秘境列表、全螢幕秘境場景（海報）、挑戰說明視窗（第 43 節；鎮魔塔玩法尚未實作）
   defense.js          魔屠天南・死守天南城：影片預載＋預計秒數、三支影片輪流、100 波特效演出、通關紀錄（第 49 節）
+  zhenmo.js           秘境「鎮魔塔」100 層：塔廳、10 題知識問答（限時、選項打亂）、結算倍率、BOSS 房入口（第 51 節；BOSS 待新增）
   home-ui.js          洞府主畫面：舞台縮放（手機／PC 版面）、HUD 數值、底部導覽分頁、建築熱點、興建中提示（第 31 節）
   settings.js         設定視窗（洞府右上 ⚙️）：顯示尺寸 手機 9:16／PC 16:9／自動、全螢幕（第 34 節）、字級 小／中／大（第 45 節）
   title-screen.js     遊戲主頁（標題畫面）與進入世界
@@ -149,6 +150,8 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15q | `config-leaderboard.js` | 天下戰力榜（第 42 節）：`LEADERBOARD_FIREBASE_CONFIG`（null = 不啟用、不連網）、`LEADERBOARD_SDK_BASE`、`LEADERBOARD_COLLECTION`、`LEADERBOARD_BANNED_COLLECTION`(banned)/`LEADERBOARD_ADMINS_COLLECTION`(admins，第 50 節)/守城榜 `LEADERBOARD_DEFENSE_SUBMIT_COLLECTION`(defenseSubmit，玩家送審)/`LEADERBOARD_DEFENSE_BOARD_COLLECTION`(defenseBoard，GM 審核通過才寫入)、`LEADERBOARD_UPLOAD_INTERVAL_MS`(5 分)/`LEADERBOARD_FIRST_UPLOAD_DELAY_MS`(15 秒)/`LEADERBOARD_MIN_GAP_MS`(60 秒，須與 tools/firestore.rules 一致)/`LEADERBOARD_HISTORY_SIZE`(24，上傳歷史 hist 筆數，須與規則一致，第 50 節)/兩日紀錄 `LEADERBOARD_HISTORY2_SIZE`(96)/`LEADERBOARD_HISTORY2_GAP_SEC`(1800，皆須與規則一致)/`LEADERBOARD_TOP_N`(100)/`LEADERBOARD_REFRESH_COOLDOWN_MS` | 無 | `leaderboard.js` |
 | 15r | `config-secret-realms.js` | 秘境（第 43 節）：`SECRET_REALM_DAILY_ATTEMPTS`(預定每日 5 次)、`secretRealmList`（id／name／img／minRealmIndex／implemented／tagline／desc／rewards 預定獎勵；選填 size／imgPc／sizePc／sceneTitle／sceneSub／enterLabel／enterPos／mode） | 無 | `secret-realm.js` |
 | 15s | `config-defense.js` | 死守天南城（第 49 節）：`DEFENSE_TOTAL_WAVES`(100)／`DEFENSE_BOSS_EVERY`(10)／`DEFENSE_CLIP_FADE`、`DEFENSE_CLIPS`（id／name／src／zoom／trim／sizeHint）、`DEFENSE_THEMES`(10 主題)、`DEFENSE_BOSSES`、`DEFENSE_OPENERS`、`DEFENSE_CAMERAS`、強度 `DEFENSE_MILESTONES`/`DEFENSE_MILESTONE_STAGE`/`DEFENSE_ENEMY`、勝負 `DEFENSE_PLAYER_SKILL_MULT`/`DEFENSE_MAX_ROUNDS`/`DEFENSE_LOSE_AT`、獎勵 `DEFENSE_REWARDS`、通關紀錄 `DEFENSE_RUN_LOG_MAX`(20)；**尾端有函式**（例外）：強度曲線 `defenseRealmAtk(r,s)`/`defenseWaveAtk(w)`（defense.js 與 gm.html 共用） | 呼叫時才用 `bounty.js` 的 getBountyRefSectMult | `defense.js`、`gm.html`(守城審核) |
+| 15t | `config-zhenmo.js` | 鎮魔塔（第 51 節）：`ZHENMO_TOTAL_FLOORS`(100)/`ZHENMO_QUIZ_COUNT`(10)/`ZHENMO_QUIZ_SECONDS`(20)/`ZHENMO_REVEAL_ANSWER`(false)/`ZHENMO_RECENT_AVOID`(100)/`ZHENMO_QUIZ_REWARD_MULT`(答對數→BOSS 獎勵倍率)/`ZHENMO_BOSS_READY`(false)/`ZHENMO_SOURCES` | 無 | `zhenmo.js`、`secret-realm.js`(ZHENMO_BOSS_READY) |
+| 15u | `config-zhenmo-questions.js` | `zhenmoQuestions`：300 題 `[出處, 題目, 選項(4 個／是非題 null), 答案 'A'～'D'／'O'／'X', 解析?]`（玩家提供；凡人 110／吞噬 100／斗羅 90；選擇 170／是非 130） | 無 | `zhenmo.js` |
 | 16 | `state.js` | `player`（含裝備系統 `starIron`/`ironShards`/`gearStash`/`ironShop`/`ironUsed`/`maxEnhance`/`gearCodex`/`titles`/`activeTitle`/`profession`/`profSwitched`/`proficiency`（第 37 節）、`lingbaoSold`、仙法 `spells`/`spellSlots`、渡劫失敗虛弱 `weakened`、頭像 `avatarId`/`unlockedAvatars`、頭像光環 `avatarFrameId`/`unlockedFrames`、礦石 `ore`、符寶 `talismans`、異火 `fireShards`/`strangeFires`/`fireCollection`（第 38 節）、天星賭坊 `casino`（第 40 節）、夥伴 `partners`/`partnerTeam`/`partnerBond`/`fieldKills`（第 39 節）、藏書閣屬性秘典次數 `elementStudy`、轉世保留的上限 `reincarnateBonus`、年齡 `age`、功德系統 `merit`/`butianStones`/`breakPills`/`evilKills`、善惡 `karma`、懸賞榜 `bountyBoard`/`bountyRefreshAt`/`bountyFaction`/`activeBountyIds`(可多名，第 36 節)/`bountyKills`、付費刷新次數 `paidRefresh`、線上實戰證明 `idleProvenMap`（第 33 節））、`DEFAULT_PLAYER_JSON`（全新角色預設值快照，讀檔/匯入的合併基底）、`enemies`（每隻帶 `attrs`/`status`；野外修士另帶 `cultivator`("正"/"邪")/`ambush`）、`respawnTimer`、`safeZoneTimer`；不存檔的執行期狀態：`inTribulation`/`heartDemon`/`tribulationFatedWin`/懸賞對決 `inBountyDuel`/`duelOpponent`/`duelWeakenTimer`/`duelWeakenMult`/`duelSilenceTimer`/`duelArmorTimer`/丹藥冷卻/`gameOver`/背景補發 `lastTickAt`/`missedTickMs`/線上實戰秒數 `fieldOnlineTicks`/日誌彙總 `waveSummary`/`meditateSummary`/`playerStatus`(玩家身上的凍結/燒傷/中毒)/靈寵輔助計時(`petBuff*`/`petShield*`/`petRegen*`) | **`maps`**（必須排在 config-maps.js 之後） | 幾乎所有檔案都會讀寫 `player` |
 | 17 | `stats.js` | `EQUIP_STAT_KEYS`/`BASE_STAT_KEYS`、`getEquipBonus`(四維＋減傷/閃避/屬性傷害；四維 × 強化倍率與主修武器加成，再加 gear.js `getBonusTotals` 的詞條／套裝／稱號／職業)/`getElementCounts`/`getSpiritRoots`(靈根判定)/`getRootBonus`(靈根加成總和)/`getPlayerElement`(本命五行，五行相剋用)/`getRealmStageExp`(依 realmPacing 換算每階經驗基數，有快取)/`getNextExp`/`getLevelExpNeeded`/`hasLiveBeast`(出戰中才算，呼叫 beast-combat.js 的 isBeastActive)/`getBasePower`/`getPhysAttack`/`getMagAttack`(兩者皆乘上懸賞對決的化功 `getDuelWeakenMult()` 與 `getGearPctBonus`)/`getMaxHp`(乘 `getGearPctBonus('hp')`)/`getMaxMp`(兩者皆加上轉世保留值)/`getReincarnateBonus`/`getSectTier`/`getAllSkills` | `player`、`realms`、`sectData`、`LEVEL_*`、`equipTypes`/`WUXING_COUNTERS`、靈寵輔助計時、`bounty.js`(getDuelWeakenMult) | `ui.js`、`combat.js`、`leveling.js`、`tribulation.js`、`beast-combat.js` 等幾乎全部功能檔 |
 | 18 | `elements.js` | `newStatus`/`getPlayerCombatAttrs`(含 `element`；懸賞對決被破甲時減傷／閃避 × `getDuelArmorMult()`；裝備特效的護體／先手盾／定神／破甲／洞察／剋敵／寒徹／焚燼／蝕骨欄位與套裝提高的上限)/`getWuxingCounterMult`/`withSkillEffect`/`getMapCategoryIndex`/`rollMonsterAttrs`/`resolveHit`/`addDotStack`/`tickStatus`/`formatStatus`/`summarizeTags`/`formatEquipStats` | `config-elements.js`、`stats.js`(getEquipBonus/getPlayerElement)、`library.js`(getElementBookBonus)、`wuxingElements`、`maps`、`playerStatus` | `combat.js`、`tribulation.js`、`ui.js`、`bag.js`/`equipment.js`/`auction.js`/`lingbao-shop.js`(裝備屬性文字) |
@@ -191,6 +194,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 41b | `avatar.js` | `getPlayerAvatar`/`isAvatarUnlocked`/`checkAvatarCondition`/`checkAvatarUnlocks`/`openAvatarModal`/`renderAvatarModal`/`buyAvatar`/`selectAvatar`；頭像光環 `isFrameUnlocked`/`getPlayerFrame`/`checkFrameUnlocks`/`getFrameOverlayBox`/`renderFramedAvatar`/`renderFrameList`/`selectFrame`/`buyFrame` | `avatarList`、`avatarFrameList`/`AVATAR_FRAME_HOLE_FIT`、`player.avatarId`/`unlockedAvatars`/`avatarFrameId`/`unlockedFrames`/`gender`/`realmIndex`/`level`/`reputation`/`tribulationCount`、`realms` | `ui.js`(updateUI 呼叫 checkAvatarUnlocks；戰鬥實況頭像 renderFramedAvatar)、`home-ui.js`(頭像框、`updateHudAvatarFrames`)、HTML 頭像點擊與選擇視窗 |
 | 41d | `leaderboard.js` | 天下戰力榜（第 42 節）：狀態 `lbBackend`/`lbLastUploadAt`/`lbLastRefreshAt`/`lbRows`/`lbError`/`lbBanned`(被 GM 封鎖)；`checkLeaderboardBan`(上傳前查 banned/{uid}，第 50 節)；`lbTsDiffNanos`(兩個 Timestamp 相差奈秒，hist2 用)；`isLeaderboardConfigured`/`getRankPower`(= getPhysAttack 扣掉禁術、靈寵增益、對決化功等暫時倍率)/`getRankAttack`(max(物攻, 術攻) 同樣扣暫時倍率，守城送審用)/`lbStripTempBuffs`/守城榜 `lbDefenseRows`/`lbDefenseMine`/`lbTab`、`submitDefenseRecord(run)`/`flushDefenseSubmit`/`getDefenseRankStatusText`/`fetchDefenseBoard`/`switchLeaderboardTab`/`applyLeaderboardTab`/`defenseBoardHtml`（第 49 節）/`lbLoadScript`/`initLeaderboardBackend`(動態載入 Firebase compat SDK＋匿名登入，回傳 `{db, uid}`)/`uploadLeaderboard`/`startLeaderboardSync`/`fetchLeaderboard`/`openLeaderboardModal`/`refreshLeaderboard(manual)`/`lbEscape`/`lbTimeAgo`/`renderLeaderboard(loading)` | `config-leaderboard.js`、`stats.js`(getPhysAttack)、`bounty.js`(getDuelWeakenMult)、`player`/`petBuffTimer`/`petBuffMult`/`gameOver`、`save.js`(saveLoadFailed)、`main.js`(gameStarted)、`player-profile.js`(sanitizePlayerName)、`realms`、全域 `firebase`（CDN 動態載入） | `main.js`(initGame 呼叫 startLeaderboardSync)、HTML 洞府 HUD「戰力 🏆」與大道石碑、`defense.js`(submitDefenseRecord／getRankPower／getRankAttack／getDefenseRankStatusText) |
 | 41e | `secret-realm.js` | 秘境入口（第 43 節）：`currentSecretRealm`、`getSecretRealm`/`openSecretRealmModal`/`renderSecretRealmList`/`openSecretRealmScene(id)`/`closeSecretRealmScene`(回到列表)/`challengeSecretRealm`(顯示預定玩法與獎勵；`mode: 'defense'` 改呼叫 `openDefenseBattle`)、每日次數 `getSecretRealmDaily`/`getSecretRealmAttemptsLeft`/`useSecretRealmAttempt`/`refreshSecretRealmEnterLabel` | `config-secret-realms.js`、`realms`、`player.realmIndex`、`ui.js`(closeModal)、`defense.js` | `activity.js`(活動「秘境」的 openFn)、HTML 秘境卡片與場景按鈕 |
+| 41g | `zhenmo.js` | 鎮魔塔（第 51 節）：`ZhenmoTower`（閉包；對外 open／close／startQuiz／answer／enterBoss／renderHall／state 與測試用 `_quiz`）、全域 `openZhenmoTower`/`closeZhenmoTower`/`startZhenmoQuiz`/`answerZhenmo(i)`/`enterZhenmoBoss`/`backToZhenmoHall` | `config-zhenmo.js`、`config-zhenmo-questions.js`、`#zhenmo-scene` DOM、`secret-realm.js`(次數)、`ui.js`(addLog) | `secret-realm.js`(challengeSecretRealm 的 `mode: 'tower'`)、HTML 鎮魔塔畫面按鈕 |
 | 41f | `defense.js` | 死守天南城（第 49 節）：`DefenseBattle`（內部函式全包在裡面，對外 open／close／setSpeed／retry／openRecords／closeRecords／waveSpec／waveAtk／waveRealmLabel／waveEnemy／simulateWave 與測試用 `_sim`／`_grantWave`／`_settle`／`_setWave`／`_state`；內部 `recordRun` 寫通關紀錄並送審）、全域 `openDefenseBattle(realmId)`/`closeDefenseBattle`/`setDefenseSpeed`/`openDefenseRecords`/`closeDefenseRecords` | `config-defense.js`（含強度曲線 defenseRealmAtk／defenseWaveAtk）、`leaderboard.js`(送審、getRankPower／getRankAttack)、`format.js`(toWan)、`#defense-scene` DOM、`bounty.js`(getBountyRefSectMult)、`elements.js`(resolveHit/tickStatus/newStatus)、`stats.js`、獎勵用的 gear.js／enhance.js(receiveLootEquip／addStarIron)／strange-fire.js／merit.js／partner.js／codex.js(checkTitleUnlocks)、`secret-realm.js`(次數) | `secret-realm.js`(challengeSecretRealm)、HTML 守城畫面按鈕 |
 | 41c | `settings.js` | `DISPLAY_MODE_KEY`(localStorage 鍵)/`DISPLAY_MODES`/`AUTO_PC_MIN_WIDTH`/`AUTO_PC_MIN_RATIO`、`getDisplayMode`/`resolveDisplayLayout`(回傳 'phone'／'pc')/`setDisplayMode`/字級 `FONT_SCALE_KEY`/`FONT_SCALES`/`getFontScaleId`/`applyFontScale`/`setFontScale`（第 45 節）/`openSettingsModal`/`renderSettingsModal`/`isFullscreen`/`toggleFullscreen`；頂層註冊 `fullscreenchange` 監聽（只綁函式，載入順序不影響） | `home-ui.js`(layoutStage)、`#settings-modal` DOM、`localStorage` | `home-ui.js`(layoutStage 呼叫 resolveDisplayLayout)、HTML ⚙️ 設定按鈕 |
 | 41a | `home-ui.js` | `STAGE_IMG_W`/`STAGE_IMG_H`、`TAB_TITLES`(修仙／戰鬥／宗門／任務／世界)、`layoutStage`(手機／PC 版面切換，並控制寬螢幕用手機版時的「切換回 PC 版」按鈕，第 34 節)/`renderPcStage`(依 config-home-pc.js 產生 PC 版按鈕與熱點)/`initHomeUi`/`switchTab`/`openWorldTab`/`showStageToast`/`showHudResourceInfo`(資源框點擊說明，第 47 節)/`showUnderConstruction`/`openAscensionPlatform`/`openSystemModal`(命運與系統彈窗)/`formatShortNumber`/`getCultivationRate`/`updateHomeHud`(同時寫入手機版 hud-xxx 與 PC 版 pc-hud-xxx) | `player`、`realms`、`PLAYER_AVATARS`、`stats.js`、`tribulation.js`(triggerTribulation)、`activity.js`(openActivity)、`config-home-pc.js`、`settings.js`(resolveDisplayLayout) | `ui.js`(updateUI 結尾呼叫 updateHomeHud)、`main.js`(onload 呼叫 initHomeUi)、HTML 熱點與底部導覽 |
@@ -302,6 +306,7 @@ combatTick() 每秒執行 [combat.js]
 | `openLeaderboardModal`（洞府 HUD 手機 `#hud-name`／PC `#pc-hud-name` 的「戰力 🏆」、洞府「大道石碑」熱點：手機寫在 index.html、PC 在 `pcStageButtons` 的 `stele`）、`refreshLeaderboard(true)`（榜單視窗「重新整理」）、`switchLeaderboardTab('power'/'defense')`（榜單視窗分頁：戰力榜／死守天南城通關榜） | `data/leaderboard.js` |
 | `openSecretRealmModal`（經由 `openActivity('secret')`）、`openSecretRealmScene(id)`（秘境卡片，動態產生）、`closeSecretRealmScene`（場景「↩ 離開」）、`challengeSecretRealm`（場景「⚔️ 入塔挑戰」／「⚔️ 死守天南城」） | `data/secret-realm.js` |
 | `closeDefenseBattle`（守城「↩ 離開」與結算「↩ 返回秘境」）、`setDefenseSpeed(1/2/4)`、`DefenseBattle.retry()`（載入失敗「🔄 重新載入」）、`openDefenseRecords`（守城畫面左上與結算畫面「📜 通關紀錄」）、`closeDefenseRecords`（紀錄視窗「關閉」） | `data/defense.js` |
+| `closeZhenmoTower`（鎮魔塔「↩ 離開」）、`startZhenmoQuiz`（塔廳「📜 開始問答」）、`answerZhenmo(i)`（問答選項）、`enterZhenmoBoss`（塔廳／結算「🚪 進入／開啟 BOSS 房門」）、`backToZhenmoHall`（「稍後再戰」「↩ 返回塔廳」） | `data/zhenmo.js` |
 | `chooseGender` | `data/main.js` |
 
 ## 5. 新增功能的建議流程
@@ -1281,7 +1286,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928w`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928x`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2008,7 +2013,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 海報圖由 `openSecretRealmScene(id)` 依 `secretRealmList[].img` 換上，**新增秘境只要在 config 加一筆**（建議 9:16 直式海報，重要內容放中間）。
 - **2026-09-27 起海報比例可逐秘境設定**：`size: [寬, 高]` 寫進場景的 CSS 變數 `--pw`／`--ph`（沒填 = 768×1365）；有 `imgPc` 且視窗寬 > 高時改用 PC 版海報（`sizePc`）。
   `sceneTitle`／`sceneSub` 在海報上疊標題（`#secret-realm-title`，海報沒有字時用）；`enterLabel` 換按鈕文字；`enterPos: 'bottom'` 按鈕移到海報下方置中（`.secret-enter.bottom`）；
-  `mode: 'defense'` 時按鈕直接 `openDefenseBattle()`（第 49 節），不顯示說明視窗。
+  `mode: 'defense'` 時按鈕直接 `openDefenseBattle()`（第 49 節）、`mode: 'tower'`（鎮魔塔，2026-09-27）直接 `openZhenmoTower()`（第 51 節），不顯示說明視窗。
+  鎮魔塔在 `ZHENMO_BOSS_READY = false` 期間不扣次數，列表卡片顯示「可入塔・問答試煉」、按鈕不顯示今日次數。
   說明視窗必須排在場景 DOM 之後才疊得上去。
 - **已決定、待實作的設計**（記在 config）：
   - 鎮魔塔獎勵：異火碎片（`addFireShards`）、秘境裝備與套裝（gear.js 的 `realm` 管道，目前 `locked: true`）、結識諸天夥伴（`meetPartner`）、靈石／星允鐵等基本資源。
@@ -2226,3 +2232,30 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   攻擊為強度 513% 且與戰力榜相符者 ✅。遊戲端：守住 2 波後 `defenseRuns` 與待送審正確、通關紀錄視窗與大道石碑守城分頁（含道號跳脫）顯示正常，Console 無錯誤。**規則與實際寫入尚未線上實測**。
 - ⚠️ **發布順序**：新規則要先發布——GM 的封鎖批次會一併刪 `defenseBoard`／`defenseSubmit`，舊規則下整批會被拒絕。新版 `leaderboard.js` 會送 `hist`、新規則要求 `hist`——舊規則會擋新程式、新規則會擋快取中的舊程式。請**同時**推上 GitHub 與在主控台發布規則；中間短暫上傳失敗只會 `console.warn`，不影響遊戲。
 - 順帶修正（2026-09-27）：gm.html 的 `fmt()` 原本把整數尾端的 0 也刪掉（2000萬 顯示成「2萬」），已改為只刪小數尾端的 0。
+
+## 51. 秘境「鎮魔塔」100 層・知識問答（`config-zhenmo.js`、`config-zhenmo-questions.js`、`zhenmo.js`；2026-09-27）
+
+- **目前範圍**：100 層關卡、每層知識問答、結算、進入 BOSS 房。**BOSS 資料與戰鬥下一步新增**（`ZHENMO_BOSS_READY = false`）。
+- **入口**：活動「🌀 秘境」→「鎮魔塔」卡片 → 海報場景「⚔️ 入塔挑戰」→ `challengeSecretRealm()` 見 `mode: 'tower'` → `openZhenmoTower()`。開放境界同秘境（煉虛）。
+- **畫面** `#zhenmo-scene`（z-index 101，疊在秘境場景上）：9:16 舞台 `#zhenmo-stage`（寬 = min(100vw, 100dvh×9/16, 560px)），背景為鎮魔塔海報加暗色漸層、四周模糊；四個面板輪流顯示（`show()`）：
+  - **塔廳** `#zm-hall`：目前樓層、「已鎮壓 N / 100 層」、10×10 樓層格（由下往上、第 1 層在左下；紫 = 已通過、金 = 目前）、動作按鈕、規則說明。
+    有本層未用的問答成績時按鈕變成「🚪 進入 BOSS 房（問答 x/10，獎勵 ×m）」，不必重答。
+  - **問答** `#zm-quiz`：「第 N 層・問答 i / 10」、10 格進度（綠對／紅錯／金目前）、限時條（剩 5 秒轉紅）、出處與題型、題目、選項。
+    選擇題 4 個按鈕（A～D，**每次打亂順序**：題庫原始答案 170 題中 154 題是 A）；是非題兩個大按鈕 ○／╳。作答後按鈕標綠／紅、顯示「答對了／答錯了／時間到」，0.9 秒後下一題。
+    **不公布正確答案**（`ZHENMO_REVEAL_ANSWER = false`，玩家要求「只給題目」）。
+  - **結算** `#zm-result`：答對數、10 題 ○╳、本層 BOSS 獎勵倍率（全對另有提示）、「🚪 開啟 BOSS 房門」「稍後再戰（成績保留）」。
+  - **BOSS 房** `#zm-boss`：兩扇門滑開（CSS `zmDoorL/R` 1.6 秒，`prefers-reduced-motion` 時瞬間開）、「第 N 層・BOSS 房」、問答成績與倍率；BOSS 未開放時顯示「塔中 BOSS 尚在甦醒」。
+- **出題**（`drawQuestions`）：從 300 題隨機抽 10 題，避開最近出過的 `ZHENMO_RECENT_AVOID`(100) 題（`player.zhenmo.recent`），同一層每次挑戰題目不同，不能背某層答案。
+- **限時** `ZHENMO_QUIZ_SECONDS`(20)：逾時算答錯（避免邊答邊查）；0 = 不限時。
+- **獎勵倍率** `ZHENMO_QUIZ_REWARD_MULT`（索引 = 答對數）：0 題 ×1.0，每多對 1 題 +0.1，9 題 ×1.9，10 題全對 ×2.5。BOSS 獎勵實作時乘上這個倍率。
+- **存檔** `player.zhenmo = { floor, best, pending, recent }`（`state()` 用到時才建立，不在 state.js 預設值）：
+  `floor` 目前要挑戰的樓層、`best` 最高通過樓層、`pending = { floor, correct, total, mult, at }` 這一層尚未使用的問答成績。
+  答完或**中途離開**（confirm，未作答視為答錯）都會寫入 pending 並記一筆日誌（道具分頁）。重新整理頁面時進行中的問答會消失（未寫入 pending）。
+- **次數**：`ZHENMO_BOSS_READY = true` 後，「開始問答」時扣 1 次秘境每日次數（`useSecretRealmAttempt('zhenmo')`），已有 pending 時進 BOSS 房不再扣。
+  目前 false：問答不扣次數、BOSS 房只顯示「尚未開放」、樓層不前進。
+- **下一步（BOSS）要接的點**：`enterBoss()` 的 `ZHENMO_BOSS_READY` 分支放 BOSS 戰；打贏後 `z.best = z.floor; z.floor++; z.pending = null`，獎勵 × `pending.mult`；輸了是否保留 pending 待定。
+- **題庫**（`config-zhenmo-questions.js`，玩家提供 300 題）：《凡人修仙傳》110、《吞噬星空》100、《斗羅大陸》90；選擇 170、是非 130（○ 93／╳ 37）。
+  轉錄時只修了明顯錯字（「基因基因突變」「參加參加」「綠夜」）與原文重複的第 100 題編號；題目與答案正確性以玩家提供為準，要改直接改檔案。
+  ⚠️ 答案寫在前端程式裡，會看原始碼的人查得到（純前端遊戲無法避免）；是非題 ○ 佔 72%，全選 ○ 期望約對 7 成。
+- 驗證（2026-09-27，本機測試頁）：300 題格式全部正確、無重複；抽題 10 題不重複、選項已打亂（正確答案出現在 A～D 各位置）；答 7 對 2 錯 1 逾時 → 7/10、×1.7 存入 pending；
+  中途離開保留成績、塔廳改顯示「進入 BOSS 房」；開門動畫正常；Console 無錯誤。
