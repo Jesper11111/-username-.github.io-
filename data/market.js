@@ -33,16 +33,44 @@ async function fetchMarket() {
     ]);
     const map = s => s.docs.map(d => Object.assign({ id: d.id }, d.data()));
     mkActive = map(act); mkMine = map(mine); mkWins = map(wins); mkRefunds = map(refs);
+    notifyMarketResults();
     return mkActive;
+}
+
+// 結標提示（2026-09-28 玩家要求「寄售得標加入得標成功提示」）：每筆只提示一次（player.marketNotified）
+//   得標（自己是最高出價且已結束、還沒領）→「🎉 得標成功」；自己的寄售品有人得標且已結束 →「💰 寄售成交」
+function notifyMarketResults() {
+    if (!Array.isArray(player.marketNotified)) player.marketNotified = [];
+    const now = Date.now(), seen = player.marketNotified;
+    const fresh = (d, type) => mkMs(d.endsAt) <= now && !isMarketClaimed(d.id, type) && !seen.includes(`${d.id}_${type}`);
+    const won = mkWins.filter(d => fresh(d, 'item'));
+    const sold = mkMine.filter(d => d.bidder && fresh(d, 'coins'));
+    won.forEach(d => {
+        showToast(`🎉 得標成功：${d.label}（到「待處理」領取）`, 'ok');
+        addLog(`🎉 寄售得標【${d.label}】（${Number(d.bid).toWan()} 靈石），到大道石碑「🏪 寄售」的待處理領取。`, "level-up", false, "item");
+        seen.push(`${d.id}_item`);
+    });
+    sold.forEach(d => {
+        showToast(`💰 寄售成交：${d.label}（${Number(d.bid).toWan()} 靈石）`, 'ok');
+        seen.push(`${d.id}_coins`);
+    });
+    if (seen.length > 200) player.marketNotified = seen.slice(-200);
 }
 
 // ---- 物品：說明、從存檔取出、放回存檔 ----
 function mkStack(key) { return MARKET_STACKS.find(s => s.key === key); }
+// 寄售品裡的裝備：雲端存成 JSON 字串 eqJson（2026-09-28 修正：裝備詞條 subs 是 [[屬性, 數值], …] 巢狀陣列，
+// Firestore 不支援巢狀陣列，直接存物件會被拒絕、上架失敗）；舊格式 item.eq 仍可讀
+function mkItemEq(item) {
+    if (!item) return null;
+    if (item.eq) return item.eq;
+    try { return item.eqJson ? JSON.parse(item.eqJson) : null; } catch (e) { return null; }
+}
 function mkLabel(item) {
     if (!item) return '？';
     if (item.kind === 'blueprint') return `📜 ${item.key.replace('_', '・')} 等鍛造圖紙 ×${item.n}`;
     if (item.kind === 'equip') {
-        const eq = item.eq || {};
+        const eq = mkItemEq(item) || {};
         return `⚔️ ${eq.level ? `Lv.${eq.level} ` : ''}${eq.quality || ''}・${getEquipDisplayName(eq)}${eq.enhance ? ` +${eq.enhance}` : ''}`;
     }
     const s = mkStack(item.key);
@@ -62,7 +90,7 @@ function mkTakeItem(f) {
         if (i < 0) return { error: '背包裡找不到這件裝備（穿在身上的要先卸下）。' };
         if (isEquipLocked(player.equipInventory[i])) return { error: '鎖定中的裝備不能上架，請先解除鎖定。' };
         const eq = player.equipInventory.splice(i, 1)[0];
-        return { item: { kind: 'equip', eq: JSON.parse(JSON.stringify(eq)) } };
+        return { item: { kind: 'equip', eqJson: JSON.stringify(eq) } };
     }
     const s = mkStack(f.key);
     if (!s || n < 1 || (player[s.key] || 0) < n) return { error: '數量不足。' };
@@ -79,7 +107,7 @@ function mkGiveItem(item) {
         if (!player.blueprints || typeof player.blueprints !== 'object') player.blueprints = {};
         player.blueprints[item.key] = (player.blueprints[item.key] || 0) + item.n;
     } else if (item.kind === 'equip') {
-        const eq = Object.assign({}, item.eq, { id: Date.now() + "_" + Math.random().toString(36).slice(2, 10), locked: false });
+        const eq = Object.assign({}, mkItemEq(item), { id: Date.now() + "_" + Math.random().toString(36).slice(2, 10), locked: false });
         player.equipInventory.push(eq);
         recordGearCollected(eq);   // 天磯錄（含圖紙器錄）
     } else {
@@ -121,7 +149,8 @@ async function marketCreate() {
     } catch (e) {
         console.warn('上架失敗：', e);
         mkGiveItem(taken.item);   // 失敗就放回
-        alert(e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : '連線失敗，請稍後再試。');
+        // 附上錯誤代碼，方便玩家截圖回報（例：invalid-argument＝資料格式被雲端拒絕，不是網路問題）
+        alert(e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : `上架失敗，請稍後再試。（${(e && (e.code || e.message)) || '未知錯誤'}）`);
         saveLocal(); renderLeaderboard(false);
         return;
     }
@@ -168,6 +197,7 @@ async function marketBid(id) {
         return;
     }
     player.coins -= amount;
+    showToast(`✅ 出價成功：${d.label}（${amount.toWan()} 靈石，目前最高）`, 'ok');
     mkDone(`🏪 出價 ${amount.toWan()} 靈石競標【${d.label}】（被超過時退回）。`);
     refreshLeaderboard(false);
 }
@@ -205,8 +235,8 @@ async function marketClaim(id, type) {
         else alert('連線失敗，請稍後再試。');
         return;
     }
-    if (type === 'item') { mkGiveItem(d.item); mkDone(`🏪 得標領取【${d.label}】（${Number(d.bid).toWan()} 靈石）！`); }
-    else { const got = Math.floor(d.bid * (1 - MARKET_FEE)); player.coins += got; mkDone(`🏪 寄售【${d.label}】成交 ${Number(d.bid).toWan()} 靈石，扣手續費後入帳 ${got.toWan()}。`); }
+    if (type === 'item') { mkGiveItem(d.item); showToast(`🎉 得標成功：${d.label} 已入袋`, 'ok'); mkDone(`🏪 得標領取【${d.label}】（${Number(d.bid).toWan()} 靈石）！`); }
+    else { const got = Math.floor(d.bid * (1 - MARKET_FEE)); player.coins += got; showToast(`💰 寄售成交，入帳 ${got.toWan()} 靈石`, 'ok'); mkDone(`🏪 寄售【${d.label}】成交 ${Number(d.bid).toWan()} 靈石，扣手續費後入帳 ${got.toWan()}。`); }
     renderLeaderboard(false);
 }
 // 下架（沒人出價時，結標前後都可以）：刪除拍賣品成功才把物品放回
@@ -274,7 +304,8 @@ function marketHtml(loading) {
     else if (!mkActive || !mkActive.length) list = `<p class="lb-note">目前沒有寄售品。</p>`;
     else list = mkActive.map(d => {
         const mine = d.seller === myUid, top = d.bidder === myUid;
-        const eqInfo = d.kind === 'equip' && d.item && d.item.eq ? `<div class="mk-eq">${formatEquipDetails(d.item.eq)}</div>` : '';
+        const eqObj = d.kind === 'equip' ? mkItemEq(d.item) : null;
+        const eqInfo = eqObj ? `<div class="mk-eq">${formatEquipDetails(eqObj)}</div>` : '';
         return `<div class="mk-card${top ? ' top' : ''}">
             <div class="mk-title">${lbEscape(d.label)}</div>${eqInfo}
             <div class="mk-meta">賣家 ${lbEscape(d.sellerName)}｜${d.bidder ? `目前 <b>${Number(d.bid).toWan()}</b>（${lbEscape(d.bidderName)}${top ? '・你' : ''}）` : `起標 <b>${Number(d.startPrice).toWan()}</b>`}｜${mkLeft(d.endsAt)}</div>
