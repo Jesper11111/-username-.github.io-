@@ -236,7 +236,10 @@ async function refreshLeaderboard(manual) {
         else lbRows = await lbWithTimeout(fetchLeaderboard());
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
-        lbError = "連線失敗，請稍後再試。";
+        // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
+        lbError = e && e.code === 'permission-denied'
+            ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
+            : "連線失敗，請稍後再試。";
     }
     renderLeaderboard(false);
 }

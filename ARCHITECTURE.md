@@ -1286,7 +1286,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928x`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928z`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -1969,6 +1969,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 打開榜單（`openLeaderboardModal`）→ `refreshLeaderboard()`：先 `uploadLeaderboard()`（距上次 < 60 秒自動略過），再讀前 100 名（依 power 由高到低）。
   視窗有兩個分頁（2026-09-27）：🏆 戰力榜／🏯 死守天南城通關榜（第 49 節），`refreshLeaderboard` 只讀目前分頁的榜。
 - Firebase SDK（compat 版，`LEADERBOARD_SDK_BASE`）在第一次需要時才用 `<script>` 動態載入，app／auth／firestore 三支**逐一檢查、缺哪支補哪支**（避免上次只載入一半），失敗會在下次重試；上傳失敗只 `console.warn`，不影響遊戲。
+- 讀取失敗訊息（2026-09-27）：`permission-denied` 顯示「伺服器設定更新中」（守城分頁：「守城榜尚未開放」），其餘顯示「連線失敗」。
+  事故：新版程式推上後主控台還沒發布新規則，大道石碑的守城分頁讀 `defenseBoard` 被拒、顯示「連線失敗」；戰力榜本身正常。**新規則一定要發布**。
 - 斷線時 Firestore 的 `set()` 要等連回伺服器才完成：開榜單時上傳與讀取各用 `lbWithTimeout()` 最多等 `LEADERBOARD_TIMEOUT_MS`(8 秒)，逾時顯示「連線失敗」，不會卡在「讀取中」。
 - 2026-09-28 以線上真實資料（39 名玩家，境界 0～15）檢查規則的戰力上限：最高只用到上限的 0.00008%，正常玩家不會被擋。
 - 集合 `leaderboard`，**文件 id = 匿名登入 uid**（存在瀏覽器 IndexedDB，同一瀏覽器永遠同一筆）。欄位：
@@ -2248,12 +2250,14 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **出題**（`drawQuestions`）：從 300 題隨機抽 10 題，避開最近出過的 `ZHENMO_RECENT_AVOID`(100) 題（`player.zhenmo.recent`），同一層每次挑戰題目不同，不能背某層答案。
 - **限時** `ZHENMO_QUIZ_SECONDS`(20)：逾時算答錯（避免邊答邊查）；0 = 不限時。
 - **獎勵倍率** `ZHENMO_QUIZ_REWARD_MULT`（索引 = 答對數）：0 題 ×1.0，每多對 1 題 +0.1，9 題 ×1.9，10 題全對 ×2.5。BOSS 獎勵實作時乘上這個倍率。
+  **一輪 10 題只影響當前這一層 BOSS 的擊敗獎勵**（玩家指定，2026-09-27）：`state()` 發現 `pending.floor ≠ floor` 就作廢；擊敗 BOSS 時呼叫 `ZhenmoTower.clearFloor()`
+  （best 記錄、floor +1、pending 清空，回傳本層倍率），進入下一層必須重新答題。塔廳規則說明也寫明「加成只對本層 BOSS 有效」。
 - **存檔** `player.zhenmo = { floor, best, pending, recent }`（`state()` 用到時才建立，不在 state.js 預設值）：
   `floor` 目前要挑戰的樓層、`best` 最高通過樓層、`pending = { floor, correct, total, mult, at }` 這一層尚未使用的問答成績。
   答完或**中途離開**（confirm，未作答視為答錯）都會寫入 pending 並記一筆日誌（道具分頁）。重新整理頁面時進行中的問答會消失（未寫入 pending）。
 - **次數**：`ZHENMO_BOSS_READY = true` 後，「開始問答」時扣 1 次秘境每日次數（`useSecretRealmAttempt('zhenmo')`），已有 pending 時進 BOSS 房不再扣。
   目前 false：問答不扣次數、BOSS 房只顯示「尚未開放」、樓層不前進。
-- **下一步（BOSS）要接的點**：`enterBoss()` 的 `ZHENMO_BOSS_READY` 分支放 BOSS 戰；打贏後 `z.best = z.floor; z.floor++; z.pending = null`，獎勵 × `pending.mult`；輸了是否保留 pending 待定。
+- **下一步（BOSS）要接的點**：`enterBoss()` 的 `ZHENMO_BOSS_READY` 分支放 BOSS 戰；打贏後 `const mult = clearFloor()`，獎勵 × mult；輸了是否保留 pending（同層重打免重答）待定。
 - **題庫**（`config-zhenmo-questions.js`，玩家提供 300 題）：《凡人修仙傳》110、《吞噬星空》100、《斗羅大陸》90；選擇 170、是非 130（○ 93／╳ 37）。
   轉錄時只修了明顯錯字（「基因基因突變」「參加參加」「綠夜」）與原文重複的第 100 題編號；題目與答案正確性以玩家提供為準，要改直接改檔案。
   ⚠️ 答案寫在前端程式裡，會看原始碼的人查得到（純前端遊戲無法避免）；是非題 ○ 佔 72%，全選 ○ 期望約對 7 成。

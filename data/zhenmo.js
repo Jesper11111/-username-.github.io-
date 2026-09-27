@@ -2,6 +2,7 @@
 // 流程：秘境場景「⚔️ 入塔挑戰」→ openZhenmoTower()：塔廳（目前樓層、100 層進度）→ 問答 10 題（限時、選項打亂）
 //       → 結算（答對數 → 本層 BOSS 獎勵倍率，存 player.zhenmo.pending）→「🚪 開啟 BOSS 房門」→ BOSS 房（BOSS 資料待新增）
 // 存檔 player.zhenmo = { floor: 目前要挑戰的樓層, best: 最高通過樓層, pending: { floor, correct, total, mult, at } | null, recent: [最近出過的題號] }
+//   pending 只對同一層有效：擊敗 BOSS（clearFloor）或樓層改變時清除，下一層要重新答題
 // 內部函式包在 ZhenmoTower 閉包裡，對外只開放 onclick 用的函式。
 
 const ZhenmoTower = (() => {
@@ -15,8 +16,19 @@ const ZhenmoTower = (() => {
         if (!(z.floor >= 1)) z.floor = 1;
         if (!(z.best >= 0)) z.best = 0;
         if (!Array.isArray(z.recent)) z.recent = [];
-        if (z.pending === undefined) z.pending = null;
+        // 問答加成只對「取得成績的那一層」BOSS 有效：樓層已不同就作廢（進入下一層必須重新答題）
+        if (z.pending === undefined || (z.pending && z.pending.floor !== z.floor)) z.pending = null;
         return z;
+    }
+    // 擊敗本層 BOSS 後呼叫（BOSS 戰實作時接上）：記錄最高樓層、前進一層、清掉本層問答加成
+    // 回傳本層使用的獎勵倍率（沒答題 = ×1）
+    function clearFloor() {
+        const z = state();
+        const mult = z.pending ? z.pending.mult : 1;
+        z.best = Math.max(z.best, z.floor);
+        z.floor = Math.min(ZHENMO_TOTAL_FLOORS, z.floor + 1);
+        z.pending = null;
+        return mult;
     }
     const multOf = correct => ZHENMO_QUIZ_REWARD_MULT[Math.max(0, Math.min(ZHENMO_QUIZ_REWARD_MULT.length - 1, correct))];
 
@@ -61,6 +73,7 @@ const ZhenmoTower = (() => {
         $('zm-hall-rule').innerHTML =
             `每層先通過<b>知識問答</b>（${ZHENMO_QUIZ_COUNT} 題${ZHENMO_QUIZ_SECONDS ? `，每題限時 ${ZHENMO_QUIZ_SECONDS} 秒` : ''}），才能開啟 BOSS 房門。<br>`
             + `答對越多，本層 BOSS 獎勵越高：${ZHENMO_QUIZ_REWARD_MULT.map((m, i) => i % 5 === 0 || i === ZHENMO_QUIZ_COUNT ? `${i} 題 ×${m}` : '').filter(Boolean).join('、')}。<br>`
+            + `加成只對本層 BOSS 有效，進入下一層須重新答題。<br>`
             + (ZHENMO_BOSS_READY ? `每次開始問答扣 1 次挑戰（今日剩 ${left}/${SECRET_REALM_DAILY_ATTEMPTS}）。` : '🚧 塔中 BOSS 尚在甦醒：目前問答不扣挑戰次數，成績會保留到 BOSS 開放。');
         show('hall');
     }
@@ -176,7 +189,7 @@ const ZhenmoTower = (() => {
 
     function escapeZm(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-    return { open, close, startQuiz, answer, enterBoss, renderHall, state,
+    return { open, close, startQuiz, answer, enterBoss, renderHall, state, clearFloor,
              _quiz: () => quiz };   // 測試用
 })();
 

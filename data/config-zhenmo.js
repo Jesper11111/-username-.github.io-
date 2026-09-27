@@ -1,6 +1,7 @@
 // 秘境「鎮魔塔」100 層（zhenmo.js，ARCHITECTURE.md 第 51 節）
 // 每層流程：塔廳 →「📜 開始問答」10 題知識問答（題庫 config-zhenmo-questions.js）→ 結算答對數 →「🚪 開啟 BOSS 房門」→ BOSS 戰（待新增）
 // 答對越多，這一層 BOSS 的獎勵倍率越高（問答結果會保留到打完 BOSS，中途離開也不會消失）。
+// 一輪 10 題只影響「當前這一層」BOSS 的擊敗獎勵；進入下一層後加成歸零，要重新答題。
 
 const ZHENMO_TOTAL_FLOORS = 100;
 const ZHENMO_QUIZ_COUNT = 10;          // 每層問答題數
