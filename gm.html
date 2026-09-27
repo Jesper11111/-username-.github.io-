@@ -175,7 +175,8 @@ const WARN_USE = 0.15;           // 佔上限 15% 以上標黃
 const LEVEL_WARN_PER_REALM = 1500;   // 等級 > (境界+1) × 1500 標「等級與境界不符」（2026-09-27：天仙 5676 級正常、化神 10000 級異常）
 const FULL_LIMIT = 1000;         // 管理者一次讀取的筆數
 // 戰力暴增判定的預設值（頁面上可改，存在本瀏覽器 localStorage）
-const JUMP_DEFAULTS = { hours: 1, ratio: 10, minWan: 100 };   // 1 小時內成長 10 倍以上、且新戰力 ≥ 100 萬
+// 2026-09-27 依公式估算：正常修煉 1 小時最多約 4～10 倍（戰力 ≥ 100 萬時），加上換宗門／一次換裝可再 ×6～13，所以取 30 倍
+const JUMP_DEFAULTS = { hours: 1, ratio: 30, minWan: 100 };   // 1 小時內成長 30 倍以上、且新戰力 ≥ 100 萬
 const JUMP_STORE_KEY = 'gm_jump_settings';
 
 const $ = id => document.getElementById(id);
