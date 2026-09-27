@@ -9,8 +9,17 @@
 //   sect 稱號的名稱會自動帶上目前的宗門名（{sect}）
 //   賭運（player.casino）：casinoStones（累計切石 N 顆）、casinoFire（切出整朵異火 N 次）、casinoTriple（押中指定豹子 N 次）、casinoBigWin（擲骰單把淨贏 ≥ N）
 //   defenseWave（秘境「魔屠天南」歷史最高守住 N 波，player.defenseBest，第 49 節）
+//   bpCount／bpTier／bpPlatinum（圖紙器錄，codex.js，第 55 節）
 
 const titleList = [
+    // ---- 圖紙器錄（7，2026-09-28，第 55 節）：cond bpCount（點亮格數）、bpTier（某檔 17 部位全收）、bpPlatinum（白金格數）----
+    { id: "bp17",      name: "天工初成", cond: { type: "bpCount", value: 17 },     bonus: { statPct: 0.01 } },
+    { id: "bpTier1500", name: "渡劫神兵", cond: { type: "bpTier", value: 1500 },   bonus: { atkPct: 0.01 } },
+    { id: "bp60",      name: "百工造化", cond: { type: "bpCount", value: 60 },     bonus: { hpPct: 0.02 } },
+    { id: "bpTier5000", name: "真仙寶庫", cond: { type: "bpTier", value: 5000 },   bonus: { atkPct: 0.02 } },
+    { id: "bpTier10000", name: "道祖神兵", cond: { type: "bpTier", value: 10000 }, bonus: { statPct: 0.02 } },
+    { id: "bpAll",     name: "萬器天工", cond: { type: "bpCount", value: 119 },    bonus: { atkPct: 0.03 } },
+    { id: "bpPlat17",  name: "先天道器師", cond: { type: "bpPlatinum", value: 17 }, bonus: { "fx:法爆": 0.03 } },
     // ---- 收藏（8）----
     { id: "codex50",   name: "初窺天磯", cond: { type: "codex", value: 50 },   bonus: { statPct: 0.01 } },
     { id: "codex100",  name: "識器之人", cond: { type: "codex", value: 100 },  bonus: { "fx:聚財": 0.02 } },

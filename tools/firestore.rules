@@ -7,7 +7,9 @@ rules_version = '2';
 //
 // 死守天南城通關榜：玩家送審到 defenseSubmit/{uid}，GM 審核通過才寫入 defenseBoard/{uid}（玩家不能直接上榜）。
 //
-// 管理者：在主控台手動建立 admins/{管理者的 Google 登入 uid}（任意欄位）。只有管理者能刪除榜單、讀取完整榜單、管理黑名單。
+// 管理者：在主控台手動建立 admins/{管理者的 Google 登入 uid}（任意欄位）。只有管理者能刪除榜單、讀取完整榜單、管理黑名單、寄信與建立兌換碼。
+//
+// 仙府信箱（mail／mailClaims）與兌換碼（codes／codeClaims）：GM 寄出，玩家每封／每組代碼限領一次（2026-09-28）。
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -64,6 +66,50 @@ service cloud.firestore {
       allow get: if true;
       allow list: if request.query.limit <= 100 || isAdmin();
       allow write: if isAdmin();
+    }
+
+    // ---- 仙府信箱與兌換碼（data/mailbox.js、gm.html「📮 發放獎勵」，ARCHITECTURE.md 第 56 節）----
+    // 信件：GM 寫；玩家只能讀寄給全服（to == 'all'）或寄給自己 uid 的信（遊戲以 where('to', 'in', ['all', uid]) 查詢）
+    match /mail/{mailId} {
+      allow get, list: if isAdmin() || (request.auth != null && resource.data.to in ['all', request.auth.uid]);
+      allow write: if isAdmin();
+    }
+    // 領取紀錄：文件 id 必須是「自己的 uid_信件 id」，只能建立一次（已存在時 set 會變成 update 而被拒絕），玩家不能改、不能刪
+    // 信件必須存在、寄給全服或自己、沒過期；被封鎖的帳號不能領
+    match /mailClaims/{claimId} {
+      allow get: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow list, delete: if isAdmin();
+      allow update: if false;
+      allow create: if request.auth != null && !isBanned(request.auth.uid)
+        && request.resource.data.keys().hasOnly(['uid', 'mailId', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.mailId is string
+        && claimId == request.auth.uid + '_' + request.resource.data.mailId
+        && request.resource.data.at == request.time
+        && exists(/databases/$(database)/documents/mail/$(request.resource.data.mailId))
+        && get(/databases/$(database)/documents/mail/$(request.resource.data.mailId)).data.to in ['all', request.auth.uid]
+        && (get(/databases/$(database)/documents/mail/$(request.resource.data.mailId)).data.get('expiresAt', null) == null
+            || get(/databases/$(database)/documents/mail/$(request.resource.data.mailId)).data.expiresAt > request.time);
+    }
+    // 兌換碼：文件 id = 代碼（大寫）。玩家知道代碼才能讀（get），不能列出全部；只有 GM 能建立、修改、刪除
+    match /codes/{code} {
+      allow get: if request.auth != null;
+      allow list, write: if isAdmin();
+    }
+    // 兌換紀錄：文件 id =「自己的 uid_代碼」，每組代碼每個帳號只能建立一次；代碼必須存在且沒過期
+    match /codeClaims/{claimId} {
+      allow get: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow list, delete: if isAdmin();
+      allow update: if false;
+      allow create: if request.auth != null && !isBanned(request.auth.uid)
+        && request.resource.data.keys().hasOnly(['uid', 'code', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.code is string
+        && claimId == request.auth.uid + '_' + request.resource.data.code
+        && request.resource.data.at == request.time
+        && exists(/databases/$(database)/documents/codes/$(request.resource.data.code))
+        && (get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.get('expiresAt', null) == null
+            || get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.expiresAt > request.time);
     }
 
     match /leaderboard/{uid} {

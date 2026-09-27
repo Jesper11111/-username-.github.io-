@@ -53,7 +53,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -83,6 +83,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
   golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）
+  mailbox.js          仙府信箱與兌換碼：讀信、領取、兌換、獎勵發放（第 56 節；設定 config-mailbox.js，GM 端在 gm.html）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
@@ -1308,7 +1309,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260929u`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260929w`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2554,3 +2555,38 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   這幾張的妖獸因此比之前強（多約 1～3 個境界），對應它們原本標示的適合境界。
 - 驗證（本機，新制、藍色武器、宗門 +50%、不吃丹藥 1 小時）：鬼谷八荒 煉虛 1 階 最低 58%、崑吾山 合體 65%、雷鳴大陸 大乘 59%、天淵戰場 渡劫 44%、荒古禁地 仙人 44%，皆無陣亡，經驗為節奏的 1.12～1.24 倍；
   大乘去天淵戰場最低 0%（越級門檻）；大乘推薦地圖顯示雷鳴大陸；Console 無錯誤。
+- **圖紙器錄**（2026-09-28，版本 `20260929v`，使用者同意）：天磯錄新增「📐 圖紙器錄」分頁（codex.js 的 `renderCodexBlueprints`），7 檔 × 17 部位共 119 格。
+  - 紀錄 `player.blueprintCodex = { "劍_1500": [取得過的品級] }`：`recordGearCollected` 內呼叫 `recordBlueprintCollected`，所以圖紙鍛造、進化白金、讀舊存檔補記都會點亮（只記 `BLUEPRINT_LEVELS` 等級、可鍛造部位）。
+  - 畫面：每檔一列「1500 等 17/17」＋ 17 格（點亮顯示部位名、顏色＝取得過的最高品級；未點亮「？」），頂端「已點亮 N / 119 格｜白金 N」。
+    品質色套在格子內層的 `<span class="quality-…">`（白金是漸層文字，和格子背景放在同一個元素會變成空白）；CSS `.bp-row／.bp-cells／.bp-cell`。
+  - 稱號 7 個（config-titles.js，條件 `bpCount`／`bpTier`／`bpPlatinum`，我擬的名稱與加成，可再改）：
+    天工初成（點亮 17 格，四維 +1%）、渡劫神兵（1500 等全收，攻擊 +1%）、百工造化（60 格，氣血 +2%）、真仙寶庫（5000 等全收，攻擊 +2%）、
+    道祖神兵（10000 等全收，四維 +2%）、萬器天工（119 格全收，攻擊 +3%）、先天道器師（白金 17 格，技能傷害 +3%）。
+  - 驗證（本機）：1500 等 17 部位各打一件 → 17/17、自動獲得「天工初成」「渡劫神兵」；把劍進化成白金 → 該格記錄 綠色＋白金；各品級顏色與白金格顯示正常；Console 無錯誤。
+
+## 56. 仙府信箱與兌換碼（GM 發放獎勵；`config-mailbox.js`、`mailbox.js`、gm.html；2026-09-28，版本 `20260929w`）
+
+- **目的**：使用者問「能不能用 GM 權限發放獎勵」，選擇**信箱（單人＋全服）與兌換碼都做**。存檔只在玩家瀏覽器，GM 不能直接改存檔，所以改成 GM 把獎勵放到雲端、玩家的遊戲自己來領。
+- **雲端集合**（`tools/firestore.rules`）：
+  - `mail/{自動 id}`：`{ to: 'all' 或 uid, title, body, rewards, expiresAt, createdBy, createdAt }`；只有 GM 能寫；玩家只能讀寄給全服或自己的信。
+  - `mailClaims/{uid}_{mailId}`：`{ uid, mailId, at }`；玩家領取時建立，**只能建立一次**（已存在時 set 會變成 update 被拒絕），不能改、不能刪；信件須存在、寄給全服或自己、未過期，被封鎖的帳號不能領。
+  - `codes/{代碼}`：`{ title, rewards, expiresAt, … }`；玩家知道代碼才能 `get`，不能列出全部；只有 GM 能寫。
+  - `codeClaims/{uid}_{代碼}`：同上，每組代碼每個帳號一次、代碼須存在且未過期。
+- **獎勵格式** `rewards`：數量型 `MAIL_REWARD_FIELDS`（靈石、七彩補天石、星允鐵、功德、聲望、洗髓丹、伐骨丹、化神靈果、破障丹；星允鐵直接加數量，不套「尋鐵」）、
+  `blueprints: { "劍_1500": 張數 }`、`servants: { "傳說": 人數 }`（品質同 servantQualities，產生格式同野外救出的僕從）。每項上限 `MAIL_REWARD_MAX`（防手誤）。
+  凝元丹是煉好直接服用、背包沒有此道具，所以不能寄。
+- **遊戲端**（mailbox.js，共用戰力榜的 Firebase 連線 `initLeaderboardBackend`，戰力榜未開通時不連網）：
+  - `startMailboxSync()`（main.js 的 `initGame`）：進遊戲約 20 秒後、之後每 `MAIL_REFRESH_MS` 30 分鐘 `refreshMailbox()`：查 `where('to', 'in', ['all', uid])`，過濾過期與已領
+    （本機快取 `player.mailClaimed`；沒有快取的再各讀一次 `mailClaims` 確認），有新信寫日誌提示。
+  - 入口：⚙️ 設定視窗「📮 仙府信箱（N 封待領）」→ `#mailbox-modal`：信件卡片（標題、內文、獎勵、全服／個人、期限、🎁 領取）、🔄 重新整理、🎟️ 兌換碼輸入框。
+  - 領取 `claimMail(id)`／兌換 `redeemCode()`：先檢查僕從空位（`MAX_SERVANTS`）→ 建立雲端領取紀錄 → 成功才 `grantMailRewards` 加進存檔、寫日誌（道具分頁）並立即存檔；
+    被拒（permission-denied）視為已領過／已過期。兌換碼自動轉大寫、去空白，格式英數與 - _、3～40 字。其他玩家的文字一律經 `lbEscape` 才插入畫面。
+- **GM 端**（gm.html「📮 發放獎勵」分頁）：選「仙府信件」或「兌換碼」；信件對象為全服或指定 uid（戰力榜每列多一個「📮」按鈕自動帶入並顯示道號）；
+  標題、內文、有效天數（0 = 永久）、各項數量、圖紙（部位＋等級＋張數）、僕從（品質＋人數），即時預覽；送出前 confirm。
+  一鍵預設 `MAIL_PRESETS`：**「🎁 100 萬靈石＋傳說僕從一名」**（使用者指定，標題「仙府賀禮」）。下方列出已寄信件（可刪除，未領的就領不到）與兌換碼（可刪除、「統計」已兌換人數）。
+  gm.html 沒有裝備與僕從設定，圖紙部位／等級與僕從品質清單寫在 config-mailbox.js（`MAIL_BLUEPRINT_SLOTS`／`MAIL_BLUEPRINT_LEVELS`／`MAIL_SERVANT_QUALITIES`），改那邊要一起改。
+- **限制**：玩家換瀏覽器、清資料、無痕視窗會變成新 uid，收不到寄給舊 uid 的個人信（全服信與兌換碼仍可領）；從沒上過戰力榜的人沒有 uid 可選。
+  獎勵由玩家端加進存檔（純前端遊戲的本質），信箱是「方便發獎勵」，不是防作弊。讀取額度：每位在線玩家每 30 分鐘約「信件數」次讀取，舊信件記得刪除。
+- **上線順序**：① 主控台發布新版 `tools/firestore.rules`（含第 52 節的新戰力上限與本節的信箱規則）→ ② push → ③ GM 後台寄信或建兌換碼。規則未發布時，信箱顯示「信箱尚未開放」、兌換顯示「兌換碼功能尚未開放」，不影響遊戲。
+- 驗證（本機）：預設禮包發放 → 靈石 +100 萬、多一名傳說僕從（效率 ×3）；圖紙、補天石、星允鐵入帳；僕從小屋滿時擋下並提示；信件卡片與內文跳脫正常、設定按鈕顯示「1 封待領」；
+  連線雲端（規則未發布）顯示「信箱尚未開放」、兌換碼格式檢查與「尚未開放」提示正常；gm.html 分頁、預設、圖紙加入、「📮」帶入 uid 正常；Console 無錯誤。**寫入雲端與規則需發布後線上實測**。

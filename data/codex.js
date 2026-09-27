@@ -8,7 +8,25 @@ function recordGearCollected(eq) {
     if (!player.gearCodex) player.gearCodex = {};
     let list = player.gearCodex[eq.gearId] || (player.gearCodex[eq.gearId] = []);
     if (!list.includes(eq.quality)) list.push(eq.quality);
+    recordBlueprintCollected(eq);
 }
+
+// ---- 圖紙器錄（2026-09-28，第 55 節）：Lv.1500 以上的圖紙裝備依「部位 × 等級」記錄取得過的品級 ----
+// 存檔：player.blueprintCodex = { "劍_1500": ["橙色", "白金"], ... }（key 同 equipment.js 的 blueprintKey）
+function recordBlueprintCollected(eq) {
+    if (!eq || !BLUEPRINT_LEVELS.includes(eq.level)) return;
+    const slot = eq.name;
+    if (!(slot in equipTypes) || NON_FORGEABLE_SLOTS.includes(slot)) return;
+    if (!player.blueprintCodex) player.blueprintCodex = {};
+    const list = player.blueprintCodex[blueprintKey(slot, eq.level)] || (player.blueprintCodex[blueprintKey(slot, eq.level)] = []);
+    if (!list.includes(eq.quality)) list.push(eq.quality);
+}
+function getBlueprintSlots() { return Object.keys(equipTypes).filter(s => !NON_FORGEABLE_SLOTS.includes(s)); }
+function getBlueprintCodexGot(slot, level) { return (player.blueprintCodex || {})[blueprintKey(slot, level)] || []; }
+function countBlueprintCodex(level, quality) {
+    return getBlueprintSlots().filter(s => { const g = getBlueprintCodexGot(s, level); return quality ? g.includes(quality) : g.length > 0; }).length;
+}
+function countBlueprintCodexAll(quality) { return BLUEPRINT_LEVELS.reduce((a, l) => a + countBlueprintCodex(l, quality), 0); }
 
 // 舊存檔：把目前持有的圖鑑裝備補記進天磯錄（讀檔時在 migrateGearIds 之後呼叫）
 function migrateGearCodex() {
@@ -71,6 +89,9 @@ function isTitleConditionMet(c) {
         case 'casinoTriple': return ((player.casino || {}).triples || 0) >= c.value;
         case 'casinoBigWin': return ((player.casino || {}).maxDiceWin || 0) >= c.value;
         case 'defenseWave': return (player.defenseBest || 0) >= c.value;   // 魔屠天南最高守住波數（defense.js）
+        case 'bpCount': return countBlueprintCodexAll() >= c.value;   // 圖紙器錄點亮格數
+        case 'bpTier': return countBlueprintCodex(c.value) >= getBlueprintSlots().length;   // 某一檔 17 部位全收
+        case 'bpPlatinum': return countBlueprintCodexAll(PLATINUM_QUALITY.name) >= c.value;   // 圖紙器錄白金格數
     }
     return false;
 }
@@ -98,6 +119,9 @@ function describeTitleCondition(c) {
         case 'casinoTriple': return `天星賭坊押中指定豹子`;
         case 'casinoBigWin': return `天星賭坊擲骰單把淨贏 ${c.value.toWan()} 靈石`;
         case 'defenseWave': return `秘境「魔屠天南」守住第 ${c.value} 波（最高 ${player.defenseBest || 0}）`;
+        case 'bpCount': return `圖紙器錄點亮 ${c.value} 格（目前 ${countBlueprintCodexAll()} / ${BLUEPRINT_LEVELS.length * getBlueprintSlots().length}）`;
+        case 'bpTier': return `圖紙器錄 ${c.value} 等 ${getBlueprintSlots().length} 部位全收（目前 ${countBlueprintCodex(c.value)}）`;
+        case 'bpPlatinum': return `圖紙器錄白金 ${c.value} 格（目前 ${countBlueprintCodexAll(PLATINUM_QUALITY.name)}）`;
     }
     return '';
 }
@@ -169,12 +193,13 @@ function setCodexSlot(slot) { codexSlot = slot; renderCodexModal(); }
 function renderCodexModal() {
     let box = document.getElementById('codex-container');
     if (!box || document.getElementById('codex-modal').style.display !== 'flex') return;
-    let tabs = [['gear', '📜 器錄'], ['sets', '❖ 套裝'], ['fires', '🔥 異火'], ['titles', '🏅 稱號'], ['prof', '⚔️ 職業']]
+    let tabs = [['gear', '📜 器錄'], ['bp', '📐 圖紙器錄'], ['sets', '❖ 套裝'], ['fires', '🔥 異火'], ['titles', '🏅 稱號'], ['prof', '⚔️ 職業']]
         .map(([k, label]) => `<button class="codex-tab${codexTab === k ? ' active' : ''}" onclick="setCodexTab('${k}')">${label}</button>`).join('');
     let body = codexTab === 'sets' ? renderCodexSets()
              : codexTab === 'fires' ? renderCodexFires()   // strange-fire.js
              : codexTab === 'titles' ? renderCodexTitles()
              : codexTab === 'prof' ? renderProfessionTab()
+             : codexTab === 'bp' ? renderCodexBlueprints()
              : renderCodexGear();
     box.innerHTML = `
         <p style="text-align: center; color: #9ca3af; font-size: 0.85em; margin: 0 0 8px;">
@@ -219,6 +244,26 @@ function renderCodexGear() {
             <div>${stars}</div></div>`;
     }).join('');
     return `<div class="codex-slots">${slots}</div>${formatCodexStarLegend()}<div class="codex-grid">${cards}</div>`;
+}
+
+// 圖紙器錄：7 檔 × 17 部位，格子依取得過的最高品級上色（沒取得顯示「？」），每檔顯示進度
+function renderCodexBlueprints() {
+    const slots = getBlueprintSlots(), total = BLUEPRINT_LEVELS.length * slots.length;
+    const rows = BLUEPRINT_LEVELS.map(level => {
+        const cells = slots.map(s => {
+            const got = getBlueprintCodexGot(s, level);
+            const best = got.includes('白金') ? '白金' : CODEX_QUALITIES.filter(q => got.includes(q)).pop();
+            return got.length
+                ? `<span class="bp-cell on" title="${s}・${level} 等：${got.join('、')}"><span class="quality-${best}">${s}</span></span>`   // 品質色套在內層（白金是漸層文字，不能和格子背景同一個元素）
+                : `<span class="bp-cell" title="${s}・${level} 等：尚未取得">？</span>`;
+        }).join('');
+        const n = countBlueprintCodex(level);
+        return `<div class="bp-row"><div class="bp-row-head">${level} 等 <b style="color:${n === slots.length ? '#4ade80' : 'var(--accent)'};">${n}/${slots.length}</b></div><div class="bp-cells">${cells}</div></div>`;
+    }).join('');
+    return `<p style="color: #9ca3af; font-size: 0.82em; text-align: center; margin: 0 0 8px;">
+            Lv.1500 以上只能用「鍛造圖紙」打造（天榜懸賞、死守天南城首領波、鎮魔塔 BOSS 掉落），打出來就點亮；格子顏色＝取得過的最高品級（進化白金也會記錄）。<br>
+            已點亮 <b style="color: var(--accent);">${countBlueprintCodexAll()}</b> / ${total} 格｜<span class="quality-白金">白金 ${countBlueprintCodexAll(PLATINUM_QUALITY.name)}</span></p>
+        ${rows}`;
 }
 
 function renderCodexSets() {

@@ -85,6 +85,7 @@
         <button data-tab="defense">🏯 守城審核</button>
         <button data-tab="bans">⛔ 黑名單</button>
         <button data-tab="patrol">🛡️ 自動巡檢</button>
+        <button data-tab="reward">📮 發放獎勵</button>
     </div>
 
     <!-- 戰力榜 -->
@@ -204,6 +205,60 @@
         </div>
     </section>
 
+    <!-- 發放獎勵：仙府信箱（單人／全服）與兌換碼（data/config-mailbox.js、data/mailbox.js，ARCHITECTURE.md 第 56 節） -->
+    <section id="tab-reward" hidden>
+        <div class="card">
+            <h2>📮 寄出獎勵</h2>
+            <div class="toolbar">
+                <label><input type="radio" name="rw-mode" value="mail" checked> 仙府信件</label>
+                <label><input type="radio" name="rw-mode" value="code"> 兌換碼</label>
+                <span class="spacer" style="flex:1"></span>
+                <span id="rw-presets"></span>
+            </div>
+            <div class="toolbar" id="rw-mail-row">
+                <label>對象 <select id="rw-to"><option value="all">全服玩家</option><option value="uid">指定玩家 uid</option></select></label>
+                <label>uid <input type="text" id="rw-uid" style="width: 260px; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px;" placeholder="戰力榜該列按「📮」自動帶入"></label>
+                <span class="note" id="rw-uid-name"></span>
+            </div>
+            <div class="toolbar" id="rw-code-row" hidden>
+                <label>兌換碼 <input type="text" id="rw-code" maxlength="40" style="width: 200px; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px;" placeholder="例：SPRING2026（英數、- _）"></label>
+            </div>
+            <div class="toolbar">
+                <label>標題 <input type="text" id="rw-title" maxlength="30" style="width: 220px; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px;"></label>
+                <label>有效 <input type="number" id="rw-days" value="30" min="0"> 天（0 = 永久）</label>
+            </div>
+            <textarea id="rw-body" maxlength="300" rows="2" placeholder="內文（選填）" style="width:100%; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font-family:inherit; margin-bottom:8px;"></textarea>
+            <div class="toolbar" id="rw-fields"></div>
+            <div class="toolbar">
+                <label>📜 圖紙 <select id="rw-bp-slot"></select> <select id="rw-bp-level"></select> × <input type="number" id="rw-bp-n" value="1" min="1"></label>
+                <button id="rw-bp-add">＋ 加入圖紙</button>
+                <label>👤 僕從 <select id="rw-sv-q"></select> × <input type="number" id="rw-sv-n" value="1" min="1"></label>
+                <button id="rw-sv-add">＋ 加入僕從</button>
+                <button id="rw-extra-clear">清除圖紙／僕從</button>
+            </div>
+            <p class="note">獎勵預覽：<b id="rw-preview" style="color: var(--accent);">（無）</b></p>
+            <button id="rw-send" class="primary admin-only">📮 送出</button>
+            <p class="note">
+                玩家遊戲每 30 分鐘（與打開信箱時）檢查新信，在 ⚙️ 設定 →「📮 仙府信箱」領取；兌換碼也在同一個視窗輸入。每封信、每組兌換碼每個帳號限領一次（雲端規則保證）。<br>
+                個人信件寄給戰力榜上的 uid；玩家換瀏覽器或清資料會變成新 uid，收不到寄給舊 uid 的信，但全服信件與兌換碼仍可領。
+            </p>
+        </div>
+        <div class="card">
+            <h2>已寄出的信件 <button id="rw-reload" style="float:right;">🔄 重新讀取</button></h2>
+            <div class="tablewrap"><table>
+                <thead><tr><th>寄出時間</th><th>對象</th><th>標題</th><th>獎勵</th><th>到期</th><th>操作</th></tr></thead>
+                <tbody id="rw-mail-rows"><tr><td colspan="6" class="note">登入管理者後才能查看。</td></tr></tbody>
+            </table></div>
+        </div>
+        <div class="card">
+            <h2>兌換碼</h2>
+            <div class="tablewrap"><table>
+                <thead><tr><th>代碼</th><th>標題</th><th>獎勵</th><th>到期</th><th>已兌換</th><th>操作</th></tr></thead>
+                <tbody id="rw-code-rows"><tr><td colspan="6" class="note">登入管理者後才能查看。</td></tr></tbody>
+            </table></div>
+        </div>
+    </section>
+
     <div class="card">
         <h2>操作紀錄</h2>
         <div id="log"></div>
@@ -215,6 +270,7 @@
 <script src="data/config-numeric.js"></script>
 <script src="data/numeric.js"></script>
 <script src="data/config-leaderboard.js"></script>
+<script src="data/config-mailbox.js"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
 <script src="data/config-bounty.js"></script>
 <script src="data/bounty.js"></script>
@@ -275,6 +331,7 @@ async function onAuth(u) {
     await reloadBoard();
     if (isAdmin) await reloadBans();
     await reloadDefense();
+    await reloadRewards();
 }
 
 function renderAuth() {
@@ -554,7 +611,7 @@ function renderBoard() {
             <td class="num" title="${g ? esc(`${Math.round(g.mins)} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}`) : '沒有時窗內的前一次上傳'}">${g ? (g.ratio >= 1000 ? fmt(Math.round(g.ratio)) : g.ratio.toFixed(2)) + '×' : '—'}</td>
             <td>${r._days >= 999 ? '—' : r._days < 1 ? Math.round(r._days * 24) + ' 小時前' : Math.floor(r._days) + ' 天前'}</td>
             <td>${flags}</td><td class="uid">${esc(r.id.slice(0, 10))}…</td>
-            <td class="rowbtns admin-only-cell">${isAdmin ? `<button class="danger" onclick="delOne('${esc(r.id)}')">刪除</button><button class="danger" onclick="banOne('${esc(r.id)}')">封鎖</button>` : '—'}</td>
+            <td class="rowbtns admin-only-cell">${isAdmin ? `<button class="danger" onclick="delOne('${esc(r.id)}')">刪除</button><button class="danger" onclick="banOne('${esc(r.id)}')">封鎖</button><button onclick="mailTo('${esc(r.id)}')" title="寄獎勵給這位玩家">📮</button>` : '—'}</td>
         </tr>`;
     }).join('') : '<tr><td colspan="14" class="note">沒有符合的紀錄。</td></tr>';
     $('chk-all').checked = false;
@@ -663,9 +720,122 @@ function setPatrol(on) {
 }
 
 // ================== 事件 ==================
+// ================== 📮 發放獎勵：仙府信件（mail）與兌換碼（codes），第 56 節 ==================
+let rwExtra = { blueprints: {}, servants: {} };   // 表單上加入的圖紙與僕從
+let rwMails = [], rwCodes = [];
+function rwFormat(r) {
+    r = r || {};
+    const parts = MAIL_REWARD_FIELDS.filter(f => Number(r[f.key]) > 0).map(f => `${f.icon}${f.label} ${fmt(Number(r[f.key]))}`);
+    Object.entries(r.blueprints || {}).forEach(([k, v]) => parts.push(`📜${k.replace('_', '・')}等圖紙×${v}`));
+    Object.entries(r.servants || {}).forEach(([q, v]) => parts.push(`👤${q}僕從×${v}`));
+    return parts.join('、') || '（無）';
+}
+function rwCollect() {
+    const r = {};
+    MAIL_REWARD_FIELDS.forEach(f => { const v = Math.floor(Number($('rw-f-' + f.key).value) || 0); if (v > 0) r[f.key] = Math.min(v, MAIL_REWARD_MAX); });
+    if (Object.keys(rwExtra.blueprints).length) r.blueprints = Object.assign({}, rwExtra.blueprints);
+    if (Object.keys(rwExtra.servants).length) r.servants = Object.assign({}, rwExtra.servants);
+    return r;
+}
+function rwPreview() { $('rw-preview').textContent = rwFormat(rwCollect()); }
+function rwMode() { return document.querySelector('input[name=rw-mode]:checked').value; }
+function rwSyncMode() {
+    $('rw-mail-row').hidden = rwMode() !== 'mail';
+    $('rw-code-row').hidden = rwMode() !== 'code';
+    $('rw-uid').disabled = $('rw-to').value !== 'uid';
+    const r = rows.find(x => x.id === $('rw-uid').value.trim());
+    $('rw-uid-name').textContent = $('rw-to').value === 'uid' && r ? `→ ${r.name}（${realms[r._realm] || '？'} ${r._stage} 階）` : '';
+}
+function rwInit() {
+    $('rw-fields').innerHTML = MAIL_REWARD_FIELDS.map(f => `<label>${f.icon}${f.label} <input type="number" id="rw-f-${f.key}" min="0" step="1" style="width:${f.key === 'coins' ? 110 : 70}px"></label>`).join('');
+    $('rw-bp-slot').innerHTML = MAIL_BLUEPRINT_SLOTS.map(s => `<option>${s}</option>`).join('');
+    $('rw-bp-level').innerHTML = MAIL_BLUEPRINT_LEVELS.map(l => `<option value="${l}">${l} 等</option>`).join('');
+    $('rw-sv-q').innerHTML = MAIL_SERVANT_QUALITIES.map(q => `<option${q === '傳說' ? ' selected' : ''}>${q}</option>`).join('');
+    $('rw-presets').innerHTML = MAIL_PRESETS.map((p, i) => `<button data-preset="${i}">${esc(p.label)}</button>`).join(' ');
+    document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
+        const p = MAIL_PRESETS[Number(b.dataset.preset)];
+        MAIL_REWARD_FIELDS.forEach(f => { $('rw-f-' + f.key).value = p.rewards[f.key] || ''; });
+        rwExtra = { blueprints: Object.assign({}, p.rewards.blueprints || {}), servants: Object.assign({}, p.rewards.servants || {}) };
+        $('rw-title').value = p.title || ''; $('rw-body').value = p.body || '';
+        rwPreview();
+    });
+    document.querySelectorAll('#rw-fields input').forEach(i => i.oninput = rwPreview);
+    document.querySelectorAll('input[name=rw-mode]').forEach(i => i.onchange = rwSyncMode);
+    $('rw-to').onchange = rwSyncMode; $('rw-uid').oninput = rwSyncMode;
+    $('rw-bp-add').onclick = () => { const k = `${$('rw-bp-slot').value}_${$('rw-bp-level').value}`, n = Math.max(1, Math.floor(Number($('rw-bp-n').value) || 1)); rwExtra.blueprints[k] = (rwExtra.blueprints[k] || 0) + n; rwPreview(); };
+    $('rw-sv-add').onclick = () => { const q = $('rw-sv-q').value, n = Math.max(1, Math.floor(Number($('rw-sv-n').value) || 1)); rwExtra.servants[q] = (rwExtra.servants[q] || 0) + n; rwPreview(); };
+    $('rw-extra-clear').onclick = () => { rwExtra = { blueprints: {}, servants: {} }; rwPreview(); };
+    $('rw-send').onclick = rwSend;
+    $('rw-reload').onclick = reloadRewards;
+    rwSyncMode(); rwPreview();
+}
+async function rwSend() {
+    if (!isAdmin) return log('需要管理者權限', 'err');
+    const rewards = rwCollect(), title = $('rw-title').value.trim(), body = $('rw-body').value.trim();
+    if (rwFormat(rewards) === '（無）') return alert('請至少填一項獎勵。');
+    const days = Math.max(0, Number($('rw-days').value) || 0);
+    const expiresAt = days ? firebase.firestore.Timestamp.fromMillis(Date.now() + days * 86400000) : null;
+    if (rwMode() === 'mail') {
+        const to = $('rw-to').value === 'all' ? 'all' : $('rw-uid').value.trim();
+        if (!to) return alert('請填玩家 uid（戰力榜該列按「📮」自動帶入）。');
+        const who = to === 'all' ? '全服玩家' : ($('rw-uid-name').textContent.replace('→ ', '') || to);
+        if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定寄出？`)) return;
+        try {
+            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            log(`已寄出信件給 ${who}：${rwFormat(rewards)}`, 'ok');
+        } catch (e) { return log('寄信失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    } else {
+        const code = $('rw-code').value.trim().toUpperCase().replace(/\s+/g, '');
+        if (!/^[A-Z0-9_-]{3,40}$/.test(code)) return alert('兌換碼只能用英文、數字、- 或 _，3～40 字。');
+        if (rwCodes.some(x => x.id === code) && !confirm(`兌換碼 ${code} 已存在，要覆蓋它的內容嗎？（已兌換過的玩家不能再兌換）`)) return;
+        if (!confirm(`建立兌換碼【${code}】\n標題：${title || '（無）'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定建立？`)) return;
+        try {
+            await db.collection(CODE_COLLECTION).doc(code).set({ title, rewards, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            log(`已建立兌換碼 ${code}：${rwFormat(rewards)}`, 'ok');
+        } catch (e) { return log('建立兌換碼失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    }
+    await reloadRewards();
+}
+async function reloadRewards() {
+    if (!isAdmin) return;
+    try {
+        const [ms, cs] = await Promise.all([
+            db.collection(MAIL_COLLECTION).orderBy('createdAt', 'desc').limit(200).get(),
+            db.collection(CODE_COLLECTION).get()
+        ]);
+        rwMails = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        rwCodes = cs.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    } catch (e) { rwMails = []; rwCodes = []; log('讀取信件／兌換碼失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';
+    const exp = t => t && t.toMillis ? (t.toMillis() < Date.now() ? '<span class="flag grey">已過期</span>' : new Date(t.toMillis()).toLocaleDateString('zh-TW')) : '永久';
+    const nameOf = uid => { const r = rows.find(x => x.id === uid); return r ? r.name : uid.slice(0, 10) + '…'; };
+    $('rw-mail-rows').innerHTML = rwMails.length ? rwMails.map(m => `<tr><td>${dt(m.createdAt)}</td><td>${m.to === 'all' ? '全服' : esc(nameOf(m.to))}</td>
+        <td>${esc(m.title || '')}</td><td>${esc(rwFormat(m.rewards))}</td><td>${exp(m.expiresAt)}</td>
+        <td class="rowbtns"><button class="danger" onclick="delMail('${esc(m.id)}')">刪除</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="note">還沒有寄出任何信件。</td></tr>';
+    $('rw-code-rows').innerHTML = rwCodes.length ? rwCodes.map(x => `<tr><td><b>${esc(x.id)}</b></td><td>${esc(x.title || '')}</td><td>${esc(rwFormat(x.rewards))}</td>
+        <td>${exp(x.expiresAt)}</td><td id="rw-cnt-${esc(x.id)}"><button onclick="countCode('${esc(x.id)}')">統計</button></td>
+        <td class="rowbtns"><button class="danger" onclick="delCode('${esc(x.id)}')">刪除</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="note">還沒有建立任何兌換碼。</td></tr>';
+}
+window.mailTo = uid => {
+    document.querySelector('.tabs button[data-tab=reward]').click();
+    document.querySelector('input[name=rw-mode][value=mail]').checked = true;
+    $('rw-to').value = 'uid'; $('rw-uid').value = uid; rwSyncMode();
+};
+window.delMail = id => { const m = rwMails.find(x => x.id === id);
+    if (confirm(`刪除信件「${m ? m.title : id}」？\n還沒領的玩家就領不到了（已領的不受影響）。`)) db.collection(MAIL_COLLECTION).doc(id).delete().then(() => { log('已刪除信件', 'ok'); reloadRewards(); }).catch(e => log('刪除失敗：' + e.message, 'err')); };
+window.delCode = code => {
+    if (confirm(`刪除兌換碼 ${code}？之後就不能再兌換（已兌換的不受影響）。`)) db.collection(CODE_COLLECTION).doc(code).delete().then(() => { log(`已刪除兌換碼 ${code}`, 'ok'); reloadRewards(); }).catch(e => log('刪除失敗：' + e.message, 'err')); };
+window.countCode = async code => {
+    try { const s = await db.collection(CODE_CLAIMS_COLLECTION).where('code', '==', code).get(); $('rw-cnt-' + code).textContent = `${s.size} 人`; }
+    catch (e) { log('統計失敗：' + e.message, 'err'); }
+};
+rwInit();
+
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-    ['board', 'defense', 'bans', 'patrol'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
+    ['board', 'defense', 'bans', 'patrol', 'reward'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
 });
 $('btn-login').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => log('登入失敗：' + e.message + '（主控台需啟用 Google 登入方式）', 'err'));
 $('btn-logout').onclick = () => { setPatrol(false); $('patrol-on').checked = false; auth.signOut(); };
