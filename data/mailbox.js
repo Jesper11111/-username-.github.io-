@@ -41,6 +41,10 @@ async function refreshMailbox(force) {
         if (document.getElementById('mailbox-modal').style.display === 'flex') renderMailbox();
     }
 }
+// 信件／兌換碼的獎勵格式比這版遊戲新（GM 寄出時寫入 v，config-mailbox.js 的 MAIL_SCHEMA_VERSION）
+function isMailTooNew(m) {
+    return Number(m && m.v || 1) > MAIL_SCHEMA_VERSION;
+}
 function mbTime(ts) { return ts && ts.toMillis ? ts.toMillis() : 0; }
 function markMailClaimed(id) {
     if (!Array.isArray(player.mailClaimed)) player.mailClaimed = [];
@@ -110,6 +114,7 @@ function createMailServant(quality) {
 async function claimMail(id) {
     const m = mbMails.find(x => x.id === id);
     if (!m) return;
+    if (isMailTooNew(m)) { alert('這封信的獎勵需要新版遊戲才能領取。\n請重新整理頁面（電腦按 Ctrl＋F5）後再領，信件會保留。'); return; }
     const space = checkMailRewardSpace(m.rewards);
     if (space) { alert(space); return; }
     try {
@@ -154,6 +159,7 @@ async function redeemCode() {
         info = snap.data();
     } catch (e) { console.warn(e); alert(e && e.code === 'permission-denied' ? '兌換碼功能尚未開放。' : '連線失敗，請稍後再試。'); return; }
     if (info.expiresAt && info.expiresAt.toMillis && info.expiresAt.toMillis() < Date.now()) { alert('此兌換碼已過期。'); return; }
+    if (isMailTooNew(info)) { alert('這組兌換碼的獎勵需要新版遊戲才能兌換。\n請重新整理頁面（電腦按 Ctrl＋F5）後再輸入。'); return; }
     const space = checkMailRewardSpace(info.rewards);
     if (space) { alert(space); return; }
     try {
@@ -190,6 +196,7 @@ function renderMailbox() {
             ${m.body ? `<p style="font-size:0.85em; color:#e5e7eb; white-space:pre-wrap; margin:4px 0;">${lbEscape(m.body)}</p>` : ''}
             <p style="font-size:0.85em; color:#facc15; margin:4px 0;">${lbEscape(formatMailRewards(m.rewards))}</p>
             <p style="font-size:0.75em; color:#6b7280; margin:2px 0;">${m.to === 'all' ? '全服信件' : '個人信件'}${m.expiresAt && m.expiresAt.toMillis ? `｜${new Date(m.expiresAt.toMillis()).toLocaleDateString('zh-TW')} 前領取` : ''}</p>
+            ${isMailTooNew(m) ? '<p style="font-size:0.8em; color:#f87171;">⚠️ 需要新版遊戲才能領取，請重新整理頁面（Ctrl＋F5）</p>' : ''}
             <button class="sys-btn" onclick="claimMail('${lbEscape(m.id)}')">🎁 領取</button>
         </div>`).join('');
     box.innerHTML = head + (cards || (mbLoading || mbError ? '' : '<p class="mb-note">目前沒有待領取的信件。</p>'));

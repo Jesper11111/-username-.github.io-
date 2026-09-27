@@ -819,6 +819,7 @@ async function rwSend() {
     const rewards = rwCollect(), title = $('rw-title').value.trim(), body = $('rw-body').value.trim();
     if (rwFormat(rewards) === '（無）') return alert('請至少填一項獎勵。');
     const days = Math.max(0, Number($('rw-days').value) || 0);
+    const v = rewards.aptitude ? 2 : 1;   // 獎勵格式版本（config-mailbox.js 的 MAIL_SCHEMA_VERSION）：遊戲版本不夠新時會提示重新整理，不會白白用掉
     const expiresAt = days ? firebase.firestore.Timestamp.fromMillis(Date.now() + days * 86400000) : null;
     if (rwMode() === 'mail') {
         const to = $('rw-to').value === 'all' ? 'all' : $('rw-uid').value.trim();
@@ -826,7 +827,7 @@ async function rwSend() {
         const who = to === 'all' ? '全服玩家' : ($('rw-uid-name').textContent.replace('→ ', '') || to);
         if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定寄出？`)) return;
         try {
-            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, v, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             log(`已寄出信件給 ${who}：${rwFormat(rewards)}`, 'ok');
         } catch (e) { return log('寄信失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     } else {
@@ -835,7 +836,7 @@ async function rwSend() {
         if (rwCodes.some(x => x.id === code) && !confirm(`兌換碼 ${code} 已存在，要覆蓋它的內容嗎？（已兌換過的玩家不能再兌換）`)) return;
         if (!confirm(`建立兌換碼【${code}】\n標題：${title || '（無）'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定建立？`)) return;
         try {
-            await db.collection(CODE_COLLECTION).doc(code).set({ title, rewards, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection(CODE_COLLECTION).doc(code).set({ title, rewards, v, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             log(`已建立兌換碼 ${code}：${rwFormat(rewards)}`, 'ok');
         } catch (e) { return log('建立兌換碼失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     }

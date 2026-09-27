@@ -115,7 +115,8 @@ function formatAptitudeName(d) {
 // 人物面板「資質」一行
 function formatAptitudeShort() {
     const a = player.aptitude;
-    if (!a) return player.sect ? '待測試（點此測試）' : '拜入宗門後測試';
+    const giftNote = player.aptitudeGift ? '・已有仙府賜予，測試時生效' : '';   // mailbox.js 送來、尚未測試時先存著的資質
+    if (!a) return (player.sect ? '待測試（點此測試）' : '拜入宗門後測試') + giftNote;
     const r = describeRoot(a.root), p = describePhysique(a.physique);
     return `${r ? r.name : '?'}・${p ? p.name : '?'}`;
 }
