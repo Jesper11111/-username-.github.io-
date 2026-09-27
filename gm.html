@@ -236,6 +236,11 @@
                 <button id="rw-sv-add">＋ 加入僕從</button>
                 <button id="rw-extra-clear">清除圖紙／僕從</button>
             </div>
+            <div class="toolbar">
+                <label>⛩️ 先天靈根 <select id="rw-apt-root"></select></label>
+                <label>⛩️ 先天體質 <select id="rw-apt-phys"></select></label>
+                <span class="note">玩家已測過資質時會跳出「原本 vs 賜予」由玩家選擇；還沒入宗測試的，測試時直接採用</span>
+            </div>
             <p class="note">獎勵預覽：<b id="rw-preview" style="color: var(--accent);">（無）</b></p>
             <button id="rw-send" class="primary admin-only">📮 送出</button>
             <p class="note">
@@ -271,6 +276,8 @@
 <script src="data/numeric.js"></script>
 <script src="data/config-leaderboard.js"></script>
 <script src="data/config-mailbox.js"></script>
+<!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
+<script src="data/config-aptitude.js"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
 <script src="data/config-bounty.js"></script>
 <script src="data/bounty.js"></script>
@@ -723,11 +730,41 @@ function setPatrol(on) {
 // ================== 📮 發放獎勵：仙府信件（mail）與兌換碼（codes），第 56 節 ==================
 let rwExtra = { blueprints: {}, servants: {} };   // 表單上加入的圖紙與僕從
 let rwMails = [], rwCodes = [];
+// 先天資質選項（config-aptitude.js）：有 pick 的組逐一列出；五行組合的組列出所有組合（天 5、雙 10、三 10、四 5、五 1）
+const RW_WUXING = ["金", "木", "水", "火", "土"];
+function rwCombos(n, start = 0) {
+    if (n === 0) return [[]];
+    const out = [];
+    for (let i = start; i < RW_WUXING.length; i++) rwCombos(n - 1, i + 1).forEach(c => out.push([RW_WUXING[i]].concat(c)));
+    return out;
+}
+function rwRootOptions() {
+    const opts = [];
+    APTITUDE_ROOT_GROUPS.forEach(g => {
+        if (g.pick) g.pick.forEach(p => opts.push({ label: `${g.grade}・${p.name}`, value: { group: g.id, id: p.id } }));
+        else rwCombos(g.elems).forEach(e => opts.push({ label: `${g.grade}・${g.elems >= 4 ? `${g.name}（${e.join('')}）` : e.join('') + g.name}`, value: { group: g.id, elems: e } }));
+    });
+    return opts;
+}
+function rwRootName(root) {
+    const g = root && APTITUDE_ROOT_GROUPS.find(x => x.id === root.group);
+    if (!g) return '';
+    if (g.pick) { const p = g.pick.find(x => x.id === root.id); return p ? p.name : ''; }
+    const e = (root.elems || []).join('');
+    return g.elems >= 4 ? `${g.name}（${e}）` : e + g.name;
+}
+function rwPhysName(id) {
+    for (const g of APTITUDE_PHYSIQUE_GROUPS) { const p = g.pick.find(x => x.id === id); if (p) return p.name; }
+    return '';
+}
 function rwFormat(r) {
     r = r || {};
     const parts = MAIL_REWARD_FIELDS.filter(f => Number(r[f.key]) > 0).map(f => `${f.icon}${f.label} ${fmt(Number(r[f.key]))}`);
     Object.entries(r.blueprints || {}).forEach(([k, v]) => parts.push(`📜${k.replace('_', '・')}等圖紙×${v}`));
     Object.entries(r.servants || {}).forEach(([q, v]) => parts.push(`👤${q}僕從×${v}`));
+    const apt = r.aptitude || {};
+    if (apt.root && rwRootName(apt.root)) parts.push(`⛩️靈根【${rwRootName(apt.root)}】`);
+    if (apt.physique && rwPhysName(apt.physique)) parts.push(`⛩️體質【${rwPhysName(apt.physique)}】`);
     return parts.join('、') || '（無）';
 }
 function rwCollect() {
@@ -735,6 +772,10 @@ function rwCollect() {
     MAIL_REWARD_FIELDS.forEach(f => { const v = Math.floor(Number($('rw-f-' + f.key).value) || 0); if (v > 0) r[f.key] = Math.min(v, MAIL_REWARD_MAX); });
     if (Object.keys(rwExtra.blueprints).length) r.blueprints = Object.assign({}, rwExtra.blueprints);
     if (Object.keys(rwExtra.servants).length) r.servants = Object.assign({}, rwExtra.servants);
+    const apt = {};
+    if ($('rw-apt-root').value) apt.root = JSON.parse($('rw-apt-root').value);
+    if ($('rw-apt-phys').value) apt.physique = $('rw-apt-phys').value;
+    if (apt.root || apt.physique) r.aptitude = apt;
     return r;
 }
 function rwPreview() { $('rw-preview').textContent = rwFormat(rwCollect()); }
@@ -751,11 +792,15 @@ function rwInit() {
     $('rw-bp-slot').innerHTML = MAIL_BLUEPRINT_SLOTS.map(s => `<option>${s}</option>`).join('');
     $('rw-bp-level').innerHTML = MAIL_BLUEPRINT_LEVELS.map(l => `<option value="${l}">${l} 等</option>`).join('');
     $('rw-sv-q').innerHTML = MAIL_SERVANT_QUALITIES.map(q => `<option${q === '傳說' ? ' selected' : ''}>${q}</option>`).join('');
+    $('rw-apt-root').innerHTML = '<option value="">（不送）</option>' + rwRootOptions().map(o => `<option value='${esc(JSON.stringify(o.value))}'>${esc(o.label)}</option>`).join('');
+    $('rw-apt-phys').innerHTML = '<option value="">（不送）</option>' + APTITUDE_PHYSIQUE_GROUPS.map(g => g.pick.map(p => `<option value="${esc(p.id)}">${esc(g.grade)}・${esc(p.name)}</option>`).join('')).join('');
+    $('rw-apt-root').onchange = rwPreview; $('rw-apt-phys').onchange = rwPreview;
     $('rw-presets').innerHTML = MAIL_PRESETS.map((p, i) => `<button data-preset="${i}">${esc(p.label)}</button>`).join(' ');
     document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
         const p = MAIL_PRESETS[Number(b.dataset.preset)];
         MAIL_REWARD_FIELDS.forEach(f => { $('rw-f-' + f.key).value = p.rewards[f.key] || ''; });
         rwExtra = { blueprints: Object.assign({}, p.rewards.blueprints || {}), servants: Object.assign({}, p.rewards.servants || {}) };
+        $('rw-apt-root').value = ''; $('rw-apt-phys').value = '';
         $('rw-title').value = p.title || ''; $('rw-body').value = p.body || '';
         rwPreview();
     });

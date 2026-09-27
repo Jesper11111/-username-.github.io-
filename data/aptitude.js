@@ -166,7 +166,11 @@ function openAptitudeTest() {
 function rollAptitudeStep() {
     const btn = document.getElementById('aptitude-btn');
     if (btn) btn.disabled = true;
-    const root = rollAptitudeRoot(), phys = rollAptitudePhysique();
+    // 仙府信箱賜予的資質（尚未測試時先存在 player.aptitudeGift，mailbox.js）：該部分直接用賜予的，不擲骰
+    const gift = player.aptitudeGift || {};
+    const root = gift.root && describeRoot(gift.root) ? gift.root : rollAptitudeRoot();
+    const phys = gift.physique && describePhysique(gift.physique) ? gift.physique : rollAptitudePhysique();
+    player.aptitudeGift = null;
     playAptitudeDice('aptitude-root-box', rootNamePool(), aptitudeCard('先天靈根', describeRoot(root)), () => {
         playAptitudeDice('aptitude-phys-box', physiqueNamePool(), aptitudeCard('先天體質', describePhysique(phys)), () => {
             player.aptitude = { root, physique: phys, at: Date.now() };
@@ -222,11 +226,45 @@ function finishAptitudeReroll(keepNew) {
     if (pend && keepNew) {
         player.aptitude[pend.part] = pend.value;
         const d = pend.part === 'root' ? describeRoot(pend.value) : describePhysique(pend.value);
-        addLog(`${pend.part === 'root' ? '🧪 洗髓' : '🦴 伐骨'}重測，先天${pend.part === 'root' ? '靈根' : '體質'}改為【${d.name}】（${d.grade}）！`, "level-up");
+        const how = pend.gift ? '📮 接受仙府賜予' : pend.part === 'root' ? '🧪 洗髓重測' : '🦴 伐骨重測';
+        addLog(`${how}，先天${pend.part === 'root' ? '靈根' : '體質'}改為【${d.name}】（${d.grade}）！`, "level-up");
         saveLocal();
         updateUI();
     }
+    if (aptitudeGiftQueue.length) { showNextAptitudeGift(); return; }   // 仙府賜予還有下一項（靈根與體質各一）
     openAptitudeView();
+}
+
+// ---- 仙府信箱賜予的資質（mailbox.js 的 grantMailRewards 呼叫）----
+// 已測過：逐項跳出「原本 vs 仙府賜予」由玩家選擇保留哪個；尚未測試：存到 player.aptitudeGift，測試時直接採用
+let aptitudeGiftQueue = [];
+function offerAptitudeGift(gift) {
+    const parts = [];
+    if (gift && gift.root && describeRoot(gift.root)) parts.push({ part: 'root', value: gift.root });
+    if (gift && gift.physique && describePhysique(gift.physique)) parts.push({ part: 'physique', value: gift.physique });
+    if (!parts.length) return;
+    if (!player.aptitude) {
+        player.aptitudeGift = Object.assign(player.aptitudeGift || {}, ...parts.map(x => ({ [x.part]: x.value })));
+        addLog(`📮 仙府賜予的先天資質已記下，拜入宗門測試資質時直接生效。`, "system");
+        return;
+    }
+    aptitudeGiftQueue.push(...parts);
+    if (!aptitudeRerollPending) showNextAptitudeGift();
+}
+function showNextAptitudeGift() {
+    const g = aptitudeGiftQueue.shift();
+    if (!g) return;
+    const isRoot = g.part === 'root', label = isRoot ? '先天靈根' : '先天體質';
+    const oldD = isRoot ? describeRoot(player.aptitude.root) : describePhysique(player.aptitude.physique);
+    const newD = isRoot ? describeRoot(g.value) : describePhysique(g.value);
+    aptitudeRerollPending = { part: g.part, value: g.value, gift: true };
+    setAptitudeBody('📮 仙府賜予', `
+        <p style="color:#9ca3af; font-size:0.85em;">原本</p>${aptitudeCard(label, oldD)}
+        <p style="color:#9ca3af; font-size:0.85em;">仙府賜予</p>${aptitudeCard(label, newD)}
+        <div class="batch-btns">
+            <button class="sys-btn" onclick="finishAptitudeReroll(true)">改用賜予的</button>
+            <button class="sys-btn" onclick="finishAptitudeReroll(false)">保留原本</button>
+        </div>`);
 }
 
 // ---- 千寶閣購買洗髓丹／伐骨丹（merit.js 的 renderPreciousSection 嵌入）----

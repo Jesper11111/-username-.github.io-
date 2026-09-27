@@ -63,6 +63,11 @@ function formatMailRewards(r) {
     const parts = MAIL_REWARD_FIELDS.filter(f => mbAmount(r[f.key])).map(f => `${f.icon} ${f.label} ${mbAmount(r[f.key]).toWan()}`);
     Object.entries(r.blueprints || {}).forEach(([k, n]) => { if (mbAmount(n)) parts.push(`📜 ${k.replace('_', '・')} 等圖紙 ×${mbAmount(n)}`); });
     Object.entries(r.servants || {}).forEach(([q, n]) => { if (mbAmount(n)) parts.push(`👤 ${q}僕從 ×${mbAmount(n)}`); });
+    // 先天資質（aptitude：{ root: { group, id?, elems? }, physique: id }）
+    const apt = r.aptitude || {};
+    const rd = apt.root && describeRoot(apt.root), pd = apt.physique && describePhysique(apt.physique);
+    if (rd) parts.push(`⛩️ 先天靈根【${rd.name}】`);
+    if (pd) parts.push(`⛩️ 先天體質【${pd.name}】`);
     return parts.join('、') || '（無獎勵）';
 }
 function countMailServants(r) {
@@ -89,6 +94,8 @@ function grantMailRewards(r) {
         if (!quality) return;
         for (let i = 0; i < mbAmount(n); i++) player.servants.push(createMailServant(quality));
     });
+    // 先天資質：已測過的跳出比較讓玩家選；還沒測的存起來，測試時直接採用（aptitude.js）
+    if (r.aptitude) setTimeout(() => offerAptitudeGift(r.aptitude), 300);
 }
 // 同 combat.js 的 tryRescueServant 產生的僕從格式
 function createMailServant(quality) {
