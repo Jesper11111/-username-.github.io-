@@ -149,6 +149,7 @@ function buySpiritFruit(qty = 1) {
     player.butianStones -= f.stoneCost * n;
     player.spiritFruits = (player.spiritFruits || 0) + n;
     addLog(`${f.icon} 於千寶閣以 ${f.stoneCost * n} 顆七彩補天石購得 ${n} 顆【${f.name}】！元嬰期渡劫化神時自動服用。`, "level-up", false, "item");
+    toastBought(`${f.name} ×${n}`);
     renderAuction();
     updateUI();
 }

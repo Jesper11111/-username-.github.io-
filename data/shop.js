@@ -93,6 +93,7 @@ function buyShopItem(id) {
     player.bag[id] = (player.bag[id] || 0) + qty;
     addDailyProgress('buy', qty);
     addLog(`🛒 購買了【${item.name}】x${qty}，花費 ${totalCost.toWan()} 靈石，已存入背包。`, "system", false, "item");
+    toastBought(`${item.name} ×${qty}`);
     updateShopTotal(id);
     updateUI();
 }

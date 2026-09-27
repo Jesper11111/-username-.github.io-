@@ -278,6 +278,7 @@ function buyAptitudePill(part, qty = 1) {
     player.butianStones -= APTITUDE_REROLL_COST * n;
     player[key] = (player[key] || 0) + n;
     addLog(`${item.icon} 於千寶閣以 ${APTITUDE_REROLL_COST * n} 顆七彩補天石購得 ${n} 顆【${item.name}】！（人物面板點「資質」使用）`, "level-up", false, "item");
+    toastBought(`${item.name} ×${n}`);
     renderAuction();
     updateUI();
 }

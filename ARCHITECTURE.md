@@ -438,6 +438,10 @@ combatTick() 每秒執行 [combat.js]
 
 ## 9. 介面慣例（抽屜、批次刪除、神器欄）
 
+- **短暫提示／購買成功**（2026-09-28，版本 `20260930h`，玩家要求「購買物品加入購買成功」）：`ui.js` 的 `showToast(msg, kind)` 在畫面上方中央跳出提示（`#toast-box`，z-index 100000 蓋過所有視窗，約 2 秒淡出，最多同時 4 則）；
+  `toastBought(name)` = 「✅ 購買成功：name」（綠框）。已接在：丹藥堂 `buyShopItem`、千寶閣 `completeAuctionPurchase`（壽元丹／星允鐵袋／裝備）與 `buyStarIron`、`buyAptitudePill`、`buySpiritFruit`、`buyBreakPill`、靈寶閣 `buyLingbaoItem`、頭像 `buyAvatar`／光環 `buyFrame`。
+  自動補血補魔的自動購買（combat.js）不跳提示（每秒可能觸發）。**日後新增購買功能，成交後呼叫 `toastBought()`。**
+
 - **大量列表的渲染規則（效能）**：僕從（`renderServants`）與背包裝備（`renderBag`）的數量**沒有上限**，
   長期掛機可累積上千筆。這類列表一律先把每張卡片放進陣列、最後 `container.innerHTML = parts.join("")` 一次寫入，
   **禁止在迴圈內寫 `container.innerHTML += ...`**：每次 `+=` 都會把整個列表重新解析一遍，成本隨數量平方成長。
@@ -1314,7 +1318,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930g`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930i`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2670,7 +2674,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   敵方飄字落在右半（暴擊固定在 76～79%，避開中央 VS）、受傷字落在左半。
   上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。
   舊的 id（`battle-player-name`、`battle-player-hp`、`battle-enemy-title/icon/info`、`battle-action-desc`）都保留，`ui.js` 的 `updateCombatVisualPanel()` 照舊填字，另外呼叫 `setBattleBar()` 更新血條。
-- 爆擊血條：`.bf-fill` 立刻縮、`.bf-trail`（橘白殘影）延遲 0.35 秒再跟上，看得到被打掉的那一截；暴擊／重擊／雷擊時切口 `#bf-enemy-spark` 爆光。多隻怪時是總血量；安全區／休整／索敵時整條隱藏。回血或換波時殘影直接對齊（不倒放）。
+- 爆擊血條：`.bf-fill` 立刻縮、`.bf-trail`（橘白殘影）延遲 0.35 秒再跟上，看得到被打掉的那一截；暴擊／重擊／雷擊時切口 `#bf-enemy-spark` 爆光。多隻怪時是總血量；安全區／休整／索敵時**不隱藏**（2026-09-28 玩家要求「血條置頂、不要被刷新怪物影響」，版本 `20260930i`），改成灰框空條（`.bf-bar-enemy.idle`）並顯示「⏳ N 秒後刷新」「🔍 索敵中」「🕊️ 無敵意目標」，畫面不再一閃一閃。
+  同時 `#combat-visual-panel` 改為 `position: sticky; top: 0`：往下捲日誌時戰場（含兩邊血條）黏在捲動區頂端。回血或換波時殘影直接對齊（不倒放）。
 - 飄字：戰鬥程式只排佇列——`combat.js` 的 `playerAttackTurn` 內 `hitTarget` 呼叫 `battleFxHit(dealt, r.tags)`；怪物回合、懸賞對手（`bounty.js`）、心魔（`tribulation.js`）扣玩家血後呼叫 `battleFxHurt(dmg, dodged)`。
   `updateCombatVisualPanel()` 最後呼叫 `flushBattleFx()` 播放：一次最多約 4～5 個字，多的合併成「×N」；暴擊（tag `crit`，新制敏捷）大字漸層＋「暴擊」＋震屏＋閃光，重擊（`metal`）／雷擊（`thunder`）中字＋爆點，受傷紅字＋畫面紅框，閃避灰字。
   面板看不到（`document.hidden` 或面板 `offsetParent === null`）時不排佇列，只影響畫面、不影響結算。`prefers-reduced-motion` 時不震屏、立繪不動。

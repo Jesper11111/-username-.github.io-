@@ -183,6 +183,7 @@ function buyBreakPill(qty = 1) {
     player.butianStones -= BREAK_PILL_STONE_COST * n;
     player.breakPills += n;
     addLog(`🔮 於千寶閣以 ${BREAK_PILL_STONE_COST * n} 顆七彩補天石購得 ${n} 顆【破障丹】！渡劫時將自動服用。`, "level-up", false, "item");
+    toastBought(`破障丹 ×${n}`);
     renderAuction();
     updateUI();
 }

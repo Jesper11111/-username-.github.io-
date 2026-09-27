@@ -169,15 +169,18 @@ function completeAuctionPurchase(item, price) {
         player.reputation -= item.repPrice;
         player.lifespan += pill.years;
         addLog(`🏺 ${contested}於千寶閣以 ${price.toWan()} 靈石標下【${pill.name}】並當場服下，續命 ${pill.years} 年！（剩餘壽元 ${formatLifespan(player.lifespan)} 年）`, "heal", false, "item");
+        toastBought(pill.name);
     } else if (item.kind === "ironBag") {
         player.reputation -= item.repPrice;
         player.starIron = (player.starIron || 0) + item.amount;
         addLog(`🏺 於千寶閣以 ${price.toWan()} 靈石＋${item.repPrice.toWan()} 聲望購得【星允鐵袋】，星允鐵 +${item.amount}！（持有 ${player.starIron.toWan()}）`, "level-up", false, "item");
+        toastBought(`星允鐵袋（星允鐵 +${item.amount}）`);
     } else {
         player.equipInventory.push(item.equip);   // 孔位在上架時就決定；更新前上架的舊商品沒有孔，也不補
         recordGearCollected(item.equip);          // 天磯錄：買下才算收藏（上架時不記）
         checkTitleUnlocks();
         addLog(`🏺 ${contested}於千寶閣以 ${price.toWan()} 靈石標下【${item.equip.quality}·${item.equip.element}屬性】的【${getEquipDisplayName(item.equip)}】！`, "equip");
+        toastBought(`${getEquipDisplayName(item.equip)}（已放入背包）`);
     }
     renderAuction();
     updateUI();

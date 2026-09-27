@@ -413,6 +413,7 @@ function buyStarIron(qty) {
     st.bought += n;
     player.starIron = (player.starIron || 0) + n;
     addLog(`🌠 於千寶閣以 ${(n * IRON_AUCTION_PRICE).toWan()} 靈石購得星允鐵 ×${n}。`, "system", false, "item");
+    toastBought(`星允鐵 ×${n}`);
     renderAuction();
     updateUI();
 }

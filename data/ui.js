@@ -69,14 +69,19 @@ function updateCombatVisualPanel() {
         avatarContainer.dataset.html = battleAvatarHtml;
     }
 
-    // 敵方爆擊血條：有對手時顯示氣血，沒有時整條隱藏
+    // 敵方爆擊血條：固定顯示在最上方，不因怪物刷新而消失或跳動（2026-09-28 玩家要求）
+    // 有對手時顯示氣血；休整／索敵／安全區時變成灰色空條，文字改成狀態（例：「⏳ 3 秒後刷新」）
     const enemyBar = document.getElementById('bf-enemy-bar');
     const showEnemyBar = (cur, max) => {
-        enemyBar.style.visibility = 'visible';
+        enemyBar.classList.remove('idle');
         setBattleBar('bf-enemy-fill', 'bf-enemy-trail', cur, max);
         document.getElementById('bf-enemy-hptext').innerText = `${fmtFxNum(Math.max(0, cur))} / ${fmtFxNum(max)}`;
     };
-    enemyBar.style.visibility = 'hidden';
+    const idleEnemyBar = text => {
+        enemyBar.classList.add('idle');
+        setBattleBar('bf-enemy-fill', 'bf-enemy-trail', 0, 1);
+        document.getElementById('bf-enemy-hptext').innerText = text;
+    };
 
     if (inTribulation && heartDemon) {
         document.getElementById('battle-enemy-title').innerText = "心魔";
@@ -98,11 +103,13 @@ function updateCombatVisualPanel() {
         document.getElementById('battle-enemy-title').innerText = "安全區域";
         document.getElementById('battle-enemy-icon').innerText = "🕊️";
         document.getElementById('battle-enemy-info').innerText = "無敵意目標";
+        idleEnemyBar("🕊️ 無敵意目標");
         document.getElementById('battle-action-desc').innerText = `🧘‍♂️ 正在 ${player.currentMap.name} 靜修打坐中`;
     } else if (respawnTimer > 0) {
         document.getElementById('battle-enemy-title').innerText = "休整中";
         document.getElementById('battle-enemy-icon').innerText = "⏳";
         document.getElementById('battle-enemy-info').innerText = `剩餘 ${respawnTimer} 秒`;
+        idleEnemyBar(`⏳ ${respawnTimer} 秒後刷新`);
         document.getElementById('battle-action-desc').innerText = `⏳ 敵方全滅，等待下一波妖獸刷新...`;
     } else if (enemies.length > 0) {
         let totalEnemyHp = 0;
@@ -134,6 +141,7 @@ function updateCombatVisualPanel() {
         document.getElementById('battle-enemy-title').innerText = "索敵中";
         document.getElementById('battle-enemy-icon').innerText = "🔍";
         document.getElementById('battle-enemy-info').innerText = "尋找目標";
+        idleEnemyBar("🔍 索敵中");
         document.getElementById('battle-action-desc').innerText = `🔍 正在 ${player.currentMap.name} 探索四周...`;
     }
     updateBattleFoe();   // 右半邊敵方圖片／大 emoji（battle-fx.js）
@@ -489,6 +497,27 @@ function toggleAllBulkQualities(className) {
     const boxes = Array.from(document.querySelectorAll('.' + className));
     const allChecked = boxes.length > 0 && boxes.every(b => b.checked);
     boxes.forEach(b => { b.checked = !allChecked; });
+}
+
+// 畫面上方的短暫提示（例：「✅ 購買成功」），蓋在所有視窗之上，約 2 秒後淡出；連續觸發會往下堆疊
+function showToast(msg, kind) {
+    let box = document.getElementById('toast-box');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'toast-box';
+        document.body.appendChild(box);
+    }
+    const t = document.createElement('div');
+    t.className = 'toast' + (kind ? ' toast-' + kind : '');
+    t.textContent = msg;
+    box.appendChild(t);
+    while (box.children.length > 4) box.firstChild.remove();
+    setTimeout(() => t.classList.add('out'), 1800);
+    setTimeout(() => t.remove(), 2200);
+}
+// 購買成功提示（各商店的購買函式成交後呼叫）
+function toastBought(name) {
+    showToast(`✅ 購買成功：${name}`, 'ok');
 }
 
 // 「保留屬性」勾選列（背包／暫存區一鍵刪除、分解用）：勾選的五行屬性裝備不會被處理

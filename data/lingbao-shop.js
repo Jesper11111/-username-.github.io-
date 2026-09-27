@@ -102,6 +102,7 @@ function buyLingbaoItem(itemId) {
         addLog(`📚 於靈寶閣兌換並領悟了${SECT_TIER_NAMES[item.tier]}宗門武學：【${item.skillData.name}】！`, "skill");
     }
 
+    toastBought(item.name);
     updateUI();
     renderLingbaoShopUI();
 }

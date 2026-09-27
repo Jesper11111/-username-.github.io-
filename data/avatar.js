@@ -94,6 +94,7 @@ function buyAvatar(id) {
     if (!Array.isArray(player.unlockedAvatars)) player.unlockedAvatars = [];
     player.unlockedAvatars.push(av.id);
     addLog(`🎭 花費 ${cost.toWan()} 靈石解鎖頭像【${av.name}】！`, "level-up");
+    toastBought(`頭像【${av.name}】`);
     selectAvatar(av.id);   // 解鎖後直接換上（內含重繪、updateUI 與存檔）
 }
 
@@ -210,5 +211,6 @@ function buyFrame(id) {
     if (!Array.isArray(player.unlockedFrames)) player.unlockedFrames = [];
     player.unlockedFrames.push(fr.id);
     addLog(`💫 花費 ${cost.toWan()} 靈石解鎖頭像光環【${fr.name}】！`, "level-up");
+    toastBought(`頭像光環【${fr.name}】`);
     selectFrame(fr.id);
 }
