@@ -63,7 +63,7 @@ function flushBattleFx() {
         if (e.kind === "hurt") hurt = true;
     });
     if (crit) {
-        restartAnim(stage, 'bf-shake');
+        restartAnim(stage.querySelector('.bf-scene') || stage, 'bf-shake');   // 只震中段圖片，血條列不動
         restartAnim(document.getElementById('bf-enemy-spark'), 'on');
         restartAnim(document.getElementById('bf-flash'), 'on');
     } else if (out.some(e => e.kind === "heavy")) {
@@ -96,10 +96,10 @@ function spawnBattleFloat(layer, e) {
     // 打敵人的字落在右上（血條下方），受傷的字落在左下（玩家 HUD 上方）
     let enemySide = !(e.kind === "hurt" || e.kind === "dodge");
     // 暴擊大字固定在右半中間偏上，其餘散在右半（避開中央 VS）
-    if (e.kind === "crit") { d.style.left = (76 + Math.random() * 3) + '%'; d.style.top = (30 + Math.random() * 6) + '%'; }
+    if (e.kind === "crit") { d.style.left = (76 + Math.random() * 3) + '%'; d.style.top = (26 + Math.random() * 8) + '%'; }
     else {
         d.style.left = (enemySide ? 68 + Math.random() * 20 : 14 + Math.random() * 22) + '%';
-        d.style.top = (enemySide ? 26 + Math.random() * 24 : 46 + Math.random() * 10) + '%';
+        d.style.top = (enemySide ? 14 + Math.random() * 40 : 50 + Math.random() * 20) + '%';
     }
     layer.appendChild(d);
     setTimeout(() => d.remove(), e.kind === "crit" ? 1300 : 1000);

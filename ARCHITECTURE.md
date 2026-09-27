@@ -1318,7 +1318,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930k`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930l`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2681,7 +2681,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。
   舊的 id（`battle-player-name`、`battle-player-hp`、`battle-enemy-title/icon/info`、`battle-action-desc`）都保留，`ui.js` 的 `updateCombatVisualPanel()` 照舊填字，另外呼叫 `setBattleBar()` 更新血條。
 - 爆擊血條：`.bf-fill` 立刻縮、`.bf-trail`（橘白殘影）延遲 0.35 秒再跟上，看得到被打掉的那一截；暴擊／重擊／雷擊時切口 `#bf-enemy-spark` 爆光。多隻怪時是總血量；安全區／休整／索敵時**不隱藏**（2026-09-28 玩家要求「血條置頂、不要被刷新怪物影響」，版本 `20260930i`），改成灰框空條（`.bf-bar-enemy.idle`）並顯示「⏳ N 秒後刷新」「🔍 索敵中」「🕊️ 無敵意目標」，畫面不再一閃一閃。
-  同時 `#combat-visual-panel` 改為 `position: sticky; top: 0`：往下捲日誌時戰場（含兩邊血條）黏在捲動區頂端。回血或換波時殘影直接對齊（不倒放）。
+  同時 `#combat-visual-panel` 改為 `position: sticky; top: 0`：往下捲日誌時戰場（含兩邊血條）黏在捲動區頂端。
+- **三段式版面**（2026-09-28，版本 `20260930l`；玩家反映手機上「血條還是被吃掉一半、要完全置頂、不被新圖覆蓋」）：`#combat-visual-panel` 改為直向 flex 三段——
+  上 `.bf-enemy`（敵方徽章＋名稱＋爆擊血條＋狀態，實心深色底、金色下框線）／中 `.bf-scene`（桌機 190px、手機 160／145px，只有這段放立繪、敵方圖、VS、飄字、閃光、受傷紅框）／下 `.bf-player`（我方三條）＋ `.bf-desc`。
+  血條與狀態列不再疊在圖片上；暴擊震屏只震 `.bf-scene`（`battle-fx.js` 的 `restartAnim(...bf-scene, 'bf-shake')`），血條列不跟著晃。飄字座標改以中段圖片為準。回血或換波時殘影直接對齊（不倒放）。
 - 飄字：戰鬥程式只排佇列——`combat.js` 的 `playerAttackTurn` 內 `hitTarget` 呼叫 `battleFxHit(dealt, r.tags)`；怪物回合、懸賞對手（`bounty.js`）、心魔（`tribulation.js`）扣玩家血後呼叫 `battleFxHurt(dmg, dodged)`。
   `updateCombatVisualPanel()` 最後呼叫 `flushBattleFx()` 播放：一次最多約 4～5 個字，多的合併成「×N」；暴擊（tag `crit`，新制敏捷）大字漸層＋「暴擊」＋震屏＋閃光，重擊（`metal`）／雷擊（`thunder`）中字＋爆點，受傷紅字＋畫面紅框，閃避灰字。
   面板看不到（`document.hidden` 或面板 `offsetParent === null`）時不排佇列，只影響畫面、不影響結算。`prefers-reduced-motion` 時不震屏、立繪不動。
