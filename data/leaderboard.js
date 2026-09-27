@@ -65,13 +65,23 @@ async function uploadLeaderboard() {
         const { db, uid } = await initLeaderboardBackend();
         if (lbBanned === null) await checkLeaderboardBan(db, uid);
         if (lbBanned) return;
-        await db.collection(LEADERBOARD_COLLECTION).doc(uid).set({
+        // 先讀自己上一筆（1 次讀取）：規則要求把上一次的戰力與時間原封不動接到 hist 尾端，GM 後台據此比對戰力暴增（第 50 節）
+        // 一定要讀伺服器版本，快取的舊值會被規則擋下；斷線時讀不到就跳過這次上傳
+        const ref = db.collection(LEADERBOARD_COLLECTION).doc(uid);
+        const prev = await ref.get({ source: 'server' });
+        let hist = [];
+        if (prev.exists) {
+            const o = prev.data();
+            hist = (Array.isArray(o.hist) ? o.hist : []).concat([{ p: o.power, t: o.updatedAt }]).slice(-LEADERBOARD_HISTORY_SIZE);
+        }
+        await ref.set({
             name: sanitizePlayerName(player.name) || "無名修士",
             power: getRankPower(),
             realm: Math.floor(player.realmIndex) || 0,
             stage: Math.floor(player.stage) || 1,
             level: Math.floor(player.level) || 1,
             sect: player.sect ? String(player.sect.name || "").slice(0, 20) : "",
+            hist,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (e) {

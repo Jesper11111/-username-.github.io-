@@ -144,7 +144,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15n | `config-partners.js` | 夥伴（第 39 節）：`PARTNER_TIERS`(評級門檻與數值建議)、`PARTNER_POWER_LABELS`(六維名稱)、`partnerList`(39 位：出處、世界、巔峰、六維戰力、分析、被動、絕學；檔尾有新增模板) | 無 | `partner.js` |
 | 15l | `config-titles.js` | `titleList`（60 個稱號：條件 cond、加成 bonus；含 4 個賭運稱號） | 無 | `codex.js`、`casino.js`(紀錄頁列出賭運稱號) |
 | 15p | `config-casino.js` | 天星賭坊（第 40 節）：`CASINO_TOWN`、每日上限 `CASINO_DAILY_LIMIT_BY_REALM`、`CASINO_DICE_MAX_RATIO`/`CASINO_DICE_MIN_BET`/`CASINO_CONFIRM_RATIO`、`casinoStones`(三種隕石：價格、結果權重表)、`CASINO_VALUE`(估值)、`CASINO_CUT_LINES`、擲骰 `CASINO_DICE_BETS`/`CASINO_TOTAL_PAYOUT`/`CASINO_DICE_FACES` | 無 | `casino.js` |
-| 15q | `config-leaderboard.js` | 天下戰力榜（第 42 節）：`LEADERBOARD_FIREBASE_CONFIG`（null = 不啟用、不連網）、`LEADERBOARD_SDK_BASE`、`LEADERBOARD_COLLECTION`、`LEADERBOARD_BANNED_COLLECTION`(banned)/`LEADERBOARD_ADMINS_COLLECTION`(admins，第 50 節)、`LEADERBOARD_UPLOAD_INTERVAL_MS`(5 分)/`LEADERBOARD_FIRST_UPLOAD_DELAY_MS`(15 秒)/`LEADERBOARD_MIN_GAP_MS`(60 秒，須與 tools/firestore.rules 一致)/`LEADERBOARD_TOP_N`(100)/`LEADERBOARD_REFRESH_COOLDOWN_MS` | 無 | `leaderboard.js` |
+| 15q | `config-leaderboard.js` | 天下戰力榜（第 42 節）：`LEADERBOARD_FIREBASE_CONFIG`（null = 不啟用、不連網）、`LEADERBOARD_SDK_BASE`、`LEADERBOARD_COLLECTION`、`LEADERBOARD_BANNED_COLLECTION`(banned)/`LEADERBOARD_ADMINS_COLLECTION`(admins，第 50 節)、`LEADERBOARD_UPLOAD_INTERVAL_MS`(5 分)/`LEADERBOARD_FIRST_UPLOAD_DELAY_MS`(15 秒)/`LEADERBOARD_MIN_GAP_MS`(60 秒，須與 tools/firestore.rules 一致)/`LEADERBOARD_HISTORY_SIZE`(24，上傳歷史 hist 筆數，須與規則一致，第 50 節)/`LEADERBOARD_TOP_N`(100)/`LEADERBOARD_REFRESH_COOLDOWN_MS` | 無 | `leaderboard.js` |
 | 15r | `config-secret-realms.js` | 秘境（第 43 節）：`SECRET_REALM_DAILY_ATTEMPTS`(預定每日 5 次)、`secretRealmList`（id／name／img／minRealmIndex／implemented／tagline／desc／rewards 預定獎勵；選填 size／imgPc／sizePc／sceneTitle／sceneSub／enterLabel／enterPos／mode） | 無 | `secret-realm.js` |
 | 15s | `config-defense.js` | 死守天南城（第 49 節）：`DEFENSE_TOTAL_WAVES`(100)／`DEFENSE_BOSS_EVERY`(10)／`DEFENSE_CLIP_FADE`、`DEFENSE_CLIPS`（id／name／src／zoom／trim／sizeHint）、`DEFENSE_THEMES`(10 主題)、`DEFENSE_BOSSES`、`DEFENSE_OPENERS`、`DEFENSE_CAMERAS`、強度 `DEFENSE_MILESTONES`/`DEFENSE_MILESTONE_STAGE`/`DEFENSE_ENEMY`、勝負 `DEFENSE_PLAYER_SKILL_MULT`/`DEFENSE_MAX_ROUNDS`/`DEFENSE_LOSE_AT`、獎勵 `DEFENSE_REWARDS` | 無 | `defense.js` |
 | 16 | `state.js` | `player`（含裝備系統 `starIron`/`ironShards`/`gearStash`/`ironShop`/`ironUsed`/`maxEnhance`/`gearCodex`/`titles`/`activeTitle`/`profession`/`profSwitched`/`proficiency`（第 37 節）、`lingbaoSold`、仙法 `spells`/`spellSlots`、渡劫失敗虛弱 `weakened`、頭像 `avatarId`/`unlockedAvatars`、頭像光環 `avatarFrameId`/`unlockedFrames`、礦石 `ore`、符寶 `talismans`、異火 `fireShards`/`strangeFires`/`fireCollection`（第 38 節）、天星賭坊 `casino`（第 40 節）、夥伴 `partners`/`partnerTeam`/`partnerBond`/`fieldKills`（第 39 節）、藏書閣屬性秘典次數 `elementStudy`、轉世保留的上限 `reincarnateBonus`、年齡 `age`、功德系統 `merit`/`butianStones`/`breakPills`/`evilKills`、善惡 `karma`、懸賞榜 `bountyBoard`/`bountyRefreshAt`/`bountyFaction`/`activeBountyId`/`bountyKills`、付費刷新次數 `paidRefresh`、線上實戰證明 `idleProvenMap`（第 33 節））、`DEFAULT_PLAYER_JSON`（全新角色預設值快照，讀檔/匯入的合併基底）、`enemies`（每隻帶 `attrs`/`status`；野外修士另帶 `cultivator`("正"/"邪")/`ambush`）、`respawnTimer`、`safeZoneTimer`；不存檔的執行期狀態：`inTribulation`/`heartDemon`/`tribulationFatedWin`/懸賞對決 `inBountyDuel`/`duelOpponent`/`duelWeakenTimer`/`duelWeakenMult`/`duelSilenceTimer`/`duelArmorTimer`/丹藥冷卻/`gameOver`/背景補發 `lastTickAt`/`missedTickMs`/線上實戰秒數 `fieldOnlineTicks`/日誌彙總 `waveSummary`/`meditateSummary`/`playerStatus`(玩家身上的凍結/燒傷/中毒)/靈寵輔助計時(`petBuff*`/`petShield*`/`petRegen*`) | **`maps`**（必須排在 config-maps.js 之後） | 幾乎所有檔案都會讀寫 `player` |
@@ -1271,7 +1271,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928t`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260928u`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -1953,7 +1953,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 斷線時 Firestore 的 `set()` 要等連回伺服器才完成：開榜單時上傳與讀取各用 `lbWithTimeout()` 最多等 `LEADERBOARD_TIMEOUT_MS`(8 秒)，逾時顯示「連線失敗」，不會卡在「讀取中」。
 - 2026-09-28 以線上真實資料（39 名玩家，境界 0～15）檢查規則的戰力上限：最高只用到上限的 0.00008%，正常玩家不會被擋。
 - 集合 `leaderboard`，**文件 id = 匿名登入 uid**（存在瀏覽器 IndexedDB，同一瀏覽器永遠同一筆）。欄位：
-  `name`(道號，sanitizePlayerName)、`power`、`realm`(realmIndex)、`stage`、`level`、`sect`(宗門名稱，可空)、`updatedAt`(伺服器時間)。
+  `name`(道號，sanitizePlayerName)、`power`、`realm`(realmIndex)、`stage`、`level`、`sect`(宗門名稱，可空)、`hist`(最近 24 次上傳的 `{p: 戰力, t: 時間}`，規則強制，第 50 節)、`updatedAt`(伺服器時間)。
+- 上傳前先 `get({ source: 'server' })` 讀自己那筆（每次上傳多 1 次讀取），把上一筆的 power／updatedAt 接到 `hist` 尾端再 `set()`；斷線讀不到就略過這次。
 - 不上傳的情況：`gameOver`、`saveLoadFailed`（讀檔失敗時畫面上的角色不是真的）、尚未 `gameStarted`。
 
 ### 榜上的戰力
@@ -1967,6 +1968,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   曾讓「化神 3 階、Lv.10000、戰力 63 兆（基礎值 3000 萬倍）」通過；新上限下線上其餘 99 位正常玩家最高只用到 4.66%。細節見第 50 節。
 - 被 GM 封鎖（`banned/{uid}` 存在）的 uid 不能再建立／更新紀錄；遊戲 `checkLeaderboardBan()` 查到被封就停止上傳，榜單視窗顯示「已被移出戰力榜」。
 - 同一筆兩次寫入至少間隔 60 秒（`updatedAt` 必須等於伺服器時間）。
+- 上傳歷史 `hist` 由規則強制接續（不能改、不能清），供 GM 比對戰力暴增（第 50 節）。
 - **限制**：戰力在玩家端計算，會改存檔的人仍可灌分；要更嚴格得改成雲端函式重算（需付費方案），目前不做。
 - 已知現象：換裝置／清除瀏覽器資料／無痕視窗會拿到新 uid → 同一角色可能有多筆；舊筆不會自動刪除（顯示「N 天前」更新時間讓人分辨）。可用 GM 後台（第 50 節）刪除重複或久未更新的紀錄。
 
@@ -1977,7 +1979,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     手機座標在 index.html `#home-hotspots`（第 31 節表格），PC 在 `config-home-pc.js` 的 `stele`（第 34 節表格）。
 - 視窗 `#leaderboard-modal`：自己的戰力與名次（未進前 100 顯示「未進前 100 名」）、前 100 名（前三名獎牌、自己那列 `.lb-self` 高亮、境界階數／等級／宗門、多久前更新）、重新整理（冷卻 10 秒）。
 - 其他玩家的道號／宗門一律經 `lbEscape()` 才插入 innerHTML（資料來自網路，不能信任）。
-- 額度估算（Spark 免費：每日 5 萬讀、2 萬寫）：每位在線玩家每小時 12 次寫入 → 約 1,600 玩家小時／日；每開一次榜單約 100 次讀取 → 約 500 次開榜／日。玩家變多時先調長 `LEADERBOARD_UPLOAD_INTERVAL_MS` 或調小 `LEADERBOARD_TOP_N`。
+- 額度估算（Spark 免費：每日 5 萬讀、2 萬寫）：每位在線玩家每小時 12 次寫入 → 約 1,600 玩家小時／日；每次上傳另有 1 次讀取（hist，2026-09-27 起）→ 同樣 1,600 玩家小時約用掉 1.9 萬讀；每開一次榜單約 100 次讀取 → 其餘約 300 次開榜／日。玩家變多時先調長 `LEADERBOARD_UPLOAD_INTERVAL_MS` 或調小 `LEADERBOARD_TOP_N`。
 
 ## 43. 秘境入口與鎮魔塔（`config-secret-realms.js`、`secret-realm.js`；2026-09-28）
 
@@ -2153,14 +2155,25 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     🔴 超過規則上限（新規則下已無法再上傳，但舊資料仍在榜上）、🟡 佔上限 ≥ 15% 或 等級 >（境界+1）× 1500、灰「重複」（道號＋境界＋階＋等級＋戰力完全相同，保留最新一筆）、灰「N 天未更新」。
     可篩選；逐筆「刪除」「封鎖」、勾選批次、一鍵「封鎖全部超標」「刪除久未更新」（天數可設，預設 14）。所有破壞性操作都會 confirm／prompt 原因。
   - ⛔ 黑名單：`banned/{uid}` = { name, realm, stage, level, power（封鎖時的快照）, reason, bannedBy, bannedAt }；可解除封鎖。封鎖＝寫黑名單＋刪榜單紀錄（同一個批次）。
-  - 🛡️ 自動巡檢：**頁面開著時**每 N 分鐘（預設 10）重讀榜單 → 🔴 自動封鎖＋移除（原因「自動巡檢：超過規則上限」）→ 可選同時刪久未更新；🟡 只標記不處理。
+  - 🟠 戰力暴增（2026-09-27）：比對每筆的 `hist`（最近 24 次上傳，約 2 小時）＋目前這筆，**任兩次上傳相隔 ≤ H 小時、後者 ÷ 前者 ≥ N 倍、且後者 ≥ M 萬**就標記。
+    H／N／M 在「戰力榜」分頁的「📈 戰力暴增判定」列設定（預設 1 小時／10 倍／100 萬，`JUMP_DEFAULTS`），存在 GM 瀏覽器的 localStorage `gm_jump_settings`。
+    表格「時窗內最大成長」欄不論是否達標都顯示（滑鼠停留看幾分鐘內從多少到多少），用來校準門檻；沒有 hist 的舊紀錄顯示「—」。
+    離線多天回來的第一次上傳與前一筆相隔超過時窗，不會誤判。可逐筆封鎖（原因預填漲幅）或「⛔ 封鎖全部暴增」。
+    - `hist` 由規則 `nextHist()` 強制：每次更新必須等於「舊 hist ＋ {p: 舊 power, t: 舊 updatedAt}」取最後 24 筆，建立時必須是空的——玩家無法竄改或清掉先前的戰力；
+      證據會在之後 24 次上傳（在線約 2 小時）後被擠掉，所以巡檢間隔要小於 2 小時。
+    - 抓不到：第一次上傳就灌分（沒有前一筆可比；仍受規則上限限制）、換新 uid 後灌分、每 60 秒緩慢灌一點（單次倍數小，但 H 小時窗內的總成長仍會被比對到，只要窗內仍在 24 筆內）。
+  - 🛡️ 自動巡檢：**頁面開著時**每 N 分鐘（預設 10）重讀榜單 → 🔴 自動封鎖＋移除（原因「自動巡檢：超過規則上限」）→ 勾「自動封鎖戰力暴增」時逐筆封鎖 🟠（原因記下漲幅）→ 可選同時刪久未更新；🟡 只標記不處理。
   - 批次寫入每 400 筆一批（Firestore 單批上限 500）。
 - **真正的「關掉網頁也定時執行」**需要伺服器排程（Firebase Cloud Functions，需升級 Blaze 付費方案），目前不做。新規則已在寫入時擋下超標資料，巡檢主要清理舊資料與重複紀錄。
 - **防作弊能力與限制**：
-  - 擋得住：直接改存檔／主控台灌出不合理戰力（超過基礎值 200 倍＋等級額度）、被封鎖的 uid 再上傳、60 秒內重複上傳、亂塞欄位。
+  - 擋得住：直接改存檔／主控台灌出不合理戰力（超過基礎值 200 倍＋等級額度）、被封鎖的 uid 再上傳、60 秒內重複上傳、亂塞欄位；在上限內改存檔瞬間灌分則由 🟠 戰力暴增抓出（GM 封鎖）。
   - 擋不住：同時偽造境界、階數與戰力（在上限內灌分）；被封後清除瀏覽器資料換新匿名 uid 重新上傳（需再封一次）。
   - 進一步可做（未實作）：Firebase **App Check**（reCAPTCHA，擋掉不是從遊戲網頁發出的請求）；Cloud Functions 在伺服器端依存檔重算戰力（需付費方案）。
 - **門檻校準**（2026-09-27 讀取線上前 100 名）：正常玩家基礎值倍率 0.72～9.3（天仙 10 階、至高宗門＋裝備最高），作弊資料「大鵰俠」化神 3 階 Lv.10000 戰力 63 兆 = 3000 萬倍；
   新上限只擋下這一筆。另有大量預設道號「韓立」（41 筆）「南宮婉」（13 筆），多為停在凡人 1 階的新手殘留紀錄，不是作弊，可用「刪除久未更新」清理。
   ⚠️ 日後新增大幅提高戰力的系統（例如更強的稱號、夥伴、異火加成）後，請用 GM 後台看「佔上限 %」最高值，必要時同步調整規則與 gm.html 的 `CAP_BASE_MULT`／`CAP_PER_LEVEL`。
 - 驗證紀錄：本機未登入唯讀模式讀到 100 筆，正確標出唯一的超標資料、無誤標，管理按鈕停用，Console 無錯誤。管理者操作（刪除／封鎖／巡檢）需作者完成開通步驟後在線上測試。
+  - 戰力暴增（2026-09-27 本機以假資料測）：15 分鐘內 2000萬→50億 標 🟠；1.5 倍正常成長、離線 3 天後回來、無 hist 舊紀錄、低於 100 萬的新手皆未標；改門檻即時重算並存入 localStorage。
+    **規則尚未在線上實測**（需作者發布新版 `tools/firestore.rules`）。
+- ⚠️ **發布順序**：新版 `leaderboard.js` 會送 `hist`、新規則要求 `hist`——舊規則會擋新程式、新規則會擋快取中的舊程式。請**同時**推上 GitHub 與在主控台發布規則；中間短暫上傳失敗只會 `console.warn`，不影響遊戲。
+- 順帶修正（2026-09-27）：gm.html 的 `fmt()` 原本把整數尾端的 0 也刪掉（2000萬 顯示成「2萬」），已改為只刪小數尾端的 0。

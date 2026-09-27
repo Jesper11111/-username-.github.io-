@@ -9,7 +9,8 @@
      網頁本身公開沒關係，權限由 tools/firestore.rules 把關；非管理者只看得到公開的前 100 名（唯讀）。 -->
 <style>
     :root { --bg: #0b0f19; --panel: #131c2e; --line: #26324a; --text: #e5e7eb; --muted: #9ca3af; --accent: #f0d588;
-            --red: #f87171; --red-bg: rgba(248,113,113,0.12); --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.10); --green: #4ade80; }
+            --red: #f87171; --red-bg: rgba(248,113,113,0.12); --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.10); --green: #4ade80;
+            --orange: #fb923c; --orange-bg: rgba(251,146,60,0.14); }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: "Microsoft JhengHei", system-ui, sans-serif; font-size: 15px; }
     header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
@@ -48,6 +49,10 @@
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     tr.red td { background: var(--red-bg); }
     tr.yellow td { background: var(--yellow-bg); }
+    tr.jump td { background: var(--orange-bg); }
+    .flag.orange { background: rgba(251,146,60,0.2); color: var(--orange); }
+    .stat.orange b { color: var(--orange); }
+    .jumpbar b { font-size: 13px; color: var(--orange); font-weight: normal; }
     .flag { display: inline-block; margin: 1px 3px 1px 0; padding: 0 6px; border-radius: 8px; font-size: 12px; }
     .flag.red { background: rgba(248,113,113,0.2); color: var(--red); }
     .flag.yellow { background: rgba(251,191,36,0.18); color: var(--yellow); }
@@ -90,6 +95,7 @@
                 <option value="all">全部</option>
                 <option value="flagged">有標記的</option>
                 <option value="red">🔴 超過上限</option>
+                <option value="jump">🟠 戰力暴增</option>
                 <option value="yellow">🟡 數值偏高／等級異常</option>
                 <option value="dup">重複紀錄</option>
                 <option value="stale">久未更新</option>
@@ -99,18 +105,28 @@
             <button id="btn-del-selected" class="danger admin-only">🗑️ 刪除勾選</button>
             <button id="btn-ban-selected" class="danger admin-only">⛔ 封鎖勾選</button>
             <button id="btn-ban-red" class="danger admin-only">⛔ 封鎖全部超標</button>
+            <button id="btn-ban-jump" class="danger admin-only">⛔ 封鎖全部暴增</button>
             <button id="btn-del-stale" class="danger admin-only">🧹 刪除久未更新</button>
+        </div>
+        <div class="toolbar jumpbar">
+            <b>📈 戰力暴增判定：</b>
+            <label><input type="number" id="jump-hours" min="0.1" step="0.5"> 小時內</label>
+            <label>戰力成長 ≥ <input type="number" id="jump-ratio" min="1.1" step="0.5"> 倍</label>
+            <label>且新戰力 ≥ <input type="number" id="jump-min" min="0" step="1"> 萬</label>
+            <span class="note">（設定存在本瀏覽器；自動巡檢也用這組）</span>
         </div>
         <div class="tablewrap"><table>
             <thead><tr>
                 <th><input type="checkbox" id="chk-all"></th><th>#</th><th>道號</th><th>境界</th><th>等級</th><th>宗門</th>
-                <th class="num">戰力</th><th class="num">基礎值倍率</th><th class="num">佔上限</th><th>更新</th><th>標記</th><th>uid</th><th class="admin-only">操作</th>
+                <th class="num">戰力</th><th class="num">基礎值倍率</th><th class="num">佔上限</th><th class="num">時窗內最大成長</th><th>更新</th><th>標記</th><th>uid</th><th class="admin-only">操作</th>
             </tr></thead>
-            <tbody id="rows"><tr><td colspan="13" class="note">讀取中…</td></tr></tbody>
+            <tbody id="rows"><tr><td colspan="14" class="note">讀取中…</td></tr></tbody>
         </table></div>
         <p class="note">
             基礎值 = 同境界同階修為圓滿的基礎戰力（7 × 階 × 10^境界）。規則上限 = 基礎值 × 200 ＋ 等級 × 20 萬（與 <code>tools/firestore.rules</code> 相同）。<br>
-            🔴 超過上限：新規則下已無法再上傳，但既有資料仍在榜上，需要手動（或巡檢）清除。🟡 佔上限 15% 以上（2026-09-27 正常玩家最高約 4.7%），或等級明顯高於境界，建議人工確認。
+            🔴 超過上限：新規則下已無法再上傳，但既有資料仍在榜上，需要手動（或巡檢）清除。🟡 佔上限 15% 以上（2026-09-27 正常玩家最高約 4.7%），或等級明顯高於境界，建議人工確認。<br>
+            🟠 戰力暴增：比對該玩家最近 24 次上傳（約 2 小時，規則強制保留、玩家改不了）的戰力與時間，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
+            離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。
         </p>
     </section>
 
@@ -132,10 +148,12 @@
                 <label><input type="checkbox" id="patrol-on" class="admin-only"> 啟用</label>
                 <label>每 <input type="number" id="patrol-min" value="10" min="1"> 分鐘</label>
                 <label><input type="checkbox" id="patrol-stale"> 同時刪除久未更新的紀錄</label>
+                <label><input type="checkbox" id="patrol-jump"> 自動封鎖戰力暴增</label>
                 <button id="btn-patrol-now" class="admin-only">▶ 立即巡檢一次</button>
             </div>
             <p class="note">
-                每次巡檢：重新讀取完整榜單 → 🔴 超過上限的紀錄自動「封鎖＋移除」（原因記為「自動巡檢：超過規則上限」）→ 勾選時再刪除久未更新的紀錄。🟡 只標記、不自動處理。<br>
+                每次巡檢：重新讀取完整榜單 → 🔴 超過上限的紀錄自動「封鎖＋移除」（原因記為「自動巡檢：超過規則上限」）→ 勾選時再封鎖 🟠 戰力暴增（依「戰力榜」分頁的判定設定，原因會記下幾分鐘內從多少漲到多少）→ 勾選時再刪除久未更新的紀錄。🟡 只標記、不自動處理。<br>
+                暴增的證據會在玩家之後 24 次上傳（約 2 小時）後被擠掉，巡檢間隔請小於 2 小時。<br>
                 真正「關掉網頁也會定時執行」需要伺服器排程（Firebase Cloud Functions，需升級 Blaze 付費方案），目前不做；新規則已擋下超標上傳，巡檢主要清理舊資料。
             </p>
         </div>
@@ -156,10 +174,13 @@ const CAP_PER_LEVEL = 200000;    // 規則：＋ 等級 × 20 萬
 const WARN_USE = 0.15;           // 佔上限 15% 以上標黃
 const LEVEL_WARN_PER_REALM = 1500;   // 等級 > (境界+1) × 1500 標「等級與境界不符」（2026-09-27：天仙 5676 級正常、化神 10000 級異常）
 const FULL_LIMIT = 1000;         // 管理者一次讀取的筆數
+// 戰力暴增判定的預設值（頁面上可改，存在本瀏覽器 localStorage）
+const JUMP_DEFAULTS = { hours: 1, ratio: 10, minWan: 100 };   // 1 小時內成長 10 倍以上、且新戰力 ≥ 100 萬
+const JUMP_STORE_KEY = 'gm_jump_settings';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = n => { n = Number(n) || 0; const u = [['兆', 1e12], ['億', 1e8], ['萬', 1e4]]; for (const [s, v] of u) if (n >= v) return (n / v).toFixed(n / v >= 100 ? 0 : 2).replace(/\.?0+$/, '') + s; return n.toLocaleString(); };
+const fmt = n => { n = Number(n) || 0; const u = [['兆', 1e12], ['億', 1e8], ['萬', 1e4]]; for (const [s, v] of u) if (n >= v) return (n / v).toFixed(n / v >= 100 ? 0 : 2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') + s; return n.toLocaleString(); };
 let app, auth, db, user = null, isAdmin = false, rows = [], bans = [], patrolTimer = null;
 
 function log(msg, cls) {
@@ -228,6 +249,48 @@ function analyze(r) {
                               _red: use > 1, _yellow: !(use > 1) && flags.length > 0 });
 }
 
+// ================== 戰力暴增（比對 hist：規則強制保留的最近 24 次上傳）==================
+function loadJumpSettings() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(JUMP_STORE_KEY) || '{}') || {}; } catch (e) {}
+    $('jump-hours').value = s.hours || JUMP_DEFAULTS.hours;
+    $('jump-ratio').value = s.ratio || JUMP_DEFAULTS.ratio;
+    $('jump-min').value = s.minWan != null ? s.minWan : JUMP_DEFAULTS.minWan;
+    $('patrol-jump').checked = !!s.patrol;
+}
+function jumpSettings() {
+    return {
+        hours: Math.max(0.1, Number($('jump-hours').value) || JUMP_DEFAULTS.hours),
+        ratio: Math.max(1.1, Number($('jump-ratio').value) || JUMP_DEFAULTS.ratio),
+        minWan: Math.max(0, Number($('jump-min').value) || 0),
+        patrol: $('patrol-jump').checked
+    };
+}
+function saveJumpSettings() {
+    try { localStorage.setItem(JUMP_STORE_KEY, JSON.stringify(jumpSettings())); } catch (e) {}
+}
+const tsMs = t => t && t.toMillis ? t.toMillis() : 0;
+// 任兩次上傳相隔 ≤ 時窗時，後者 ÷ 前者 的最大值（含目前這筆）；_growth 不論是否達標都記下，方便校準門檻
+function computeJump(r) {
+    const s = jumpSettings(), win = s.hours * 3600000, min = s.minWan * 1e4;
+    const pts = (Array.isArray(r.hist) ? r.hist : []).map(h => ({ p: Number(h.p) || 0, t: tsMs(h.t) }))
+        .concat([{ p: r._power, t: tsMs(r.updatedAt) }]).filter(x => x.t);
+    let best = null;
+    for (let j = 1; j < pts.length; j++) {
+        for (let i = j - 1; i >= 0 && pts[j].t - pts[i].t <= win; i--) {
+            if (pts[i].p <= 0) continue;
+            const ratio = pts[j].p / pts[i].p;
+            if (!best || ratio > best.ratio) best = { ratio, from: pts[i].p, to: pts[j].p, mins: (pts[j].t - pts[i].t) / 60000, at: pts[j].t };
+        }
+    }
+    r._growth = best;
+    r._jump = !!(best && best.ratio >= s.ratio && best.to >= min);
+}
+function jumpReason(r) {
+    const g = r._growth;
+    return `戰力暴增：${Math.max(1, Math.round(g.mins))} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}（${g.ratio.toFixed(1)} 倍）`;
+}
+
 function markDuplicates() {
     // 同道號＋境界＋階＋等級＋戰力完全一樣的多筆（多半是同一人換瀏覽器／清資料留下的舊紀錄）：保留最新一筆，其餘標「重複」
     const groups = {};
@@ -240,7 +303,7 @@ function markDuplicates() {
 
 async function reloadBoard() {
     if (!db) return;
-    $('rows').innerHTML = '<tr><td colspan="13" class="note">讀取中…</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="14" class="note">讀取中…</td></tr>';
     try {
         const snap = await db.collection(LEADERBOARD_COLLECTION).orderBy('power', 'desc').limit(isAdmin ? FULL_LIMIT : 100).get();
         rows = snap.docs.map(d => analyze(Object.assign({ id: d.id }, d.data())));
@@ -254,27 +317,31 @@ function staleDays() { return Math.max(1, Number($('stale-days').value) || 14); 
 
 function renderBoard() {
     const sd = staleDays();
-    rows.forEach(r => { r._stale = r._days >= sd; });
+    rows.forEach(r => { r._stale = r._days >= sd; computeJump(r); });
     const f = $('filter').value;
-    const shown = rows.filter(r => f === 'all' ? true : f === 'flagged' ? (r._flags.length || r._stale) : f === 'red' ? r._red
-                                  : f === 'yellow' ? r._yellow : f === 'dup' ? r._dup : r._stale);
+    const shown = rows.filter(r => f === 'all' ? true : f === 'flagged' ? (r._flags.length || r._stale || r._jump) : f === 'red' ? r._red
+                                  : f === 'jump' ? r._jump : f === 'yellow' ? r._yellow : f === 'dup' ? r._dup : r._stale);
     $('stats').innerHTML = [
-        ['', rows.length, '筆紀錄'], ['red', rows.filter(r => r._red).length, '🔴 超過上限'], ['yellow', rows.filter(r => r._yellow).length, '🟡 偏高／異常'],
+        ['', rows.length, '筆紀錄'], ['red', rows.filter(r => r._red).length, '🔴 超過上限'], ['orange', rows.filter(r => r._jump).length, '🟠 戰力暴增'],
+        ['yellow', rows.filter(r => r._yellow).length, '🟡 偏高／異常'],
         ['', rows.filter(r => r._dup).length, '重複'], ['', rows.filter(r => r._stale).length, `${sd} 天未更新`]
     ].map(([c, n, t]) => `<div class="stat ${c}"><b>${n}</b><small>${t}</small></div>`).join('');
     $('rows').innerHTML = shown.length ? shown.map(r => {
         const i = rows.indexOf(r) + 1;
-        const flags = r._flags.map(([c, t]) => `<span class="flag ${c}">${esc(t)}</span>`).join('') + (r._stale ? `<span class="flag grey">${Math.floor(r._days)} 天未更新</span>` : '');
-        return `<tr class="${r._red ? 'red' : r._yellow ? 'yellow' : ''}">
+        const g = r._growth;
+        const flags = (r._jump ? `<span class="flag orange">${esc(jumpReason(r).replace('戰力暴增：', '暴增 '))}</span>` : '')
+            + r._flags.map(([c, t]) => `<span class="flag ${c}">${esc(t)}</span>`).join('') + (r._stale ? `<span class="flag grey">${Math.floor(r._days)} 天未更新</span>` : '');
+        return `<tr class="${r._red ? 'red' : r._jump ? 'jump' : r._yellow ? 'yellow' : ''}">
             <td><input type="checkbox" class="chk" value="${esc(r.id)}"></td><td>${i}</td><td>${esc(r.name)}</td>
             <td>${esc(realms[r._realm] || '？')} ${r._stage} 階</td><td>${r._level}</td><td>${esc(r.sect || '')}</td>
             <td class="num">${fmt(r._power)}</td><td class="num">${r._ratio >= 1000 ? fmt(Math.round(r._ratio)) : r._ratio.toFixed(1)}×</td>
             <td class="num">${r._use >= 10 ? fmt(Math.round(r._use * 100)) : (r._use * 100).toFixed(1)}%</td>
+            <td class="num" title="${g ? esc(`${Math.round(g.mins)} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}`) : '沒有時窗內的前一次上傳'}">${g ? (g.ratio >= 1000 ? fmt(Math.round(g.ratio)) : g.ratio.toFixed(2)) + '×' : '—'}</td>
             <td>${r._days >= 999 ? '—' : r._days < 1 ? Math.round(r._days * 24) + ' 小時前' : Math.floor(r._days) + ' 天前'}</td>
             <td>${flags}</td><td class="uid">${esc(r.id.slice(0, 10))}…</td>
             <td class="rowbtns admin-only-cell">${isAdmin ? `<button class="danger" onclick="delOne('${esc(r.id)}')">刪除</button><button class="danger" onclick="banOne('${esc(r.id)}')">封鎖</button>` : '—'}</td>
         </tr>`;
-    }).join('') : '<tr><td colspan="13" class="note">沒有符合的紀錄。</td></tr>';
+    }).join('') : '<tr><td colspan="14" class="note">沒有符合的紀錄。</td></tr>';
     $('chk-all').checked = false;
 }
 
@@ -315,7 +382,7 @@ async function guarded(fn) {
 window.delOne = id => { const r = rows.find(x => x.id === id); if (confirm(`刪除「${r ? r.name : id}」這筆紀錄？\n（玩家下次上線會重新上傳；要永久阻擋請用「封鎖」）`)) guarded(() => deleteIds([id], '手動')); };
 window.banOne = id => {
     const r = rows.find(x => x.id === id);
-    const reason = prompt(`封鎖「${r ? r.name : id}」並移出戰力榜。\n請輸入原因（會記在黑名單）：`, r && r._red ? '戰力超過規則上限' : '');
+    const reason = prompt(`封鎖「${r ? r.name : id}」並移出戰力榜。\n請輸入原因（會記在黑名單）：`, r && r._red ? '戰力超過規則上限' : r && r._jump ? jumpReason(r) : '');
     if (reason !== null) guarded(() => banIds([id], reason || '手動封鎖'));
 };
 
@@ -344,11 +411,13 @@ async function patrol() {
     log('▶ 自動巡檢開始', 'warn');
     await reloadBoard();
     const red = rows.filter(r => r._red).map(r => r.id);
-    const stale = $('patrol-stale').checked ? rows.filter(r => r._stale && !r._red).map(r => r.id) : [];
+    const jump = $('patrol-jump').checked ? rows.filter(r => r._jump && !r._red) : [];
+    const stale = $('patrol-stale').checked ? rows.filter(r => r._stale && !r._red && !(r._jump && $('patrol-jump').checked)).map(r => r.id) : [];
     try {
         if (red.length) await banIds(red, '自動巡檢：超過規則上限');
+        for (const r of jump) await banIds([r.id], '自動巡檢：' + jumpReason(r));   // 逐筆封鎖，原因各自記下漲幅
         if (stale.length) await deleteIds(stale, `自動巡檢：${staleDays()} 天未更新`);
-        if (!red.length && !stale.length) log('巡檢完成：沒有需要處理的紀錄', 'ok');
+        if (!red.length && !jump.length && !stale.length) log('巡檢完成：沒有需要處理的紀錄', 'ok');
     } catch (e) { log('巡檢失敗：' + e.message, 'err'); }
     await reloadBoard(); await reloadBans();
 }
@@ -382,11 +451,17 @@ $('btn-ban-selected').onclick = () => {
 };
 $('btn-ban-red').onclick = () => { const ids = rows.filter(r => r._red).map(r => r.id); if (!ids.length) return log('沒有超過上限的紀錄', 'ok');
     if (confirm(`封鎖並移除全部 ${ids.length} 筆超過上限的紀錄？`)) guarded(() => banIds(ids, '戰力超過規則上限')); };
+$('btn-ban-jump').onclick = () => { const list = rows.filter(r => r._jump); if (!list.length) return log('沒有戰力暴增的紀錄', 'ok');
+    if (confirm(`封鎖並移除全部 ${list.length} 筆戰力暴增的紀錄？\n${list.slice(0, 10).map(r => `・${r.name}：${jumpReason(r)}`).join('\n')}${list.length > 10 ? '\n…' : ''}`))
+        guarded(async () => { for (const r of list) await banIds([r.id], jumpReason(r)); }); };
+['jump-hours', 'jump-ratio', 'jump-min'].forEach(id => $(id).onchange = () => { saveJumpSettings(); renderBoard(); });
+$('patrol-jump').onchange = saveJumpSettings;
 $('btn-del-stale').onclick = () => { const ids = rows.filter(r => r._stale).map(r => r.id); if (!ids.length) return log(`沒有 ${staleDays()} 天未更新的紀錄`, 'ok');
     if (confirm(`刪除 ${ids.length} 筆 ${staleDays()} 天以上未更新的紀錄？（不封鎖，玩家回來會重新上傳）`)) guarded(() => deleteIds(ids, `${staleDays()} 天未更新`)); };
 $('patrol-on').onchange = e => setPatrol(e.target.checked);
 $('btn-patrol-now').onclick = patrol;
 
+loadJumpSettings();
 init().catch(e => { $('who').textContent = '初始化失敗：' + e.message; log(e.message, 'err'); });
 </script>
 </body>
