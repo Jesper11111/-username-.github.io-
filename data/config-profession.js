@@ -2,6 +2,14 @@
 // 玩家選一個主修，只有主修累積熟練度；各職業熟練度分開保存，換主修不歸零（第一次免費，之後每次 PROFESSION_SWITCH_COST 靈石）
 
 const PROFESSION_SWITCH_COST = 100000;
+const PROFESSION_MIN_LEVEL = 10;
+// 宗門傳承（2026-09-27）：主修職業的武器 = 目前所屬宗門的傳承武器（config-sects.js 的 weapon）時生效，依宗門階段
+//   weaponPct：主修武器加成再加這麼多（舊制＝該武器四維、新制＝武器攻擊，與 PROF_WEAPON_BONUS 相加）；profMult：熟練度獲得倍率
+const SECT_LEGACY_BONUS = {
+    1: { weaponPct: 0.10, profMult: 1.3 },   // 凡俗宗門
+    2: { weaponPct: 0.20, profMult: 1.6 },   // 修真宗門
+    3: { weaponPct: 0.30, profMult: 2.0 }    // 至高聖地
+};   // 人物等級達此才能選主修職業（2026-09-27 使用者指定；已選過的老玩家不受影響）
 // 熟練度來源：野外每擊殺一隻 +1 × 地圖分類倍率（野外歷練 1、開放世界 2、上古禁區 3、幽冥禁域 3、諸天戰場 4）；懸賞伏誅 +PROF_BOUNTY_GAIN；離線 × PROF_OFFLINE_RATE
 const PROF_MAP_MULT = { 1: 1, 2: 2, 3: 3, 4: 3, 5: 4 };
 const PROF_BOUNTY_GAIN = 200;

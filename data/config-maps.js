@@ -7,6 +7,8 @@
 const SECT_MAP_NAME = "宗門";
 
 // monsterAtk／monsterHp（選填）= 直接指定妖獸攻擊／氣血；沒填就用 攻擊 = diff × 50、氣血 = diff × 500（combat.js 的 getMapMonsterStats）
+// 新制（NUMERIC_V2，第 52 節）不看 diff：nv2L = 妖獸對應的成長位置（境界 + (階 − 1)/10，例 6 = 煉虛 1 階），
+//   妖獸強度由 numeric.js 的 nv2MonsterStats 依「同境界一般玩家」算出；nv2MinStat = 新制的四維進入門檻（取代 minStat）；nv2AtkMult（選填）= 妖獸攻擊倍率
 // ⚠️ coins = 每擊殺一隻的「平均」靈石（實際為 ±20% 隨機，見 combat.js 的 rollKillCoins）。
 //    舊版用 diff × (8~12) 計算，難度一放大靈石就爆量（混沌初界每小時 22 億），因此改為各地圖獨立設定。
 //    換算方式：滿速掛機每小時約 KILLS_PER_HOUR_ESTIMATE 隻 → 每小時靈石 ≈ coins × 1160。
@@ -26,33 +28,33 @@ const maps = [
     ]},
     { category: "一、野外歷練 (戰鬥區)", isSafe: false, items: [
         //                                                      coins   ≈ 每小時上限
-        { name: "靈山大川", expRate: 8, diff: 2, coins: 20 },        //   2.3 萬
-        { name: "深淵險地", expRate: 20, diff: 50, coins: 80 },       //   9.3 萬
-        { name: "上古遺跡", expRate: 50, diff: 350, coins: 250 }      //  29 萬
+        { name: "靈山大川", expRate: 8, diff: 2, coins: 20, nv2L: 0, nv2AtkMult: 0.7, suit: [0, 1] },   // 新手圖：新制妖獸攻擊 ×0.7（剛入門沒有宗門技能也不會戰死）        //   2.3 萬
+        { name: "深淵險地", expRate: 20, diff: 50, coins: 80, nv2L: 2, suit: [2, 2] },       //   9.3 萬
+        { name: "上古遺跡", expRate: 50, diff: 350, coins: 250, nv2L: 3, suit: [3, 3] }      //  29 萬
     ]},
     { category: "二、開放世界大區域 (高難度戰鬥)", isSafe: false, items: [
-        { name: "天南", expRate: 100, diff: 40000, coins: 1000 },      // 116 萬
-        { name: "亂星海", expRate: 300, diff: 100000, coins: 1650 },    // 191 萬（上限 200 萬）
-        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450 } // 284 萬（上限 300 萬）
+        { name: "天南", expRate: 100, diff: 40000, coins: 1000, nv2L: 4, suit: [4, 4] },      // 116 萬
+        { name: "亂星海", expRate: 300, diff: 100000, coins: 1650, nv2L: 5, suit: [5, 5] },    // 191 萬（上限 200 萬）
+        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 9] } // 284 萬（上限 300 萬）
     ]},
     { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
-        { name: "荒古禁地", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000 },      // 389 萬（上限 400 萬）
-        { name: "太初古礦", expRate: 4000, diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000 },      // 487 萬（上限 500 萬）
-        { name: "上蒼（葬天島）", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000 } // 800 萬
+        { name: "荒古禁地", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [10, 10] },      // 389 萬（上限 400 萬）
+        { name: "太初古礦", expRate: 4000, diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [10, 11] },      // 487 萬（上限 500 萬）
+        { name: "上蒼（葬天島）", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [11, 11] } // 800 萬
     ]},
     // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
     { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
-        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000 },       // 847 萬
-        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000 },         // 899 萬
-        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000 },         // 951 萬
-        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000 }         // 974 萬（上限 1000 萬）
+        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 10, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
+        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 11, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
+        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
+        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 13, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
     ]},
     // 上蒼之後（含諸天戰場）一律維持在每小時 800～1000 萬，不再隨難度放大；
     // 這幾張圖的差異改由經驗與聲望體現，靈石封頂。
     { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
-        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true },   // 974 萬
-        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true },   // 974 萬
-        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true }   // 974 萬
+        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
+        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
+        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.9, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
     ]}
 ];
 

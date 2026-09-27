@@ -128,6 +128,8 @@ function getBonusTotals() {
     add(getProfessionPassive());
     add(getStrangeFireBonusTotals());   // 天下異火收錄加成（strange-fire.js）
     add(getPartnerBonusTotals());       // 出戰夥伴被動（partner.js）
+    add(getAptitudeBonusTotals());      // 先天靈根與體質（aptitude.js）
+    add(getGoldenCoreBonusTotals());    // 金丹（氣血／靈力 %）、元嬰（術法 %）（golden-core.js）
     return t;
 }
 
@@ -238,7 +240,8 @@ function formatEquipTitle(eq) {
 
 // 卡片的屬性、詞條、特效、孔位（背包、角色裝備欄、千寶閣、強化視窗共用）
 function formatEquipDetails(eq) {
-    return `<p style="font-size: 0.8em; color: #facc15;">加成: ${formatEquipStats(getEquipEffectiveStats(eq))}</p>
+    let statsText = NUMERIC_V2 ? nv2FormatEquipStats(eq) : formatEquipStats(getEquipEffectiveStats(eq));   // 新制顯示武器攻擊與新屬性點（numeric.js）
+    return `<p style="font-size: 0.8em; color: #facc15;">加成: ${statsText}</p>
             ${formatGearSubs(eq)}${formatGearEffect(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
 }
 
@@ -338,7 +341,7 @@ function applyGearHitChain(fx, target, targets, r, tags) {
     let totals = getBonusTotals();
     r.tags.forEach(tag => {
         let boost = totals["elemBoost:" + tag];
-        if (boost && r.dmg > 0) { let d = Math.floor(r.dmg * boost); target.hp -= d; extra += d; }
+        if (boost && r.dmg > 0) { let d = roundDmg(r.dmg * boost); target.hp -= d; extra += d; }
     });
     let others = () => targets.filter(t => t !== target && t.hp > 0);
     if (fx["冰封"] && r.tags.includes("ice") && Math.random() < fx["冰封"]) {
@@ -347,12 +350,12 @@ function applyGearHitChain(fx, target, targets, r, tags) {
     }
     if (fx["連雷"] && r.tags.includes("thunder") && r.dmg > 0) {
         let pool = others();
-        if (pool.length) { let d = Math.floor(r.dmg * fx["連雷"]); pool[0].hp -= d; extra += d; tags.push("thunder"); }
+        if (pool.length) { let d = roundDmg(r.dmg * fx["連雷"]); pool[0].hp -= d; extra += d; tags.push("thunder"); }
     }
     let st = target.status;
     let maxStacks = getPlayerCombatAttrs().poisonMax || POISON_MAX_STACKS;
     if (fx["毒爆"] && st && st.poison && st.poison.stacks >= maxStacks) {
-        let d = Math.floor(getPhysAttack() * fx["毒爆"]);
+        let d = roundDmg(getPhysAttack() * fx["毒爆"]);   // 新制保留 1 位小數（elements.js）
         target.hp -= d;
         extra += d;
         st.poison = null;
@@ -368,7 +371,7 @@ function applyGearDefense(r, attacker, isMagic, tags) {
     let fx = getGearEffects();
     let dmg = r.dmg * (1 - (isMagic ? (fx["化勁"] || 0) : (fx["金身"] || 0)));
     if (fx["反震"] && dmg > 0 && attacker) {
-        attacker.hp -= Math.floor(dmg * fx["反震"]);
+        attacker.hp -= roundDmg(dmg * fx["反震"]);
         tags.push("reflect");
     }
     if (r.tags.includes("dodge") && hasSetSpecial("dodgeStrike")) gearDodgeStrikeReady = true;   // 套裝（閃避 4 件）
@@ -378,7 +381,7 @@ function applyGearDefense(r, attacker, isMagic, tags) {
         attacker.hp -= hit.dmg;
         tags.push("counterHit");
     }
-    return Math.floor(dmg);
+    return roundDmg(dmg);   // 舊制捨去、新制保留 1 位小數（elements.js）
 }
 
 // 每回合回復（回春、回靈）：野外、渡劫、懸賞對決與靈根回復一起結算，回傳回復的氣血

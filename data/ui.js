@@ -134,7 +134,11 @@ function updateUI() {
     // 渡劫失敗的虛弱狀態（stats.js 的 getWeaknessMult）
     if (player.weakened) realmEl.innerHTML += ` <span class="weak-tag" title="攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%，修回 10 階後解除">虛弱 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%</span>`;
     let levelPct = player.level >= MAX_PLAYER_LEVEL ? 100 : Math.min(player.levelExp / getLevelExpNeeded(player.level) * 100, 100);
-    document.getElementById('level-display').innerText = `Lv.${player.level.toWan()} (${levelPct.toFixed(1)}%)`;
+    // 新制：到達境界的等級上限時顯示「已達上限」（leveling.js 的 getLevelCap）
+    let atCap = NUMERIC_V2 && player.level >= getLevelCap() && player.level < MAX_PLAYER_LEVEL;
+    document.getElementById('level-display').innerText = atCap
+        ? `Lv.${player.level.toWan()}（已達${realms[player.realmIndex]}上限，突破後再升）`
+        : `Lv.${player.level.toWan()} (${levelPct.toFixed(1)}%)${NUMERIC_V2 && getLevelCap() < MAX_PLAYER_LEVEL ? `／上限 ${getLevelCap().toWan()}` : ''}`;
     let lifespanEl = document.getElementById('lifespan-display');
     let atFloor = player.lifespan <= getLifespanFloor();
     let perMin = getAgingPerMinute();
@@ -149,27 +153,45 @@ function updateUI() {
                  : `${(perMin * 60).toFixed(1)}年/時`;
     rateEl.innerText = atFloor ? '（歲月已止）' : `⌛-${rateText}`;
     rateEl.style.color = atFloor ? '#ef4444' : (getAgingMultiplier() > 1 ? '#fb923c' : '#9ca3af');
-    document.getElementById('power-display').innerText = getPhysAttack().toWan();
+    document.getElementById('power-display').innerText = (NUMERIC_V2 ? nv2CombatPower() : getPhysAttack()).toWan();
+    let aptEl = document.getElementById('aptitude-display');   // 先天靈根・體質（aptitude.js），點擊查看／重測
+    if (aptEl) aptEl.innerText = formatAptitudeShort();
+    let coreEl = document.getElementById('core-display');   // 丹田／金丹／元嬰（golden-core.js）
+    if (coreEl) coreEl.innerHTML = formatCoreShort();
     document.getElementById('sect-display').innerText = player.sect ? player.sect.name : "散修 (無技能)";
     document.getElementById('coins-display').innerText = player.coins.toWan();
     document.getElementById('reputation-display').innerText = (player.reputation || 0).toWan();
 
     let eqBonus = getEquipBonus();
-    document.getElementById('stat-str').innerText = `${player.stats.str} (+${eqBonus.str})`;
-    document.getElementById('stat-con').innerText = `${player.stats.con} (+${eqBonus.con})`;
-    document.getElementById('stat-int').innerText = `${player.stats.int} (+${eqBonus.int})`;
-    document.getElementById('stat-spr').innerText = `${player.stats.spr} (+${eqBonus.spr})`;
+    if (NUMERIC_V2) {
+        // 新制：顯示總值（小數一位）；滑鼠停留看來源（境界／丹藥／藏書閣／裝備）
+        const gear = nv2GearStats(), base = nv2BaseStat();
+        ["str", "con", "int", "spr", "agi"].forEach(k => {
+            const el = document.getElementById('stat-' + k);
+            el.innerText = (Math.round(nv2Stat(k) * 10) / 10).toString();
+            el.parentElement.title = `境界 ${base}｜丹藥 +${nv2PillStat(k).toFixed(1)}｜藏書閣 +${nv2StudyStat(k).toFixed(1)}｜裝備 +${(gear[k] || 0).toFixed(1)}`;
+        });
+        document.getElementById('stat-agi-row').hidden = false;
+    } else {
+        document.getElementById('stat-str').innerText = `${player.stats.str} (+${eqBonus.str})`;
+        document.getElementById('stat-con').innerText = `${player.stats.con} (+${eqBonus.con})`;
+        document.getElementById('stat-int').innerText = `${player.stats.int} (+${eqBonus.int})`;
+        document.getElementById('stat-spr').innerText = `${player.stats.spr} (+${eqBonus.spr})`;
+    }
     document.getElementById('stat-cha').innerText = `${player.stats.cha} (+${eqBonus.cha})`;
 
     let attrs = getPlayerCombatAttrs();
     let elemHtml = attrs.element
         ? `<span title="${formatWuxingCounterTip(attrs.element)}">☯️本命 <b><span class="elem-${attrs.element}">${attrs.element}</span></b></span>`
         : `<span title="穿戴裝備後，數量最多的五行即為本命五行">☯️本命 <b>無</b></span>`;
-    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "eva"].concat(AFFIX_TYPES).map(k => {
+    // 變異屬性（風／光／暗）有數值才顯示；光暗本質附在最後
+    let variantKeys = VARIANT_AFFIX_TYPES.filter(k => attrs[k] > 0);
+    let natureHtml = attrs.nature ? `<span title="與相反本質互剋 +30%">${attrs.nature === 'light' ? '☀️本質：光' : '🌑本質：暗'}</span>` : '';
+    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
-    }).join('');
+    }).join('') + natureHtml;
     document.getElementById('reincarnate-count').innerText = player.reincarnations;
 
     document.getElementById('res-grass').innerText = player.spiritGrass;
@@ -241,11 +263,20 @@ function updatePotionCooldownUI() {
         + `<span style="color:${potionCooldownMp > 0 ? '#f87171' : '#4ade80'};">靈力 ${mpText}</span>`;
 }
 
+// 藏書閣次數／每次增加量／規則文字（新制上限 200、每次 +0.1，並顯示敏捷古籍，見 library.js）
 function updateStudyCountsUI() {
-    if (document.getElementById('study-count-str')) document.getElementById('study-count-str').innerText = `已學習: ${player.studyCounts.str} / 100`;
-    if (document.getElementById('study-count-con')) document.getElementById('study-count-con').innerText = `已學習: ${player.studyCounts.con} / 100`;
-    if (document.getElementById('study-count-int')) document.getElementById('study-count-int').innerText = `已學習: ${player.studyCounts.int} / 100`;
-    if (document.getElementById('study-count-spr')) document.getElementById('study-count-spr').innerText = `已學習: ${player.studyCounts.spr} / 100`;
+    const max = studyMaxOf(), gain = studyGainOf();
+    const names = { str: '力量', con: '體質', int: '悟性', spr: '靈力', agi: '敏捷' };
+    const agiCard = document.getElementById('study-card-agi');
+    if (agiCard) agiCard.hidden = !NUMERIC_V2;
+    const rule = document.getElementById('study-rule');
+    if (rule) rule.innerText = `消耗【武學積分】永久提升${NUMERIC_V2 ? '屬性' : '四維'}（每種書籍學習上限 ${max} 次）`;
+    for (const k in names) {
+        const cnt = document.getElementById('study-count-' + k);
+        if (cnt) cnt.innerText = `已學習: ${(player.studyCounts && player.studyCounts[k]) || 0} / ${max}`;
+        const g = document.getElementById('study-gain-' + k);
+        if (g) g.innerText = `每次 ${names[k]} +${NUMERIC_V2 ? gain.toFixed(1) : gain}`;
+    }
 }
 
 // 修仙分頁「⚔️ 當前可用技能」按鈕：彈出 #skill-modal

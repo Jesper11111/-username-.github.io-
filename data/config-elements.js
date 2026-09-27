@@ -29,8 +29,25 @@ const combatAttrInfo = {
     fire:   { label: "火傷", icon: "🔥", desc: `燒傷，最多 ${BURN_MAX_STACKS} 層、持續 ${BURN_TURNS} 回合` },
     poison: { label: "毒傷", icon: "☠️", desc: `中毒，最多 ${POISON_MAX_STACKS} 層、持續 ${POISON_TURNS} 回合` },
     metal:  { label: "金傷", icon: "⚔️", desc: `重擊，該次傷害 ×${1 + METAL_BONUS}` },
-    thunder:{ label: "雷傷", icon: "⚡", desc: `雷擊，該次傷害 ×${1 + THUNDER_BONUS} 且無視目標減傷` }
+    thunder:{ label: "雷傷", icon: "⚡", desc: `雷擊，該次傷害 ×${1 + THUNDER_BONUS} 且無視目標減傷` },
+    wind:   { label: "風擊", icon: "🌪️", desc: "每回合機率追加一擊（普攻 ×0.6）" },
+    light:  { label: "聖光", icon: "☀️", desc: "該擊 ×1.3 並回復最大氣血 1%" },
+    dark:   { label: "暗蝕", icon: "🌑", desc: "該擊無視減傷並吸取 20% 傷害回血" }
 };
+// ---- 變異屬性（2026-09-27，第 53 節）：由先天靈根、體質提供，與上面的屬性傷害一起套 AFFIX_CAP ----
+//   風：每回合 wind% 機率追加一擊（普攻 ×WIND_HIT_MULT）
+//   光：觸發時該擊 ×(1 + LIGHT_BONUS) 並回復最大氣血 LIGHT_HEAL
+//   暗：觸發時該擊無視減傷，並吸取該擊傷害 DARK_LIFESTEAL 回血
+const WIND_HIT_MULT = 0.6;
+const LIGHT_BONUS = 0.3;
+const LIGHT_HEAL = 0.01;
+const DARK_LIFESTEAL = 0.2;
+const VARIANT_AFFIX_TYPES = ["wind", "light", "dark"];
+// 光暗互剋：雙方都有「光／暗」本質（attrs.nature）且不同時，攻擊方傷害 ×(1 + 此值)
+//   玩家本質來自資質（config-aptitude.js 的 special.nature）；邪修、邪派懸賞人物、幽冥禁域妖獸為暗，正道修士與正派懸賞人物為光
+const LIGHT_DARK_COUNTER_BONUS = 0.3;
+const DARK_MAP_CATEGORIES = [4];   // 這些地圖分類的妖獸本質為暗（幽冥禁域）
+
 // 玩家武器可帶的屬性傷害（鍛造閣／千寶閣隨機抽一種）
 const AFFIX_TYPES = ["ice", "fire", "poison", "metal", "thunder"];
 // 怪物的「異屬性」只會是冰／毒／雷（火、金已屬於五行，不再作為怪物的屬性傷害）

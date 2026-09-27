@@ -2,7 +2,7 @@ rules_version = '2';
 // 天下戰力榜（data/leaderboard.js）與 GM 管理頁（gm.html）的 Firestore 安全規則：
 // 貼到 Firebase 主控台 → Firestore → 規則 → 發布（ARCHITECTURE.md 第 42、50 節）
 //
-// 防作弊：只能寫自己的那筆（匿名登入 uid）、欄位型別與範圍檢查、戰力不可超過「同境界同階基礎值 × 200」、
+// 防作弊：只能寫自己的那筆（匿名登入 uid）、欄位型別與範圍檢查、戰力不可超過「400 ＋ 境界 × 40」（2026-09-28 數值重做後的新制上限）、
 // 上傳至少間隔 60 秒、被封鎖（banned/{uid}）的不能再上傳、每筆保留最近 24 次上傳的戰力歷史 hist（GM 比對暴增）。擋得住隨手改數字，擋不住會改存檔的高手（戰力是玩家端算的）。
 //
 // 死守天南城通關榜：玩家送審到 defenseSubmit/{uid}，GM 審核通過才寫入 defenseBoard/{uid}（玩家不能直接上榜）。
@@ -52,9 +52,9 @@ service cloud.firestore {
           && d.level is int && d.level >= 1 && d.level <= 10000
           && d.kills is int && d.kills >= 0
           && d.runAt is int
-          // 與戰力榜相同的戰力上限；攻擊（取物攻、術攻較高者）給 5 倍空間
-          && d.power <= math.pow(10, d.realm) * d.stage * 7 * 200 + d.level * 200000
-          && d.atk <= (math.pow(10, d.realm) * d.stage * 7 * 200 + d.level * 200000) * 5
+          // 與戰力榜相同的戰力上限（新制，2026-09-28）；新制戰力 = 攻擊 × 暴擊連擊技能期望（1.8～2.3 倍），攻擊一定小於戰力
+          && d.power <= 400 + d.realm * 40
+          && d.atk <= d.power
           && d.updatedAt == request.time;
       }
     }
@@ -101,11 +101,11 @@ service cloud.firestore {
           && d.stage is int && d.stage >= 1 && d.stage <= 10
           && d.level is int && d.level >= 1 && d.level <= 10000
           && d.power is number && d.power >= 0
-          // 戰力上限 = 基礎戰力 × 200 ＋ 等級 × 20 萬：
-          //   基礎戰力：同境界同階修為圓滿約 7 × 階 × 10^境界（stats.js 的 getBasePower）；2026-09-27 線上真實資料最高約 9.3 倍（天仙 10 階、至高宗門＋裝備）
-          //   等級項：裝備力量（受人物等級限制）另計，轉世回凡人但保留全身裝備的玩家才不會被誤擋（滿級約 20 億，不影響榜首）
-          //   原本上限 10^(境界+9) 太寬，曾讓「化神 3 階、戰力 63 兆（基礎值 3000 萬倍）」的作弊資料通過
-          && d.power <= math.pow(10, d.realm) * d.stage * 7 * 200 + d.level * 200000
+          // 戰力上限（數值重做新制，2026-09-28，ARCHITECTURE.md 第 52 節）= 400 ＋ 境界 × 40（凡人 400、混沌道祖 1000）：
+          //   新制戰力 = 每回合期望輸出（numeric.js 的 nv2CombatPower）。本機以「白金 +20 武器、職業滿階＋傳承＋劍體、丹藥藏書閣全滿、至尊靈根、增益 +200% 上限」
+          //   量得理論最高 凡人 163、金丹 210、煉虛 286、渡劫 365、真仙 425、混沌道祖 463，上限留 2 倍以上空間
+          //   舊制上限（10^境界 × 階 × 7 × 200 ＋ 等級 × 20 萬）已不適用；快取中的舊版程式上傳的億兆級戰力會被擋下
+          && d.power <= 400 + d.realm * 40
           && d.updatedAt == request.time;
       }
     }

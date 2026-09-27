@@ -12,6 +12,7 @@ function gainExp(amount) {
 
     gainLevelExp(finalAmount);
     gainBeastExp(finalAmount);
+    gainCoreProgress(finalAmount);   // 築基期灌丹田、金丹期溫養（含待渡劫時溢出的修為，golden-core.js）
 
     if (player.pendingTribulation) { updateUI(); return 0; }
     if (player.realmIndex >= realms.length - 1 && player.stage >= 10) { updateUI(); return 0; }
@@ -52,7 +53,10 @@ function gainExp(amount) {
         player.stats.cha += 2;
 
         addDailyProgress('breakthrough');
-        addLog(`✨ 修為精進，達到【${realms[player.realmIndex]} ${player.stage}階】！四維屬性 +5，魅力 +2。`, "level-up");
+        // 新制（第 52 節）：屬性由境界階數計算（numeric.js 的 nv2BaseStat），每階六大屬性 +1；player.stats 照舊累加但戰鬥不讀（魅力除外）
+        addLog(NUMERIC_V2
+            ? `✨ 修為精進，達到【${realms[player.realmIndex]} ${player.stage}階】！六大屬性 +${NV2.statPerStage}（基礎 ${nv2BaseStat()}），魅力 +2。`
+            : `✨ 修為精進，達到【${realms[player.realmIndex]} ${player.stage}階】！四維屬性 +5，魅力 +2。`, "level-up");
         // 渡劫失敗造成的虛弱：重新修回 10 階即解除
         if (player.weakened && player.stage >= 10) {
             player.weakened = false;
@@ -71,15 +75,39 @@ function gainExp(amount) {
 function gainLevelExp(amount) {
     if (player.level >= MAX_PLAYER_LEVEL || !(amount > 0)) return;
     player.levelExp += amount;
+    processLevelUps();
+}
 
+// 人物等級上限：新制依境界（config-level.js 的 LEVEL_CAP_BY_REALM），舊制只有 MAX_PLAYER_LEVEL
+function getLevelCap() {
+    if (!NUMERIC_V2) return MAX_PLAYER_LEVEL;
+    return Math.min(MAX_PLAYER_LEVEL, LEVEL_CAP_BY_REALM[player.realmIndex] || MAX_PLAYER_LEVEL);
+}
+// 到達境界上限時最多能存的經驗：從目前等級升到「下一境界上限」所需的總量（最高境界時為 0）
+let levelBankCache = { key: '', value: 0 };
+function getLevelBankLimit() {
+    let nextCap = Math.min(MAX_PLAYER_LEVEL, LEVEL_CAP_BY_REALM[player.realmIndex + 1] || 0);
+    let key = player.level + '_' + nextCap;
+    if (levelBankCache.key !== key) {
+        let sum = 0;
+        for (let lv = player.level; lv < nextCap; lv++) sum += getLevelExpNeeded(lv);
+        levelBankCache = { key, value: sum };
+    }
+    return levelBankCache.value;
+}
+
+// 依已累積的經驗連續升級（受 getLevelCap 限制）；突破境界後 advanceRealm 也會呼叫，把存著的經驗補升
+function processLevelUps() {
+    let cap = getLevelCap();
     let startLevel = player.level;
     let need = getLevelExpNeeded(player.level);
-    while (player.levelExp >= need && player.level < MAX_PLAYER_LEVEL) {
+    while (player.levelExp >= need && player.level < cap) {
         player.levelExp -= need;
         player.level++;
         need = getLevelExpNeeded(player.level);
     }
     if (player.level >= MAX_PLAYER_LEVEL) player.levelExp = 0;
+    else if (player.level >= cap) player.levelExp = Math.min(player.levelExp, getLevelBankLimit());   // 到頂：經驗先存著（有上限）
 
     let gained = player.level - startLevel;
     if (gained > 0) {
@@ -88,7 +116,13 @@ function gainLevelExp(amount) {
         player.stats.con += statGain;
         player.stats.int += statGain;
         player.stats.spr += statGain;
-        addLog(`🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！四維各 +${statGain}，生命上限 +${gained * LEVEL_UP_HP_GAIN}，靈力上限 +${gained * LEVEL_UP_MP_GAIN}。`, "level-up");
+        // 新制：等級不再加屬性，只加氣血 %（NV2.levelHpPct）與靈力上限（NV2.levelMp），見 numeric.js
+        addLog(NUMERIC_V2
+            ? `🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！氣血上限 +${+(gained * NV2.levelHpPct).toFixed(3)}%，靈力上限 +${+(gained * NV2.levelMp).toFixed(1)}。`
+            : `🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！四維各 +${statGain}，生命上限 +${gained * LEVEL_UP_HP_GAIN}，靈力上限 +${gained * LEVEL_UP_MP_GAIN}。`, "level-up");
+        if (NUMERIC_V2 && player.level >= cap && cap < MAX_PLAYER_LEVEL) {
+            addLog(`🔒 人物等級已達【${realms[player.realmIndex]}】上限 Lv.${cap}，突破境界後才能繼續提升（期間的經驗會先存著）。`, "level-up");
+        }
     }
 }
 
@@ -118,7 +152,11 @@ function advanceRealm() {
     player.hp = getMaxHp();
     player.mp = getMaxMp();
 
-    addLog(`⚡ 突破成功！境界晉升至【${realmName}】！四維與魅力屬性全面暴增！`, "level-up");
+    addLog(NUMERIC_V2
+        ? `⚡ 突破成功！境界晉升至【${realmName}】！六大屬性 +${NV2.statPerStage + NV2.statPerRealm}（基礎 ${nv2BaseStat()}），氣血成長再上一層！${getLevelCap() < MAX_PLAYER_LEVEL ? `人物等級上限提高到 Lv.${getLevelCap()}。` : ''}`
+        : `⚡ 突破成功！境界晉升至【${realmName}】！四維與魅力屬性全面暴增！`, "level-up");
+    onRealmAdvancedCore();   // 進金丹凝金丹、進元嬰成元嬰（golden-core.js）
+    processLevelUps();   // 新制：等級上限隨境界提高，存著的經驗補升
     gainRealmLifespan();
 }
 
@@ -129,8 +167,12 @@ function triggerReincarnate() {
     }
 
     let pct = Math.round(REINCARNATE_KEEP_RATE * 100);
+    // 新制（第 52 節）：屬性由境界計算，轉世只保留氣血上限的 NV2.reincarnateHpKeep（10%）
+    let keepText = NUMERIC_V2
+        ? `・保留：氣血上限的 ${Math.round(NV2.reincarnateHpKeep * 100)}%（目前約 +${(Math.round(getMaxHp() * NV2.reincarnateHpKeep * 10) / 10).toWan()}，可逐世累積）\n`
+        : `・保留：四維與魅力的 ${pct}%、氣血上限與靈力上限的 ${pct}%\n`;
     if (confirm(`轉世輪迴將洗去此世修為：\n` +
-        `・保留：四維與魅力的 ${pct}%、氣血上限與靈力上限的 ${pct}%\n` +
+        keepText +
         `・遺忘：境界、人物等級、宗門（須重新拜入）與宗門技能、藏書閣古籍與屬性秘典\n` +
         `・壽元回到凡人的 ${lifespanByRealm[0].gain} 年\n` +
         `此操作無法復原，是否確定輪迴？`)) {
@@ -139,6 +181,10 @@ function triggerReincarnate() {
         let oldStats = player.stats;
         let keptHp = Math.floor(getMaxHp() * REINCARNATE_KEEP_RATE);
         let keptMp = Math.floor(getMaxMp() * REINCARNATE_KEEP_RATE);
+        // 新制：保留此世氣血上限的 10%（getMaxHp 已含前世保留量，所以會逐世累積）；舊制的 hp／mp 保留量不動，避免新舊數字混在一起
+        let oldBonus = player.reincarnateBonus || {};
+        let keptNv2Hp = NUMERIC_V2 ? Math.round(getMaxHp() * NV2.reincarnateHpKeep * 10) / 10 : (oldBonus.nv2Hp || 0);
+        if (NUMERIC_V2) { keptHp = oldBonus.hp || 0; keptMp = oldBonus.mp || 0; }
         let keep = v => 10 + Math.floor((v || 0) * REINCARNATE_KEEP_RATE);
 
         player.reincarnations++;
@@ -153,16 +199,19 @@ function triggerReincarnate() {
         player.lifespan = lifespanByRealm[0].gain;
         player.age = LIFESPAN_START_AGE;
         player.stats = { str: keep(oldStats.str), con: keep(oldStats.con), int: keep(oldStats.int), spr: keep(oldStats.spr), cha: keep(oldStats.cha) };
-        player.reincarnateBonus = { hp: keptHp, mp: keptMp };
+        player.reincarnateBonus = { hp: keptHp, mp: keptMp, nv2Hp: keptNv2Hp };
         player.sect = null;
         player.sectSkills = { 1: null, 2: null, 3: null };
         player.activeQuest = null;
         player.questTimer = 0;
         player.studyCounts = { str: 0, con: 0, int: 0, spr: 0 };
         player.elementStudy = {};
+        player.goldenCore = null;   // 丹田／金丹／元嬰隨轉世重來（golden-core.js）
         player.hp = getMaxHp();
         player.mp = getMaxMp();
-        addLog(`🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為 ${pct}% 的底蘊（氣血上限 +${keptHp.toWan()}、靈力上限 +${keptMp.toWan()}），其餘盡數遺忘。`, "reincarnate");
+        addLog(NUMERIC_V2
+            ? `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為底蘊（氣血上限 +${keptNv2Hp.toWan()}），其餘盡數遺忘。`
+            : `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為 ${pct}% 的底蘊（氣血上限 +${keptHp.toWan()}、靈力上限 +${keptMp.toWan()}），其餘盡數遺忘。`, "reincarnate");
         updateUI();
         updateSectFacilitiesUI();
     }

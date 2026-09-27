@@ -8,7 +8,11 @@ function isInSect() {
 // 修仙地圖（獨立彈窗 #world-map-modal）：列出五個區域，點選後開啟該區的地圖清單
 function openWorldMapModal() {
     let cur = document.getElementById('world-map-current');
-    if (cur) cur.innerText = `目前所在：${player.currentMap.name}${player.currentMapIsSafe ? '（安全區）' : ''}`;
+    if (cur) {
+        let rec = getRecommendedMaps();
+        cur.innerText = `目前所在：${player.currentMap.name}${player.currentMapIsSafe ? '（安全區）' : ''}`
+            + `\n🎯 ${realms[player.realmIndex]}適合練功：${rec.length ? rec.map(r => r.item.name).join('、') : '（目前沒有對應地圖）'}`;
+    }
     renderTownTeleports();
     document.getElementById('world-map-modal').style.display = 'flex';
 }
@@ -52,11 +56,15 @@ function openMapCategoryModal(catIndex) {
     cat.items.forEach((item, iIndex) => {
         if (item.hidden) return;   // 宗門不列在修仙地圖（按洞府的「宗門」回去）
         let isCurrent = player.currentMap.name === item.name;
+        let suit = getMapSuitRange(item);
+        let recommended = suit && player.realmIndex >= suit[0] && player.realmIndex <= suit[1];
+        let suitText = suit ? (suit[0] === suit[1] ? realms[suit[0]] : `${realms[suit[0]]}～${realms[suit[1]]}`) : '';
         container.innerHTML += `
             <div class="card" style="border-color: ${isCurrent ? 'var(--accent)' : 'rgba(255,255,255,0.08)'};">
                 ${getMapThumb(item) ? `<img class="map-thumb" src="${getMapThumb(item)}" alt="${item.name}">` : ''}
-                <h3 style="color: ${isCurrent ? 'var(--accent)' : '#fff'};">${item.name}</h3>
-                <p style="font-size:0.85em; color:#9ca3af;">經驗倍率: x${item.expRate} | 難度: ${item.diff}</p>
+                <h3 style="color: ${isCurrent ? 'var(--accent)' : '#fff'};">${item.name}${recommended ? ' <span style="font-size:0.7em; color:#facc15;">⭐ 推薦練功</span>' : ''}</h3>
+                ${suitText ? `<p style="font-size:0.8em; color:${recommended ? '#facc15' : '#9ca3af'}; margin:2px 0;">🎯 適合境界：${suitText}</p>` : ''}
+                <p style="font-size:0.85em; color:#9ca3af;">經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}</p>
                 ${item.minRealm ? `<p style="font-size:0.8em; color:#f87171;">限制：${realms[item.minRealm]}以上</p>` : ''}
                 <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? '當前所在區域' : '前往此區域'}</button>
             </div>
@@ -66,10 +74,34 @@ function openMapCategoryModal(catIndex) {
     document.getElementById('map-category-modal').style.display = 'flex';
 }
 
+// 適合練功的境界範圍 [最低, 最高]（顯示用）：舊制看 config-maps.js 的 suit；新制妖獸強度由 nv2L 決定，改用 nv2L 所在的境界
+function getMapSuitRange(item) {
+    if (NUMERIC_V2 && typeof item.nv2L === 'number') { let r = Math.floor(item.nv2L + 1e-9); return [r, r]; }
+    return Array.isArray(item.suit) ? item.suit : null;
+}
+// 目前境界推薦的練功地圖 [{ catIndex, itemIndex, item }]（修仙地圖視窗頂端顯示）；沒有剛好對應的就取「適合境界」不超過自己的最高那張
+function getRecommendedMaps() {
+    let list = [], below = null;
+    maps.forEach((cat, ci) => cat.items.forEach((item, ii) => {
+        let s = !cat.isSafe && getMapSuitRange(item);
+        if (!s) return;
+        if (player.realmIndex >= s[0] && player.realmIndex <= s[1]) list.push({ catIndex: ci, itemIndex: ii, item });
+        else if (s[1] < player.realmIndex && (!below || s[1] >= getMapSuitRange(below.item)[1])) below = { catIndex: ci, itemIndex: ii, item };
+    }));
+    return list.length ? list : (below ? [below] : []);
+}
+
 // 洞府的「宗門」（手機熱點、PC pcStageButtons）：不在宗門就先傳送回宗門，再打開宗門分頁
 function returnToSect() {
     if (!isInSect()) changeMap(0, 0);   // maps[0].items[0] = 宗門
     switchTab('sect');
+}
+
+// 地圖卡片的難度文字：舊制顯示 diff；新制顯示妖獸氣血／攻擊（numeric.js 的 nv2MonsterStats）
+function getMapDifficultyText(item) {
+    if (!NUMERIC_V2) return `難度: ${item.diff}`;
+    let ms = nv2MonsterStats(item);
+    return `妖獸 氣血 ${ms.hp.toWan()}／攻擊 ${ms.atk.toWan()}`;
 }
 
 function selectMap(cIndex, iIndex) {
@@ -87,9 +119,11 @@ function changeMap(cIndex, iIndex) {
             return;
         }
     }
-    if (targetMap.minStat) {
-        let minS = targetMap.minStat;
-        if (player.stats.str < minS || player.stats.con < minS || player.stats.int < minS || player.stats.spr < minS) {
+    // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
+    let minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
+    if (minS) {
+        let st = k => NUMERIC_V2 ? nv2Stat(k) : player.stats[k];
+        if (["str", "con", "int", "spr"].some(k => st(k) < minS)) {
             alert(`進入【${targetMap.name}】失敗！四維屬性全數必須大於 ${minS} 方可進入。`);
             return;
         }

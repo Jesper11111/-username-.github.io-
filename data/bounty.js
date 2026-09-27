@@ -13,8 +13,13 @@ function getBountyRefSectMult(realmIndex) {
 
 // 攻擊力：同境界同階數、修為圓滿的修士基礎戰力（getBasePower 同曲線）× 該境界一般宗門倍率 × 天榜倍率 × 各榜比例
 // 氣血：攻擊力 × 20（與玩家的氣血公式同比例）
+// 新制（第 52 節）：攻擊＝同境界同階數「一般玩家」的普攻 × bountyAtkMult、氣血＝一般玩家氣血 × bountyHpMult（numeric.js、config-numeric.js），同樣 × 天榜倍率 × 榜別比例
 function getBountyStats(entry) {
     let r = entry.realmIndex, s = entry.stage;
+    if (typeof NUMERIC_V2 !== 'undefined' && NUMERIC_V2) {   // gm.html 也載入本檔但沒有新制檔案
+        let L = nv2Level(r, s), m = BOUNTY_TIAN_MULT * BOUNTY_RANKS[entry.rank].ratio;
+        return { attack: Math.round(nv2TypNormal(L) * NV2.bountyAtkMult * m * 10) / 10, hp: Math.round(nv2TypHp(L) * NV2.bountyHpMult * m) };
+    }
     let base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
     let rank = BOUNTY_RANKS[entry.rank];
     let attack = Math.floor(base * getBountyRefSectMult(r) * BOUNTY_TIAN_MULT * rank.ratio);
@@ -204,9 +209,9 @@ function renderBountyBulkButtons() {
 function tryStartBountyDuel() {
     if (inBountyDuel || inTribulation || player.currentMapIsSafe) return false;
     let list = getActiveBounties();
-    // 每波機率乘 KILL_REWARD_MULT：怪物刷新變慢、波數變少，遇上的平均時間維持原設計（config-maps.js）
+    // 每波機率乘 getWaveChanceMult()（combat.js）：怪物刷新變慢、波數變少，遇上的平均時間維持原設計（config-maps.js）
     // 同時追蹤多名時機率不變（不會因為接越多遇越快），遇上時隨機其中一人
-    if (!list.length || Math.random() >= BOUNTY_ENCOUNTER_CHANCE * KILL_REWARD_MULT) return false;
+    if (!list.length || Math.random() >= BOUNTY_ENCOUNTER_CHANCE * getWaveChanceMult()) return false;
     startBountyDuel(list[Math.floor(Math.random() * list.length)]);
     return true;
 }
@@ -215,7 +220,8 @@ function startBountyDuel(entry) {
     let npc = getBountyNpc(entry);
     let rank = BOUNTY_RANKS[entry.rank];
     let st = getBountyStats(entry);
-    let attrs = { def: rank.def, eva: rank.eva, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: entry.element };
+    let attrs = { def: rank.def, eva: rank.eva, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: entry.element,
+                  nature: entry.faction === "邪" ? "dark" : "light" };   // 光暗互剋（config-elements.js）
     attrs[entry.affix] = rank.affix;
 
     enemies = [];
@@ -331,7 +337,7 @@ function bountyDuelTick() {
     player.hp -= dealt;
     if (sk && dealt > 0) {
         if (sk.type === "lifesteal") opp.hp = Math.min(opp.maxHp, opp.hp + dealt * sk.steal);
-        if (sk.type === "poison") {
+        if (sk.type === "poison" && !getAptitudeSpecial().poisonImmune) {   // 萬毒不侵體（aptitude.js）
             for (let i = 0; i < sk.stacks; i++) playerStatus.poison = addDotStack(playerStatus.poison, POISON_MAX_STACKS, POISON_TURNS, opp.attack * POISON_RATE);
         }
         if (sk.type === "freeze") playerStatus.frozen = Math.max(playerStatus.frozen, FREEZE_TURNS);
@@ -371,6 +377,8 @@ function endBountyDuel(result) {
         gainProficiency(PROF_BOUNTY_GAIN);   // 主修職業熟練度（profession.js）
         let loot = tryLootDrop(opp.rank);
         if (loot) addLog(loot, "equip");
+        // 天榜：鍛造圖紙（Lv.1500 以上，equipment.js）
+        if (opp.rank === "tian") { let bp = grantBlueprint(BLUEPRINT_DROPS.tian, `從${opp.name}的遺物中`); if (bp) addLog(bp, "level-up"); }
         respawnTimer = 3;
         refreshCombatStatusText();
         updateUI();

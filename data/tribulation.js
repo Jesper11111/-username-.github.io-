@@ -25,8 +25,11 @@ function getTribulationChance() {
     let cap = hasPill ? BREAK_PILL_MAX_CHANCE : TRIBULATION_MAX_CHANCE;
 
     let hard = getTribulationHardPenalty();
-    let total = Math.max(0, Math.min(cap, TRIBULATION_BASE_CHANCE - hard + potion + skill + pill));
-    return { total, cap, base: TRIBULATION_BASE_CHANCE, hard, potion, skill, pill, hasPill, openTiers: openTiers.length, learnedTiers: learnedTiers.length };
+    let apt = getAptitudeSpecial().trib;   // 先天資質：偽靈根 −5%、天雷之體 +5%（aptitude.js）
+    let core = getCoreTribBonus();          // 化神：人元嬰 −10%、天元嬰 +10%（golden-core.js）
+    let fruit = willUseSpiritFruit() ? SPIRIT_FRUIT.trib : 0;   // 化神靈果（天材地寶）
+    let total = Math.max(0, Math.min(cap, TRIBULATION_BASE_CHANCE - hard + potion + skill + pill + apt + core + fruit));
+    return { total, cap, base: TRIBULATION_BASE_CHANCE, hard, potion, skill, pill, apt, core, fruit, hasPill, openTiers: openTiers.length, learnedTiers: learnedTiers.length };
 }
 
 // 合體期起天劫加劇：基礎勝算的扣除量（未達合體為 0）
@@ -64,6 +67,9 @@ function triggerTribulation() {
         + (chance.hard > 0 ? `・⚡ 合體期後天劫加劇 -${formatChance(chance.hard)}（心魔戰力 +${formatChance(chance.hard)}）\n` : '')
         + `・丹藥準備 +${formatChance(chance.potion)}\n`
         + `・宗門技能 +${formatChance(chance.skill)}（已學 ${chance.learnedTiers} / ${chance.openTiers} 階）\n`
+        + (chance.core ? `・👶 元嬰品級【${INFANT_GRADES[getGoldenCore().infant].name}】 ${chance.core > 0 ? '+' : '-'}${formatChance(Math.abs(chance.core))}\n` : '')
+        + (chance.fruit ? `・${SPIRIT_FRUIT.icon} ${SPIRIT_FRUIT.name} +${formatChance(chance.fruit)}（將服用 1 顆，剩 ${player.spiritFruits - 1} 顆）\n` : '')
+        + (chance.apt ? `・⛩️ 先天資質 ${chance.apt > 0 ? '+' : '-'}${formatChance(Math.abs(chance.apt))}\n` : '')
         + (chance.hasPill ? `・🔮 破障丹 +${formatChance(chance.pill)}（將服用 1 顆，剩 ${player.breakPills - 1} 顆；心魔戰力 -10%）\n` : '')
         + (tips ? `\n提升勝算：${tips}\n` : '')
         + `\n心魔戰力 ${demonPower.toWan()}／氣血 ${demonHp.toWan()}，會施展魔功並吸取靈力。\n`
@@ -71,6 +77,10 @@ function triggerTribulation() {
         + `且境界跌落 ${TRIBULATION_FAIL_STAGE_DROP} 階（10 階 → ${10 - TRIBULATION_FAIL_STAGE_DROP} 階），陷入「虛弱」（攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%）直到修回 10 階。\n\n是否開始渡劫？`
     )) return;
 
+    if (chance.fruit) {
+        player.spiritFruits--;
+        addLog(`${SPIRIT_FRUIT.icon} 服下【${SPIRIT_FRUIT.name}】，元嬰靈光大盛，化神把握更增！（剩餘 ${player.spiritFruits} 顆）`, "level-up");
+    }
     if (chance.hasPill) {
         player.breakPills--;
         addLog(`🔮 服下【破障丹】，靈台一片清明，心魔之力削弱一成！（剩餘 ${player.breakPills} 顆）`, "level-up");

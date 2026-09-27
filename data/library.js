@@ -1,4 +1,4 @@
-// 藏書閣彈窗：消耗武學積分參悟古籍，永久提升四維（每項上限 100 次，可 ×1 / ×10 / 最高 批次參悟）
+// 藏書閣彈窗：消耗武學積分參悟古籍，永久提升四維（每項上限 100 次，可 ×1 / ×10 / 最高 批次參悟；新制每次 +0.1、上限 200 次，多一本敏捷）
 // 第二階段（需拜入中級宗門）：五行屬性秘典，每次提升對應屬性傷害 0.01%（每本上限 1000 次）
 
 const STUDY_COST = 10;        // 每次消耗的武學積分
@@ -31,12 +31,19 @@ function openLibraryModal() {
     document.getElementById('library-modal').style.display = 'flex';
 }
 
+// 每次提升量與上限：新制（第 52 節）一律 +0.1、200 次（同丹藥），屬性由 numeric.js 依研讀次數計算，不改 player.stats；多一本敏捷古籍
+function studyGainOf() { return NUMERIC_V2 ? NV2.studyGain : STUDY_GAIN; }
+function studyMaxOf() { return NUMERIC_V2 ? NV2.studyMax : STUDY_MAX_COUNT; }
+
 // qty：1、10 或 'max'
 function studyBook(statType, qty = 1) {
     if (!player.studyCounts) player.studyCounts = { str: 0, con: 0, int: 0, spr: 0 };
-    let remaining = STUDY_MAX_COUNT - player.studyCounts[statType];
+    if (statType === 'agi' && !NUMERIC_V2) return;
+    if (typeof player.studyCounts[statType] !== 'number') player.studyCounts[statType] = 0;   // 敏捷（新制）舊存檔沒有此欄位
+    const max = studyMaxOf(), gain = studyGainOf();
+    let remaining = max - player.studyCounts[statType];
     if (remaining <= 0) {
-        alert(`該古籍已達參悟上限 (${STUDY_MAX_COUNT} 次)，無法繼續參悟！`);
+        alert(`該古籍已達參悟上限 (${max} 次)，無法繼續參悟！`);
         return;
     }
 
@@ -50,11 +57,12 @@ function studyBook(statType, qty = 1) {
 
     player.martialPoints -= STUDY_COST * n;
     player.studyCounts[statType] += n;
-    player.stats[statType] += STUDY_GAIN * n;
+    if (!NUMERIC_V2) player.stats[statType] += gain * n;
     addDailyProgress('study', n);
 
-    let names = { str: '力量', con: '體質', int: '悟性', spr: '靈力' };
-    addLog(`📚 在藏書閣研讀秘典 ${n} 次 (${player.studyCounts[statType]}/${STUDY_MAX_COUNT})，【${names[statType]}】永久提升 ${STUDY_GAIN * n} 點！`, "skill");
+    let names = { str: '力量', con: '體質', int: '悟性', spr: '靈力', agi: '敏捷' };
+    let gainText = NUMERIC_V2 ? (gain * n).toFixed(1) : gain * n;
+    addLog(`📚 在藏書閣研讀秘典 ${n} 次 (${player.studyCounts[statType]}/${max})，【${names[statType]}】永久提升 ${gainText} 點！`, "skill");
     renderElementBooks();
     updateUI();
 }

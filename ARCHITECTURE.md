@@ -23,7 +23,7 @@ images/               圖片素材
   secret/             秘境海報（config-secret-realms.js 的 img，第 43 節）：zhenmo-tower.jpg 鎮魔塔（768×1365，9:16，玩家提供的水墨海報，圖上已有標題與標語）、
                       motu-tiannan.jpg 魔屠天南手機版（852×1846）／motu-tiannan-pc.jpg PC 版（1024×1536），玩家提供的 webp 以瀏覽器轉 JPG（圖上無字，標題由程式疊上，第 49 節）
   zhenmo/             鎮魔塔戰鬥畫面（第 51 節）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
-                      黑底依亮度轉透明並還原邊緣顏色，tools 外的一次性腳本；460×843／459×843），boss-qitianshen.jpg 第 1 層 BOSS 棄天神（2026-09-27 換成玩家提供的直式版 848×1264，2:3，左上有字）、boss-bumiegu.jpg 第 2 層 BOSS 不滅骨（2026-09-27 換成玩家提供的直式版 848×1264，2:3）、boss-zhuzhou.jpg 第 3 層 BOSS 主咒之王（848×1264）
+                      黑底依亮度轉透明並還原邊緣顏色，tools 外的一次性腳本；460×843／459×843），boss-qitianshen.jpg 第 1 層 BOSS 棄天神（2026-09-27 換成玩家提供的直式版 848×1264，2:3，左上有字）、boss-bumiegu.jpg 第 2 層 BOSS 不滅骨（2026-09-27 換成玩家提供的直式版 848×1264，2:3）、boss-zhuzhou.jpg 第 3 層 BOSS 主咒之王、boss-guihu.jpg 第 4 層 BOSS 幽冥鬼虎、boss-qingming.jpg 第 5 層 BOSS 青瞑爪龍（皆 848×1264）
   avatars/            可解鎖更換的頭像（256×256 正方形、臉部置中，由玩家提供的原圖裁切縮小），見第 32 節
   towns/              城內場景圖（玩家提供，第 20 節）：tianxing-market.jpg 天星城坊市橫圖（1582×672）、
                       tianxing-market-portrait.jpg 手機直式（704×1520，9:19.4）、
@@ -41,14 +41,19 @@ tools/                不會被遊戲載入的維護工具
   csv-to-js.ps1       把 CSV 轉成 data/config-gear-catalog.js（powershell -ExecutionPolicy Bypass -File tools\csv-to-js.ps1）
   cut-figure.ps1      以手描外框去背（-Src 圖 -OutPng 輸出 -Preview 預覽 -PointsFile 外框點檔；點檔每行 "x,y"，空白行分隔，第一組外框、其餘為挖掉的洞）
   cut-figure-points-fengxi.txt  風希人偶的外框點（原圖 768×1376，玩家提供的插畫）
+  數值設計器.html      新數值制度試算工具（2026-09-27；遊戲不載入）：成長倍率、六大屬性（含新增的敏捷）、增益上限、技能、怪物與 BOSS 參數 →
+                      各境界空手／普攻／技能／小怪與 BOSS 血量、「打低幾境的怪要幾下」。已發布為 Artifact：https://claude.ai/artifact/XpVkm2XTdA9pCEGEuD6HwB（私人）；
+                      「複製設定」得到的 JSON 就是之後數值重做的定案依據。尚未套用到遊戲。
   firestore.rules     天下戰力榜＋守城榜（defenseSubmit／defenseBoard）＋GM 後台的 Firestore 安全規則（貼到 Firebase 主控台，第 42、49、50 節）
+  serve.ps1           本機測試用靜態伺服器（這台電腦沒有 Python／Node；2026-09-27）：Claude 預覽面板用 `.claude/launch.json` 的 `game` 設定啟動（http://localhost:8780）。
+                      ⚠️ 8765 埠會被 Windows 保留，停掉後常無法再綁，所以改用 8780。新制開關存在各網址自己的 localStorage，換埠號要重新打開（第 52 節）
   cut-avatar-frames.ps1  從頭像框展示圖裁出 25 個光環並去背、量內圈（-Src 圖檔 -OutDir 輸出資料夾；格線座標寫死在檔內，見第 32 節）
 data/                 所有遊戲邏輯與資料，依「設定資料 / 執行狀態 / 功能模組 / 進入點」分層
   format.js           數字顯示格式 fmtNum()／xxx.toWan()：1 萬以上用中文單位（1000萬、1.5億），**第一個載入**（第 41 節）
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -75,7 +80,9 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   talisman.js         符寶坊：礦石煉製符寶、橙裝孔位鑲嵌／打掉（第 28 節）
   gear.js             裝備圖鑑 850 種：產生裝備、隨機詞條、特效、套裝、加成彙總、奪寶掉落、舊裝備轉換（第 37 節）
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
-  profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）
+  profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
+  aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
+  golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
@@ -143,7 +150,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15h | `config-gear.js` | 管道 `GEAR_CHANNELS`、`GEAR_EXTERNAL_MULT`、四維模板 `GEAR_TEMPLATES`/`GEAR_ACCESSORY_BUDGET`、主詞條 `GEAR_ELEMENT_AFFIX`/`GEAR_ARMOR_DEF_MULT`、奪寶 `LOOT_DROP`、白金 `PLATINUM_QUALITY`、特效 `GEAR_EFFECT_TIER_MULT`/`gearEffects`(value/cap/fmt/desc) | 無 | `gear.js`、`enhance.js`、`artifact.js`(白金顯示) |
 | 15i | `config-enhance.js` | 隨機詞條 `GEAR_SUB_COUNT`/`GEAR_SUB_QUALITY_SCALE`/`gearSubAffixes`、強化 `ENHANCE_*`、進化 `EVOLVE_*`、分解 `DECOMPOSE_*`/`SHARDS_PER_IRON`、暫存區 `GEAR_STASH_MAX`、星允鐵來源 `IRON_*` | 無 | `gear.js`、`enhance.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵) |
 | 15j | `config-sets.js` | `GEAR_SET_MIN_QUALITY`、`gearSets`(30 組：主題＋五行)、`gearSetThemes`(2/4/6 件加成) | 無 | `gear.js`、`codex.js` |
-| 15k | `config-profession.js` | `PROFESSION_SWITCH_COST`、`PROF_MAP_MULT`/`PROF_BOUNTY_GAIN`/`PROF_OFFLINE_RATE`、`PROF_RANK_EXP`/`PROF_WEAPON_BONUS`、`professions`(6 職業：階名、被動、技能) | 無 | `profession.js` |
+| 15k | `config-profession.js` | `PROFESSION_SWITCH_COST`、`PROFESSION_MIN_LEVEL`、`PROF_MAP_MULT`/`PROF_BOUNTY_GAIN`/`PROF_OFFLINE_RATE`、`PROF_RANK_EXP`/`PROF_WEAPON_BONUS`、`professions`(6 職業：階名、被動、技能) | 無 | `profession.js` |
 | 15m | `config-strange-fire.js` | 異火（第 38 節）：`STRANGE_FIRE_SHARDS_PER_FIRE`(100 片合 1 朵)/`STRANGE_FIRE_REALM_REDUCE`(每朵秘境受傷 -3%)/`STRANGE_FIRE_REALM_REDUCE_MAX`(上限 30%)、品階 `STRANGE_FIRE_TIERS`(weight/color)、`strangeFireItems`(碎片與異火的顯示資料)、`strangeFireList`(50 種：id/name/tier/origin/desc/bonus；檔尾有新增模板) | 無 | `strange-fire.js` |
 | 15o | `config-towns.js` | `townScenes`（key = 城鎮地圖名稱：title、img、imgW／imgH、選填 `portrait`（手機直式圖，自有 img／imgW／imgH／hotspots／figures）、`figures` 場景人偶 `{ id, name, img, rect, action? }`、`hotspots` 傳送點 `{ id, label, rect:[x,y,w,h] 圖上像素, action, enabled }`；檔內有模板） | 無 | `town.js`、`map.js`(hasTownScene) |
 | 15n | `config-partners.js` | 夥伴（第 39 節）：`PARTNER_TIERS`(評級門檻與數值建議)、`PARTNER_POWER_LABELS`(六維名稱)、`partnerList`(39 位：出處、世界、巔峰、六維戰力、分析、被動、絕學；檔尾有新增模板) | 無 | `partner.js` |
@@ -153,8 +160,10 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15r | `config-secret-realms.js` | 秘境（第 43 節）：`SECRET_REALM_DAILY_ATTEMPTS`(預定每日 5 次)、`secretRealmList`（id／name／img／minRealmIndex／implemented／tagline／desc／rewards 預定獎勵；選填 size／imgPc／sizePc／sceneTitle／sceneSub／enterLabel／enterPos／mode） | 無 | `secret-realm.js` |
 | 15s | `config-defense.js` | 死守天南城（第 49 節）：`DEFENSE_TOTAL_WAVES`(100)／`DEFENSE_BOSS_EVERY`(10)／`DEFENSE_CLIP_FADE`、`DEFENSE_CLIPS`（id／name／src／zoom／trim／sizeHint）、`DEFENSE_THEMES`(10 主題)、`DEFENSE_BOSSES`、`DEFENSE_OPENERS`、`DEFENSE_CAMERAS`、強度 `DEFENSE_MILESTONES`/`DEFENSE_MILESTONE_STAGE`/`DEFENSE_ENEMY`、勝負 `DEFENSE_PLAYER_SKILL_MULT`/`DEFENSE_MAX_ROUNDS`/`DEFENSE_LOSE_AT`、獎勵 `DEFENSE_REWARDS`、通關紀錄 `DEFENSE_RUN_LOG_MAX`(20)；**尾端有函式**（例外）：強度曲線 `defenseRealmAtk(r,s)`/`defenseWaveAtk(w)`（defense.js 與 gm.html 共用） | 呼叫時才用 `bounty.js` 的 getBountyRefSectMult | `defense.js`、`gm.html`(守城審核) |
 | 15t | `config-zhenmo.js` | 鎮魔塔（第 51 節）：`ZHENMO_TOTAL_FLOORS`(100)/`ZHENMO_QUIZ_COUNT`(10)/`ZHENMO_QUIZ_SECONDS`(20)/`ZHENMO_REVEAL_ANSWER`(false)/`ZHENMO_RECENT_AVOID`(100)/`ZHENMO_QUIZ_REWARD_MULT`(答對數→BOSS 獎勵倍率)/`ZHENMO_SOURCES`、BOSS 戰 `ZHENMO_HERO_IMG`/`ZHENMO_PLAYER_SKILL_MULT`/`ZHENMO_MAX_ROUNDS`/`ZHENMO_ROUND_MS`/`ZHENMO_BOSSES`(第 1 層棄天神) | 無 | `zhenmo.js` |
+| 15v | `config-numeric.js` | 數值重做（第 52 節）：開關 `NUMERIC_V2`（讀 localStorage `xiuxian_numeric_v2`，預設關閉）、參數 `NV2`（成長、屬性、丹藥／藏書閣上限、增益上限、敏捷、氣血靈力、戰力）、`NV2_STAT_KEYS`/`NV2_STAT_LABELS`、`NV2_TEMPLATE_OVERRIDE`（靈動→敏捷範本） | 無 | `numeric.js`、`stats.js`、`elements.js`、`combat.js`、`ui.js`、`home-ui.js`、`alchemy.js` |
 | 15u | `config-zhenmo-questions.js` | `zhenmoQuestions`：300 題 `[出處, 題目, 選項(4 個／是非題 null), 答案 'A'～'D'／'O'／'X', 解析?]`（玩家提供；凡人 110／吞噬 100／斗羅 90；選擇 170／是非 130） | 無 | `zhenmo.js` |
 | 16 | `state.js` | `player`（含裝備系統 `starIron`/`ironShards`/`gearStash`/`ironShop`/`ironUsed`/`maxEnhance`/`gearCodex`/`titles`/`activeTitle`/`profession`/`profSwitched`/`proficiency`（第 37 節）、`lingbaoSold`、仙法 `spells`/`spellSlots`、渡劫失敗虛弱 `weakened`、頭像 `avatarId`/`unlockedAvatars`、頭像光環 `avatarFrameId`/`unlockedFrames`、礦石 `ore`、符寶 `talismans`、異火 `fireShards`/`strangeFires`/`fireCollection`（第 38 節）、天星賭坊 `casino`（第 40 節）、夥伴 `partners`/`partnerTeam`/`partnerBond`/`fieldKills`（第 39 節）、藏書閣屬性秘典次數 `elementStudy`、轉世保留的上限 `reincarnateBonus`、年齡 `age`、功德系統 `merit`/`butianStones`/`breakPills`/`evilKills`、善惡 `karma`、懸賞榜 `bountyBoard`/`bountyRefreshAt`/`bountyFaction`/`activeBountyIds`(可多名，第 36 節)/`bountyKills`、付費刷新次數 `paidRefresh`、線上實戰證明 `idleProvenMap`（第 33 節））、`DEFAULT_PLAYER_JSON`（全新角色預設值快照，讀檔/匯入的合併基底）、`enemies`（每隻帶 `attrs`/`status`；野外修士另帶 `cultivator`("正"/"邪")/`ambush`）、`respawnTimer`、`safeZoneTimer`；不存檔的執行期狀態：`inTribulation`/`heartDemon`/`tribulationFatedWin`/懸賞對決 `inBountyDuel`/`duelOpponent`/`duelWeakenTimer`/`duelWeakenMult`/`duelSilenceTimer`/`duelArmorTimer`/丹藥冷卻/`gameOver`/背景補發 `lastTickAt`/`missedTickMs`/線上實戰秒數 `fieldOnlineTicks`/日誌彙總 `waveSummary`/`meditateSummary`/`playerStatus`(玩家身上的凍結/燒傷/中毒)/靈寵輔助計時(`petBuff*`/`petShield*`/`petRegen*`) | **`maps`**（必須排在 config-maps.js 之後） | 幾乎所有檔案都會讀寫 `player` |
+| 16b | `numeric.js` | 新制公式（只在 `NUMERIC_V2` 時被呼叫）：`nv2Level`/`nv2Growth`、屬性 `nv2BaseStat`/`nv2PillStat`/`nv2StudyStat`/`nv2GearStats`/`nv2Stat`、武器 `nv2QualityMult`/`nv2WeaponAtkOf`/`nv2WeaponAtk`、增益 `nv2BuffPct`、`nv2Attack`/`nv2PhysAttack`/`nv2MagAttack`/`nv2MaxHp`/`nv2MaxMp`、敏捷 `nv2Crit`/`nv2Combo`/`nv2Hit`/`nv2AgiEva`、`nv2CombatPower` | `config-numeric.js`、`player`、gear.js(getGearDef／getBonusTotals／getGearPctBonus)、spells.js(getSpellAuraBonus)、stats.js(getRootBonus／hasLiveBeast／getWeaknessMult)、bounty.js(getDuelWeakenMult)、profession.js(getProfWeaponMult) | `stats.js`、`elements.js`、`combat.js`、`ui.js`、`home-ui.js`、`alchemy.js` |
 | 17 | `stats.js` | `EQUIP_STAT_KEYS`/`BASE_STAT_KEYS`、`getEquipBonus`(四維＋減傷/閃避/屬性傷害；四維 × 強化倍率與主修武器加成，再加 gear.js `getBonusTotals` 的詞條／套裝／稱號／職業)/`getElementCounts`/`getSpiritRoots`(靈根判定)/`getRootBonus`(靈根加成總和)/`getPlayerElement`(本命五行，五行相剋用)/`getRealmStageExp`(依 realmPacing 換算每階經驗基數，有快取)/`getNextExp`/`getLevelExpNeeded`/`hasLiveBeast`(出戰中才算，呼叫 beast-combat.js 的 isBeastActive)/`getBasePower`/`getPhysAttack`/`getMagAttack`(兩者皆乘上懸賞對決的化功 `getDuelWeakenMult()` 與 `getGearPctBonus`)/`getMaxHp`(乘 `getGearPctBonus('hp')`)/`getMaxMp`(兩者皆加上轉世保留值)/`getReincarnateBonus`/`getSectTier`/`getAllSkills` | `player`、`realms`、`sectData`、`LEVEL_*`、`equipTypes`/`WUXING_COUNTERS`、靈寵輔助計時、`bounty.js`(getDuelWeakenMult) | `ui.js`、`combat.js`、`leveling.js`、`tribulation.js`、`beast-combat.js` 等幾乎全部功能檔 |
 | 18 | `elements.js` | `newStatus`/`getPlayerCombatAttrs`(含 `element`；懸賞對決被破甲時減傷／閃避 × `getDuelArmorMult()`；裝備特效的護體／先手盾／定神／破甲／洞察／剋敵／寒徹／焚燼／蝕骨欄位與套裝提高的上限)/`getWuxingCounterMult`/`withSkillEffect`/`getMapCategoryIndex`/`rollMonsterAttrs`/`resolveHit`/`addDotStack`/`tickStatus`/`formatStatus`/`summarizeTags`/`formatEquipStats` | `config-elements.js`、`stats.js`(getEquipBonus/getPlayerElement)、`library.js`(getElementBookBonus)、`wuxingElements`、`maps`、`playerStatus` | `combat.js`、`tribulation.js`、`ui.js`、`bag.js`/`equipment.js`/`auction.js`/`lingbao-shop.js`(裝備屬性文字) |
 | 19 | `ui.js` | 「製作成功」提示 `showCraftSuccess(title, detail)`（`#craft-toast` 動態建立、z-index 5000、2.2 秒淡出；煉丹／鍛造／符寶共用，2026-09-27）、常數 `PLAYER_AVATARS`（頭像 `img`（本地 images/avatar-*.jpg）/裁切位置 `pos`/預設道號，洞府頭像框、戰鬥實況、性別選擇共用；性別選擇視窗的兩張 `<img>` 寫在 index.html，換圖時要一起改）、`updateUI`/`updateCombatVisualPanel`/`formatWuxingCounterTip`/`updateTribulationUI`/`updatePotionCooldownUI`/`updateStudyCountsUI`/`openSkillModal`/`renderSkillList`/`addLog(msg, type, force, channel)`(野外回合中依 `fieldLogMuted`／`FIELD_MUTED_LOG_TYPES` 略過逐回合訊息；依 `channel`／`LOG_CHANNEL_BY_TYPE` 寫入戰鬥／道具／僕從分頁，第 44 節)/`switchLogTab`/`restoreLogTab`/`renderLogBadge`/`initModalTopClose`(彈窗右上角 ✕，第 46 節)/`refreshCombatStatusText`/`updateAutoSettings`/`syncAutoSettingsUI`/`updateSectFacilitiesUI`/`closeModal`/`toggleDrawer`/`formatCountdown`/`clampRefreshAt`(刷新時間軸保護，第 10 節)/`resolveBatchCount`(×1/×10/最高 共用)/批次刪除工具 `renderBulkDeleteBar`/`getCheckedBulkQualities`/`toggleAllBulkQualities` | `player`、`realms`、`stats.js` 的計算函式、`lifespan.js`(getDeathLifespanCost) | 幾乎所有功能檔在資料變動後都會呼叫 `updateUI()`/`addLog()` |
@@ -629,6 +638,7 @@ combatTick() 每秒執行 [combat.js]
 ## 13. 宗門技能（分階段學習、永久保留）
 
 - 宗門分三個階段，對應 `sectData` 每個分類的 `tier`：凡俗 1（初級）/ 修真 2（中級）/ 至高 3（高級）。
+- 2026-09-27 起每個階段 6 個宗門（新增逍遙派、天音閣、天籟仙宮），每個宗門傳承一種武器（weapon），主修相同職業時有傳承加成（第 53 節）。
 - **每個階段只能拜入一個宗門**：`player.sectSkills = { 1, 2, 3 }` 記錄各階段選定的宗門名稱，
   第一次加入時會跳確認並鎖定；之後同階段的其他宗門按鈕會被停用。
 - **境界只擋下限，不擋上限**：新拜入時只檢查 `player.realmIndex >= cat.minRealm`，
@@ -683,6 +693,13 @@ combatTick() 每秒執行 [combat.js]
   以擊殺經驗估算：天南（每殺約 4,500）約可練到 Lv100 附近；禁區可推到數千級；
   Lv10000 需在最高戰場（每殺約 500 萬）長期掛機。
 - 等級與壽元、戰力無掛鉤（戰力不影響壽元）。轉世輪迴會把人物等級**重置為 Lv1**（見第 25 節）。
+- **境界等級上限**（2026-09-27 使用者同意，**只在新制 `NUMERIC_V2` 生效**，第 52 節；舊制每級加四維，現在上線會削弱線上玩家）：
+  `config-level.js` 的 `LEVEL_CAP_BY_REALM`：凡人 50、煉氣 70、築基 100、金丹 150、元嬰 200、化神 300、煉虛 500、合體 700、大乘 1000、渡劫 1500、
+  仙人初境 2500、天仙 3500、真仙 5000、大羅金仙 6500、混元大羅金仙 8000、混沌道祖 10000（依原本經驗曲線的自然進度訂，裝備等級 10～1000 在大乘以前對上境界）。
+  - `leveling.js`：`gainLevelExp` 加經驗後交給 `processLevelUps()` 連升到 `getLevelCap()` 為止；到頂時 `levelExp` 最多存到「升到下一境界上限」所需的量（`getLevelBankLimit`，有快取），並記一則「🔒 已達上限」日誌。
+  - `advanceRealm()` 突破後呼叫 `processLevelUps()`，存著的經驗自動補升（突破日誌附「人物等級上限提高到 Lv.N」）。
+  - 已超過上限的老玩家等級不降，只是在境界追上前不再升級、也不存經驗。人物面板顯示「Lv.20 (5.6%)／上限 50」，到頂顯示「已達凡人上限，突破後再升」（ui.js）。
+  - 實測（本機）：凡人灌 10 億經驗 → Lv.50、存 92 萬；突破煉氣 → 補升到 Lv.70；金丹 Lv.900 不變；開關關閉時照舊升到 Lv.588。
 
 ## 15. 壽元
 
@@ -1010,7 +1027,10 @@ combatTick() 每秒執行 [combat.js]
   `maps` 內的最新設定（順便讓倍率調整生效），找不到的地圖（三張舊地圖）一律回到宗門。
   日後刪除或改名任何地圖，都靠這個函式自動處理，不必另外寫轉換。
 
-## 21. 靈根系統（取代舊版「17 件全同屬性成陣」）
+## 21. 五行共鳴（原「靈根系統」，取代舊版「17 件全同屬性成陣」）
+
+> 2026-09-27 改名：畫面上的「靈根」一律改叫「五行共鳴」（冰靈根 → 冰共鳴、五行聖靈根 → 五行聖共鳴…），效果與判定不變；程式名稱（getSpiritRoots／getRootBonus、ROOT_* 常數）沿用。
+> 「靈根」改指入宗資質測試擲出的**先天靈根**（第 53 節）。
 
 判定在 `stats.js` 的 `getSpiritRoots()`，數值表與門檻常數全部在 `config-equipment.js`。
 先統計 17 個部位（不含神器）各五行件數，再算出**套數** `sets`（五種件數的最小值，即能湊出幾組完整的「金木水火土」）
@@ -1288,7 +1308,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260929g`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260929s`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -1688,6 +1708,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 勝率曲線很陡（數值型戰鬥的特性），天榜在同境界需要「減傷閃避拉滿＋一點運氣」；再加靈根、仙法光環、符寶、技能會更穩。
 - ⚠️ 每差 1 境戰力約差 10 倍：+1 境的天榜幾乎打不贏；最低的 −0.8 境只有約 1/7 實力，很輕鬆。上表是「同境界同階數」的情況，實際勝率依抽到的位置浮動。
 - 調難度：整體改 `BOUNTY_TIAN_MULT`；個別榜改 `BOUNTY_RANKS` 的 `ratio`/`def`/`eva`；武學強度改 `bountySkills`。改完請重跑模擬。
+- 新制（第 52 節，`NUMERIC_V2`）：對手改為同境界「一般玩家」的鏡像（攻擊 × 0.7、氣血 × 3），勝率表見第 52 節；遭遇機率改乘 `getWaveChanceMult()`。
 
 ## 37. 裝備系統（850 種裝備、強化、職業、天磯錄；2026-09-26）
 
@@ -1773,9 +1794,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 「尋鐵」特效與收益套裝會提高 `addStarIron` 的數量（千寶閣購買與分解不套用）。
 
 ### 職業（`config-profession.js`、`profession.js`）
-- 6 職業對應 6 武器：劍修（劍）、刀修（刀）、扇修（扇）、弓修（弓）、音修（笛）、符修（筆）。在天磯錄「職業」分頁選主修，第一次免費、之後每次 10 萬靈石，各職業熟練度分開保存。
+- 6 職業對應 6 武器：劍修（劍）、刀修（刀）、扇修（扇）、弓修（弓）、音修（笛）、符修（筆）。在天磯錄「職業」分頁選主修，**人物 Lv.10 起才能選**（`PROFESSION_MIN_LEVEL`，2026-09-27 使用者指定，新舊制都生效；未滿時分頁頂端顯示 🔒 提示、按鈕顯示「Lv.10 解鎖」，已選過的老玩家不受影響），第一次免費、之後每次 10 萬靈石，各職業熟練度分開保存。
 - 熟練度只加在主修：野外每擊殺 +1 × 地圖分類倍率（1～4）、懸賞伏誅 +200、離線 ×0.5。10 階門檻 0／500／3,000／1 萬／2.5 萬／6 萬／12 萬／25 萬／50 萬／100 萬。
-- 主修武器（該部位那一件）四維 +3%～+30%（`getProfWeaponMult`）；職業被動每階累加（`getProfessionPassive`）；第 5／8／10 階各解鎖一招職業技能，每回合出手後依機率自動發動（`professionSkillTurn` → `artifact.js` 的 `castProcSkill`）。
+- 主修武器（該部位那一件）四維 +3%～+30%（`getProfWeaponMult`；新制改為該武器的武器攻擊 +3%～+30%，卡片文字依制度顯示）；職業被動每階累加（`getProfessionPassive`）；第 5／8／10 階各解鎖一招職業技能，每回合出手後依機率自動發動（`professionSkillTurn` → `artifact.js` 的 `castProcSkill`）。
 - 階級名稱：劍童 劍徒 劍癡 劍狂 劍魔 劍王 劍尊 劍神 劍仙 劍帝；刀修頂階刀皇、扇修風帝、弓修弓帝、音修樂帝、符修符祖（完整表在 `professions[].ranks`）。
 
 ### 天磯錄（`codex.js`，入口：洞府寶塔右側山峰，手機熱點與 PC `pcStageButtons` 的 `codex`）
@@ -2173,6 +2194,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 本機預覽伺服器必須支援 HTTP Range，影片才能 seek（沒有 Range 時 currentTime 永遠停在 0）。
   - 2026-09-27 以此法轉出佛焰（264 格、2.38 MB）與巨劍（262 格、2.34 MB），各約 3 分鐘；與原片同時間點比對差異 8～17（不相干畫面 99～134），trim 0.6 對齊正確。
 - 三支合計約 7.5 MB（手機 4G 約 5～15 秒）。videos/ 內的原始大檔（10～18 MB）遊戲不會載入，若不需要保留可以不推上 GitHub。
+- 新制（第 52 節，`NUMERIC_V2`）：每波改為該強度「一般玩家」的鏡像（`defenseRealmAtk` 分流、氣血比例 3.6 × 5、模擬時玩家氣血也 × 5、減傷閃避較平緩），難度表與「裝備影響遠大於境界」的待決事項見第 52 節。
 
 ## 50. 戰力榜 GM 後台與防作弊（`gm.html`、`tools/firestore.rules`；2026-09-27）
 
@@ -2280,7 +2302,13 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 第 3 層【主咒之王】（束縛幽冥，2026-09-27）：煉虛 3 階、**攻擊 ×1.5（玩家指定）**＝攻 7875 萬、血 157.5 億（基準攻擊 5250 萬 × 300）；減傷 15 閃避 15、冰凍 18%（束縛咒：被凍結的回合無法出手）、水；
     戰況圖示 📜、出手閃紫光；獎勵 靈石 13 分鐘、功德 150～300、異火碎片 4～7、星允鐵 5～9。
     實測（40 場）：裸裝合體 3 階 0 勝、5 階全勝；中等裝備煉虛 5、7 階 0 勝，10 階全勝；強力裝備煉虛 5 階全勝——比第 2 層明顯高一截（關卡門檻）。
+  - 第 4 層【幽冥鬼虎】（冥火凶獸，2026-09-27）：煉虛 4 階（攻 7000 萬、血 210 億）、減傷 10 閃避 20、金暴擊 18%、金；戰況圖示 🐯、出手閃藍紫冥火；
+    獎勵 靈石 14 分鐘、功德 160～320、異火碎片 4～7、星允鐵 5～10。實測（40 場）：裸裝合體 5 階全勝；中等裝備煉虛 10 階 38 勝；強力裝備煉虛 5 階全勝（與第 3 層門檻相近）。
+  - 第 5 層【青瞑爪龍】（雷雲蒼龍，2026-09-27）：煉虛 5 階、**攻擊 ×3（玩家指定）**＝攻 2.63 億、血 262.5 億；減傷 20 閃避 15、雷擊 18%、木；戰況圖示 🐉、出手閃青色雷光；
+    第 5 層關卡獎勵加碼：靈石 20 分鐘、功德 250～500、異火碎片 6～10、星允鐵 8～14。
+    實測（40 場）：裸裝合體 8 階 0 勝、合體 10 階全勝；中等裝備煉虛 10 階 0 勝、合體 3 階起全勝；強力裝備煉虛 5 階 0 勝、8 階 8 勝。攻擊 ×3 讓氣血（生存）變成關鍵，比第 4 層約高一個大境界。
   - `atkMult` 只放大攻擊，氣血 = 基準攻擊 × `hpPerAtk` × `hpMult`（2026-09-27 起；原本 atkMult 會連氣血一起放大）。
+  - 新制（第 52 節）：BOSS 氣血改為一般玩家約 300 回合的輸出、攻擊為一般玩家氣血 ÷ 400 × `atkMult`、回合上限 600，`hpPerAtk` 不使用。
   - 強度慣例：第 n 層 = 煉虛起每層一階（1～10 層煉虛 1～10 階、11～20 層合體 1～10 階…91～100 層混沌道祖），特別層用 atkMult 調整。
   - **BOSS 圖建議規格**（2026-09-27 實測戰鬥場景：手機 331×475～383×650、筆電 403×503、1920×1080 為 531×735，寬高比 0.59～0.80）：
     直式 2:3、1024×1536、JPG 400KB 內；手機與 PC 共用（鎮魔塔舞台一律直式）。BOSS 放中間偏右上（頭在上方 15～35%），左下約 6 成寬 8 成高會被主角立繪擋住，四周留一成可能被裁，圖上不放字。
@@ -2293,3 +2321,211 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   ⚠️ 答案寫在前端程式裡，會看原始碼的人查得到（純前端遊戲無法避免）；是非題 ○ 佔 72%，全選 ○ 期望約對 7 成。
 - 驗證（2026-09-27，本機測試頁）：300 題格式全部正確、無重複；抽題 10 題不重複、選項已打亂（正確答案出現在 A～D 各位置）；答 7 對 2 錯 1 逾時 → 7/10、×1.7 存入 pending；
   中途離開保留成績、塔廳改顯示「進入 BOSS 房」；開門動畫正常；Console 無錯誤。
+
+## 52. 數值重做（新制，`config-numeric.js`、`numeric.js`；2026-09-27 起，2026-09-28 正式上線）
+
+- **目的**：解決戰力／氣血／傷害無限膨脹（舊制每大境界 ×10，到「京」）與中期以後秒殺小怪的問題，改成傳統 RPG 的小數字制，並新增第六屬性**敏捷**。
+  參數由 `tools/數值設計器.html`（Artifact）定案，使用者確認：成長每境界 ×1.05、武器基數 5、屬性起始 5／每階 +1／每大境界 +5、空手 力量×0.05、力量每點攻擊 +0.1%、
+  增益相加上限 +200%、暴擊每點 0.01%（上限 30%、×1.5）、連擊每點 0.04%（上限 10%）、命中／閃避每點 0.08%、氣血基數 50、體質每點 +0.2%。
+  使用者決定：A 人物等級不再加屬性（每級氣血 +0.005%、靈力 +0.5，等級保留為穿戴門檻）；B 丹藥每顆 +0.1、每種最多 200 顆（其他丹藥、藏書閣同規則）；
+  C 武器提供武器攻擊、防具提供氣血、飾品提供增益，屬性點只剩個位數；D 畫面與戰力榜的「戰力」改成每回合期望輸出。
+- **開關** `NUMERIC_V2`（config-numeric.js）：**2026-09-28 起預設開啟（正式上線，版本 `20260929r`）**；`localStorage['xiuxian_numeric_v2'] === '0'` 時退回舊制（只影響該瀏覽器，除錯用）。以下「預設關閉」的敘述為上線前的紀錄。
+  開發時在 Console `localStorage.setItem('xiuxian_numeric_v2','1')` 後重新整理即可打開（只影響自己的瀏覽器）。三階段完成、使用者確認對照表後，改成 `const NUMERIC_V2 = true` 正式上線。
+- **施工階段**：
+  1. ✅ **屬性與戰鬥公式**（2026-09-27 完成）：見下方。
+  2. ✅ **怪物與內容**（2026-09-27 完成，版本 `20260929k`）：野外妖獸、擊殺收益補償、離線估算、地圖門檻、懸賞、渡劫心魔、死守天南城、鎮魔塔 BOSS、藏書閣、升級日誌、裝備卡片。見下方「第 2 階段內容」。
+  3. ✅ **存檔轉換與上線**（2026-09-28，版本 `20260929r`）：見下方「第 3 階段」。
+- **第 1 階段內容**（皆只在 `NUMERIC_V2` 時生效，`if (NUMERIC_V2)` 分流，舊制程式路徑完全不變）：
+  - 屬性 `nv2Stat(k)` = 境界基本值（`nv2BaseStat`）＋丹藥（`player.pillUsed[k]` ≤ 200 × 0.1）＋藏書閣（`player.studyCounts[k]` ≤ 200 × 0.1）＋裝備（`nv2GearStats`）＋詞條 %；**不讀 `player.stats`**（魅力除外，魅力沿用舊制）。
+    裝備屬性：每件 = 四維範本係數 × 0.5 × 品質倍率 × 強化（飾品 ×1.25）；範本「靈動」改為敏捷 1.2＋靈力 0.8（`NV2_TEMPLATE_OVERRIDE`）。
+  - 武器攻擊 `nv2WeaponAtk`：身上攻擊最高的一把武器（6 種武器部位不疊加）＝ 5 × 1.05^L × 品質（白 1／綠 1.1／藍 1.25／紫 1.35／橙 1.5／白金 2）× (1 + 強化 × 2.5%) × 主修職業加成；
+    L 由裝備等級換算（Lv.10～1000 → 0～10）。⚠️ 裝備等級上限 1000，Lv.1000 以後武器攻擊靠品質與強化成長（混沌道祖普攻會比設計器低約 20%，第 2 階段校準怪物時一併考慮）。
+  - 增益 `nv2BuffPct(kind)` **全部相加後封頂 +200%**：裝備詞條／套裝／稱號／職業／異火／夥伴（getGearPctBonus）、仙法光環、靈根（倍率 −1）、宗門（(powerMult − 1) × 20%）、狼 +15%／龍 +30%、禁術與靈寵增益。
+  - 攻擊 = (武器攻擊 ＋ 力量(術法：悟性) × 0.05) × (1 + 力量 × 0.1%) × (1 + 增益) × 對決化功 × 虛弱；氣血 = 50 × 1.05^L × (1 + 體質 × 0.2%) × (1 + 氣血增益) × (1 + 等級 × 0.005%)；靈力 = (50 + 靈力 × 10) × 光環 + 等級 × 0.5。
+  - 敏捷：`getPlayerCombatAttrs` 的閃避加 `nv2AgiEva`（仍受上限）、洞察加 `nv2Hit`、新增 `crit`；`resolveHit` 在五行相剋後判定暴擊（×1.5，tag `crit`「💥暴擊」）；
+    `playerAttackTurn` 普攻後以 `nv2Combo` 機率再打一次普攻（tag `combo`「⚡連擊」）。死守天南城、鎮魔塔的模擬戰鬥第 2 階段起也有連擊。
+  - 戰力 `nv2CombatPower` = max(物攻, 術攻) × 暴擊期望 × 連擊期望 × 技能期望（40% × 3 倍）；人物面板 `#power-display` 與洞府 HUD 戰力改顯示它（戰力榜上傳仍是舊值，第 3 階段改）。
+  - 人物面板新增「敏捷」列 `#stat-agi-row`（新制才顯示）；四維改顯示總值，滑鼠停留看來源。
+  - 煉丹房：新制每顆 +0.1、每種上限 200（魅力丹沿用舊制），不改 `player.stats`；新增**身法丹**（敏捷，上品靈草，`#pill-card-agi` 新制才顯示）；卡片顯示「已服用 N / 200 顆（屬性 +X）」，效果行 `#pill-effect-*` 依制度改字。
+- **第 1 階段驗證**（2026-09-27 本機測試頁，藍色武器、無增益）：凡人 1 階普攻 7（加 +50% 增益 ≈ 10，符合設計器）、金丹 10 階 11、煉虛 10 階 15、渡劫 10 階 20、混沌道祖 10 階 27；
+  氣血 51～169、戰力 13～54；增益疊滿（宗門 ×6＋禁術 ×4）封頂在 +200%；空手 1；暴擊與連擊調高後實測觸發率 28%／10%（上限 30%／10%）；煉丹 200 顆上限、身法丹正常；開關關閉時舊制數值完全不變；Console 無錯誤。
+  野外怪物仍是舊數值（例：靈山大川攻擊 100，新制玩家氣血約 100），所以新制下目前無法正常練功——這是第 2 階段的工作（已完成，見下）。
+- **第 2 階段內容**（2026-09-27；同樣只在 `NUMERIC_V2` 時生效，參數集中在 `config-numeric.js` 的「第 2 階段」區塊）：
+  - **「一般玩家」基準**（`numeric.js` 的 `nv2TypStat／nv2TypNormal／nv2TypHp／nv2TypBuff／nv2TypRoundMult`）：成長位置 L 時同境界一般玩家的屬性（基本值 +10%）、普攻（藍色武器、武器 L 最多 10、
+    增益凡人 +10%、每境界 +10%、元嬰起 +50%）、氣血（不含增益）。怪物、懸賞、守城、BOSS **都以它為基準、不看玩家本身**，所以玩家變強就打得比較快。
+    （增益改成逐境界遞增：凡俗宗門最多只給 +6%，前期假設 +50% 會讓新手打一隻要 35 下。）
+  - **野外妖獸**（`nv2MonsterStats`，`combat.js` 的 `getMapMonsterStats` 分流）：每張戰鬥地圖加 `nv2L`（config-maps.js）：靈山大川 0、深淵險地 2、上古遺跡 3、天南 4、亂星海 5、鬼谷八荒 6、荒古禁地 7、太初古礦 8、
+    上蒼 9、不死山 10、神墟 11、仙陵 12、冥界 13、仙界戰場 14、萬界戰場 15、混沌初界 15.9。氣血 = 一般玩家普攻 × `hitsSame` 25；攻擊 = 一般玩家氣血 × `monAtkPct` 0.4%（1 位小數）；靈山大川另有 `nv2AtkMult: 0.7`（新手圖）。
+    範例：靈山大川 氣血 180／攻擊 0.1、天南 449／0.3、混沌初界 1105／0.7。地圖卡片的「難度」改顯示「妖獸 氣血 X／攻擊 Y」（map.js 的 `getMapDifficultyText`）。
+  - **使用者 2026-09-27 選定「少怪＋調息」**：每波 1～3 隻（`waveMin/waveMax`，舊制 1～5）；刷新等待的 10 秒內每秒回 `restHealPct` 10% 氣血與靈力（等於每波開打前補滿，狀態列顯示「調息回復中」）。
+    原本提議的攻擊 1.5% 實測太痛（同境界每小時 150 顆以上補血丹、最低剩 4% 血），且當時傷害會被捨去成 0（見下），改為 0.4%。
+  - **小數傷害** `roundDmg()`（elements.js）：舊制照舊無條件捨去；新制保留 1 位小數（妖獸攻擊不到 1，捨去會讓減傷把傷害變 0）。`resolveHit`、`tickStatus`、gear.js 的 `applyGearDefense`／反震／首擊連鎖／連雷、鎮魔塔戰況與飄字都改用它。
+  - **擊殺收益補償**：`combat.js` 的 `getKillRewardMult()`（舊制 = `KILL_REWARD_MULT`；新制 = `nv2KillRewardMult` =（刷新間隔 11 ＋ 2 × 一般玩家每隻回合數）÷ 2 ÷ 3，約 ×7.6～8.2）乘在每隻的經驗／靈石／聲望／熟練度／救僕從次數；
+    `getWaveChanceMult()`（新制 `nv2WaveChanceMult` 約 ×5）乘在每波的野外修士、暗殺者、懸賞遭遇機率（bounty.js 也改用它）。每小時收益因此維持 `realmPacing` 的修煉節奏。
+    一般玩家每隻回合數 `nv2TypRoundsPerKill` = 25 ÷ 回合期望倍率 ÷ 妖獸減傷閃避；`typSkillAvg` 取 1.1（實測靈力有限、常「靈力不足」，技能實際只多約 10%，取 1.4 時經驗只有設計的 8 成）。
+  - **離線／背景**：`save.js` 的 `estimateIdleCombat` 分流到 `nv2EstimateIdleCombat`（每回合期望輸出含暴擊連擊技能；效率以「同境界一般玩家 = 100%」計，最多 100%），結算文字改成「約需 N 回合斬殺一隻」。
+  - **地圖門檻**：`changeMap` 新制看 `nv2MinStat`（上古禁區 100、幽冥禁域 160、諸天戰場 180）與 `nv2Stat` 總值（煉虛 1 階基本值 95，需再多約 5 點）。
+  - **懸賞**（`getBountyStats`）：攻擊 = 一般玩家普攻 × `bountyAtkMult` 0.7、氣血 = 一般玩家氣血 × `bountyHpMult` 3（× 天榜倍率 × 榜別比例）。直接鏡像時新制氣血只有攻擊約 7 倍，5 回合就分勝負且太簡單（無裝備天榜 30% 勝）。
+  - **渡劫心魔**：本來就是玩家自身攻擊／氣血的鏡像、勝負靠擲骰，新制不用改。
+  - **死守天南城**：`defenseRealmAtk` 新制 = 一般玩家普攻（`typeof NUMERIC_V2` 防呆，gm.html 沒載入新制檔案時照舊制算）；每波氣血 = 攻擊 × `defenseHpPerAtk` 3.6 × `defenseHpScale` 5，
+    `simulateWave` 裡玩家氣血也 × 5（雙方約 20 下分勝負，結果較穩定）；減傷／閃避改用較平緩的 `defenseEnemy`（15→25、8→14）；模擬加入敏捷連擊。
+  - **鎮魔塔 BOSS**（`bossStats`）：氣血 = 一般玩家普攻 × 1.3 × `bossRounds` 300 × (1 − BOSS 減傷) × (1 − BOSS 閃避)；攻擊 = 一般玩家氣血（含增益）÷ `bossHitsToKill` 400 × 樓層 `atkMult`；
+    回合上限 `bossMaxRounds` 600（`maxRounds()`）；舊制 `hpPerAtk` 新制不使用。BOSS 介紹的攻擊改顯示「每下約你氣血 X%」。戰鬥加入敏捷連擊（飄字橘色）。
+  - **藏書閣**（library.js、ui.js 的 `updateStudyCountsUI`）：新制每次 +0.1、上限 200 次（`studyGainOf／studyMaxOf`），不改 `player.stats`；新增敏捷古籍《凌波微步》`#study-card-agi`（新制才顯示）；
+    index.html 的次數、每次增加量、規則文字加上 id（`study-gain-*`、`study-rule`）。
+  - **日誌**（leveling.js）：升階「六大屬性 +1（基礎 N）」、突破「六大屬性 +6」、人物升級「氣血上限 +X%、靈力上限 +Y」。
+  - **裝備卡片**（gear.js 的 `formatEquipDetails` → numeric.js 的 `nv2FormatEquipStats`）：武器顯示「⚔️武器攻擊 X」，並列出新制屬性點（1 位小數，`nv2GearStatsOf`）；魅力與減傷／閃避／屬性傷害沿用裝備本身數值。
+- **第 2 階段驗證**（2026-09-27 本機測試頁，模擬每組 1 小時或 20～100 場）：
+  - 野外（藍色武器、無減傷閃避）：同境界一般玩家不吃丹藥也不會陣亡（最低剩 2～17% 血），經驗為設計節奏的 0.89～1.18 倍；凡人 1 階沒宗門技能在靈山大川最低剩 55% 血；
+    越級（煉氣去深淵險地、金丹去天南）不吃丹藥每小時陣亡 4～10 次、吃丹藥約 115 顆且不會死——這是刻意的門檻。
+  - 懸賞（化神 5 階、宗門 +30%，對手同境界同階）：無裝備 天 0%／地 17%／人 80%；減傷 30 閃避 15 → 13%／57%／95%；減傷 60 閃避 40 → 57%／93%／100%；對決 7～16 回合（舊制表格見第 36 節）。
+  - 鎮魔塔（30 場）：一般玩家（+50%）打第 1、2、4 層全勝、約 300 回合；第 3 層（冰凍＋攻 ×1.5）一般玩家 0 勝、中等裝備（+100%、減傷 40 閃避 25）全勝；
+    第 5 層（攻 ×3）煉虛 1 階一般 0 勝、煉虛 10 階 19/30、中等全勝；完全沒增益的煉虛 1 階全敗。實際 UI 走完一場（191 回合勝、樓層 +1、獎勵入帳）。
+  - 死守天南城（20 場，連打到失守）：一般玩家無減傷 煉虛 1 階 3 波、合體 10 階 8 波、渡劫 10 階 8～23、真仙 10 階 38～58、混沌道祖 10 階 68～98。
+    成長只有每境界 ×1.05，100 波的總強度只差約 2 倍，所以**裝備的影響遠大於境界**——減傷 60 閃避 40 的煉虛玩家可守 28～58 波、渡劫 10 階可能全破（舊制不管裝備都只多 2～4 波）。
+    ✅ **使用者決定維持現狀**（2026-09-28）：「連番塵戰，這已經不是靠天賦可以決定的，裝備大於天賦」。里程碑（第 N 波 = 某境界）只代表「同境界一般玩家、無減傷閃避」的參考強度，
+    獎勵照波次發放（裝備好的低境界玩家能拿到高波次獎勵是刻意的）。之後調整守城時不要再把「讓境界主導」當目標。
+  - 開關關閉時舊制數值完全相同（妖獸、懸賞、守城、地圖卡片、藏書閣、裝備卡片皆比對過）；gm.html 載入正常且仍是舊制數值；Console 無錯誤。
+- **第 3 階段：存檔轉換與上線**（2026-09-28，版本 `20260929r`）
+  - 使用者決定：**丹藥不補償、重新來過**；**舊戰力榜與守城榜由使用者用 GM 後台全部刪除**（沿用同一組集合）；**這版就上線**。
+  - **開關**：`NUMERIC_V2` 預設開啟；`localStorage['xiuxian_numeric_v2'] = '0'` 可在單一瀏覽器退回舊制（除錯用，丹藥清空不會還原）。
+  - **存檔轉換** `migrateNumericV2()`（save.js，`migrateProgressionFields` 內呼叫，只做一次，記 `player.nv2Converted`）：`pillUsed` 清空；藏書閣次數保留（舊上限 100，本來就在新規則內）；
+    `defenseSubmitted` 歸零、`defensePending` 清掉（守城榜要用新制數字重新送審）；`idleProvenMap` 清掉；設 `player.nv2Notice`。新角色在 `chooseGender` 直接記 `nv2Converted`，不跳公告。
+  - **改版公告** `#notice-modal`（main.js 的 `showNumericV2Notice`，`initGame` 後 0.8 秒；按「知道了」`closeNumericV2Notice` 清旗標並存檔）：列出小數字制、敏捷、丹藥重來、野外妖獸、等級上限、戰力榜重算與其他新系統。
+  - **榜上的數字**（leaderboard.js）：新制 `getRankPower()` = `nv2CombatPower()`、`getRankAttack()` = max(物攻, 術攻)；暫時增益在新制是加進增益池，用除的不準，
+    改由 `lbWithoutTempBuffs()` 暫時把禁術／靈寵增益／化功計時歸零再算、算完還原。戰力 ÷ 攻擊 固定約 1.8～2.28。
+  - **雲端規則**（`tools/firestore.rules`）：戰力上限改為 **400 ＋ 境界 × 40**（凡人 400、混沌道祖 1000）；守城送審 `atk ≤ power`。依據：本機以「白金 +20 武器、職業滿階＋傳承＋劍體、丹藥藏書閣全滿、至尊靈根、增益 +200%」
+    量得理論最高 凡人 163／金丹 210／煉虛 286／渡劫 365／真仙 425／混沌道祖 463。快取中的舊版程式上傳億兆級戰力會被擋下（只在 Console 警告）。
+  - **GM 後台**（gm.html）：載入 `config-numeric.js`／`numeric.js`；上限 `CAP_BASE`＋`CAP_PER_REALM`；「基礎值倍率」改「一般玩家倍率」（戰力 ÷ `nv2TypNormal × nv2TypRoundMult`）；🟡 門檻改 60%；
+    暴增預設 1 小時／4 倍／新戰力 ≥ 60（儲存鍵改 `gm_jump_settings_v2`，舊的 30 倍／100 萬不會沿用；上線後請用「時窗內最大成長」校準）；
+    守城審核 ③ 改為「戰力 ÷ 攻擊 在 1.7～2.4」（`DEF_POWER_ATK_MIN`，設定鍵 `gm_defense_settings_v2`）；守城強度 `defenseWaveAtk` 自動用新制曲線；
+    新增「💥 新制上線清空全部榜單」按鈕：刪除戰力榜、守城榜、守城送審全部資料（黑名單保留），需 confirm 並輸入「清空」。
+  - 其他：gear.js 毒爆、beast-combat.js 靈寵技能的傷害改 `roundDmg`（新制原本會被捨成 0）。
+  - ⚠️ **上線順序**：① Firebase 主控台發布新版 `tools/firestore.rules` → ② push → ③ 用 GM 後台「💥 新制上線清空全部榜單」。
+    先 push 再發規則的話，新版程式上傳的小數字不受影響，但舊規則不會擋下舊程式的億兆級上傳。
+  - 驗證（本機）：預設開啟；舊存檔轉換後丹藥 {}、守城送審 0、藏書閣保留、公告只跳一次；開禁術 ×3 時畫面戰力 278、榜上仍 256；
+    gm.html 無錯誤，舊制 5 兆戰力標 🔴、凡人 300 標 🟡、送審戰力 ÷ 攻擊 6.6 倍判不一致。規則與清空按鈕需在線上實測。- **第 2 階段補充**（2026-09-27，版本 `20260929l`，使用者逐項決定）：
+  - **轉世**：新制保留此世氣血上限的 `reincarnateHpKeep` 10%，存在 `player.reincarnateBonus.nv2Hp`（`nv2MaxHp` 以固定值加上，再乘虛弱；因為 `getMaxHp` 已含前世保留量，會逐世累積）。
+    新制下舊制的 `hp`／`mp` 保留量不更新（避免新舊數字混在一起），四維保留在新制無作用。確認視窗與日誌依制度改字。實測：仙人 5 階氣血 115 → 轉世保留 11.5 → 凡人 1 階氣血 62。
+  - **靈寶閣寶物**（含神器）：沒有圖鑑 def、只有 `lingbaoId`，改由 `nv2LingbaoStats` 給屬性點——總量 `lingbaoStatBudget`（初級 2.5／中級 4／高級 6／神器 10，圖鑑橙裝一件約 1.5）× 強化，
+    依商品原本四維的比例分配（例：大羅劍胎 力量 5.6、靈力 1.9、體質／悟性 1.3）；武器沒有裝備等級，`nv2WeaponAtkOf` 依兌換階段給成長位置 `lingbaoWeaponL`（初級 4／中級 8／高級 10）。
+    實測：誅仙劍武器攻擊 12.2（= 橙色 Lv.1000），減傷閃避屬性傷害沿用商品原本數值。
+  - **宗門技能耗魔**：不縮小，**讓玩家買靈力丹藥吃**（使用者決定）。
+  - **商品預覽**：千寶閣卡片本來就走 `formatEquipDetails`，已是新制顯示；靈寶閣改用 `formatLingbaoItemStats`（lingbao-shop.js，新制組一件兌換後的裝備交給 `nv2FormatEquipStats`）。
+  - **符寶**（2026-09-27，版本 `20260929m`，使用者要求改新制）：四維符每枚改為 `talismanFlat` 下品 0.1／中品 0.3／上品 0.6（舊制 100／400／1500），
+    由 talisman.js 的 `talismanFlatOf` 回傳；`nv2GearStats` 把身上所有孔位的四維符加進屬性（不併進單件的 `nv2GearStatsOf`，卡片上由孔位那一行顯示「+0.6」）。
+    全身橙裝約 30 孔全鑲上品同一種 ≈ +18，與丹藥上限 +20 相當。戰鬥屬性符（%）不變。符寶坊的品階說明依制度顯示。實測：上品＋下品力量符 = 力量 +0.7。
+  - **境界等級上限**（版本 `20260929n`）：新制下每個境界有人物等級上限（凡人 50…混沌道祖 10000），詳見第 14 節。
+  - 轉世後人物等級回 Lv.1，但**已穿在身上的裝備不會卸下**（穿戴等級只在穿上時檢查，equipment.js），所以高等級武器照樣生效；新制下等級只影響氣血 % 與靈力，歸零損失很小。
+
+## 53. 宗門傳承、資質測試（先天靈根／體質）與變異屬性（2026-09-27，版本 `20260929p`）
+
+使用者要求「門派跟職業掛鉤」「入宗後資質測試擲骰決定靈根」「體質系統」「五行系統調整」。四個決定（使用者選定）：**傳承加成**（不限制主修）、**每階段加 1 個宗門**、**舊靈根改名五行共鳴**、**資質可用道具重測**。
+新舊制（`NUMERIC_V2`）都生效；加成走 `getBonusTotals`，新制下 % 加成一樣進增益池（上限 +200%）。
+
+### 一、宗門傳承（config-sects.js、config-profession.js、profession.js、sect.js）
+- 每個宗門加 `weapon`（傳承武器），三個階段各 6 個宗門、6 種武器各一：
+
+  | 武器 | 凡俗 | 修真 | 至高 |
+  |---|---|---|---|
+  | 劍 | 武當 | 蜀山劍派 | 上清截教宗 |
+  | 刀 | 少林寺 | 天魔教 | 九幽黃泉 |
+  | 扇 | **逍遙派（新）** | 崑崙仙宗 | 太清道德宗 |
+  | 弓 | 皇朝 | 御獸仙宗 | 萬界仙門 |
+  | 笛 | 峨嵋 | **天音閣（新）** | **天籟仙宮（新）** |
+  | 筆 | 全真教 | 丹鼎司 | 玉清闡教宗 |
+
+  新宗門（皆正派）：逍遙派 經驗 ×1.2／戰力 ×1.1（天山折梅手、逍遙扇舞）、天音閣 ×2.0／×1.8（天音破魔曲、裂石音刃）、天籟仙宮 ×4.0／×4.0（天籟九霄、仙音斷魂）。原有宗門的技能名稱不變。
+- **傳承加成** `getSectLegacy()`：主修職業的武器 = 目前所屬宗門（`player.sect`）的 `weapon` 時生效，`SECT_LEGACY_BONUS`：凡俗 武器 +10%／熟練度 ×1.3、修真 +20%／×1.6、至高 +30%／×2。
+  武器加成加在 `getProfWeaponMult`（舊制＝該武器四維、新制＝武器攻擊），熟練度倍率在 `gainProficiency`。任何職業都能主修，換宗門（回歸已選宗門）就能追加成。
+- 顯示：宗門卡片「⚔️ 傳承：🗡️劍修（劍）」與加成（與主修相合標綠，`formatSectLegacyLine`）；拜入／回歸時日誌說明是否相合；天磯錄職業分頁頂端顯示傳承是否生效、每張職業卡列出傳承宗門。
+- 驗證：主修劍＋拜入武當 → 劍 ×1.1、熟練度 100 → 130；改到天音閣 → 失效並提示。
+
+### 二、資質測試（config-aptitude.js、aptitude.js）
+- **觸發**：第一次拜入宗門後（`joinSect` 延遲 0.3 秒呼叫 `checkAptitudeTest`），以及每次進遊戲（`initGame` 延遲 1.2 秒）時已在宗門但沒有 `player.aptitude` 的老玩家補測。
+  視窗 `#aptitude-modal`：「🎲 手按測靈石」→ 名稱輪播約 1.6 秒（`prefers-reduced-motion` 時直接顯示）→ 先天靈根、先天體質各一張卡（等級、說明、加成）。結果一世固定，**轉世也保留**。
+- **先天靈根**（`APTITUDE_ROOT_GROUPS`，組機率，組內平均）：
+
+  | 組 | 機率 | 修為（fx:悟道） | 其他 |
+  |---|---|---|---|
+  | 偽靈根 五靈根／四靈根 | 17%／18% | −25%／−15% | 渡劫勝算 −5% |
+  | 真靈根 三靈根／雙靈根 | 30%／17% | 0／+20% | 所含五行各得 20%／40% 親和 |
+  | 天靈根（單一五行） | 8% | +50% | 該五行 100% 親和 |
+  | 變異 風／雷／冰／暗 | 6% | +40% | 風擊 15＋敏捷 10%／雷傷 20＋攻擊 5%／冰傷 20＋抗凍 30%／暗蝕 15（本質暗） |
+  | 特殊 無屬性／日／月／仙 | 3% | +60～80% | 全屬性 8%／物攻 12%＋聖光 12（光）／術攻 12%＋冰傷 15／全屬性 8%＋氣血 10%＋聖光 8（光） |
+  | 至尊 混沌、太初、鴻蒙、創世、先天五太、先天五行、空靈、空明、空識 | 1% | +100～130% | 全屬性 10～15% 等 |
+
+  五行親和 `ROOT_ELEMENT_AFFINITY`（×親和比例）：金 金傷 15、木 每回合回血 1%、水 冰傷 15、火 火傷 15、土 減傷 5。名稱例：「火天靈根」「木水雙靈根」「四靈根（金木火土）」。
+  實測 2 萬次：偽 34.4%、真 47.2%、天 8.3%、變異 6.4%、特殊 2.9%、至尊 0.9%。
+- **先天體質**（`APTITUDE_PHYSIQUE_GROUPS`）：凡體 70%；靈體 22%（庚金／乙木／癸水本源體、九陽赤炎體、戊土本源體（本命五行相同時攻擊 +8%）、天雷之體（渡劫 +5%）、玄冰之體、純陰／純陽之體（術攻／物攻 +10%、暗蝕／聖光 8、暗殺者 ×1.5）、天生藥體（丹藥效果 +50%）、萬毒不侵體（免疫中毒））；
+  道體 6%（先天劍體、霸刀戰體、風靈仙體、神射之體、天籟道體、符靈道體：裝備對應武器時該武器 +15%、技能傷害 +10%；劍體為使用者指定，其餘五種補齊六職業）；
+  神體 2%（混沌體、荒古聖體、先天聖體道胎、蒼天霸體、重瞳、至尊骨）。
+- **加成套用**：`getAptitudeBonusTotals()` 併入 gear.js 的 `getBonusTotals`（含條件式：武器體質裝備該武器時的技能傷害、本源體的本命五行攻擊）；
+  `getAptitudeSpecial()`：`trib` → tribulation.js 的勝算（確認視窗多一行「先天資質」）、`ambushMult` → combat.js 暗殺者機率、`poisonImmune` → `resolveHit` 與懸賞「蝕骨毒功」不上毒、`weapons` → `getProfWeaponMult`（不論主修）、`nature` → 光暗本質。
+- **顯示**：人物面板「資質：木水雙靈根・乙木本源體」（`#aptitude-display`，點擊 `openAptitudeView()` 查看與重測）。
+- **重測**：千寶閣「珍貴物資」新增【洗髓丹】（重測靈根）、【伐骨丹】（重測體質），各 `APTITUDE_REROLL_COST` 10 顆七彩補天石（`buyAptitudePill`，背包也會顯示）。
+  使用後擲出新結果，**玩家選擇保留新的或原本的**（`finishAptitudeReroll`）。存檔：`player.aptitude = { root: { group, id?, elems? }, physique, at }`、`player.rootPills`、`player.physiquePills`（用到時才建立）。
+
+### 三、變異屬性與光暗（config-elements.js、elements.js、combat.js）
+- 五行相剋照舊只在金木水火土之間。新增變異屬性（`VARIANT_AFFIX_TYPES`，與屬性傷害一起套 `AFFIX_CAP` 50%，目前來源只有先天資質）：
+  - 🌪️**風擊** `wind`：每回合機率追加一擊（普攻 ×`WIND_HIT_MULT` 0.6，combat.js 的 `playerAttackTurn`）。實測 15% → 16%。
+  - ☀️**聖光** `light`：該擊 ×1.3 並回復最大氣血 1%（`LIGHT_BONUS`／`LIGHT_HEAL`）。
+  - 🌑**暗蝕** `dark`：該擊無視減傷並吸取 20% 傷害（`DARK_LIFESTEAL`）。實測 23% → 23.75%。
+  - 雷、冰沿用原本的雷傷、冰傷。
+- **光暗互剋**：`attrs.nature`（light／dark）不同的雙方互相攻擊 +30%（`LIGHT_DARK_COUNTER_BONUS`，tag「☯️光暗相剋」）。
+  玩家本質來自資質（靈根與體質一光一暗時抵銷）；野外邪修與暗殺者（邪）為暗、正道為光；懸賞人物依陣營；幽冥禁域（`DARK_MAP_CATEGORIES` = [4]）妖獸為暗；心魔鏡像玩家（同本質不相剋）。
+- 人物面板戰鬥屬性列：變異屬性有數值才顯示，最後附「☀️本質：光／🌑本質：暗」；五行共鳴說明視窗（「!」）新增「變異屬性與光暗」段落。
+- 尚未做：裝備詞條、符寶、仙法還不會提供風／光／暗（只有資質）；鎮魔塔 BOSS 沒有光暗本質。
+
+### 載入順序
+`config-aptitude.js` 接在 `config-profession.js` 後、`aptitude.js` 接在 `profession.js` 後（都只在執行期被呼叫，順序不影響）。
+
+## 54. 丹田、金丹、元嬰與地圖推薦練功區（2026-09-27，版本 `20260929q`）
+
+使用者設計：築基期多一條「丹田成長」，進金丹時依丹田凝結五品金丹（影響氣血與靈力）；進元嬰時金丹轉為元嬰（天／地／人三品各分上中下，影響術法傷害）。
+使用者選定：**累積靠修為＋待渡劫溢出＋丹藥**、**老玩家補發中等**、**門檻 50／75／100＋超品機率**、**元嬰影響化神勝算，另有天材地寶可加機率**。新舊制都生效。
+
+### 丹田與溫養（config-golden-core.js、golden-core.js）
+- 存檔 `player.goldenCore = { dantian, core, nurture, infant }`（dantian／nurture 0～1；core 0～4、infant 0～8，null = 未凝結）。
+- **累積**（`gainCoreProgress`，leveling.js 的 `gainExp` 在判斷待渡劫之前呼叫，所以溢出的修為也算）：築基期灌丹田、金丹期灌溫養，
+  每獲得「整個境界所需修為」灌 `CORE_FILL_PER_REALM` 50%（`getRealmStageExp × 55`）。正常修完築基約 50%，圓滿後在築基多待同樣時間再 +50%。跨 50／75／100% 時寫日誌。
+- **凝元丹**（煉丹房 `#pill-card-core`，只在築基／金丹期顯示）：5 株上品靈草＋1 萬靈石，丹田／溫養 +5%（`craftCorePill`）。
+- **金丹**（`onRealmAdvancedCore`，advanceRealm 晉升金丹時）：下品（<50%）／中品（50%）／上品（75%）／極品（100%）＋0／10／20／35% 氣血與靈力上限；
+  丹田 100% 時再擲超品（+50%），機率 `getSuperCoreChance` = 10%＋靈根（天／變異 +10%、特殊 +20%、至尊 +40%）＋體質（道體 +10%、神體 +30%）。
+- **元嬰**（晉升元嬰時）：起點 `INFANT_BASE_BY_CORE` [0,2,3,5,6]（下品→人下、中品→人上、上品→地下、極品→地上、超品→天下），溫養 ≥ 50% 再 +1、100% 再 +2。
+  九品術法傷害 人 0／5／10%、地 15／20／25%、天 35／45／60%；天元嬰出世日誌附天地異象（`INFANT_OMENS`）。
+- **加成**：`getGoldenCoreBonusTotals` 併入 `getBonusTotals`（`hpPct`、`mpPct`、`magPct`）；`mpPct` 為新鍵，舊制 `getMaxMp` 與新制 `nv2MaxMp` 都乘上。
+- **化神勝算**（元嬰 → 化神，`getCoreTribBonus`）：人元嬰 −10%、地 ±0、天 +10%。
+  **化神靈果**（天材地寶，千寶閣珍貴物資 3 顆七彩補天石，`buySpiritFruit`）：元嬰期渡劫化神時自動服用 1 顆 +10%（可抵銷人元嬰）；確認視窗列出元嬰與靈果兩行。背包顯示持有數。
+- **老玩家**（`migrateGoldenCore`，save.js 讀檔時；存檔沒有 goldenCore 才做）：金丹期以上補發中品金丹、元嬰期以上補發地元嬰・中。
+  ⚠️ 補發只在讀檔時做：advanceRealm 會在晉升後立刻算氣血，若在取值時補發，剛進金丹的新玩家會被誤判成老玩家。
+- **轉世**：`goldenCore` 清空，重新累積。
+- 人物面板「金丹：」一行（`#core-display`，`formatCoreShort`）：築基期顯示丹田 % 與可結成的品級，之後顯示金丹、溫養、元嬰。
+- 驗證（本機）：修完築基 丹田 51.5% → 待渡劫再練半個境界 77% → 上品金丹；溫養 62% → 地元嬰・中（術法 +20%）；
+  人元嬰化神 −10%、靈果 +10% 並消耗；凝元丹 10 顆 30% → 80%；新制下 下品＋人下 → 超品＋天上：氣血 88 → 123、靈力 952 → 1375、術攻 17 → 25；Console 無錯誤。
+
+### 地圖推薦練功區（config-maps.js、map.js）
+- 每張戰鬥地圖加 `suit: [最低境界, 最高境界]`（依 `realmPacing` 的主要練功地圖）：靈山大川 凡人～煉氣、深淵險地 築基、上古遺跡 金丹、天南 元嬰、亂星海 化神、鬼谷八荒 煉虛～渡劫、
+  荒古禁地 仙人初境、太初古礦 仙人初境～天仙、上蒼 天仙、不死山／神墟／仙陵／冥界 真仙、仙界戰場 大羅金仙、萬界戰場 混元大羅金仙、混沌初界 混沌道祖。
+- `getMapSuitRange`：舊制用 `suit`；新制妖獸強度由 `nv2L` 決定，改用 nv2L 所在境界。`getRecommendedMaps`：目前境界落在範圍內的地圖（沒有就取不超過自己的最高那張）。
+- 修仙地圖視窗頂端「🎯 金丹適合練功：上古遺跡」；地圖卡片「🎯 適合境界：…」，符合時標題加「⭐ 推薦練功」。
+- ⚠️ 使用者表示**之後再細分區域**：目前煉虛～渡劫只有鬼谷八荒、真仙有四張，且新制 `nv2L`（第 52 節）與 `suit` 不一致（例：荒古禁地 nv2L 7 ≈ 合體，suit 是仙人初境），分區時一併整理。
+
+## 55. 鍛造圖紙（Lv.1500 以上裝備，2026-09-28，版本 `20260929s`）
+
+- **問題**：裝備等級最高 Lv.1000（約大乘就到頂），人物等級上限一路到 10000，新制武器攻擊在大乘後不再成長。
+- **使用者選定**：鍛造閣新增 **Lv.1500、2500、3500、5000、6500、8000、10000** 七檔（對上渡劫～混沌道祖各境界的等級上限，`BLUEPRINT_LEVELS`），
+  **只能用圖紙鍛造**；圖紙**分部位、分等級**（劍的 1500 等圖紙只能打 1500 等的劍）；未來要做**玩家交易、離線寄賣**。Lv.1000 以下維持靈石鍛造，千寶閣／奪寶／秘境掉落仍最高 Lv.1000（`EQUIP_LEVELS` 不變）。
+- **鍛造**（equipment.js）：`renderForgeLevelSelect` 在一般等級後面列出「目前所選部位」持有圖紙的檔次（「📜 2500 等・劍圖紙鍛造（持有 N 張）」），部位下拉 `onchange` 會重新列；
+  `forgeEquipment` 遇到圖紙檔：每件消耗 1 張該部位該等級圖紙＋`BLUEPRINT_FORGE_COST` 10 萬靈石，批次上限 = min(圖紙、靈石、背包)；不受宗門階段限制；品質照原本機率；清單用至高宗門（`getCraftChannel`）。
+- **存檔**：`player.blueprints = { "劍_1500": 張數 }`（`blueprintKey(slot, level)`，用到時才建立）。之後做交易／寄賣時以此 key 當道具識別碼。
+  `getBlueprintCount(slot, level)`、`useBlueprints`、`listBlueprints()`（背包「📜 鍛造圖紙」卡片、鍛造閣提示用）。
+- **掉落** `grantBlueprint(chance, 來源文字)`：等級 = 不超過人物等級的最高一檔（未滿 1500 給 1500 檔先存著），部位從可鍛造的 17 部位平均隨機；`BLUEPRINT_DROPS`：
+  - 天榜懸賞伏誅 30%（bounty.js 的 `endBountyDuel`）
+  - 死守天南城首領波（每 10 波）10% ＋ 波數 × 0.5%（第 100 波 60%，defense.js 的 `grantWave`；結算畫面列「📜 鍛造圖紙 ×N」）
+  - 鎮魔塔擊敗 BOSS 30% × 問答倍率，最多 75%（zhenmo.js 的 `grantRewards`；結算畫面與日誌）
+  - ⚠️ 圖紙分 17 個部位，湊齊一整套要很多張；掉率是預設值，上線後看玩家取得速度再調。
+- **新制武器成長**：`NV2.blueprintWeaponL`（1500 → 11、2500 → 12、3500 → 13、5000 → 14、6500 → 15、8000 → 15.5、10000 → 16），`nv2WeaponAtkOf` 優先查表。
+  藍色武器攻擊：Lv.1000 10.18 → 1500 10.69 → 2500 11.22 → 5000 12.37 → 10000 13.64。「一般玩家」（怪物強度基準）仍假設武器最多 L 10，圖紙裝備是後期額外戰力，怪物不變強。
+  理論最高戰力約 ×1.3（仍在雲端上限 400 ＋ 境界 × 40 內）。
+- 驗證（本機）：人物 Lv.2600 掉 2500 檔、200 次掉落涵蓋 17 部位；劍 2500 圖紙 3 張「最高」打出 3 把 Lv.2500 劍、扣 30 萬靈石、圖紙歸 0；選「頭」只列頭的 1500 檔；背包卡片正常；Console 無錯誤。

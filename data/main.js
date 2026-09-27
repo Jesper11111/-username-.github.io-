@@ -14,6 +14,8 @@ function initGame() {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveLocal(); });
     window.addEventListener('pagehide', saveLocal);
     startLeaderboardSync();   // 天下戰力榜：定時上傳戰力（leaderboard.js，未設定 Firebase 時不動作）
+    setTimeout(showNumericV2Notice, 800);   // 數值重做上線：老玩家第一次進來跳一次改版公告（第 52 節）
+    setTimeout(checkAptitudeTest, 1200);   // 已在宗門但還沒測過資質的老玩家：補測（aptitude.js）
 }
 
 // 由標題畫面的 enterWorld() 呼叫（title-screen.js）
@@ -38,11 +40,23 @@ function chooseGender(gender) {
     player.gender = gender === 'female' ? 'female' : 'male';
     player.name = avatar.defaultName;
     player.lastSaveTime = Date.now();
+    player.nv2Converted = Date.now();   // 新角色一開始就是新制，不需要轉換與改版公告（save.js 的 migrateNumericV2）
 
     closeModal('gender-modal');
     addLog(`🌱 歡迎踏入修仙世界！系統已初始化角色【${player.name}】。`, "system");
     initGame();
     saveLocal();   // 立刻存檔，重新整理後不會再次詢問性別
+}
+
+// 數值重做改版公告（save.js 的 migrateNumericV2 設 player.nv2Notice）：只跳一次，關閉後清掉旗標並存檔
+function showNumericV2Notice() {
+    if (!player.nv2Notice) return;
+    document.getElementById('notice-modal').style.display = 'flex';
+}
+function closeNumericV2Notice() {
+    player.nv2Notice = false;
+    closeModal('notice-modal');
+    saveLocal();
 }
 
 window.onload = function() {

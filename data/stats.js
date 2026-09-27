@@ -156,6 +156,7 @@ function getWeaknessMult() {
 }
 
 function getPhysAttack() {
+    if (NUMERIC_V2) return nv2PhysAttack();   // 新制（numeric.js，第 52 節）
     let eqBonus = getEquipBonus();
     let totalStr = player.stats.str + eqBonus.str;
     let base = getBasePower() * (player.sect ? player.sect.powerMult : 1.0) + (totalStr * 5);
@@ -169,6 +170,7 @@ function getPhysAttack() {
 }
 
 function getMagAttack() {
+    if (NUMERIC_V2) return nv2MagAttack();
     let eqBonus = getEquipBonus();
     let totalInt = player.stats.int + eqBonus.int;
     let base = getBasePower() * (player.sect ? player.sect.powerMult : 1.0) + (totalInt * 5);
@@ -182,6 +184,7 @@ function getMagAttack() {
 }
 
 function getMaxHp() {
+    if (NUMERIC_V2) return nv2MaxHp();
     let eqBonus = getEquipBonus();
     let totalCon = player.stats.con + eqBonus.con;
     let root = getRootBonus();
@@ -192,9 +195,10 @@ function getMaxHp() {
 }
 
 function getMaxMp() {
+    if (NUMERIC_V2) return nv2MaxMp();
     let eqBonus = getEquipBonus();
     let totalSpr = player.stats.spr + eqBonus.spr;
-    let baseMp = Math.floor((50 + totalSpr * 10) * Math.max(0.1, 1 + getSpellAuraBonus().mpPct));
+    let baseMp = Math.floor((50 + totalSpr * 10) * Math.max(0.1, 1 + getSpellAuraBonus().mpPct) * (1 + (getBonusTotals().mpPct || 0)));   // mpPct：金丹品級（golden-core.js）
     return Math.floor((baseMp + (player.level - 1) * LEVEL_UP_MP_GAIN + getReincarnateBonus().mp) * getWeaknessMult());
 }
 

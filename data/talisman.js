@@ -7,18 +7,21 @@ function talismanKey(type, grade) { return `${type}_${grade}`; }
 function getTalismanType(type) { return talismanTypes.find(t => t.key === type); }
 function getTalismanGrade(grade) { return talismanGrades.find(g => g.grade === grade); }
 
+// 四維符的點數：舊制 g.flat；新制（第 52 節）改用 NV2.talismanFlat（下品 0.1／中品 0.3／上品 0.6），由 numeric.js 的 nv2GearStats 計入屬性
+function talismanFlatOf(g) { return NUMERIC_V2 ? NV2.talismanFlat[g.grade] : g.flat; }
+
 // 單一符寶提供的數值（四維為點數、戰鬥屬性為 %）
 function getTalismanValue(type, grade) {
     let t = getTalismanType(type), g = getTalismanGrade(grade);
     if (!t || !g) return 0;
-    return t.kind === "flat" ? g.flat : g.pct;
+    return t.kind === "flat" ? talismanFlatOf(g) : g.pct;
 }
 
 function formatTalisman(type, grade) {
     let t = getTalismanType(type), g = getTalismanGrade(grade);
     if (!t || !g) return "未知符寶";
     let v = getTalismanValue(type, grade);
-    return `${t.icon}${g.name}${t.name}（${t.kind === "flat" ? `+${v.toWan()}` : `+${v}%`}）`;
+    return `${t.icon}${g.name}${t.name}（${t.kind === "flat" ? `+${NUMERIC_V2 ? v.toFixed(1) : v.toWan()}` : `+${v}%`}）`;
 }
 
 // ---- 孔位 ----
@@ -73,7 +76,7 @@ function renderTalismanWorkshop() {
     // 煉製區：種類與品階全部隨機，只選次數
     let c = TALISMAN_CRAFT_COST;
     let gradeText = talismanGrades.map(g =>
-        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${g.flat.toWan()}／屬性 +${g.pct}%）`).join("｜");
+        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${NUMERIC_V2 ? talismanFlatOf(g).toFixed(1) : g.flat.toWan()}／屬性 +${g.pct}%）`).join("｜");
     let craftCard = `
         <div class="card" style="max-width: 460px; margin: 0 auto;">
             <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">每次煉製：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>

@@ -74,5 +74,15 @@ const ZHENMO_BOSSES = {
         skills: ["冥火虎嘯", "裂魂虎爪", "百鬼夜行", "幽冥撲殺"],
         icon: "🐯", flash: "rgba(129, 140, 248, 0.32)",   // 冥火藍紫光
         rewards: { coinMinutes: 14, merit: [160, 320], shards: [4, 7], iron: [5, 10] }
+    },
+    5: {
+        name: "青瞑爪龍", title: "雷雲蒼龍", img: "images/zhenmo/boss-qingming.jpg", imgPos: "50% 25%",   // 玩家提供直式（848×1264，展翼青龍、龍頭在上方）
+        realm: 6, stage: 5, atkMult: 3,     // 煉虛 5 階，攻擊 ×3（2026-09-27 玩家指定）
+        hpPerAtk: 300,
+        def: 20, eva: 15, affix: "thunder", affixVal: 18, element: "木",   // 青龍屬木；御雷雲、爪握雷珠（雷擊）；展翼飛騰（閃避）
+        intro: "盤踞雷雲之上的青鱗爪龍，雙翼遮天、爪握雷珠，龍吟一聲風雨驟至，是塔中第一道真正的難關。",
+        skills: ["青瞑龍爪", "雷珠轟頂", "蒼龍擺尾", "風雷龍吟"],
+        icon: "🐉", flash: "rgba(56, 189, 248, 0.32)",   // 青色雷光
+        rewards: { coinMinutes: 20, merit: [250, 500], shards: [6, 10], iron: [8, 14] }   // 第 5 層關卡：獎勵加碼
     }
 };

@@ -1,5 +1,5 @@
 // 宗門彈窗：檢查是否已拜入宗門、渲染宗門列表、加入宗門
-// 每個階段（凡俗/修真/至高）只能拜入一個宗門，選定後鎖定；已學的技能永久保留。
+// 每個階段（凡俗/修真/至高）只能拜入一個宗門，選定後鎖定；已學的技能永久保留。每個宗門傳承一種武器（職業），主修相同時有傳承加成（profession.js 的 getSectLegacy）。
 
 function checkSectJoined() {
     if (!player.sect) {
@@ -51,6 +51,7 @@ function renderSects() {
                     <h3>${sect.name}${isOwnSect && !isCurrent ? ' <span style="font-size:0.7em; color:#4ade80;">(已選定)</span>' : ''}</h3>
                     <p style="font-size: 0.78em; margin: 0; color: ${sect.faction === '邪' ? '#f87171' : '#60a5fa'};">${sect.faction === '邪' ? '邪派' : '正派'}（影響懸賞榜陣營）</p>
                     <p style="font-size: 0.85em; color: #9ca3af;">加成: ${sect.buff}</p>
+                    ${formatSectLegacyLine(sect, cat.tier)}
                     <p style="font-size: 0.78em; color: #c084fc; text-align: left;">${SECT_TIER_NAMES[cat.tier]}技能：<br>${skillLines}</p>
                     <button class="sect-btn ${isCurrent ? 'active' : ''}" ${disabled ? 'disabled' : ''} onclick="joinSect('${sect.name}')">${btnText}</button>
                 </div>`;
@@ -58,6 +59,16 @@ function renderSects() {
         catHtml += `</div></div>`;
         container.innerHTML += catHtml;
     });
+}
+
+// 宗門卡片的傳承說明：傳承哪個職業、加成多少；與主修相同時標綠
+function formatSectLegacyLine(sect, tier) {
+    let sp = getSectProfession(sect);
+    if (!sp) return '';
+    let b = SECT_LEGACY_BONUS[tier] || {};
+    let match = player.profession === sp.id;
+    return `<p style="font-size: 0.78em; margin: 2px 0; color: ${match ? '#4ade80' : '#facc15'};">⚔️ 傳承：${sp.icon}${sp.name}（${sp.slot}）${match ? '・與你的主修相合' : ''}<br>
+        主修${sp.name}時：${sp.slot}的${NUMERIC_V2 ? '武器攻擊' : '四維'} +${Math.round((b.weaponPct || 0) * 100)}%、熟練度 ×${b.profMult || 1}</p>`;
 }
 
 function joinSect(sectName) {
@@ -84,6 +95,7 @@ function joinSect(sectName) {
             if (!confirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`)) return;
             player.sectSkills[cat.tier] = s.name;
             addLog(`📜 習得【${s.name}】${SECT_TIER_NAMES[cat.tier]}技能：${s.skills.map(sk => `【${sk.name}】`).join('')}！`, "skill");
+            setTimeout(checkAptitudeTest, 300);   // 第一次拜入宗門：資質測試（aptitude.js）
         }
 
         // 已經身在此宗門：只關閉視窗，不重複寫日誌
@@ -97,6 +109,10 @@ function joinSect(sectName) {
         addLog(isOwnSect
             ? `⛩️ 回歸【${s.name}】，改由此宗門加持（原【${from}】的技能仍然保留）。`
             : `⛩️ 拜入【${s.name}】，獲得宗門氣運加持！${from ? `（原【${from}】的技能仍然保留）` : ''}`, "system");
+        // 宗門傳承（profession.js）：主修職業與本宗傳承武器相同時生效
+        let legacy = getSectLegacy(), sp = getSectProfession(s);
+        if (legacy.active) addLog(`⚔️ 【${s.name}】傳承${sp.name}之道，與你的主修相合：${sp.slot}的${NUMERIC_V2 ? '武器攻擊' : '四維'} +${Math.round(legacy.weaponPct * 100)}%、熟練度 ×${legacy.profMult}！`, "level-up");
+        else if (sp && player.profession) addLog(`ℹ️ 【${s.name}】傳承的是${sp.icon}${sp.name}（${sp.slot}），與你的主修不同，沒有傳承加成。`, "system");
         updateUI();
         closeModal('sect-modal');
         return;

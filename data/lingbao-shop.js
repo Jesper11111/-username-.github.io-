@@ -17,6 +17,14 @@ function getLingbaoCost(item) {
     return isArtifactItem(item) ? { coins: ARTIFACT_COST_COINS, rep: cost.rep } : cost;
 }
 
+// 商品屬性文字：舊制直接列 itemData.stats；新制組一件「兌換後的樣子」交給 numeric.js 的 nv2FormatEquipStats（武器攻擊、新制屬性點）
+function formatLingbaoItemStats(item) {
+    if (!NUMERIC_V2) return formatEquipStats(item.itemData.stats);
+    let d = item.itemData;
+    return nv2FormatEquipStats({ name: d.name, category: d.category, quality: d.quality, element: d.element,
+                                 stats: Object.assign({}, d.stats), lingbaoId: item.id, enhance: 0 });
+}
+
 function renderLingbaoShopUI() {
     const container = document.getElementById('lingbao-shop-container');
     let sold = player.lingbaoSold || [];
@@ -33,7 +41,7 @@ function renderLingbaoShopUI() {
             let artSkill = artifactSkills[item.id];
             let detail = item.type === 'equip'
                 ? (artSkill ? `<p style="font-size: 0.8em; margin: 2px 0;"><span class="quality-${item.itemData.quality}">${formatQualityLabel(item.itemData.quality)}</span></p>` : '')
-                  + `<p style="font-size: 0.8em; color: #facc15;">【${item.itemData.name}】<span class="elem-${item.itemData.element}">${item.itemData.element}</span>｜${formatEquipStats(item.itemData.stats)}</p>`
+                  + `<p style="font-size: 0.8em; color: #facc15;">【${item.itemData.name}】<span class="elem-${item.itemData.element}">${item.itemData.element}</span>｜${formatLingbaoItemStats(item)}</p>`
                   + (artSkill ? `<p style="font-size: 0.78em; color: #fca5a5;">專屬技能【${artSkill.name}】：${artSkill.desc}</p>` : '')
                   + (isArtifactItem(item) ? `<p style="font-size: 0.8em; color: #facc15;">兌換：${getLingbaoCost(item).coins.toWan()} 靈石 ＋ ${getLingbaoCost(item).rep.toWan()} 聲望</p>` : '')
                 : `<p style="font-size: 0.8em; color: #c084fc;">耗魔 ${item.skillData.mpCost}</p>`;

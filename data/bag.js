@@ -97,16 +97,28 @@ function renderBag() {
     let fireCards = renderStrangeFireCards();
     if (fireCards) { hasItems = true; parts.push(fireCards); }
 
-    [["butianStone", player.butianStones], ["breakPill", player.breakPills]].forEach(([key, count]) => {
+    [["butianStone", player.butianStones], ["breakPill", player.breakPills], ["rootPill", player.rootPills], ["physiquePill", player.physiquePills], ["spiritFruit", player.spiritFruits]].forEach(([key, count]) => {
         if (!(count > 0)) return;
         hasItems = true;
-        let item = preciousItems[key];
+        let item = preciousItems[key] || aptitudeItems[key] || (key === "spiritFruit" ? SPIRIT_FRUIT : null);   // 洗髓丹／伐骨丹（config-aptitude.js）、化神靈果（config-golden-core.js）
         parts.push(`
             <div class="card rainbow-glow">
                 <h3 class="rainbow-text">${item.icon} ${item.name} <span style="font-size:0.8em;">(x${count.toWan()})</span></h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">${item.desc}</p>
             </div>`);
     });
+
+    // 鍛造圖紙（equipment.js，第 55 節）：分部位、分等級
+    let bps = listBlueprints();
+    if (bps.length) {
+        hasItems = true;
+        parts.push(`
+            <div class="card" style="border-color: var(--accent);">
+                <h3 style="color: var(--accent);">📜 鍛造圖紙 <span style="font-size:0.8em;">(共 ${bps.reduce((a, b) => a + b.count, 0)} 張)</span></h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">${bps.map(b => `${b.slot}・${b.level} 等 ×${b.count}`).join('、')}</p>
+                <p style="font-size: 0.78em; color: #6b7280;">至宗門鍛造閣選擇部位與圖紙等級打造（每張一件，另需 ${BLUEPRINT_FORGE_COST.toWan()} 靈石）</p>
+            </div>`);
+    }
 
     if (player.equipInventory && player.equipInventory.length > 0) {
         hasItems = true;

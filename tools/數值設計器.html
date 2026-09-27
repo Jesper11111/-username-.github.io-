@@ -1,0 +1,306 @@
+<title>修仙數值設計器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+:root {
+  --bg: #eef1ec; --surface: #fbfcf9; --surface2: #f3f6f1; --ink: #1d2925; --muted: #63736c; --line: #d3dcd5;
+  --accent: #2c7a66; --accent-soft: #dcebe5; --ok: #1f7a3f; --warn: #a35a07; --warn-soft: #f6e7cf; --bad: #b42318; --bad-soft: #f8dcd8;
+  --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --sans: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1614; --surface: #16201d; --surface2: #1b2724; --ink: #e2ebe7; --muted: #93a39c; --line: #2a3834;
+    --accent: #5dbfa3; --accent-soft: #1c3a32; --ok: #5cc98a; --warn: #e3a44f; --warn-soft: #3a2c16; --bad: #f08a7e; --bad-soft: #3d1f1b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1614; --surface: #16201d; --surface2: #1b2724; --ink: #e2ebe7; --muted: #93a39c; --line: #2a3834;
+  --accent: #5dbfa3; --accent-soft: #1c3a32; --ok: #5cc98a; --warn: #e3a44f; --warn-soft: #3a2c16; --bad: #f08a7e; --bad-soft: #3d1f1b;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.55; padding: 20px 16px 40px; }
+.wrap { max-width: 1380px; margin: 0 auto; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+header.top { max-width: 1380px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+h1 { font-family: var(--serif); font-size: 26px; letter-spacing: 2px; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 68ch; }
+h2 { font-family: var(--serif); font-size: 17px; letter-spacing: 1px; margin: 0 0 10px; text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+
+/* 參數面板 */
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+legend { font-size: 12px; letter-spacing: 1.5px; color: var(--accent); font-weight: 700; margin-bottom: 4px; padding: 0; }
+.p { display: grid; grid-template-columns: 1fr 88px; gap: 2px 8px; align-items: center; }
+.p label { font-size: 13px; }
+.p input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 0; }
+.p input[type=number], select { width: 100%; font: inherit; font-family: var(--mono); font-size: 13px; text-align: right; padding: 3px 6px;
+  background: var(--surface2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
+select { text-align: left; font-family: var(--sans); }
+.hint { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface2); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button:hover { border-color: var(--accent); }
+
+/* 結果 */
+main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.card .k { font-size: 12px; color: var(--muted); }
+.card .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .n { font-size: 11.5px; color: var(--muted); }
+.card.good .v { color: var(--ok); } .card.warn .v { color: var(--warn); } .card.bad .v { color: var(--bad); }
+section.block { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.head .note { font-size: 12px; color: var(--muted); max-width: 70ch; }
+.tw { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; position: sticky; top: 0; background: var(--surface); }
+th:first-child, td:first-child { text-align: left; font-family: var(--serif); font-weight: 600; }
+td.hl { color: var(--accent); font-weight: 700; }
+tr:hover td { background: var(--surface2); }
+.hit { display: inline-flex; gap: 4px; align-items: baseline; }
+.hit b { font-weight: 700; }
+.hit small { color: var(--muted); }
+td.one { background: var(--bad-soft); } td.one b { color: var(--bad); }
+td.few { background: var(--warn-soft); } td.few b { color: var(--warn); }
+.tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 0 5px; border-radius: 8px; margin-left: 4px; background: var(--bad); color: var(--surface); font-family: var(--sans); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; border: 1px solid var(--line); }
+.formula { font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+.formula code { font-family: var(--mono); color: var(--ink); background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
+#copied { font-size: 12px; color: var(--ok); }
+textarea { width: 100%; min-height: 90px; font-family: var(--mono); font-size: 12px; background: var(--surface2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; }
+  aside { position: static; max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <h1>修仙數值設計器</h1>
+  <p class="sub">調左邊參數，右邊即時算出 16 個境界的空手、普攻、技能、小怪與 BOSS 血量，以及「打比自己低幾個境界的怪要幾下」。預設值是對話中的建議方案（每境界 ×1.3、增益相加封頂 +200%、敏捷管暴擊與連擊）。</p>
+</header>
+
+<div class="wrap">
+  <aside aria-label="參數">
+    <fieldset>
+      <legend>成長曲線</legend>
+      <div class="p"><label for="g">每個大境界成長倍率</label><input type="number" id="g" step="0.05" min="1.05" max="10"><input type="range" data-for="g" min="1.05" max="3" step="0.05"><span class="hint">舊制為 ×10（會膨脹到「京」）</span></div>
+      <div class="p"><label for="weaponBase">凡人武器攻擊基數</label><input type="number" id="weaponBase" step="1" min="1"><input type="range" data-for="weaponBase" min="5" max="100" step="1"></div>
+      <div class="p"><label for="quality">一般玩家武器品質</label>
+        <select id="quality"><option value="1">白 ×1.0</option><option value="1.1">綠 ×1.1</option><option value="1.25">藍 ×1.25</option><option value="1.35">紫 ×1.35</option><option value="1.5">橙 ×1.5</option><option value="2">白金 ×2.0</option></select></div>
+    </fieldset>
+    <fieldset>
+      <legend>屬性成長（六大屬性各自相同）</legend>
+      <div class="p"><label for="statStart">起始屬性</label><input type="number" id="statStart" step="1" min="0"><input type="range" data-for="statStart" min="1" max="50" step="1"></div>
+      <div class="p"><label for="statPerStage">每升一階 +</label><input type="number" id="statPerStage" step="0.5" min="0"><input type="range" data-for="statPerStage" min="0" max="5" step="0.5"></div>
+      <div class="p"><label for="statPerRealm">每突破大境界 +</label><input type="number" id="statPerRealm" step="1" min="0"><input type="range" data-for="statPerRealm" min="0" max="30" step="1"></div>
+      <div class="p"><label for="statExtra">裝備／丹藥額外屬性（%）</label><input type="number" id="statExtra" step="5" min="0"><input type="range" data-for="statExtra" min="0" max="200" step="5"><span class="hint">一般玩家在基本屬性之外多出的比例</span></div>
+    </fieldset>
+    <fieldset>
+      <legend>力量</legend>
+      <div class="p"><label for="fistCoef">空手傷害 = 力量 ×</label><input type="number" id="fistCoef" step="0.05" min="0"><input type="range" data-for="fistCoef" min="0" max="1" step="0.05"></div>
+      <div class="p"><label for="strPct">每點力量攻擊 +%</label><input type="number" id="strPct" step="0.05" min="0"><input type="range" data-for="strPct" min="0" max="1" step="0.05"></div>
+    </fieldset>
+    <fieldset>
+      <legend>增益（裝備詞條・功法・寵物・夥伴・稱號…相加）</legend>
+      <div class="p"><label for="buffTypical">一般玩家增益 %</label><input type="number" id="buffTypical" step="5" min="0"><input type="range" data-for="buffTypical" min="0" max="300" step="5"></div>
+      <div class="p"><label for="buffCap">增益上限 %</label><input type="number" id="buffCap" step="10" min="0"><input type="range" data-for="buffCap" min="0" max="1000" step="10"></div>
+    </fieldset>
+    <fieldset>
+      <legend>技能</legend>
+      <div class="p"><label for="skillRate">每回合施放機率 %</label><input type="number" id="skillRate" step="5" min="0" max="100"><input type="range" data-for="skillRate" min="0" max="100" step="5"></div>
+      <div class="p"><label for="skillTypical">一般技能倍率 ×</label><input type="number" id="skillTypical" step="0.1" min="1"><input type="range" data-for="skillTypical" min="1" max="6" step="0.1"></div>
+      <div class="p"><label for="skillMax">最強技能倍率 ×</label><input type="number" id="skillMax" step="0.5" min="1"><input type="range" data-for="skillMax" min="1" max="10" step="0.5"><span class="hint">絕學；用來算「極限一擊」</span></div>
+    </fieldset>
+    <fieldset>
+      <legend>敏捷</legend>
+      <div class="p"><label for="critPer">每點暴擊率 +%</label><input type="number" id="critPer" step="0.01" min="0"><input type="range" data-for="critPer" min="0" max="0.5" step="0.01"></div>
+      <div class="p"><label for="critCap">暴擊率上限 %</label><input type="number" id="critCap" step="1" min="0" max="100"><input type="range" data-for="critCap" min="0" max="100" step="1"></div>
+      <div class="p"><label for="critDmg">暴擊傷害 ×</label><input type="number" id="critDmg" step="0.1" min="1"><input type="range" data-for="critDmg" min="1" max="3" step="0.1"></div>
+      <div class="p"><label for="comboPer">每點連擊率 +%</label><input type="number" id="comboPer" step="0.01" min="0"><input type="range" data-for="comboPer" min="0" max="0.3" step="0.01"></div>
+      <div class="p"><label for="comboCap">連擊率上限 %</label><input type="number" id="comboCap" step="1" min="0" max="100"><input type="range" data-for="comboCap" min="0" max="50" step="1"></div>
+      <div class="p"><label for="hitPer">每點命中 +%</label><input type="number" id="hitPer" step="0.01" min="0"><input type="range" data-for="hitPer" min="0" max="0.3" step="0.01"><span class="hint">抵銷怪物閃避</span></div>
+      <div class="p"><label for="evaPer">每點閃避 +%</label><input type="number" id="evaPer" step="0.01" min="0"><input type="range" data-for="evaPer" min="0" max="0.3" step="0.01"></div>
+      <div class="p"><label for="evaCap">閃避上限 %</label><input type="number" id="evaCap" step="1" min="0" max="90"><input type="range" data-for="evaCap" min="0" max="90" step="1"></div>
+    </fieldset>
+    <fieldset>
+      <legend>怪物與 BOSS</legend>
+      <div class="p"><label for="hitsSame">同境界小怪要打幾下（一般玩家普攻）</label><input type="number" id="hitsSame" step="1" min="1"><input type="range" data-for="hitsSame" min="1" max="60" step="1"></div>
+      <div class="p"><label for="monsterEva">怪物閃避 %</label><input type="number" id="monsterEva" step="1" min="0"><input type="range" data-for="monsterEva" min="0" max="50" step="1"></div>
+      <div class="p"><label for="bossSec">BOSS 戰目標秒數</label><input type="number" id="bossSec" step="10" min="10"><input type="range" data-for="bossSec" min="30" max="900" step="10"></div>
+      <div class="p"><label for="roundSec">每回合秒數</label><input type="number" id="roundSec" step="0.05" min="0.1"><input type="range" data-for="roundSec" min="0.3" max="2" step="0.05"><span class="hint">野外 1 秒；鎮魔塔演出 0.65 秒</span></div>
+      <div class="p"><label for="hpHits">小怪幾下打倒玩家</label><input type="number" id="hpHits" step="1" min="1"><input type="range" data-for="hpHits" min="3" max="60" step="1"></div>
+      <div class="p"><label for="hpBaseMult">玩家氣血基數 = 武器基數 ×</label><input type="number" id="hpBaseMult" step="1" min="1"><input type="range" data-for="hpBaseMult" min="1" max="100" step="1"></div>
+      <div class="p"><label for="conPct">每點體質氣血 +%</label><input type="number" id="conPct" step="0.05" min="0"><input type="range" data-for="conPct" min="0" max="1" step="0.05"></div>
+    </fieldset>
+    <div class="btns">
+      <button type="button" id="reset">恢復建議值</button>
+      <button type="button" class="primary" id="copy">複製設定</button>
+      <span id="copied" aria-live="polite"></span>
+    </div>
+    <textarea id="json" readonly aria-label="目前設定（JSON）"></textarea>
+    <p class="hint">「複製設定」後把內容貼給 Claude，就能照這組數字修改遊戲。</p>
+  </aside>
+
+  <main>
+    <div class="cards" id="cards"></div>
+
+    <section class="block">
+      <div class="head">
+        <h2>各境界數值</h2>
+        <label class="note">顯示階數 <select id="stageSel" style="width:auto"><option value="1">1 階</option><option value="5">5 階</option><option value="10">10 階</option></select></label>
+      </div>
+      <div class="tw"><table id="t1"></table></div>
+      <p class="formula" id="formula"></p>
+    </section>
+
+    <section class="block">
+      <div class="head">
+        <h2>打一隻小怪要幾下</h2>
+        <span class="note">每格「一般 / 全滿」：一般＝一般增益＋一般技能機率；全滿＝增益上限＋同樣技能機率。已算入暴擊、連擊與怪物閃避。<span class="tag">秒</span> 表示「極限一擊」（增益上限×最強技能×暴擊）足以一招打死。</span>
+      </div>
+      <div class="legend"><span><span class="sw" style="background:var(--bad-soft)"></span>1 下內（秒殺）</span><span><span class="sw" style="background:var(--warn-soft)"></span>3 下內</span><span><span class="sw" style="background:var(--surface)"></span>4 下以上</span></div>
+      <div class="tw"><table id="t2"></table></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const REALMS = ["凡人", "煉氣", "築基", "金丹", "元嬰", "化神", "煉虛", "合體", "大乘", "渡劫", "仙人初境", "天仙", "真仙", "大羅金仙", "混元大羅金仙", "混沌道祖"];
+const DEFAULTS = {
+  g: 1.3, weaponBase: 20, quality: 1.25,
+  statStart: 5, statPerStage: 1, statPerRealm: 5, statExtra: 20,
+  fistCoef: 0.2, strPct: 0.2,
+  buffTypical: 50, buffCap: 200,
+  skillRate: 40, skillTypical: 2.5, skillMax: 5,
+  critPer: 0.1, critCap: 30, critDmg: 1.5, comboPer: 0.04, comboCap: 10, hitPer: 0.08, evaPer: 0.08, evaCap: 40,
+  hitsSame: 25, monsterEva: 10, bossSec: 300, roundSec: 1, hpHits: 15, hpBaseMult: 10, conPct: 0.2
+};
+const KEY = 'xiuxian-balance-designer';
+const $ = id => document.getElementById(id);
+let P = load();
+
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) return Object.assign({}, DEFAULTS, s); } catch (e) {}
+  return Object.assign({}, DEFAULTS);
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} }
+
+// 數字：1 萬以上用 萬／億／兆，與遊戲內 fmtNum 相同
+function fmt(n) {
+  if (!isFinite(n)) return '—';
+  const a = Math.abs(n);
+  for (const [u, v] of [['京', 1e16], ['兆', 1e12], ['億', 1e8], ['萬', 1e4]]) {
+    if (a >= v) { const x = n / v; return (x >= 100 ? x.toFixed(0) : x >= 10 ? x.toFixed(1) : x.toFixed(2)).replace(/\.?0+$/, '') + u; }
+  }
+  return a >= 100 ? Math.round(n).toLocaleString() : (Math.round(n * 10) / 10).toLocaleString();
+}
+const pct = x => (Math.round(x * 10) / 10) + '%';
+
+// ================== 公式 ==================
+function lv(r, s) { return r + (s - 1) / 10; }
+function stat(r, s) { return (P.statStart + P.statPerStage * (r * 10 + s - 1) + P.statPerRealm * r) * (1 + P.statExtra / 100); }
+function calc(r, s) {
+  const st = stat(r, s);
+  const fist = st * P.fistCoef;
+  const weapon = P.weaponBase * Math.pow(P.g, lv(r, s)) * P.quality;
+  const base = (weapon + fist) * (1 + st * P.strPct / 100);
+  const normal = base * (1 + P.buffTypical / 100);
+  const normalMax = base * (1 + P.buffCap / 100);
+  const crit = Math.min(P.critCap, st * P.critPer) / 100;
+  const combo = Math.min(P.comboCap, st * P.comboPer) / 100;
+  const avgMult = (1 + crit * (P.critDmg - 1)) * (1 + combo);
+  const skillAvg = 1 + P.skillRate / 100 * (P.skillTypical - 1);
+  const round = normal * avgMult * skillAvg;               // 一般玩家每回合期望輸出
+  const roundMax = normalMax * avgMult * skillAvg;
+  const oneMax = normalMax * P.skillMax * P.critDmg;         // 極限一擊
+  const monHp = P.hitsSame * normal;                         // 同境界小怪：一般玩家普攻 × 下數
+  const bossHp = round * P.bossSec / P.roundSec;
+  const eva = Math.min(P.evaCap, st * P.evaPer);
+  const hitBonus = st * P.hitPer;
+  // 玩家氣血 = 氣血基數（武器基數 × 氣血倍數，同樣每境界 × g）× (1 + 體質 × %)；同境界小怪攻擊 = 玩家氣血 ÷ 幾下打倒玩家
+  const hp = P.weaponBase * P.hpBaseMult * Math.pow(P.g, lv(r, s)) * (1 + st * P.conPct / 100);
+  const monAtk = hp / P.hpHits;
+  return { st, fist, weapon, normal, normalMax, crit, combo, round, roundMax, oneMax, monHp, bossHp, eva, hitBonus, monAtk, hp, skill: normal * P.skillTypical };
+}
+function hitChance(c) { return 1 - Math.max(0, P.monsterEva - c.hitBonus) / 100; }
+
+// ================== 畫面 ==================
+function render() {
+  const S = +$('stageSel').value;
+  const rows = REALMS.map((n, r) => ({ n, r, c: calc(r, S) }));
+  // 表 1
+  $('t1').innerHTML = `<thead><tr><th>境界</th><th>屬性</th><th>空手</th><th>武器</th><th>普攻</th><th>技能一擊</th><th>每回合期望</th><th>暴擊</th><th>連擊</th><th>閃避</th><th>極限一擊</th><th>玩家氣血</th><th>小怪氣血</th><th>小怪攻擊</th><th>BOSS 氣血</th></tr></thead><tbody>`
+    + rows.map(({ n, r, c }) => `<tr><td>${n}</td><td>${fmt(c.st)}</td><td>${fmt(c.fist)}</td><td>${fmt(c.weapon)}</td><td class="hl">${fmt(c.normal)}</td><td>${fmt(c.skill)}</td><td>${fmt(c.round)}</td><td>${pct(c.crit * 100)}</td><td>${pct(c.combo * 100)}</td><td>${pct(c.eva)}</td><td>${fmt(c.oneMax)}</td><td>${fmt(c.hp)}</td><td>${fmt(c.monHp)}</td><td>${fmt(c.monAtk)}</td><td>${fmt(c.bossHp)}</td></tr>`).join('') + '</tbody>';
+  // 表 2：玩家在 r，打 r-k 的小怪
+  const offs = [0, 1, 2, 3, 4, 6];
+  $('t2').innerHTML = `<thead><tr><th>玩家境界</th>${offs.map(k => `<th>${k ? `低 ${k} 境` : '同境界'}</th>`).join('')}</tr></thead><tbody>`
+    + rows.map(({ n, r, c }) => `<tr><td>${n}</td>${offs.map(k => {
+        if (r - k < 0) return '<td style="color:var(--muted)">—</td>';
+        const m = calc(r - k, S);
+        const hc = hitChance(c);
+        const a = m.monHp / (c.round * hc), b = m.monHp / (c.roundMax * hc);
+        const one = c.oneMax >= m.monHp;
+        const cls = b <= 1 ? 'one' : b <= 3 ? 'few' : '';
+        return `<td class="${cls}"><span class="hit"><b>${a < 10 ? a.toFixed(1) : Math.round(a)}</b><small>/ ${b < 10 ? b.toFixed(1) : Math.round(b)}</small>${one ? '<span class="tag">秒</span>' : ''}</span></td>`;
+      }).join('')}</tr>`).join('') + '</tbody>';
+  // 摘要
+  const top = calc(15, 10), low = calc(0, 1);
+  let firstOne = null;
+  for (let k = 1; k <= 15 && firstOne === null; k++) { let hit = false; for (let r = k; r < 16; r++) if (calc(r, S).oneMax >= calc(r - k, S).monHp) hit = true; if (hit) firstOne = k; }
+  let minLow2 = Infinity;
+  for (let r = 2; r < 16; r++) { const c = calc(r, S), m = calc(r - 2, S); minLow2 = Math.min(minLow2, m.monHp / (c.roundMax * hitChance(c))); }
+  const bossRounds = P.bossSec / P.roundSec;
+  const cards = [
+    ['凡人 1 階 空手', fmt(low.fist), '基礎屬性起始值 × 空手係數', low.fist <= 3 ? 'good' : 'warn'],
+    ['凡人 1 階 普攻', fmt(low.normal), '有武器、一般增益', ''],
+    ['最大數字（極限一擊）', fmt(top.oneMax), '混沌道祖 10 階・增益上限・最強技能・暴擊', top.oneMax < 1e8 ? 'good' : 'bad'],
+    ['低 2 境小怪（全滿）', `${minLow2 < 10 ? minLow2.toFixed(1) : Math.round(minLow2)} 下`, '所有境界中最少的下數', minLow2 <= 1 ? 'bad' : minLow2 <= 3 ? 'warn' : 'good'],
+    ['極限一擊可秒殺', firstOne ? `低 ${firstOne} 境以上` : '都秒不掉', '最強技能對小怪一招打死的境界差', firstOne && firstOne <= 2 ? 'bad' : firstOne && firstOne <= 3 ? 'warn' : 'good'],
+    ['BOSS 戰', `${Math.round(bossRounds)} 回合`, `約 ${Math.round(P.bossSec / 60 * 10) / 10} 分鐘（一般玩家）`, '']
+  ];
+  $('cards').innerHTML = cards.map(([k, v, n, c]) => `<div class="card ${c}"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join('');
+  $('formula').innerHTML = `屬性 = <code>(${P.statStart} + ${P.statPerStage}×(境界×10+階−1) + ${P.statPerRealm}×境界) × ${(1 + P.statExtra / 100).toFixed(2)}</code>
+    武器 = <code>${P.weaponBase} × ${P.g}^(境界+(階−1)/10) × ${P.quality}</code>
+    普攻 = <code>(武器 + 力量×${P.fistCoef}) × (1 + 力量×${P.strPct}%) × (1 + ${P.buffTypical}%)</code>
+    每回合期望 = <code>普攻 × (1 + 暴擊率×${(P.critDmg - 1).toFixed(1)}) × (1 + 連擊率) × (1 + ${P.skillRate}%×(${P.skillTypical}−1))</code>
+    小怪氣血 = <code>普攻 × ${P.hitsSame}</code>　BOSS 氣血 = <code>每回合期望 × ${Math.round(bossRounds)} 回合</code>`;
+  $('json').value = JSON.stringify(P, null, 1);
+}
+
+// ================== 輸入綁定 ==================
+function sync() {
+  Object.keys(DEFAULTS).forEach(k => {
+    const el = $(k); if (el) el.value = P[k];
+    const rg = document.querySelector(`input[type=range][data-for="${k}"]`); if (rg) rg.value = P[k];
+  });
+}
+Object.keys(DEFAULTS).forEach(k => {
+  const el = $(k); if (!el) return;
+  el.addEventListener('input', () => { const v = parseFloat(el.value); if (isFinite(v)) { P[k] = v; const rg = document.querySelector(`input[type=range][data-for="${k}"]`); if (rg) rg.value = v; save(); render(); } });
+});
+document.querySelectorAll('input[type=range][data-for]').forEach(rg => rg.addEventListener('input', () => {
+  const k = rg.dataset.for; P[k] = parseFloat(rg.value); $(k).value = rg.value; save(); render();
+}));
+$('stageSel').addEventListener('change', render);
+$('reset').addEventListener('click', () => { P = Object.assign({}, DEFAULTS); save(); sync(); render(); $('copied').textContent = '已恢復建議值'; });
+$('copy').addEventListener('click', () => {
+  const txt = $('json').value;
+  const done = () => { $('copied').textContent = '已複製'; setTimeout(() => $('copied').textContent = '', 2000); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => { $('json').select(); $('copied').textContent = '請按 Ctrl+C 複製選取的文字'; });
+  else { $('json').select(); $('copied').textContent = '請按 Ctrl+C 複製選取的文字'; }
+});
+sync();
+render();
+</script>

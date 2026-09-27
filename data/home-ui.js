@@ -211,7 +211,7 @@ function updateHomeHud() {
     let levelPct = player.level >= MAX_PLAYER_LEVEL ? 100 : player.levelExp / getLevelExpNeeded(player.level) * 100;
     set('hud-level', `Lv.${player.level.toWan()}`);
     width('hud-level-bar', levelPct);
-    set('hud-power', formatShortNumber(getPhysAttack()));
+    set('hud-power', formatShortNumber(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack()));   // 新制戰力＝每回合期望輸出（numeric.js）
 
     set('hud-coins', formatShortNumber(player.coins));
     set('hud-rep', formatShortNumber(player.reputation || 0));   // 圖上的「仙玉」欄位改顯示聲望

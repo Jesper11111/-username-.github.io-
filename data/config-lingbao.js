@@ -101,7 +101,7 @@ const lingbaoShopItems = [
     { id: "lb3_artifact", tier: 3, type: "equip", name: "神器・混沌鐘",
       itemData: { name: "神器", category: "artifact", quality: "七彩", element: "土",
                   stats: { str: 20000, con: 20000, int: 20000, spr: 20000, def: 20, eva: 10 } },
-      desc: "開天闢地之神器，鐘聲鎮壓諸天。可裝備於神器欄（不影響五行/靈根）。" },
+      desc: "開天闢地之神器，鐘聲鎮壓諸天。可裝備於神器欄（不影響五行共鳴）。" },
     // 以下五件神器與混沌鐘同價、同為唯一性；神器欄只有一格，因此各走不同路線
     // （四維總量皆約 8 萬，戰鬥屬性約 30～40 點，避免任何一件完全取代其他件）
     { id: "lb3_artifact_coffin", tier: 3, type: "equip", name: "神器・三世銅棺",

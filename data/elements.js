@@ -19,14 +19,22 @@ function getPlayerCombatAttrs() {
                 + (fx["先手盾"] && gearWaveRound <= 2 ? fx["先手盾"] : 0);
     let extra = getBonusTotals();   // 套裝可提高上限（cap:屬性，gear.js）
     let capOf = (k, base) => base + (extra["cap:" + k] || 0);
+    // 新制（numeric.js）：敏捷提供閃避（一起套上限）、命中（加在洞察上）、暴擊率
+    let agiEva = NUMERIC_V2 ? nv2AgiEva() : 0;
     return {
         def: cap(b.def + r.def + a.def + gearDef, capOf("def", DEF_CAP)) * armor,
-        eva: cap(b.eva + a.eva, capOf("eva", EVA_CAP)) * armor,
+        eva: cap(b.eva + a.eva + agiEva, capOf("eva", EVA_CAP)) * armor,
+        crit: NUMERIC_V2 ? nv2Crit() : 0,
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
         fire: cap(b.fire + r.fire + a.fire, capOf("fire", AFFIX_CAP)),
         poison: cap(b.poison + r.poison + a.poison, capOf("poison", AFFIX_CAP)),
         metal: cap(b.metal + r.metal + a.metal, capOf("metal", AFFIX_CAP)),
         thunder: cap(b.thunder + r.thunder + a.thunder, capOf("thunder", AFFIX_CAP)),
+        // 變異屬性（config-elements.js）：目前來自先天資質（getBonusTotals 的 wind／light／dark），同樣套 AFFIX_CAP
+        wind: cap(extra.wind || 0, capOf("wind", AFFIX_CAP)),
+        light: cap(extra.light || 0, capOf("light", AFFIX_CAP)),
+        dark: cap(extra.dark || 0, capOf("dark", AFFIX_CAP)),
+        nature: getAptitudeSpecial().nature,   // 光／暗本質（光暗互剋），沒有則為 null
         element: getPlayerElement(),
         // 以下由靈根提供（怪物沒有這些欄位，會取 resolveHit 內的預設值）
         freezeResist: 1 - (1 - (r.freezeResist || 0)) * (1 - (fx["定神"] || 0)),   // 靈根與「定神」特效相乘疊加
@@ -37,11 +45,12 @@ function getPlayerCombatAttrs() {
         book: getElementBookBonus(),
         // 裝備特效（gear.js），怪物沒有這些欄位（視為 0）
         armorPen: fx["破甲"] || 0,
-        evaPen: fx["洞察"] || 0,
+        evaPen: (fx["洞察"] || 0) + (NUMERIC_V2 ? nv2Hit() : 0),
         counterBonus: fx["剋敵"] || 0,
         frozenBonus: fx["寒徹"] || 0,
         burnBonus: fx["焚燼"] || 0,
-        poisonBonus: fx["蝕骨"] || 0
+        poisonBonus: fx["蝕骨"] || 0,
+        poisonImmune: getAptitudeSpecial().poisonImmune   // 萬毒不侵體（aptitude.js），怪物沒有此欄位
     };
 }
 
@@ -73,6 +82,7 @@ function rollMonsterAttrs() {
     if (Math.random() < profile.affixProb) {
         attrs[MONSTER_AFFIX_TYPES[Math.floor(Math.random() * MONSTER_AFFIX_TYPES.length)]] = profile.affixChance;
     }
+    if (DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name))) attrs.nature = "dark";   // 幽冥禁域妖獸本質為暗（光暗互剋）
     return attrs;
 }
 
@@ -114,7 +124,24 @@ function resolveHit(rawDmg, attacker, defender) {
         if (wx.tag === "counter") dmg *= 1 + (attacker.attrs.counterBonus || 0);   // 剋敵（裝備特效）
         tags.push(wx.tag);
     }
-    if (!thunder) dmg *= 1 - Math.max(0, (defender.attrs.def || 0) - (attacker.attrs.armorPen || 0)) / 100;   // 破甲：無視部分減傷
+    // 光暗互剋：雙方都有光／暗本質且不同（config-elements.js）
+    if (attacker.attrs.nature && defender.attrs.nature && attacker.attrs.nature !== defender.attrs.nature) {
+        dmg *= 1 + LIGHT_DARK_COUNTER_BONUS;
+        tags.push("lightdark");
+    }
+    // 變異屬性：聖光（增傷，回血由呼叫端依 tag 處理）、暗蝕（無視減傷，吸血由呼叫端處理）
+    if (attacker.attrs.light > 0 && Math.random() < attacker.attrs.light / 100) {
+        dmg *= 1 + LIGHT_BONUS;
+        tags.push("light");
+    }
+    let darkHit = attacker.attrs.dark > 0 && Math.random() < attacker.attrs.dark / 100;
+    if (darkHit) tags.push("dark");
+    // 新制：敏捷暴擊（attrs.crit 為機率 0～0.3，只有新制的玩家有此欄位）
+    if (attacker.attrs.crit > 0 && Math.random() < attacker.attrs.crit) {
+        dmg *= NV2.critDmg;
+        tags.push("crit");
+    }
+    if (!thunder && !darkHit) dmg *= 1 - Math.max(0, (defender.attrs.def || 0) - (attacker.attrs.armorPen || 0)) / 100;   // 雷擊、暗蝕無視減傷   // 破甲：無視部分減傷
 
     let st = defender.status;
     // 冰靈根等提供的 freezeResist 會折減「被凍結」的機率
@@ -128,12 +155,17 @@ function resolveHit(rawDmg, attacker, defender) {
             attacker.power * BURN_RATE * (1 + (book ? book.fire : 0)) * (1 + (attacker.attrs.burnBonus || 0)));
         tags.push("fire");
     }
-    if (attacker.attrs.poison > 0 && Math.random() < attacker.attrs.poison / 100) {
+    if (attacker.attrs.poison > 0 && !defender.attrs.poisonImmune && Math.random() < attacker.attrs.poison / 100) {
         st.poison = addDotStack(st.poison, attacker.attrs.poisonMax || POISON_MAX_STACKS, POISON_TURNS,
             attacker.power * POISON_RATE * (1 + (book ? book.poison : 0)) * (1 + (attacker.attrs.poisonBonus || 0)));
         tags.push("poison");
     }
-    return { dmg: Math.floor(dmg), tags };
+    return { dmg: roundDmg(dmg), tags };
+}
+
+// 傷害取整：舊制無條件捨去；新制數字很小（凡人氣血約 50、妖獸攻擊不到 1），保留 1 位小數，否則減傷會把傷害捨成 0
+function roundDmg(v) {
+    return NUMERIC_V2 ? Math.round(v * 10) / 10 : Math.floor(v);
 }
 
 // 疊一層持續傷害：層數 +1（有上限）、回合數刷新、每層傷害取較高者
@@ -154,7 +186,7 @@ function tickStatus(st) {
     });
     let frozen = st.frozen > 0;
     if (frozen) st.frozen--;
-    return { dot: Math.floor(dot), frozen };
+    return { dot: roundDmg(dot), frozen };
 }
 
 // 狀態圖示文字（戰鬥實況面板用），例：「❄️ 🔥×2 ☠️×3」
@@ -174,7 +206,11 @@ function summarizeTags(tags, dodgeLabel) {
                   // 裝備特效（gear.js）
                   chase: "✦追擊", cleave: "✦橫掃", haste: "✦疾風", poisonBurst: "✦毒爆", reflect: "✦反震", counterHit: "✦閃擊反擊",
                   // 套裝特殊效果
-                  rage: "❖套裝之怒", echo: "❖技能連發" };
+                  rage: "❖套裝之怒", echo: "❖技能連發",
+                  // 新制敏捷（numeric.js）
+                  crit: "💥暴擊", combo: "⚡連擊",
+                  // 變異屬性與光暗互剋（config-elements.js）
+                  wind: "🌪️風擊", light: "☀️聖光", dark: "🌑暗蝕", lightdark: "☯️光暗相剋" };
     let counts = {};
     tags.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
     return Object.keys(counts).map(t => `${names[t]}${counts[t] > 1 ? '×' + counts[t] : ''}`).join(" ");

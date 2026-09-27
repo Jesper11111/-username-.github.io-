@@ -166,6 +166,8 @@ function renderPreciousSection() {
                     <button class="sys-btn" ${canPill < 1 ? 'disabled' : ''} onclick="buyBreakPill('max')">最高</button>
                 </div>
             </div>
+            ${renderAptitudePillCards()}
+            ${renderSpiritFruitCard()}
         </div>`;
 }
 

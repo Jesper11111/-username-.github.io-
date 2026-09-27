@@ -14,12 +14,21 @@ function isLeaderboardConfigured() {
 }
 
 // 榜上的戰力：與畫面「戰力」同一個數字（getPhysAttack），但扣掉暫時性的增益（禁術、靈寵增益、對決化功），避免開技能瞬間灌分
+// 新制（第 52 節）：戰力 = 每回合期望輸出（nv2CombatPower）；暫時增益在新制是加進增益池（有上限），用除的不準，改成暫時關掉再算
 function getRankPower() {
+    if (NUMERIC_V2) return lbWithoutTempBuffs(() => nv2CombatPower());
     return lbStripTempBuffs(getPhysAttack());
 }
 // 守城排行榜用的攻擊：死守天南城以 max(物攻, 術攻) 判定勝負（defense.js 的 simulateWave），同樣扣掉暫時性增益
 function getRankAttack() {
+    if (NUMERIC_V2) return lbWithoutTempBuffs(() => Math.max(nv2PhysAttack(), nv2MagAttack()));
     return lbStripTempBuffs(Math.max(getPhysAttack(), getMagAttack()));
+}
+// 暫時把禁術、靈寵增益、對決化功的計時歸零來計算，算完還原
+function lbWithoutTempBuffs(fn) {
+    const saved = [player.buffTimer, petBuffTimer, duelWeakenTimer];
+    player.buffTimer = 0; petBuffTimer = 0; duelWeakenTimer = 0;
+    try { return Math.max(0, Math.floor(fn())); } finally { [player.buffTimer, petBuffTimer, duelWeakenTimer] = saved; }
 }
 function lbStripTempBuffs(p) {
     if (player.buffTimer > 0 && player.buffMult) p /= player.buffMult;

@@ -88,9 +88,16 @@ function combatTick() {
 
     if (enemies.length === 0) {
         if (respawnTimer > 0) {
-            document.getElementById('combat-status').innerText = `⏳ 擊殺完畢，等待怪物刷新中... (${respawnTimer}秒)`;
+            document.getElementById('combat-status').innerText = `⏳ 擊殺完畢，${NUMERIC_V2 ? '調息回復中，' : ''}等待怪物刷新中... (${respawnTimer}秒)`;
             document.getElementById('combat-status').style.color = '#fb923c';
             respawnTimer--;
+            // 新制：刷新等待期間調息，每秒回復一定比例的氣血與靈力（config-numeric.js 的 restHealPct）
+            if (NUMERIC_V2) {
+                let r = NV2.restHealPct / 100;
+                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * r);
+                player.mp = Math.min(player.maxMp, player.mp + player.maxMp * r);
+                updateUI();
+            }
             updateCombatVisualPanel();
             return;
         }
@@ -98,7 +105,7 @@ function combatTick() {
         // 已接取懸賞時，有機率遇上目標而進入一對一對決（bounty.js），本波不刷妖獸
         if (tryStartBountyDuel()) return;
 
-        let count = Math.floor(Math.random() * 5) + 1;
+        let count = NUMERIC_V2 ? randInt(NV2.waveMin, NV2.waveMax) : Math.floor(Math.random() * 5) + 1;   // 新制每波 1～3 隻（config-numeric.js）
         let ms = getMapMonsterStats(player.currentMap);
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
@@ -114,16 +121,17 @@ function combatTick() {
                 let mult = ambush ? AMBUSH_POWER_MULT : FIELD_CULTIVATOR_POWER_MULT;
                 enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
-                               attrs: rollMonsterAttrs(), status: newStatus() });
+                               attrs: Object.assign(rollMonsterAttrs(), { nature: faction === "邪" ? "dark" : "light" }),   // 邪修為暗、正道為光（光暗互剋）
+                               status: newStatus() });
             };
-            // 每波機率乘 KILL_REWARD_MULT：刷新變慢、波數變少，每小時遇到的次數維持原設計（config-maps.js）
-            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * KILL_REWARD_MULT) {
+            // 每波機率乘 getWaveChanceMult()：刷新變慢（新制另有每波變長）、波數變少，每小時遇到的次數維持原設計（config-maps.js）
+            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * getWaveChanceMult()) {
                 let faction = Math.random() < 0.5 ? "正" : "邪";
                 addCultivator(faction, false);
                 extraText.push(`一名${CULTIVATOR_ICONS[faction]}${faction === "邪" ? "魔道" : "正道"}修士`);
             }
             let karma = getKarmaState().key;
-            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * KILL_REWARD_MULT) {
+            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * getWaveChanceMult() * getAptitudeSpecial().ambushMult) {
                 let faction = karma === "good" ? "邪" : "正";
                 addCultivator(faction, true);
                 extraText.push(`一名${AMBUSH_ICON}${faction === "邪" ? "邪派刺客（衝著你的善名而來）" : "正道獵魔人（前來為民除害）"}`);
@@ -202,10 +210,11 @@ function fieldCombatRound() {
 
     if (expEarned > 0) {
         let fx = getGearEffects();
-        // 刷新變慢的補償（config-maps.js 的 KILL_REWARD_MULT）：每隻的經驗／靈石／聲望／熟練度加成，每小時收益維持原設計
-        expEarned *= KILL_REWARD_MULT;
-        coinsEarned = Math.floor(coinsEarned * KILL_REWARD_MULT * (1 + (fx["聚財"] || 0)));   // 聚財（裝備特效）
-        repEarned = Math.round(repEarned * KILL_REWARD_MULT);
+        // 刷新變慢的補償（getKillRewardMult：舊制 KILL_REWARD_MULT、新制 nv2KillRewardMult）：每隻的經驗／靈石／聲望／熟練度加成，每小時收益維持原設計
+        let rewardMult = getKillRewardMult();
+        expEarned *= rewardMult;
+        coinsEarned = Math.floor(coinsEarned * rewardMult * (1 + (fx["聚財"] || 0)));   // 聚財（裝備特效）
+        repEarned = Math.round(repEarned * rewardMult);
         // 噬魂（裝備特效）：每擊殺一隻回復一定比例氣血
         if (fx["噬魂"] && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * fx["噬魂"] * killedCount);
         let gainedExp = gainExp(expEarned) || 0;
@@ -213,7 +222,7 @@ function fieldCombatRound() {
         player.reputation = (player.reputation || 0) + repEarned;
         addDailyProgress('kill', killedCount);
         onPartnerFieldKills(killedCount);   // 情緣任務的野外擊殺／並肩擊殺（partner.js）
-        gainKillProficiency(killedCount * KILL_REWARD_MULT);   // 主修職業熟練度（profession.js）
+        gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;
             waveSummary.exp += gainedExp;
@@ -241,7 +250,7 @@ function fieldCombatRound() {
         });
         if (slainCultivators.length > 0) settleMeritStones();
         // 救援判定次數同樣乘補償倍率（小數部分以機率補一次），每小時救到的人數維持原設計
-        let rescueRolls = killedCount * KILL_REWARD_MULT;
+        let rescueRolls = killedCount * rewardMult;
         rescueRolls = Math.floor(rescueRolls) + (Math.random() < rescueRolls % 1 ? 1 : 0);
         for (let k = 0; k < rescueRolls; k++) {
             tryRescueServant();
@@ -290,9 +299,19 @@ function fieldCombatRound() {
 // 妖獸的攻擊與氣血：預設 攻擊 = 難度 × 50、氣血 = 攻擊 × 10；地圖可用 monsterAtk／monsterHp 直接指定（config-maps.js）
 // 野外修士／暗殺者再乘上各自倍率；離線估算（save.js 的 estimateIdleCombat）也用這裡
 function getMapMonsterStats(map) {
+    if (NUMERIC_V2) return nv2MonsterStats(map);   // 新制：依地圖 nv2L 與同境界一般玩家計算（numeric.js）
     let atk = typeof map.monsterAtk === 'number' ? map.monsterAtk : map.diff * 50;
     let hp = typeof map.monsterHp === 'number' ? map.monsterHp : map.diff * 500;
     return { atk, hp };
+}
+
+// 每隻擊殺收益的補償倍率：舊制為刷新變慢的 KILL_REWARD_MULT（config-maps.js）；新制妖獸要打很多下，改用 nv2KillRewardMult（numeric.js）
+function getKillRewardMult() {
+    return NUMERIC_V2 ? nv2KillRewardMult(player.currentMap) : KILL_REWARD_MULT;
+}
+// 「每波」遭遇機率（野外修士、暗殺者、懸賞人物）的補償倍率：每小時波數變少多少就放大多少
+function getWaveChanceMult() {
+    return NUMERIC_V2 ? nv2WaveChanceMult(player.currentMap) : KILL_REWARD_MULT;
 }
 
 // 擊殺一隻妖獸的靈石：該地圖的 coins ±20%（數值表與每小時上限見 config-maps.js）
@@ -334,6 +353,9 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
         r.tags.forEach(t => tags.push(t));
         let dealt = r.dmg + applyGearHitChain(fx, target, targets, r, tags);
         dealtTotal += dealt;
+        // 變異屬性（config-elements.js）：聖光回復最大氣血、暗蝕吸取該擊傷害
+        if (r.tags.includes("light") && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * LIGHT_HEAL);
+        if (r.tags.includes("dark") && player.hp > 0 && r.dmg > 0) player.hp = Math.min(player.maxHp, player.hp + r.dmg * DARK_LIFESTEAL);
         return dealt;
     };
 
@@ -409,6 +431,16 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
             let others = targets.filter(t => t !== main && t.hp > 0);
             if (others.length) { others.forEach(t => hitTarget(t, getPhysAttack() * 0.4, baseAttrs)); tags.push("cleave"); }
         }
+        // 新制敏捷：連擊，本回合再打一次普攻（numeric.js）
+        if (NUMERIC_V2 && targets.some(t => t.hp > 0) && Math.random() < nv2Combo()) {
+            hitTarget(firstAlive(), getPhysAttack(), baseAttrs);
+            tags.push("combo");
+        }
+    }
+    // 風擊（變異屬性）：每回合機率追加一擊 ×WIND_HIT_MULT
+    if (baseAttrs.wind > 0 && Math.random() < baseAttrs.wind / 100 && targets.some(t => t.hp > 0)) {
+        hitTarget(firstAlive(), getPhysAttack() * WIND_HIT_MULT, baseAttrs);
+        tags.push("wind");
     }
     // 追擊：追加一次攻擊 ×0.6
     if (fx["追擊"] && Math.random() < fx["追擊"] && targets.some(t => t.hp > 0)) {

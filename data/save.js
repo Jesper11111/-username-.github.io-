@@ -125,7 +125,9 @@ function settleIdleSeconds(offlineSeconds, label) {
             + (meritEarned > 0 ? `、${meritEarned.toWan()} 點功德` : '')
             + (rescuedCount > 0 ? `，並拯救了 ${rescuedCount} 名受困修士！` : '！');
         if (est.rateMult < 0.995) {
-            msg += `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 擊才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（能一擊斬殺時為 100%）。`;
+            msg += NUMERIC_V2
+                ? `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 回合才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（達到同境界一般水準時為 100%）。`
+                : `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 擊才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（能一擊斬殺時為 100%）。`;
         }
     }
     msg = prefix + msg;
@@ -152,6 +154,7 @@ function settleIdleSeconds(offlineSeconds, label) {
 //   survivable = waveDamage < 氣血上限（線上還有自動補血，這裡只擋「一波就會被打死」的情況）
 // 技能、屬性傷害、靈寵協助都不計，所以估算偏保守（實際通常略快）。
 function estimateIdleCombat() {
+    if (NUMERIC_V2) return nv2EstimateIdleCombat();   // 新制（numeric.js）
     let map = player.currentMap;
     let mAttrs = monsterAttrsByMapCategory[getMapCategoryIndex(map.name)] || monsterAttrsByMapCategory[1];
     let ms = getMapMonsterStats(map);
@@ -248,6 +251,20 @@ function migrateCurrentMap() {
     player.currentMapIsSafe = maps[0].isSafe;
 }
 
+// 數值重做上線（第 52 節第 3 階段，2026-09-28）：新制下第一次讀到舊存檔時轉換一次，記在 player.nv2Converted
+//   使用者決定「不補償、重新來過」：丹藥服用紀錄清空（新制每種最多 200 顆、每顆 +0.1，從 0 開始吃）；藏書閣次數舊制上限 100，本來就在新規則內，保留
+//   守城排行榜改用新制數字：已送審的最高波數歸零（player.defenseSubmitted／defensePending），新制下重新送審；氣血靈力夾在新上限內
+//   player.nv2Notice = true：進遊戲後跳一次改版公告（main.js 的 showNumericV2Notice）
+function migrateNumericV2() {
+    if (!NUMERIC_V2 || player.nv2Converted) return;
+    player.pillUsed = {};
+    player.defenseSubmitted = 0;
+    player.defensePending = null;
+    player.idleProvenMap = null;   // 戰鬥強度全變，線上實戰證明重新計算
+    player.nv2Converted = Date.now();
+    player.nv2Notice = true;
+}
+
 // 舊存檔相容：人物等級、壽元、分階段宗門技能、靈寵等級制
 // savedData 是存檔原始內容：player 已被 Object.assign 合併過預設值（lifespan 60），
 // 必須看原始存檔才知道壽元欄位是否真的不存在。
@@ -256,6 +273,8 @@ function migrateProgressionFields(savedData) {
     if (typeof player.levelExp !== 'number') player.levelExp = 0;
     if (typeof savedData.lifespan !== 'number') player.lifespan = getInitialLifespanForRealm(player.realmIndex);
     if (!Array.isArray(savedData.lingbaoSold)) player.lingbaoSold = [];
+    migrateGoldenCore(savedData);   // 丹田／金丹／元嬰：老玩家補發中品金丹、地元嬰・中（golden-core.js）
+    migrateNumericV2();   // 數值重做上線：舊存檔清空丹藥、重置守城送審（第 52 節）
 
     // 存檔內的 player.sect 是舊版整包物件，改指向最新設定，技能/倍率調整才會生效
     if (!player.sectSkills || typeof player.sectSkills !== 'object') player.sectSkills = { 1: null, 2: null, 3: null };

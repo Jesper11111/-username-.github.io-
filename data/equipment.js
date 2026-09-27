@@ -1,4 +1,4 @@
-// 角色裝備彈窗（穿戴部位列表 + 靈根狀態）與鍛造閣
+// 角色裝備彈窗（穿戴部位列表 + 五行共鳴狀態）與鍛造閣
 
 const EQUIP_CATEGORY_NAMES = { weapon: '武器', armor: '防具', accessory: '飾品', artifact: '神器' };
 
@@ -47,7 +47,7 @@ function renderLingbaoUI() {
                     <button class="sys-btn" onclick="unequipItem('${eqName}')">卸下裝備</button>
                 </div>`;
         } else {
-            // 神器為特殊部位（靈寶閣高級宗門兌換，不計入五行/靈根），欄位以金色標示
+            // 神器為特殊部位（靈寶閣高級宗門兌換，不計入五行共鳴），欄位以金色標示
             let isArtifact = equipTypes[eqName] === 'artifact';
             container.innerHTML += `
                 <div class="card" style="border-color: ${isArtifact ? 'rgba(240,213,136,0.45)' : 'rgba(255,255,255,0.05)'}; color: #6b7280; background: rgba(10,14,22,0.3);">
@@ -58,7 +58,7 @@ function renderLingbaoUI() {
     }
 }
 
-// 目前生效的靈根一覽（角色裝備視窗頂端與「!」說明視窗共用）
+// 目前生效的五行共鳴一覽（角色裝備視窗頂端與「!」說明視窗共用）
 function formatSpiritRoots() {
     let roots = getSpiritRoots();
     let parts = roots.singles.map(e => {
@@ -66,11 +66,11 @@ function formatSpiritRoots() {
         return `<span class="elem-${e}">【${info.title}】${info.effect}</span>`;
     });
     if (roots.special) parts.push(`<span style="color: var(--reputation-color);">【${roots.special.icon} ${roots.special.name}】${roots.special.effect}</span>`);
-    if (parts.length === 0) return `【靈根】：無（同屬性湊滿 ${ROOT_SINGLE_COUNT} 件即可激活）`;
+    if (parts.length === 0) return `【五行共鳴】：無（同屬性湊滿 ${ROOT_SINGLE_COUNT} 件即可激活）`;
     return parts.join('<br>');
 }
 
-// 「!」說明視窗：靈根的激活條件、目前進度、各靈根效果與五行相剋說明
+// 「!」說明視窗：五行共鳴的激活條件、目前進度、各五行共鳴效果與五行相剋說明
 function openWuxingInfo() {
     let slots = Object.keys(player.equipment).filter(key => equipTypes[key] !== "artifact");
     let counts = {};
@@ -119,10 +119,10 @@ function openWuxingInfo() {
     document.getElementById('wuxing-info-body').innerHTML = `
         <h4 class="wuxing-info-h">激活條件</h4>
         <p>共 <strong>${slots.length} 個部位</strong>（武器 ${categoryCount('weapon')}、防具 ${categoryCount('armor')}、飾品 ${categoryCount('accessory')}；神器不計入五行）。<br>
-        ・<strong>單屬性靈根</strong>：同屬性湊滿 <strong>${ROOT_SINGLE_COUNT} 件</strong>即激活，最多可同時擁有 <strong>3 種</strong>。<br>
-        ・<strong>特殊靈根</strong>：另外依「完整五行套數（金木水火土各 1 件為 1 套）」與多出來的件數判定，只會有一個，與單屬性靈根並存。</p>
+        ・<strong>單屬性五行共鳴</strong>：同屬性湊滿 <strong>${ROOT_SINGLE_COUNT} 件</strong>即激活，最多可同時擁有 <strong>3 種</strong>。<br>
+        ・<strong>特殊五行共鳴</strong>：另外依「完整五行套數（金木水火土各 1 件為 1 套）」與多出來的件數判定，只會有一個，與單屬性五行共鳴並存。</p>
 
-        <h4 class="wuxing-info-h">目前靈根</h4>
+        <h4 class="wuxing-info-h">目前五行共鳴</h4>
         <p>${formatSpiritRoots()}</p>
 
         <h4 class="wuxing-info-h">五行相剋</h4>
@@ -136,16 +136,22 @@ function openWuxingInfo() {
         <h4 class="wuxing-info-h">目前進度</h4>
         <p>${progress}</p>
 
-        <h4 class="wuxing-info-h">單屬性靈根（同屬性 ${ROOT_SINGLE_COUNT} 件）</h4>
+        <h4 class="wuxing-info-h">單屬性五行共鳴（同屬性 ${ROOT_SINGLE_COUNT} 件）</h4>
         <table class="wuxing-info-table">${rows}</table>
 
-        <h4 class="wuxing-info-h">特殊靈根</h4>
+        <h4 class="wuxing-info-h">特殊五行共鳴</h4>
         <p>・<strong>${ROOT_SUPREME_SETS} 套五行</strong>（${ROOT_SUPREME_SETS * 5} 件，剩下的件數不論屬性）→
         <span style="color: var(--reputation-color);">${supremeRootEffect.icon} ${supremeRootEffect.name}</span>：${supremeRootEffect.effect}<br>
-        ・<strong>${ROOT_PURE_SETS} 套五行 + 同屬性再 ${ROOT_PURE_REST} 件</strong> → 純化靈根<br>
-        ・<strong>${ROOT_DUAL_SETS} 套五行 + 兩個屬性各再 ${ROOT_DUAL_REST} 件</strong> → 雙屬性靈根</p>
+        ・<strong>${ROOT_PURE_SETS} 套五行 + 同屬性再 ${ROOT_PURE_REST} 件</strong> → 純化五行共鳴<br>
+        ・<strong>${ROOT_DUAL_SETS} 套五行 + 兩個屬性各再 ${ROOT_DUAL_REST} 件</strong> → 雙屬性五行共鳴</p>
         <table class="wuxing-info-table">${pureRows}${dualRows}</table>
-        <p style="color:#9ca3af;">※ 靈根提供的屬性傷害與減傷會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%、減傷 ${DEF_CAP}%）。</p>
+        <p style="color:#9ca3af;">※ 五行共鳴提供的屬性傷害與減傷會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%、減傷 ${DEF_CAP}%）。</p>
+
+        <h4 class="wuxing-info-h">變異屬性與光暗</h4>
+        <p>五行相剋只在金木水火土之間作用。先天資質（人物面板「資質」）可能帶來變異屬性：<br>
+        ・${VARIANT_AFFIX_TYPES.map(k => `${combatAttrInfo[k].icon}<strong>${combatAttrInfo[k].label}</strong>：${combatAttrInfo[k].desc}`).join('<br>・')}<br>
+        ・<strong>雷、冰</strong>沿用原本的雷傷、冰傷。<br>
+        ・<strong>光暗互剋</strong>：本質為光與本質為暗的雙方互相攻擊時傷害 +${Math.round(LIGHT_DARK_COUNTER_BONUS * 100)}%。邪修、邪派懸賞人物、幽冥禁域妖獸為暗；正道修士與正派懸賞人物為光。</p>
 
         <h4 class="wuxing-info-h">如何湊齊</h4>
         <p>・<strong>鍛造閣</strong>：每次從該等級的可製作清單隨機打出一種裝備，每種裝備的五行固定（清單中五行各佔一份），可用「最高」一次大量開爐，再挑出需要的保留，其餘在背包依品級一鍵刪除。<br>
@@ -167,7 +173,7 @@ function equipItem(equipId) {
         alert(`人物等級不足！【Lv.${item.level} ${getEquipDisplayName(item)}】需要人物等級 ${item.level}（目前 Lv.${player.level}）。`);
         return;
     }
-    // 舊版靈寶閣「降魔伏虎杖」的部位「杖」不在 equipTypes 內，穿上會破壞靈根判定
+    // 舊版靈寶閣「降魔伏虎杖」的部位「杖」不在 equipTypes 內，穿上會破壞五行共鳴判定
     if (!(slotName in equipTypes)) {
         alert(`【${item.name}】的部位已停用，無法穿戴。可在背包中毀棄。`);
         return;
@@ -210,10 +216,18 @@ function renderForgeLevelSelect() {
     let cap = getForgeLevelCap();
     let prev = parseInt(select.value);
     let levels = EQUIP_LEVELS.filter(l => l <= cap);
-    select.innerHTML = levels.map(l => `<option value="${l}">${l} 等（需人物 Lv.${l}）</option>`).join("");
-    select.value = levels.includes(prev) ? prev : levels[levels.length - 1];
+    // 圖紙檔（Lv.1500 以上）：持有「目前選的部位」該等級的圖紙才列出，不受宗門階段限制
+    let slot = document.getElementById('forge-type-select').value;
+    let bpLevels = BLUEPRINT_LEVELS.filter(l => getBlueprintCount(slot, l) > 0);
+    select.innerHTML = levels.map(l => `<option value="${l}">${l} 等（需人物 Lv.${l}）</option>`).join("")
+        + bpLevels.map(l => `<option value="${l}">📜 ${l} 等・${slot}圖紙鍛造（持有 ${getBlueprintCount(slot, l)} 張，需人物 Lv.${l}）</option>`).join("");
+    let all = levels.concat(bpLevels);
+    select.value = all.includes(prev) ? prev : levels[levels.length - 1];
+    let owned = listBlueprints().map(b => `${b.slot} ${b.level} 等 ×${b.count}`);
     document.getElementById('forge-level-hint').innerText =
-        `目前宗門（${SECT_TIER_NAMES[getSectTier()]}）最高可鍛造 ${cap} 等；初級宗門 100 等、中級 500 等、高級 1000 等`;
+        `目前宗門（${SECT_TIER_NAMES[getSectTier()]}）最高可鍛造 ${cap} 等；初級宗門 100 等、中級 500 等、高級 1000 等\n`
+        + `📜 1500 等以上需「鍛造圖紙」（分部位、分等級：劍的 1500 等圖紙只能打 1500 等的劍；天榜懸賞、死守天南城首領波、鎮魔塔 BOSS 掉落），每張打一件、另需 ${BLUEPRINT_FORGE_COST.toWan()} 靈石`
+        + (owned.length ? `｜持有：${owned.join('、')}` : '');
 }
 
 function openForgeModal() {
@@ -224,26 +238,32 @@ function openForgeModal() {
 
 // qty：1、10 或 'max'（靈石與背包空位允許的最多次數）
 function forgeEquipment(qty = 1) {
-    if (player.coins < FORGE_COST) {
-        alert(`靈石不足 ${FORGE_COST.toWan()}！無法打造裝備。`);
+    let level = parseInt(document.getElementById('forge-level-select').value);
+    let isBlueprint = BLUEPRINT_LEVELS.includes(level);
+    let cost = isBlueprint ? BLUEPRINT_FORGE_COST : FORGE_COST;
+    if (player.coins < cost) {
+        alert(`靈石不足 ${cost.toWan()}！無法打造裝備。`);
         return;
     }
     if (!hasEquipInventorySpace()) return;
 
-    let level = parseInt(document.getElementById('forge-level-select').value);
-    if (!EQUIP_LEVELS.includes(level) || level > getForgeLevelCap()) {
+    let name = document.getElementById('forge-type-select').value;
+    if (isBlueprint) {
+        if (getBlueprintCount(name, level) <= 0) { alert(`沒有 ${level} 等的【${name}】鍛造圖紙！`); renderForgeLevelSelect(); return; }
+    } else if (!EQUIP_LEVELS.includes(level) || level > getForgeLevelCap()) {
         alert(`目前宗門最高只能鍛造 ${getForgeLevelCap()} 等裝備！`);
         renderForgeLevelSelect();
         return;
     }
 
-    let affordable = Math.min(Math.floor(player.coins / FORGE_COST), MAX_EQUIP_INVENTORY - player.equipInventory.length);
+    let affordable = Math.min(Math.floor(player.coins / cost), MAX_EQUIP_INVENTORY - player.equipInventory.length);
+    if (isBlueprint) affordable = Math.min(affordable, getBlueprintCount(name, level));   // 圖紙每張打一件
     let n = resolveBatchCount(qty, affordable, "鍛造");
     if (!n) return;
 
-    let name = document.getElementById('forge-type-select').value;
     let results = [];
-    for (let i = 0; i < n; i++) results.push(forgeOneEquipment(name, level));
+    for (let i = 0; i < n; i++) results.push(forgeOneEquipment(name, level, cost));
+    if (isBlueprint) { useBlueprints(name, level, n); renderForgeLevelSelect(); }
 
     addDailyProgress('forge', n);
     if (n === 1) {
@@ -253,7 +273,7 @@ function forgeEquipment(qty = 1) {
         let byQuality = equipQualities.map(q => [q.name, results.filter(r => r.quality === q.name).length]).filter(([, c]) => c > 0);
         let byElement = wuxingElements.map(e => [e, results.filter(r => r.element === e).length]).filter(([, c]) => c > 0);
         let best = results.filter(r => r.quality === '橙色').map(getEquipDisplayName);
-        addLog(`⚒️ 鍛造閣連續開爐 ${n} 次，打造【Lv.${level} ${name}】×${n}（消耗 ${(n * FORGE_COST).toWan()} 靈石）！`
+        addLog(`⚒️ 鍛造閣連續開爐 ${n} 次，打造【Lv.${level} ${name}】×${n}（消耗 ${(n * cost).toWan()} 靈石${isBlueprint ? `、${n} 張圖紙` : ''}）！`
             + `品質：${byQuality.map(([q, c]) => `<span class="quality-${q}">${q}</span>×${c}`).join('、')}；`
             + `五行：${byElement.map(([e, c]) => `<span class="elem-${e}">${e}</span>×${c}`).join('、')}`
             + (best.length ? `；橙色：<span class="quality-橙色">${best.join('、')}</span>` : ''), "equip");
@@ -267,8 +287,8 @@ function forgeEquipment(qty = 1) {
 
 // 打造一件指定等級的裝備並放進背包（扣靈石），回傳新裝備
 // 從該等級對應的可製作清單（凡俗／修真／至高，gear.js 的 getCraftChannel）隨機抽一種，五行跟著那一種裝備
-function forgeOneEquipment(name, level) {
-    player.coins -= FORGE_COST;
+function forgeOneEquipment(name, level, cost = FORGE_COST) {
+    player.coins -= cost;
 
     let qRand = Math.random();
     let qualityObj = equipQualities[0];
@@ -281,4 +301,43 @@ function forgeOneEquipment(name, level) {
     let newEquip = createGearEquip(def, qualityObj, level * EQUIP_LEVEL_STAT_MULT * qualityObj.mult, level);
     player.equipInventory.push(newEquip);
     return newEquip;
+}
+
+// ---- 鍛造圖紙（Lv.1500 以上，config-equipment.js 的 BLUEPRINT_*；第 55 節）----
+// 分部位、分等級（2026-09-28 使用者指定）：劍的 1500 等圖紙只能打 1500 等的劍
+// 存檔：player.blueprints = { "劍_1500": 張數, ... }（key = 部位_等級，用到時才建立）；
+//   之後要做玩家交易／離線寄賣（使用者規劃），以 blueprintKey 當道具識別碼即可直接搬移
+function blueprintKey(slot, level) { return `${slot}_${level}`; }
+function getBlueprintCount(slot, level) {
+    return (player.blueprints && player.blueprints[blueprintKey(slot, level)]) || 0;
+}
+function useBlueprints(slot, level, n) {
+    const k = blueprintKey(slot, level);
+    player.blueprints[k] = Math.max(0, (player.blueprints[k] || 0) - n);
+    if (!player.blueprints[k]) delete player.blueprints[k];
+}
+// 持有的圖紙清單 [{ slot, level, count }]（背包、鍛造閣提示用），依等級、部位排序
+function listBlueprints() {
+    const slots = Object.keys(equipTypes);
+    return Object.entries(player.blueprints || {}).filter(([, n]) => n > 0).map(([k, count]) => {
+        const i = k.lastIndexOf('_');
+        return { slot: k.slice(0, i), level: Number(k.slice(i + 1)), count };
+    }).sort((a, b) => a.level - b.level || slots.indexOf(a.slot) - slots.indexOf(b.slot));
+}
+// 掉落的圖紙等級：不超過人物等級的最高一檔；未滿 Lv.1500 給 1500 檔
+function getBlueprintDropLevel() {
+    let fit = BLUEPRINT_LEVELS.filter(l => l <= player.level);
+    return fit.length ? fit[fit.length - 1] : BLUEPRINT_LEVELS[0];
+}
+// 依機率給一張圖紙；中了回傳日誌文字，沒中回傳 ''（呼叫端：bounty.js 天榜、defense.js 首領波、zhenmo.js BOSS）
+function grantBlueprint(chance, sourceText) {
+    if (!(Math.random() < chance)) return '';
+    let level = getBlueprintDropLevel();
+    // 部位隨機（可鍛造的 17 個部位平均，不含神器）
+    let slots = Object.keys(equipTypes).filter(s => !NON_FORGEABLE_SLOTS.includes(s));
+    let slot = slots[Math.floor(Math.random() * slots.length)];
+    if (!player.blueprints || typeof player.blueprints !== 'object') player.blueprints = {};
+    const k = blueprintKey(slot, level);
+    player.blueprints[k] = (player.blueprints[k] || 0) + 1;
+    return `📜 ${sourceText}獲得【${slot}・${level} 等鍛造圖紙】！（持有 ${player.blueprints[k]} 張，至鍛造閣選【${slot}】與圖紙等級即可打造）`;
 }

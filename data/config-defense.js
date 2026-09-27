@@ -63,7 +63,7 @@ const DEFENSE_MILESTONES = [
     { wave: 90, realm: 15 }    // 混沌道祖
 ];
 const DEFENSE_MILESTONE_STAGE = 10;
-// 每波妖潮的戰鬥屬性：氣血 = 攻擊 × 20（同懸賞人物）；首領波攻擊 × bossAtk、氣血 × bossHp
+// 每波妖潮的戰鬥屬性：氣血 = 攻擊 × 20（同懸賞人物；新制改用 config-numeric.js 的 defenseHpPerAtk）；首領波攻擊 × bossAtk、氣血 × bossHp
 // 首領不另外加強（= 1）：里程碑「第 10 波 = 合體 10 階」就是首領本身的強度；首領波以加倍獎勵、必掉套裝部件區隔
 // （2026-09-27 測試：首領攻 ×1.5、血 ×3 時，每個境界 10 階的玩家都卡在自己境界的首領波，違背里程碑，已取消）
 const DEFENSE_ENEMY = { hpPerAtk: 20, bossAtk: 1, bossHp: 1, def: [15, 35], eva: [8, 20], affix: [10, 35] };   // [第 1 波, 第 100 波] 線性
@@ -100,7 +100,9 @@ const DEFENSE_RUN_LOG_MAX = 20;      // 守城介面「📜 通關紀錄」保�
 // ==================== 強度曲線（defense.js 與 gm.html 共用，gm.html 審核排行榜時用來判斷「這個攻擊守不守得住這一波」）====================
 // ⚠️ 例外：本檔尾端有函式（與 config-sects.js 相同），需要 bounty.js 的 getBountyRefSectMult（呼叫時才用，載入順序不受影響）
 // 某境界某階修士的攻擊：與懸賞人物同一條曲線（bounty.js 的 getBountyStats：修為圓滿基礎戰力 × 該境界一般宗門倍率）
+// 新制（第 52 節）：同境界一般玩家普攻（numeric.js）；gm.html 沒有載入新制檔案，NUMERIC_V2 不存在時一律用舊制
 function defenseRealmAtk(r, s) {
+    if (typeof NUMERIC_V2 !== 'undefined' && NUMERIC_V2) return nv2TypNormal(nv2Level(r, s));
     const base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
     return base * getBountyRefSectMult(r);
 }

@@ -183,13 +183,23 @@ const ZhenmoTower = (() => {
 
     // ================== BOSS 房：開門 → BOSS 介紹 ==================
     function bossStats(boss) {
+        const attrs = { def: boss.def || 0, eva: boss.eva || 0, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: boss.element || null };
+        if (boss.affix) attrs[boss.affix] = boss.affixVal || 0;
+        // 新制（第 52 節）：氣血 = 同強度一般玩家每回合輸出 × bossRounds（約 300 回合）；攻擊 = 一般玩家氣血（含增益）÷ bossHitsToKill；hpPerAtk 是舊制比例，不使用
+        if (NUMERIC_V2) {
+            const L = nv2Level(boss.realm, boss.stage);
+            // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
+            const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * 10) / 10;
+            const through = (1 - attrs.def / 100) * (1 - attrs.eva / 100);   // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完
+            return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1)), attrs };
+        }
         // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
         const baseAtk = defenseRealmAtk(boss.realm, boss.stage);
         const atk = baseAtk * (boss.atkMult || 1);
-        const attrs = { def: boss.def || 0, eva: boss.eva || 0, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: boss.element || null };
-        if (boss.affix) attrs[boss.affix] = boss.affixVal || 0;
         return { atk, hp: baseAtk * (boss.hpPerAtk || 300) * (boss.hpMult || 1), attrs };   // 氣血預設基準攻擊 × 300（2026-09-27 玩家指定）
     }
+    // 回合上限：新制 BOSS 要打約 300 回合，上限放寬到 bossMaxRounds（600）
+    function maxRounds() { return NUMERIC_V2 ? NV2.bossMaxRounds : ZHENMO_MAX_ROUNDS; }
     function playerStats() {
         return { atk: Math.max(getPhysAttack(), getMagAttack()) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs() };
     }
@@ -204,10 +214,15 @@ const ZhenmoTower = (() => {
             const b = bossStats(boss), me = playerStats();
             const r = boss.rewards || {};
             const ratio = b.atk / Math.max(1, me.atk / ZHENMO_PLAYER_SKILL_MULT);
+            // 新制 BOSS 攻擊很低、氣血很厚，改顯示「每下約扣你氣血幾 %」
+            const hitPct = b.atk / Math.max(1, me.hp) * 100;
+            const atkNote = NUMERIC_V2
+                ? `每下約你氣血 <span style="color:${hitPct >= 0.5 ? '#f87171' : hitPct >= 0.3 ? '#facc15' : '#4ade80'}">${hitPct.toFixed(2)}%</span>`
+                : `<span style="color:${ratio >= 1.5 ? '#f87171' : ratio >= 0.8 ? '#facc15' : '#4ade80'}">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>`;
             $('zm-boss-body').innerHTML = `
                 <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
-                <p class="zm-boss-stat">攻擊 ${Math.round(b.atk).toWan()}（<span style="color:${ratio >= 1.5 ? '#f87171' : ratio >= 0.8 ? '#facc15' : '#4ade80'}">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）・氣血 ${Math.round(b.hp).toWan()}<br>
+                <p class="zm-boss-stat">攻擊 ${(NUMERIC_V2 ? b.atk : Math.round(b.atk)).toWan()}（${atkNote}）・氣血 ${Math.round(b.hp).toWan()}<br>
                     🛡️減傷 ${b.attrs.def}% 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>
                 <button class="zm-btn gold" onclick="startZhenmoFight()">⚔️ 挑戰${escapeZm(boss.name)}</button>
@@ -260,11 +275,17 @@ const ZhenmoTower = (() => {
         if (!st.frozen) {
             const hit = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
             E.hp -= hit.dmg;
+            // 新制敏捷連擊：再打一下（第 52 節）
+            if (NUMERIC_V2 && Math.random() < nv2Combo()) {
+                const extra = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
+                E.hp -= extra.dmg;
+                if (!instant && !extra.tags.includes('dodge')) popNum('boss', extra.dmg, 'crit');
+            }
             if (!instant) {
                 const crit = hit.tags.includes('metal') || hit.tags.includes('thunder');
                 popNum('boss', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : crit ? 'crit' : '');
                 slash();
-                if (f.round % 3 === 1 || crit) fightLog(`🗡️ 你施展【${HERO_MOVES[f.round % HERO_MOVES.length]}】${hit.tags.includes('dodge') ? '，被閃開了' : `，造成 ${Math.floor(hit.dmg).toWan()} 傷害${crit ? '（暴擊）' : ''}`}`, 'me');
+                if (f.round % 3 === 1 || crit) fightLog(`🗡️ 你施展【${HERO_MOVES[f.round % HERO_MOVES.length]}】${hit.tags.includes('dodge') ? '，被閃開了' : `，造成 ${roundDmg(hit.dmg).toWan()} 傷害${crit ? '（暴擊）' : ''}`}`, 'me');
             }
         } else if (!instant) fightLog('❄️ 你被凍結，無法出手', 'me');
         const et = tickStatus(E.st);
@@ -276,11 +297,11 @@ const ZhenmoTower = (() => {
             if (!instant) {
                 popNum('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
                 bossFlash();
-                if (f.round % 3 === 2) fightLog(`${f.boss.icon || '⚡'} ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${Math.floor(hit.dmg).toWan()} 傷害`}`, 'boss');
+                if (f.round % 3 === 2) fightLog(`${f.boss.icon || '⚡'} ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${roundDmg(hit.dmg).toWan()} 傷害`}`, 'boss');
             }
         }
         if (P.hp <= 0) return endFight(false, `被${f.boss.name}擊倒`);
-        if (f.round >= ZHENMO_MAX_ROUNDS) return endFight(false, `久戰 ${ZHENMO_MAX_ROUNDS} 回合未能擊倒${f.boss.name}`);
+        if (f.round >= maxRounds()) return endFight(false, `久戰 ${maxRounds()} 回合未能擊倒${f.boss.name}`);
         if (!instant) updateBars();
     }
     function step() {
@@ -316,9 +337,10 @@ const ZhenmoTower = (() => {
             const g = grantRewards(f.boss, mult);
             html = `<div class="big win">鎮壓成功</div>
                 <p>第 ${f.floor} 層【${escapeZm(f.boss.name)}】伏誅（${f.round} 回合）</p>
-                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}</p>
+                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}</p>
                 <p class="zm-note">已鎮壓 ${z.best} 層，前往第 ${z.floor} 層須重新答題。</p>`;
             addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}`, 'level-up', true, 'item');
+            if (g.blueprint) addLog(g.blueprint, 'level-up', true, 'item');
         } else {
             z.pending = null;   // 挑戰失敗：本層問答成績作廢
             html = `<div class="big lose">挑戰失敗</div>
@@ -341,6 +363,8 @@ const ZhenmoTower = (() => {
         if (r.merit) { g.merit = Math.floor(randInt(r.merit) * mult); player.merit = (player.merit || 0) + g.merit; settleMeritStones(); }
         if (r.shards) g.shards = addFireShards(Math.floor(randInt(r.shards) * mult));
         if (r.iron) g.iron = addStarIron(Math.floor(randInt(r.iron) * mult));
+        // 鍛造圖紙（Lv.1500 以上，equipment.js）：基礎機率 × 問答倍率，最高 75%
+        g.blueprint = grantBlueprint(Math.min(BLUEPRINT_DROPS.zhenmo.max, BLUEPRINT_DROPS.zhenmo.base * mult), `鎮壓【${boss.name}】，`);
         return g;
     }
 
@@ -358,7 +382,7 @@ const ZhenmoTower = (() => {
         const box = $(who === 'boss' ? 'zm-fight-boss-fx' : 'zm-fight-hero-fx');
         const el = document.createElement('span');
         el.className = `zm-pop ${cls || ''}`;
-        el.textContent = typeof v === 'number' ? `-${Math.floor(v).toWan()}` : v;
+        el.textContent = typeof v === 'number' ? `-${roundDmg(v).toWan()}` : v;   // 舊制取整、新制 1 位小數（elements.js）
         el.style.left = `${35 + Math.random() * 30}%`;
         box.appendChild(el);
         setTimeout(() => el.remove(), 1100);

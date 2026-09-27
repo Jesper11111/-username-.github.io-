@@ -108,24 +108,25 @@
             <button id="btn-ban-red" class="danger admin-only">⛔ 封鎖全部超標</button>
             <button id="btn-ban-jump" class="danger admin-only">⛔ 封鎖全部暴增</button>
             <button id="btn-del-stale" class="danger admin-only">🧹 刪除久未更新</button>
+            <button id="btn-wipe-all" class="danger admin-only" title="數值重做上線用：刪除戰力榜、守城榜、守城送審的全部資料（黑名單保留）">💥 新制上線清空全部榜單</button>
         </div>
         <div class="toolbar jumpbar">
             <b>📈 戰力暴增判定：</b>
             <label><input type="number" id="jump-hours" min="0.1" step="0.5"> 小時內</label>
             <label>戰力成長 ≥ <input type="number" id="jump-ratio" min="1.1" step="0.5"> 倍</label>
-            <label>且新戰力 ≥ <input type="number" id="jump-min" min="0" step="1"> 萬</label>
+            <label>且新戰力 ≥ <input type="number" id="jump-min" min="0" step="1"></label>
             <span class="note">（設定存在本瀏覽器；自動巡檢也用這組）</span>
         </div>
         <div class="tablewrap"><table>
             <thead><tr>
                 <th><input type="checkbox" id="chk-all"></th><th>#</th><th>道號</th><th>境界</th><th>等級</th><th>宗門</th>
-                <th class="num">戰力</th><th class="num">基礎值倍率</th><th class="num">佔上限</th><th class="num">時窗內最大成長</th><th>更新</th><th>標記</th><th>uid</th><th class="admin-only">操作</th>
+                <th class="num">戰力</th><th class="num">一般玩家倍率</th><th class="num">佔上限</th><th class="num">時窗內最大成長</th><th>更新</th><th>標記</th><th>uid</th><th class="admin-only">操作</th>
             </tr></thead>
             <tbody id="rows"><tr><td colspan="14" class="note">讀取中…</td></tr></tbody>
         </table></div>
         <p class="note">
-            基礎值 = 同境界同階修為圓滿的基礎戰力（7 × 階 × 10^境界）。規則上限 = 基礎值 × 200 ＋ 等級 × 20 萬（與 <code>tools/firestore.rules</code> 相同）。<br>
-            🔴 超過上限：新規則下已無法再上傳，但既有資料仍在榜上，需要手動（或巡檢）清除。🟡 佔上限 15% 以上（2026-09-27 正常玩家最高約 4.7%），或等級明顯高於境界，建議人工確認。<br>
+            新制（2026-09-28 上線）：戰力 = 每回合期望輸出。一般玩家倍率 = 戰力 ÷ 同境界同階一般玩家的期望輸出。規則上限 = 400 ＋ 境界 × 40（與 <code>tools/firestore.rules</code> 相同）。<br>
+            🔴 超過上限：新規則下已無法再上傳（含舊制的億兆級紀錄），需要手動（或巡檢）清除。🟡 佔上限 60% 以上（理論最高約 46%），或等級明顯高於境界，建議人工確認。<br>
             🟠 戰力暴增：比對該玩家的上傳歷史（最近 24 次＋每 30 分鐘一筆的兩日紀錄，共約 2 天，規則強制保留、玩家改不了）的戰力與時間，時數最多可設 48，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
             離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。
         </p>
@@ -154,7 +155,7 @@
             <label>攻擊 ≥ 該波強度 <input type="number" id="def-min-pct" min="0" step="1"> %</label>
             <label>比對戰力榜 ±<input type="number" id="def-window" min="1" step="5"> 分鐘</label>
             <label>送審戰力 ≤ 同時段戰力榜 × <input type="number" id="def-power-tol" min="1" step="0.1"></label>
-            <label>攻擊 ≤ 戰力 × <input type="number" id="def-atk-mult" min="1" step="0.5"></label>
+            <label>戰力 ÷ 攻擊 ≤ <input type="number" id="def-atk-mult" min="1.8" step="0.1">（下限 1.7）</label>
         </div>
         <div class="tablewrap"><table>
             <thead><tr>
@@ -210,6 +211,9 @@
 </main>
 
 <script src="data/config-realms.js"></script>
+<!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
+<script src="data/config-numeric.js"></script>
+<script src="data/numeric.js"></script>
 <script src="data/config-leaderboard.js"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
 <script src="data/config-bounty.js"></script>
@@ -217,18 +221,23 @@
 <script src="data/config-defense.js"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
-const CAP_BASE_MULT = 200;       // 規則：基礎值 × 200
-const CAP_PER_LEVEL = 200000;    // 規則：＋ 等級 × 20 萬
-const WARN_USE = 0.15;           // 佔上限 15% 以上標黃
+// 新制戰力上限（與 tools/firestore.rules 相同，2026-09-28）：400 ＋ 境界 × 40；理論最高約佔 40～46%（凡人 163、混沌道祖 463）
+const CAP_BASE = 400;
+const CAP_PER_REALM = 40;
+const WARN_USE = 0.6;            // 佔上限 60% 以上標黃（超過理論最高值）
 const LEVEL_WARN_PER_REALM = 1500;   // 等級 > (境界+1) × 1500 標「等級與境界不符」（2026-09-27：天仙 5676 級正常、化神 10000 級異常）
 const FULL_LIMIT = 1000;         // 管理者一次讀取的筆數
 // 戰力暴增判定的預設值（頁面上可改，存在本瀏覽器 localStorage）
 // 2026-09-27 依公式估算：正常修煉 1 小時最多約 4～10 倍（戰力 ≥ 100 萬時），加上換宗門／一次換裝可再 ×6～13，所以取 30 倍
-const JUMP_DEFAULTS = { hours: 1, ratio: 30, minWan: 100 };   // 1 小時內成長 30 倍以上、且新戰力 ≥ 100 萬
-const JUMP_STORE_KEY = 'gm_jump_settings';
+// 新制（2026-09-28）：戰力只有幾十到幾百。正常 1 小時內的跳升主要來自換武器（最多約 ×2.4）與增益（最多 +200%），暫取 4 倍；
+//   新戰力 < 60 多為新手不判定。上線後請以「時窗內最大成長」欄重新校準。儲存鍵換成 v2，避免沿用舊制的 30 倍／100 萬設定
+const JUMP_DEFAULTS = { hours: 1, ratio: 4, min: 60 };
+const JUMP_STORE_KEY = 'gm_jump_settings_v2';
 // 守城審核的預設值（頁面上可改，存在本瀏覽器 localStorage）；minPct 依據見頁面下方說明與 ARCHITECTURE.md 第 50 節
-const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 5 };
-const DEF_STORE_KEY = 'gm_defense_settings';
+// 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望，正常落在 1.8～2.28 倍（下限固定 DEF_POWER_ATK_MIN）
+const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.4 };
+const DEF_POWER_ATK_MIN = 1.7;
+const DEF_STORE_KEY = 'gm_defense_settings_v2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -290,8 +299,10 @@ function renderAuth() {
 // ================== 榜單 ==================
 function analyze(r) {
     const realm = Number(r.realm) || 0, stage = Number(r.stage) || 1, level = Number(r.level) || 1, power = Number(r.power) || 0;
-    const base = 7 * stage * Math.pow(10, realm);
-    const cap = base * CAP_BASE_MULT + level * CAP_PER_LEVEL;
+    // 一般玩家倍率：戰力 ÷ 同境界同階「一般玩家」的每回合期望輸出（numeric.js）
+    const L = nv2Level(realm, stage);
+    const base = nv2TypNormal(L) * nv2TypRoundMult(L);
+    const cap = CAP_BASE + realm * CAP_PER_REALM;
     const ms = r.updatedAt && r.updatedAt.toMillis ? r.updatedAt.toMillis() : 0;
     const days = ms ? (Date.now() - ms) / 86400000 : 999;
     const flags = [];
@@ -309,14 +320,14 @@ function loadJumpSettings() {
     try { s = JSON.parse(localStorage.getItem(JUMP_STORE_KEY) || '{}') || {}; } catch (e) {}
     $('jump-hours').value = s.hours || JUMP_DEFAULTS.hours;
     $('jump-ratio').value = s.ratio || JUMP_DEFAULTS.ratio;
-    $('jump-min').value = s.minWan != null ? s.minWan : JUMP_DEFAULTS.minWan;
+    $('jump-min').value = s.min != null ? s.min : JUMP_DEFAULTS.min;
     $('patrol-jump').checked = !!s.patrol;
 }
 function jumpSettings() {
     return {
         hours: Math.max(0.1, Number($('jump-hours').value) || JUMP_DEFAULTS.hours),
         ratio: Math.max(1.1, Number($('jump-ratio').value) || JUMP_DEFAULTS.ratio),
-        minWan: Math.max(0, Number($('jump-min').value) || 0),
+        min: Math.max(0, Number($('jump-min').value) || 0),
         patrol: $('patrol-jump').checked
     };
 }
@@ -335,7 +346,7 @@ function histPoints(r) {
 }
 // 任兩次上傳相隔 ≤ 時窗時，後者 ÷ 前者 的最大值（含目前這筆）；_growth 不論是否達標都記下，方便校準門檻
 function computeJump(r) {
-    const s = jumpSettings(), win = s.hours * 3600000, min = s.minWan * 1e4;
+    const s = jumpSettings(), win = s.hours * 3600000, min = s.min;
     const pts = histPoints(r);
     let best = null;
     for (let j = 1; j < pts.length; j++) {
@@ -417,9 +428,9 @@ function verifyDefense(s) {
     const ratio = atk / need;
     if (ratio * 100 < cfg.minPct) checks.push({ ok: false, text: `攻擊只有第 ${best} 波強度的 ${(ratio * 100).toPrecision(2)}%，守不住` });
     else checks.push({ ok: true, text: '攻擊足以守住' });
-    // ③ 數值一致：攻擊（物攻、術攻取高）≥ 戰力（物攻），且不超過戰力 × 倍數
-    if (atk < power * 0.99) checks.push({ ok: false, text: '攻擊低於戰力（數值不一致）' });
-    else if (atk > power * cfg.atkMult) checks.push({ ok: false, text: `攻擊超過戰力 ${cfg.atkMult} 倍` });
+    // ③ 數值一致（新制）：戰力 ÷ 攻擊 應在 1.7～設定值（預設 2.4）之間（戰力 = 攻擊 × 暴擊連擊技能期望）
+    const pa = atk > 0 ? power / atk : Infinity;
+    if (pa < DEF_POWER_ATK_MIN || pa > cfg.atkMult) checks.push({ ok: false, text: `戰力是攻擊的 ${isFinite(pa) ? pa.toFixed(2) : '∞'} 倍，不在 ${DEF_POWER_ATK_MIN}～${cfg.atkMult} 倍之間（數值不一致）` });
     const verdict = checks.some(c => c.ok === false) ? 'fail' : checks.some(c => c.ok === null) ? 'manual' : 'pass';
     return { checks, verdict, need, ratio, near };
 }
@@ -692,6 +703,24 @@ $('btn-del-stale').onclick = () => { const ids = rows.filter(r => r._stale).map(
     if (confirm(`刪除 ${ids.length} 筆 ${staleDays()} 天以上未更新的紀錄？（不封鎖，玩家回來會重新上傳）`)) guarded(() => deleteIds(ids, `${staleDays()} 天未更新`)); };
 $('patrol-on').onchange = e => setPatrol(e.target.checked);
 $('btn-patrol-now').onclick = patrol;
+// 數值重做上線（2026-09-28）：清空戰力榜、守城榜、守城送審（黑名單與管理者名單不動）。要輸入「清空」才執行
+$('btn-wipe-all').onclick = () => {
+    if (!confirm('⚠️ 將刪除「戰力榜」「守城榜」「守城送審」的全部資料（黑名單保留），無法復原。\n\n用於數值重做上線後清掉舊制的億兆級紀錄。確定要繼續？')) return;
+    if (prompt('請輸入「清空」兩個字確認：') !== '清空') return log('已取消清空', 'warn');
+    guarded(async () => {
+        let total = 0;
+        for (const col of [LEADERBOARD_COLLECTION, LEADERBOARD_DEFENSE_BOARD_COLLECTION, LEADERBOARD_DEFENSE_SUBMIT_COLLECTION]) {
+            for (;;) {
+                const snap = await db.collection(col).limit(400).get();
+                if (snap.empty) break;
+                await commitInChunks(snap.docs.map(d => b => b.delete(d.ref)));
+                total += snap.size;
+            }
+        }
+        log(`已清空全部榜單，共刪除 ${total} 筆`, 'ok');
+        await reloadBoard(); await reloadDefense();
+    });
+};
 
 loadJumpSettings();
 loadDefSettings();

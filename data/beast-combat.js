@@ -153,7 +153,7 @@ function petAssistTick(targets) {
 
         if (sk.kind === "single" || sk.kind === "aoe") {
             if (living.length === 0) return;
-            let dmg = Math.floor(getPhysAttack() * sk.mult * (1 + gearFx("獸魂")));   // 獸魂（裝備特效，gear.js）
+            let dmg = roundDmg(getPhysAttack() * sk.mult * (1 + gearFx("獸魂")));   // 獸魂（裝備特效，gear.js）；新制保留 1 位小數
             if (sk.kind === "aoe") living.forEach(t => t.hp -= dmg);
             else living[0].hp -= dmg;
             addLog(`${who} 施展【${sk.name}】，造成 ${dmg.toWan()} 點${sk.kind === "aoe" ? "群體" : ""}傷害！`, "skill");

@@ -166,7 +166,7 @@
         .batch-btns { display: flex; gap: 6px; }
         .batch-btns button { flex: 1; width: auto; margin-bottom: 0; padding: 8px 4px; }
 
-        /* 標題旁的「!」說明按鈕與靈根說明視窗 */
+        /* 標題旁的「!」說明按鈕與五行共鳴說明視窗 */
         .info-btn {
             width: 26px; height: 26px; padding: 0; margin: 0 0 0 6px; border-radius: 50%;
             display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
@@ -1166,7 +1166,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20260929g"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20260929s"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -1466,6 +1466,8 @@
             <div>境界：<span id="realm-display" style="color: var(--accent); font-weight: bold;">凡人 1階</span></div>
             <div style="margin-top: 5px;">等級：<span id="level-display" style="color: var(--accent);">Lv.1 (0.0%)</span></div>
             <div style="margin-top: 5px;">戰力：<span id="power-display">5</span></div>
+            <div style="margin-top: 5px;">金丹：<span id="core-display" style="color: #facc15;">築基期開啟丹田</span></div>
+            <div style="margin-top: 5px;">資質：<span id="aptitude-display" style="color: #c084fc; cursor: pointer; text-decoration: underline dotted;" onclick="openAptitudeView()">尚未測試</span></div>
             <div style="margin-top: 5px;">當前壽命：<span id="age-display" style="color: #e5e7eb; font-weight: bold;">16 歲</span></div>
             <div style="margin-top: 5px;">剩餘壽元：<span id="lifespan-display" style="color: #4ade80; font-weight: bold;">60 年</span>
                 <span id="lifespan-rate" style="font-size: 0.75em; color: #9ca3af;"></span></div>
@@ -1503,6 +1505,8 @@
                 <div class="stat-item">體質 <span id="stat-con">10</span></div>
                 <div class="stat-item">悟性 <span id="stat-int">10</span></div>
                 <div class="stat-item">靈力 <span id="stat-spr">10</span></div>
+                <!-- 新制第六屬性（config-numeric.js 的 NUMERIC_V2 開啟時才顯示，ui.js） -->
+                <div class="stat-item" id="stat-agi-row" hidden>敏捷 <span id="stat-agi">5</span></div>
                 <div class="stat-item" style="grid-column: 1 / -1;">魅力 <span id="stat-cha" style="color: var(--charm-color);">10</span></div>
             </div>
             <!-- 戰鬥屬性（減傷/閃避/屬性傷害），由 ui.js 的 updateUI() 依裝備計算 -->
@@ -1654,7 +1658,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20260929g" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20260929s" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-name">
@@ -1708,7 +1712,29 @@
         <button class="close-btn" onclick="closeModal('leaderboard-modal')">關閉</button>
     </div>
 </div>
-<!-- 設定（settings.js）：顯示尺寸與全螢幕，選項由 renderSettingsModal() 產生 -->
+<!-- 數值重做改版公告（main.js 的 showNumericV2Notice，只對轉換過的老存檔跳一次，第 52 節） -->
+<div id="notice-modal" class="modal-bg">
+    <div class="modal-content" style="max-width: 520px; text-align: left; border-color: var(--accent);">
+        <h2 style="color: var(--accent); margin-top: 0; text-align: center;">📜 天道重塑・改版公告</h2>
+        <p style="color:#e5e7eb; font-size:0.9em;">修仙界的數值全面改為「小數字」制，戰鬥更講究裝備、資質與身法：</p>
+        <ul style="color:#e5e7eb; font-size:0.85em; padding-left: 20px; line-height: 1.6;">
+            <li><b>戰力、氣血、傷害大幅縮小</b>：空手只有幾點、武器十幾到幾十點，增益全部相加最多 +200%。</li>
+            <li><b>新增第六屬性「敏捷」</b>：暴擊、連擊、命中、閃避。煉丹房有身法丹、藏書閣有《凌波微步》。</li>
+            <li><b>丹藥重新來過</b>：每顆 +0.1、每種最多 200 顆，舊的丹藥效果不保留（不補償）。</li>
+            <li><b>野外妖獸改依地圖境界計算</b>：同境界約 25 下擊殺，每波 1～3 隻，刷新時會調息回血；每小時收益維持原本的修煉節奏。</li>
+            <li><b>人物等級依境界設上限</b>（凡人 50、煉氣 70…），突破後補升。</li>
+            <li><b>戰力榜重新計算</b>：戰力改為「每回合期望輸出」，舊榜紀錄會清除；守城紀錄請重新挑戰送審。</li>
+        </ul>
+        <p style="color:#9ca3af; font-size:0.8em;">其餘新系統：宗門傳承、入門資質測試（先天靈根／體質）、丹田與金丹元嬰品級、地圖推薦練功區。</p>
+        <button class="sys-btn" onclick="closeNumericV2Notice()">知道了，繼續修仙</button>
+    </div>
+</div><!-- 資質測試／資質（aptitude.js，第 53 節）：入宗後擲骰決定先天靈根與先天體質；內容由 aptitude.js 產生 -->
+<div id="aptitude-modal" class="modal-bg">
+    <div class="modal-content" style="max-width: 480px; text-align: center; border-color: var(--accent);">
+        <h2 id="aptitude-title" style="color: var(--accent); margin-top: 0;">⛩️ 入門資質測試</h2>
+        <div id="aptitude-body"></div>
+    </div>
+</div><!-- 設定（settings.js）：顯示尺寸與全螢幕，選項由 renderSettingsModal() 產生 -->
 <div id="settings-modal" class="modal-bg">
     <div class="modal-content" style="max-width: 420px; text-align: center; border-color: var(--accent);">
         <h2 style="color: var(--accent); margin-top: 0;">⚙️ 設定</h2>
@@ -1831,21 +1857,21 @@
 <div id="equipment-modal" class="modal-bg">
     <div class="modal-content" style="border-color: var(--equip-color);">
         <h2 style="text-align: center; color: var(--equip-color); margin-top: 0;">
-            🛡️ 角色裝備與靈根狀態
-            <button class="info-btn" onclick="openWuxingInfo()" title="靈根與五行說明" aria-label="靈根與五行說明">!</button>
+            🛡️ 角色裝備與五行共鳴
+            <button class="info-btn" onclick="openWuxingInfo()" title="五行共鳴與相剋說明" aria-label="五行共鳴與相剋說明">!</button>
         </h2>
         <div id="wuxing-status-modal" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">
-            【靈根】：無
+            【五行共鳴】：無
         </div>
         <div id="equipped-list-container" class="grid-container"></div>
         <button class="close-btn" onclick="closeModal('equipment-modal')">關閉</button>
     </div>
 </div>
 
-<!-- 靈根與五行說明（由角色裝備視窗標題旁的「!」開啟，內容由 equipment.js 的 openWuxingInfo() 產生） -->
+<!-- 五行共鳴與相剋說明（由角色裝備視窗標題旁的「!」開啟，內容由 equipment.js 的 openWuxingInfo() 產生） -->
 <div id="wuxing-info-modal" class="modal-bg" onclick="if (event.target === this) closeModal('wuxing-info-modal')">
     <div class="modal-content" style="max-width: 640px; border-color: var(--accent);">
-        <h2 style="text-align: center; color: var(--accent); margin-top: 0;">☯️ 靈根與五行說明</h2>
+        <h2 style="text-align: center; color: var(--accent); margin-top: 0;">☯️ 五行共鳴與相剋說明</h2>
         <div id="wuxing-info-body" class="wuxing-info-body"></div>
         <button class="close-btn" onclick="closeModal('wuxing-info-modal')">知道了</button>
     </div>
@@ -1955,7 +1981,7 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20260929g" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20260929s" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -2206,13 +2232,13 @@
             📖 第一階段・四維古籍 <span class="drawer-arrow">▾</span>
         </button>
         <div id="drawer-library-1" class="drawer-body">
-        <p style="text-align: center; color: #9ca3af; font-size: 0.85em; margin: 4px 0;">消耗【武學積分】永久提升四維（每種書籍學習上限 100 次）</p>
+        <p style="text-align: center; color: #9ca3af; font-size: 0.85em; margin: 4px 0;" id="study-rule">消耗【武學積分】永久提升四維（每種書籍學習上限 100 次）</p>
         <div class="grid-container" style="margin-top: 12px;">
             <div class="card">
                 <h3>《力道真解》</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">消耗: 10 武學積分</p>
                 <p style="font-size: 0.85em; color: var(--accent);" id="study-count-str">已學習: 0 / 100</p>
-                <p style="font-size: 0.85em; color: #4ade80;">每次 力量 +20</p>
+                <p style="font-size: 0.85em; color: #4ade80;" id="study-gain-str">每次 力量 +20</p>
                 <div class="batch-btns">
                     <button class="sys-btn" onclick="studyBook('str', 1)">×1</button>
                     <button class="sys-btn" onclick="studyBook('str', 10)">×10</button>
@@ -2223,7 +2249,7 @@
                 <h3>《洗髓經》</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">消耗: 10 武學積分</p>
                 <p style="font-size: 0.85em; color: var(--accent);" id="study-count-con">已學習: 0 / 100</p>
-                <p style="font-size: 0.85em; color: #4ade80;">每次 體質 +20</p>
+                <p style="font-size: 0.85em; color: #4ade80;" id="study-gain-con">每次 體質 +20</p>
                 <div class="batch-btns">
                     <button class="sys-btn" onclick="studyBook('con', 1)">×1</button>
                     <button class="sys-btn" onclick="studyBook('con', 10)">×10</button>
@@ -2234,7 +2260,7 @@
                 <h3>《黃庭內景經》</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">消耗: 10 武學積分</p>
                 <p style="font-size: 0.85em; color: var(--accent);" id="study-count-int">已學習: 0 / 100</p>
-                <p style="font-size: 0.85em; color: #4ade80;">每次 悟性 +20</p>
+                <p style="font-size: 0.85em; color: #4ade80;" id="study-gain-int">每次 悟性 +20</p>
                 <div class="batch-btns">
                     <button class="sys-btn" onclick="studyBook('int', 1)">×1</button>
                     <button class="sys-btn" onclick="studyBook('int', 10)">×10</button>
@@ -2245,11 +2271,23 @@
                 <h3>《靈飛經》</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">消耗: 10 武學積分</p>
                 <p style="font-size: 0.85em; color: var(--accent);" id="study-count-spr">已學習: 0 / 100</p>
-                <p style="font-size: 0.85em; color: #4ade80;">每次 靈力 +20</p>
+                <p style="font-size: 0.85em; color: #4ade80;" id="study-gain-spr">每次 靈力 +20</p>
                 <div class="batch-btns">
                     <button class="sys-btn" onclick="studyBook('spr', 1)">×1</button>
                     <button class="sys-btn" onclick="studyBook('spr', 10)">×10</button>
                     <button class="sys-btn" onclick="studyBook('spr', 'max')">最高</button>
+                </div>
+            </div>
+            <!-- 新制（第 52 節）才顯示：第六屬性敏捷的古籍 -->
+            <div class="card" id="study-card-agi" hidden>
+                <h3>《凌波微步》</h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">消耗: 10 武學積分</p>
+                <p style="font-size: 0.85em; color: var(--accent);" id="study-count-agi">已學習: 0 / 200</p>
+                <p style="font-size: 0.85em; color: #4ade80;" id="study-gain-agi">每次 敏捷 +0.1</p>
+                <div class="batch-btns">
+                    <button class="sys-btn" onclick="studyBook('agi', 1)">×1</button>
+                    <button class="sys-btn" onclick="studyBook('agi', 10)">×10</button>
+                    <button class="sys-btn" onclick="studyBook('agi', 'max')">最高</button>
                 </div>
             </div>
         </div>
@@ -2271,7 +2309,7 @@
         <p style="text-align: center; color: #9ca3af; font-size: 0.9em;">消耗靈石打造靈寶裝備，品質與五行屬性隨機產生！</p>
         <div style="text-align: center; margin-bottom: 20px;">
             <label style="color: var(--accent);">選擇打造部位：</label>
-            <select id="forge-type-select" style="background: #0b0f19; color: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--panel-border);">
+            <select id="forge-type-select" onchange="renderForgeLevelSelect()" style="background: #0b0f19; color: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--panel-border);">
             </select>
             <br>
             <label style="color: var(--accent); display: inline-block; margin-top: 10px;">選擇裝備等級：</label>
@@ -2298,7 +2336,7 @@
             <div class="card">
                 <h3>大力神丸</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1 株 凡品靈草</p>
-                <p style="font-size: 0.85em; color: #4ade80;">效果: 力量 +10</p>
+                <p id="pill-effect-str" style="font-size: 0.85em; color: #4ade80;">效果: 力量 +10</p>
                 <p class="pill-used" id="pill-used-str"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('str', 1)">×1</button>
@@ -2309,7 +2347,7 @@
             <div class="card">
                 <h3>洗髓丹</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1 株 上品靈草</p>
-                <p style="font-size: 0.85em; color: #4ade80;">效果: 體質 +25</p>
+                <p id="pill-effect-con" style="font-size: 0.85em; color: #4ade80;">效果: 體質 +25</p>
                 <p class="pill-used" id="pill-used-con"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('con', 1)">×1</button>
@@ -2320,7 +2358,7 @@
             <div class="card">
                 <h3>悟道丹</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1 株 極品靈草</p>
-                <p style="font-size: 0.85em; color: #4ade80;">效果: 悟性 +50</p>
+                <p id="pill-effect-int" style="font-size: 0.85em; color: #4ade80;">效果: 悟性 +50</p>
                 <p class="pill-used" id="pill-used-int"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('int', 1)">×1</button>
@@ -2331,7 +2369,7 @@
             <div class="card">
                 <h3>九轉聚靈丹</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1 株 仙品靈草</p>
-                <p style="font-size: 0.85em; color: #4ade80;">效果: 靈力 +100</p>
+                <p id="pill-effect-spr" style="font-size: 0.85em; color: #4ade80;">效果: 靈力 +100</p>
                 <p class="pill-used" id="pill-used-spr"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('spr', 1)">×1</button>
@@ -2342,12 +2380,35 @@
             <div class="card">
                 <h3>駐顏駐魅力丹</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1株 仙品靈草 + 1000 靈石</p>
-                <p style="font-size: 0.85em; color: var(--charm-color);">效果: 魅力 +20</p>
+                <p id="pill-effect-cha" style="font-size: 0.85em; color: var(--charm-color);">效果: 魅力 +20</p>
                 <p class="pill-used" id="pill-used-cha"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('cha', 1)">×1</button>
                     <button class="shop-btn" onclick="craftPill('cha', 10)">×10</button>
                     <button class="shop-btn" onclick="craftPill('cha', 'max')">最高</button>
+                </div>
+            </div>
+            <!-- 新制才有的敏捷丹（NUMERIC_V2，alchemy.js 的 renderPillUsed 切換顯示） -->
+            <!-- 凝元丹：築基期充盈丹田、金丹期溫養金丹才顯示（golden-core.js，第 54 節） -->
+            <div class="card" id="pill-card-core" hidden>
+                <h3>凝元丹</h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">材料: 5 株 上品靈草 ＋ 1萬 靈石</p>
+                <p style="font-size: 0.85em; color: #4ade80;">效果: 丹田／金丹溫養 +5%</p>
+                <p class="pill-used" id="pill-core-status"></p>
+                <div class="batch-btns">
+                    <button class="shop-btn" onclick="craftCorePill(1)">×1</button>
+                    <button class="shop-btn" onclick="craftCorePill(10)">×10</button>
+                    <button class="shop-btn" onclick="craftCorePill('max')">最高</button>
+                </div>
+            </div>            <div class="card" id="pill-card-agi" hidden>
+                <h3>身法丹</h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">材料: 1 株 上品靈草</p>
+                <p id="pill-effect-agi" style="font-size: 0.85em; color: #4ade80;">效果: 敏捷 +0.1</p>
+                <p class="pill-used" id="pill-used-agi"></p>
+                <div class="batch-btns">
+                    <button class="shop-btn" onclick="craftPill('agi', 1)">×1</button>
+                    <button class="shop-btn" onclick="craftPill('agi', 10)">×10</button>
+                    <button class="shop-btn" onclick="craftPill('agi', 'max')">最高</button>
                 </div>
             </div>
         </div>
@@ -2415,92 +2476,98 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20260929g"></script>
-<script src="data/config-realms.js?v=20260929g"></script>
-<script src="data/config-level.js?v=20260929g"></script>
-<script src="data/config-lifespan.js?v=20260929g"></script>
-<script src="data/config-maps.js?v=20260929g"></script>
-<script src="data/config-sects.js?v=20260929g"></script>
-<script src="data/config-lingbao.js?v=20260929g"></script>
-<script src="data/config-shop.js?v=20260929g"></script>
-<script src="data/config-beasts.js?v=20260929g"></script>
-<script src="data/config-servants.js?v=20260929g"></script>
-<script src="data/config-equipment.js?v=20260929g"></script>
-<script src="data/config-gear-catalog.js?v=20260929g"></script>
-<script src="data/config-gear.js?v=20260929g"></script>
-<script src="data/config-enhance.js?v=20260929g"></script>
-<script src="data/config-sets.js?v=20260929g"></script>
-<script src="data/config-profession.js?v=20260929g"></script>
-<script src="data/config-titles.js?v=20260929g"></script>
-<script src="data/config-tribulation.js?v=20260929g"></script>
-<script src="data/config-quests.js?v=20260929g"></script>
-<script src="data/config-activities.js?v=20260929g"></script>
-<script src="data/config-daily-quests.js?v=20260929g"></script>
-<script src="data/config-elements.js?v=20260929g"></script>
-<script src="data/config-merit.js?v=20260929g"></script>
-<script src="data/config-bounty.js?v=20260929g"></script>
-<script src="data/config-talisman.js?v=20260929g"></script>
-<script src="data/config-avatars.js?v=20260929g"></script>
-<script src="data/config-avatar-frames.js?v=20260929g"></script>
-<script src="data/config-spells.js?v=20260929g"></script>
-<script src="data/config-strange-fire.js?v=20260929g"></script>
-<script src="data/config-partners.js?v=20260929g"></script>
-<script src="data/config-towns.js?v=20260929g"></script>
-<script src="data/config-casino.js?v=20260929g"></script>
-<script src="data/config-leaderboard.js?v=20260929g"></script>
-<script src="data/config-secret-realms.js?v=20260929g"></script>
-<script src="data/config-defense.js?v=20260929g"></script>
-<script src="data/config-zhenmo.js?v=20260929g"></script>
-<script src="data/config-zhenmo-questions.js?v=20260929g"></script>
-<script src="data/state.js?v=20260929g"></script>
-<script src="data/stats.js?v=20260929g"></script>
-<script src="data/elements.js?v=20260929g"></script>
-<script src="data/ui.js?v=20260929g"></script>
-<script src="data/map.js?v=20260929g"></script>
-<script src="data/town.js?v=20260929g"></script>
-<script src="data/casino.js?v=20260929g"></script>
-<script src="data/combat.js?v=20260929g"></script>
-<script src="data/leveling.js?v=20260929g"></script>
-<script src="data/lifespan.js?v=20260929g"></script>
-<script src="data/tribulation.js?v=20260929g"></script>
-<script src="data/sect.js?v=20260929g"></script>
-<script src="data/shop.js?v=20260929g"></script>
-<script src="data/bag.js?v=20260929g"></script>
-<script src="data/equipment.js?v=20260929g"></script>
-<script src="data/gear.js?v=20260929g"></script>
-<script src="data/enhance.js?v=20260929g"></script>
-<script src="data/profession.js?v=20260929g"></script>
-<script src="data/codex.js?v=20260929g"></script>
-<script src="data/lingbao-shop.js?v=20260929g"></script>
-<script src="data/artifact.js?v=20260929g"></script>
-<script src="data/servant.js?v=20260929g"></script>
-<script src="data/quest.js?v=20260929g"></script>
-<script src="data/activity.js?v=20260929g"></script>
-<script src="data/daily-quest.js?v=20260929g"></script>
-<script src="data/auction.js?v=20260929g"></script>
-<script src="data/merit.js?v=20260929g"></script>
-<script src="data/bounty.js?v=20260929g"></script>
-<script src="data/talisman.js?v=20260929g"></script>
-<script src="data/strange-fire.js?v=20260929g"></script>
-<script src="data/partner.js?v=20260929g"></script>
-<script src="data/field.js?v=20260929g"></script>
-<script src="data/beast-combat.js?v=20260929g"></script>
-<script src="data/spells.js?v=20260929g"></script>
-<script src="data/beast.js?v=20260929g"></script>
-<script src="data/library.js?v=20260929g"></script>
-<script src="data/alchemy.js?v=20260929g"></script>
-<script src="data/player-profile.js?v=20260929g"></script>
-<script src="data/save.js?v=20260929g"></script>
-<script src="data/config-home-pc.js?v=20260929g"></script>
-<script src="data/home-ui.js?v=20260929g"></script>
-<script src="data/settings.js?v=20260929g"></script>
-<script src="data/avatar.js?v=20260929g"></script>
-<script src="data/leaderboard.js?v=20260929g"></script>
-<script src="data/secret-realm.js?v=20260929g"></script>
-<script src="data/defense.js?v=20260929g"></script>
-<script src="data/zhenmo.js?v=20260929g"></script>
-<script src="data/title-screen.js?v=20260929g"></script>
-<script src="data/main.js?v=20260929g"></script>
+<script src="data/format.js?v=20260929s"></script>
+<script src="data/config-realms.js?v=20260929s"></script>
+<script src="data/config-level.js?v=20260929s"></script>
+<script src="data/config-lifespan.js?v=20260929s"></script>
+<script src="data/config-maps.js?v=20260929s"></script>
+<script src="data/config-sects.js?v=20260929s"></script>
+<script src="data/config-lingbao.js?v=20260929s"></script>
+<script src="data/config-shop.js?v=20260929s"></script>
+<script src="data/config-beasts.js?v=20260929s"></script>
+<script src="data/config-servants.js?v=20260929s"></script>
+<script src="data/config-equipment.js?v=20260929s"></script>
+<script src="data/config-gear-catalog.js?v=20260929s"></script>
+<script src="data/config-gear.js?v=20260929s"></script>
+<script src="data/config-enhance.js?v=20260929s"></script>
+<script src="data/config-sets.js?v=20260929s"></script>
+<script src="data/config-profession.js?v=20260929s"></script>
+<script src="data/config-aptitude.js?v=20260929s"></script>
+<script src="data/config-golden-core.js?v=20260929s"></script>
+<script src="data/config-titles.js?v=20260929s"></script>
+<script src="data/config-tribulation.js?v=20260929s"></script>
+<script src="data/config-quests.js?v=20260929s"></script>
+<script src="data/config-activities.js?v=20260929s"></script>
+<script src="data/config-daily-quests.js?v=20260929s"></script>
+<script src="data/config-elements.js?v=20260929s"></script>
+<script src="data/config-merit.js?v=20260929s"></script>
+<script src="data/config-bounty.js?v=20260929s"></script>
+<script src="data/config-talisman.js?v=20260929s"></script>
+<script src="data/config-avatars.js?v=20260929s"></script>
+<script src="data/config-avatar-frames.js?v=20260929s"></script>
+<script src="data/config-spells.js?v=20260929s"></script>
+<script src="data/config-strange-fire.js?v=20260929s"></script>
+<script src="data/config-partners.js?v=20260929s"></script>
+<script src="data/config-towns.js?v=20260929s"></script>
+<script src="data/config-casino.js?v=20260929s"></script>
+<script src="data/config-leaderboard.js?v=20260929s"></script>
+<script src="data/config-secret-realms.js?v=20260929s"></script>
+<script src="data/config-defense.js?v=20260929s"></script>
+<script src="data/config-zhenmo.js?v=20260929s"></script>
+<script src="data/config-zhenmo-questions.js?v=20260929s"></script>
+<script src="data/config-numeric.js?v=20260929s"></script>
+<script src="data/state.js?v=20260929s"></script>
+<script src="data/stats.js?v=20260929s"></script>
+<script src="data/numeric.js?v=20260929s"></script>
+<script src="data/elements.js?v=20260929s"></script>
+<script src="data/ui.js?v=20260929s"></script>
+<script src="data/map.js?v=20260929s"></script>
+<script src="data/town.js?v=20260929s"></script>
+<script src="data/casino.js?v=20260929s"></script>
+<script src="data/combat.js?v=20260929s"></script>
+<script src="data/leveling.js?v=20260929s"></script>
+<script src="data/lifespan.js?v=20260929s"></script>
+<script src="data/tribulation.js?v=20260929s"></script>
+<script src="data/sect.js?v=20260929s"></script>
+<script src="data/shop.js?v=20260929s"></script>
+<script src="data/bag.js?v=20260929s"></script>
+<script src="data/equipment.js?v=20260929s"></script>
+<script src="data/gear.js?v=20260929s"></script>
+<script src="data/enhance.js?v=20260929s"></script>
+<script src="data/profession.js?v=20260929s"></script>
+<script src="data/aptitude.js?v=20260929s"></script>
+<script src="data/golden-core.js?v=20260929s"></script>
+<script src="data/codex.js?v=20260929s"></script>
+<script src="data/lingbao-shop.js?v=20260929s"></script>
+<script src="data/artifact.js?v=20260929s"></script>
+<script src="data/servant.js?v=20260929s"></script>
+<script src="data/quest.js?v=20260929s"></script>
+<script src="data/activity.js?v=20260929s"></script>
+<script src="data/daily-quest.js?v=20260929s"></script>
+<script src="data/auction.js?v=20260929s"></script>
+<script src="data/merit.js?v=20260929s"></script>
+<script src="data/bounty.js?v=20260929s"></script>
+<script src="data/talisman.js?v=20260929s"></script>
+<script src="data/strange-fire.js?v=20260929s"></script>
+<script src="data/partner.js?v=20260929s"></script>
+<script src="data/field.js?v=20260929s"></script>
+<script src="data/beast-combat.js?v=20260929s"></script>
+<script src="data/spells.js?v=20260929s"></script>
+<script src="data/beast.js?v=20260929s"></script>
+<script src="data/library.js?v=20260929s"></script>
+<script src="data/alchemy.js?v=20260929s"></script>
+<script src="data/player-profile.js?v=20260929s"></script>
+<script src="data/save.js?v=20260929s"></script>
+<script src="data/config-home-pc.js?v=20260929s"></script>
+<script src="data/home-ui.js?v=20260929s"></script>
+<script src="data/settings.js?v=20260929s"></script>
+<script src="data/avatar.js?v=20260929s"></script>
+<script src="data/leaderboard.js?v=20260929s"></script>
+<script src="data/secret-realm.js?v=20260929s"></script>
+<script src="data/defense.js?v=20260929s"></script>
+<script src="data/zhenmo.js?v=20260929s"></script>
+<script src="data/title-screen.js?v=20260929s"></script>
+<script src="data/main.js?v=20260929s"></script>
 
 </body>
 </html>

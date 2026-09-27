@@ -54,22 +54,28 @@ const DefenseBattle = (() => {
         const t = (w - 1) / Math.max(1, DEFENSE_TOTAL_WAVES - 1), lerp = ([a, b]) => a + (b - a) * t;
         const boss = w % DEFENSE_BOSS_EVERY === 0, E = DEFENSE_ENEMY;
         const atk = waveAtk(w) * (boss ? E.bossAtk : 1);
-        const attrs = { def: lerp(E.def), eva: lerp(E.eva), ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
+        const DE = NUMERIC_V2 ? NV2.defenseEnemy : E;   // 新制減傷／閃避較平緩（config-numeric.js）
+        const attrs = { def: lerp(DE.def), eva: lerp(DE.eva), ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
                         element: wuxingElements[(w * 7) % wuxingElements.length] };
         attrs[MONSTER_AFFIX_TYPES[w % MONSTER_AFFIX_TYPES.length]] = lerp(E.affix);
-        return { atk, hp: waveAtk(w) * E.hpPerAtk * (boss ? E.bossHp : 1), attrs, boss };
+        // 新制：氣血 = 攻擊 × 3.6（一般玩家的比例）× defenseHpScale，模擬時玩家氣血同樣放大（simulateWave）
+        const hpPerAtk = NUMERIC_V2 ? NV2.defenseHpPerAtk * NV2.defenseHpScale : E.hpPerAtk;
+        return { atk, hp: waveAtk(w) * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss };
     }
     // 以玩家當下真實數值，用遊戲的 resolveHit／tickStatus 在背後打一場（不影響玩家實際氣血與狀態）
     function simulateWave(w) {
         const e = waveEnemy(w), pa = getPlayerCombatAttrs();
         const pAtk = Math.max(getPhysAttack(), getMagAttack()) * DEFENSE_PLAYER_SKILL_MULT;
-        const pMax = getMaxHp();
+        const pMax = getMaxHp() * (NUMERIC_V2 ? NV2.defenseHpScale : 1);   // 新制雙方氣血一起放大，約 20 下分勝負
         let pHp = pMax, eHp = e.hp;
         const ps = newStatus(), es = newStatus();
         for (let r = 1; r <= DEFENSE_MAX_ROUNDS; r++) {
             const st = tickStatus(ps); pHp -= st.dot;
             if (pHp <= 0) return { win: false, rounds: r };
-            if (!st.frozen) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: e.attrs, status: es }).dmg;
+            if (!st.frozen) {
+                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: e.attrs, status: es }).dmg;
+                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: e.attrs, status: es }).dmg;   // 新制敏捷連擊
+            }
             const et = tickStatus(es); eHp -= et.dot;
             if (eHp <= 0) return { win: true, rounds: r, hpLeft: pHp / pMax };
             if (!et.frozen) pHp -= resolveHit(e.atk, { attrs: e.attrs, power: e.atk }, { attrs: pa, status: ps }).dmg;
@@ -290,6 +296,11 @@ const DefenseBattle = (() => {
         D.cleared = w; D.snap = spec.snap;
         if (w > (player.defenseBest || 0)) { player.defenseBest = w; checkTitleUnlocks(); }
         if (boss) settleMeritStones();   // 功德滿額自動凝結七彩補天石（merit.js）
+        // 首領波：鍛造圖紙（Lv.1500 以上，equipment.js），機率 = base ＋ 波數 × perWave（第 100 波 60%）
+        if (boss) {
+            const bp = grantBlueprint(BLUEPRINT_DROPS.defenseBoss.base + w * BLUEPRINT_DROPS.defenseBoss.perWave, `第 ${w} 波首領伏誅，`);
+            if (bp) { g.blueprints = (g.blueprints || 0) + 1; feed('📜 首領遺落一張鍛造圖紙！', 'kill'); addLog(bp, 'level-up', false, 'item'); }
+        }
     }
     function rewardSummaryHtml() {
         const g = D.gain;
@@ -299,6 +310,7 @@ const DefenseBattle = (() => {
             `💎 靈石 ${g.coins.toWan()}`, `☯️ 功德 ${g.merit.toWan()}`,
             g.shards ? `🔥 異火碎片 ×${g.shards}` : '', g.iron ? `🌠 星允鐵 ×${g.iron}` : '',
             g.gear.length ? `⚔️ 裝備 ${g.gear.length} 件` : '',
+            g.blueprints ? `📜 鍛造圖紙 ×${g.blueprints}` : '',
             newTitles.length ? `🏅 新稱號 ${newTitles.join('、')}` : '',
             g.partners.length ? `💞 結識 ${g.partners.join('、')}` : ''
         ].filter(Boolean);
