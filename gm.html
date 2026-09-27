@@ -53,6 +53,11 @@
     .flag.orange { background: rgba(251,146,60,0.2); color: var(--orange); }
     .stat.orange b { color: var(--orange); }
     .jumpbar b { font-size: 13px; color: var(--orange); font-weight: normal; }
+    tr.realmx td { background: rgba(168, 85, 247, 0.12); }
+    .flag.purple { background: rgba(168,85,247,0.2); color: #c084fc; }
+    .stat.purple b { color: #c084fc; }
+    .realmbar b { color: #c084fc; }
+    .realmbar select { padding: 3px; }
     .flag { display: inline-block; margin: 1px 3px 1px 0; padding: 0 6px; border-radius: 8px; font-size: 12px; }
     .flag.red { background: rgba(248,113,113,0.2); color: var(--red); }
     .flag.yellow { background: rgba(251,191,36,0.18); color: var(--yellow); }
@@ -99,6 +104,7 @@
                 <option value="flagged">有標記的</option>
                 <option value="red">🔴 超過上限</option>
                 <option value="jump">🟠 戰力暴增</option>
+                <option value="realm">🟣 境界異常</option>
                 <option value="yellow">🟡 數值偏高／等級異常</option>
                 <option value="dup">重複紀錄</option>
                 <option value="stale">久未更新</option>
@@ -119,6 +125,12 @@
             <label>且新戰力 ≥ <input type="number" id="jump-min" min="0" step="1"></label>
             <span class="note">（設定存在本瀏覽器；自動巡檢也用這組）</span>
         </div>
+        <div class="toolbar jumpbar realmbar">
+            <b>🟣 境界異常判定：</b>
+            <label>新面孔＝首次出現 <input type="number" id="rx-new-hours" min="1" step="1"> 小時內就已是 <select id="rx-new-realm"></select> 以上</label>
+            <label>跳境＝<input type="number" id="rx-jump-hours" min="1" step="1"> 小時內升 ≥ <input type="number" id="rx-jump-gain" min="1" step="1"> 個大境界、且到了 <select id="rx-jump-realm"></select> 以上</label>
+            <span class="note">（只標記、不自動封鎖）</span>
+        </div>
         <div class="tablewrap"><table>
             <thead><tr>
                 <th><input type="checkbox" id="chk-all"></th><th>#</th><th>道號</th><th>境界</th><th>等級</th><th>宗門</th>
@@ -130,7 +142,11 @@
             新制（2026-09-28 上線）：戰力 = 每回合期望輸出。一般玩家倍率 = 戰力 ÷ 同境界同階一般玩家的期望輸出。規則上限 = 400 ＋ 境界 × 40（與 <code>tools/firestore.rules</code> 相同）。<br>
             🔴 超過上限：新規則下已無法再上傳（含舊制的億兆級紀錄），需要手動（或巡檢）清除。🟡 佔上限 60% 以上（理論最高約 46%），或等級明顯高於境界，建議人工確認。<br>
             🟠 戰力暴增：比對該玩家的上傳歷史（最近 24 次＋每 30 分鐘一筆的兩日紀錄，共約 2 天，規則強制保留、玩家改不了）的戰力與時間，時數最多可設 48，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
-            離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。
+            離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。<br>
+            🟣 境界異常（2026-09-28）：離線最多結算 12 小時、離線不會渡劫，照設計進度渡劫→混沌道祖要 3 年以上，所以「一出現就是高境界」或「短時間連升好幾個大境界」多半是改存檔。
+            <b>新面孔</b>：戰力榜最早的一筆歷史在設定時數內（兩日紀錄已存滿 96 筆的不算新面孔），而且境界已達門檻——清榜前就有的老存檔也會被標，請人工判斷（例如對照清榜前的舊榜）。
+            <b>跳境</b>：和<b>本瀏覽器</b>上次讀榜時看到的境界比（榜上只存戰力歷史、沒有境界歷史），所以要定期打開本頁或開自動巡檢才抓得到；超過設定時數的舊印象會換成最新境界。
+            標了 🟣 的玩家送守城審核時會變成 ❔ 人工確認。
         </p>
     </section>
 
@@ -290,18 +306,18 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20260930f"></script>
+<script src="data/config-realms.js?v=20260930g"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20260930f"></script>
-<script src="data/numeric.js?v=20260930f"></script>
-<script src="data/config-leaderboard.js?v=20260930f"></script>
-<script src="data/config-mailbox.js?v=20260930f"></script>
+<script src="data/config-numeric.js?v=20260930g"></script>
+<script src="data/numeric.js?v=20260930g"></script>
+<script src="data/config-leaderboard.js?v=20260930g"></script>
+<script src="data/config-mailbox.js?v=20260930g"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20260930f"></script>
+<script src="data/config-aptitude.js?v=20260930g"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20260930f"></script>
-<script src="data/bounty.js?v=20260930f"></script>
-<script src="data/config-defense.js?v=20260930f"></script>
+<script src="data/config-bounty.js?v=20260930g"></script>
+<script src="data/bounty.js?v=20260930g"></script>
+<script src="data/config-defense.js?v=20260930g"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同，2026-09-28）：400 ＋ 境界 × 40；理論最高約佔 40～46%（凡人 163、混沌道祖 463）
@@ -448,6 +464,60 @@ function jumpReason(r) {
     return `戰力暴增：${Math.max(1, Math.round(g.mins))} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}（${g.ratio.toFixed(1)} 倍）`;
 }
 
+// ================== 境界異常（2026-09-28）：新面孔高境界、短時間跳境（只標記）==================
+// 預設：24 小時內首次出現就已是仙人初境(10)以上；24 小時內升 ≥ 2 個大境界且到了合體(7)以上（煉虛 20 時＋合體 2 天，正常 24 小時不可能）
+const RX_DEFAULTS = { newHours: 24, newRealm: 10, jumpHours: 24, jumpGain: 2, jumpRealm: 7 };
+const RX_STORE_KEY = 'gm_realm_check_v1';
+const RX_SEEN_KEY = 'gm_realm_seen_v1';   // 本瀏覽器看過的境界：uid → { r: 境界, t: 記下的時間 }
+let rxSeen = {};
+function loadRxSettings() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(RX_STORE_KEY) || '{}') || {}; } catch (e) {}
+    try { rxSeen = JSON.parse(localStorage.getItem(RX_SEEN_KEY) || '{}') || {}; } catch (e) { rxSeen = {}; }
+    const opts = realms.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join('');
+    ['rx-new-realm', 'rx-jump-realm'].forEach(id => $(id).innerHTML = opts);
+    $('rx-new-hours').value = s.newHours || RX_DEFAULTS.newHours;
+    $('rx-new-realm').value = s.newRealm != null ? s.newRealm : RX_DEFAULTS.newRealm;
+    $('rx-jump-hours').value = s.jumpHours || RX_DEFAULTS.jumpHours;
+    $('rx-jump-gain').value = s.jumpGain || RX_DEFAULTS.jumpGain;
+    $('rx-jump-realm').value = s.jumpRealm != null ? s.jumpRealm : RX_DEFAULTS.jumpRealm;
+}
+function rxSettings() {
+    return {
+        newHours: Math.max(1, Number($('rx-new-hours').value) || RX_DEFAULTS.newHours),
+        newRealm: Number($('rx-new-realm').value) || 0,
+        jumpHours: Math.max(1, Number($('rx-jump-hours').value) || RX_DEFAULTS.jumpHours),
+        jumpGain: Math.max(1, Number($('rx-jump-gain').value) || RX_DEFAULTS.jumpGain),
+        jumpRealm: Number($('rx-jump-realm').value) || 0
+    };
+}
+function saveRxSettings() {
+    try { localStorage.setItem(RX_STORE_KEY, JSON.stringify(rxSettings())); } catch (e) {}
+}
+// 讀榜後：先把每筆「上次看到的境界」掛到 r._seenPrev（判定用），再更新本瀏覽器的紀錄
+// 紀錄超過跳境時數、或境界變低（轉世）才換成最新境界，所以跳境比的是「時數內最早看到的境界」
+function updateRealmSeen() {
+    const s = rxSettings(), now = Date.now();
+    rows.forEach(r => {
+        const prev = rxSeen[r.id];
+        r._seenPrev = prev || null;
+        if (!prev || r._realm < prev.r || now - prev.t > s.jumpHours * 3600000) rxSeen[r.id] = { r: r._realm, t: now };
+    });
+    try { localStorage.setItem(RX_SEEN_KEY, JSON.stringify(rxSeen)); } catch (e) {}
+}
+function computeRealmCheck(r) {
+    const s = rxSettings(), now = Date.now(), msgs = [];
+    const pts = histPoints(r);
+    const first = pts.length ? pts[0].t : 0;
+    const full = Array.isArray(r.hist2) && r.hist2.length >= LEADERBOARD_HISTORY2_SIZE;
+    if (!full && first && now - first <= s.newHours * 3600000 && r._realm >= s.newRealm)
+        msgs.push(`新面孔：${Math.max(1, Math.round((now - first) / 3600000))} 小時前首次出現就是${realms[r._realm]}`);
+    const p = r._seenPrev;
+    if (p && r._realm - p.r >= s.jumpGain && r._realm >= s.jumpRealm && now - p.t <= s.jumpHours * 3600000)
+        msgs.push(`跳境：${Math.max(1, Math.round((now - p.t) / 3600000))} 小時內 ${realms[p.r]} → ${realms[r._realm]}`);
+    r._rx = msgs.length ? msgs.join('；') : null;
+}
+
 // ================== 守城審核（死守天南城排行榜）==================
 function loadDefSettings() {
     let s = {};
@@ -490,6 +560,7 @@ function verifyDefense(s) {
     // 帳號狀態
     if (bans.some(b => b.id === s.id)) checks.push({ ok: false, text: '已被封鎖' });
     else if (r && (r._red || r._jump)) checks.push({ ok: false, text: r._red ? '戰力榜紀錄超過規則上限' : '戰力榜紀錄戰力暴增' });
+    else if (r && r._rx) checks.push({ ok: null, text: '戰力榜標記境界異常（' + r._rx + '），請人工確認' });   // 老存檔也會被標，所以只轉人工
     // 達成時間要落在送出時間附近（送審失敗會在之後重送，最多容許 3 天）
     const upMs = tsMs(s.updatedAt);
     if (upMs && (runAt > upMs + 5 * 60000 || runAt < upMs - 3 * 86400000)) checks.push({ ok: false, text: '達成時間異常' });
@@ -607,6 +678,7 @@ async function reloadBoard() {
         const snap = await db.collection(LEADERBOARD_COLLECTION).orderBy('power', 'desc').limit(isAdmin ? FULL_LIMIT : 100).get();
         rows = snap.docs.map(d => analyze(Object.assign({ id: d.id }, d.data())));
         markDuplicates();
+        updateRealmSeen();   // 境界異常的「跳境」比對（本瀏覽器紀錄）
         log(`讀取榜單 ${rows.length} 筆${isAdmin ? '' : '（非管理者只能讀前 100 名）'}`, 'ok');
     } catch (e) { rows = []; log('讀取榜單失敗：' + e.message, 'err'); }
     renderBoard();
@@ -616,12 +688,13 @@ function staleDays() { return Math.max(1, Number($('stale-days').value) || 14); 
 
 function renderBoard() {
     const sd = staleDays();
-    rows.forEach(r => { r._stale = r._days >= sd; computeJump(r); });
+    rows.forEach(r => { r._stale = r._days >= sd; computeJump(r); computeRealmCheck(r); });
     const f = $('filter').value;
-    const shown = rows.filter(r => f === 'all' ? true : f === 'flagged' ? (r._flags.length || r._stale || r._jump) : f === 'red' ? r._red
-                                  : f === 'jump' ? r._jump : f === 'yellow' ? r._yellow : f === 'dup' ? r._dup : r._stale);
+    const shown = rows.filter(r => f === 'all' ? true : f === 'flagged' ? (r._flags.length || r._stale || r._jump || r._rx) : f === 'red' ? r._red
+                                  : f === 'jump' ? r._jump : f === 'realm' ? r._rx : f === 'yellow' ? r._yellow : f === 'dup' ? r._dup : r._stale);
     $('stats').innerHTML = [
         ['', rows.length, '筆紀錄'], ['red', rows.filter(r => r._red).length, '🔴 超過上限'], ['orange', rows.filter(r => r._jump).length, '🟠 戰力暴增'],
+        ['purple', rows.filter(r => r._rx).length, '🟣 境界異常'],
         ['yellow', rows.filter(r => r._yellow).length, '🟡 偏高／異常'],
         ['', rows.filter(r => r._dup).length, '重複'], ['', rows.filter(r => r._stale).length, `${sd} 天未更新`]
     ].map(([c, n, t]) => `<div class="stat ${c}"><b>${n}</b><small>${t}</small></div>`).join('');
@@ -629,8 +702,9 @@ function renderBoard() {
         const i = rows.indexOf(r) + 1;
         const g = r._growth;
         const flags = (r._jump ? `<span class="flag orange">${esc(jumpReason(r).replace('戰力暴增：', '暴增 '))}</span>` : '')
+            + (r._rx ? `<span class="flag purple">${esc(r._rx)}</span>` : '')
             + r._flags.map(([c, t]) => `<span class="flag ${c}">${esc(t)}</span>`).join('') + (r._stale ? `<span class="flag grey">${Math.floor(r._days)} 天未更新</span>` : '');
-        return `<tr class="${r._red ? 'red' : r._jump ? 'jump' : r._yellow ? 'yellow' : ''}">
+        return `<tr class="${r._red ? 'red' : r._jump ? 'jump' : r._rx ? 'realmx' : r._yellow ? 'yellow' : ''}">
             <td><input type="checkbox" class="chk" value="${esc(r.id)}"></td><td>${i}</td><td>${esc(r.name)}</td>
             <td>${esc(realms[r._realm] || '？')} ${r._stage} 階</td><td>${r._level}</td><td>${esc(r.sect || '')}</td>
             <td class="num">${fmt(r._power)}</td><td class="num">${r._ratio >= 1000 ? fmt(Math.round(r._ratio)) : r._ratio.toFixed(1)}×</td>
@@ -1000,6 +1074,8 @@ $('btn-wipe-all').onclick = () => {
 };
 
 loadJumpSettings();
+loadRxSettings();
+['rx-new-hours', 'rx-new-realm', 'rx-jump-hours', 'rx-jump-gain', 'rx-jump-realm'].forEach(id => $(id).onchange = () => { saveRxSettings(); renderBoard(); if (isAdmin) renderDefense(); });
 loadDefSettings();
 init().catch(e => { $('who').textContent = '初始化失敗：' + e.message; log(e.message, 'err'); });
 </script>
