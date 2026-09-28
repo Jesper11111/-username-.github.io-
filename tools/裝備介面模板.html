@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>裝備介面模板</title>
+<!-- 裝備介面改版模板（2026-09-28，遊戲不載入）：人形裝備欄＋點部位換裝＋「使用中 vs 選擇」對比與穿上後的增減。資料是假的，只示範版面與操作。 -->
+<style>
+    :root {
+        --bg: #07080d; --panel: #0f1220; --line: rgba(232, 190, 110, 0.55); --gold: #f5c56b; --text: #e5e7eb; --muted: #9ca3af;
+        --up: #4ade80; --down: #f87171;
+        --q-白色: #ffffff; --q-綠色: #4ade80; --q-藍色: #38bdf8; --q-紫色: #c084fc; --q-橙色: #fb923c; --q-白金: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #050608; color: var(--text); font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; display: flex; justify-content: center; }
+    .phone { width: 100%; max-width: 420px; padding: 12px; }
+    h1 { font-size: 1.05em; color: var(--gold); text-align: center; margin: 4px 0 10px; letter-spacing: 2px; }
+    .note { font-size: 0.75em; color: var(--muted); line-height: 1.6; margin: 8px 2px; }
+    .doll { display: grid; grid-template-columns: 58px 1fr 58px; gap: 6px; background: radial-gradient(ellipse at 50% 40%, #1c1410, var(--bg) 70%);
+            border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .col { display: flex; flex-direction: column; gap: 6px; }
+    .row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+    .slot { position: relative; height: 54px; border-radius: 8px; background: linear-gradient(#171b2b, #0c0f1a); border: 1px solid #2a3148;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7em; color: var(--muted); }
+    .slot .ic { font-size: 1.5em; line-height: 1; }
+    .slot .lv { font-size: 0.85em; margin-top: 2px; }
+    .slot.filled { border-width: 2px; }
+    .slot.sel { outline: 2px solid var(--gold); outline-offset: 1px; box-shadow: 0 0 10px rgba(245, 197, 107, 0.6); }
+    .slot .up { position: absolute; top: -5px; right: -5px; background: var(--up); color: #052e16; font-size: 0.8em; font-weight: bold; border-radius: 8px; padding: 0 4px; }
+    .hero { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #2a3148; min-height: 100%;
+            background: url("../images/battle/hero-male.jpg") center 20% / cover, linear-gradient(#1a1a22, #0a0a10); }
+    .hero .sum { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.9) 40%); font-size: 0.75em; }
+    .hero .sum b { color: var(--gold); font-size: 1.25em; }
+    .sheet { margin-top: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .sheet-head b { color: var(--gold); }
+    .btn { background: #1b2033; color: var(--text); border: 1px solid #3a4260; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-size: 0.85em; cursor: pointer; }
+    .btn.gold { background: linear-gradient(#f5c56b, #b7862f); color: #1a1205; border: none; font-weight: bold; }
+    .btn.red { color: var(--down); border-color: rgba(248,113,113,0.5); }
+    .cand { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid #252b40; margin-bottom: 6px; cursor: pointer; background: #0b0e18; }
+    .cand:hover { border-color: var(--gold); }
+    .cand .nm { flex: 1; min-width: 0; font-size: 0.85em; }
+    .cand .nm small { display: block; color: var(--muted); font-size: 0.85em; }
+    .chip { font-size: 0.78em; font-weight: bold; border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+    .chip.up { background: rgba(74,222,128,0.15); color: var(--up); }
+    .chip.down { background: rgba(248,113,113,0.15); color: var(--down); }
+    .chip.eq { background: rgba(156,163,175,0.15); color: var(--muted); }
+    .cur { border-color: var(--gold); background: rgba(245,197,107,0.06); }
+    .mask { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: flex-end; justify-content: center; z-index: 10; }
+    .mask.on { display: flex; }
+    .cmp { width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px 14px 0 0; padding: 12px; }
+    .cmp h2 { margin: 0 0 8px; font-size: 1em; color: var(--gold); text-align: center; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card { border: 1px solid #2a3148; border-radius: 10px; padding: 8px; background: #0b0e18; font-size: 0.8em; }
+    .card .tag { font-size: 0.8em; color: var(--muted); }
+    .card .title { font-weight: bold; margin: 2px 0 6px; }
+    .card.pick { border-color: var(--gold); }
+    .kv { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed #1f2538; }
+    .kv .better { color: var(--up); font-weight: bold; }
+    .kv .worse { color: var(--down); }
+    .kv .none { color: #4b5563; }
+    .delta { margin-top: 10px; border: 1px solid #2a3148; border-radius: 10px; padding: 8px; background: #0b0e18; }
+    .delta h3 { margin: 0 0 6px; font-size: 0.85em; color: var(--gold); }
+    .drow { display: flex; justify-content: space-between; font-size: 0.85em; padding: 3px 0; }
+    .drow .v.up { color: var(--up); } .drow .v.down { color: var(--down); }
+    .big { font-size: 1.05em; font-weight: bold; }
+    .warn { font-size: 0.78em; color: #fbbf24; margin-top: 6px; line-height: 1.5; }
+    .acts { display: flex; gap: 8px; margin-top: 10px; }
+    .acts .btn { flex: 1; padding: 10px; font-size: 0.95em; }
+</style>
+</head>
+<body>
+<div class="phone">
+    <h1>⚔️ 角色裝備（改版模板）</h1>
+    <div class="doll">
+        <div class="col" id="col-left"></div>
+        <div class="hero"><div class="sum">韓立【金】<br>戰力 <b id="sum-power"></b>　氣血 <span id="sum-hp"></span></div></div>
+        <div class="col" id="col-right"></div>
+        <div class="row" id="row-bottom"></div>
+    </div>
+    <p class="note">① 點任一格 → 下方列出背包裡同部位的裝備。格子右上角綠色 <b style="color:var(--up)">▲</b>＝背包裡有比身上更好的。</p>
+    <div class="sheet" id="sheet"></div>
+    <p class="note">② 每件候選直接標「穿上後戰力 +/−」，由好到差排序；點一件打開 ③ 對比。<br>
+    ③ 對比：左「使用中」、右「選擇」，較好標綠、較差標紅；「穿上後變化」是整個角色的實際增減，並提醒套裝、五行、等級。</p>
+</div>
+<div class="mask" id="mask" onclick="if (event.target === this) closeCmp()"><div class="cmp" id="cmp"></div></div>
+<script>
+const SLOTS = {
+    left:   [["劍","🗡️"],["刀","🔪"],["扇","🪭"],["弓","🏹"],["笛","🎋"],["筆","🖌️"]],
+    right:  [["頭","⛑️"],["披風","🧣"],["盔甲","🛡️"],["內衣","👘"],["手套","🧤"],["長靴","👢"]],
+    bottom: [["項鍊","📿"],["耳環","💠"],["戒指","💍"],["腰帶","🎗️"],["腰牌","🪪"],["神器","🔱"]]
+};
+const STAT_ROWS = [["atk","武器攻擊"],["str","力量"],["con","體質"],["int","悟性"],["spr","靈力"],["agi","敏捷"],["def","減傷%"],["eva","閃避%"],["fire","火焰%"]];
+const mk = (slot, name, q, lv, el, st, extra) => Object.assign({ slot, name, q, lv, el, st }, extra || {});
+const equipped = {
+    "劍": mk("劍", "太乙青鋒劍", "紫色", 500, "金", { atk: 18.2, str: 6.1, agi: 2.0 }, { set: "太乙" }),
+    "頭": mk("頭", "玄鐵盔", "藍色", 300, "土", { con: 5.2, def: 3 }),
+    "盔甲": mk("盔甲", "太乙鎖子甲", "紫色", 500, "金", { con: 8.4, def: 5 }, { set: "太乙" }),
+    "戒指": mk("戒指", "靈犀戒", "藍色", 300, "水", { int: 3.1, spr: 2.4 })
+};
+const bag = [
+    mk("劍", "赤霄劍", "橙色", 700, "火", { atk: 24.6, str: 7.8, fire: 8 }),
+    mk("劍", "凡鐵劍", "綠色", 100, "金", { atk: 6.0, str: 1.5 }),
+    mk("劍", "太乙游龍劍", "紫色", 600, "金", { atk: 21.0, str: 7.0, agi: 2.4 }, { set: "太乙" }),
+    mk("頭", "鳳翎盔", "紫色", 500, "火", { con: 7.0, def: 4, eva: 1 }),
+    mk("戒指", "雷紋戒", "紫色", 500, "金", { int: 4.8, spr: 3.9, agi: 1.2 }),
+    mk("刀", "斬嶽刀", "藍色", 300, "土", { atk: 12.0, str: 4.0 })
+];
+const PLAYER_LV = 600;
+const W = { atk: 3.2, str: 1.1, con: 0.35, int: 0.6, spr: 0.5, agi: 0.9, def: 1.4, eva: 1.2, fire: 0.5 };
+const power = eq => eq ? Object.keys(eq.st).reduce((s, k) => s + eq.st[k] * (W[k] || 0), 0) : 0;
+const basePower = 128.4, baseHp = 1260;
+const totalPower = () => basePower + Object.values(equipped).reduce((s, e) => s + power(e), 0);
+const setCount = name => Object.values(equipped).filter(e => e.set === name).length;
+let curSlot = "劍";
+const fmt = v => (Math.round(v * 10) / 10).toString();
+const sign = v => (v > 0 ? "+" : "") + fmt(v);
+const qColor = q => `var(--q-${q})`;
+const val = (e, k) => e ? (e.st[k] || 0) : 0;
+
+function renderDoll() {
+    const cell = ([slot, ic]) => {
+        const e = equipped[slot], better = bag.some(b => b.slot === slot && b.lv <= PLAYER_LV && power(b) > power(e));
+        return `<div class="slot ${e ? 'filled' : ''} ${slot === curSlot ? 'sel' : ''}" style="${e ? `border-color:${qColor(e.q)}` : ''}" onclick="pick('${slot}')">
+            ${better ? '<span class="up">▲</span>' : ''}<span class="ic">${ic}</span><span class="lv">${e ? 'Lv.' + e.lv : slot}</span></div>`;
+    };
+    document.getElementById('col-left').innerHTML = SLOTS.left.map(cell).join('');
+    document.getElementById('col-right').innerHTML = SLOTS.right.map(cell).join('');
+    document.getElementById('row-bottom').innerHTML = SLOTS.bottom.map(cell).join('');
+    document.getElementById('sum-power').textContent = fmt(totalPower());
+    document.getElementById('sum-hp').textContent = Math.round(baseHp + Object.values(equipped).reduce((s, e) => s + val(e, 'con') * 12, 0));
+}
+function pick(slot) { curSlot = slot; renderDoll(); renderSheet(); }
+function renderSheet() {
+    const cur = equipped[curSlot];
+    const list = bag.filter(b => b.slot === curSlot).map(b => ({ b, d: power(b) - power(cur) })).sort((x, y) => y.d - x.d);
+    document.getElementById('sheet').innerHTML = `
+        <div class="sheet-head"><b>更換【${curSlot}】</b>${cur ? `<button class="btn red" onclick="unequip()">卸下</button>` : ''}</div>
+        ${cur ? `<div class="cand cur"><div class="nm" style="color:${qColor(cur.q)}">🔸 使用中：${cur.name}<small>Lv.${cur.lv}・${cur.q}・${cur.el}${cur.set ? '・套裝 ' + cur.set : ''}</small></div><span class="chip eq">目前</span></div>` : '<div class="note">這個部位目前沒有裝備。</div>'}
+        ${list.length ? list.map(({ b, d }) => `<div class="cand" onclick="openCmp(${bag.indexOf(b)})">
+            <div class="nm" style="color:${qColor(b.q)}">${b.name}${b.lv > PLAYER_LV ? ' 🔒' : ''}<small>Lv.${b.lv}・${b.q}・${b.el}${b.set ? '・套裝 ' + b.set : ''}</small></div>
+            <span class="chip ${d > 0 ? 'up' : d < 0 ? 'down' : 'eq'}">戰力 ${d > 0 ? '▲' : d < 0 ? '▼' : ''}${sign(d)}</span></div>`).join('')
+            : '<div class="note">背包裡沒有這個部位的裝備。</div>'}`;
+}
+function openCmp(i) {
+    const p = bag[i], cur = equipped[curSlot];
+    const cls = (x, y) => x > y ? 'better' : x < y ? 'worse' : '';
+    const rowA = ([k, l]) => (!val(cur, k) && !val(p, k)) ? '' :
+        `<div class="kv"><span>${l}</span><span class="${val(cur, k) ? cls(val(cur, k), val(p, k)) : 'none'}">${val(cur, k) ? fmt(val(cur, k)) : '—'}</span></div>`;
+    const rowB = ([k, l]) => { const a = val(cur, k), b = val(p, k); return (!a && !b) ? '' :
+        `<div class="kv"><span>${l}</span><span class="${b ? cls(b, a) : 'none'}">${b ? fmt(b) : '—'}${b !== a ? ` (${sign(b - a)})` : ''}</span></div>`; };
+    const dP = power(p) - power(cur);
+    const dHp = (val(p, 'con') - val(cur, 'con')) * 12;
+    const dAtk = val(p, 'atk') - val(cur, 'atk') + (val(p, 'str') - val(cur, 'str')) * 0.5;
+    const dDef = val(p, 'def') - val(cur, 'def'), dEva = val(p, 'eva') - val(cur, 'eva');
+    const d = (label, v, unit, big) => !v ? '' : `<div class="drow ${big ? 'big' : ''}"><span>${label}</span><span class="v ${v > 0 ? 'up' : 'down'}">${v > 0 ? '▲' : '▼'} ${sign(v)}${unit || ''}</span></div>`;
+    const warns = [];
+    if (cur && cur.set && cur.set !== p.set) { const n = setCount(cur.set); warns.push(`⚠️ 【${cur.set}】套裝 ${n} → ${n - 1} 件${n === 2 ? '，失去 2 件套效果' : ''}`); }
+    if (p.set && (!cur || cur.set !== p.set)) warns.push(`✨ 【${p.set}】套裝 ${setCount(p.set)} → ${setCount(p.set) + 1} 件`);
+    if (cur && cur.el !== p.el) warns.push(`☯️ 五行：${cur.el} −1、${p.el} +1（五行共鳴可能改變）`);
+    const canWear = p.lv <= PLAYER_LV;
+    if (!canWear) warns.push(`🔒 需要人物等級 Lv.${p.lv}（你目前 Lv.${PLAYER_LV}，不能穿）`);
+    document.getElementById('cmp').innerHTML = `
+        <h2>裝備對比・${curSlot}</h2>
+        <div class="two">
+            <div class="card"><div class="tag">🔸 使用中</div>
+                <div class="title" style="color:${cur ? qColor(cur.q) : 'var(--muted)'}">${cur ? cur.name : '（空）'}</div>
+                ${cur ? `<div class="tag">Lv.${cur.lv}・${cur.q}・${cur.el}</div>` : ''}${STAT_ROWS.map(rowA).join('')}</div>
+            <div class="card pick"><div class="tag">🔹 選擇</div>
+                <div class="title" style="color:${qColor(p.q)}">${p.name}</div>
+                <div class="tag">Lv.${p.lv}・${p.q}・${p.el}</div>${STAT_ROWS.map(rowB).join('')}</div>
+        </div>
+        <div class="delta"><h3>穿上後變化</h3>
+            ${d('戰力', dP, '', true)}${d('氣血', Math.round(dHp))}${d('攻擊', Math.round(dAtk * 10) / 10)}${d('減傷', dDef, '%')}${d('閃避', dEva, '%')}
+            ${warns.map(w => `<div class="warn">${w}</div>`).join('')}
+        </div>
+        <div class="acts"><button class="btn" onclick="closeCmp()">取消</button>
+            <button class="btn gold" ${canWear ? '' : 'disabled style="opacity:.4"'} onclick="wear(${i})">穿上</button></div>`;
+    document.getElementById('mask').classList.add('on');
+}
+function closeCmp() { document.getElementById('mask').classList.remove('on'); }
+function wear(i) {
+    const e = bag[i], cur = equipped[curSlot];
+    bag.splice(i, 1); if (cur) bag.push(cur);
+    equipped[curSlot] = e; closeCmp(); renderDoll(); renderSheet();
+}
+function unequip() { const cur = equipped[curSlot]; if (!cur) return; bag.push(cur); delete equipped[curSlot]; renderDoll(); renderSheet(); }
+renderDoll(); renderSheet();
+</script>
+</body>
+</html>

@@ -132,6 +132,7 @@ function renderBag() {
                     ${formatEquipDetails(eq)}
                     ${formatArtifactSkill(eq)}
                     <button class="equip-btn" onclick="equipItem('${eq.id}')">穿戴裝備</button>
+                    ${eq.name in player.equipment ? `<button class="sys-btn" onclick="openEquipCompare('${eq.id}')">🔍 對比身上${eq.name}</button>` : ''}
                     ${formatLockButton(eq)}
                     ${ENHANCE_CAP[eq.quality] ? `<div class="batch-btns">
                         <button class="sys-btn" onclick="openEnhanceModal('${eq.id}')">🔨 強化</button>

@@ -27,35 +27,10 @@ function openEquipmentModal() {
 }
 
 // 注意：函式名稱為歷史命名，實際渲染的是「角色裝備與五行狀態」彈窗內容，非靈寶閣
+// 2026-09-28 改版：人形裝備欄＋點部位換裝＋裝備對比（equip-compare.js，第 60 節）
 function renderLingbaoUI() {
-    const container = document.getElementById('equipped-list-container');
-    container.innerHTML = "";
-
     document.getElementById('wuxing-status-modal').innerHTML = formatSpiritRoots();
-
-    for (let eqName in player.equipment) {
-        let eq = player.equipment[eqName];
-        if (eq) {
-            container.innerHTML += `
-                <div class="${getEquipCardClass(eq)}" style="border-color: var(--equip-color);">
-                    <h3 class="quality-${eq.quality}">${formatEquipTitle(eq)}</h3>
-                    <p style="font-size:0.85em; color:#9ca3af;">${formatGearSubline(eq)} | <span class="quality-${eq.quality}">${formatQualityLabel(eq.quality)}</span> | 屬性：<span class="elem-${eq.element}">${eq.element}</span></p>
-                    ${formatEquipDetails(eq)}
-                    ${formatArtifactSkill(eq)}
-                    ${ENHANCE_CAP[eq.quality] ? `<button class="sys-btn" onclick="openEnhanceModal('${eq.id}')">🔨 強化</button>` : ''}
-                    ${formatLockButton(eq)}
-                    <button class="sys-btn" onclick="unequipItem('${eqName}')">卸下裝備</button>
-                </div>`;
-        } else {
-            // 神器為特殊部位（靈寶閣高級宗門兌換，不計入五行共鳴），欄位以金色標示
-            let isArtifact = equipTypes[eqName] === 'artifact';
-            container.innerHTML += `
-                <div class="card" style="border-color: ${isArtifact ? 'rgba(240,213,136,0.45)' : 'rgba(255,255,255,0.05)'}; color: #6b7280; background: rgba(10,14,22,0.3);">
-                    <h3 style="${isArtifact ? 'color: var(--accent);' : ''}">${isArtifact ? '✨ ' : ''}${eqName}</h3>
-                    <p style="font-size:0.85em;">${isArtifact ? '(未裝備・可於靈寶閣高級宗門兌換)' : '(未裝備)'}</p>
-                </div>`;
-        }
-    }
+    renderEquipDoll();
 }
 
 // 目前生效的五行共鳴一覽（角色裝備視窗頂端與「!」說明視窗共用）

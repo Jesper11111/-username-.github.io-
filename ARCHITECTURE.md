@@ -31,6 +31,7 @@ images/               圖片素材
   maps/               修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
   monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）
+  equip/              角色裝備欄中間的人物正面圖（第 60 節）：hero-male.jpg 520×592／hero-female.jpg 520×459（玩家提供，縮小）
   battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（玩家提供，縮成 480 寬，480×531／480×439），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
   frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
@@ -43,6 +44,7 @@ tools/                不會被遊戲載入的維護工具
   csv-to-js.ps1       把 CSV 轉成 data/config-gear-catalog.js（powershell -ExecutionPolicy Bypass -File tools\csv-to-js.ps1）
   cut-figure.ps1      以手描外框去背（-Src 圖 -OutPng 輸出 -Preview 預覽 -PointsFile 外框點檔；點檔每行 "x,y"，空白行分隔，第一組外框、其餘為挖掉的洞）
   cut-figure-points-fengxi.txt  風希人偶的外框點（原圖 768×1376，玩家提供的插畫）
+  裝備介面模板.html    角色裝備改版的可操作模板（假資料，遊戲不載入；第 60 節）
   數值設計器.html      新數值制度試算工具（2026-09-27；遊戲不載入）：成長倍率、六大屬性（含新增的敏捷）、增益上限、技能、怪物與 BOSS 參數 →
                       各境界空手／普攻／技能／小怪與 BOSS 血量、「打低幾境的怪要幾下」。已發布為 Artifact：https://claude.ai/artifact/XpVkm2XTdA9pCEGEuD6HwB（私人）；
                       「複製設定」得到的 JSON 就是之後數值重做的定案依據。尚未套用到遊戲。
@@ -63,6 +65,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
+  equip-compare.js    角色裝備視窗：人形裝備欄、部位換裝、裝備對比與穿上後試算（第 60 節）
   battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏（第 59 節）
   ui.js               畫面渲染共用函式（頂部狀態列、戰鬥實況、日誌與日誌分頁（第 44 節）、彈窗開關與右上角 ✕（第 46 節））
   map.js / combat.js / leveling.js / tribulation.js
@@ -1318,7 +1321,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930l`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930o`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2689,3 +2692,18 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `updateCombatVisualPanel()` 最後呼叫 `flushBattleFx()` 播放：一次最多約 4～5 個字，多的合併成「×N」；暴擊（tag `crit`，新制敏捷）大字漸層＋「暴擊」＋震屏＋閃光，重擊（`metal`）／雷擊（`thunder`）中字＋爆點，受傷紅字＋畫面紅框，閃避灰字。
   面板看不到（`document.hidden` 或面板 `offsetParent === null`）時不排佇列，只影響畫面、不影響結算。`prefers-reduced-motion` 時不震屏、立繪不動。
 - 鎮魔塔（第 51 節）、死守天南城（第 49 節）有各自的戰鬥畫面，不受影響。
+
+## 60. 角色裝備視窗改版：人形裝備欄＋裝備對比（`equip-compare.js`；2026-09-28，版本 `20260930n`）
+- 玩家反映：換裝很不方便、無法對照屬性；提供暗黑破壞神式的人形裝備欄參考圖，要求「選擇的裝備跟使用中的兩樣顯示，增加什麼減少什麼」。先做模板 `tools/裝備介面模板.html`（假資料）給玩家確認後實作。
+- **① 人形裝備欄**（`renderEquipDoll`，由 equipment.js 的 `renderLingbaoUI()` 呼叫；`#equipped-list-container` 不再是 grid-container）：
+  `EQ_DOLL_LAYOUT` 左欄 6 武器（劍刀扇弓笛筆）、右欄 6 防具（頭披風盔甲內衣手套長靴）、下排 5 飾品＋神器；中間人物正面圖（`EQUIP_HERO_IMG`，依性別：男＝玩家提供的第二張「屋頂對飲」圖、女＝第一張「伸手」圖，2026-09-28，版本 `20260930o`；`pos` 對準臉部）＋名字、本命五行、戰力、氣血。
+  格子外框用品質顏色、顯示 Lv 與強化；背包裡有「能穿、且穿上後戰力更高」的同部位裝備時右上角亮綠色 ▲。圖示 `EQ_SLOT_ICONS`（扇用 🎐、腰牌用 🏷️：🪭🪪 在部分裝置顯示成方框）。
+- **② 部位換裝**（`renderEquipSlotSheet`）：選中的部位顯示「🔸 使用中」卡片（原本的強化／鎖定／卸下按鈕都在這裡）＋背包同部位候選（`eqCandidates`），
+  每件標「戰力 ▲+N／▼−N」，可穿的在前、依戰力差由高到低；等級不足標 🔒 與原因。點候選開 ③。
+- **③ 裝備對比**（`openEquipCompare(id)`，`#equip-compare-modal`，z-index 110 蓋在裝備視窗與背包上）：左「使用中」右「選擇」，數值表 `eqStatMap`（新制：武器攻擊、四維＋敏捷；另有減傷、閃避、各屬性傷害）取聯集逐項比較，較好綠、較差紅，右邊附差值；
+  兩張卡都可展開「詞條／特效／孔位」（`formatEquipDetails`）。下方「穿上後變化」＝ `eqSimulate(slot, eq)`：**暫時把 `player.equipment[slot]` 換成該件、用遊戲公式算 `eqSnapshot()`、try/finally 還原**，
+  所以套裝、五行共鳴、詞條、特效、孔位、金丹等所有加成都算在內。列出有變化的：戰力、氣血、法力、物理／術法攻擊、減傷、閃避、暴擊、連擊、各屬性傷害（`a → b`）。
+  提醒：套裝件數變化、五行共鳴變化、本命五行變化、等級不足（「穿上」變灰）。「穿上」＝ `wearFromCompare()` → `equipItem()` → 提示「✅ 已穿上」→ `refreshEquipViews()`。
+- 背包的裝備卡片多一顆「🔍 對比身上 X」（bag.js），直接開 ③。
+- 試算成本：開裝備欄時每件背包裝備各試算一次（判斷 ▲ 與排序），背包上限 100 件，實測渲染約數毫秒。
+- **日後新增會影響角色數值的裝備欄位或加成**，只要走既有的 `getBonusTotals`／`getEquipBonus` 等函式，對比會自動算進去；若新增的加成讀的是快取，要確認試算時快取會跟著變（目前沒有裝備相關快取）。
