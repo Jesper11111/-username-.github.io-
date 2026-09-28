@@ -115,7 +115,8 @@ function combatTick() {
         let pool = FIELD_MONSTERS.filter(m => !isDarkMap || m.dark);
         for (let i = 0; i < count; i++) {
             let look = pool[Math.floor(Math.random() * pool.length)];
-            enemies.push({ hp: ms.hp, maxHp: ms.hp, attack: ms.atk,
+            let one = NUMERIC_V2 ? getMapMonsterStats(player.currentMap, true) : ms;   // 新制每隻各自擲階數與強度（numeric.js）
+            enemies.push({ hp: one.hp, maxHp: one.hp, attack: one.atk, nv2Lv: one.L,
                            name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
                            attrs: rollMonsterAttrs(), status: newStatus() });
         }
@@ -311,8 +312,9 @@ function fieldCombatRound() {
 
 // 妖獸的攻擊與氣血：預設 攻擊 = 難度 × 50、氣血 = 攻擊 × 10；地圖可用 monsterAtk／monsterHp 直接指定（config-maps.js）
 // 野外修士／暗殺者再乘上各自倍率；離線估算（save.js 的 estimateIdleCombat）也用這裡
-function getMapMonsterStats(map) {
-    if (NUMERIC_V2) return nv2MonsterStats(map);   // 新制：依地圖 nv2L 與同境界一般玩家計算（numeric.js）
+// roll = true（新制刷怪時）：每隻隨機階數與強度倍率；不給＝平均值
+function getMapMonsterStats(map, roll) {
+    if (NUMERIC_V2) return nv2MonsterStats(map, roll);   // 新制：地圖定境界、玩家定階數，× 強度倍率（numeric.js）
     let atk = typeof map.monsterAtk === 'number' ? map.monsterAtk : map.diff * 50;
     let hp = typeof map.monsterHp === 'number' ? map.monsterHp : map.diff * 500;
     return { atk, hp };

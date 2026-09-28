@@ -144,14 +144,17 @@ function updateCombatVisualPanel() {
         idleEnemyBar("🔍 索敵中");
         document.getElementById('battle-action-desc').innerText = `🔍 正在 ${player.currentMap.name} 探索四周...`;
     }
-    // 名牌右側的等級字（2026-09-28 血條改參考圖樣式）：野外妖獸＝地圖對應境界（config-maps.js 的 nv2L），心魔＝自己的境界
+    // 名牌右側的等級字（2026-09-28 血條改參考圖樣式）：野外妖獸＝目前這隻的境界階數（新制每隻各自的 nv2Lv，2026-09-29），
+    // 沒有 nv2Lv（修士、暗殺者、舊制）＝地圖對應境界（config-maps.js 的 nv2L）；心魔＝自己的境界
     const lvEl = document.getElementById('bf-enemy-lv');
     if (lvEl) {
         let lv = '';
         if (inTribulation && heartDemon) lv = (realms[player.realmIndex] || '') + '境';
         else if (!inBountyDuel && !player.currentMapIsSafe && respawnTimer <= 0 && enemies.length > 0) {
+            const cur = enemies.find(x => x.hp > 0) || enemies[0];
             const L = player.currentMap && player.currentMap.nv2L;
-            if (typeof L === 'number' && realms[Math.floor(L)]) lv = realms[Math.floor(L)] + '境';
+            if (cur && typeof cur.nv2Lv === 'number') lv = nv2LevelLabel(cur.nv2Lv);
+            else if (typeof L === 'number' && realms[Math.floor(L)]) lv = realms[Math.floor(L)] + '境';
         }
         if (lvEl.textContent !== lv) lvEl.textContent = lv;
     }

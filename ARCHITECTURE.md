@@ -28,7 +28,8 @@ images/               圖片素材
   towns/              城內場景圖（玩家提供，第 20 節）：tianxing-market.jpg 天星城坊市橫圖（1582×672）、
                       tianxing-market-portrait.jpg 手機直式（704×1520，9:19.4）、
                       npc-fengxi.png 亂星海第一大善人・風希人偶（252×400 透明 PNG，由玩家提供的插畫手動描邊去背）
-  maps/               修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
+  maps/               safe-zone.jpg 安全區（宗門、天南城、天星城）的戰場實況圖（config-maps.js 的 SAFE_ZONE_IMG，第 59 節；玩家提供 848×1264 縮成 480×715、88KB）；
+                      修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
   monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
                       righteous-cultivator.jpg 野外正道修士（config-merit.js 的 CULTIVATOR_IMGS，第 27、59 節；玩家提供 848×1264 直式縮成 480×715、77KB）、
@@ -1331,7 +1332,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002b`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002d`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2429,6 +2430,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     上蒼 9、不死山 10、神墟 11、仙陵 12、冥界 13、仙界戰場 14、萬界戰場 15、混沌初界 15.9。氣血 = 一般玩家普攻 × `hitsSame` 25；攻擊 = 一般玩家氣血 × `monAtkPct` 0.4%（1 位小數）；靈山大川另有 `nv2AtkMult: 0.7`（新手圖）。
     範例：靈山大川 氣血 180／攻擊 0.1、天南 449／0.3、混沌初界 1105／0.7。地圖卡片的「難度」改顯示「妖獸 氣血 X／攻擊 Y」（map.js 的 `getMapDifficultyText`）。
   - **使用者 2026-09-27 選定「少怪＋調息」**：每波 1～3 隻（`waveMin/waveMax`，舊制 1～5）；刷新等待的 10 秒內每秒回 `restHealPct` 10% 氣血與靈力（等於每波開打前補滿，狀態列顯示「調息回復中」）。
+    ⇒ 2026-09-29 改為每秒 3%，同時妖獸改為隨玩家階數、強度 1.5～3 倍（第 54 節「妖獸隨玩家階數」）。
     原本提議的攻擊 1.5% 實測太痛（同境界每小時 150 顆以上補血丹、最低剩 4% 血），且當時傷害會被捨去成 0（見下），改為 0.4%。
   - **小數傷害** `roundDmg()`（elements.js）：舊制照舊無條件捨去；新制保留 1 位小數（妖獸攻擊不到 1，捨去會讓減傷把傷害變 0）。`resolveHit`、`tickStatus`、gear.js 的 `applyGearDefense`／反震／首擊連鎖／連雷、鎮魔塔戰況與飄字都改用它。
   - **擊殺收益補償**：`combat.js` 的 `getKillRewardMult()`（舊制 = `KILL_REWARD_MULT`；新制 = `nv2KillRewardMult` =（刷新間隔 11 ＋ 2 × 一般玩家每隻回合數）÷ 2 ÷ 3，約 ×7.6～8.2）乘在每隻的經驗／靈石／聲望／熟練度／救僕從次數；
@@ -2591,6 +2593,22 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `numeric.js` 的 `nv2SuppressMult(map)`：gap＝地圖 `nv2L` −（玩家境界＋(階−1)/10），>0 時妖獸氣血 ×(1＋gap×`NV2.suppressHp` 1.0)、攻擊 ×(1＋gap×`NV2.suppressAtk` 1.2)，直接乘在 `nv2MonsterStats` 裡（刷怪、離線估算、地圖卡片都一致；`nv2KillRewardMult` 仍依一般玩家算，所以越級刷變慢、每小時收益下降）。
   實測（一般配置）：金丹10→煉虛 102 下殺一隻／62 下陣亡；元嬰1→化神 56／99；元嬰10→化神 28／246；同境界不變。地圖卡片會標「⚠️ 境界壓制：高你 X 個境界，氣血 ×A、攻擊 ×B」。
   搭配上面的地圖門檻（最多越 1 個大境界），剛突破時越級很吃力、修到該境界後期才能順利挑戰下一境界地圖。
+- **妖獸隨玩家階數＋強度 1.5～3 倍**（2026-09-29，版本 `20261002c`；使用者指定「玩家 1 階遇到 1～2 階、10 階遇到 10 階或下一境界 1 階，平均強度是玩家的 1.5～3 倍，玩家要大量補血」）：
+  - 原本妖獸強度只看地圖 `nv2L`，同一張圖 1 階和 10 階玩家遇到的一樣；每波之間調息每秒回 10%，同境界幾乎不用吃藥。
+  - 使用者選定：①**地圖定境界、玩家定階數**；②強度以**同階一般玩家**為基準（裝備仍有意義）；③**攻擊與氣血都放大**；④調息 `restHealPct` 10 → **3**（一波間約回 30%）。
+  - `numeric.js`：`nv2MonsterLevelAt(map, up)`＝玩家 L ＋ up，夾在 [地圖 `nv2L`, 地圖 `suit` 最高境界 + 0.9]；玩家境界 ≤ suit 最高境界時上限放寬為 +1.0（10 階遇到下一境界 1 階）。
+    越級（玩家 L < 地圖 nv2L）固定為地圖 nv2L，境界壓制照舊（`nv2SuppressMult` 仍以地圖 nv2L 對玩家計算）。`nv2MonsterLevel(map, roll)`：roll 時 `NV2.monStageUp`（50%）機率高一階，否則取平均。
+    `nv2MonsterStrMult(roll)`：隨機 `monStrMin`～`monStrMax`（1.5～3），平均 2.25。`nv2MonsterStats(map, roll)` 氣血、攻擊都以妖獸自己的 L 算再 × 倍率，回傳多了 `L`、`mult`。
+    `nv2LevelLabel(L)`＝「築基5階」；`nv2MonsterLevelRange(map)` 給地圖卡片。
+  - `combat.js`：新制刷怪時每隻各自 `getMapMonsterStats(map, true)`，妖獸物件多 `nv2Lv`；野外修士／暗殺者仍用該波的平均值 × 自己的倍率（約 3.4 倍）。
+    `ui.js` 戰場名牌等級字改顯示目前這隻的 `nv2Lv`（「築基6階」），修士與舊制仍顯示地圖境界。`map.js` 地圖卡片：「妖獸 築基5階～築基6階（強度 1.5～3 倍）｜平均 氣血／攻擊」。
+  - **收益不變**：`nv2TypRoundsPerKill` 乘上平均強度倍率，擊殺收益補償（`nv2KillRewardMult`）、遭遇機率補償、收益速度上限都跟著調，每小時經驗／靈石／聲望維持 `realmPacing`（每隻變慢、每隻給得多）。
+  - 模擬（每回合 1 秒、每波 1～3 隻、血量低於 50% 就喝藥補滿；一般＝同階一般玩家、無減傷閃避，好裝＝攻 ×2、減傷 30、閃避 20）：
+    一般玩家每隻約 55～60 回合、每小時擊殺約 60 隻，每小時失血約 **30～37 倍氣血上限**；調息約回 9 倍，其餘約 20～25 倍靠丹藥，約等於每小時 220 顆培元丹（4.4 萬靈石）或 440 顆凝血草（2.2 萬）。
+    好裝每隻約 32 回合、失血約 15～20 倍。各境界比例相近。
+  - ⚠️ 待決定：①前期丹藥花費接近甚至超過收入（靈山大川每小時約 2.3 萬靈石），凡人／煉氣可能入不敷出；
+    ②離線估算（`nv2EstimateIdleCombat`）一波傷害常超過氣血上限，沒有在該圖線上撐過 `IDLE_PROVEN_SECONDS` 的玩家，離線時會被送回宗門；離線也不扣丹藥。
+  - 驗證（本機）：築基 5 階在深淵險地刷出築基 5～6 階、名牌與地圖卡片正確；實際戰鬥 20 秒正常扣血；Console 無錯誤。
 - 修仙地圖視窗頂端「🎯 金丹適合練功：上古遺跡」；地圖卡片「🎯 適合境界：…」，符合時標題加「⭐ 推薦練功」。
 - ⚠️ 使用者表示**之後再細分區域**：目前煉虛～渡劫只有鬼谷八荒、真仙有四張，且新制 `nv2L`（第 52 節）與 `suit` 不一致（例：荒古禁地 nv2L 7 ≈ 合體，suit 是仙人初境），分區時一併整理。
 
@@ -2729,7 +2747,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
   **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
   `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
-  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
+  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；
+  **安全區**（2026-09-29，版本 `20261002d`）顯示 `SAFE_ZONE_IMG`（config-maps.js，宗門景色；個別安全地圖可加 `battleImg`／`battleImgPos` 蓋過），同時 `.bf-scene` 加 `.bf-safe` 隱藏「VS」（渡劫、懸賞對決除外）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
   敵方飄字落在右半（暴擊固定在 76～79%，避開中央 VS）、受傷字落在左半。
   上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。
   舊的 id（`battle-player-name`、`battle-player-hp`、`battle-enemy-title/icon/info`、`battle-action-desc`）都保留，`ui.js` 的 `updateCombatVisualPanel()` 照舊填字，另外呼叫 `setBattleBar()` 更新血條。

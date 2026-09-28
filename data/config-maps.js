@@ -63,6 +63,10 @@ const maps = [
     ]}
 ];
 
+// 安全區（宗門、天南城、天星城）在戰場實況右半邊顯示的圖（battle-fx.js 的 getBattleFoeImg）；
+// 個別安全地圖可在自己的物件加 battleImg／battleImgPos 蓋過（目前沒有）
+const SAFE_ZONE_IMG = { img: "images/maps/safe-zone.jpg", pos: "50% 45%" };   // 2026-09-29 玩家提供：雲霧峰頂的宗門殿宇與瀑布
+
 // 每擊殺一隻妖獸獲得的聲望：依地圖分類（maps 的索引）隨機 1 ~ 上限，難度越高聲望越多。
 // 安全區（索引 0）不會戰鬥，沒有對應值；找不到時退回 1 點。
 const REPUTATION_MAX_BY_MAP_CATEGORY = {
