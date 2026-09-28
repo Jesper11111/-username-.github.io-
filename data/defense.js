@@ -53,14 +53,15 @@ const DefenseBattle = (() => {
     function waveEnemy(w) {
         const t = (w - 1) / Math.max(1, DEFENSE_TOTAL_WAVES - 1), lerp = ([a, b]) => a + (b - a) * t;
         const boss = w % DEFENSE_BOSS_EVERY === 0, E = DEFENSE_ENEMY;
-        const atk = waveAtk(w) * (boss ? E.bossAtk : 1);
+        const grow = defenseWaveMult(w);   // 新制每波額外成長（config-defense.js）
+        const atk = waveAtk(w) * grow * (boss ? E.bossAtk : 1);
         const DE = NUMERIC_V2 ? NV2.defenseEnemy : E;   // 新制減傷／閃避較平緩（config-numeric.js）
         const attrs = { def: lerp(DE.def), eva: lerp(DE.eva), ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
                         element: wuxingElements[(w * 7) % wuxingElements.length] };
         attrs[MONSTER_AFFIX_TYPES[w % MONSTER_AFFIX_TYPES.length]] = lerp(E.affix);
         // 新制：氣血 = 攻擊 × 3.6（一般玩家的比例）× defenseHpScale，模擬時玩家氣血同樣放大（simulateWave）
         const hpPerAtk = NUMERIC_V2 ? NV2.defenseHpPerAtk * NV2.defenseHpScale : E.hpPerAtk;
-        return { atk, hp: waveAtk(w) * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss };
+        return { atk, hp: waveAtk(w) * grow * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss };
     }
     // 以玩家當下真實數值，用遊戲的 resolveHit／tickStatus 在背後打一場（不影響玩家實際氣血與狀態）
     function simulateWave(w) {
@@ -220,7 +221,8 @@ const DefenseBattle = (() => {
     function setWave(w) {
         D.wave = w; spec = waveSpec(w);
         spec.result = simulateWave(w);                  // 這一波守不守得住（以玩家當下數值，在背後打一場）
-        spec.realmLabel = waveRealmLabel(w);
+        const grow = defenseWaveMult(w);                // 新制每波額外成長：標籤 = 基準境界＋倍率
+        spec.realmLabel = waveRealmLabel(w) + (grow >= 1.05 ? `・妖潮 ×${grow.toFixed(1)}` : '');
         // 這一波開打時的數值（守住後記入通關紀錄、送守城排行榜審核；扣掉禁術等暫時增益，與戰力榜同一標準）
         spec.snap = { power: getRankPower(), atk: getRankAttack(), realm: player.realmIndex, stage: player.stage, level: player.level };
         $('defense-vwrap').style.filter = spec.th.filter;

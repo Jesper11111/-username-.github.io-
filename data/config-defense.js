@@ -116,4 +116,10 @@ function defenseWaveAtk(w) {
     const a = miles[miles.length - 2], b = miles[miles.length - 1];
     return b.a * Math.pow(b.a / a.a, (w - b.w) / (b.w - a.w));
 }
+// 新制每波額外成長倍率（config-numeric.js 的 defenseWaveGrowth）：妖潮攻擊與氣血都乘上，舊制 = 1
+// defenseWaveAtk 仍是「同境界一般玩家」的基準（強度標籤、靈石獎勵用它），實際妖潮 = 基準 × 本倍率
+function defenseWaveMult(w) {
+    if (typeof NUMERIC_V2 === 'undefined' || !NUMERIC_V2 || !NV2.defenseWaveGrowth) return 1;
+    return Math.pow(NV2.defenseWaveGrowth, Math.max(0, w - 1));
+}
 

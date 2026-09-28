@@ -85,6 +85,9 @@ const NV2 = {
     //   妖潮減傷／閃避改用較平緩的 defenseEnemy（舊制 15→35／8→20，新制 100 波整體強度只差約 2 倍，照舊會蓋過境界差距）
     defenseHpPerAtk: 3.6, defenseHpScale: 5,
     defenseEnemy: { def: [15, 25], eva: [8, 14] },
+    //   每波額外成長（2026-09-29，config-defense.js 的 defenseWaveMult）：第 w 波攻擊與氣血 × defenseWaveGrowth^(w−1)（第 100 波約 ×4.4）。
+    //   沒有這一項時 100 波只差約 2 倍，煉虛 1 階好裝就能全破；1.015 時全破約需混沌道祖頂配（對照表見 ARCHITECTURE.md 第 49 節）
+    defenseWaveGrowth: 1.015,
     // 鎮魔塔 BOSS（zhenmo.js 的 bossStats）：氣血 = 同強度一般玩家每回合輸出（普攻 × 1.3，扣 BOSS 減傷閃避）× bossRounds；攻擊 = 一般玩家氣血（含增益）÷ bossHitsToKill × 樓層 atkMult
     bossRounds: 300, bossHitsToKill: 400, bossMaxRounds: 600,
     // 靈寶閣寶物（numeric.js 的 nv2LingbaoStats／nv2WeaponAtkOf，2026-09-27 使用者要求「增加」）：

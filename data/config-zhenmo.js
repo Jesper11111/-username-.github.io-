@@ -84,5 +84,15 @@ const ZHENMO_BOSSES = {
         skills: ["青瞑龍爪", "雷珠轟頂", "蒼龍擺尾", "風雷龍吟"],
         icon: "🐉", flash: "rgba(56, 189, 248, 0.32)",   // 青色雷光
         rewards: { coinMinutes: 20, merit: [250, 500], shards: [6, 10], iron: [8, 14] }   // 第 5 層關卡：獎勵加碼
+    },
+    6: {
+        name: "黑暗法老王", title: "封印神王", img: "images/zhenmo/boss-pharaoh.jpg", imgPos: "50% 30%",   // 玩家提供直式（687×1024，2:3；掙斷鎖鏈的黃金法老，頭在上方約 30%）
+        realm: 6, stage: 6, atkMult: 1,     // 煉虛 6 階（每層一階）
+        hpPerAtk: 300,
+        def: 30, eva: 5, affix: "fire", affixVal: 18, element: "土",   // 黃金神軀：減傷高、身形笨重（閃避低）；胸前聖符射出烈日神光（燒傷）；沙漠古陵屬土
+        intro: "被萬道鎖鏈封印於古陵深處的黃金神王，如今掙斷枷鎖、聖符迸發烈日神光，所過之處石柱崩裂、黃沙蔽日。",
+        skills: ["烈日神光", "斷鎖神拳", "法老怒焰", "黃沙滅界"],
+        icon: "☀️", flash: "rgba(250, 204, 21, 0.32)",   // 金色烈日光
+        rewards: { coinMinutes: 15, merit: [170, 340], shards: [4, 8], iron: [6, 11] }
     }
 };
