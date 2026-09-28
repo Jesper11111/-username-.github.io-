@@ -32,7 +32,7 @@ images/               圖片素材
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
   monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）
   equip/              角色裝備欄中間的人物正面圖（第 60 節）：hero-male.jpg 520×592／hero-female.jpg 520×459（玩家提供，縮小）
-  battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（玩家提供，縮成 480 寬，480×531／480×439），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
+  battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（2026-09-28 版本 `20260930w` 換成玩家提供的「站在飛劍上的背影」新圖：男 480×531、女 480×594（女圖原本四角有圓形玻璃框，裁掉兩側與上緣）；舊圖留在 hero-male-v1.jpg／hero-female-v1.jpg；版本 `20260930z` 起玩家要求「人物取完整、露出整把武器、貼左邊」：`.bf-hero` 改 `object-fit: contain` 靠左下、寬 44%（斜切線最左點，劍尖不會被切），上緣與右緣用 mask 淡出，後面墊 `#bf-hero-bg`＝同一張圖模糊放大（`updateBattleHero` 設背景）；呼吸動畫改為只上下浮動、前衝與閃避改為只平移，不再放大以免切到頭或劍尖），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
   frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
@@ -1321,7 +1321,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930t`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930z`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2691,6 +2691,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **我方頭像不套火焰圓環**（版本 `20260930p`；玩家反映手機版女角頭像被蓋住）：原本我方徽章也套 `emblem.jpg` 火焰圓環，頭像只剩 34px，玩家若裝了頭像光環（frames），兩層框疊在一起把臉擠掉。
   改為 `.bf-player .bf-emblem::before { display: none }`；我方頭像放大到 60px（手機 54px），光環照常顯示。
   同一版稍後（`20260930t`，玩家反映怪物頭像也被蓋住）敵方也拿掉火焰圓環：`#battle-enemy-icon`（`.monster-avatar`）改為 58px（手機 52px）紅金框圓頭像，`updateBattleFoe()` 有怪物圖時設為背景圖（`.has-img` 隱藏 emoji），沒有圖時顯示 emoji。`emblem.jpg` 目前已不使用。
+- **閃避動作**（版本 `20260930v`，玩家要求）：我閃掉敵方攻擊（`battleFxHurt` 收到 dodge，多隻怪時部分閃掉也算）→ 立繪 `.bf-hero.bf-evade` 往左閃；敵方閃掉我的攻擊（`battleFxHit` 的 dodge → kind `miss`）→ 敵方圖 `.bf-foe.bf-evade` 往右閃。
+  動作是位移 16%＋半透明＋模糊（殘影感）再回位 0.45 秒；閃避優先於受擊動作（`restartAnim(el, cls, clear)` 第三參數同時移除衝突的 class）。
+  ⚠️ 立繪同時有無限循環的 `bf-breathe`，多個 animation 改同一個 transform 時**清單後面的優先**，所以 `.bf-evade`／`.bf-lunge` 都寫成 `animation: bf-breathe …, bf-evade-l …`（之前出手前衝寫反了，一直沒生效，這版一併修正）。
 - **飄字落點＋屬性色＋暴擊血條**（版本 `20260930s`；玩家反映傷害被蓋住、要把傷害放在受傷的人物上、做參考圖那種暴擊效果、冰藍毒綠火紅）：
   - 落點：打敵人的字在右半敵方圖上、受傷的字在左半立繪上（`spawnBattleFloat`）；同一批依 `slot` 分到不同高度（`ROWS`），暴擊固定在敵方中央偏上；`.bf-float` z-index 6 蓋過閃光／紅框。
   - 屬性色：`battleFxElemOf(tags)` 依 `BATTLE_FX_ELEMS` 優先序（雷＞冰＞火＞毒＞金＞風＞聖光＞暗蝕）取 `resolveHit` 標籤，加 `.bf-el-*`（CSS 變數 `--fx-c1/c2/c3/glow`）與小圖示；受傷字無屬性時為紅、有屬性時用屬性色。

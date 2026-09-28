@@ -40,6 +40,8 @@ function battleFxHit(dmg, tags) {
 function battleFxHurt(dmg, dodged, tags) {
     if (!battleFxActive()) return;
     if (dodged) { battleFxQueue.push({ kind: "dodge", side: "hero" }); return; }
+    // 多隻妖獸時：閃掉其中幾隻、仍被其他隻打中 → 同時顯示「閃避」（立繪往左閃）與受傷數字
+    if (tags && tags.includes("dodge")) battleFxQueue.push({ kind: "dodge", side: "hero" });
     if (dmg > 0) battleFxQueue.push({ kind: "hurt", side: "hero", dmg, elem: battleFxElemOf(tags) });
 }
 
@@ -89,17 +91,21 @@ function flushBattleFx() {
     } else if (out.some(e => e.kind === "heavy")) {
         restartAnim(document.getElementById('bf-enemy-spark'), 'on');
     }
-    if (out.some(e => e.side === "foe" && e.kind !== "miss")) {
-        restartAnim(document.getElementById('bf-hero'), 'bf-lunge');
-        restartAnim(document.getElementById('bf-foe'), 'bf-foe-hit');   // 敵方受擊閃白＋後退
-    }
+    const heroEl = document.getElementById('bf-hero'), foeEl = document.getElementById('bf-foe');
+    const foeHit = out.some(e => e.side === "foe" && e.kind !== "miss");
+    if (foeHit) restartAnim(heroEl, 'bf-lunge', ['bf-evade']);
+    // 閃避動作（2026-09-28 玩家要求）：敵方閃掉我的攻擊 → 敵方圖往右閃；我閃掉敵方攻擊 → 立繪往左閃。閃避優先於受擊動作
+    if (out.some(e => e.kind === "miss")) restartAnim(foeEl, 'bf-evade', ['bf-foe-hit']);
+    else if (foeHit) restartAnim(foeEl, 'bf-foe-hit', ['bf-evade']);   // 敵方受擊閃白＋後退
+    if (out.some(e => e.kind === "dodge")) restartAnim(heroEl, 'bf-evade', ['bf-lunge']);
     if (out.some(e => e.side === "hero" && (e.kind === "hurt" || e.kind === "dot"))) restartAnim(document.getElementById('bf-hurt'), 'on');
 }
 
-// 移除再加回 class，讓 CSS 動畫重播
-function restartAnim(el, cls) {
+// 移除再加回 class，讓 CSS 動畫重播；clear＝同時移除的其他動畫 class（例：閃避與受擊不同時播）
+function restartAnim(el, cls, clear) {
     if (!el) return;
     el.classList.remove(cls);
+    if (clear) clear.forEach(c => el.classList.remove(c));
     void el.offsetWidth;
     el.classList.add(cls);
 }
@@ -192,5 +198,7 @@ function updateBattleHero() {
         img.src = BATTLE_HERO_IMG[g];
         img.dataset.g = g;
         img.className = 'bf-hero bf-hero-' + g;
+        const bg = document.getElementById('bf-hero-bg');   // 立繪完整顯示（contain）後右側的空白：同一張圖模糊放大墊底
+        if (bg) bg.style.backgroundImage = `url("${BATTLE_HERO_IMG[g]}")`;
     }
 }
