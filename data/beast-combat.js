@@ -77,20 +77,45 @@ function settleOfflineBeastUpkeep(seconds) {
 }
 
 // 靈寵第 slot 格選了 element 屬性時學到的技能
-function getBeastSkill(element, slot) {
-    return beastSkillTree[element] ? beastSkillTree[element][slot] : null;
+// 技能欄存的是技能 id（config-beasts.js 的 beastSkills）；舊版五行字串由 save.js 的 migrateBeastSkills 清空
+function getBeastSkill(id) {
+    return id ? beastSkillById[id] || null : null;
 }
 
+const beastPct = v => `${Math.round(v * 100)}%`;
+function describeBeastBuff(key, v) {
+    if (key === 'atk') return `攻擊 ×${v}`;
+    if (key === 'reduce' || key === 'lifesteal') return `${BEAST_BUFF_LABELS[key]} ${beastPct(v)}`;
+    if (key === 'crit' || key === 'combo') return `${BEAST_BUFF_LABELS[key]} +${v}%`;
+    return `${BEAST_BUFF_LABELS[key]} +${v}`;
+}
 function describeBeastSkill(sk) {
-    if (sk.kind === "single") return `單體傷害 ${Math.round(sk.mult * 100)}% 攻擊力`;
-    if (sk.kind === "aoe") return `群體傷害 每隻 ${Math.round(sk.mult * 100)}% 攻擊力`;
-    if (sk.kind === "buff") return `攻擊力 ×${sk.mult}，持續 ${sk.duration} 回合`;
-    if (sk.kind === "shield") return `受到傷害 -${Math.round(sk.reduce * 100)}%，持續 ${sk.duration} 回合`;
-    let parts = [];
-    if (sk.heal) parts.push(`立即回復 ${Math.round(sk.heal * 100)}% 氣血`);
-    if (sk.mpHeal) parts.push(`${Math.round(sk.mpHeal * 100)}% 靈力`);
-    if (sk.regen) parts.push(`每回合回復 ${Math.round(sk.regen * 100)}% 氣血 ×${sk.regenTurns} 回合`);
-    return parts.join('、');
+    const p = [];
+    if (sk.cat === 'control') {
+        if (sk.freeze) p.push(`${sk.aoe ? '全體' : ''}凍結 ${sk.freeze} 回合`);
+        if (sk.silence) p.push(`封印武學 ${sk.silence} 回合`);
+        if (sk.weaken) p.push(`敵人攻擊 −${beastPct(sk.weaken)} ${sk.turns} 回合`);
+        if (sk.vuln) p.push(`敵人受到傷害 +${beastPct(sk.vuln)} ${sk.turns} 回合`);
+    } else if (sk.cat === 'attack') {
+        p.push(`${sk.aoe ? '全體各' : '單體'}造成物攻 ${beastPct(sk.mult)} 傷害`);
+        if (sk.splash) p.push(`再對全體造成 ${beastPct(sk.splash)}`);
+        if (sk.burn) p.push(`燒傷 ${sk.burn} 層`);
+        if (sk.poison) p.push(`中毒 ${sk.poison} 層`);
+        if (sk.execute) p.push('目標氣血低於 30% 時傷害 ×2');
+        if (sk.drain) p.push(`傷害的 ${beastPct(sk.drain)} 回復主人氣血`);
+    } else if (sk.cat === 'buff') {
+        p.push(Object.keys(sk.effects).map(k => describeBeastBuff(k, sk.effects[k])).join('、') + `，持續 ${sk.turns} 回合`);
+    } else if (sk.cat === 'heal') {
+        if (sk.heal) p.push(`回復氣血 ${beastPct(sk.heal)}${sk.emergency ? `（主人氣血低於 40% 時 ${beastPct(sk.emergency)}）` : ''}`);
+        if (sk.mp) p.push(`回復靈力 ${beastPct(sk.mp)}`);
+        if (sk.regen) p.push(`每回合回血 ${beastPct(sk.regen)} ×${sk.turns} 回合`);
+        if (sk.mpRegen) p.push(`每回合回靈 ${beastPct(sk.mpRegen)} ×${sk.turns} 回合`);
+    } else if (sk.cat === 'cleanse') {
+        p.push(`解除${sk.remove.map(k => BEAST_DEBUFF_LABELS[k]).join('、')}`);
+        if (sk.immune) p.push(`之後 ${sk.immune} 回合內持續淨化`);
+        if (sk.heal) p.push(`回復氣血 ${beastPct(sk.heal)}`);
+    }
+    return p.join('，');
 }
 
 // 與人物共用經驗來源；等級不可超過人物等級，已陣亡或休息中的靈寵不累積經驗
@@ -120,59 +145,173 @@ function gainBeastExp(amount) {
 function killAllBeasts() {
     let died = player.beasts.filter(b => b.alive);
     died.forEach(b => { b.alive = false; });
-    petBuffTimer = 0; petShieldTimer = 0; petRegenTimer = 0;
+    petBuffTimer = 0; petShieldTimer = 0; petRegenTimer = 0; petFx = {};
     if (died.length > 0) {
         let names = died.map(b => { let d = beastData.find(x => x.id === b.id); return d ? d.name : b.id; });
         addLog(`🐾 靈寵【${names.join('、')}】隨主人一同陣亡！需至靈獸園以 ${BEAST_REVIVE_COST_CORE} 獸丹復活。`, "combat");
     }
 }
 
-// 受到的傷害套用土屬性減傷
+// ==================== 施加在主人身上的效果 ====================
+// 受到的傷害套用「受傷減少」（靈寵增益、仙法守護、神器共用 petShield*）
 function applyPetDamageReduction(dmg) {
     return petShieldTimer > 0 ? dmg * (1 - petShieldRate) : dmg;
 }
+// 其他增益的目前數值（沒有或已結束 = 0）：elements.js 的 getPlayerCombatAttrs（def／eva／crit／hit／armorPen）、
+// combat.js 的 playerAttackTurn（combo、lifesteal）
+function petFxVal(key) {
+    const e = petFx[key];
+    return e && e.t > 0 ? e.v : 0;
+}
+// 同種類取較高值、持續時間取較長（不同種類各自存在，所以多隻靈寵的增益可以疊在一起）
+function addPetBuff(key, v, turns) {
+    if (key === 'atk') {
+        petBuffMult = petBuffTimer > 0 ? Math.max(petBuffMult, v) : v;
+        petBuffTimer = Math.max(petBuffTimer, turns);
+    } else if (key === 'reduce') {
+        petShieldRate = petShieldTimer > 0 ? Math.max(petShieldRate, v) : v;
+        petShieldTimer = Math.max(petShieldTimer, turns);
+    } else {
+        const e = petFx[key];
+        petFx[key] = e && e.t > 0 ? { v: Math.max(e.v, v), t: Math.max(e.t, turns) } : { v, t: turns };
+    }
+}
 
-// 每回合由 combatTick()／tribulationTick() 呼叫；targets 為本回合可攻擊的目標（需有 hp 屬性）
+// 主人身上的負面狀態：poison／burn／freeze（playerStatus，elements.js）、silence／weaken／armor（懸賞對決，bounty.js）
+function playerHasDebuff(k) {
+    if (k === 'poison') return !!(playerStatus.poison && playerStatus.poison.stacks > 0);
+    if (k === 'burn') return !!(playerStatus.burn && playerStatus.burn.stacks > 0);
+    if (k === 'freeze') return playerStatus.frozen > 0;
+    if (k === 'silence') return duelSilenceTimer > 0;
+    if (k === 'weaken') return duelWeakenTimer > 0;
+    if (k === 'armor') return duelArmorTimer > 0;
+    return false;
+}
+// 清除指定的負面狀態，回傳實際清掉的名稱
+function removePlayerDebuffs(list) {
+    const removed = list.filter(playerHasDebuff);
+    removed.forEach(k => {
+        if (k === 'poison') playerStatus.poison = null;
+        else if (k === 'burn') playerStatus.burn = null;
+        else if (k === 'freeze') playerStatus.frozen = 0;
+        else if (k === 'silence') duelSilenceTimer = 0;
+        else if (k === 'weaken') { duelWeakenTimer = 0; duelWeakenMult = 1; }
+        else if (k === 'armor') duelArmorTimer = 0;
+    });
+    return removed.map(k => BEAST_DEBUFF_LABELS[k]);
+}
+// 每回合主人行動前呼叫（野外 fieldCombatRound、懸賞 bountyDuelTick、渡劫 tribulationTick）：淨化技能的持續淨化
+function petPreTurn() {
+    const im = petFx.immune;
+    if (!im || im.t <= 0) return;
+    const removed = removePlayerDebuffs(im.v);
+    if (removed.length) addLog(`🌸 靈寵的淨化之力化解了${removed.join('、')}！`, "heal");
+}
+
+// ==================== 施加在敵人身上的效果（t.petCc）====================
+function petCcOf(t) { if (!t.petCc) t.petCc = { weakT: 0, weakV: 0, silenceT: 0, vulnT: 0, vulnV: 0, freezeCd: 0 }; return t.petCc; }
+// 敵人攻擊倍率（被削弱時 < 1）：combat.js 妖獸回合、bounty.js 對手出手、tribulation.js 心魔出手
+function petEnemyAtkMult(t) { return t && t.petCc && t.petCc.weakT > 0 ? 1 - t.petCc.weakV : 1; }
+// 敵人是否被封印武學：bounty.js、tribulation.js 擲武學前檢查
+function petIsSilenced(t) { return !!(t && t.petCc && t.petCc.silenceT > 0); }
+// 敵人受到的傷害倍率（破綻）：combat.js 的 hitTarget 與靈寵攻擊
+function petVulnMult(t) { return t && t.petCc && t.petCc.vulnT > 0 ? 1 + t.petCc.vulnV : 1; }
+
+// ==================== 每回合協助 ====================
+// 依戰況挑招：主人氣血 < 50% 優先治療、身上有可解的負面狀態優先淨化；其餘隨機（治療只在未滿血、淨化只在有狀態時才列入）
+function pickBeastSkill(learned, living) {
+    const hpRatio = player.hp / Math.max(1, player.maxHp), mpRatio = player.mp / Math.max(1, player.maxMp);
+    const heals = learned.filter(s => s.cat === 'heal');
+    const cleans = learned.filter(s => s.cat === 'cleanse' && s.remove.some(playerHasDebuff));
+    if (hpRatio < 0.5) {
+        const h = heals.filter(s => s.heal || s.regen);
+        if (h.length) return h[Math.floor(Math.random() * h.length)];
+    }
+    if (cleans.length) return cleans[Math.floor(Math.random() * cleans.length)];
+    const pool = learned.filter(s => {
+        if (s.cat === 'cleanse') return false;
+        if (s.cat === 'heal') return ((s.heal || s.regen) && hpRatio < 0.85) || ((s.mp || s.mpRegen) && mpRatio < 0.6);
+        if (s.cat === 'control' || s.cat === 'attack') return living.length > 0;
+        return true;
+    });
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+
+function castBeastSkill(sk, who, living) {
+    const dmgBase = () => getPhysAttack() * (1 + gearFx("獸魂"));   // 獸魂（裝備特效，gear.js）
+    if (sk.cat === 'attack') {
+        const hit = (t, mult) => {
+            let d = dmgBase() * mult * petVulnMult(t);
+            if (sk.execute && t.hp < (t.maxHp || t.hp) * 0.3) d *= 2;
+            d = roundDmg(d);   // 新制保留 1 位小數
+            t.hp -= d;
+            if (sk.burn && t.status) t.status.burn = addDotStack(t.status.burn, BURN_MAX_STACKS, BURN_TURNS, getPhysAttack() * BURN_RATE);
+            if (sk.poison && t.status) for (let i = 0; i < sk.poison; i++) t.status.poison = addDotStack(t.status.poison, POISON_MAX_STACKS, POISON_TURNS, getPhysAttack() * POISON_RATE);
+            return d;
+        };
+        let total = 0;
+        (sk.aoe ? living : [living[0]]).forEach(t => { total += hit(t, sk.mult); });
+        if (sk.splash) living.forEach(t => { if (t.hp > 0) total += hit(t, sk.splash); });
+        if (sk.drain && total > 0) player.hp = Math.min(player.maxHp, player.hp + total * sk.drain);
+        addLog(`${who} 施展【${sk.name}】，造成 ${total.toWan()} 點${sk.aoe || sk.splash ? '群體' : ''}傷害！`, "skill");
+    } else if (sk.cat === 'control') {
+        const parts = [];
+        (sk.aoe ? living : [living[0]]).forEach(t => {
+            const cc = petCcOf(t);
+            if (sk.freeze && t.status) {
+                if (cc.freezeCd <= 0) { t.status.frozen = Math.max(t.status.frozen || 0, sk.freeze); cc.freezeCd = sk.freeze + BEAST_FREEZE_COOLDOWN; }
+                else if (!sk.aoe) parts.push('（目標剛解凍，暫時凍不住）');
+            }
+            if (sk.silence) cc.silenceT = Math.max(cc.silenceT, sk.silence);
+            if (sk.weaken) { cc.weakV = cc.weakT > 0 ? Math.max(cc.weakV, sk.weaken) : sk.weaken; cc.weakT = Math.max(cc.weakT, sk.turns); }
+            if (sk.vuln) { cc.vulnV = cc.vulnT > 0 ? Math.max(cc.vulnV, sk.vuln) : sk.vuln; cc.vulnT = Math.max(cc.vulnT, sk.turns); }
+        });
+        addLog(`${who} 施展【${sk.name}】，${describeBeastSkill(sk)}${parts.join('')}！`, "skill");
+    } else if (sk.cat === 'buff') {
+        Object.keys(sk.effects).forEach(k => addPetBuff(k, sk.effects[k], sk.turns));
+        addLog(`${who} 施展【${sk.name}】，主人${describeBeastSkill(sk)}！`, "skill");
+    } else if (sk.cat === 'heal') {
+        const low = player.hp < player.maxHp * 0.4;
+        const heal = sk.emergency && low ? sk.emergency : sk.heal;
+        if (heal) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * heal);
+        if (sk.mp) player.mp = Math.min(player.maxMp, player.mp + player.maxMp * sk.mp);
+        if (sk.regen) { petRegenRate = petRegenTimer > 0 ? Math.max(petRegenRate, sk.regen) : sk.regen; petRegenTimer = Math.max(petRegenTimer, sk.turns); }
+        if (sk.mpRegen) addPetBuff('mpRegen', sk.mpRegen, sk.turns);
+        addLog(`${who} 施展【${sk.name}】，${describeBeastSkill(sk)}${sk.emergency && low ? '（護主！）' : ''}！`, "heal");
+    } else if (sk.cat === 'cleanse') {
+        const removed = removePlayerDebuffs(sk.remove);
+        if (sk.immune) petFx.immune = { v: sk.remove, t: Math.max((petFx.immune && petFx.immune.t) || 0, sk.immune) };
+        if (sk.heal) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * sk.heal);
+        addLog(`${who} 施展【${sk.name}】，${removed.length ? `解除了${removed.join('、')}` : '靈光護體'}${sk.immune ? `，${sk.immune} 回合內持續淨化` : ''}！`, "heal");
+    }
+}
+
+// 每回合由 fieldCombatRound／bountyDuelTick／tribulationTick 呼叫；targets 為本回合可攻擊的目標（需有 hp 屬性）
 function petAssistTick(targets) {
+    // 主人身上的效果倒數
     if (petBuffTimer > 0) petBuffTimer--;
     if (petShieldTimer > 0) petShieldTimer--;
     if (petRegenTimer > 0) {
         petRegenTimer--;
         player.hp = Math.min(player.maxHp, player.hp + player.maxHp * petRegenRate);
     }
+    if (petFxVal('mpRegen')) player.mp = Math.min(player.maxMp, player.mp + player.maxMp * petFxVal('mpRegen'));
+    Object.keys(petFx).forEach(k => { if (petFx[k].t > 0) petFx[k].t--; });
+    // 敵人身上的效果倒數
+    targets.forEach(t => {
+        const cc = t.petCc;
+        if (!cc) return;
+        ['weakT', 'silenceT', 'vulnT', 'freezeCd'].forEach(k => { if (cc[k] > 0) cc[k]--; });
+    });
 
     player.beasts.forEach(b => {
         if (!isBeastActive(b)) return;
-        let learned = b.skills.map((elem, slot) => elem ? getBeastSkill(elem, slot) : null).filter(Boolean);
+        const learned = b.skills.map(getBeastSkill).filter(Boolean);
         if (learned.length === 0 || Math.random() >= BEAST_SKILL_CHANCE) return;
-
-        let sk = learned[Math.floor(Math.random() * learned.length)];
-        let info = beastData.find(d => d.id === b.id);
-        let who = `🐾 ${info ? info.name : b.id}`;
-        let living = targets.filter(t => t.hp > 0);
-
-        if (sk.kind === "single" || sk.kind === "aoe") {
-            if (living.length === 0) return;
-            let dmg = roundDmg(getPhysAttack() * sk.mult * (1 + gearFx("獸魂")));   // 獸魂（裝備特效，gear.js）；新制保留 1 位小數
-            if (sk.kind === "aoe") living.forEach(t => t.hp -= dmg);
-            else living[0].hp -= dmg;
-            addLog(`${who} 施展【${sk.name}】，造成 ${dmg.toWan()} 點${sk.kind === "aoe" ? "群體" : ""}傷害！`, "skill");
-        } else if (sk.kind === "buff") {
-            petBuffMult = petBuffTimer > 0 ? Math.max(petBuffMult, sk.mult) : sk.mult;
-            petBuffTimer = Math.max(petBuffTimer, sk.duration);
-            addLog(`${who} 施展【${sk.name}】，主人攻擊力提升至 ×${petBuffMult}！`, "skill");
-        } else if (sk.kind === "shield") {
-            petShieldRate = petShieldTimer > 0 ? Math.max(petShieldRate, sk.reduce) : sk.reduce;
-            petShieldTimer = Math.max(petShieldTimer, sk.duration);
-            addLog(`${who} 施展【${sk.name}】，主人受到的傷害降低 ${Math.round(petShieldRate * 100)}%！`, "skill");
-        } else if (sk.kind === "heal") {
-            if (sk.heal) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * sk.heal);
-            if (sk.mpHeal) player.mp = Math.min(player.maxMp, player.mp + player.maxMp * sk.mpHeal);
-            if (sk.regen) {
-                petRegenRate = petRegenTimer > 0 ? Math.max(petRegenRate, sk.regen) : sk.regen;
-                petRegenTimer = Math.max(petRegenTimer, sk.regenTurns);
-            }
-            addLog(`${who} 施展【${sk.name}】，${describeBeastSkill(sk)}！`, "heal");
-        }
+        const living = targets.filter(t => t.hp > 0);
+        const sk = pickBeastSkill(learned, living);
+        if (!sk) return;
+        castBeastSkill(sk, `🐾 ${getBeastName(b)}`, living);
     });
 }
+

@@ -298,7 +298,7 @@ combatTick() 每秒執行 [combat.js]
 | `openServantModal`, `dismissServant`, `toggleServantLock(id)`（僕從卡片的 🔓/🔒 按鈕） | `data/servant.js` |
 | `openQuestModal`（任務分頁「📜 門派任務」、宗門分頁按鈕）, `startQuest`, `stopQuest` | `data/quest.js` |
 | `openFieldModal`, `plantHerb` | `data/field.js` |
-| `openBeastModal`, `tameBeast`, `reviveBeast`, `toggleBeastActive`, `learnBeastSkill` | `data/beast.js` |
+| `openBeastModal`, `tameBeast`, `reviveBeast`, `toggleBeastActive`, `toggleBeastPicker(id, 欄)`／`learnBeastSkill(id, 欄, 技能id)`／`resetBeastSkills(id)`（技能抽屜，`renderBeastSkillSlots()` 動態產生） | `data/beast.js` |
 | `openLingbaoShopModal`, `buyLingbaoItem(itemId)`（舊版的第二個參數 payType 已移除，改為同時扣靈石＋聲望） | `data/lingbao-shop.js` |
 | `openLibraryModal`, `studyBook`, `studyElementBook`（後者的按鈕由 `renderElementBooks()` 動態產生） | `data/library.js` |
 | `openForgeModal`, `openWuxingInfo` | `data/equipment.js` |
@@ -795,20 +795,31 @@ combatTick() 每秒執行 [combat.js]
   - 陣亡的靈寵不計費；復活後維持原本的出戰／休息狀態。
 - **等級**：兌換後一律 Lv1；與人物共用經驗（`gainBeastExp()`，同一條經驗曲線），
   **等級不可超過人物等級**，到達上限後經驗不再累積。
-- **技能**：Lv30 / 60 / 100 / 300 / 500 / 1000（`BEAST_SKILL_LEVELS`）各領悟一招，
-  每一格可自由選擇五行方向，第 N 格選某屬性就學會該屬性的第 N 招（`beastSkillTree`），選定後不可更改。
+- **技能（2026-09-29 全面改版，版本 `20261002h`；使用者要求「控制、攻擊、增益、補血、解除負面效果各 10 招，舊技能廢除，改抽屜式點選，不再四選一」）**：
+  - Lv30 / 60 / 100 / 300 / 500 / 1000（`BEAST_SKILL_LEVELS`）各開放一個技能欄；每一欄可從 **5 類 × 10 招＝50 招**（`config-beasts.js` 的 `beastSkills`）任選一招，
+    **同一隻靈寵不能重複**，招式有 `minLv`（靈寵等級不足時鎖住）。`b.skills[欄] = 技能 id`（`beastSkillById`）。
+  - 選單（`beast.js` 的 `renderBeastSkillSlots`）：空欄按「📖 選擇技能」→ 下方展開 5 個 `<details>` 抽屜（控制／攻擊／增益／治療／淨化，顯示「可選 N / 10」），點一招 → `learnBeastSkill(id, 欄, 技能id)` 確認後領悟。
+    打開選單時那張靈寵卡片改為佔滿整列（手機兩欄版面太窄）。選定後不能單獨改，但可「🔄 重新領悟全部技能」（`resetBeastSkills`，`BEAST_SKILL_RESET_CORE` 2000 獸丹）。
+  - **舊存檔**：`save.js` 讀檔時發現技能欄是舊版五行字串（金木水火土）→ 清空並標 `b.skillsRevamped`，靈獸園顯示「技能已改版，請重新選擇」（免費），選了第一招後提示消失。
 
-  | 屬性 | 類型 | 效果範圍（第 1 招 → 第 6 招） |
+  | 類別 | 作用對象 | 內容（Lv30 → Lv1000） |
   |---|---|---|
-  | 金 | 單體傷害 | 人物物理攻擊 × 20% → 100% |
-  | 木 | 增益 | 人物攻擊 × 1.10 → × 1.50，持續 3～4 回合 |
-  | 水 | 治療 | 立即回復 / 群體（氣血＋靈力）/ 持續回復，5%～18% |
-  | 火 | 群體傷害 | 每隻 人物物理攻擊 × 12% → 60% |
-  | 土 | 防禦守護 | 受到傷害 -10% → -40%，持續 3～4 回合 |
+  | 🌀 控制 | 敵人（`t.petCc`） | 凍結 1～2 回合（含全體）、封印武學 2～3 回合、攻擊 −15%～−35%、破綻（受傷 +20%～+25%）；同一敵人被靈寵凍結後，解凍後 `BEAST_FREEZE_COOLDOWN`(2) 回合內凍不住，避免多隻靈寵連鎖定死 |
+  | ⚔️ 攻擊 | 敵人 | 物攻 30%～120%，附加群體、燒傷、中毒、斬殺（氣血 < 30% ×2）、吸血、餘波 |
+  | ✨ 增益 | 主人 | 10 種不同能力：攻擊 ×、受傷減少、減傷、閃避、暴擊率、連擊率、命中、吸血、破甲，萬獸之王一次給三種 |
+  | 💧 治療 | 主人 | 立即回血 6%～35%、回靈、持續回血／回靈；護主心切在主人氣血 < 40% 時改回 22% |
+  | 🌸 淨化 | 主人 | 解除中毒、燒傷、凍結、封印、化功、破甲（懸賞對決的負面效果也算），高階可持續淨化 3 回合 |
 
-- **戰鬥**：靈寵沒有氣血，不會被攻擊。**所有出戰中的靈寵**每回合各以 `BEAST_SKILL_CHANCE`(30%) 機率施展一招已學技能
-  （`petAssistTick()`，野外與渡劫都會觸發）。木/土/水的持續效果存在 `state.js` 的 `petBuff*`/`petShield*`/`petRegen*`，
-  同類效果取最高值、不疊乘；木屬性增益在 `getPhysAttack()`/`getMagAttack()` 生效，土屬性減傷由 `applyPetDamageReduction()` 套用。
+- **戰鬥**：靈寵沒有氣血，不會被攻擊。**所有出戰中的靈寵**每回合各以 `BEAST_SKILL_CHANCE`(30%) 機率出手（`petAssistTick()`，野外、懸賞對決、渡劫都會觸發）。
+  出哪一招由 `pickBeastSkill` 依戰況挑：主人氣血 < 50% 優先治療、身上有可解的負面狀態優先淨化；其餘隨機（治療只在未滿血／靈力不足時、淨化只在有狀態時才列入）。
+  - **增益可以疊加**：不同種類各自存在（例如一隻加攻擊、一隻加閃避，兩個同時生效），同種類才取較高值、持續取較長。
+    攻擊沿用 `petBuff*`（`getPhysAttack()`／`getMagAttack()`）、受傷減少沿用 `petShield*`（仙法守護、神器共用，`applyPetDamageReduction()`）、持續回血沿用 `petRegen*`；
+    其餘存在 `state.js` 的 `petFx = { 種類: { v, t } }`，讀取用 `petFxVal(種類)`：減傷／閃避／暴擊／命中／破甲在 `getPlayerCombatAttrs()`（減傷閃避一起套上限），
+    連擊率與吸血在 `combat.js` 的 `playerAttackTurn`，每回合回靈在 `petAssistTick`。戰力榜的戰力不含這些暫時增益。
+  - **控制的掛點**：凍結用敵人自己的 `status.frozen`；削弱 `petEnemyAtkMult(t)`（野外妖獸出手、`bountyDuelTick`、`tribulationTick`）；
+    封印 `petIsSilenced(t)`（懸賞對手、心魔不能施展武學／魔功，野外妖獸本來就沒有武學）；破綻 `petVulnMult(t)`（`hitTarget` 與靈寵攻擊）。
+  - **持續淨化**：`petPreTurn()` 在野外、懸賞、渡劫每回合主人行動前呼叫，清掉 `petFx.immune.v` 內的狀態。
+  - 驗證（本機）：50 招逐一施放，效果與說明一致、無錯誤；野外、懸賞對決、渡劫各跑 120～200 回合無錯誤，封印、削弱、淨化、增益都有觸發；手機 375×812 選單顯示正常。
 - **陣亡與復活**：玩家死亡時所有靈寵立即陣亡（`killAllBeasts()`），輔助效果清空；
   陣亡（或休息中）的靈寵不出手、不給被動、不累積經驗。在靈獸園每隻消耗 `BEAST_REVIVE_COST_CORE`(5000) 獸丹復活。
 - 靈寵的攻擊**不經過** `resolveHit()`（不受怪物閃避/減傷影響，也不觸發屬性傷害），見第 17 節。
@@ -1342,7 +1353,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002g`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002h`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 

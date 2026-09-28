@@ -270,6 +270,7 @@ function bountyDuelTick() {
     opp.turn++;
 
     checkAutoHealAndMana();
+    petPreTurn();   // 靈寵淨化技能的持續淨化（beast-combat.js）
 
     // ---- 玩家回合 ----
     let selfTick = tickStatus(playerStatus);
@@ -313,11 +314,13 @@ function bountyDuelTick() {
         updateUI();
         return;
     }
-    let dmgMult = 1;
+    let dmgMult = petEnemyAtkMult(opp);   // 被靈寵削弱（beast-combat.js）
     let sk = null;
-    if (Math.random() < opp.skillChance) {
+    if (petIsSilenced(opp)) {
+        // 被靈寵封印：本回合只能普攻
+    } else if (Math.random() < opp.skillChance) {
         sk = bountySkills[opp.skills[Math.floor(Math.random() * opp.skills.length)]];
-        if (sk.mult) dmgMult = sk.mult;
+        if (sk.mult) dmgMult *= sk.mult;
         if (sk.type === "weaken") {
             duelWeakenTimer = sk.duration; duelWeakenMult = sk.weaken;
         } else if (sk.type === "silence") {

@@ -159,6 +159,7 @@ function combatTick() {
 }
 
 function fieldCombatRound() {
+    petPreTurn();   // 靈寵淨化技能的持續淨化（beast-combat.js）
     // ---- 玩家回合：先結算自身的燒傷/中毒，被凍結則本回合無法出手 ----
     let selfTick = tickStatus(playerStatus);
     if (selfTick.dot > 0) {
@@ -290,7 +291,8 @@ function fieldCombatRound() {
         enemies.forEach(e => {
             if (e.hp <= 0) return;   // 被反震／閃擊反擊打倒的，下一回合才結算擊殺
             if (e.skipTurn) { frozenCount++; return; }
-            let r = resolveHit(e.attack, { attrs: e.attrs || {}, power: e.attack }, playerDef);
+            let atk = e.attack * petEnemyAtkMult(e);   // 被靈寵削弱時攻擊降低（beast-combat.js）
+            let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
             // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）
             totalDmg += applyGearDefense(r, e, !!e.cultivator, r.tags);
             enemyTags = enemyTags.concat(r.tags);
@@ -365,7 +367,8 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
     let firstAlive = () => targets.find(t => t.hp > 0) || targets[0];
     let hitTarget = (target, dmg, attrs) => {
         if (!target) return 0;
-        let r = resolveHit(dmg * getGearHitMult(fx, target), { attrs, power: getPhysAttack() }, { attrs: target.attrs || {}, status: target.status || newStatus() });
+        // petVulnMult：目標被靈寵施加「破綻」時受到的傷害提高（beast-combat.js）
+        let r = resolveHit(dmg * getGearHitMult(fx, target) * petVulnMult(target), { attrs, power: getPhysAttack() }, { attrs: target.attrs || {}, status: target.status || newStatus() });
         target.hp -= r.dmg;
         r.tags.forEach(t => tags.push(t));
         let dealt = r.dmg + applyGearHitChain(fx, target, targets, r, tags);
@@ -450,7 +453,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
             if (others.length) { others.forEach(t => hitTarget(t, getPhysAttack() * 0.4, baseAttrs)); tags.push("cleave"); }
         }
         // 新制敏捷：連擊，本回合再打一次普攻（numeric.js）
-        if (NUMERIC_V2 && targets.some(t => t.hp > 0) && Math.random() < nv2Combo()) {
+        if (NUMERIC_V2 && targets.some(t => t.hp > 0) && Math.random() < nv2Combo() + petFxVal('combo') / 100) {   // 靈寵增益「連擊率」另外加
             hitTarget(firstAlive(), getPhysAttack(), baseAttrs);
             tags.push("combo");
         }
@@ -468,6 +471,10 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
     // 吸血（裝備特效）：本回合造成傷害的一定比例回復氣血
     if (fx["吸血"] && dealtTotal > 0 && player.hp > 0) {
         player.hp = Math.min(player.maxHp, player.hp + dealtTotal * fx["吸血"]);
+    }
+    // 吸血（靈寵增益「血祭」等，beast-combat.js）
+    if (petFxVal('lifesteal') && dealtTotal > 0 && player.hp > 0) {
+        player.hp = Math.min(player.maxHp, player.hp + dealtTotal * petFxVal('lifesteal'));
     }
     // 疾風：本回合再出手一次（不會連鎖）
     if (!isExtra && fx["疾風"] && Math.random() < fx["疾風"] && targets.some(t => t.hp > 0)) {

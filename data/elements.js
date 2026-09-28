@@ -22,9 +22,10 @@ function getPlayerCombatAttrs() {
     // 新制（numeric.js）：敏捷提供閃避（一起套上限）、命中（加在洞察上）、暴擊率
     let agiEva = NUMERIC_V2 ? nv2AgiEva() : 0;
     return {
-        def: cap(b.def + r.def + a.def + gearDef, capOf("def", DEF_CAP)) * armor,
-        eva: cap(b.eva + a.eva + agiEva, capOf("eva", EVA_CAP)) * armor,
-        crit: NUMERIC_V2 ? nv2Crit() : 0,
+        // 靈寵增益（beast-combat.js 的 petFxVal）：減傷、閃避一起套上限；暴擊、命中、破甲直接加
+        def: cap(b.def + r.def + a.def + gearDef + petFxVal('def'), capOf("def", DEF_CAP)) * armor,
+        eva: cap(b.eva + a.eva + agiEva + petFxVal('eva'), capOf("eva", EVA_CAP)) * armor,
+        crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100,
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
         fire: cap(b.fire + r.fire + a.fire, capOf("fire", AFFIX_CAP)),
         poison: cap(b.poison + r.poison + a.poison, capOf("poison", AFFIX_CAP)),
@@ -44,8 +45,8 @@ function getPlayerCombatAttrs() {
         // 藏書閣屬性秘典的傷害加成（library.js），怪物沒有此欄位
         book: getElementBookBonus(),
         // 裝備特效（gear.js），怪物沒有這些欄位（視為 0）
-        armorPen: fx["破甲"] || 0,
-        evaPen: (fx["洞察"] || 0) + (NUMERIC_V2 ? nv2Hit() : 0),
+        armorPen: (fx["破甲"] || 0) + petFxVal('armorPen'),
+        evaPen: (fx["洞察"] || 0) + (NUMERIC_V2 ? nv2Hit() : 0) + petFxVal('hit'),
         counterBonus: fx["剋敵"] || 0,
         frozenBonus: fx["寒徹"] || 0,
         burnBonus: fx["焚燼"] || 0,

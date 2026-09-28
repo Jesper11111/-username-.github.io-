@@ -118,6 +118,7 @@ function tribulationTick() {
     if (!heartDemon) { inTribulation = false; return; }
 
     checkAutoHealAndMana();
+    petPreTurn();   // 靈寵淨化技能的持續淨化（beast-combat.js）
 
     // ---- 玩家回合：自身持續傷害 → 凍結判定 → 出手（與野外相同，範圍技也只打心魔）----
     let selfTick = tickStatus(playerStatus);
@@ -167,10 +168,10 @@ function tribulationTick() {
         return;
     }
     if (heartDemon.buffTimer > 0) heartDemon.buffTimer--;
-    let demonBase = heartDemon.attack * (heartDemon.buffTimer > 0 ? heartDemon.buffMult : 1);
+    let demonBase = heartDemon.attack * (heartDemon.buffTimer > 0 ? heartDemon.buffMult : 1) * petEnemyAtkMult(heartDemon);   // 被靈寵削弱（beast-combat.js）
     let demonDmg = demonBase;
 
-    if (Math.random() < HEART_DEMON_SKILL_CHANCE) {
+    if (!petIsSilenced(heartDemon) && Math.random() < HEART_DEMON_SKILL_CHANCE) {   // 被靈寵封印時不能施展魔功
         let sk = heartDemonSkills[Math.floor(Math.random() * heartDemonSkills.length)];
         if (sk.type === "buff") {
             heartDemon.buffTimer = sk.duration;

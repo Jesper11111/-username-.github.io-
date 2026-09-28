@@ -1,4 +1,4 @@
-// 靈獸園彈窗：兌換靈寵（含魅力折扣）、復活、出戰／召回休息（維持費）、在各等級節點選擇五行技能
+// 靈獸園彈窗：兌換靈寵（含魅力折扣）、復活、出戰／召回休息（維持費）、技能欄與抽屜式技能選單（50 招）
 // 成長與戰鬥邏輯在 beast-combat.js
 
 function openBeastModal() {
@@ -45,25 +45,10 @@ function renderBeasts() {
             : active ? `<button class="sys-btn" style="border-color:#9ca3af; color:#9ca3af;" onclick="toggleBeastActive('${b.id}')">召回休息</button>`
             : `<button class="sys-btn" style="border-color:#4ade80; color:#4ade80;" onclick="toggleBeastActive('${b.id}')">出戰</button>`;
 
-        let slots = BEAST_SKILL_LEVELS.map((lv, slot) => {
-            let elem = b.skills[slot];
-            if (elem) {
-                let sk = getBeastSkill(elem, slot);
-                return `<div class="beast-skill-slot"><span style="color:${beastElementInfo[elem].color};">[${elem}]</span> Lv${lv}【${sk.name}】<br><span style="color:#9ca3af;">${describeBeastSkill(sk)}</span></div>`;
-            }
-            if (b.level < lv) {
-                return `<div class="beast-skill-slot" style="color:#6b7280;">Lv${lv} 解鎖</div>`;
-            }
-            let choices = wuxingElements.map(e => {
-                let sk = getBeastSkill(e, slot);
-                return `<button class="beast-elem-btn" style="border-color:${beastElementInfo[e].color}; color:${beastElementInfo[e].color};"
-                    onclick="learnBeastSkill('${b.id}', ${slot}, '${e}')">${e}・${sk.name}<br><span style="font-size:0.9em; color:#9ca3af;">${describeBeastSkill(sk)}</span></button>`;
-            }).join('');
-            return `<div class="beast-skill-slot" style="border-color: var(--accent);">Lv${lv} 可領悟（擇一，選定不可更改）：<div class="beast-elem-choices">${choices}</div></div>`;
-        }).join('');
+        let slots = renderBeastSkillSlots(b);
 
         return `
-            <div class="card" style="border-color: ${!b.alive ? '#ef4444' : active ? '#fb923c' : '#6b7280'};">
+            <div class="card" style="border-color: ${!b.alive ? '#ef4444' : active ? '#fb923c' : '#6b7280'};${typeof beastPickerSlot[b.id] === 'number' ? ' grid-column: 1 / -1;' : ''}">
                 <h3 style="color: #fb923c;">${info.name} <span style="font-size:0.8em; color:var(--accent);">Lv.${b.level}</span></h3>
                 <p style="font-size: 0.8em; color: #9ca3af;">${status}｜${expText}</p>
                 <p style="font-size: 0.8em; color: #9ca3af;">被動：${info.passive}${!b.alive ? '（陣亡中失效）' : active ? '' : '（休息中失效）'}</p>
@@ -128,14 +113,76 @@ function toggleBeastActive(id) {
     updateUI();
 }
 
-function learnBeastSkill(id, slot, element) {
-    let b = player.beasts.find(x => x.id === id);
-    if (!b || b.skills[slot] || b.level < BEAST_SKILL_LEVELS[slot]) return;
-    let sk = getBeastSkill(element, slot);
-    if (!sk) return;
-    if (!confirm(`確定讓靈寵領悟【${element}】屬性技能【${sk.name}】嗎？\n${describeBeastSkill(sk)}\n\n選定後無法更改。`)) return;
-    b.skills[slot] = element;
-    let info = beastData.find(d => d.id === id);
-    addLog(`🐾 靈寵【${info.name}】領悟了${element}屬性技能【${sk.name}】！`, "skill");
+// ==================== 技能欄與抽屜式選單（2026-09-29 技能改版）====================
+// 每隻靈寵 6 個技能欄；點空欄的「📖 選擇技能」會在下方展開選單：5 類各一個抽屜（<details>），每類 10 招，
+// 點一招即領悟（同一隻靈寵不能重複、靈寵等級未達 minLv 的招式鎖住）。
+let beastPickerSlot = {};   // { 靈寵 id: 正在選的欄位 }（只影響畫面，不存檔）
+
+function renderBeastSkillSlots(b) {
+    const learnedIds = b.skills.filter(Boolean);
+    const rows = BEAST_SKILL_LEVELS.map((lv, slot) => {
+        const sk = getBeastSkill(b.skills[slot]);
+        if (sk) {
+            const c = beastSkillCategories[sk.cat];
+            return `<div class="beast-skill-slot"><span style="color:${c.color};">${c.icon}${c.name}</span> 第 ${slot + 1} 欄【${sk.name}】<br><span style="color:#9ca3af;">${describeBeastSkill(sk)}</span></div>`;
+        }
+        if (b.level < lv) return `<div class="beast-skill-slot" style="color:#6b7280;">第 ${slot + 1} 欄・Lv${lv} 解鎖</div>`;
+        const picking = beastPickerSlot[b.id] === slot;
+        return `<div class="beast-skill-slot" style="border-color: var(--accent);">第 ${slot + 1} 欄・可領悟
+            <button class="beast-pick-btn ${picking ? 'on' : ''}" onclick="toggleBeastPicker('${b.id}', ${slot})">${picking ? '▲ 收起選單' : '📖 選擇技能'}</button></div>`;
+    }).join('');
+
+    let picker = '';
+    const slot = beastPickerSlot[b.id];
+    if (typeof slot === 'number' && !b.skills[slot] && b.level >= BEAST_SKILL_LEVELS[slot]) {
+        picker = `<div class="beast-picker"><div class="beast-picker-title">第 ${slot + 1} 欄：展開類別，點一招領悟</div>` + Object.keys(beastSkillCategories).map(cat => {
+            const c = beastSkillCategories[cat];
+            const list = beastSkills.filter(s => s.cat === cat);
+            const ok = list.filter(s => s.minLv <= b.level && !learnedIds.includes(s.id)).length;
+            const items = list.map(s => {
+                const learned = learnedIds.includes(s.id), locked = s.minLv > b.level;
+                const why = learned ? '已領悟' : locked ? `需 Lv${s.minLv}` : `Lv${s.minLv}`;
+                return `<button class="beast-skill-opt" ${learned || locked ? 'disabled' : ''} onclick="learnBeastSkill('${b.id}', ${slot}, '${s.id}')">
+                    <b>${s.name}</b><span class="bso-lv">${why}</span><br><span class="bso-desc">${describeBeastSkill(s)}</span></button>`;
+            }).join('');
+            return `<details class="beast-skill-cat"><summary><span style="color:${c.color};">${c.icon} ${c.name}</span>
+                <small>${c.desc}｜可選 ${ok} / ${list.length}</small></summary><div class="beast-skill-list">${items}</div></details>`;
+        }).join('') + `</div>`;
+    }
+
+    const notice = b.skillsRevamped ? `<div class="beast-revamp">📢 靈寵技能已全面改版（控制、攻擊、增益、治療、淨化共 50 招），舊技能已清除，請重新選擇。</div>` : '';
+    const reset = learnedIds.length ? `<button class="beast-reset-btn" onclick="resetBeastSkills('${b.id}')">🔄 重新領悟全部技能（${BEAST_SKILL_RESET_CORE.toWan()} 獸丹）</button>` : '';
+    return notice + rows + picker + reset;
+}
+
+function toggleBeastPicker(id, slot) {
+    beastPickerSlot[id] = beastPickerSlot[id] === slot ? undefined : slot;
     renderBeasts();
+}
+
+function learnBeastSkill(id, slot, skillId) {
+    let b = player.beasts.find(x => x.id === id);
+    let sk = getBeastSkill(skillId);
+    if (!b || !sk || b.skills[slot] || b.level < BEAST_SKILL_LEVELS[slot]) return;
+    if (sk.minLv > b.level) { alert(`【${sk.name}】需要靈寵 Lv${sk.minLv} 才能領悟。`); return; }
+    if (b.skills.includes(skillId)) { alert(`這隻靈寵已經會【${sk.name}】了。`); return; }
+    if (!confirm(`確定讓【${getBeastName(b)}】在第 ${slot + 1} 欄領悟【${beastSkillCategories[sk.cat].name}】${sk.name}？\n${describeBeastSkill(sk)}\n\n之後要更換，需花 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹重新領悟全部技能。`)) return;
+    b.skills[slot] = skillId;
+    delete b.skillsRevamped;
+    beastPickerSlot[id] = undefined;
+    addLog(`🐾 靈寵【${getBeastName(b)}】領悟了${beastSkillCategories[sk.cat].icon}【${sk.name}】！`, "skill");
+    renderBeasts();
+}
+
+// 重新領悟：清空這隻靈寵的全部技能欄（花獸丹），之後可重新挑選
+function resetBeastSkills(id) {
+    let b = player.beasts.find(x => x.id === id);
+    if (!b || !b.skills.some(Boolean)) return;
+    if (player.beastCore < BEAST_SKILL_RESET_CORE) { alert(`獸丹不足！重新領悟需要 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹。`); return; }
+    if (!confirm(`花費 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹，清除【${getBeastName(b)}】已領悟的全部技能並重新挑選？`)) return;
+    player.beastCore -= BEAST_SKILL_RESET_CORE;
+    b.skills = BEAST_SKILL_LEVELS.map(() => null);
+    addLog(`🐾 靈寵【${getBeastName(b)}】遺忘了所有技能，可重新領悟。`, "skill");
+    renderBeasts();
+    updateUI();
 }

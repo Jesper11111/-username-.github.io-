@@ -115,7 +115,11 @@ let meditateSummary = { seconds: 0, exp: 0 };   // 安全區打坐累計，每 M
 let fieldOnlineTicks = 0;   // 在目前野外地圖實際戰鬥的秒數（換地圖歸零；滿 IDLE_PROVEN_SECONDS 記入 player.idleProvenMap）
 let playerStatus = { frozen: 0, burn: null, poison: null };   // 玩家身上的凍結/燒傷/中毒（elements.js）
 
-// 靈寵輔助效果（木：攻擊增益／土：減傷／水：持續回復），皆以回合數倒數
+// 靈寵輔助效果，皆以回合數倒數（beast-combat.js）
+//   petBuff*：攻擊增益（stats.js／numeric.js 讀取）；petShield*：受傷減少（仙法守護、神器也共用）；petRegen*：持續回血
+//   petFx：2026-09-29 技能改版新增的其他增益／狀態 { 種類: { v, t } }：def／eva／crit／combo／hit／lifesteal／armorPen／mpRegen，
+//          以及 immune（t 回合內自動淨化，v = 要清除的狀態陣列）
 let petBuffTimer = 0, petBuffMult = 1;
 let petShieldTimer = 0, petShieldRate = 0;
 let petRegenTimer = 0, petRegenRate = 0;
+let petFx = {};

@@ -381,6 +381,11 @@ function migrateProgressionFields(savedData) {
     player.beasts = player.beasts.map(b => {
         if (typeof b === 'string') return createBeast(b);
         if (!Array.isArray(b.skills)) b.skills = BEAST_SKILL_LEVELS.map(() => null);
+        // 2026-09-29 靈寵技能改版：舊版存的是五行字串（金木水火土），新版存技能 id → 清空讓玩家重新挑選（靈獸園顯示提示）
+        if (b.skills.some(s => s && !beastSkillById[s])) {
+            b.skills = b.skills.map(s => (s && beastSkillById[s]) ? s : null);
+            b.skillsRevamped = true;
+        }
         if (typeof b.level !== 'number') b.level = 1;
         if (typeof b.exp !== 'number') b.exp = 0;
         if (typeof b.alive !== 'boolean') b.alive = true;
