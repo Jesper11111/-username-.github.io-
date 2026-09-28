@@ -65,7 +65,7 @@ function openMapCategoryModal(catIndex) {
                 <h3 style="color: ${isCurrent ? 'var(--accent)' : '#fff'};">${item.name}${recommended ? ' <span style="font-size:0.7em; color:#facc15;">⭐ 推薦練功</span>' : ''}</h3>
                 ${suitText ? `<p style="font-size:0.8em; color:${recommended ? '#facc15' : '#9ca3af'}; margin:2px 0;">🎯 適合境界：${suitText}</p>` : ''}
                 <p style="font-size:0.85em; color:#9ca3af;">經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}</p>
-                ${item.minRealm ? `<p style="font-size:0.8em; color:#f87171;">限制：${realms[item.minRealm]}以上</p>` : ''}
+                ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${player.realmIndex < getMapMinRealm(item) ? '#f87171' : '#9ca3af'};">${player.realmIndex < getMapMinRealm(item) ? '🔒 ' : ''}限制：${realms[getMapMinRealm(item)]}以上</p>` : ''}
                 <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? '當前所在區域' : '前往此區域'}</button>
             </div>
         `;
@@ -97,6 +97,15 @@ function returnToSect() {
     switchTab('sect');
 }
 
+// 地圖的境界門檻（2026-09-28 使用者決定「最多越 1 個大境界練功」）：新制＝妖獸對應境界（nv2L）− 1，
+// 與 config-maps.js 原本的 minRealm 取較嚴者（例：鬼谷八荒 nv2L 6＝煉虛 → 需化神；崑吾山原本就要合體，維持）。
+// 原因：新制妖獸強度只看地圖，低境界拿高等裝備越級刷高階地圖，經驗靈石暴增；0 表示沒有門檻
+function getMapMinRealm(item) {
+    let r = item.minRealm || 0;
+    if (NUMERIC_V2 && typeof item.nv2L === 'number') r = Math.max(r, Math.floor(item.nv2L + 1e-9) - 1);
+    return Math.max(0, r);
+}
+
 // 地圖卡片的難度文字：舊制顯示 diff；新制顯示妖獸氣血／攻擊（numeric.js 的 nv2MonsterStats）
 function getMapDifficultyText(item) {
     if (!NUMERIC_V2) return `難度: ${item.diff}`;
@@ -113,11 +122,10 @@ function selectMap(cIndex, iIndex) {
 function changeMap(cIndex, iIndex) {
     let targetMap = maps[cIndex].items[iIndex];
 
-    if (targetMap.minRealm) {
-        if (player.realmIndex < targetMap.minRealm) {
-            alert(`進入【${targetMap.name}】失敗！您的境界未達【${realms[targetMap.minRealm]}】。`);
-            return;
-        }
+    const minRealm = getMapMinRealm(targetMap);
+    if (minRealm && player.realmIndex < minRealm) {
+        alert(`進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界）`);
+        return;
     }
     // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
     let minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;

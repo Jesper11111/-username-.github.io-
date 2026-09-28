@@ -251,6 +251,13 @@ function migrateCurrentMap() {
     for (let cat of maps) {
         let found = cat.items.find(item => item.name === name);
         if (found) {
+            // 2026-09-28 地圖境界門檻（map.js 的 getMapMinRealm，最多越 1 個大境界）：境界不夠還待在裡面的舊存檔送回宗門
+            // （在離線結算之前執行，所以這段離線時間算宗門靜修）
+            const need = getMapMinRealm(found);
+            if (!cat.isSafe && need && player.realmIndex < need) {
+                addLog(`⛩️ 【${found.name}】需【${realms[need]}】以上才能練功（最多越一個大境界），你已被送回宗門。`, "system");
+                break;
+            }
             player.currentMap = found;
             player.currentMapIsSafe = cat.isSafe;
             return;
