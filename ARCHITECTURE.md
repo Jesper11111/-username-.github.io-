@@ -1321,7 +1321,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20260930z`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261001e`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2694,6 +2694,16 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **閃避動作**（版本 `20260930v`，玩家要求）：我閃掉敵方攻擊（`battleFxHurt` 收到 dodge，多隻怪時部分閃掉也算）→ 立繪 `.bf-hero.bf-evade` 往左閃；敵方閃掉我的攻擊（`battleFxHit` 的 dodge → kind `miss`）→ 敵方圖 `.bf-foe.bf-evade` 往右閃。
   動作是位移 16%＋半透明＋模糊（殘影感）再回位 0.45 秒；閃避優先於受擊動作（`restartAnim(el, cls, clear)` 第三參數同時移除衝突的 class）。
   ⚠️ 立繪同時有無限循環的 `bf-breathe`，多個 animation 改同一個 transform 時**清單後面的優先**，所以 `.bf-evade`／`.bf-lunge` 都寫成 `animation: bf-breathe …, bf-evade-l …`（之前出手前衝寫反了，一直沒生效，這版一併修正）。
+- **武器發光＋本命五行特效＋能量旋風**（版本 `20261001a`～`e`，玩家要求）：
+  - 立繪改包在 `#bf-hero-box`（`layoutBattleHero()` 依圖片比例算 px 大小：高 96%、寬 ≤ 44%，靠左下；視窗縮放時重算），框內用 % 座標就能對準圖片；呼吸／前衝／閃避動畫作用在框上，特效跟著動。
+  - 武器發光：`svg.bf-weapon` 沿 `BATTLE_HERO_BLADE`（男 [72,55,95,80]、女 [66,52,93,88]，圖片寬高 %）畫三層線——外暈（模糊脈動）、劍芯（屬性色）、流光（白色短線沿劍身滑動）。**換立繪時要重量這組座標。**
+  - 屬性特效：`getPlayerElement()`（裝備最多的五行）→ `BATTLE_HERO_ELEM_CLASS` 的 `.el-fire/-water/-wood/-metal/-earth`（沒有則 `.el-none` 淡金），設定 `--wc/--wc2` 顏色；10 顆粒子各有形狀動畫：火＝火星上飄、水＝空心泡泡、木＝葉片旋轉、金＝十字星芒閃爍、土＝塵砂揚起；另有 screen 混色光暈。
+  - 能量旋風（`.bf-whirl` 4 圈）：屬性色光環 `rotateX(74deg)` 斜躺繞身體旋轉，由腳到胸越小越快、正反交錯。
+  - 女角立繪重裁（x150～1024、y100～936）：上一版把劍尖裁掉了，現在整把劍完整；右上殘留的圓形框邊被右緣／上緣淡出遮掉。
+- **VS 置頂**（`20261001c`，手機版 VS 被遮）：`.bf-vs` z-index 5、分隔線 z-index 3、飄字 6。
+- **暴擊震動＋畫面破碎**（`20261001e`）：暴擊時整個 `#combat-visual-panel` 加 `.bf-crit-quake`（位移＋微旋轉 0.5 秒，含上下血條）；敵方血條 `crit-hit` 震幅加大到 ±8px、上下撐大 1.4 倍；
+  `spawnCritShatter(scene)` 以敵方中央為撞擊點隨機畫 7 條鋸齒裂痕（SVG polyline，白光）＋撞擊圈，並噴出 9 片玻璃碎片（`.bf-shard`，CSS 變數 `--dx/--dy/--rot` 決定飛行方向），約 0.85 秒後移除。
+  `prefers-reduced-motion` 時旋風、粒子、流光、震動都關閉。
 - **飄字落點＋屬性色＋暴擊血條**（版本 `20260930s`；玩家反映傷害被蓋住、要把傷害放在受傷的人物上、做參考圖那種暴擊效果、冰藍毒綠火紅）：
   - 落點：打敵人的字在右半敵方圖上、受傷的字在左半立繪上（`spawnBattleFloat`）；同一批依 `slot` 分到不同高度（`ROWS`），暴擊固定在敵方中央偏上；`.bf-float` z-index 6 蓋過閃光／紅框。
   - 屬性色：`battleFxElemOf(tags)` 依 `BATTLE_FX_ELEMS` 優先序（雷＞冰＞火＞毒＞金＞風＞聖光＞暗蝕）取 `resolveHit` 標籤，加 `.bf-el-*`（CSS 變數 `--fx-c1/c2/c3/glow`）與小圖示；受傷字無屬性時為紅、有屬性時用屬性色。

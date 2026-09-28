@@ -5,6 +5,10 @@
 //   依屬性上色（冰藍、毒綠、火紅、雷紫、金黃…）；暴擊時血條閃光震動＋放射爆點，數字放大跳動。
 
 const BATTLE_HERO_IMG = { male: "images/battle/hero-male.jpg", female: "images/battle/hero-female.jpg" };
+// 立繪上劍身的位置（圖片寬高的 %：護手 x1,y1 → 劍尖 x2,y2），武器發光沿這條線畫（2026-09-28 依玩家提供的新立繪量測）
+const BATTLE_HERO_BLADE = { male: [72, 55, 95, 80], female: [66, 52, 93, 88] };
+// 本命五行 → 屬性特效 class（index.html 的 .bf-hero-box.el-*：武器光色、粒子、光暈）
+const BATTLE_HERO_ELEM_CLASS = { "金": "el-metal", "木": "el-wood", "水": "el-water", "火": "el-fire", "土": "el-earth" };
 const BATTLE_FX_MAX_FLOATS = 5;      // 每次更新最多幾個飄字（多的合併）
 const BATTLE_FX_STAGGER_MS = 110;    // 同一批飄字的間隔
 // 飄字的屬性（resolveHit 的標籤）→ 顏色 class（index.html 的 .bf-el-*）與圖示；優先序由前到後
@@ -84,14 +88,15 @@ function flushBattleFx() {
     out.forEach((e, i) => setTimeout(() => spawnBattleFloat(layer, e), i * BATTLE_FX_STAGGER_MS));
     const crit = crits.length > 0;
     if (crit) {
-        restartAnim(stage.querySelector('.bf-scene') || stage, 'bf-shake');   // 只震中段圖片
+        restartAnim(stage, 'bf-crit-quake');   // 暴擊：整個戰鬥面板（含血條）明顯震動（2026-09-28 玩家要求）
+        spawnCritShatter(stage.querySelector('.bf-scene'));   // 畫面破碎：裂痕＋碎片
         restartAnim(document.getElementById('bf-enemy-bar'), 'crit-hit');     // 血條閃光＋震動
         restartAnim(document.getElementById('bf-enemy-spark'), 'big');        // 切口放射爆點
         restartAnim(document.getElementById('bf-flash'), 'on');
     } else if (out.some(e => e.kind === "heavy")) {
         restartAnim(document.getElementById('bf-enemy-spark'), 'on');
     }
-    const heroEl = document.getElementById('bf-hero'), foeEl = document.getElementById('bf-foe');
+    const heroEl = document.getElementById('bf-hero-box'), foeEl = document.getElementById('bf-foe');
     const foeHit = out.some(e => e.side === "foe" && e.kind !== "miss");
     if (foeHit) restartAnim(heroEl, 'bf-lunge', ['bf-evade']);
     // 閃避動作（2026-09-28 玩家要求）：敵方閃掉我的攻擊 → 敵方圖往右閃；我閃掉敵方攻擊 → 立繪往左閃。閃避優先於受擊動作
@@ -99,6 +104,48 @@ function flushBattleFx() {
     else if (foeHit) restartAnim(foeEl, 'bf-foe-hit', ['bf-evade']);   // 敵方受擊閃白＋後退
     if (out.some(e => e.kind === "dodge")) restartAnim(heroEl, 'bf-evade', ['bf-lunge']);
     if (out.some(e => e.side === "hero" && (e.kind === "hurt" || e.kind === "dot"))) restartAnim(document.getElementById('bf-hurt'), 'on');
+}
+
+// 暴擊的畫面破碎感：以敵方中央為撞擊點，隨機畫 7 條鋸齒裂痕（SVG）＋ 9 片玻璃碎片往外飛，約 0.8 秒後移除
+function spawnCritShatter(scene) {
+    if (!scene) return;
+    const cx = 70 + Math.random() * 8, cy = 38 + Math.random() * 10;   // 撞擊點（中段圖片的 %）
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('class', 'bf-crack');
+    for (let i = 0; i < 7; i++) {
+        const ang = (i / 7) * Math.PI * 2 + Math.random() * 0.5;
+        let x = cx, y = cy, pts = [`${x},${y}`];
+        const len = 18 + Math.random() * 26, steps = 4;
+        for (let s = 1; s <= steps; s++) {
+            const a = ang + (Math.random() - 0.5) * 0.7;
+            x += Math.cos(a) * len / steps * 0.9;   // 橫向稍短（圖片比較寬）
+            y += Math.sin(a) * len / steps * 1.6;
+            pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+        }
+        const pl = document.createElementNS(NS, 'polyline');
+        pl.setAttribute('points', pts.join(' '));
+        svg.appendChild(pl);
+    }
+    const ring = document.createElementNS(NS, 'ellipse');   // 撞擊點的小碎裂圈
+    ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.setAttribute('rx', 3.5); ring.setAttribute('ry', 6);
+    svg.appendChild(ring);
+    scene.appendChild(svg);
+    setTimeout(() => svg.remove(), 850);
+    for (let i = 0; i < 9; i++) {
+        const sh = document.createElement('div');
+        sh.className = 'bf-shard';
+        const ang = Math.random() * Math.PI * 2, dist = 40 + Math.random() * 70;
+        sh.style.left = cx + '%'; sh.style.top = cy + '%';
+        sh.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(0) + 'px');
+        sh.style.setProperty('--dy', (Math.sin(ang) * dist * 0.8).toFixed(0) + 'px');
+        sh.style.setProperty('--rot', ((Math.random() - 0.5) * 540).toFixed(0) + 'deg');
+        sh.style.width = sh.style.height = (8 + Math.random() * 10).toFixed(0) + 'px';
+        scene.appendChild(sh);
+        setTimeout(() => sh.remove(), 800);
+    }
 }
 
 // 移除再加回 class，讓 CSS 動畫重播；clear＝同時移除的其他動畫 class（例：閃避與受擊不同時播）
@@ -192,13 +239,44 @@ function updateBattleFoe() {
 // 人物立繪依性別（不跟頭像走：頭像是圓形小圖，立繪是半身場景圖）
 function updateBattleHero() {
     const img = document.getElementById('bf-hero');
-    if (!img) return;
+    const box = document.getElementById('bf-hero-box');
+    if (!img || !box) return;
     let g = player.gender === 'female' ? 'female' : 'male';
     if (img.dataset.g !== g) {
+        img.onload = layoutBattleHero;
         img.src = BATTLE_HERO_IMG[g];
         img.dataset.g = g;
-        img.className = 'bf-hero bf-hero-' + g;
-        const bg = document.getElementById('bf-hero-bg');   // 立繪完整顯示（contain）後右側的空白：同一張圖模糊放大墊底
+        const bg = document.getElementById('bf-hero-bg');   // 立繪完整顯示後右側的空白：同一張圖模糊放大墊底
         if (bg) bg.style.backgroundImage = `url("${BATTLE_HERO_IMG[g]}")`;
+        const [x1, y1, x2, y2] = BATTLE_HERO_BLADE[g];
+        ['bf-blade-halo', 'bf-blade-core', 'bf-blade-shine'].forEach(id => {
+            const l = document.getElementById(id);
+            if (l) { l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); }
+        });
     }
+    // 本命五行（stats.js 的 getPlayerElement，裝備最多的五行）決定武器光色與屬性特效；沒有則為淡金
+    const cls = BATTLE_HERO_ELEM_CLASS[getPlayerElement()] || 'el-none';
+    if (box.dataset.el !== cls) {
+        if (box.dataset.el) box.classList.remove(box.dataset.el);
+        box.classList.add(cls);
+        box.dataset.el = cls;
+    }
+    layoutBattleHero();
 }
+
+// 立繪框大小：依圖片比例，高度佔中段 96%、寬度不超過 44%（斜切線最左點），靠左下；框內的武器光、粒子用 % 座標就能對準圖片
+function layoutBattleHero() {
+    const img = document.getElementById('bf-hero'), box = document.getElementById('bf-hero-box');
+    if (!img || !box || !box.parentElement) return;
+    const W = box.parentElement.clientWidth, H = box.parentElement.clientHeight;
+    if (!W || !H) return;
+    const r = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.9;
+    let h = H * 0.96, w = h * r;
+    if (w > W * 0.44) { w = W * 0.44; h = w / r; }
+    const key = `${Math.round(w)}x${Math.round(h)}`;
+    if (box.dataset.size === key) return;
+    box.dataset.size = key;
+    box.style.width = w + 'px';
+    box.style.height = h + 'px';
+}
+window.addEventListener('resize', () => { const b = document.getElementById('bf-hero-box'); if (b) { b.dataset.size = ''; layoutBattleHero(); } });
