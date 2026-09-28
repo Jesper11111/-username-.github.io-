@@ -230,10 +230,12 @@ function startBountyDuel(entry) {
     playerStatus = newStatus();
     resetGearWave();   // 首擊、先手盾（gear.js）
     inBountyDuel = true;
+    let look = CULTIVATOR_IMGS[entry.faction];   // 戰場實況的圖：與野外修士同一張（config-merit.js，邪修＝魔道修士、正道＝正道修士）
     duelOpponent = {
         entryId: entry.id,
         name: npc.name, title: npc.title, faction: entry.faction, rank: entry.rank,
         icon: getBountyIcon(entry),
+        img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
         attack: st.attack, maxHp: st.hp, hp: st.hp,
         attrs, status: newStatus(),
         skills: entry.skills, skillChance: rank.skillChance,

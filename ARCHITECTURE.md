@@ -1271,6 +1271,8 @@ combatTick() 每秒執行 [combat.js]
   與**魔道修士**（2026-09-29，版本 `20261001z`；玩家提供：掌心黑焰、持骷爪法杖的魔道術士 `images/monsters/demonic-cultivator.jpg`，pos 50% 25%）。
   **暗殺者**另用 `AMBUSH_IMG`（2026-09-29，版本 `20261001y`；玩家提供：黑甲持弩的白髮殺手 `images/monsters/assassin.jpg`，pos 50% 30%），不分陣營都用這張。
   戰場的敵方區是窄長條，所以左上角的弩只會露出一部分，人物本身完整。野外修士與暗殺者現在都有圖；emoji（🧙／🧛／🥷）仍用於日誌與沒有圖時的備援。
+  **懸賞對決（獵殺邪修）**（2026-09-29，版本 `20261002g`；玩家回報「仙魔戰場獵殺邪修的殺手圖片沒有改」）：原本對手物件沒有 `img`，戰場只顯示 emoji。
+  `bounty.js` 的 `startBountyDuel` 改為依對手陣營帶入同一張表 `CULTIVATOR_IMGS[entry.faction]`（邪修＝魔道修士圖、正道＝正道修士圖）。
   同一波裡修士排在妖獸後面，所以要等前面的妖獸倒下、輪到修士時才會換成他的圖（和妖獸一樣，都顯示目前在打的那隻）。
 - 斬殺時 `onCultivatorKilled()`：改善惡值、`evilKills` +1；**只有敵對陣營給功德** `FIELD_MERIT_MIN`～`FIELD_MERIT_MAX`(1～10)，同陣營不給（日誌註明）。
 - 離線（野外）：波數（戰鬥 tick ÷ `IDLE_WAVE_AVG_MONSTERS`）× 5% × 一半敵對 × 平均 5.5 功德，每小時約 50 功德。
@@ -1340,7 +1342,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002f`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002g`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2762,7 +2764,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
   **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
   `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
-  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；
+  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`（依陣營取 `CULTIVATOR_IMGS`，第 27 節）、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；
   **安全區**（2026-09-29，版本 `20261002d`）顯示 `SAFE_ZONE_IMG`（config-maps.js，宗門景色；個別安全地圖可加 `battleImg`／`battleImgPos` 蓋過），同時 `.bf-scene` 加 `.bf-safe` 隱藏「VS」（渡劫、懸賞對決除外）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
   敵方飄字落在右半（暴擊固定在 76～79%，避開中央 VS）、受傷字落在左半。
   上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。

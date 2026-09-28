@@ -201,7 +201,7 @@ function setBattleBar(fillId, trailId, cur, max) {
 }
 
 // 敵方圖片（右半邊）：對手物件有 img 就用（野外妖獸由 FIELD_MONSTERS 帶入，config-maps.js）；
-// 野外修士（正／魔）、暗殺者由 CULTIVATOR_IMGS／AMBUSH_IMG 帶入（config-merit.js）；安全區顯示 SAFE_ZONE_IMG（config-maps.js）；地圖也可設選填的 monsterImg 蓋過；心魔依性別由 HEART_DEMON_IMGS 帶入（config-tribulation.js）；都沒有（懸賞對手）就顯示大號 emoji
+// 野外修士（正／魔）、暗殺者由 CULTIVATOR_IMGS／AMBUSH_IMG 帶入（config-merit.js）；安全區顯示 SAFE_ZONE_IMG（config-maps.js）；地圖也可設選填的 monsterImg 蓋過；心魔依性別由 HEART_DEMON_IMGS 帶入（config-tribulation.js）；懸賞對手（獵殺邪修）也依陣營用 CULTIVATOR_IMGS（bounty.js）；都沒有圖時顯示大號 emoji
 // 回傳 { src, pos } 或 null
 function getBattleFoeImg() {
     if (inTribulation && heartDemon) return heartDemon.img ? { src: heartDemon.img, pos: heartDemon.imgPos } : null;
