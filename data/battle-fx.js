@@ -5,9 +5,9 @@
 //   依屬性上色（冰藍、毒綠、火紅、雷紫、金黃…）；暴擊時血條閃光震動＋放射爆點，數字放大跳動。
 
 const BATTLE_HERO_IMG = { male: "images/battle/hero-male.jpg", female: "images/battle/hero-female.jpg" };
-// 立繪上劍身的位置（圖片寬高的 %：護手 x1,y1 → 劍尖 x2,y2），武器發光沿這條線畫（2026-09-28 依玩家提供的新立繪量測）
+// 立繪上劍身的位置（圖片寬高的 %：護手 x1,y1 → 劍尖 x2,y2），武器火焰（buildBladeFire）沿這條線排（2026-09-28 依玩家提供的新立繪量測）
 const BATTLE_HERO_BLADE = { male: [72, 55, 95, 80], female: [66, 52, 93, 88] };
-// 本命五行 → 屬性特效 class（index.html 的 .bf-hero-box.el-*：武器光色、粒子、光暈）
+// 本命五行 → 屬性特效 class（index.html 的 .bf-hero-box.el-*：武器火焰顏色、氣焰、粒子、光暈）
 const BATTLE_HERO_ELEM_CLASS = { "金": "el-metal", "木": "el-wood", "水": "el-water", "火": "el-fire", "土": "el-earth" };
 const BATTLE_FX_MAX_FLOATS = 5;      // 每次更新最多幾個飄字（多的合併）
 const BATTLE_FX_STAGGER_MS = 110;    // 同一批飄字的間隔
@@ -94,7 +94,9 @@ function flushBattleFx() {
         restartAnim(document.getElementById('bf-enemy-spark'), 'big');        // 切口放射爆點
         restartAnim(document.getElementById('bf-flash'), 'on');
     } else if (out.some(e => e.kind === "heavy")) {
+        // 重擊／雷擊：血條切口小爆點＋中段圖片小震一下（2026-09-28 曾加過輕量版裂痕碎片，玩家覺得太假已移除；破碎只留給暴擊）
         restartAnim(document.getElementById('bf-enemy-spark'), 'on');
+        restartAnim(stage.querySelector('.bf-scene'), 'bf-shake');
     }
     const heroEl = document.getElementById('bf-hero-box'), foeEl = document.getElementById('bf-foe');
     const foeHit = out.some(e => e.side === "foe" && e.kind !== "miss");
@@ -248,11 +250,7 @@ function updateBattleHero() {
         img.dataset.g = g;
         const bg = document.getElementById('bf-hero-bg');   // 立繪完整顯示後右側的空白：同一張圖模糊放大墊底
         if (bg) bg.style.backgroundImage = `url("${BATTLE_HERO_IMG[g]}")`;
-        const [x1, y1, x2, y2] = BATTLE_HERO_BLADE[g];
-        ['bf-blade-halo', 'bf-blade-core', 'bf-blade-shine'].forEach(id => {
-            const l = document.getElementById(id);
-            if (l) { l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); }
-        });
+        buildBladeFire(BATTLE_HERO_BLADE[g]);
     }
     // 本命五行（stats.js 的 getPlayerElement，裝備最多的五行）決定武器光色與屬性特效；沒有則為淡金
     const cls = BATTLE_HERO_ELEM_CLASS[getPlayerElement()] || 'el-none';
@@ -264,19 +262,48 @@ function updateBattleHero() {
     layoutBattleHero();
 }
 
-// 立繪框大小：依圖片比例，高度佔中段 96%、寬度不超過 44%（斜切線最左點），靠左下；框內的武器光、粒子用 % 座標就能對準圖片
+// 武器火焰：沿劍身（護手 x1,y1 → 劍尖 x2,y2，立繪框的 %）等距排 16 團圓潤柔焰（互相重疊、模糊），護手端大、劍尖端小，
+// 每團節奏與起始相位不同（看起來像火舌在劍上亂竄）；尺寸用框的 % 所以跟著立繪縮放
+function buildBladeFire(blade) {
+    const wrap = document.getElementById('bf-blade-fire');
+    if (!wrap || !blade) return;
+    const [x1, y1, x2, y2] = blade, N = 16;
+    let html = '';
+    for (let i = 0; i < N; i++) {
+        const t = i / (N - 1);
+        const x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+        const k = 1 - t * 0.5;   // 護手 100% → 劍尖 50%
+        html += `<span style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--fw:${(10 * k).toFixed(1)}%;--fh:${((18 + (i % 3) * 4) * k).toFixed(1)}%;`
+             + `animation-duration:${(0.85 + ((i * 7) % 5) * 0.12).toFixed(2)}s;animation-delay:-${((i * 3) % 7 * 0.15).toFixed(2)}s"></span>`;
+    }
+    wrap.innerHTML = html;
+}
+
+// 立繪框大小與左右分界（2026-09-28 玩家要求「玩家對戰畫面滿版」）：
+//   立繪依圖片比例填滿中段高度（96%，完整全身與整把劍），寬度 w＝立繪寬；左右分界的斜線改跟著立繪走——
+//   斜線底端＝立繪右緣（--s）、頂端再往右 --slant，人物區剛好被立繪填滿，只有斜線上方一小塊三角由模糊背景補；怪物區拿剩下的寬度。
+//   立繪寬最多佔 60%（窄螢幕時縮小立繪，保留怪物區）。框內的武器光、粒子用 % 座標對準圖片。
 function layoutBattleHero() {
     const img = document.getElementById('bf-hero'), box = document.getElementById('bf-hero-box');
-    if (!img || !box || !box.parentElement) return;
-    const W = box.parentElement.clientWidth, H = box.parentElement.clientHeight;
+    const scene = box && box.parentElement;
+    if (!img || !box || !scene) return;
+    const W = scene.clientWidth, H = scene.clientHeight;
     if (!W || !H) return;
     const r = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.9;
     let h = H * 0.96, w = h * r;
-    if (w > W * 0.44) { w = W * 0.44; h = w / r; }
-    const key = `${Math.round(w)}x${Math.round(h)}`;
+    if (w > W * 0.6) { w = W * 0.6; h = w / r; }
+    const slant = Math.min(W * 0.12, 70);
+    const key = `${W}x${H}:${Math.round(w)}x${Math.round(h)}`;
     if (box.dataset.size === key) return;
     box.dataset.size = key;
     box.style.width = w + 'px';
     box.style.height = h + 'px';
+    scene.style.setProperty('--s', w + 'px');
+    scene.style.setProperty('--slant', slant + 'px');
+    const line = document.getElementById('bf-divider-line');
+    if (line) {
+        line.setAttribute('x1', ((w + slant) / W * 100).toFixed(2));
+        line.setAttribute('x2', (w / W * 100).toFixed(2));
+    }
 }
 window.addEventListener('resize', () => { const b = document.getElementById('bf-hero-box'); if (b) { b.dataset.size = ''; layoutBattleHero(); } });
