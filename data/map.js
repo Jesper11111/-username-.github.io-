@@ -110,7 +110,10 @@ function getMapMinRealm(item) {
 function getMapDifficultyText(item) {
     if (!NUMERIC_V2) return `難度: ${item.diff}`;
     let ms = nv2MonsterStats(item);
-    return `妖獸 氣血 ${ms.hp.toWan()}／攻擊 ${ms.atk.toWan()}`;
+    // 境界壓制（numeric.js）：顯示的已是對你的數值，另外標出倍率
+    let sup = ms.suppress && ms.suppress.gap >= 0.05
+        ? `<br><span style="color:#f87171;">⚠️ 境界壓制：高你 ${ms.suppress.gap.toFixed(1)} 個境界，妖獸氣血 ×${ms.suppress.hp.toFixed(1)}、攻擊 ×${ms.suppress.atk.toFixed(1)}</span>` : '';
+    return `妖獸 氣血 ${ms.hp.toWan()}／攻擊 ${ms.atk.toWan()}${sup}`;
 }
 
 function selectMap(cIndex, iIndex) {

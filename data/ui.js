@@ -343,7 +343,7 @@ function renderSkillList() {
             ? `${typeName}・${sk.dmgType === 'mag' ? '悟性' : '力量'}・威力 ${Math.round(sk.mult * 100)}%`
             : typeName;
         if (sk.effect) detail += `・${combatAttrInfo[sk.effect.type].icon}${Math.round(sk.effect.chance * 100)}%`;
-        html += `・[${source}] ${sk.name} (${detail}, 耗魔:${sk.mpCost})<br>`;
+        html += `・[${source}] ${sk.name} (${detail}, 耗魔:${skillMpCost(sk.mpCost)})<br>`;
     });
     document.getElementById('skill-list').innerHTML = html;
 }

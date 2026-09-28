@@ -130,6 +130,11 @@ function nv2MaxHp() {
             * (1 + nv2BuffPct('hp')) * (1 + player.level * NV2.levelHpPct / 100) + reinc) * getWeaknessMult();
     return Math.max(1, Math.round(v));
 }
+// 技能實際耗魔：新制 × NV2.mpScale（0.1）無條件進位；舊制原值。施放（combat.js）與所有顯示耗魔的地方都要經過這裡
+function skillMpCost(base) {
+    base = Number(base) || 0;
+    return NUMERIC_V2 ? Math.max(1, Math.ceil(base * NV2.mpScale - 1e-9)) : base;
+}
 function nv2MaxMp() {
     const v = (NV2.mpBase + nv2Stat('spr') * NV2.mpPerSpr) * Math.max(0.1, 1 + getSpellAuraBonus().mpPct) * (1 + (getBonusTotals().mpPct || 0)) + player.level * NV2.levelMp;   // mpPct：金丹品級
     return Math.max(1, Math.round(v * getWeaknessMult()));
@@ -174,12 +179,27 @@ function nv2TypRoundMult(L) {
     return (1 + crit * (NV2.critDmg - 1)) * (1 + combo) * NV2.typSkillAvg;
 }
 
-// 野外妖獸：氣血 = 一般玩家普攻 × 25 下；攻擊 = 一般玩家氣血 × 1.5%
+// 境界壓制（2026-09-28 玩家反映「金丹可以打煉虛，怎麼樣都不合理」）：新制每個大境界成長只有 ×1.05，
+//   一般配置的金丹 10 階打煉虛妖獸只要 33 下（同境界 25 下）、被打 211 下才死（同境界 250 下），幾乎沒差。
+//   地圖妖獸境界（nv2L）高於玩家（境界＋(階−1)/10）時，差距 gap 每 1 個大境界：妖獸氣血 +NV2.suppressHp、攻擊 +NV2.suppressAtk（線性）。
+//   同境界或打低階地圖 gap ≤ 0 不受影響；同境界後期打下一境界圖 gap 很小（10 階 ≈ 0.1），剛突破的 1 階 gap ≈ 1 最吃力
+function nv2RealmGap(map) {
+    const L = typeof map.nv2L === 'number' ? map.nv2L : 0;
+    return Math.max(0, L - nv2Level(player.realmIndex, player.stage));
+}
+function nv2SuppressMult(map) {
+    const gap = nv2RealmGap(map);
+    return { gap, hp: 1 + gap * NV2.suppressHp, atk: 1 + gap * NV2.suppressAtk };
+}
+
+// 野外妖獸：氣血 = 一般玩家普攻 × 25 下；攻擊 = 一般玩家氣血 × 0.4%；再乘境界壓制（對目前玩家）
 function nv2MonsterStats(map) {
     const L = typeof map.nv2L === 'number' ? map.nv2L : 0;
+    const sup = nv2SuppressMult(map);
     return {
-        hp: Math.max(1, Math.round(nv2TypNormal(L) * NV2.hitsSame)),
-        atk: Math.max(0.1, Math.round(nv2TypHp(L) * NV2.monAtkPct * (map.nv2AtkMult || 1) / 10) / 10)   // 保留 1 位小數（elements.js 的 roundDmg）；nv2AtkMult 選填（新手圖 0.7）
+        hp: Math.max(1, Math.round(nv2TypNormal(L) * NV2.hitsSame * sup.hp)),
+        atk: Math.max(0.1, Math.round(nv2TypHp(L) * NV2.monAtkPct * (map.nv2AtkMult || 1) * sup.atk / 10) / 10),   // 保留 1 位小數（elements.js 的 roundDmg）；nv2AtkMult 選填（新手圖 0.7）
+        suppress: sup
     };
 }
 // 一般玩家殺一隻要幾回合（含妖獸減傷、閃避）

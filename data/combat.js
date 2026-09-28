@@ -375,7 +375,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
 
     if (availableSkills.length > 0 && Math.random() < 0.4) {
         let skill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
-        let mpCost = Math.ceil(skill.mpCost * (1 - (fx["聚靈"] || 0)));   // 聚靈：技能耗魔降低
+        let mpCost = Math.ceil(skillMpCost(skill.mpCost) * (1 - (fx["聚靈"] || 0)));   // 聚靈：技能耗魔降低；新制耗魔 ×0.1（numeric.js）
         if (player.mp >= mpCost) {
             player.mp -= mpCost;
             usedSkill = true;

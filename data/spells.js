@@ -135,7 +135,7 @@ function describeSpell(s) {
             return `${SPELL_AURA_LABELS[k]} ${v >= 0 ? '+' : ''}${isPct ? pct(v) : v + '%'}`;
         }).join("、"));
     }
-    if (s.active) parts.push(`耗魔 ${s.mpCost}${s.hpCost ? `、反噬氣血 ${pct(s.hpCost)}` : ''}`);
+    if (s.active) parts.push(`耗魔 ${skillMpCost(s.mpCost)}${s.hpCost ? `、反噬氣血 ${pct(s.hpCost)}` : ''}`);
     return parts.join("；");
 }
 
