@@ -140,6 +140,7 @@ function tribulationTick() {
     // 心魔身上的燒傷/中毒發作
     let demonTick = tickStatus(heartDemon.status);
     heartDemon.hp -= demonTick.dot;
+    battleFxDot(demonTick, false);   // 戰鬥面板：燒傷／中毒飄字（battle-fx.js）
     let regen = applyRootRegen() + applyGearRegen();
     if (tags.length > 0 || demonTick.dot > 0 || regen > 0) {
         addLog(`✨ 屬性效果：${[tags.length ? summarizeTags(tags, "💨被心魔閃避") : '',
@@ -190,7 +191,7 @@ function tribulationTick() {
     if (r.tags.length > 0) addLog(`🧍 心魔攻勢：${summarizeTags(r.tags, "💨你閃避了")}`, "combat");
     let tribTaken = applyPetDamageReduction(taken);
     player.hp -= tribTaken;
-    battleFxHurt(tribTaken, r.tags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
+    battleFxHurt(tribTaken, r.tags.includes("dodge"), r.tags);   // 戰鬥面板飄字（battle-fx.js）
 
     if (player.hp <= 0 && !tryGearUndying()) { resolvePlayerFall(); return; }
 

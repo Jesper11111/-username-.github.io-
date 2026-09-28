@@ -160,6 +160,7 @@ function fieldCombatRound() {
     let selfTick = tickStatus(playerStatus);
     if (selfTick.dot > 0) {
         player.hp -= selfTick.dot;
+        battleFxDot(selfTick, true);   // 戰鬥面板：燒傷紅字／中毒綠字（battle-fx.js）
         addLog(`🩸 身上的${formatStatus(playerStatus) || '異常狀態'}發作，損失 ${selfTick.dot.toWan()} 點氣血！`, "combat");
         if (player.hp <= 0 && !tryGearUndying()) { player.idleProvenMap = null; onPlayerKilledInField(); return; }
     }
@@ -179,13 +180,16 @@ function fieldCombatRound() {
 
     // ---- 怪物身上的燒傷/中毒發作，並記錄誰被凍結 ----
     let dotTotal = 0;
+    const dotSum = { burn: 0, poison: 0 };
     enemies.forEach(e => {
         if (e.hp <= 0) return;
         let t = tickStatus(e.status);
         e.hp -= t.dot;
         dotTotal += t.dot;
+        dotSum.burn += t.burn; dotSum.poison += t.poison;
         e.skipTurn = t.frozen;
     });
+    battleFxDot(dotSum, false);   // 戰鬥面板：怪物身上的燒傷／中毒（全體合計，battle-fx.js）
     let regen = applyRootRegen() + applyGearRegen();
     if (playerTags.length > 0 || dotTotal > 0 || regen > 0) {
         let parts = [];
@@ -290,7 +294,7 @@ function fieldCombatRound() {
         });
         let taken = applyPetDamageReduction(totalDmg);
         player.hp -= taken;
-        battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
+        battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）
         if (enemyTags.length > 0 || frozenCount > 0) {
             let parts = [];
             if (frozenCount > 0) parts.push(`${frozenCount} 隻妖獸被凍結無法出手`);

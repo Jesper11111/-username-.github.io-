@@ -175,18 +175,20 @@ function addDotStack(dot, maxStacks, turns, perStack) {
 }
 
 // 行動前結算自身狀態：扣持續傷害、判斷是否被凍結（凍結會消耗 1 回合）
-// 回傳 { dot, frozen }，呼叫端自行扣 hp
+// 回傳 { dot, frozen, burn, poison }，呼叫端自行扣 hp（burn／poison 為各自的量，戰鬥畫面飄字依此上色）
 function tickStatus(st) {
     let dot = 0;
+    const part = { burn: 0, poison: 0 };
     ["burn", "poison"].forEach(k => {
         if (!st[k]) return;
-        dot += st[k].stacks * st[k].perStack;
+        part[k] = st[k].stacks * st[k].perStack;
+        dot += part[k];
         st[k].turns--;
         if (st[k].turns <= 0) st[k] = null;
     });
     let frozen = st.frozen > 0;
     if (frozen) st.frozen--;
-    return { dot: roundDmg(dot), frozen };
+    return { dot: roundDmg(dot), frozen, burn: part.burn, poison: part.poison };
 }
 
 // 狀態圖示文字（戰鬥實況面板用），例：「❄️ 🔥×2 ☠️×3」

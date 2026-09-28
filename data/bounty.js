@@ -295,6 +295,7 @@ function bountyDuelTick() {
 
     let oppTick = tickStatus(opp.status);
     opp.hp -= oppTick.dot;
+    battleFxDot(oppTick, false);   // 戰鬥面板：燒傷／中毒飄字（battle-fx.js）
     let regen = applyRootRegen() + applyGearRegen();
     if (tags.length > 0 || oppTick.dot > 0 || regen > 0) {
         addLog(`✨ 屬性效果：${[tags.length ? summarizeTags(tags, `💨被${opp.name}閃避`) : '',
@@ -335,7 +336,7 @@ function bountyDuelTick() {
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
     let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags));
     player.hp -= dealt;
-    battleFxHurt(dealt, r.tags.includes("dodge"));   // 戰鬥面板飄字（battle-fx.js）
+    battleFxHurt(dealt, r.tags.includes("dodge"), r.tags);   // 戰鬥面板飄字（battle-fx.js）
     if (sk && dealt > 0) {
         if (sk.type === "lifesteal") opp.hp = Math.min(opp.maxHp, opp.hp + dealt * sk.steal);
         if (sk.type === "poison" && !getAptitudeSpecial().poisonImmune) {   // 萬毒不侵體（aptitude.js）
