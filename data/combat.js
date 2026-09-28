@@ -124,8 +124,10 @@ function combatTick() {
         if (isEvilHuntUnlocked()) {
             let addCultivator = (faction, ambush) => {
                 let mult = ambush ? AMBUSH_POWER_MULT : FIELD_CULTIVATOR_POWER_MULT;
+                let look = ambush ? AMBUSH_IMG : CULTIVATOR_IMGS[faction];   // 戰場實況的圖（config-merit.js，只影響外觀）
                 enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
+                               img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
                                attrs: Object.assign(rollMonsterAttrs(), { nature: faction === "邪" ? "dark" : "light" }),   // 邪修為暗、正道為光（光暗互剋）
                                status: newStatus() });
             };

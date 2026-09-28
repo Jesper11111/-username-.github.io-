@@ -35,6 +35,11 @@ const HEART_DEMON_HP_MULT = 1.0;
 
 // 心魔為人形（與玩家同貌的魔身）
 const HEART_DEMON_ICON = "🧍";
+// 戰場實況的心魔圖（依玩家性別，battle-fx.js 的 getBattleFoeImg）；沒有圖的性別顯示上面的 emoji
+const HEART_DEMON_IMGS = {
+    male:   { img: "images/monsters/heart-demon-male.jpg", pos: "50% 25%" },     // 2026-09-29 玩家提供：紫袍魔身、背後魔神浮雕、腳踩血色法陣
+    female: { img: "images/monsters/heart-demon-female.jpg", pos: "50% 22%" }    // 2026-09-29 玩家提供：紫髮紅瞳魔女、持血晶魔杖、月下古寺
+};
 
 // 心魔每回合施展魔功的機率
 const HEART_DEMON_SKILL_CHANCE = 0.4;

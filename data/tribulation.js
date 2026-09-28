@@ -91,9 +91,11 @@ function triggerTribulation() {
     inTribulation = true;
     tribulationFatedWin = Math.random() < chance.total;
 
+    let demonLook = HEART_DEMON_IMGS[player.gender === 'female' ? 'female' : 'male'];   // 戰場實況的圖（config-tribulation.js）
     heartDemon = {
         name: "心魔",
         icon: HEART_DEMON_ICON,
+        img: demonLook ? demonLook.img : undefined, imgPos: demonLook ? demonLook.pos : undefined,
         attack: demonPower,
         maxHp: demonHp,
         hp: demonHp,

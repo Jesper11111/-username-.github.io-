@@ -24,6 +24,13 @@ const FIELD_MERIT_MAX = 10;
 const AMBUSH_WAVE_CHANCE = 0.04;             // 善／惡時，每波有此機率混入一名暗殺者
 const AMBUSH_POWER_MULT = 3;                 // 暗殺者的氣血與攻擊力倍率
 const CULTIVATOR_ICONS = { "正": "🧙", "邪": "🧛" };
+// 野外修士在戰場實況的圖（battle-fx.js 的 getBattleFoeImg；沒有圖的陣營顯示上面的 emoji）；暗殺者用 AMBUSH_IMG（不分陣營）
+// pos = 圖片裁切對準的位置（直式圖，對準臉部與上半身）
+const CULTIVATOR_IMGS = {
+    "正": { img: "images/monsters/righteous-cultivator.jpg", pos: "50% 28%" },   // 2026-09-29 玩家提供：持杖白髮老道立於城樓
+    "邪": { img: "images/monsters/demonic-cultivator.jpg", pos: "50% 25%" }      // 2026-09-29 玩家提供：掌心黑焰、持骷爪法杖的魔道術士
+};
+const AMBUSH_IMG = { img: "images/monsters/assassin.jpg", pos: "50% 30%" };   // 2026-09-29 玩家提供：黑甲持弩、爪刃的白髮殺手立於城樓
 const AMBUSH_ICON = "🥷";
 
 // ---- 七彩補天石：功德滿 MERIT_PER_BUTIAN_STONE 自動凝結一顆（merit.js 的 settleMeritStones）----

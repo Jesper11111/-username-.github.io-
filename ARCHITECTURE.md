@@ -30,7 +30,10 @@ images/               圖片素材
                       npc-fengxi.png 亂星海第一大善人・風希人偶（252×400 透明 PNG，由玩家提供的插畫手動描邊去背）
   maps/               修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
-  monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）
+  monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
+                      righteous-cultivator.jpg 野外正道修士（config-merit.js 的 CULTIVATOR_IMGS，第 27、59 節；玩家提供 848×1264 直式縮成 480×715、77KB）、
+                      assassin.jpg 暗殺者（AMBUSH_IMG；玩家提供 687×1024 縮成 480×715、72KB）、demonic-cultivator.jpg 野外魔道修士（CULTIVATOR_IMGS；848×1264 縮成 480×715、73KB）、
+                      heart-demon-male.jpg／heart-demon-female.jpg 男／女角渡劫心魔（config-tribulation.js 的 HEART_DEMON_IMGS，第 7 節；皆 480×715，80／75KB）
   equip/              角色裝備欄中間的人物正面圖（第 60 節）：hero-male.jpg 520×592／hero-female.jpg 520×459（玩家提供，縮小）
   battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（2026-09-28 版本 `20260930w` 換成玩家提供的「站在飛劍上的背影」新圖：男 480×531、女 480×594（女圖原本四角有圓形玻璃框，裁掉兩側與上緣）；舊圖留在 hero-male-v1.jpg／hero-female-v1.jpg；版本 `20260930z` 起玩家要求「人物取完整、露出整把武器、貼左邊」：`.bf-hero` 改 `object-fit: contain` 靠左下、寬 44%（斜切線最左點，劍尖不會被切），上緣與右緣用 mask 淡出，後面墊 `#bf-hero-bg`＝同一張圖模糊放大（`updateBattleHero` 設背景）；呼吸動畫改為只上下浮動、前衝與閃避改為只平移，不再放大以免切到頭或劍尖），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
   frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節
@@ -387,6 +390,7 @@ combatTick() 每秒執行 [combat.js]
 | 勝算計算 | `tribulation.js` 的 `getTribulationChance()` | 基礎 + 丹藥 + 技能，上限 80%（見下方） |
 | 天命擲骰 | `triggerTribulation()` | 確認視窗列出勝算明細與提升建議；開打時 `tribulationFatedWin = Math.random() < 勝算`（`state.js`，不存檔） |
 | 心魔數值 | `config-tribulation.js` | 戰力 = 玩家 100%（`HEART_DEMON_POWER_MULT`）、氣血 = 玩家 100%（`HEART_DEMON_HP_MULT`）、4 個魔功技能；只影響戰鬥過程的觀感 |
+| 心魔外觀 | `config-tribulation.js` 的 `HEART_DEMON_IMGS` | 依 `player.gender` 取 `{ img, pos }`，`triggerTribulation()` 寫進 `heartDemon.img／imgPos`，戰場實況顯示（第 59 節）。2026-09-29（版本 `20261002a`）玩家提供男角心魔 `images/monsters/heart-demon-male.jpg`（紫袍魔身，687×1024 縮成 480×715、80KB，pos 50% 25%），版本 `20261002b` 加女角心魔 `images/monsters/heart-demon-female.jpg`（紫髮紅瞳魔女持血晶魔杖，848×1264 縮成 480×715、75KB，pos 50% 22%）。沒有圖時顯示 emoji 🧍。`heartDemon` 不存檔，不用考慮舊存檔 |
 | 戰鬥流程 | `tribulation.js` 的 `tribulationTick()` | 由 `combat.js` 的 `combatTick()` 在 `inTribulation` 為 true 時接管，暫停掛機、刷怪與宗門任務。戰況與天命相反時在關鍵一刻收尾：天命勝卻將戰死 →「絕處逢生」判勝；天命敗卻將擊殺心魔 →「心魔反噬」判敗 |
 | 成功 | `endTribulation(true)` → `leveling.js` 的 `advanceRealm()` | 晉升大境界並給予屬性獎勵，`pendingTribulation` 解除、經驗恢復累積 |
 | 失敗 | `endTribulation(false)` | **視同死亡**：先呼叫 `handlePlayerDeath()` 折壽並使靈寵陣亡（壽元歸零即遊戲結束），再損失 10% 靈石、氣血歸 1、回到安全區；接著 `applyTribulationFailDrop()` **境界跌落並陷入虛弱**（見下方） |
@@ -1253,6 +1257,12 @@ combatTick() 每秒執行 [combat.js]
 ### 野外修士（取代舊版「每隻 1.6% 是邪修」）
 - 野外修士**不是妖獸**：`combat.js` 每刷新一波，有 `FIELD_CULTIVATOR_WAVE_CHANCE`(5%) 混入**一名**，正道／魔道各半（圖示 `CULTIVATOR_ICONS` 🧙／🧛，氣血與攻擊 ×1.5）。
   敵人物件帶 `cultivator: "正"/"邪"`、暗殺者另帶 `ambush: true`；戰鬥實況標題顯示「修士×N」。
+- 戰場實況的圖（2026-09-29，版本 `20261001x`）：`config-merit.js` 的 `CULTIVATOR_IMGS[陣營] = { img, pos }`，刷出野外修士時寫進敵人物件的 `img`／`imgPos`（只影響外觀）。
+  目前有**正道修士**（玩家提供：持杖白髮老道 `images/monsters/righteous-cultivator.jpg`，pos 50% 28%）
+  與**魔道修士**（2026-09-29，版本 `20261001z`；玩家提供：掌心黑焰、持骷爪法杖的魔道術士 `images/monsters/demonic-cultivator.jpg`，pos 50% 25%）。
+  **暗殺者**另用 `AMBUSH_IMG`（2026-09-29，版本 `20261001y`；玩家提供：黑甲持弩的白髮殺手 `images/monsters/assassin.jpg`，pos 50% 30%），不分陣營都用這張。
+  戰場的敵方區是窄長條，所以左上角的弩只會露出一部分，人物本身完整。野外修士與暗殺者現在都有圖；emoji（🧙／🧛／🥷）仍用於日誌與沒有圖時的備援。
+  同一波裡修士排在妖獸後面，所以要等前面的妖獸倒下、輪到修士時才會換成他的圖（和妖獸一樣，都顯示目前在打的那隻）。
 - 斬殺時 `onCultivatorKilled()`：改善惡值、`evilKills` +1；**只有敵對陣營給功德** `FIELD_MERIT_MIN`～`FIELD_MERIT_MAX`(1～10)，同陣營不給（日誌註明）。
 - 離線（野外）：波數（戰鬥 tick ÷ `IDLE_WAVE_AVG_MONSTERS`）× 5% × 一半敵對 × 平均 5.5 功德，每小時約 50 功德。
 - ⚠️ 功德改成 3 萬凝結一顆補天石後，野外修士（1～10）只是零頭，**補天石的主要來源是懸賞榜**（1～3000，平均 1,500，約 20 名換一顆）。
@@ -1321,7 +1331,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261001w`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002b`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2719,7 +2729,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
   **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
   `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
-  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
+  敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
   敵方飄字落在右半（暴擊固定在 76～79%，避開中央 VS）、受傷字落在左半。
   上方敵方列（徽章＋怪物 emoji `#battle-enemy-icon`、標題、`#bf-enemy-bar` 血條、狀態／五行一行）；下方玩家 HUD（徽章中央是帶光環的頭像 `#battle-player-icon`、名字、氣血／法力／修為三條）；最下一行 `#battle-action-desc`。
   舊的 id（`battle-player-name`、`battle-player-hp`、`battle-enemy-title/icon/info`、`battle-action-desc`）都保留，`ui.js` 的 `updateCombatVisualPanel()` 照舊填字，另外呼叫 `setBattleBar()` 更新血條。
