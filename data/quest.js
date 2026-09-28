@@ -32,6 +32,7 @@ function canServantTakeQuest(servant, def) {
 function formatQuestRewards(def) {
     return Object.keys(def.rewards)
         .map(key => {
+            if (key === 'caravan') return formatCaravanReward();   // 商隊：依境界換算的靈石（economy.js）
             let v = def.rewards[key];
             return `${Array.isArray(v) ? `${v[0]}~${v[1]}` : v} ${questRewardInfo[key].label}`;
         })
@@ -39,9 +40,11 @@ function formatQuestRewards(def) {
 }
 
 // 實際把獎勵加到 player 身上（[最小, 最大] 每次隨機），回傳實際獲得的文字供日誌使用
-function grantQuestRewards(def) {
+// servant：由僕從完成時傳入（商隊收益依僕從品質）
+function grantQuestRewards(def, servant) {
     let parts = [];
     for (let key in def.rewards) {
+        if (key === 'caravan') { parts.push(grantCaravanReward(servant)); continue; }   // 商隊（economy.js）
         let v = def.rewards[key];
         let amount = Array.isArray(v) ? v[0] + Math.floor(Math.random() * (v[1] - v[0] + 1)) : v;
         let field = questRewardInfo[key].field;
@@ -75,12 +78,13 @@ function renderQuestButtons() {
             ? `<p style="font-size:0.78em; color:var(--servant-color); margin:4px 0;">僕從代勞：${workers.map(s => s.name).join("、")}</p>`
             : "";
         let seconds = getQuestRequiredProgress(def) / QUEST_PROGRESS_PER_TICK;
-        let timeText = def.duration ? `固定 ${seconds} 秒／次` : `基礎 ${seconds} 秒／次`;
+        let timeText = def.duration ? (seconds >= 3600 ? `固定 ${+(seconds / 3600).toFixed(1)} 小時／次` : `固定 ${seconds} 秒／次`) : `基礎 ${seconds} 秒／次`;
         let limitText = def.requiredQuality
             ? `<p style="font-size: 0.8em; color: #fb923c; margin: 4px 0;">限【<span class="quality-${def.requiredQuality}">${def.requiredQuality}</span>】僕從代勞（至僕從小屋指派）</p>`
-            : "";
+            : def.servantOnly ? `<p style="font-size: 0.8em; color: #fb923c; margin: 4px 0;">只能由僕從執行（至僕從小屋指派）</p>` : "";
         let button = def.requiredQuality
             ? `<button class="sys-btn" disabled>僅限${def.requiredQuality}僕從</button>`
+            : def.servantOnly ? `<button class="sys-btn" disabled>僅限僕從</button>`
             : `<button class="sys-btn ${isActive ? 'active' : ''}" ${atSect ? '' : 'disabled'} onclick="startQuest('${questId}')">
                     ${isActive ? '✅ 執行中' : (atSect ? '接取任務' : '需在宗門')}
                </button>`;
@@ -106,8 +110,8 @@ function startQuest(questId) {
     }
     let def = getQuestDef(questId, getSectTier());
     if (!def) return;
-    if (def.requiredQuality) {
-        alert(`【${def.name}】只有${def.requiredQuality}品質的僕從才能執行，請到僕從小屋指派。`);
+    if (def.requiredQuality || def.servantOnly) {
+        alert(`【${def.name}】只有${def.requiredQuality ? def.requiredQuality + '品質的' : ''}僕從才能執行，請到僕從小屋指派。`);
         return;
     }
 

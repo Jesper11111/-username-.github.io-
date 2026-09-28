@@ -61,11 +61,12 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
                       （config-defense.js 例外：尾端有守城強度曲線 defenseRealmAtk()／defenseWaveAtk()，gm.html 也要用，第 49、50 節）
+                      （config-economy.js 例外：會把「商隊跑商」加進 config-quests.js 的 questData／questRewardInfo，必須排在它之後，第 61 節）
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
@@ -95,6 +96,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）
   mailbox.js          仙府信箱與兌換碼：讀信、領取、兌換、獎勵發放（第 56 節；設定 config-mailbox.js，GM 端在 gm.html）
   msgboard.js         修仙留言板：大道石碑第三個分頁，讀最新 50 則、留言（每 60 秒一則）、刪自己的留言、髒話過濾（第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*）
+  economy.js          賺錢管道（第 61 節）：H＝境界每小時練功收入、坊市回收（天星城收購商）、商隊收益與每日趟數、洞府產業（靈田／礦脈）、懸賞賞金
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
@@ -133,6 +135,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   其餘新檔（`config-gear/enhance/sets/profession/titles.js`、`enhance.js`、`profession.js`、`codex.js`）只宣告常數與函式，排在 `gear.js` 附近即可。
 - `strange-fire.js`、`partner.js` 載入時會建 `strangeFireById`／`partnerById`，必須分別排在 `config-strange-fire.js`、`config-partners.js` 之後。
 - `defense.js` 載入時就建立 `DefenseBattle`（讀 `DEFENSE_*` 常數），必須排在 `config-defense.js` 之後；它在 DOMContentLoaded 抓 `#defense-vwrap` 的影片元素。
+- `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
 
 | # | 檔案 | 責任 | 依賴（讀取哪些全域） | 被誰依賴 / 誰會呼叫它 |
 |---|------|------|----------------------|------------------------|
@@ -332,6 +335,7 @@ combatTick() 每秒執行 [combat.js]
 | `closeDefenseBattle`（守城「↩ 離開」與結算「↩ 返回秘境」）、`setDefenseSpeed(1/2/4)`、`DefenseBattle.retry()`（載入失敗「🔄 重新載入」）、`openDefenseRecords`（守城畫面左上與結算畫面「📜 通關紀錄」）、`closeDefenseRecords`（紀錄視窗「關閉」） | `data/defense.js` |
 | `closeZhenmoTower`（鎮魔塔「↩ 離開」）、`startZhenmoQuiz`（塔廳「📜 開始問答」）、`answerZhenmo(i)`（問答選項）、`enterZhenmoBoss`（塔廳／結算「🚪 進入／開啟 BOSS 房門」）、`backToZhenmoHall`（「稍後再戰」「↩ 返回塔廳」）、`startZhenmoFight`（BOSS 介紹「⚔️ 挑戰」）、`setZhenmoFightSpeed(1/2/4)`、`skipZhenmoFight`（戰鬥「⏭ 跳過」） | `data/zhenmo.js` |
 | `chooseGender` | `data/main.js` |
+| `openMarketSellModal`（天星城坊市「收購商」傳送點，`config-towns.js`）、`sellEquipByQualities([...])`／`sellPill(id, qty)`／`sellMaterial('shard'/'iron', qty)`／`toggleAutoSellFull`（視窗內動態產生）、`openEstateModal`（宗門分頁「🏞️ 洞府產業」）、`collectEstate(kind)`／`upgradeEstate(kind)`（視窗內動態產生） | `data/economy.js` |
 
 ## 5. 新增功能的建議流程
 
@@ -649,6 +653,9 @@ combatTick() 每秒執行 [combat.js]
   指派（或換任務）時先付第一趟，付不起就無法指派；每趟完成後自動付下一趟，付不起則該僕從停工回到閒置並寫日誌。
   玩家親自執行不需付費。
 - 新增任務只要在 `questData` 加一筆；獎勵值可寫 `[最小, 最大]` 表示隨機，`grantQuestRewards()` 會回傳實際獲得的文字供日誌使用。
+- **🐫 商隊跑商**（2026-09-29，第 61 節）：定義在 `config-economy.js`（載入時加進 `questData.caravan`），三個宗門等級都有；`servantOnly: true` → 玩家本人不能接、任務面板顯示「僅限僕從」；
+  固定 2 小時；獎勵 key `caravan` 由 `grantQuestRewards(def, servant)` 交給 `economy.js` 的 `grantCaravanReward(servant)`（依境界與僕從品質）。
+  **每日合計 4 趟**：`payServantTrip(servant, questId)` 出發時檢查並計入 `player.caravanDaily`，跑完就停工，日誌寫 `servantTripFailText()`（「今日商隊 4 趟已跑完」）。
 - **舊存檔相容**：早期版本使用「單一 `activeQuest` + `assignedServantIds` 共同加速」，
   `save.js` 的 `migrateServantAssignments()` 會在讀檔/匯入時把舊結構轉成每位僕從自帶 `quest`/`timer`，
   並移除 `assignedServantIds`。
@@ -1140,6 +1147,7 @@ combatTick() 每秒執行 [combat.js]
   這個係數同時影響離線的經驗、靈石、僕從救援與聲望（聲望另乘 `OFFLINE_REPUTATION_RATE`）。
   2026-09-24 起再乘上**實力效率**（`estimateIdleCombat()`，見第 33 節），打不過的地圖不再給滿額離線收益。
 - 主要消耗：鍛造 10,000／次、符寶煉製 100 萬／次、僕從派遣 50～300／趟、丹藥 40～500、靈寵 1～5 萬、壽元丹 1～10 萬、靈寶閣 10 萬～100 萬。
+- **其他靈石來源**（2026-09-29 起，第 61 節）：坊市回收、商隊跑商、洞府產業、懸賞賞金，一律以「H＝境界每小時練功收入」換算並有每日上限，不會超過打怪收入太多。
   ⚠️ 後期靈石仍遠多於消耗，真正的瓶頸是聲望（高級靈寶閣需 50 萬聲望）。若要讓靈石一直有意義，
   需要讓後期消耗（鍛造、丹藥、壽元丹）隨境界提高，而不是再調高產出。
 
@@ -1332,7 +1340,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002d`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002f`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2606,8 +2614,15 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 模擬（每回合 1 秒、每波 1～3 隻、血量低於 50% 就喝藥補滿；一般＝同階一般玩家、無減傷閃避，好裝＝攻 ×2、減傷 30、閃避 20）：
     一般玩家每隻約 55～60 回合、每小時擊殺約 60 隻，每小時失血約 **30～37 倍氣血上限**；調息約回 9 倍，其餘約 20～25 倍靠丹藥，約等於每小時 220 顆培元丹（4.4 萬靈石）或 440 顆凝血草（2.2 萬）。
     好裝每隻約 32 回合、失血約 15～20 倍。各境界比例相近。
-  - ⚠️ 待決定：①前期丹藥花費接近甚至超過收入（靈山大川每小時約 2.3 萬靈石），凡人／煉氣可能入不敷出；
-    ②離線估算（`nv2EstimateIdleCombat`）一波傷害常超過氣血上限，沒有在該圖線上撐過 `IDLE_PROVEN_SECONDS` 的玩家，離線時會被送回宗門；離線也不扣丹藥。
+  - **前期減壓**（同日，版本 `20261002e`，使用者同意）：妖獸境界 ≤ 築基（`NV2.monStrEarlyRealm` 2）時強度改為 `monStrEarlyMin`～`Max`（1.0～1.5），`nv2MonsterStrRange(L)` 依妖獸自己的 L 判斷，
+    所以築基 10 階遇到金丹 1 階妖獸時會回到 1.5～3 倍（大境界門檻）。收益補償與地圖卡片都跟著用該範圍。
+    模擬（一般玩家、血量低於 50% 喝培元丹）：每小時丹藥費占收入 凡人／煉氣 約 20～26%、築基 5 階 8%、築基 10 階 44%（半數遇金丹）、金丹 18%、元嬰 4%。
+  - **離線／背景也扣丹藥**（同日，版本 `20261002e`，使用者同意）：`save.js` 的 `settleIdlePotions(est, 秒數, isOffline, 全程收入)`（新制才有）：
+    每輪（`IDLE_WAVE_GAP_TICKS` + 平均隻數 × 每隻回合）受傷 `est.waveDamage`，扣掉刷新期間調息（`restHealPct` × `MONSTER_RESPAWN_SECONDS`）後的差額靠丹藥；輪數與收益同比例（離線 × `OFFLINE_REWARD_MULT`）。
+    規則同線上 `checkAutoHealAndMana`：背包補血丹先用（回復量高的先，含「丹心」加成），不夠且有開自動補血時買「可自動購買、回復量最高」的（培元丹），可用「原有靈石＋這段收入」支付。
+    丹藥與靈石都不夠時算出可戰鬥比例 f，收益 × f，結算訊息列出服用數量與「只撐了約 N% 的時間」。
+    `idlePotionCanKeepUp(est)`：有開自動補血、且最好的可用丹藥「回復量 ÷ 5 秒冷卻」≥ 一波戰鬥中的每秒受傷時，即使一波傷害超過氣血上限也不送回宗門。沒開自動補血仍照舊送回宗門（除非線上已撐過 `IDLE_PROVEN_SECONDS`）。
+    只補氣血，靈力丹不計。驗證（本機，1 小時離線）：背包 20 顆培元丹用完後自動購買 50 顆，靈石不夠時只撐 59%；沒丹藥也沒靈石 → 0%；沒開自動補血 → 退回宗門。
   - 驗證（本機）：築基 5 階在深淵險地刷出築基 5～6 階、名牌與地圖卡片正確；實際戰鬥 20 秒正常扣血；Console 無錯誤。
 - 修仙地圖視窗頂端「🎯 金丹適合練功：上古遺跡」；地圖卡片「🎯 適合境界：…」，符合時標題加「⭐ 推薦練功」。
 - ⚠️ 使用者表示**之後再細分區域**：目前煉虛～渡劫只有鬼谷八荒、真仙有四張，且新制 `nv2L`（第 52 節）與 `suit` 不一致（例：荒古禁地 nv2L 7 ≈ 合體，suit 是仙人初境），分區時一併整理。
@@ -2809,3 +2824,26 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 背包的裝備卡片多一顆「🔍 對比身上 X」（bag.js），直接開 ③。
 - 試算成本：開裝備欄時每件背包裝備各試算一次（判斷 ▲ 與排序），背包上限 100 件，實測渲染約數毫秒。
 - **日後新增會影響角色數值的裝備欄位或加成**，只要走既有的 `getBonusTotals`／`getEquipBonus` 等函式，對比會自動算進去；若新增的加成讀的是快取，要確認試算時快取會跟著變（目前沒有裝備相關快取）。
+
+## 61. 賺錢管道：坊市回收、商隊跑商、洞府產業、職業加成、懸賞賞金（`config-economy.js`、`economy.js`；2026-09-29，版本 `20261002f`）
+- 背景：妖獸改為強度 1.5～3 倍、要大量喝藥（第 54 節）後，靈石幾乎只有打怪一個來源，也沒有把用不到的東西換錢的管道。使用者同意我提出的 ①～⑤ 全部實作。
+- **共同換算 H**：`getHourlyIncome(realm)`＝`realmPacing[境界].map` 那張地圖的 `coins` × `KILLS_PER_HOUR_ESTIMATE`（凡人／煉氣 2.3 萬、元嬰 116 萬、上蒼以後約 800～1000 萬）；`incomeMinutes(n)`＝H 的 n 分鐘。所有新收入都用它換算並設每日上限。
+- **① 坊市回收**（天星城坊市「收購商」傳送點：橫圖 rect [90,330,300,300] 左側木棚攤位、直式 [0,1060,220,360] 左下攤位，`config-towns.js`）→ `#market-sell-modal`：
+  - 裝備：H 的 `equipMinutes`（白 0.5／綠 1／藍 2／紫 4／橙 10／白金 30 分鐘）× 等級係數 `getEquipLevelFactor`（0.5 ＋ 0.5 × 裝備等級 ÷ 人物等級可穿的最高檔，`EQUIP_LEVELS`＋`BLUEPRINT_LEVELS`）。依品級一次賣出、「一鍵賣出全部白、綠裝」；🔒 鎖定與神器不賣；超過剩餘額度的那件跳過、便宜的照賣。
+  - 丹藥堂丹藥：售價 × 20%；異火碎片 H 的 1 分鐘、星允鐵 2 分鐘（×10／全部）。
+  - **每日上限** H × 2 小時（`player.marketSell = { date, total }`，`toDateString` 換日重置）。
+  - **背包滿時自動賣出**（勾選 `player.autoSellFull`）：`enhance.js` 的 `receiveLootEquip` 在背包滿、白～紫、額度夠時改呼叫 `tryAutoSellLoot` 賣掉，否則照舊分解；橙色以上照舊進暫存區。
+  - ⚠️ 鍛造一件 1 萬靈石，高境界白裝回收價可能高於鍛造費，「鍛造→回收」會有賺頭，但受每日 2 小時 H 上限約束（等於每天多一份固定收入）。
+- **② 僕從商隊**（門派任務「🐫 商隊跑商」，詳見第 12 節）：固定 2 小時，帶回 H 的 10～30 分鐘 × 品質倍率（一般 1／優秀 1.2／稀有 1.4／史詩 1.7／傳說 2），30% 另帶回星允鐵 1～3 或異火碎片 1～2；
+  出發照舊付 50～300 靈石；**所有僕從合計每日 4 趟**（`player.caravanDaily`）。離線／背景結算（`settleIdleQuests`）照常推進。
+- **③ 洞府產業**（宗門分頁「🏞️ 洞府產業」按鈕，不用在宗門也能開；`#estate-modal`）：靈田（靈石＋靈草）、礦脈（靈石＋礦石＋每小時 0.2 顆星允鐵），第一次開啟時各送 1 級。
+  - 每小時靈石＝H × `ESTATE.rate`（1 級 5% → 10 級 25%）；累積上限 `capHours`（1 級 8 小時 → 10 級 24 小時），滿了停止累積；依時間戳記 `player.estate[kind].last` 計算，所以關掉遊戲也會累積。
+  - 升級花費 H × `upgradeHours`（1→2 級 1 小時 … 9→10 級 3 小時），升級前自動收成。
+  - 靈草可到宗門靈田（`field.js`）培育成煉丹材料，等於省丹藥錢；礦石給符寶坊用。
+- **④ 煉丹／鍛造賣錢**：自己做的東西可放寄售（第 58 節，原本就能），或賣給坊市回收；主修職業每一階回收價 +2%（`MARKET_SELL.profRankBonus`，`marketProfBonus()`）。
+- **⑤ 懸賞賞金**：`bounty.js` 的 `endBountyDuel` 勝利時 `grantBountyCoins(rank)`：天榜 H 30 分鐘、地榜 15、人榜 5，寫在伏誅日誌裡。
+- 驗證（2026-09-29 本機，元嬰 Lv.50，H＝116 萬）：
+  - 回收：白 Lv.50 9,666、白 Lv.10 5,799、綠 19,333、藍 38,666、紫 77,333、橙 193,333；鎖定的沒被賣；額度剩 5 萬時紫、橙都不賣並提示；背包滿時藍裝自動賣得 3.87 萬、橙色進暫存區、關掉設定改回分解。
+  - 產業：靈田放 5 小時可收 29 萬＋靈草 10；礦脈放 30 小時只算 8 小時（46.4 萬＋礦石 8＋星允鐵 1）；升 2 級花 116 萬。
+  - 商隊：傳說僕從一趟 44.2 萬，第 4 趟後自動停工。懸賞：天／地／人 58 萬／29 萬／9.7 萬。
+  - 手機 375×812：收購商傳送點在左下攤位、不擋風希；回收與產業視窗顯示正常；Console 無錯誤。

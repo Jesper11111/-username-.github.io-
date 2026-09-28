@@ -371,7 +371,8 @@ function endBountyDuel(result) {
         player.evilKills = (player.evilKills || 0) + 1;
         addKarma(opp.faction === "邪" ? rank.karma : -rank.karma);
         let how = getPlayerFaction() === "邪" ? `吸取其一身功德 ${merit.toWan()} 點` : `積累功德 ${merit.toWan()} 點`;
-        addLog(`🏆 【懸賞伏誅】${rank.name}「${opp.title}」${opp.name}授首！${how}！（目前 ${player.merit.toWan()}）`, "level-up");
+        let bountyCoins = grantBountyCoins(opp.rank);   // 懸賞賞金（economy.js：H 的 30／15／5 分鐘）
+        addLog(`🏆 【懸賞伏誅】${rank.name}「${opp.title}」${opp.name}授首！${how}${bountyCoins ? `，領得賞金 ${bountyCoins.toWan()} 靈石` : ''}！（功德 ${player.merit.toWan()}）`, "level-up");
         settleMeritStones();
         // 星允鐵與奪寶（enhance.js／gear.js）：依榜給星允鐵、必掉一件奪寶裝備
         let ironRange = IRON_BOUNTY_AMOUNT[opp.rank];

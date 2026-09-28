@@ -17,12 +17,22 @@ function getServantTripCost(servant) {
     return SERVANT_TRIP_COST[servant.quality] || 0;
 }
 
-// 開始新的一趟：付得起就扣靈石並回傳 true
-function payServantTrip(servant) {
+// 開始新的一趟：付得起就扣靈石並回傳 true；questId 不給 = 目前任務
+// 商隊（caravan）另受每日趟數限制（economy.js），出發時就計入今日趟數
+function payServantTrip(servant, questId) {
+    let q = questId || servant.quest;
+    if (q === 'caravan' && caravanTripsLeft() <= 0) return false;
     let cost = getServantTripCost(servant);
     if (player.coins < cost) return false;
     player.coins -= cost;
+    if (q === 'caravan') reserveCaravanTrip();
     return true;
+}
+// payServantTrip 失敗的原因（日誌、提示用）
+function servantTripFailText(servant, questId) {
+    let q = questId || servant.quest;
+    if (q === 'caravan' && caravanTripsLeft() <= 0) return `今日商隊 ${CARAVAN.dailyTrips} 趟已跑完`;
+    return `靈石不足 ${getServantTripCost(servant)}`;
 }
 
 // ⚠️ 僕從數量沒有上限（長期掛機可累積上千名），一律先組好整段 HTML 再一次寫入。
@@ -61,7 +71,8 @@ function renderServants() {
     // 任務選項只算一次；限定品質的任務（例：礦脈採礦限傳說）只出現在符合的僕從選單
     let questOptions = getAvailableQuestIds(tier).map(questId => {
         let def = getQuestDef(questId, tier);
-        return { questId, def, label: `${def.icon} ${def.name}（${formatQuestRewards(def)}${def.duration ? `｜${def.duration} 秒` : ''}）` };
+        let dur = def.duration ? (def.duration >= 3600 ? `｜${+(def.duration / 3600).toFixed(1)} 小時` : `｜${def.duration} 秒`) : '';
+        return { questId, def, label: `${def.icon} ${def.name}（${formatQuestRewards(def)}${dur}）` };
     });
 
     // 派遣中的僕從排在最前面，方便管理
@@ -119,8 +130,10 @@ function assignServantQuest(servantId, questId) {
 
         // 換任務或從閒置出發都是新的一趟：先付這趟的靈石
         let cost = getServantTripCost(servant);
-        if (!payServantTrip(servant)) {
-            alert(`靈石不足！派遣【${servant.quality}】僕從每趟需要 ${cost} 靈石（目前 ${player.coins.toWan()}）。`);
+        if (!payServantTrip(servant, questId)) {
+            alert(questId === 'caravan' && caravanTripsLeft() <= 0
+                ? `今日商隊 ${CARAVAN.dailyTrips} 趟已經跑完，明天再派吧！`
+                : `靈石不足！派遣【${servant.quality}】僕從每趟需要 ${cost} 靈石（目前 ${player.coins.toWan()}）。`);
             renderServants();
             return;
         }
@@ -198,7 +211,7 @@ function tickServantQuests() {
 
         while (s.quest && s.timer >= required) {
             s.timer -= required;
-            let got = grantQuestRewards(def);
+            let got = grantQuestRewards(def, s);
             addDailyProgress('sectQuest');
             addLog(`${def.icon} 僕從【${s.name}】完成【${def.name}】：獲得 ${got}`, "servant");
             anyCompleted = true;
@@ -209,7 +222,7 @@ function tickServantQuests() {
 
             // 接著出發下一趟：付不起靈石就停工
             if (!payServantTrip(s)) {
-                addLog(`💸 靈石不足 ${getServantTripCost(s)}，僕從【${s.name}】停止【${def.name}】，回到閒置。`, "servant");
+                addLog(`💸 ${servantTripFailText(s)}，僕從【${s.name}】停止【${def.name}】，回到閒置。`, "servant");
                 s.quest = null;
                 s.timer = 0;
             }
@@ -241,7 +254,7 @@ function settleIdleQuests(seconds) {
             const required = getQuestRequiredProgress(def);
             while (s.quest && s.timer >= required) {
                 s.timer -= required;
-                grantQuestRewards(def);
+                grantQuestRewards(def, s);
                 addDailyProgress('sectQuest');
                 servantTrips++;
                 if (s.quest === 'mine' && Math.random() < IRON_MINE_CHANCE) addStarIron(randInt(IRON_MINE_AMOUNT[0], IRON_MINE_AMOUNT[1]), '');
@@ -250,7 +263,7 @@ function settleIdleQuests(seconds) {
         });
         if (player.activeQuest && isInSect()) {
             const def = getQuestDef(player.activeQuest, tier);
-            if (!def || def.requiredQuality) { player.activeQuest = null; player.questTimer = 0; }
+            if (!def || def.requiredQuality || def.servantOnly) { player.activeQuest = null; player.questTimer = 0; }
             else {
                 player.questTimer = (player.questTimer || 0) + getQuestSpeed(def, null) * seconds;
                 const required = getQuestRequiredProgress(def);

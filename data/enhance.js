@@ -290,6 +290,8 @@ function receiveLootEquip(eq) {
         return '已放入背包';
     }
     if (!DECOMPOSE_IRON[eq.quality]) {
+        let sold = tryAutoSellLoot(eq);   // 坊市回收設定「背包滿時自動賣出」（economy.js）；額度用完才分解
+        if (sold) return `背包已滿，自動賣給坊市得 ${sold.toWan()} 靈石`;
         let y = getDecomposeYield(eq);
         addIronShards(y.shards);
         return `背包已滿，自動分解為 🔩 碎鐵 ×${y.shards}`;

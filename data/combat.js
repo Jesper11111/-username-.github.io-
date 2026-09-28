@@ -34,7 +34,7 @@ function combatTick() {
     if (player.activeQuest && isInSect()) {
         let def = getQuestDef(player.activeQuest, getSectTier());
         // 任務在目前宗門等級不存在，或限定僕從執行（例：換了宗門）→ 自動中止
-        if (!def || def.requiredQuality) {
+        if (!def || def.requiredQuality || def.servantOnly) {
             player.activeQuest = null;
             player.questTimer = 0;
         } else {

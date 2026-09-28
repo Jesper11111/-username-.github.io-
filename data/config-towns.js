@@ -21,6 +21,8 @@ const townScenes = {
         hotspots: [
             // 右側雕花石拱門（含上方佛像雕飾）
             { id: "casino", label: "天星賭坊", rect: [1150, 140, 270, 430], action: "openCasinoModal()" },
+            // 左側木棚攤位（攤主坐在攤後）：坊市回收・收購商（economy.js，2026-09-29）
+            { id: "market-sell", label: "收購商", rect: [90, 330, 300, 300], action: "openMarketSellModal()" },
             // ---- 新增傳送點的模板（複製一行、改內容）----
             // { id: "xxx", label: "牌匾文字", rect: [左, 上, 寬, 高], action: "openXxx()" },
         ],
@@ -35,6 +37,8 @@ const townScenes = {
             hotspots: [
                 // 右側雕花石拱門（含上方佛像雕飾）
                 { id: "casino", label: "天星賭坊", rect: [470, 600, 234, 700], action: "openCasinoModal()" },
+                // 左下木棚攤位：坊市回收・收購商
+                { id: "market-sell", label: "收購商", rect: [0, 1060, 220, 360], action: "openMarketSellModal()" },
             ],
             figures: [
                 { id: "fengxi", name: "亂星海第一大善人・風希", img: "images/towns/npc-fengxi.png", rect: [226, 1110, 126, 200], action: "talkToPartner('dashanren')" }

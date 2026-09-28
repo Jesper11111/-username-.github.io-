@@ -72,6 +72,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // 估算不計自動補血、吸血、回血、護盾、靈寵，常把線上打得過的玩家誤判成撐不住（曾造成「縮小畫面回來人在宗門」）。
         // 線上已在這張地圖實際撐過 IDLE_PROVEN_SECONDS 秒（combat.js 記錄的 idleProvenMap）就信任玩家，留在原地結算。
         if (!est.survivable && player.idleProvenMap === player.currentMap.name) est.survivable = true;
+        // 新制（2026-09-29 離線也扣丹藥）：有開自動補血、且丹藥回復速度跟得上妖獸輸出，就算一波傷害超過氣血上限也留在原地（實際消耗見 settleIdlePotions）
+        if (!est.survivable && NUMERIC_V2 && idlePotionCanKeepUp(est)) est.survivable = true;
         if (!est.survivable) {
             let fromName = player.currentMap.name;
             player.currentMap = maps[0].items[0];
@@ -91,11 +93,16 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // OFFLINE_COMBAT_RATE = 離線每秒的戰鬥次數（見 config-maps.js，刻意低於線上滿速的每秒 0.32 隻）
         // 再乘上實力效率 est.rateMult（能秒殺 = 1；打得越久越低）
         let combatTicks = Math.floor(offlineSeconds * OFFLINE_COMBAT_RATE * est.rateMult * (isOffline ? OFFLINE_REWARD_MULT : 1));
+        let coinPerTick = typeof player.currentMap.coins === 'number' ? player.currentMap.coins : player.currentMap.diff * 10;
+        // 新制：離線／背景也消耗丹藥（背包優先、不夠再以靈石自動購買）；丹藥不夠時只算撐得住的那一段
+        let potion = NUMERIC_V2 ? settleIdlePotions(est, offlineSeconds, isOffline, combatTicks * coinPerTick) : null;
+        if (potion && potion.f < 1) combatTicks = Math.floor(combatTicks * potion.f);
         expEarned = combatTicks * (player.currentMap.expRate * 15);
-        coinsEarned = combatTicks * (typeof player.currentMap.coins === 'number' ? player.currentMap.coins : player.currentMap.diff * 10);
+        coinsEarned = combatTicks * coinPerTick;
 
         let gained = gainExp(expEarned) || 0;
         player.coins += coinsEarned;
+        if (potion && potion.cost) player.coins = Math.max(0, player.coins - potion.cost);   // 自動購買丹藥的花費（收入入帳後再扣）
         gainKillProficiency(combatTicks * PROF_OFFLINE_RATE);   // 主修職業熟練度（離線打折，profession.js）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
@@ -126,6 +133,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         msg = `⚔️ ${label}於【${player.currentMap.name}】歷練 ${formatIdleDuration(offlineSeconds)}，獲得 ${expText}、${coinsEarned.toWan()} 靈石與 ${repEarned.toWan()} 點聲望`
             + (meritEarned > 0 ? `、${meritEarned.toWan()} 點功德` : '')
             + (rescuedCount > 0 ? `，並拯救了 ${rescuedCount} 名受困修士！` : '！');
+        if (potion && potion.text) msg += `\n${potion.text}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
                 ? `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 回合才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（達到同境界一般水準時為 100%）。`
@@ -181,6 +189,74 @@ function estimateIdleCombat() {
     let maxHp = getMaxHp();
 
     return { hits, rateMult, waveDamage, maxHp, survivable: waveDamage < maxHp };
+}
+
+// ---- 離線／背景的丹藥消耗（新制，2026-09-29 使用者要求「離線也扣丹藥」）----
+// 每輪（刷新間隔＋一波戰鬥）妖獸造成 est.waveDamage，刷新期間調息回 restHealPct × MONSTER_RESPAWN_SECONDS，差額靠丹藥補。
+// 規則同線上的 checkAutoHealAndMana：背包裡的補血丹先用（回復量高的先），不夠且有開自動補血時以靈石買「可自動購買、回復量最高」的那種。
+function idlePotionHealOf(item) { return item.amount * (1 + gearFx("丹心")) * getMaxHp(); }
+function idleBuyablePotion() {
+    return shopItems.filter(s => s.type === 'heal' && !s.noAutoBuy).sort((a, b) => b.amount - a.amount)[0] || null;
+}
+// 丹藥回復速度（每秒，受服用冷卻限制）是否跟得上一波戰鬥中的受傷速度；沒開自動補血＝跟不上
+function idlePotionCanKeepUp(est) {
+    if (!player.autoHp || !player.autoHp.enabled) return false;
+    const best = shopItems.filter(s => s.type === 'heal' && ((player.bag[s.id] || 0) > 0 || !s.noAutoBuy)).sort((a, b) => b.amount - a.amount)[0];
+    if (!best) return false;
+    const fightSec = Math.max(1, NV2.waveAvg * est.hits);
+    return est.waveDamage / fightSec <= idlePotionHealOf(best) / POTION_COOLDOWN_SECONDS;
+}
+// 回傳 { f：可戰鬥比例 0～1, cost：購買花費（由呼叫端在收入入帳後扣）, text：結算說明 }；會直接扣背包丹藥
+// coinsFull：假設全程都打得下去時的靈石收入（購買可用「原有靈石＋收入」支付）
+function settleIdlePotions(est, seconds, isOffline, coinsFull) {
+    const maxHp = getMaxHp();
+    const cycle = IDLE_WAVE_GAP_TICKS + NV2.waveAvg * est.hits;                // 一輪秒數
+    const rest = Math.min(maxHp, maxHp * NV2.restHealPct / 100 * MONSTER_RESPAWN_SECONDS);
+    const perCycle = Math.max(0, est.waveDamage - rest);                       // 每輪要靠丹藥補的氣血
+    const cycles = seconds * (isOffline ? OFFLINE_REWARD_MULT : 1) / cycle;    // 與收益同比例（離線打折的部分也不耗藥）
+    const need = perCycle * cycles;
+    if (need <= 0) return { f: 1, cost: 0, text: '' };
+    // 背包丹藥（回復量高的先用）
+    const bagItems = shopItems.filter(s => s.type === 'heal' && (player.bag[s.id] || 0) > 0).sort((a, b) => b.amount - a.amount);
+    const bagHeal = bagItems.reduce((s, it) => s + player.bag[it.id] * idlePotionHealOf(it), 0);
+    // 自動購買
+    const buy = player.autoHp && player.autoHp.enabled ? idleBuyablePotion() : null;
+    let f = 1;
+    if (bagHeal < need) {
+        if (!buy) f = bagHeal / need;
+        else {
+            const cph = buy.cost / idlePotionHealOf(buy);                      // 每點氣血的靈石成本
+            const budgetHeal = (player.coins + coinsFull) / cph;
+            if (bagHeal + budgetHeal < need) {
+                // 收入隨可戰鬥比例 f 變動：bagHeal + (原有靈石 + 收入 × f) / cph = need × f
+                const den = need - coinsFull / cph;
+                f = den > 0 ? Math.min(1, (bagHeal + player.coins / cph) / den) : 1;
+            }
+        }
+    }
+    f = Math.max(0, Math.min(1, f));
+    // 實際扣背包與購買
+    let remain = need * f;
+    const used = [];
+    bagItems.forEach(it => {
+        if (remain <= 0) return;
+        const heal = idlePotionHealOf(it);
+        const n = Math.min(player.bag[it.id], Math.ceil(remain / heal));
+        player.bag[it.id] -= n; if (player.bag[it.id] <= 0) delete player.bag[it.id];
+        remain -= n * heal;
+        if (n) used.push(`${it.name} ×${n}`);
+    });
+    let cost = 0, bought = 0;
+    if (remain > 0 && buy) {
+        bought = Math.ceil(remain / idlePotionHealOf(buy));
+        cost = bought * buy.cost;
+    }
+    const parts = [];
+    if (used.length) parts.push(`背包 ${used.join('、')}`);
+    if (bought) parts.push(`自動購買 ${buy.name} ×${bought}（${cost.toWan()} 靈石）`);
+    let text = parts.length ? `💊 歷練期間服用丹藥：${parts.join('；')}` : '';
+    if (f < 0.999) text += `${text ? '\n' : ''}⚠️ 丹藥${buy ? '與靈石' : ''}不足，只撐了約 ${Math.round(f * 100)}% 的時間，之後無法再戰（${buy ? '請備妥丹藥或靈石' : '請開啟自動補血或備妥丹藥'}）。`;
+    return { f, cost, text };
 }
 
 function formatIdleDuration(seconds) {
