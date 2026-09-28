@@ -8,6 +8,7 @@ let lbLastRefreshAt = 0;
 let lbRows = null;             // 最近一次讀到的榜單
 let lbError = "";
 let lbBanned = null;           // null = 尚未查過；true = 被 GM 封鎖（banned/{uid}，第 50 節），不再上傳
+let lbAvatarOk = true;         // 上傳時帶頭像 id（av）；雲端規則還沒更新而被擋時設為 false，這次遊戲不再帶
 
 function isLeaderboardConfigured() {
     return !!(LEADERBOARD_FIREBASE_CONFIG && LEADERBOARD_FIREBASE_CONFIG.apiKey);
@@ -95,7 +96,7 @@ async function uploadLeaderboard() {
                 hist2 = hist2.slice(-(LEADERBOARD_HISTORY2_SIZE - 1)).concat([entry]);
             }
         }
-        await ref.set({
+        const entry = {
             name: sanitizePlayerName(player.name) || "無名修士",
             power: getRankPower(),
             realm: Math.floor(player.realmIndex) || 0,
@@ -105,7 +106,16 @@ async function uploadLeaderboard() {
             hist,
             hist2,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        // 頭像 id（2026-09-28，榜單每列右側顯示本人頭像）：雲端規則還沒更新時會被擋（permission-denied），就改成不帶頭像重傳，之後這次遊戲都不再帶
+        if (lbAvatarOk) entry.av = String(getPlayerAvatar().id || '').slice(0, 32);
+        try { await ref.set(entry); }
+        catch (e) {
+            if (!(lbAvatarOk && e && e.code === 'permission-denied')) throw e;
+            lbAvatarOk = false;
+            delete entry.av;
+            await ref.set(entry);
+        }
     } catch (e) {
         console.warn("戰力榜上傳失敗：", e);
     }
@@ -276,6 +286,22 @@ function lbTimeAgo(ts) {
     return `${Math.floor(min / 1440)} 天前`;
 }
 
+// 榜單頭像的對焦點：橫向沿用頭像設定的 x（例：韓立 49%），縱向固定 28%（臉多在上半部，格子是寬扁的，置中會切掉額頭或下巴）
+function lbAvatarPos(av) {
+    const x = String((av && av.pos) || 'center').split(' ')[0];
+    return `${x} 28%`;
+}
+
+// 榜單每列右側的頭像：自己＝目前選用的頭像；別人＝上傳的 av（頭像 id）；舊紀錄沒有 av 時依 uid 固定挑一張（同一人每次都一樣）
+function lbRowAvatar(r, self) {
+    if (self) return getPlayerAvatar();
+    const hit = r.av && avatarList.find(a => a.id === r.av);
+    if (hit) return hit;
+    let h = 0;
+    for (const ch of String(r.id || r.name || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return avatarList[h % avatarList.length];
+}
+
 function renderLeaderboard(loading) {
     const box = document.getElementById('leaderboard-body');
     if (!box) return;
@@ -309,13 +335,20 @@ function renderLeaderboard(loading) {
 
     if (lbRows) {
         if (!lbRows.length) html += `<p class="lb-note">目前還沒有人上榜。</p>`;
-        html += `<div class="lb-list">` + lbRows.map((r, i) => {
+        // 2026-09-28 改版（玩家提供「飛昇職業人數榜」參考圖）：名次圓章＋名字與標籤＋戰力＋右側頭像淡入
+        html += `<div class="lbx-list">` + lbRows.map((r, i) => {
             const realm = realms[r.realm] || "？";
-            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
-            return `<div class="lb-row${r.id === myUid ? ' lb-self' : ''}">
-                <span class="lb-rank">${medal}</span>
-                <span class="lb-name">${lbEscape(r.name)}<small>${lbEscape(realm)} ${Number(r.stage) || 1}階・Lv.${Number(r.level) || 1}${r.sect ? '・' + lbEscape(r.sect) : ''}</small></span>
-                <span class="lb-power">${Number(r.power || 0).toWan()}<small>${lbTimeAgo(r.updatedAt)}</small></span>
+            const self = r.id === myUid;
+            const av = lbRowAvatar(r, self);
+            const rank = i + 1;
+            return `<div class="lbx-row${self ? ' self' : ''}${rank <= 3 ? ' top' + rank : ''}">
+                <div class="lbx-rank${rank >= 10 ? ' small' : ''}">${rank}</div>
+                <div class="lbx-main">
+                    <div class="lbx-name">${lbEscape(r.name)}</div>
+                    <div class="lbx-tags"><span>${lbEscape(realm)} ${Number(r.stage) || 1}階</span><span>Lv.${Number(r.level) || 1}</span>${r.sect ? `<span>${lbEscape(r.sect)}</span>` : ''}</div>
+                </div>
+                <div class="lbx-power"><small>戰力</small><b>${Number(r.power || 0).toWan()}</b><i>${lbTimeAgo(r.updatedAt)}</i></div>
+                <div class="lbx-img" style="background-image:url('${av.img}');background-position:${lbAvatarPos(av)}"></div>
             </div>`;
         }).join("") + `</div>`;
     }

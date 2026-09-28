@@ -144,6 +144,17 @@ function updateCombatVisualPanel() {
         idleEnemyBar("🔍 索敵中");
         document.getElementById('battle-action-desc').innerText = `🔍 正在 ${player.currentMap.name} 探索四周...`;
     }
+    // 名牌右側的等級字（2026-09-28 血條改參考圖樣式）：野外妖獸＝地圖對應境界（config-maps.js 的 nv2L），心魔＝自己的境界
+    const lvEl = document.getElementById('bf-enemy-lv');
+    if (lvEl) {
+        let lv = '';
+        if (inTribulation && heartDemon) lv = (realms[player.realmIndex] || '') + '境';
+        else if (!inBountyDuel && !player.currentMapIsSafe && respawnTimer <= 0 && enemies.length > 0) {
+            const L = player.currentMap && player.currentMap.nv2L;
+            if (typeof L === 'number' && realms[Math.floor(L)]) lv = realms[Math.floor(L)] + '境';
+        }
+        if (lvEl.textContent !== lv) lvEl.textContent = lv;
+    }
     updateBattleFoe();   // 右半邊敵方圖片／大 emoji（battle-fx.js）
     flushBattleFx();   // 播放這段期間累積的飄字／爆擊特效（battle-fx.js）
 }
