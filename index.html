@@ -211,19 +211,39 @@
                           filter: drop-shadow(0 0 4px var(--wc)); animation: bf-blade-shine 2.2s linear infinite; }
         @keyframes bf-blade-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; } }
         @keyframes bf-blade-shine { from { stroke-dashoffset: 40; } to { stroke-dashoffset: -170; } }
-        /* ---- 能量旋風（2026-09-28 玩家要求「周身光暈用類似能量旋風附著在人物身上」）：4 圈屬性色光環斜躺繞著身體旋轉，由腳到胸越轉越快、越往上越小 ---- */
-        .bf-whirl { position: absolute; left: 6%; right: 30%; top: 14%; bottom: 0; perspective: 260px; pointer-events: none; mix-blend-mode: screen; }
-        .bf-whirl b {
-            position: absolute; left: 0; right: 0; height: 26%; border-radius: 50%;
-            border: 2px solid transparent; border-top-color: var(--wc); border-right-color: var(--wc2);
-            filter: drop-shadow(0 0 3px var(--wc)) drop-shadow(0 0 7px var(--wc));
-            opacity: 0.75; animation: bf-whirl 1.8s linear infinite;
+        /* ---- 氣焰（2026-09-28 玩家提供超級賽亞人式參考圖，取代原本的旋風光環）：12 道尖刺狀能量火焰從腳下往上竄、忽長忽短閃爍，
+           兩側較高較亮、中間較淡（避免蓋住人物），screen 混色＋屬性色（--wc/--wc2） ---- */
+        .bf-ki { position: absolute; left: -4%; right: 18%; top: 0; bottom: 0; pointer-events: none; mix-blend-mode: screen; }
+        .bf-ki b {
+            position: absolute; bottom: 0; width: 8%; height: 70%; transform-origin: 50% 100%;
+            background: linear-gradient(to top, var(--wc) 0%, var(--wc2) 30%, var(--wc) 60%, transparent 96%);
+            clip-path: polygon(50% 0, 60% 34%, 74% 26%, 66% 60%, 90% 100%, 10% 100%, 34% 60%, 26% 26%, 40% 34%);
+            filter: blur(0.6px) drop-shadow(0 0 4px var(--wc));
+            opacity: 0.55; animation: bf-ki 0.7s ease-in-out infinite alternate;
         }
-        .bf-whirl b:nth-child(1) { bottom: 0;   left: -6%; right: -6%; }
-        .bf-whirl b:nth-child(2) { bottom: 24%; left: 2%;  right: 2%;  animation-duration: 1.45s; animation-direction: reverse; opacity: 0.6; }
-        .bf-whirl b:nth-child(3) { bottom: 48%; left: 10%; right: 10%; animation-duration: 1.2s; }
-        .bf-whirl b:nth-child(4) { bottom: 68%; left: 20%; right: 20%; animation-duration: 1s; animation-direction: reverse; opacity: 0.5; border-width: 1.5px; }
-        @keyframes bf-whirl { from { transform: rotateX(74deg) rotateZ(0deg); } to { transform: rotateX(74deg) rotateZ(360deg); } }        /* ---- 本命五行屬性特效：光暈（screen 混色）＋ 10 顆粒子，形狀與顏色依五行 ---- */
+        .bf-ki b:nth-child(1)  { left: 0%;  height: 78%; animation-duration: 0.62s; opacity: 0.8; }
+        .bf-ki b:nth-child(2)  { left: 7%;  height: 92%; animation-duration: 0.74s; animation-delay: -0.2s; opacity: 0.85; }
+        .bf-ki b:nth-child(3)  { left: 15%; height: 66%; animation-duration: 0.55s; animation-delay: -0.4s; opacity: 0.35; }
+        .bf-ki b:nth-child(4)  { left: 24%; height: 84%; animation-duration: 0.8s;  animation-delay: -0.1s; opacity: 0.18; }
+        .bf-ki b:nth-child(5)  { left: 33%; height: 100%; animation-duration: 0.66s; animation-delay: -0.5s; opacity: 0.14; width: 9%; }
+        .bf-ki b:nth-child(6)  { left: 43%; height: 88%; animation-duration: 0.58s; animation-delay: -0.3s; opacity: 0.14; }
+        .bf-ki b:nth-child(7)  { left: 52%; height: 96%; animation-duration: 0.72s; animation-delay: -0.15s; opacity: 0.18; width: 9%; }
+        .bf-ki b:nth-child(8)  { left: 61%; height: 74%; animation-duration: 0.6s;  animation-delay: -0.45s; opacity: 0.35; }
+        .bf-ki b:nth-child(9)  { left: 70%; height: 90%; animation-duration: 0.77s; animation-delay: -0.25s; opacity: 0.8; }
+        .bf-ki b:nth-child(10) { left: 79%; height: 70%; animation-duration: 0.64s; animation-delay: -0.35s; opacity: 0.85; }
+        .bf-ki b:nth-child(11) { left: 86%; height: 58%; animation-duration: 0.52s; animation-delay: -0.05s; opacity: 0.7; width: 10%; }
+        .bf-ki b:nth-child(12) { left: -4%; height: 55%; animation-duration: 0.69s; animation-delay: -0.55s; opacity: 0.7; width: 10%; }
+        @keyframes bf-ki {
+            0%   { transform: scaleY(0.78) scaleX(0.9) skewX(-3deg); filter: blur(1.4px) drop-shadow(0 0 5px var(--wc)); }
+            50%  { transform: scaleY(1.05) scaleX(1.05) skewX(2deg); }
+            100% { transform: scaleY(1.18) scaleX(0.92) skewX(-1deg); filter: blur(0.8px) drop-shadow(0 0 9px var(--wc)); }
+        }
+        /* 立繪外圈的柔光（氣場底色），比原本更亮、更貼身 */
+        .bf-hero-box::after {
+            content: ""; position: absolute; left: -6%; right: 12%; top: 4%; bottom: -2%; pointer-events: none; mix-blend-mode: screen;
+            background: radial-gradient(ellipse 55% 60% at 45% 62%, transparent 42%, var(--wc) 70%, transparent 88%);
+            opacity: 0.35; animation: bf-aura-pulse 1.4s ease-in-out infinite;
+        }        /* ---- 本命五行屬性特效：光暈（screen 混色）＋ 10 顆粒子，形狀與顏色依五行 ---- */
         .bf-aura { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
         .bf-aura::before {
             content: ""; position: absolute; left: 5%; right: 15%; top: 20%; bottom: 0;
@@ -501,7 +521,7 @@
         .bf-scene.bf-shake { animation: bf-shake 0.32s linear; }   /* 只震圖片，血條不動 */
         @keyframes bf-shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-3px, -1px); } 80% { transform: translate(2px, 1px); } }
         @media (prefers-reduced-motion: reduce) {
-            .bf-scene.bf-shake, .bf-hero-box, .bf-hero-box.bf-lunge, .bf-hero-box.bf-evade, .bf-foe.bf-evade, .bf-aura i, .bf-blade-shine, .bf-whirl b, #combat-visual-panel.bf-crit-quake { animation: none; }
+            .bf-scene.bf-shake, .bf-hero-box, .bf-hero-box.bf-lunge, .bf-hero-box.bf-evade, .bf-foe.bf-evade, .bf-aura i, .bf-blade-shine, .bf-ki b, .bf-hero-box::after, #combat-visual-panel.bf-crit-quake { animation: none; }
         }
         @keyframes float-avatar {
             0% { transform: translateY(0px) scale(1); }
@@ -1564,7 +1584,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261001e"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261001g"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -1982,7 +2002,7 @@
                 <!-- 立繪框（battle-fx.js 的 layoutBattleHero 依圖片比例算大小）：立繪＋武器發光（SVG 沿劍身）＋本命五行屬性特效（粒子與光暈） -->
                 <div class="bf-hero-box" id="bf-hero-box">
                     <img id="bf-hero" class="bf-hero" alt="">
-                    <div class="bf-whirl" aria-hidden="true"><b></b><b></b><b></b><b></b></div>
+                    <div class="bf-ki" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
                     <div class="bf-aura" id="bf-aura"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
                     <svg class="bf-weapon" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                         <line class="bf-blade-halo" id="bf-blade-halo"></line>
@@ -2086,7 +2106,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261001e" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261001g" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-name">
@@ -2438,7 +2458,7 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261001e" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261001g" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -2933,104 +2953,104 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20261001e"></script>
-<script src="data/config-realms.js?v=20261001e"></script>
-<script src="data/config-level.js?v=20261001e"></script>
-<script src="data/config-lifespan.js?v=20261001e"></script>
-<script src="data/config-maps.js?v=20261001e"></script>
-<script src="data/config-sects.js?v=20261001e"></script>
-<script src="data/config-lingbao.js?v=20261001e"></script>
-<script src="data/config-shop.js?v=20261001e"></script>
-<script src="data/config-beasts.js?v=20261001e"></script>
-<script src="data/config-servants.js?v=20261001e"></script>
-<script src="data/config-equipment.js?v=20261001e"></script>
-<script src="data/config-gear-catalog.js?v=20261001e"></script>
-<script src="data/config-gear.js?v=20261001e"></script>
-<script src="data/config-enhance.js?v=20261001e"></script>
-<script src="data/config-sets.js?v=20261001e"></script>
-<script src="data/config-profession.js?v=20261001e"></script>
-<script src="data/config-aptitude.js?v=20261001e"></script>
-<script src="data/config-golden-core.js?v=20261001e"></script>
-<script src="data/config-mailbox.js?v=20261001e"></script>
-<script src="data/config-titles.js?v=20261001e"></script>
-<script src="data/config-tribulation.js?v=20261001e"></script>
-<script src="data/config-quests.js?v=20261001e"></script>
-<script src="data/config-activities.js?v=20261001e"></script>
-<script src="data/config-daily-quests.js?v=20261001e"></script>
-<script src="data/config-elements.js?v=20261001e"></script>
-<script src="data/config-merit.js?v=20261001e"></script>
-<script src="data/config-bounty.js?v=20261001e"></script>
-<script src="data/config-talisman.js?v=20261001e"></script>
-<script src="data/config-avatars.js?v=20261001e"></script>
-<script src="data/config-avatar-frames.js?v=20261001e"></script>
-<script src="data/config-spells.js?v=20261001e"></script>
-<script src="data/config-strange-fire.js?v=20261001e"></script>
-<script src="data/config-partners.js?v=20261001e"></script>
-<script src="data/config-towns.js?v=20261001e"></script>
-<script src="data/config-casino.js?v=20261001e"></script>
-<script src="data/config-leaderboard.js?v=20261001e"></script>
-<script src="data/config-secret-realms.js?v=20261001e"></script>
-<script src="data/config-defense.js?v=20261001e"></script>
-<script src="data/config-zhenmo.js?v=20261001e"></script>
-<script src="data/config-zhenmo-questions.js?v=20261001e"></script>
-<script src="data/config-numeric.js?v=20261001e"></script>
-<script src="data/state.js?v=20261001e"></script>
-<script src="data/stats.js?v=20261001e"></script>
-<script src="data/numeric.js?v=20261001e"></script>
-<script src="data/elements.js?v=20261001e"></script>
-<script src="data/battle-fx.js?v=20261001e"></script>
-<script src="data/ui.js?v=20261001e"></script>
-<script src="data/map.js?v=20261001e"></script>
-<script src="data/town.js?v=20261001e"></script>
-<script src="data/casino.js?v=20261001e"></script>
-<script src="data/combat.js?v=20261001e"></script>
-<script src="data/leveling.js?v=20261001e"></script>
-<script src="data/lifespan.js?v=20261001e"></script>
-<script src="data/tribulation.js?v=20261001e"></script>
-<script src="data/sect.js?v=20261001e"></script>
-<script src="data/shop.js?v=20261001e"></script>
-<script src="data/bag.js?v=20261001e"></script>
-<script src="data/equipment.js?v=20261001e"></script>
-<script src="data/equip-compare.js?v=20261001e"></script>
-<script src="data/gear.js?v=20261001e"></script>
-<script src="data/enhance.js?v=20261001e"></script>
-<script src="data/profession.js?v=20261001e"></script>
-<script src="data/aptitude.js?v=20261001e"></script>
-<script src="data/golden-core.js?v=20261001e"></script>
-<script src="data/codex.js?v=20261001e"></script>
-<script src="data/lingbao-shop.js?v=20261001e"></script>
-<script src="data/artifact.js?v=20261001e"></script>
-<script src="data/servant.js?v=20261001e"></script>
-<script src="data/quest.js?v=20261001e"></script>
-<script src="data/activity.js?v=20261001e"></script>
-<script src="data/daily-quest.js?v=20261001e"></script>
-<script src="data/auction.js?v=20261001e"></script>
-<script src="data/merit.js?v=20261001e"></script>
-<script src="data/bounty.js?v=20261001e"></script>
-<script src="data/talisman.js?v=20261001e"></script>
-<script src="data/strange-fire.js?v=20261001e"></script>
-<script src="data/partner.js?v=20261001e"></script>
-<script src="data/field.js?v=20261001e"></script>
-<script src="data/beast-combat.js?v=20261001e"></script>
-<script src="data/spells.js?v=20261001e"></script>
-<script src="data/beast.js?v=20261001e"></script>
-<script src="data/library.js?v=20261001e"></script>
-<script src="data/alchemy.js?v=20261001e"></script>
-<script src="data/player-profile.js?v=20261001e"></script>
-<script src="data/save.js?v=20261001e"></script>
-<script src="data/config-home-pc.js?v=20261001e"></script>
-<script src="data/home-ui.js?v=20261001e"></script>
-<script src="data/settings.js?v=20261001e"></script>
-<script src="data/avatar.js?v=20261001e"></script>
-<script src="data/leaderboard.js?v=20261001e"></script>
-<script src="data/mailbox.js?v=20261001e"></script>
-<script src="data/msgboard.js?v=20261001e"></script>
-<script src="data/market.js?v=20261001e"></script>
-<script src="data/secret-realm.js?v=20261001e"></script>
-<script src="data/defense.js?v=20261001e"></script>
-<script src="data/zhenmo.js?v=20261001e"></script>
-<script src="data/title-screen.js?v=20261001e"></script>
-<script src="data/main.js?v=20261001e"></script>
+<script src="data/format.js?v=20261001g"></script>
+<script src="data/config-realms.js?v=20261001g"></script>
+<script src="data/config-level.js?v=20261001g"></script>
+<script src="data/config-lifespan.js?v=20261001g"></script>
+<script src="data/config-maps.js?v=20261001g"></script>
+<script src="data/config-sects.js?v=20261001g"></script>
+<script src="data/config-lingbao.js?v=20261001g"></script>
+<script src="data/config-shop.js?v=20261001g"></script>
+<script src="data/config-beasts.js?v=20261001g"></script>
+<script src="data/config-servants.js?v=20261001g"></script>
+<script src="data/config-equipment.js?v=20261001g"></script>
+<script src="data/config-gear-catalog.js?v=20261001g"></script>
+<script src="data/config-gear.js?v=20261001g"></script>
+<script src="data/config-enhance.js?v=20261001g"></script>
+<script src="data/config-sets.js?v=20261001g"></script>
+<script src="data/config-profession.js?v=20261001g"></script>
+<script src="data/config-aptitude.js?v=20261001g"></script>
+<script src="data/config-golden-core.js?v=20261001g"></script>
+<script src="data/config-mailbox.js?v=20261001g"></script>
+<script src="data/config-titles.js?v=20261001g"></script>
+<script src="data/config-tribulation.js?v=20261001g"></script>
+<script src="data/config-quests.js?v=20261001g"></script>
+<script src="data/config-activities.js?v=20261001g"></script>
+<script src="data/config-daily-quests.js?v=20261001g"></script>
+<script src="data/config-elements.js?v=20261001g"></script>
+<script src="data/config-merit.js?v=20261001g"></script>
+<script src="data/config-bounty.js?v=20261001g"></script>
+<script src="data/config-talisman.js?v=20261001g"></script>
+<script src="data/config-avatars.js?v=20261001g"></script>
+<script src="data/config-avatar-frames.js?v=20261001g"></script>
+<script src="data/config-spells.js?v=20261001g"></script>
+<script src="data/config-strange-fire.js?v=20261001g"></script>
+<script src="data/config-partners.js?v=20261001g"></script>
+<script src="data/config-towns.js?v=20261001g"></script>
+<script src="data/config-casino.js?v=20261001g"></script>
+<script src="data/config-leaderboard.js?v=20261001g"></script>
+<script src="data/config-secret-realms.js?v=20261001g"></script>
+<script src="data/config-defense.js?v=20261001g"></script>
+<script src="data/config-zhenmo.js?v=20261001g"></script>
+<script src="data/config-zhenmo-questions.js?v=20261001g"></script>
+<script src="data/config-numeric.js?v=20261001g"></script>
+<script src="data/state.js?v=20261001g"></script>
+<script src="data/stats.js?v=20261001g"></script>
+<script src="data/numeric.js?v=20261001g"></script>
+<script src="data/elements.js?v=20261001g"></script>
+<script src="data/battle-fx.js?v=20261001g"></script>
+<script src="data/ui.js?v=20261001g"></script>
+<script src="data/map.js?v=20261001g"></script>
+<script src="data/town.js?v=20261001g"></script>
+<script src="data/casino.js?v=20261001g"></script>
+<script src="data/combat.js?v=20261001g"></script>
+<script src="data/leveling.js?v=20261001g"></script>
+<script src="data/lifespan.js?v=20261001g"></script>
+<script src="data/tribulation.js?v=20261001g"></script>
+<script src="data/sect.js?v=20261001g"></script>
+<script src="data/shop.js?v=20261001g"></script>
+<script src="data/bag.js?v=20261001g"></script>
+<script src="data/equipment.js?v=20261001g"></script>
+<script src="data/equip-compare.js?v=20261001g"></script>
+<script src="data/gear.js?v=20261001g"></script>
+<script src="data/enhance.js?v=20261001g"></script>
+<script src="data/profession.js?v=20261001g"></script>
+<script src="data/aptitude.js?v=20261001g"></script>
+<script src="data/golden-core.js?v=20261001g"></script>
+<script src="data/codex.js?v=20261001g"></script>
+<script src="data/lingbao-shop.js?v=20261001g"></script>
+<script src="data/artifact.js?v=20261001g"></script>
+<script src="data/servant.js?v=20261001g"></script>
+<script src="data/quest.js?v=20261001g"></script>
+<script src="data/activity.js?v=20261001g"></script>
+<script src="data/daily-quest.js?v=20261001g"></script>
+<script src="data/auction.js?v=20261001g"></script>
+<script src="data/merit.js?v=20261001g"></script>
+<script src="data/bounty.js?v=20261001g"></script>
+<script src="data/talisman.js?v=20261001g"></script>
+<script src="data/strange-fire.js?v=20261001g"></script>
+<script src="data/partner.js?v=20261001g"></script>
+<script src="data/field.js?v=20261001g"></script>
+<script src="data/beast-combat.js?v=20261001g"></script>
+<script src="data/spells.js?v=20261001g"></script>
+<script src="data/beast.js?v=20261001g"></script>
+<script src="data/library.js?v=20261001g"></script>
+<script src="data/alchemy.js?v=20261001g"></script>
+<script src="data/player-profile.js?v=20261001g"></script>
+<script src="data/save.js?v=20261001g"></script>
+<script src="data/config-home-pc.js?v=20261001g"></script>
+<script src="data/home-ui.js?v=20261001g"></script>
+<script src="data/settings.js?v=20261001g"></script>
+<script src="data/avatar.js?v=20261001g"></script>
+<script src="data/leaderboard.js?v=20261001g"></script>
+<script src="data/mailbox.js?v=20261001g"></script>
+<script src="data/msgboard.js?v=20261001g"></script>
+<script src="data/market.js?v=20261001g"></script>
+<script src="data/secret-realm.js?v=20261001g"></script>
+<script src="data/defense.js?v=20261001g"></script>
+<script src="data/zhenmo.js?v=20261001g"></script>
+<script src="data/title-screen.js?v=20261001g"></script>
+<script src="data/main.js?v=20261001g"></script>
 
 </body>
 </html>
