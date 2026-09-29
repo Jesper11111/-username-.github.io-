@@ -159,30 +159,63 @@ function physiqueNamePool() {
 // 第一次測試：先擲靈根、再擲體質
 function openAptitudeTest() {
     aptitudeRolling = true;
+    aptitudeFirstPending = null; aptitudeFirstRerolls = 0;   // 中途關掉視窗再打開＝重新測（還沒按決定就不會存）
     setAptitudeBody('⛩️ 入門資質測試', `
         <p style="color:#e5e7eb; font-size:0.9em;">拜入宗門的弟子，須先於測靈石前測出<b>先天靈根</b>與<b>先天體質</b>。<br>資質一經測出便伴隨終生（可用千寶閣的洗髓丹／伐骨丹重測）。</p>
         <div id="aptitude-root-box"></div><div id="aptitude-phys-box"></div>
-        <button id="aptitude-btn" class="sys-btn" onclick="rollAptitudeStep()">🎲 手按測靈石</button>`);
+        <button id="aptitude-btn" class="sys-btn" onclick="rollAptitudeStep()">🎲 手按測靈石</button>
+        <div id="aptitude-choice" style="display:none;">
+            <div class="batch-btns">
+                <button class="sys-btn" onclick="rerollAptitudeFirst()">🎲 再來一次</button>
+                <button class="sys-btn" style="border-color:#4ade80; color:#4ade80;" onclick="confirmAptitudeFirst()">✅ 決定</button>
+            </div>
+            <p style="color:#9ca3af; font-size:0.78em; margin:4px 0 0;">「再來一次」會把靈根與體質一起重新抽；按「決定」後才會定下來。<span id="aptitude-reroll-count"></span></p>
+        </div>`);
 }
+// 第一次測試的結果先放在這裡，按「✅ 決定」才寫進 player.aptitude；按「🎲 再來一次」靈根與體質一起重抽（2026-09-29 使用者要求，次數不限）
+let aptitudeFirstPending = null, aptitudeFirstRerolls = 0;
 function rollAptitudeStep() {
     const btn = document.getElementById('aptitude-btn');
     if (btn) btn.disabled = true;
-    // 仙府信箱賜予的資質（尚未測試時先存在 player.aptitudeGift，mailbox.js）：該部分直接用賜予的，不擲骰
+    const choice = document.getElementById('aptitude-choice');
+    if (choice) choice.style.display = 'none';
+    // 仙府信箱賜予的資質（尚未測試時先存在 player.aptitudeGift，mailbox.js）：該部分直接用賜予的，不擲骰，再來一次也不會換掉
     const gift = player.aptitudeGift || {};
-    const root = gift.root && describeRoot(gift.root) ? gift.root : rollAptitudeRoot();
-    const phys = gift.physique && describePhysique(gift.physique) ? gift.physique : rollAptitudePhysique();
-    player.aptitudeGift = null;
-    playAptitudeDice('aptitude-root-box', rootNamePool(), aptitudeCard('先天靈根', describeRoot(root)), () => {
-        playAptitudeDice('aptitude-phys-box', physiqueNamePool(), aptitudeCard('先天體質', describePhysique(phys)), () => {
-            player.aptitude = { root, physique: phys, at: Date.now() };
-            aptitudeRolling = false;
-            const r = describeRoot(root), p = describePhysique(phys);
-            addLog(`⛩️ 資質測試：先天靈根【${r.name}】（${r.grade}）、先天體質【${p.name}】（${p.grade}）！`, "level-up");
-            if (btn) { btn.disabled = false; btn.innerText = '領悟完畢'; btn.onclick = () => closeModal('aptitude-modal'); }
-            saveLocal();
-            updateUI();
+    const giftRoot = gift.root && describeRoot(gift.root), giftPhys = gift.physique && describePhysique(gift.physique);
+    const root = giftRoot ? gift.root : rollAptitudeRoot();
+    const phys = giftPhys ? gift.physique : rollAptitudePhysique();
+    aptitudeFirstPending = { root, physique: phys };
+    const rootCard = aptitudeCard('先天靈根', describeRoot(root)) + (giftRoot ? '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>' : '');
+    const physCard = aptitudeCard('先天體質', describePhysique(phys)) + (giftPhys ? '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>' : '');
+    playAptitudeDice('aptitude-root-box', rootNamePool(), rootCard, () => {
+        playAptitudeDice('aptitude-phys-box', physiqueNamePool(), physCard, () => {
+            if (btn) btn.style.display = 'none';
+            if (choice) {
+                choice.style.display = '';
+                const n = document.getElementById('aptitude-reroll-count');
+                if (n) n.innerText = aptitudeFirstRerolls ? `已再來 ${aptitudeFirstRerolls} 次` : '';
+            }
         });
     });
+}
+function rerollAptitudeFirst() {
+    if (!aptitudeFirstPending || player.aptitude) return;
+    aptitudeFirstRerolls++;
+    rollAptitudeStep();
+}
+function confirmAptitudeFirst() {
+    const pend = aptitudeFirstPending;
+    if (!pend || player.aptitude) return;
+    player.aptitude = { root: pend.root, physique: pend.physique, at: Date.now() };
+    player.aptitudeGift = null;
+    aptitudeFirstPending = null;
+    aptitudeRolling = false;
+    const r = describeRoot(pend.root), p = describePhysique(pend.physique);
+    addLog(`⛩️ 資質測試：先天靈根【${r.name}】（${r.grade}）、先天體質【${p.name}】（${p.grade}）！${aptitudeFirstRerolls ? `（再來了 ${aptitudeFirstRerolls} 次）` : ''}`, "level-up");
+    aptitudeFirstRerolls = 0;
+    closeModal('aptitude-modal');
+    saveLocal();
+    updateUI();
 }
 
 // 人物面板點「資質」：查看目前資質，並可用道具重測

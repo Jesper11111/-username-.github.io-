@@ -335,6 +335,7 @@ combatTick() 每秒執行 [combat.js]
 | `closeDefenseBattle`（守城「↩ 離開」與結算「↩ 返回秘境」）、`setDefenseSpeed(1/2/4)`、`DefenseBattle.retry()`（載入失敗「🔄 重新載入」）、`openDefenseRecords`（守城畫面左上與結算畫面「📜 通關紀錄」）、`closeDefenseRecords`（紀錄視窗「關閉」） | `data/defense.js` |
 | `closeZhenmoTower`（鎮魔塔「↩ 離開」）、`startZhenmoQuiz`（塔廳「📜 開始問答」）、`answerZhenmo(i)`（問答選項）、`enterZhenmoBoss`（塔廳／結算「🚪 進入／開啟 BOSS 房門」）、`backToZhenmoHall`（「稍後再戰」「↩ 返回塔廳」）、`startZhenmoFight`（BOSS 介紹「⚔️ 挑戰」）、`setZhenmoFightSpeed(1/2/4)`、`skipZhenmoFight`（戰鬥「⏭ 跳過」） | `data/zhenmo.js` |
 | `chooseGender` | `data/main.js` |
+| `rollAptitudeStep`（資質測試「🎲 手按測靈石」）、`rerollAptitudeFirst`／`confirmAptitudeFirst`（「🎲 再來一次」「✅ 決定」）、`openAptitudeView`（人物面板資質）、`rerollAptitude(part)`／`finishAptitudeReroll(keepNew)`（洗髓／伐骨重測） | `data/aptitude.js` |
 | `openMarketSellModal`（天星城坊市「收購商」傳送點，`config-towns.js`）、`sellEquipByQualities([...])`／`sellPill(id, qty)`／`sellMaterial('shard'/'iron', qty)`／`toggleAutoSellFull`（視窗內動態產生）、`openEstateModal`（宗門分頁「🏞️ 洞府產業」）、`collectEstate(kind)`／`upgradeEstate(kind)`（視窗內動態產生） | `data/economy.js` |
 
 ## 5. 新增功能的建議流程
@@ -1292,7 +1293,7 @@ combatTick() 每秒執行 [combat.js]
 ### 七彩補天石與破障丹
 - **七彩補天石**：`player.butianStones`。身上功德每滿 `MERIT_PER_BUTIAN_STONE`(30,000) **自動凝結**一顆（`settleMeritStones()`，在野外斬殺修士、懸賞伏誅、離線結算、讀檔時呼叫）。
   ⚠️ 舊版是千寶閣按鈕「100 功德換 1 顆」（`exchangeMeritForStone`，已移除）。
-- **破障丹**：`player.breakPills`，在千寶閣以 `BREAK_PILL_STONE_COST`(5) 顆補天石購買（`buyBreakPill(qty)`）。
+- **破障丹**：`player.breakPills`，在千寶閣以 `BREAK_PILL_STONE_COST`(1，2026-09-29 由 5 改) 顆補天石購買（`buyBreakPill(qty)`）。
   渡劫時若持有會**自動服用 1 顆**：心魔戰力 ×`BREAK_PILL_DEMON_POWER_MULT`(0.9)、勝算 +`BREAK_PILL_CHANCE_BONUS`(10%)、上限提高到 `BREAK_PILL_MAX_CHANCE`(90%)。見第 7 節。
 - **千寶閣珍貴物資區**：`renderPreciousSection()` 嵌在 `renderAuction()` 的商品下方，**常駐、不佔每 3 小時刷新的 5 格**。
   「只能用七彩補天石購買的珍貴物資」之後要新增，也加在這一區。
@@ -1353,7 +1354,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002i`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002k`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2561,6 +2562,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 ### 二、資質測試（config-aptitude.js、aptitude.js）
 - **觸發**：第一次拜入宗門後（`joinSect` 延遲 0.3 秒呼叫 `checkAptitudeTest`），以及每次進遊戲（`initGame` 延遲 1.2 秒）時已在宗門但沒有 `player.aptitude` 的老玩家補測。
   視窗 `#aptitude-modal`：「🎲 手按測靈石」→ 名稱輪播約 1.6 秒（`prefers-reduced-motion` 時直接顯示）→ 先天靈根、先天體質各一張卡（等級、說明、加成）。結果一世固定，**轉世也保留**。
+  - **再來一次／決定**（2026-09-29，版本 `20261002j`，使用者要求）：擲完後顯示「🎲 再來一次」「✅ 決定」（`#aptitude-choice`）。結果先放在 `aptitudeFirstPending`，
+    按「再來一次」（`rerollAptitudeFirst`）靈根與體質一起重抽、顯示「已再來 N 次」，**次數不限、不花費**；按「決定」（`confirmAptitudeFirst`）才寫進 `player.aptitude`、存檔並關閉視窗。
+    還沒決定就關掉視窗或重新整理＝沒測，下次開啟重新測。仙府信箱賜予的部分（`player.aptitudeGift`）固定不變，只重抽另一項。
 - **先天靈根**（`APTITUDE_ROOT_GROUPS`，組機率，組內平均）：
 
   | 組 | 機率 | 修為（fx:悟道） | 其他 |
@@ -2574,13 +2578,13 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 
   五行親和 `ROOT_ELEMENT_AFFINITY`（×親和比例）：金 金傷 15、木 每回合回血 1%、水 冰傷 15、火 火傷 15、土 減傷 5。名稱例：「火天靈根」「木水雙靈根」「四靈根（金木火土）」。
   實測 2 萬次：偽 34.4%、真 47.2%、天 8.3%、變異 6.4%、特殊 2.9%、至尊 0.9%。
-- **先天體質**（`APTITUDE_PHYSIQUE_GROUPS`）：凡體 70%；靈體 22%（庚金／乙木／癸水本源體、九陽赤炎體、戊土本源體（本命五行相同時攻擊 +8%）、天雷之體（渡劫 +5%）、玄冰之體、純陰／純陽之體（術攻／物攻 +10%、暗蝕／聖光 8、暗殺者 ×1.5）、天生藥體（丹藥效果 +50%）、萬毒不侵體（免疫中毒））；
+- **先天體質**（`APTITUDE_PHYSIQUE_GROUPS`）：凡體 71%（2026-09-29 神體改 1%，多出的 1% 併入凡體；原 70%）；靈體 22%（庚金／乙木／癸水本源體、九陽赤炎體、戊土本源體（本命五行相同時攻擊 +8%）、天雷之體（渡劫 +5%）、玄冰之體、純陰／純陽之體（術攻／物攻 +10%、暗蝕／聖光 8、暗殺者 ×1.5）、天生藥體（丹藥效果 +50%）、萬毒不侵體（免疫中毒））；
   道體 6%（先天劍體、霸刀戰體、風靈仙體、神射之體、天籟道體、符靈道體：裝備對應武器時該武器 +15%、技能傷害 +10%；劍體為使用者指定，其餘五種補齊六職業）；
-  神體 2%（混沌體、荒古聖體、先天聖體道胎、蒼天霸體、重瞳、至尊骨）。
+  神體 1%（2026-09-29 使用者指定，原 2%；混沌體、荒古聖體、先天聖體道胎、蒼天霸體、重瞳、至尊骨）。至尊靈根維持 1%。實測 10 萬次：神體 0.98%、至尊靈根 0.98%。
 - **加成套用**：`getAptitudeBonusTotals()` 併入 gear.js 的 `getBonusTotals`（含條件式：武器體質裝備該武器時的技能傷害、本源體的本命五行攻擊）；
   `getAptitudeSpecial()`：`trib` → tribulation.js 的勝算（確認視窗多一行「先天資質」）、`ambushMult` → combat.js 暗殺者機率、`poisonImmune` → `resolveHit` 與懸賞「蝕骨毒功」不上毒、`weapons` → `getProfWeaponMult`（不論主修）、`nature` → 光暗本質。
 - **顯示**：人物面板「資質：木水雙靈根・乙木本源體」（`#aptitude-display`，點擊 `openAptitudeView()` 查看與重測）。
-- **重測**：千寶閣「珍貴物資」新增【洗髓丹】（重測靈根）、【伐骨丹】（重測體質），各 `APTITUDE_REROLL_COST` 10 顆七彩補天石（`buyAptitudePill`，背包也會顯示）。
+- **重測**：千寶閣「珍貴物資」新增【洗髓丹】（重測靈根）、【伐骨丹】（重測體質），各 `APTITUDE_REROLL_COST` 1 顆七彩補天石（2026-09-29 由 10 改 1；`buyAptitudePill`，背包也會顯示）。
   使用後擲出新結果，**玩家選擇保留新的或原本的**（`finishAptitudeReroll`）。存檔：`player.aptitude = { root: { group, id?, elems? }, physique, at }`、`player.rootPills`、`player.physiquePills`（用到時才建立）。
 
 ### 三、變異屬性與光暗（config-elements.js、elements.js、combat.js）
@@ -2613,7 +2617,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   九品術法傷害 人 0／5／10%、地 15／20／25%、天 35／45／60%；天元嬰出世日誌附天地異象（`INFANT_OMENS`）。
 - **加成**：`getGoldenCoreBonusTotals` 併入 `getBonusTotals`（`hpPct`、`mpPct`、`magPct`）；`mpPct` 為新鍵，舊制 `getMaxMp` 與新制 `nv2MaxMp` 都乘上。
 - **化神勝算**（元嬰 → 化神，`getCoreTribBonus`）：人元嬰 −10%、地 ±0、天 +10%。
-  **化神靈果**（天材地寶，千寶閣珍貴物資 3 顆七彩補天石，`buySpiritFruit`）：元嬰期渡劫化神時自動服用 1 顆 +10%（可抵銷人元嬰）；確認視窗列出元嬰與靈果兩行。背包顯示持有數。
+  **化神靈果**（天材地寶，千寶閣珍貴物資 1 顆七彩補天石（2026-09-29 由 3 改 1），`buySpiritFruit`）：元嬰期渡劫化神時自動服用 1 顆 +10%（可抵銷人元嬰）；確認視窗列出元嬰與靈果兩行。背包顯示持有數。
 - **老玩家**（`migrateGoldenCore`，save.js 讀檔時；存檔沒有 goldenCore 才做）：金丹期以上補發中品金丹、元嬰期以上補發地元嬰・中。
   ⚠️ 補發只在讀檔時做：advanceRealm 會在晉升後立刻算氣血，若在取值時補發，剛進金丹的新玩家會被誤判成老玩家。
 - **轉世**：`goldenCore` 清空，重新累積。

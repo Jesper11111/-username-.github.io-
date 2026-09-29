@@ -35,7 +35,7 @@ const AMBUSH_ICON = "🥷";
 
 // ---- 七彩補天石：功德滿 MERIT_PER_BUTIAN_STONE 自動凝結一顆（merit.js 的 settleMeritStones）----
 const MERIT_PER_BUTIAN_STONE = 30000;
-const BREAK_PILL_STONE_COST = 5;      // 千寶閣：1 顆破障丹需要幾顆七彩補天石
+const BREAK_PILL_STONE_COST = 1;      // 千寶閣：1 顆破障丹需要幾顆七彩補天石（2026-09-29 使用者指定由 5 改 1）
 
 // ---- 破障丹效果（渡劫時自動服用 1 顆，見 tribulation.js）----
 const BREAK_PILL_DEMON_POWER_MULT = 0.9;   // 心魔戰力 -10%

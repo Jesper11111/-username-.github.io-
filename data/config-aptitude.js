@@ -11,7 +11,7 @@
 //   nature：光／暗本質（光暗互剋，config-elements.js）；靈根與體質一光一暗時互相抵銷
 // 變異屬性 wind／light／dark（%）也寫在 bonus，由 elements.js 的 getPlayerCombatAttrs 讀取
 
-const APTITUDE_REROLL_COST = 10;   // 洗髓丹／伐骨丹各需幾顆七彩補天石（千寶閣珍貴物資）
+const APTITUDE_REROLL_COST = 1;    // 洗髓丹／伐骨丹各需幾顆七彩補天石（千寶閣珍貴物資）；2026-09-29 使用者指定由 10 改 1
 
 // 五行親和：每個屬性依靈根等級給的加成（單屬性 × 1、雙 × 0.4、三 × 0.2）
 const ROOT_ELEMENT_AFFINITY = {
@@ -61,7 +61,7 @@ const APTITUDE_ROOT_GROUPS = [
 
 // ---- 先天體質：chance 為組機率，組內平均 ----
 const APTITUDE_PHYSIQUE_GROUPS = [
-    { grade: "凡體", color: "#9ca3af", chance: 0.70, pick: [
+    { grade: "凡體", color: "#9ca3af", chance: 0.71, pick: [   // 2026-09-29 神體 2% → 1%，多出的 1% 併入凡體（原 70%）
         { id: "mortal", name: "凡體", icon: "🧍", desc: "尋常肉身，勤能補拙。", bonus: {} }
     ] },
     { grade: "靈體", color: "#4ade80", chance: 0.22, pick: [
@@ -86,7 +86,7 @@ const APTITUDE_PHYSIQUE_GROUPS = [
         { id: "fluteBody", name: "天籟道體", icon: "🎶", desc: "聞音知道，一曲可動天地。",           bonus: {}, special: { weapon: "笛", weaponPct: 0.15, skillPct: 0.1 } },
         { id: "brushBody", name: "符靈道體", icon: "🖌️", desc: "天生通曉符文，筆落即成符籙。",       bonus: {}, special: { weapon: "筆", weaponPct: 0.15, skillPct: 0.1 } }
     ] },
-    { grade: "神體", color: "#f472b6", rainbow: true, chance: 0.02, pick: [
+    { grade: "神體", color: "#f472b6", rainbow: true, chance: 0.01, pick: [   // 2026-09-29 使用者指定 1%（原 2%）
         { id: "chaosBody",  name: "混沌體",       icon: "🌀", desc: "萬古第一體質，融合萬物本源，修煉幾乎沒有瓶頸。", bonus: { statPct: 0.1, atkPct: 0.1, hpPct: 0.1, "fx:悟道": 0.3 } },
         { id: "holyBody",   name: "荒古聖體",     icon: "💪", desc: "肉身舉世無雙，氣血如海，克制一切妖魔邪祟。",     bonus: { hpPct: 0.25, conPct: 0.1, def: 5, light: 8 }, special: { nature: "light" } },
         { id: "daoBody",    name: "先天聖體道胎", icon: "🌟", desc: "聖體與道胎合一，天生親近大道。",                 bonus: { hpPct: 0.2, magPct: 0.05, "fx:悟道": 0.3 }, special: { nature: "light" } },
