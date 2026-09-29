@@ -207,6 +207,7 @@ function nv2SuppressByL(enemyL) {
 //   玩家境界還在地圖範圍內（≤ suit 最高境界）時上限放寬到下一境界 1 階（10 階玩家會遇到 10 階或下一境界 1 階）。
 //   越級（玩家低於地圖 nv2L）→ 固定為地圖 nv2L（另有境界壓制）。roll = false 時取平均（高一階機率 × 0.1），給地圖卡片與離線估算用
 function nv2MonsterLevelAt(map, up) {
+    if (typeof map.nv2FixedL === 'number') return map.nv2FixedL;   // 固定階數的地圖（config-maps.js，例：墜魔谷＝煉虛 10 階），不隨玩家階數
     const base = typeof map.nv2L === 'number' ? map.nv2L : 0;
     const top = map.suit ? map.suit[1] : Math.floor(base);
     const pL = nv2Level(player.realmIndex, player.stage);
@@ -218,13 +219,14 @@ function nv2MonsterLevel(map, roll) {
 }
 // 這張地圖對目前玩家會出現的妖獸階數範圍 [最低, 最高]（地圖卡片顯示）
 function nv2MonsterLevelRange(map) { return [nv2MonsterLevelAt(map, 0), nv2MonsterLevelAt(map, 0.1)]; }
-// 妖獸強度倍率範圍（依妖獸自己的 L）：凡人～築基用前期的 1.0～1.5，金丹起 1.5～3
-function nv2MonsterStrRange(L) {
+// 妖獸強度倍率範圍（依妖獸自己的 L）：凡人～築基用前期的 1.0～1.5，金丹起 1.5～3；地圖有 nv2Str（例：墜魔谷 5～10）時用地圖的
+function nv2MonsterStrRange(L, map) {
+    if (map && map.nv2Str) return map.nv2Str;
     return Math.floor(L + 1e-6) <= NV2.monStrEarlyRealm ? [NV2.monStrEarlyMin, NV2.monStrEarlyMax] : [NV2.monStrMin, NV2.monStrMax];
 }
 // 妖獸強度倍率（對同階一般玩家）：roll = true 每隻隨機，否則取平均
-function nv2MonsterStrMult(roll, L) {
-    const [lo, hi] = nv2MonsterStrRange(L);
+function nv2MonsterStrMult(roll, L, map) {
+    const [lo, hi] = nv2MonsterStrRange(L, map);
     return roll ? lo + Math.random() * (hi - lo) : (lo + hi) / 2;
 }
 // 成長位置 L 換成「境界 N 階」文字（戰場名牌、地圖卡片）
@@ -238,7 +240,7 @@ function nv2LevelLabel(L) {
 // roll = true：刷怪時每隻隨機階數與強度；false：平均值（地圖卡片、離線估算、收益速度）
 function nv2MonsterStats(map, roll) {
     const L = nv2MonsterLevel(map, roll);
-    const mult = nv2MonsterStrMult(roll, L);
+    const mult = nv2MonsterStrMult(roll, L, map);
     const sup = nv2SuppressMult(map);
     return {
         hp: Math.max(1, Math.round(nv2TypNormal(L) * NV2.hitsSame * sup.hp * mult)),
@@ -251,7 +253,9 @@ function nv2TypRoundsPerKill(map) {
     const L = typeof map.nv2L === 'number' ? map.nv2L : 0;
     const a = monsterAttrsByMapCategory[getMapCategoryIndex(map.name)] || monsterAttrsByMapCategory[1];
     const eva = Math.max(0, a.eva - nv2TypStat(L) * NV2.hitPer);
-    return NV2.hitsSame * nv2MonsterStrMult(false, L) / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
+    // 固定階數的地圖（nv2FixedL）：妖獸比地圖起點（nv2L）的一般玩家強，氣血依一般玩家普攻的比例放大
+    const fixed = typeof map.nv2FixedL === 'number' ? nv2TypNormal(map.nv2FixedL) / nv2TypNormal(L) : 1;
+    return NV2.hitsSame * nv2MonsterStrMult(false, L, map) * fixed / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
 }
 // 擊殺收益補償：舊制設計是「一波 3 隻、一擊一隻、每波 6 秒」＝每秒 1/3 隻；
 // 新制一般玩家每秒擊殺 = 每波隻數 ÷ (刷新間隔 + 每波隻數 × 每隻回合數)，每隻收益乘上兩者比例，讓每小時經驗／靈石／聲望維持 realmPacing 的節奏

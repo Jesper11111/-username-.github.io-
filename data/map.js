@@ -115,7 +115,7 @@ function getMapDifficultyText(item) {
         ? `<br><span style="color:#f87171;">⚠️ 境界壓制：高你 ${ms.suppress.gap.toFixed(1)} 個境界，妖獸氣血 ×${ms.suppress.hp.toFixed(1)}、攻擊 ×${ms.suppress.atk.toFixed(1)}</span>` : '';
     let [lo, hi] = nv2MonsterLevelRange(item);
     let lvText = hi - lo < 0.05 ? nv2LevelLabel(lo) : `${nv2LevelLabel(lo)}～${nv2LevelLabel(hi)}`;
-    let [sLo, sHi] = nv2MonsterStrRange(lo);
+    let [sLo, sHi] = nv2MonsterStrRange(lo, item);
     return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}${sup}`;
 }
 

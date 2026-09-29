@@ -35,7 +35,10 @@ const maps = [
     { category: "二、開放世界大區域 (高難度戰鬥)", isSafe: false, items: [
         { name: "天南", expRate: 100, diff: 40000, coins: 1000, nv2L: 4, suit: [4, 4] },      // 116 萬
         { name: "亂星海", expRate: 300, diff: 100000, coins: 1650, nv2L: 5, suit: [5, 5] },    // 191 萬（上限 200 萬）
-        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] } // 284 萬（上限 300 萬）
+        { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] }, // 284 萬（上限 300 萬）
+        // 2026-09-30 使用者新增：煉虛可進、經驗 1200；妖獸固定煉虛 10 階（nv2FixedL）、強度 5～10 倍（nv2Str，一般地圖 1.5～3）。
+        //   nv2L 6 ＝ 境界壓制以煉虛 1 階起算（煉虛玩家不吃壓制）；靈石介於鬼谷八荒與崑吾山之間
+        { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] } // 296 萬
     ]},
     { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
         // 合體／大乘／渡劫各一張（2026-09-28 使用者要求；原本這三個境界都只有鬼谷八荒）。經驗、靈石介於鬼谷八荒與荒古禁地之間，修煉節奏表（config-realms.js）改指向這三張
