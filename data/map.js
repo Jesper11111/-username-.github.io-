@@ -64,7 +64,9 @@ function openMapCategoryModal(catIndex) {
                 ${getMapThumb(item) ? `<img class="map-thumb" src="${getMapThumb(item)}" alt="${item.name}">` : ''}
                 <h3 style="color: ${isCurrent ? 'var(--accent)' : '#fff'};">${item.name}${recommended ? ' <span style="font-size:0.7em; color:#facc15;">⭐ 推薦練功</span>' : ''}</h3>
                 ${suitText ? `<p style="font-size:0.8em; color:${recommended ? '#facc15' : '#9ca3af'}; margin:2px 0;">🎯 適合境界：${suitText}</p>` : ''}
-                <p style="font-size:0.85em; color:#9ca3af;">經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}</p>
+                <p style="font-size:0.85em; color:#9ca3af;">${cat.isSafe   // 城鎮（安全區）沒有妖獸：新制上線後曾誤顯示妖獸數值（2026-09-30 修正）
+                    ? `🏯 安全區：可打坐靜修`
+                    : `經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}`}</p>
                 ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${player.realmIndex < getMapMinRealm(item) ? '#f87171' : '#9ca3af'};">${player.realmIndex < getMapMinRealm(item) ? '🔒 ' : ''}限制：${realms[getMapMinRealm(item)]}以上</p>` : ''}
                 <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? '當前所在區域' : '前往此區域'}</button>
             </div>

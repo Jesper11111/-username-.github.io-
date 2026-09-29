@@ -14,6 +14,15 @@
 //   rect 的寬高比請和圖片一致（避免變形）；底邊 = 人偶腳下站的位置。選填 action 可讓人偶可點
 
 const townScenes = {
+    // 天南市集（2026-09-30 玩家提供，848×1264 直式）：只有直式圖，當主圖用——手機直向剛好；電腦橫向時以寬度填滿、上下捲動（town.js）
+    //   使用者選「先只放場景」，之後要加店鋪就在 hotspots 加（圖上招牌：左「天南百貨」「布莊舖」、右「天南百貨」「酒樓」、中央城門「天南城門」）
+    "天南市集": {
+        title: "天南城・市集",
+        img: "images/towns/tiannan-market.jpg",
+        imgW: 848, imgH: 1264,
+        hotspots: [],
+        figures: []
+    },
     "天星城": {
         title: "天星城・坊市",
         img: "images/towns/tianxing-market.jpg",

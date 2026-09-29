@@ -24,6 +24,8 @@ const maps = [
         { name: SECT_MAP_NAME, expRate: 3, diff: 1, coins: 0, hidden: true },
         { name: "天南城", expRate: 3, diff: 1, coins: 0,   // 縮圖：御劍俯瞰天南城，男修／女修各一張
           thumb: "images/maps/tiannan-city-male.jpg", thumbFemale: "images/maps/tiannan-city-female.jpg" },
+        // 天南市集（2026-09-30 玩家提供圖：天南城門前的市集街道，848×1264 直式）：安全區，點進去是城內場景（config-towns.js），目前只有場景、沒有店鋪功能
+        { name: "天南市集", expRate: 3, diff: 1, coins: 0, thumb: "images/towns/tiannan-market.jpg" },
         { name: "天星城", expRate: 3, diff: 1, coins: 0, thumb: "images/maps/tianxing-city.jpg" }   // 亂星海的主城；第二區已有戰鬥地圖「亂星海」，名稱不可重複
     ]},
     { category: "一、野外歷練 (戰鬥區)", isSafe: false, items: [

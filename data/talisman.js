@@ -14,14 +14,29 @@ function talismanFlatOf(g) { return NUMERIC_V2 ? NV2.talismanFlat[g.grade] : g.f
 function getTalismanValue(type, grade) {
     let t = getTalismanType(type), g = getTalismanGrade(grade);
     if (!t || !g) return 0;
-    return t.kind === "flat" ? talismanFlatOf(g) : g.pct;
+    return t.kind === "flat" ? talismanFlatOf(g) : t.kind === "race" ? g.race : g.pct;
 }
 
 function formatTalisman(type, grade) {
     let t = getTalismanType(type), g = getTalismanGrade(grade);
     if (!t || !g) return "未知符寶";
     let v = getTalismanValue(type, grade);
+    if (t.kind === "race") return `${t.icon}${g.name}${t.name}（對${RACES[t.race].name} +${v}%）`;   // 剋制符（種族剋制，race.js）
     return `${t.icon}${g.name}${t.name}（${t.kind === "flat" ? `+${NUMERIC_V2 ? v.toFixed(1) : v.toWan()}` : `+${v}%`}）`;
+}
+
+// 穿戴中裝備孔位上的剋制符，對各族的加成合計（小數，已套 RACE_TALISMAN_CAP）；race.js 的 getRaceDmgBonus 呼叫
+function getRaceTalismanBonus() {
+    const out = {};
+    for (const slot in player.equipment) {
+        const eq = player.equipment[slot];
+        (eq && Array.isArray(eq.sockets) ? eq.sockets : []).forEach(s => {
+            const t = s && getTalismanType(s.type);
+            if (t && t.kind === "race") out[t.race] = (out[t.race] || 0) + getTalismanValue(s.type, s.grade) / 100;
+        });
+    }
+    for (const k in out) out[k] = Math.min(RACE_TALISMAN_CAP, out[k]);
+    return out;
 }
 
 // ---- 孔位 ----
@@ -80,12 +95,26 @@ function renderTalismanWorkshop() {
     let craftCard = `
         <div class="card" style="max-width: 460px; margin: 0 auto;">
             <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">每次煉製：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>
-            <p style="font-size: 0.8em; color: #9ca3af; margin: 4px 0;">種類（${talismanTypes.length} 種）與品階全部隨機，無法指定</p>
+            <p style="font-size: 0.8em; color: #9ca3af; margin: 4px 0;">種類（${talismanTypes.filter(t => t.kind !== "race").length} 種）與品階全部隨機，無法指定</p>
             <p style="font-size: 0.78em; color: #9ca3af; margin: 4px 0;">${gradeText}</p>
             <div class="batch-btns">
                 <button class="sys-btn" onclick="craftTalisman(1)">×1</button>
                 <button class="sys-btn" onclick="craftTalisman(10)">×10</button>
                 <button class="sys-btn" onclick="craftTalisman('max')">最高</button>
+            </div>
+        </div>`;
+    // 剋制符（種族剋制第 3 期）：同樣成本，4 種隨機；鑲在穿戴中的裝備才生效
+    let raceTypes = talismanTypes.filter(t => t.kind === "race");
+    let raceCard = `
+        <div class="card" style="max-width: 460px; margin: 10px auto 0;">
+            <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">⚔️ 煉製剋制符：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>
+            <p style="font-size: 0.8em; color: #9ca3af; margin: 4px 0;">${raceTypes.map(t => `${t.icon}${t.name}（剋${RACES[t.race].name}）`).join("、")}，隨機一種</p>
+            <p style="font-size: 0.78em; color: #9ca3af; margin: 4px 0;">${talismanGrades.map(g => `${g.name} ${Math.round(g.chance * 100)}%（對該族傷害 +${g.race}%）`).join("｜")}</p>
+            <p style="font-size: 0.75em; color: #9ca3af; margin: 4px 0;">同一族的剋制符合計最多 +${Math.round(RACE_TALISMAN_CAP * 100)}%（再與斬妖錄等一起最多 +${Math.round(RACE_DMG_CAP * 100)}%）</p>
+            <div class="batch-btns">
+                <button class="sys-btn" onclick="craftTalisman(1, true)">×1</button>
+                <button class="sys-btn" onclick="craftTalisman(10, true)">×10</button>
+                <button class="sys-btn" onclick="craftTalisman('max', true)">最高</button>
             </div>
         </div>`;
 
@@ -108,6 +137,7 @@ function renderTalismanWorkshop() {
         </p>
         <h3 style="color: #c084fc; margin: 14px 0 6px;">🔥 煉製符寶（隨機）</h3>
         ${craftCard}
+        ${raceCard}
 
         <h3 style="color: #c084fc; margin: 18px 0 6px;">🎴 持有符寶</h3>
         <p style="font-size: 0.85em; line-height: 1.8;">${ownedHtml}</p>
@@ -140,9 +170,10 @@ function renderSocketCard(eq, isEquipped, ownedOptions) {
         </div>`;
 }
 
-// 隨機抽一枚符寶：種類平均、品階依 talismanGrades 的 chance
-function rollTalisman() {
-    let type = talismanTypes[Math.floor(Math.random() * talismanTypes.length)].key;
+// 隨機抽一枚符寶：種類平均、品階依 talismanGrades 的 chance；race＝true 只抽剋制符（4 種），否則只抽原本 11 種
+function rollTalisman(race) {
+    const pool = talismanTypes.filter(t => (t.kind === "race") === !!race);
+    let type = pool[Math.floor(Math.random() * pool.length)].key;
     let r = Math.random(), acc = 0, grade = talismanGrades[0].grade;
     for (let g of talismanGrades) {
         acc += g.chance;
@@ -151,8 +182,8 @@ function rollTalisman() {
     return { type, grade };
 }
 
-// qty：1、10 或 'max'；每次產出的種類與品階都是隨機
-function craftTalisman(qty = 1) {
+// qty：1、10 或 'max'；每次產出的種類與品階都是隨機；race＝true 煉製剋制符（同樣成本）
+function craftTalisman(qty = 1, race) {
     let c = TALISMAN_CRAFT_COST;
     let affordable = Math.min(Math.floor((player.ore || 0) / c.ore), Math.floor(player.coins / c.coins));
     if (affordable <= 0) {
@@ -167,7 +198,7 @@ function craftTalisman(qty = 1) {
     if (!player.talismans) player.talismans = {};
     let got = {};
     for (let i = 0; i < n; i++) {
-        let t = rollTalisman();
+        let t = rollTalisman(race);
         let key = talismanKey(t.type, t.grade);
         player.talismans[key] = (player.talismans[key] || 0) + 1;
         got[key] = (got[key] || 0) + 1;

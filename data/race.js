@@ -50,10 +50,11 @@ function getRaceSlayBonus(race) {
 }
 
 // 對各族的剋制加成（合計後套 RACE_DMG_CAP）；elements.js 的 getPlayerCombatAttrs 放進 attrs.raceDmg，resolveHit 依對方 attrs.race 套用
-// 之後的來源（符寶、法寶、裝備特效）都加在這裡
+// 來源：A 斬妖錄、B 剋制符（talisman.js，自己上限 +20%）；之後的法寶、裝備特效也加在這裡
 function getRaceDmgBonus() {
     const out = {};
-    RACE_KEYS.forEach(k => { out[k] = Math.min(RACE_DMG_CAP, getRaceSlayBonus(k)); });
+    const tal = typeof getRaceTalismanBonus === 'function' ? getRaceTalismanBonus() : {};
+    RACE_KEYS.forEach(k => { out[k] = Math.min(RACE_DMG_CAP, getRaceSlayBonus(k) + (tal[k] || 0)); });
     return out;
 }
 
@@ -109,6 +110,7 @@ function renderCodexRaces() {
         </div>`;
     }).join('');
     return `<p style="color: #9ca3af; font-size: 0.82em; text-align: center;">斬殺四族敵人會記錄在斬妖錄，達到門檻後對該族的傷害永久提高（取最高一階）。<br>
-        妖獸、鬼物：野外；魔修：邪修、暗殺者、邪派懸賞、守城首領、鎮魔塔魔頭；心魔：渡劫與鎮魔塔。剋制只增加傷害，不計入戰力。</p>
+        妖獸、鬼物：野外；魔修：邪修、暗殺者、邪派懸賞、守城首領、鎮魔塔魔頭；心魔：渡劫與鎮魔塔。<br>
+        另可在符寶坊煉製剋制符（斬妖符、鎮魂符、誅邪符、清心符）鑲在穿戴的裝備上。剋制只增加傷害，不計入戰力。</p>
         <div class="grid-container">${cards}</div>`;
 }
