@@ -13,17 +13,28 @@ function getBountyRefSectMult(realmIndex) {
 
 // 攻擊力：同境界同階數、修為圓滿的修士基礎戰力（getBasePower 同曲線）× 該境界一般宗門倍率 × 天榜倍率 × 各榜比例
 // 氣血：攻擊力 × 20（與玩家的氣血公式同比例）
-// 新制（第 52 節）：攻擊＝同境界同階數「一般玩家」的普攻 × bountyAtkMult、氣血＝一般玩家氣血 × bountyHpMult（numeric.js、config-numeric.js），同樣 × 天榜倍率 × 榜別比例
+// 新制（第 52 節）：攻擊＝同境界同階數「一般玩家」的普攻 × bountyAtkMult × √強度、氣血＝一般玩家氣血 × bountyHpMult × 強度（強度見 config-bounty.js 的 BOUNTY_STR_RANGE）
 function getBountyStats(entry) {
     let r = entry.realmIndex, s = entry.stage;
     if (typeof NUMERIC_V2 !== 'undefined' && NUMERIC_V2) {   // gm.html 也載入本檔但沒有新制檔案
-        let L = nv2Level(r, s), m = BOUNTY_TIAN_MULT * BOUNTY_RANKS[entry.rank].ratio;
-        return { attack: Math.round(nv2TypNormal(L) * NV2.bountyAtkMult * m * 10) / 10, hp: Math.round(nv2TypHp(L) * NV2.bountyHpMult * m) };
+        // 強度倍率 m（config-bounty.js 的 BOUNTY_STR_RANGE，刷榜時存進 entry.str；舊榜單沒有就取該榜中間值）：氣血 × m、攻擊 × √m
+        let L = nv2Level(r, s), m = getBountyStrMult(entry);
+        return { attack: Math.round(nv2TypNormal(L) * NV2.bountyAtkMult * Math.sqrt(m) * 10) / 10, hp: Math.round(nv2TypHp(L) * NV2.bountyHpMult * m) };
     }
     let base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
     let rank = BOUNTY_RANKS[entry.rank];
     let attack = Math.floor(base * getBountyRefSectMult(r) * BOUNTY_TIAN_MULT * rank.ratio);
     return { attack, hp: attack * 20 };
+}
+
+function getBountyStrMult(entry) {
+    if (typeof entry.str === 'number') return entry.str;
+    const [lo, hi] = BOUNTY_STR_RANGE[entry.rank] || [1, 1];
+    return (lo + hi) / 2;
+}
+function rollBountyStr(rank) {
+    const [lo, hi] = BOUNTY_STR_RANGE[rank] || [1, 1];
+    return Math.round((lo + Math.random() * (hi - lo)) * 10) / 10;
 }
 
 function getBountyNpc(entry) {
@@ -92,6 +103,7 @@ function rollBountyBoard(faction) {
                 element: wuxingElements[Math.floor(Math.random() * wuxingElements.length)],
                 affix: MONSTER_AFFIX_TYPES[Math.floor(Math.random() * MONSTER_AFFIX_TYPES.length)],
                 skills: set.fixed.concat(extra),
+                str: rollBountyStr(rank),   // 新制強度倍率（getBountyStats）
                 status: "open"   // open／done
             });
         }
@@ -172,7 +184,7 @@ function renderBountyBoard() {
                 <div class="bounty-rank" style="color: ${rank.color};">${rank.icon} ${rank.name}</div>
                 <h3 style="margin: 4px 0;">${getBountyIcon(entry)} ${npc.name}</h3>
                 <p style="font-size: 0.8em; color: #9ca3af; margin: 0;">「${npc.title}」・${npc.gender === 'female' ? '女' : '男'}・${getFactionLabel(entry.faction)}</p>
-                <p style="font-size: 0.85em; color: var(--accent); margin: 6px 0 2px;">${realms[entry.realmIndex]} ${entry.stage}階</p>
+                <p style="font-size: 0.85em; color: var(--accent); margin: 6px 0 2px;">${realms[entry.realmIndex]} ${entry.stage}階${NUMERIC_V2 ? `・<span style="color: ${rank.color};">強度 ×${getBountyStrMult(entry).toFixed(1)}</span>` : ''}</p>
                 <p style="font-size: 0.78em; margin: 2px 0;">攻擊 ${formatShortNumber(st.attack)}（<span style="color: ${ratioColor};">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）｜氣血 ${formatShortNumber(st.hp)}（你的 ${(st.hp / myHp).toFixed(1)} 倍）</p>
                 <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️減傷 ${rank.def}% 💨閃避 ${rank.eva}% ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
                 <p style="font-size: 0.75em; color: #fca5a5; margin: 2px 0 6px;">武學：${skillNames}</p>

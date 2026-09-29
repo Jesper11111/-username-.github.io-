@@ -11,7 +11,13 @@ const BOUNTY_MERIT_MAX = 3000;
 // 例：玩家金丹 5 階、-0.8～+1 → 築基 7 階 ～ 元嬰 5 階
 const BOUNTY_REALM_OFFSET_MIN = -0.8;
 const BOUNTY_REALM_OFFSET_MAX = 1;
-const BOUNTY_MAX_TURNS = 150;            // 對決超過此回合數，對方遁走（懸賞保留，可再遇上）
+const BOUNTY_MAX_TURNS = 300;            // 對決超過此回合數，對方遁走（懸賞保留，可再遇上）；2026-09-29 強度改 1～5 倍、對決變長，由 150 改 300
+
+// 新制強度倍率（2026-09-29 使用者要求「懸賞邪修比玩家強 1～5 倍」，只在 NUMERIC_V2 生效，bounty.js 的 getBountyStats）：
+//   刷榜時每名依榜別在範圍內隨機一個倍率（存在 entry.str），基準＝同境界一般玩家的鏡像（攻擊 × bountyAtkMult 0.4、氣血 × bountyHpMult 3，config-numeric.js）；
+//   氣血 × 倍率、攻擊 × √倍率：新制玩家氣血只有攻擊約 3.6 倍，倍率全乘在攻擊會一擊斃命，喝藥與靈寵治療、控制都來不及發揮
+//   舊的榜別比例（BOUNTY_RANKS 的 ratio）在新制不再使用
+const BOUNTY_STR_RANGE = { tian: [3.5, 5], di: [2, 3.5], ren: [1, 2] };
 
 // 參考戰力：以「同境界同階數、修為圓滿的修士」為基準（與 stats.js 的 getBasePower 同一條曲線），
 // 再乘上該境界可加入宗門的一般戰力倍率。天榜 = 參考值 × BOUNTY_TIAN_MULT，地榜 8 成、人榜 6 成。

@@ -83,9 +83,10 @@ const NV2 = {
     //   所以設 1.0 時，實測一般玩家 1.22 倍、強力配置約 1.3～1.4 倍（未修正前強力配置 3.9 倍）
     rewardSpeedCap: 1.0,
     restHealPct: 3,             // 刷新等待（10 秒）期間調息：每秒回復 3% 氣血與靈力（一波間約回 30%；2026-09-29 使用者由 10% 改 3%，其餘靠丹藥）
-    // 懸賞對決（bounty.js 的 getBountyStats）：以同境界一般玩家為鏡像，再乘下列倍率（× 天榜倍率 × 榜別比例）
-    //   新制氣血只有攻擊的約 7 倍，直接鏡像 5 回合就分勝負且太簡單；氣血 ×3 讓對決回到約 8～16 回合，攻擊 ×0.7 讓勝率接近舊制（第 36 節表格）
-    bountyHpMult: 3, bountyAtkMult: 0.7,
+    // 懸賞對決（bounty.js 的 getBountyStats）：以同境界一般玩家為鏡像，再乘下列倍率，再 × 強度倍率（config-bounty.js 的 BOUNTY_STR_RANGE：氣血 × m、攻擊 × √m）
+    //   新制氣血只有攻擊的約 7 倍，直接鏡像 5 回合就分勝負且太簡單；氣血 ×3 讓對決變長。
+    //   攻擊原本 ×0.7；2026-09-29 強度改 1～5 倍時降為 0.4（×0.7 時連人榜 ×1 一般玩家都 0 勝、丹藥來不及補），模擬表見 ARCHITECTURE.md 第 36 節
+    bountyHpMult: 3, bountyAtkMult: 0.4,
     // 死守天南城（config-defense.js 的 defenseRealmAtk、defense.js 的 waveEnemy／simulateWave）：每波妖潮 = 該強度「一般玩家」的鏡像
     //   攻擊 = 一般玩家普攻、氣血 = 攻擊 × defenseHpPerAtk（一般玩家氣血約是普攻的 3.6 倍）× defenseHpScale；
     //   模擬時玩家氣血也 × defenseHpScale：雙方約 20 下分勝負（同舊制），結果不會大起大落
