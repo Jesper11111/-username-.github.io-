@@ -59,14 +59,16 @@ const DefenseBattle = (() => {
         const atk = waveAtk(w) * grow * sup.atk * (boss ? E.bossAtk : 1);
         const DE = NUMERIC_V2 ? NV2.defenseEnemy : E;   // 新制減傷／閃避較平緩（config-numeric.js）
         const attrs = { def: lerp(DE.def), eva: lerp(DE.eva), ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
-                        element: wuxingElements[(w * 7) % wuxingElements.length] };
+                        element: wuxingElements[(w * 7) % wuxingElements.length],
+                        race: boss ? 'demon' : 'beast' };   // 種族（race.js）：一般波妖潮＝妖獸、首領波＝魔修
         attrs[MONSTER_AFFIX_TYPES[w % MONSTER_AFFIX_TYPES.length]] = lerp(E.affix);
+        applyRaceTraits(attrs);   // 種族特性（race.js）：妖潮氣血在下方 × raceHpMult、首領魔修吸血
         if (NUMERIC_V2) attrs.evaPen = nv2TypHit(defenseWaveL(w));   // 命中：同強度一般玩家（numeric.js），抵銷玩家閃避
         // 新制：氣血 = 攻擊 × 3.6（一般玩家的比例）× defenseHpScale，模擬時玩家氣血同樣放大（simulateWave）
         const hpPerAtk = NUMERIC_V2 ? NV2.defenseHpPerAtk * NV2.defenseHpScale : E.hpPerAtk;
         // 首領光環（config-defense.js 的 DEFENSE_BOSS_AURAS，新制才有）
         const auras = boss && NUMERIC_V2 ? DEFENSE_BOSS_AURAS[(w / DEFENSE_BOSS_EVERY - 1) % DEFENSE_BOSS_AURAS.length] || null : null;
-        return { atk, hp: waveAtk(w) * grow * sup.hp * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss, auras, sup };
+        return { atk, hp: waveAtk(w) * grow * sup.hp * hpPerAtk * (boss ? E.bossHp : 1) * raceHpMult(attrs.race), attrs, boss, auras, sup };
     }
     // 以玩家當下真實數值，用遊戲的 resolveHit／tickStatus 在背後打一場（不影響玩家實際氣血與狀態）
     function simulateWave(w) {
@@ -88,7 +90,11 @@ const DefenseBattle = (() => {
             }
             const et = tickStatus(es); eHp -= et.dot;
             if (eHp <= 0) return { win: true, rounds: r, hpLeft: pHp / pMax };
-            if (!et.frozen) pHp -= resolveHit(eAtk, { attrs: eAttrs, power: eAtk }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
+            if (!et.frozen) {
+                const d = resolveHit(eAtk, { attrs: eAttrs, power: eAtk }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
+                pHp -= d;
+                eHp = Math.min(e.hp, eHp + raceLifestealHeal(eAttrs, d));   // 種族特性：魔修吸血（race.js）
+            }
             if (pHp <= 0) return { win: false, rounds: r };
         }
         return { win: false, rounds: DEFENSE_MAX_ROUNDS, timeout: true };
@@ -103,7 +109,7 @@ const DefenseBattle = (() => {
             [3.9,  () => { cast(spec.names.guard, '魔將飛撲，法光護體擋下一擊！'); ring([0.6, 0.55], 0.28); }],
             [5.1,  () => { cast(spec.names.slash, '一劍橫斬！'); slashArc([0.5, 0.52], spec.v % 2 === 1); kill(2, 4); }],
             [6.6,  () => { cast(spec.names.strike, '劍指一引，法術轟向魔將！'); fingerMotes([0.6, 0.55]); strike(); }],
-            [7.9,  () => { feed(spec.boss ? `👹 首領【${spec.bossName}】伏誅！` : '💥 魔將化為黑煙！', 'kill'); kill(1, spec.boss ? 1 : 2); punch = 0.06; if (spec.slowmo) slowmo(0.8); }],
+            [7.9,  () => { feed(spec.boss ? `👹 首領【${spec.bossName}】伏誅！` : '💥 魔將化為黑煙！', 'kill'); kill(1, spec.boss ? 1 : 2, spec.boss ? 'demon' : 'beast'); punch = 0.06; if (spec.slowmo) slowmo(0.8); }],
             [8.9,  () => { cast(spec.names.fin, spec.boss ? '首領已誅，大招清場！' : '終結一擊！'); fingerMotes([0.56, 0.52]); finisher(); kill(3, spec.boss ? 9 : 6); }],
             [10.5, () => { feed('☯ 收劍凝神，靈力回轉…', 'skill'); }]
         ],
@@ -387,7 +393,8 @@ const DefenseBattle = (() => {
     }
 
     // ================== 戰況文字 ==================
-    function kill(a, b) { if (!D.active) return; D.kills += a + Math.floor(Math.random() * (b - a + 1)); $('defense-kill-no').textContent = `斬殺 ${D.kills.toWan()}`; }
+    // race：斬妖錄計入的種族（race.js）；沒填＝妖潮（妖獸）
+    function kill(a, b, race) { if (!D.active) return; const n = a + Math.floor(Math.random() * (b - a + 1)); D.kills += n; addRaceKill(race || 'beast', n); $('defense-kill-no').textContent = `斬殺 ${D.kills.toWan()}`; }
     function feed(text, cls) {
         const f = $('defense-feed'), d = document.createElement('div'); d.className = cls; d.textContent = text;
         f.appendChild(d); while (f.children.length > 4) f.firstChild.remove();

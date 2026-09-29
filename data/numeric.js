@@ -255,7 +255,9 @@ function nv2TypRoundsPerKill(map) {
     const eva = Math.max(0, a.eva - nv2TypStat(L) * NV2.hitPer);
     // 固定階數的地圖（nv2FixedL）：妖獸比地圖起點（nv2L）的一般玩家強，氣血依一般玩家普攻的比例放大
     const fixed = typeof map.nv2FixedL === 'number' ? nv2TypNormal(map.nv2FixedL) / nv2TypNormal(L) : 1;
-    return NV2.hitsSame * nv2MonsterStrMult(false, L, map) * fixed / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
+    // 種族特性（config-race.js）：妖獸氣血加成、鬼物閃避讓一般玩家要多打幾下 → 收益補償跟著放大（gm.html 沒載 race.js，視為 1）
+    const race = typeof fieldRaceKillMult === 'function' ? fieldRaceKillMult(map, a.eva, nv2TypStat(L) * NV2.hitPer) : 1;
+    return NV2.hitsSame * nv2MonsterStrMult(false, L, map) * fixed * race / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
 }
 // 擊殺收益補償：舊制設計是「一波 3 隻、一擊一隻、每波 6 秒」＝每秒 1/3 隻；
 // 新制一般玩家每秒擊殺 = 每波隻數 ÷ (刷新間隔 + 每波隻數 × 每隻回合數)，每隻收益乘上兩者比例，讓每小時經驗／靈石／聲望維持 realmPacing 的節奏
@@ -273,7 +275,8 @@ function nv2EstimateIdleCombat() {
     const ms = nv2MonsterStats(map);
     const round = Math.max(nv2PhysAttack(), nv2MagAttack()) * (1 + nv2Crit() * (NV2.critDmg - 1)) * (1 + nv2Combo()) * NV2.typSkillAvg;
     const eva = Math.max(0, a.eva - nv2Hit());
-    const hits = Math.max(1, ms.hp / Math.max(0.01, round * (1 - a.def / 100)) / (1 - eva / 100));
+    const raceMult = typeof fieldRaceKillMult === 'function' ? fieldRaceKillMult(map, a.eva, nv2Hit()) : 1;   // 種族特性（race.js）
+    const hits = Math.max(1, ms.hp / Math.max(0.01, round * (1 - a.def / 100)) / (1 - eva / 100) * raceMult);
     const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
     const rateMult = Math.min(1, (gap + n * nv2TypRoundsPerKill(map)) / (gap + n * hits));
     const pAttrs = getPlayerCombatAttrs();

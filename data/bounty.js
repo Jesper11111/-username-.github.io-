@@ -233,9 +233,11 @@ function startBountyDuel(entry) {
     let rank = BOUNTY_RANKS[entry.rank];
     let st = getBountyStats(entry);
     let attrs = { def: rank.def, eva: rank.eva, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: entry.element,
-                  nature: entry.faction === "邪" ? "dark" : "light" };   // 光暗互剋（config-elements.js）
+                  nature: entry.faction === "邪" ? "dark" : "light",   // 光暗互剋（config-elements.js）
+                  race: entry.faction === "邪" ? "demon" : null };   // 邪派懸賞＝魔修（種族剋制，race.js），正派＝人修無種族
     attrs[entry.affix] = rank.affix;
     if (NUMERIC_V2) attrs.evaPen = nv2TypHit(nv2Level(entry.realmIndex, entry.stage));   // 同階一般玩家的命中，抵銷玩家閃避（numeric.js）
+    applyRaceTraits(attrs);   // 種族特性：邪派＝魔修吸血（race.js）
 
     enemies = [];
     respawnTimer = 0;
@@ -354,6 +356,7 @@ function bountyDuelTick() {
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
     let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags), r);   // 護盾＋最低傷害保底（beast-combat.js）
     player.hp -= dealt;
+    opp.hp = Math.min(opp.maxHp, opp.hp + raceLifestealHeal(opp.attrs, dealt));   // 種族特性：魔修吸血（race.js）
     battleFxHurt(dealt, r.tags.includes("dodge"), r.tags);   // 戰鬥面板飄字（battle-fx.js）
     if (sk && dealt > 0) {
         if (sk.type === "lifesteal") opp.hp = Math.min(opp.maxHp, opp.hp + dealt * sk.steal);
@@ -380,6 +383,7 @@ function endBountyDuel(result) {
     let rank = BOUNTY_RANKS[opp.rank];
 
     if (result === "win") {
+        if (opp.attrs && opp.attrs.race) addRaceKill(opp.attrs.race, 1);   // 斬妖錄（race.js）
         if (entry) entry.status = "done";
         player.activeBountyIds = getTrackedBountyIds().filter(x => x !== opp.entryId);
         let merit = Math.floor((BOUNTY_MERIT_MIN + Math.floor(Math.random() * (BOUNTY_MERIT_MAX - BOUNTY_MERIT_MIN + 1)))

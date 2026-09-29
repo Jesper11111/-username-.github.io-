@@ -102,7 +102,7 @@ function triggerTribulation() {
         hp: demonHp,
         buffTimer: 0,
         buffMult: 1,
-        attrs: getPlayerCombatAttrs(),   // 鏡像：與玩家相同的減傷/閃避/屬性傷害/五行（同五行不相剋）
+        attrs: Object.assign(getPlayerCombatAttrs(), { race: "heart", raceDmg: null }),   // 鏡像：與玩家相同的減傷/閃避/屬性傷害/五行（同五行不相剋）；種族＝心魔（race.js），不帶玩家的剋制
         status: newStatus()
     };
     playerStatus = newStatus();
@@ -231,6 +231,7 @@ function endTribulation(success) {
     playerStatus = newStatus();
 
     if (success) {
+        addRaceKill("heart", 1);   // 斬妖錄：斬心魔（race.js）
         player.pendingTribulation = false;
         player.tribulationCount = (player.tribulationCount || 0) + 1;
         addLog(`☯️ 【渡劫成功】心魔潰散，你斬去心中執念，天劫已渡！（累計渡劫 ${player.tribulationCount} 次）`, "reincarnate");

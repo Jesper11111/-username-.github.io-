@@ -56,6 +56,7 @@ function getPlayerCombatAttrs() {
         burnBonus: fx["焚燼"] || 0,
         poisonBonus: fx["蝕骨"] || 0,
         poisonImmune: getAptitudeSpecial().poisonImmune,  // 萬毒不侵體（aptitude.js），怪物沒有此欄位
+        raceDmg: typeof getRaceDmgBonus === 'function' ? getRaceDmgBonus() : null,   // 種族剋制（race.js）：{ beast, ghost, demon, heart }，對方 attrs.race 對上時增傷
         isPlayer: true   // resolveHit：敵人打玩家時閃避、減傷實際最多 PLAYER_EFFECTIVE_*_MAX（心魔鏡像也帶，雙方對稱）
     };
 }
@@ -159,6 +160,8 @@ function resolveHit(rawDmg, attacker, defender) {
     }
 
     let dmg = rawDmg * nv2DmgRoll();   // 新制傷害浮動 ±10%（config-numeric.js 的 dmgVariance），平均不變
+    // 種族剋制（race.js）：攻擊方對防守方種族的傷害加成（已套上限 RACE_DMG_CAP）
+    if (attacker.attrs.raceDmg && defender.attrs.race) dmg *= 1 + (attacker.attrs.raceDmg[defender.attrs.race] || 0);
     // 藏書閣屬性秘典：本命五行的直接傷害、對凍結中目標的傷害（其餘在各效果觸發時套用）
     let book = attacker.attrs.book;
     if (book) {

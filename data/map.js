@@ -116,7 +116,7 @@ function getMapDifficultyText(item) {
     let [lo, hi] = nv2MonsterLevelRange(item);
     let lvText = hi - lo < 0.05 ? nv2LevelLabel(lo) : `${nv2LevelLabel(lo)}～${nv2LevelLabel(hi)}`;
     let [sLo, sHi] = nv2MonsterStrRange(lo, item);
-    return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}${sup}`;
+    return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}<br>種族 ${formatFieldRaceMix(item)}${sup}`;   // 種族比例（race.js）
 }
 
 function selectMap(cIndex, iIndex) {

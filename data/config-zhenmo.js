@@ -41,7 +41,7 @@ const ZHENMO_PARTNER_MEET = [
 // 強度建議：第 n 層 = 煉虛起每層一階（1～10 層煉虛 1～10 階、11～20 層合體…91～100 層混沌道祖），特別層再用 atkMult 調整
 const ZHENMO_BOSSES = {
     1: {
-        name: "棄天神", title: "塔底魔神", img: "images/zhenmo/boss-qitianshen.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；左上有「棄天神」字樣）
+        name: "棄天神", race: "demon", title: "塔底魔神", img: "images/zhenmo/boss-qitianshen.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；左上有「棄天神」字樣）
         realm: 6, stage: 1, atkMult: 1,   // 入門關：煉虛 1 階
         hpPerAtk: 300,                    // 氣血 = 攻擊 × 300（2026-09-27 玩家指定，原 30）
         def: 20, eva: 10, affix: "thunder", affixVal: 15, element: "金",
@@ -59,7 +59,7 @@ const ZHENMO_BOSSES = {
         }
     },
     2: {
-        name: "不滅骨", title: "皇道殭屍", img: "images/zhenmo/boss-bumiegu.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；龍虎山石階上的龍袍屍王）
+        name: "不滅骨", race: "ghost", title: "皇道殭屍", img: "images/zhenmo/boss-bumiegu.jpg", imgPos: "50% 30%",   // 玩家提供直式版（848×1264，2:3；龍虎山石階上的龍袍屍王）
         realm: 6, stage: 2, atkMult: 1,   // 樓層 n = 煉虛起每層一階（第 2 層 = 煉虛 2 階）
         hpPerAtk: 300,
         def: 25, eva: 5, affix: "poison", affixVal: 15, element: "土",   // 殭屍：皮糙肉厚（減傷高、閃避低）、屍毒
@@ -73,7 +73,7 @@ const ZHENMO_BOSSES = {
         rewards: { coinMinutes: 11, merit: [130, 260], shards: [3, 6], iron: [4, 8] }
     },
     3: {
-        name: "主咒之王", title: "束縛幽冥", img: "images/zhenmo/boss-zhuzhou.jpg", imgPos: "50% 30%",   // 玩家提供直式（848×1264，符咒王座）
+        name: "主咒之王", race: "ghost", title: "束縛幽冥", img: "images/zhenmo/boss-zhuzhou.jpg", imgPos: "50% 30%",   // 玩家提供直式（848×1264，符咒王座）
         realm: 6, stage: 3, atkMult: 1.5,   // 煉虛 3 階，攻擊 ×1.5（2026-09-27 玩家指定）
         hpPerAtk: 300,                      // 氣血 = 基準攻擊 × 300（atkMult 只放大攻擊；要加血用 hpMult）
         def: 15, eva: 15, affix: "ice", affixVal: 18, element: "水",   // 咒術師：束縛咒（冰凍＝定身，玩家該回合無法出手）、身法飄忽
@@ -87,7 +87,7 @@ const ZHENMO_BOSSES = {
         rewards: { coinMinutes: 13, merit: [150, 300], shards: [4, 7], iron: [5, 9] }
     },
     4: {
-        name: "幽冥鬼虎", title: "冥火凶獸", img: "images/zhenmo/boss-guihu.jpg", imgPos: "60% 40%",   // 玩家提供直式（848×1264，虎頭在右側中段）
+        name: "幽冥鬼虎", race: "ghost", title: "冥火凶獸", img: "images/zhenmo/boss-guihu.jpg", imgPos: "60% 40%",   // 玩家提供直式（848×1264，虎頭在右側中段）
         realm: 6, stage: 4, atkMult: 1,     // 煉虛 4 階（每層一階）
         hpPerAtk: 300,
         def: 10, eva: 20, affix: "metal", affixVal: 18, element: "金",   // 凶獸：身法迅捷（閃避高、減傷低）、利爪撕咬易暴擊；白虎屬金
@@ -102,7 +102,7 @@ const ZHENMO_BOSSES = {
         rewards: { coinMinutes: 14, merit: [160, 320], shards: [4, 7], iron: [5, 10] }
     },
     5: {
-        name: "青瞑爪龍", title: "雷雲蒼龍", img: "images/zhenmo/boss-qingming.jpg", imgPos: "50% 25%",   // 玩家提供直式（848×1264，展翼青龍、龍頭在上方）
+        name: "青瞑爪龍", race: "beast", title: "雷雲蒼龍", img: "images/zhenmo/boss-qingming.jpg", imgPos: "50% 25%",   // 玩家提供直式（848×1264，展翼青龍、龍頭在上方）
         realm: 6, stage: 5, atkMult: 3,     // 煉虛 5 階，攻擊 ×3（2026-09-27 玩家指定）
         hpPerAtk: 300,
         def: 20, eva: 15, affix: "thunder", affixVal: 18, element: "木",   // 青龍屬木；御雷雲、爪握雷珠（雷擊）；展翼飛騰（閃避）
@@ -117,7 +117,7 @@ const ZHENMO_BOSSES = {
         rewards: { coinMinutes: 20, merit: [250, 500], shards: [6, 10], iron: [8, 14] }   // 第 5 層關卡：獎勵加碼
     },
     6: {
-        name: "黑暗法老王", title: "封印神王", img: "images/zhenmo/boss-pharaoh.jpg", imgPos: "50% 30%",   // 玩家提供直式（687×1024，2:3；掙斷鎖鏈的黃金法老，頭在上方約 30%）
+        name: "黑暗法老王", race: "ghost", title: "封印神王", img: "images/zhenmo/boss-pharaoh.jpg", imgPos: "50% 30%",   // 玩家提供直式（687×1024，2:3；掙斷鎖鏈的黃金法老，頭在上方約 30%）
         realm: 6, stage: 6, atkMult: 1,     // 煉虛 6 階（每層一階）
         hpPerAtk: 300,
         def: 30, eva: 5, affix: "fire", affixVal: 18, element: "土",   // 黃金神軀：減傷高、身形笨重（閃避低）；胸前聖符射出烈日神光（燒傷）；沙漠古陵屬土

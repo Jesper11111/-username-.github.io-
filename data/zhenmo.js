@@ -183,8 +183,10 @@ const ZhenmoTower = (() => {
 
     // ================== BOSS 房：開門 → BOSS 介紹 ==================
     function bossStats(boss) {
-        const attrs = { def: boss.def || 0, eva: boss.eva || 0, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: boss.element || null };
+        const attrs = { def: boss.def || 0, eva: boss.eva || 0, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: boss.element || null,
+                        race: zhenmoBossRace(boss) };   // 種族（race.js）：手動 race 或依名稱後綴
         if (boss.affix) attrs[boss.affix] = boss.affixVal || 0;
+        applyRaceTraits(attrs);   // 種族特性（config-race.js 的 RACE_TRAITS）：鬼物閃避、不中毒、魔修吸血；妖獸氣血在下方 × raceHpMult
         // 新制（第 52 節）：氣血 = 同強度一般玩家每回合輸出 × bossRounds（約 300 回合）；攻擊 = 一般玩家氣血（含增益）÷ bossHitsToKill；hpPerAtk 是舊制比例，不使用
         if (NUMERIC_V2) {
             const L = nv2Level(boss.realm, boss.stage);
@@ -192,8 +194,9 @@ const ZhenmoTower = (() => {
             const sup = nv2SuppressByL(L);   // 境界壓制：BOSS 境界高於玩家時攻擊與氣血放大（同野外、死守天南城）
             // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
             const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 100) / 100;   // 2 位小數（畫面 ×100）
-            const through = (1 - attrs.def / 100) * (1 - attrs.eva / 100);   // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完
-            return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp), attrs, sup };
+            // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完；閃避用 BOSS 本身的值（不含種族特性加的閃避，否則氣血會被扣回來、特性等於沒有）
+            const through = (1 - attrs.def / 100) * (1 - (boss.eva || 0) / 100);
+            return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp * raceHpMult(attrs.race)), attrs, sup };
         }
         // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
         const baseAtk = defenseRealmAtk(boss.realm, boss.stage);
@@ -222,7 +225,7 @@ const ZhenmoTower = (() => {
                 ? `每下約你氣血 <span style="color:${hitPct >= 0.5 ? '#f87171' : hitPct >= 0.3 ? '#facc15' : '#4ade80'}">${hitPct.toFixed(2)}%</span>`
                 : `<span style="color:${ratio >= 1.5 ? '#f87171' : ratio >= 0.8 ? '#facc15' : '#4ade80'}">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>`;
             $('zm-boss-body').innerHTML = `
-                <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階</p>
+                <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階${b.attrs.race ? `・種族 ${raceTag(b.attrs.race)}（${raceTrait(b.attrs.race).desc}）` : ''}</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
                 <p class="zm-boss-stat">攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
                     🛡️減傷 ${b.attrs.def}% 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
@@ -309,6 +312,7 @@ const ZhenmoTower = (() => {
             const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk }, { attrs: P.attrs, status: P.st });
             hit.dmg *= auraCurseMult(f.aura);   // 光環詛咒：受到的傷害提高
             P.hp -= hit.dmg;
+            E.hp = Math.min(E.max, E.hp + raceLifestealHeal(E.attrs, hit.dmg));   // 種族特性：魔修吸血（race.js）
             if (!instant) {
                 popNum('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
                 bossFlash();
@@ -344,6 +348,7 @@ const ZhenmoTower = (() => {
         if (!f || f.over) return;
         f.over = true;
         clearTimeout(f.tid);
+        if (win) addRaceKill(zhenmoBossRace(f.boss), 1);   // 斬妖錄（race.js）
         updateBars();
         const z = state();
         let html;

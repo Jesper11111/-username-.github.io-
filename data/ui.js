@@ -135,7 +135,9 @@ function updateCombatVisualPanel() {
         let enemyAttrText = (elemCounts.length ? '五行 ' + elemCounts.map(([el, c]) => `${el}×${c}`).join(' ') : '')
             + (affixCounts.length ? '｜' + affixCounts.map(([k, c]) => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label.charAt(0)}×${c}`).join(' ') : '');
         showEnemyBar(totalEnemyHp, totalMaxEnemyHp);   // 多隻時為總血量
-        document.getElementById('battle-enemy-info').innerText = [enemySt, enemyAttrText].filter(Boolean).join('｜');
+        // 種族（race.js），例：「🐉妖獸×2 😈魔修×1」；人修（正道修士）不列
+        let raceText = RACE_KEYS.map(k => [k, enemies.filter(e => e.attrs && e.attrs.race === k).length]).filter(([, c]) => c > 0).map(([k, c]) => `${raceTag(k)}×${c}`).join(' ');
+        document.getElementById('battle-enemy-info').innerText = [raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
         document.getElementById('battle-action-desc').innerText = `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;
     } else {
         document.getElementById('battle-enemy-title').innerText = "索敵中";
@@ -256,7 +258,8 @@ function updateUI() {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
-    }).join('') + natureHtml;
+    }).join('') + natureHtml
+        + (formatRaceDmgLine() ? `<span title="種族剋制：對該族的傷害加成（天磯錄・斬妖錄等，合計上限 +${Math.round(RACE_DMG_CAP * 100)}%）">⚔️剋制 <b>${formatRaceDmgLine()}</b></span>` : '');
     document.getElementById('reincarnate-count').innerText = player.reincarnations;
 
     document.getElementById('res-grass').innerText = player.spiritGrass;

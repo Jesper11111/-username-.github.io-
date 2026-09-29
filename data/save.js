@@ -108,6 +108,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // combatTicks 是「收益次數」（新制含每隻收益補償 getKillRewardMult），換回實際擊殺數，與線上同樣速度
         let partnerKills = Math.floor(combatTicks / (NUMERIC_V2 ? getKillRewardMult() : 1));
         if (partnerKills > 0) onPartnerFieldKills(partnerKills);
+        if (partnerKills > 0) addFieldRaceKills(player.currentMap, partnerKills);   // 斬妖錄：依這張圖的種族比例計入（race.js）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;

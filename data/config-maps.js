@@ -127,11 +127,12 @@ const OFFLINE_MAX_SECONDS = 12 * 3600;
 // pos：圖片在右半邊的對焦位置（CSS object-position），讓頭部不被左邊斜切線切掉
 // 之後要加怪物：放圖、加一行即可（只影響外觀與名稱，不影響數值）
 const FIELD_MONSTERS = [
-    { name: "青鱗蒼龍", icon: "🐉", img: "images/monsters/dragon.jpg",        pos: "62% 30%" },
-    { name: "雪紋白虎", icon: "🐅", img: "images/monsters/white-tiger.jpg",   pos: "78% 35%" },
-    { name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%" },
-    { name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%" },
-    { name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%" },
-    { name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", dark: true },
-    { name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", dark: true }
+// race：種族（config-race.js，2026-09-30）：妖獸 beast／鬼物 ghost
+    { name: "青鱗蒼龍", icon: "🐉", img: "images/monsters/dragon.jpg",        pos: "62% 30%", race: "beast" },
+    { name: "雪紋白虎", icon: "🐅", img: "images/monsters/white-tiger.jpg",   pos: "78% 35%", race: "beast" },
+    { name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%", race: "beast" },
+    { name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%", race: "beast" },
+    { name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%", race: "beast" },
+    { name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", dark: true, race: "ghost" },
+    { name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", dark: true, race: "ghost" }
 ];

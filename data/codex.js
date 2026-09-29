@@ -193,13 +193,14 @@ function setCodexSlot(slot) { codexSlot = slot; renderCodexModal(); }
 function renderCodexModal() {
     let box = document.getElementById('codex-container');
     if (!box || document.getElementById('codex-modal').style.display !== 'flex') return;
-    let tabs = [['gear', '📜 器錄'], ['bp', '📐 圖紙器錄'], ['sets', '❖ 套裝'], ['fires', '🔥 異火'], ['titles', '🏅 稱號'], ['prof', '⚔️ 職業']]
+    let tabs = [['gear', '📜 器錄'], ['bp', '📐 圖紙器錄'], ['sets', '❖ 套裝'], ['fires', '🔥 異火'], ['titles', '🏅 稱號'], ['prof', '⚔️ 職業'], ['races', '📕 斬妖錄']]
         .map(([k, label]) => `<button class="codex-tab${codexTab === k ? ' active' : ''}" onclick="setCodexTab('${k}')">${label}</button>`).join('');
     let body = codexTab === 'sets' ? renderCodexSets()
              : codexTab === 'fires' ? renderCodexFires()   // strange-fire.js
              : codexTab === 'titles' ? renderCodexTitles()
              : codexTab === 'prof' ? renderProfessionTab()
              : codexTab === 'bp' ? renderCodexBlueprints()
+             : codexTab === 'races' ? renderCodexRaces()   // 種族剋制・斬妖錄（race.js）
              : renderCodexGear();
     box.innerHTML = `
         <p style="text-align: center; color: #9ca3af; font-size: 0.85em; margin: 0 0 8px;">

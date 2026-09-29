@@ -117,9 +117,10 @@ function combatTick() {
         for (let i = 0; i < count; i++) {
             let look = pool[Math.floor(Math.random() * pool.length)];
             let one = NUMERIC_V2 ? getMapMonsterStats(player.currentMap, true) : ms;   // 新制每隻各自擲階數與強度（numeric.js）
-            enemies.push({ hp: one.hp, maxHp: one.hp, attack: one.atk, nv2Lv: one.L,
+            let hp = one.hp * raceHpMult(look.race);   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
+            enemies.push({ hp, maxHp: hp, attack: one.atk, nv2Lv: one.L,
                            name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
-                           attrs: rollMonsterAttrs(one.L), status: newStatus() });   // 新制帶同階一般玩家的命中（elements.js）
+                           attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race })), status: newStatus() });   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
         let extraText = [];
@@ -130,7 +131,7 @@ function combatTick() {
                 enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
                                img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
-                               attrs: Object.assign(rollMonsterAttrs(ms.L), { nature: faction === "邪" ? "dark" : "light" }),   // 邪修為暗、正道為光（光暗互剋）；命中同妖獸平均階數
+                               attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(ms.L), { nature: faction === "邪" ? "dark" : "light", race: faction === "邪" ? "demon" : null })),   // 邪修為暗、正道為光（光暗互剋）；邪修＝魔修（種族剋制），正道＝人修無種族
                                status: newStatus() });
             };
             // 每波機率乘 getWaveChanceMult()：刷新變慢（新制另有每波變長）、波數變少，每小時遇到的次數維持原設計（config-maps.js）
@@ -216,6 +217,7 @@ function fieldCombatRound() {
             coinsEarned += rollKillCoins();
             repEarned += rollKillReputation();
             killedCount++;
+            if (e.attrs && e.attrs.race) addRaceKill(e.attrs.race, 1);   // 斬妖錄（race.js）
             if (e.cultivator) slainCultivators.push(e);
             return false;
         }
@@ -295,7 +297,9 @@ function fieldCombatRound() {
             let atk = e.attack * petEnemyAtkMult(e);   // 被靈寵削弱時攻擊降低（beast-combat.js）
             let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
             // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
-            totalDmg += applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
+            let dealt = applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
+            totalDmg += dealt;
+            if (e.hp > 0) e.hp = Math.min(e.maxHp, e.hp + raceLifestealHeal(e.attrs, dealt));   // 種族特性：魔修吸血（race.js）
             enemyTags = enemyTags.concat(r.tags);
         });
         let taken = NUMERIC_V2 ? roundDmg(totalDmg) : totalDmg;   // 多隻加總後去掉浮點尾數（新制 2 位小數）
