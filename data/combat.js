@@ -298,7 +298,7 @@ function fieldCombatRound() {
             totalDmg += applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
             enemyTags = enemyTags.concat(r.tags);
         });
-        let taken = totalDmg;
+        let taken = NUMERIC_V2 ? Math.round(totalDmg * 10) / 10 : totalDmg;   // 多隻加總後去掉浮點尾數（新制 1 位小數）
         player.hp -= taken;
         battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）
         if (enemyTags.length > 0 || frozenCount > 0) {

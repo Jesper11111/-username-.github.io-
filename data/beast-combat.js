@@ -162,7 +162,7 @@ function applyPetDamageReduction(dmg, r) {
     if (partnerShieldTimer > 0) d *= 1 - partnerShieldRate;
     if (selfShieldTimer > 0) d *= 1 - selfShieldRate;
     if (r && typeof r.preDef === 'number' && r.preDef > 0 && d > 0) d = Math.max(d, r.preDef * playerDamageFloor());
-    return d;
+    return d === dmg ? d : roundDmg(d);   // 護盾／保底改過才重新取整（新制 1 位小數），避免 7.6000000000000005 這類尾數
 }
 // 敵人打玩家的最低傷害比例（見 config-elements.js）
 function playerDamageFloor() {
