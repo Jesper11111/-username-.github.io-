@@ -53,7 +53,7 @@ function renderBeasts() {
                 <p style="font-size: 0.8em; color: #9ca3af;">${status}｜${expText}</p>
                 <p style="font-size: 0.8em; color: #9ca3af;">被動：${info.passive}${!b.alive ? '（陣亡中失效）' : active ? '' : '（休息中失效）'}</p>
                 <p style="font-size: 0.8em; color: #facc15;">${upkeepText}</p>
-                <p style="font-size: 0.78em; color: #7dd3fc;">💧 靈力 ${Math.floor(getBeastMp(b.id))}/${BEAST_MP_MAX}（每回合 +${BEAST_MP_REGEN}；技能依領悟等級耗 ${Object.values(BEAST_SKILL_MP_BY_LV).join('／')}，不夠就不施展）｜同時只能一隻出戰</p>
+                <p style="font-size: 0.78em; color: #7dd3fc;">💧 靈力 ${Math.floor(getBeastMp(b.id))}/${BEAST_MP_MAX}（每回合 +${BEAST_MP_REGEN}；技能依領悟等級耗 ${Object.values(BEAST_SKILL_MP_BY_LV).join('／')}，不夠就不施展）｜最多同時 ${BEAST_ACTIVE_MAX} 隻出戰</p>
                 ${toggleBtn}
                 ${b.alive ? '' : `<button class="sys-btn" style="border-color:#ef4444; color:#ef4444;" onclick="reviveBeast('${b.id}')">復活 (${BEAST_REVIVE_COST_CORE.toWan()} 獸丹)</button>`}
                 <div style="text-align:left; font-size:0.78em;">${slots}</div>
@@ -70,7 +70,7 @@ function tameBeast(id) {
         player.beastCore -= info.costCore;
         player.coins -= finalCoins;
         const nb = createBeast(id);
-        if (player.beasts.some(x => isBeastActive(x))) nb.active = false;   // 已有出戰中的靈寵：新兌換的先休息（只能一隻出戰）
+        if (player.beasts.filter(x => isBeastActive(x)).length >= BEAST_ACTIVE_MAX) nb.active = false;   // 出戰已滿（BEAST_ACTIVE_MAX）：新兌換的先休息
         player.beasts.push(nb);
         let upkeep = getBeastUpkeep(1);
         addLog(`🐾 成功兌換靈寵【${info.name}】（Lv.1）！於 Lv${BEAST_SKILL_LEVELS[0]} 可領悟第一招技能。出戰中每 ${BEAST_UPKEEP_INTERVAL} 秒消耗 ${upkeep.coins.toWan()} 靈石＋${upkeep.core.toWan()} 獸丹。`, "system");
@@ -107,11 +107,11 @@ function toggleBeastActive(id) {
             alert(`資源不足！出戰需能支付維持費：每 ${BEAST_UPKEEP_INTERVAL} 秒 ${cost.coins.toWan()} 靈石＋${cost.core.toWan()} 獸丹。`);
             return;
         }
-        // 只能一隻出戰（BEAST_ACTIVE_MAX，config-beasts.js）：自動召回其他出戰中的靈寵
-        player.beasts.filter(x => x !== b && isBeastActive(x)).forEach(x => {
-            x.active = false;
-            addLog(`🐾 靈寵【${getBeastName(x)}】召回休息（同時只能一隻出戰）。`, "system");
-        });
+        // 出戰上限 BEAST_ACTIVE_MAX（config-beasts.js，三隻）：已滿時請玩家先召回一隻
+        if (player.beasts.filter(x => x !== b && isBeastActive(x)).length >= BEAST_ACTIVE_MAX) {
+            alert(`最多同時 ${BEAST_ACTIVE_MAX} 隻靈寵出戰，請先召回一隻再出戰。`);
+            return;
+        }
         b.active = true;
         addLog(`🐾 靈寵【${getBeastName(b)}】出戰！每 ${BEAST_UPKEEP_INTERVAL} 秒消耗 ${cost.coins.toWan()} 靈石＋${cost.core.toWan()} 獸丹。`, "system");
     } else {
