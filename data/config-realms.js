@@ -20,11 +20,12 @@ const realmPacing = [
     { hours: 5,    map: "天南",     expMult: 2.2 },    // 元嬰      5 小時
     { hours: 10,   map: "亂星海",   expMult: 2.2 },    // 化神      10 小時
     { hours: 20,   map: "鬼谷八荒", expMult: 2.2 },    // 煉虛      20 小時
-    { hours: 48,   map: "崑吾山",   expMult: 2.2 },    // 合體      2 天（2026-09-28 由鬼谷八荒改為新地圖，時數不變）
-    { hours: 240,  map: "雷鳴大陸", expMult: 2.2 },    // 大乘      10 天
-    { hours: 720,  map: "天淵戰場", expMult: 2.2 },    // 渡劫      30 天
-    { hours: 1200, map: "荒古禁地", expMult: 5.28 },   // 仙人初境  50 天
-    { hours: 2400, map: "上蒼（葬天島）", expMult: 5.28 }, // 天仙  100 天
+    // 合體～天仙 2026-09-30 改指向新的普通圖（原本的崑吾山等改為高強度挑戰圖、經驗提高）；普通圖的 expRate 沿用舊值，所以每階所需經驗不變
+    { hours: 48,   map: "黑風海域", expMult: 2.2 },    // 合體      2 天（原崑吾山）
+    { hours: 240,  map: "蠻荒古地", expMult: 2.2 },    // 大乘      10 天（原雷鳴大陸）
+    { hours: 720,  map: "血天大陸", expMult: 2.2 },    // 渡劫      30 天（原天淵戰場）
+    { hours: 1200, map: "星空古路", expMult: 5.28 },   // 仙人初境  50 天（原荒古禁地）
+    { hours: 2400, map: "九天仙域", expMult: 5.28 },   // 天仙  100 天（原上蒼）
     { hours: 3600, map: "冥界",     expMult: 5.28 },   // 真仙      150 天
     { hours: 4800, map: "仙界戰場", expMult: 5.28 },   // 大羅金仙  200 天
     { hours: 4800, map: "萬界戰場", expMult: 5.28 },   // 混元大羅金仙 200 天

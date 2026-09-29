@@ -41,14 +41,22 @@ const maps = [
         { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] } // 296 萬
     ]},
     { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
+        // 2026-09-30 使用者要求「每個境界補一張普通圖」：合體～天仙各一張，妖獸照一般規則（隨玩家階數、強度 1.5～3 倍），
+        //   經驗、靈石沿用下面挑戰圖改版前的數值，並當作修煉節奏表（config-realms.js）的主要練功圖 → 升階所需經驗不變
+        { name: "黑風海域", expRate: 1400, diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },        // 合體
+        { name: "蠻荒古地", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },        // 大乘
+        { name: "血天大陸", expRate: 2500, diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫
+        { name: "星空古路", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境
+        { name: "九天仙域", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] },   // 天仙
+        // 2026-09-30 使用者指定（挑戰圖）：六張圖的經驗與妖獸強度（nv2FixedL 固定該境界 10 階、nv2Str 強度倍率，numeric.js）；靈石不變
         // 合體／大乘／渡劫各一張（2026-09-28 使用者要求；原本這三個境界都只有鬼谷八荒）。經驗、靈石介於鬼谷八荒與荒古禁地之間，修煉節奏表（config-realms.js）改指向這三張
-        { name: "崑吾山", expRate: 1400, diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 313 萬
-        { name: "雷鳴大陸", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 342 萬
-        { name: "天淵戰場", expRate: 2500, diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 365 萬
+        { name: "崑吾山", expRate: 1600, nv2FixedL: 7.9, nv2Str: [5, 10], diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 313 萬
+        { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 342 萬
+        { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [8, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 365 萬
         // nv2L 2026-09-28 對齊 suit（原 7／8／9 被上面三張取代）
-        { name: "荒古禁地", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 389 萬（上限 400 萬）
-        { name: "太初古礦", expRate: 4000, diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 487 萬（上限 500 萬）
-        { name: "上蒼（葬天島）", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 800 萬
+        { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 389 萬（上限 400 萬）
+        { name: "太初古礦", expRate: 6500, nv2FixedL: 10.9, nv2Str: [15, 30], diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 487 萬（上限 500 萬）
+        { name: "上蒼（葬天島）", expRate: 8000, nv2FixedL: 11.9, nv2Str: [15, 40], diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 800 萬
     ]},
     // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
     { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
