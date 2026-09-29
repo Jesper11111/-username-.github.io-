@@ -91,6 +91,7 @@ function combatTick() {
             document.getElementById('combat-status').innerText = `⏳ 擊殺完畢，${NUMERIC_V2 ? '調息回復中，' : ''}等待怪物刷新中... (${respawnTimer}秒)`;
             document.getElementById('combat-status').style.color = '#fb923c';
             respawnTimer--;
+            regenCompanionMp();   // 出戰靈寵與隊伍夥伴每秒也回靈（beast-combat.js）
             // 新制：刷新等待期間調息，每秒回復一定比例的氣血與靈力（config-numeric.js 的 restHealPct）
             if (NUMERIC_V2) {
                 let r = NV2.restHealPct / 100;

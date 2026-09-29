@@ -12,6 +12,9 @@
 // 變異屬性 wind／light／dark（%）也寫在 bonus，由 elements.js 的 getPlayerCombatAttrs 讀取
 
 const APTITUDE_REROLL_COST = 1;    // 洗髓丹／伐骨丹各需幾顆七彩補天石（千寶閣珍貴物資）；2026-09-29 使用者指定由 10 改 1
+// 入門測試「靈根與體質同時最頂級（至尊靈根＋神體）」合計機率 0.05%（2026-09-29 使用者指定）：
+//   兩者各 1% 且獨立時本來只有 0.01%，所以每次擲骰另外有 APTITUDE_BOTH_TOP_EXTRA 機率直接給兩項最頂級（0.01% ＋ 0.04% ≈ 0.05%；單項約 1.04%）
+const APTITUDE_BOTH_TOP_EXTRA = 0.0004;
 
 // 五行親和：每個屬性依靈根等級給的加成（單屬性 × 1、雙 × 0.4、三 × 0.2）
 const ROOT_ELEMENT_AFFINITY = {

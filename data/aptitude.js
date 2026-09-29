@@ -174,11 +174,12 @@ function openAptitudeTest() {
             <p style="color:#9ca3af; font-size:0.78em; margin:4px 0 0;">「再來一次」會把靈根與體質一起重新抽；按「決定」後才會定下來。<span id="aptitude-reroll-count"></span></p>
             <div class="aptitude-auto">
                 <label><input type="checkbox" id="aptitude-auto" onchange="toggleAptitudeAuto(this.checked)"> 🔁 自動重抽</label>
-                <span>抽到 靈根至少
-                    <select id="aptitude-auto-root">${APTITUDE_ROOT_RANKS.map((g, i) => `<option value="${i}" ${i === 2 ? 'selected' : ''}>${i ? g + (i < APTITUDE_ROOT_RANKS.length - 1 ? '以上' : '') : '不限'}</option>`).join('')}</select>
-                    、體質至少
-                    <select id="aptitude-auto-phys">${APTITUDE_PHYS_RANKS.map((g, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i ? g + (i < APTITUDE_PHYS_RANKS.length - 1 ? '以上' : '') : '不限'}</option>`).join('')}</select>
-                    就停</span>
+                <span>抽到
+                    <select id="aptitude-auto-target">
+                        <optgroup label="靈根">${APTITUDE_ROOT_RANKS.map((g, i) => i ? `<option value="root:${i}" ${i === 2 ? 'selected' : ''}>靈根：${g}${i < APTITUDE_ROOT_RANKS.length - 1 ? '以上' : ''}</option>` : '').join('')}</optgroup>
+                        <optgroup label="體質">${APTITUDE_PHYS_RANKS.map((g, i) => i ? `<option value="phys:${i}">體質：${g}${i < APTITUDE_PHYS_RANKS.length - 1 ? '以上' : ''}</option>` : '').join('')}</optgroup>
+                    </select>
+                    就停（只看選的這一種）</span>
                 <p id="aptitude-auto-msg"></p>
             </div>
         </div>`);
@@ -190,8 +191,12 @@ let aptitudeFirstPending = null, aptitudeFirstRerolls = 0;
 function rollAptitudeFirstOnce() {
     const gift = player.aptitudeGift || {};
     const giftRoot = !!(gift.root && describeRoot(gift.root)), giftPhys = !!(gift.physique && describePhysique(gift.physique));
-    const root = giftRoot ? gift.root : rollAptitudeRoot();
-    const physique = giftPhys ? gift.physique : rollAptitudePhysique();
+    // 兩項同時最頂級另有一道機率（APTITUDE_BOTH_TOP_EXTRA，合計約 0.05%，config-aptitude.js）；有仙府賜予的那項不受影響
+    const bothTop = Math.random() < APTITUDE_BOTH_TOP_EXTRA;
+    const topRoot = () => { const g = APTITUDE_ROOT_GROUPS[APTITUDE_ROOT_GROUPS.length - 1]; return { group: g.id, id: g.pick[Math.floor(Math.random() * g.pick.length)].id }; };
+    const topPhys = () => { const g = APTITUDE_PHYSIQUE_GROUPS[APTITUDE_PHYSIQUE_GROUPS.length - 1]; return g.pick[Math.floor(Math.random() * g.pick.length)].id; };
+    const root = giftRoot ? gift.root : bothTop ? topRoot() : rollAptitudeRoot();
+    const physique = giftPhys ? gift.physique : bothTop ? topPhys() : rollAptitudePhysique();
     const giftNote = '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>';
     return { root, physique, giftRoot, giftPhys,
         rootCard: aptitudeCard('先天靈根', describeRoot(root)) + (giftRoot ? giftNote : ''),
@@ -230,11 +235,11 @@ const APTITUDE_AUTO_MS = 150;      // 兩次之間的停頓
 const APTITUDE_ROOT_RANKS = ["偽靈根", "真靈根", "天靈根", "變異靈根", "特殊靈根", "至尊靈根"];
 const APTITUDE_PHYS_RANKS = ["凡體", "靈體", "道體", "神體"];
 let aptitudeAutoTid = 0, aptitudeAutoOn = false;
+// 停止條件只選一種（2026-09-29 使用者改：原本靈根、體質兩個都要達到）：值為 "root:等級" 或 "phys:等級"；仙府賜予的那項視為已達成
 function aptitudeAutoTargetMet(r) {
-    const rootMin = +document.getElementById('aptitude-auto-root').value, physMin = +document.getElementById('aptitude-auto-phys').value;
-    const rootOk = r.giftRoot || APTITUDE_ROOT_RANKS.indexOf(describeRoot(r.root).grade) >= rootMin;
-    const physOk = r.giftPhys || APTITUDE_PHYS_RANKS.indexOf(describePhysique(r.physique).grade) >= physMin;
-    return rootOk && physOk;
+    const [part, min] = document.getElementById('aptitude-auto-target').value.split(':');
+    if (part === 'root') return r.giftRoot || APTITUDE_ROOT_RANKS.indexOf(describeRoot(r.root).grade) >= +min;
+    return r.giftPhys || APTITUDE_PHYS_RANKS.indexOf(describePhysique(r.physique).grade) >= +min;
 }
 function toggleAptitudeAuto(on) {
     if (!on) { stopAptitudeAuto(); return; }

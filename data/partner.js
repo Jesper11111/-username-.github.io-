@@ -196,6 +196,40 @@ function onPartnerFieldKills(n) {
     getPartnerTeam().forEach(p => { let b = getBond(p.id); b.teamKills = (b.teamKills || 0) + n; });
 }
 
+// ---- 夥伴碎片（config-partners.js 的 PARTNER_SHARDS_*）----
+function getPartnerShards(id) { return (player.partnerShards || {})[id] || 0; }
+// 依評級掉落一位尚未結識夥伴的碎片（死守天南城、鎮魔塔呼叫）；tiers 依序嘗試（前一個評級都結識完就換下一個），風希（first）不在池內
+// amount＝[最少, 最多]；回傳 { p, n }（沒掉或沒有可掉的夥伴回傳 null）
+function grantPartnerShards(tiers, chance, amount, source) {
+    if (Math.random() >= chance) return null;
+    for (const tier of tiers) {
+        const pool = partnerList.filter(p => !p.first && getPartnerTier(p).name === tier && !isPartnerMet(p.id));
+        if (!pool.length) continue;
+        // 集中：大多數時候給碎片最多的那位（還沒湊滿的），其餘隨機
+        const need = pool.filter(p => getPartnerShards(p.id) < PARTNER_SHARDS_NEED);
+        const list = need.length ? need : pool;
+        const best = list.slice().sort((a, b) => getPartnerShards(b.id) - getPartnerShards(a.id))[0];
+        const p = Math.random() < PARTNER_SHARD_FOCUS && getPartnerShards(best.id) > 0 ? best : list[Math.floor(Math.random() * list.length)];
+        const n = amount[0] + Math.floor(Math.random() * (amount[1] - amount[0] + 1));
+        if (!player.partnerShards) player.partnerShards = {};
+        player.partnerShards[p.id] = getPartnerShards(p.id) + n;
+        const full = player.partnerShards[p.id] >= PARTNER_SHARDS_NEED;
+        addLog(`🧩 ${source}，獲得${getPartnerTier(p).name}【${p.title}・${p.name}】碎片 ×${n}（${Math.min(player.partnerShards[p.id], PARTNER_SHARDS_NEED)}/${PARTNER_SHARDS_NEED}）${full ? '——已集滿，可到情緣視窗激活！' : ''}`, "level-up", false, "item");
+        return { p, n };
+    }
+    return null;
+}
+// 碎片集滿：激活（＝結識）；多出的碎片保留不用
+function activatePartner(id) {
+    const p = partnerById[id];
+    if (!p || isPartnerMet(id)) return;
+    if (getPartnerShards(id) < PARTNER_SHARDS_NEED) { alert(`碎片不足！需要 ${PARTNER_SHARDS_NEED} 片（目前 ${getPartnerShards(id)}）。`); return; }
+    player.partnerShards[id] -= PARTNER_SHARDS_NEED;
+    meetPartner(id, `以 ${PARTNER_SHARDS_NEED} 片碎片凝聚元神`);
+    renderPartnerModal();
+    updateUI();
+}
+
 // ==================== 結識 ====================
 // 結識夥伴（天星城坊市點人偶、未來秘境相遇）；回傳是否為新結識
 function meetPartner(id, source) {
@@ -405,10 +439,16 @@ function getPartnerBonusTotals() {
 }
 
 // 玩家出手之後呼叫（野外 combat.js、渡劫 tribulation.js、懸賞對決 bounty.js）：隊伍中的夥伴各自依機率發動絕學
+// 夥伴靈力（config-partners.js 的 PARTNER_MP_*；state.js 的 partnerMp，不存檔）：每回合回靈，發動絕學扣該評級的消耗，不夠就不發動
+function getPartnerMp(id) { if (typeof partnerMp[id] !== 'number') partnerMp[id] = PARTNER_MP_MAX; return partnerMp[id]; }
+function partnerSkillMp(p) { return PARTNER_SKILL_MP[getPartnerTier(p).name] || 20; }
 function partnerSkillTurn(targets, tags) {
     getPartnerTeam().forEach(p => {
+        partnerMp[p.id] = Math.min(PARTNER_MP_MAX, getPartnerMp(p.id) + PARTNER_MP_REGEN);
         let chance = p.skill.chance + (getBondLevel(p.id).lv >= 5 ? PARTNER_LV5_SKILL_BONUS : 0);
-        if (Math.random() < chance) castProcSkill(p.skill, targets, tags, 'partner');   // artifact.js；護盾算在夥伴那 10%
+        if (Math.random() >= chance || partnerMp[p.id] < partnerSkillMp(p)) return;
+        partnerMp[p.id] -= partnerSkillMp(p);
+        castProcSkill(p.skill, targets, tags, 'partner');   // artifact.js；護盾算在夥伴那 10%
     });
 }
 
@@ -506,6 +546,7 @@ function renderBondSection(p) {
                 <button class="sys-btn" ${giftsLeft > 0 && !full ? '' : 'disabled'} onclick="giftPartner('${id}')">🎁 贈禮 ${getGiftCost(p).toWan()}（${giftsLeft}/${PARTNER_GIFT_DAILY}）</button>
             </div>
             ${questHtml}
+            <p style="font-size: 0.78em; color: #7dd3fc; margin: 4px 0;">💧 絕學耗靈力 ${partnerSkillMp(p)}（每位 ${PARTNER_MP_MAX} 點、每回合 +${PARTNER_MP_REGEN}，不夠就不發動）</p>
             ${teamBtn}
         </div>`;
 }
@@ -521,7 +562,14 @@ function renderPartnerCard(p) {
             <b>${p.power[k]}</b></div>`).join('');
     let lv5 = met && getBondLevel(p.id).lv >= 5;
     let bottom = met ? renderBondSection(p)
-        : `<button class="sys-btn" disabled>${p.first ? '未結識・可在天星城坊市遇見他' : '未結識・秘境中有緣相遇'}</button>`;
+        : p.first ? `<button class="sys-btn" disabled>未結識・可在天星城坊市遇見他</button>`
+        : (() => {   // 夥伴碎片：顯示進度，集滿可激活
+            const s = getPartnerShards(p.id), pct = Math.min(100, s / PARTNER_SHARDS_NEED * 100);
+            return `<div class="bond-box"><div class="bond-head">🧩 碎片 <span>${Math.min(s, PARTNER_SHARDS_NEED)} / ${PARTNER_SHARDS_NEED}</span></div>
+                <div class="partner-bar-track bond-track"><div class="partner-bar-fill" style="width: ${pct}%; background: #facc15;"></div></div>
+                ${s >= PARTNER_SHARDS_NEED ? `<button class="sys-btn" style="border-color:#facc15; color:#facc15;" onclick="activatePartner('${p.id}')">✨ 激活（消耗 ${PARTNER_SHARDS_NEED} 片）</button>`
+                    : `<p style="font-size:0.78em; color:#9ca3af; margin:4px 0 0;">${PARTNER_MEET_HINT[tier.name] || ''}</p>`}</div>`;
+        })();
     return `
         <div id="partner-card-${p.id}" class="card partner-card${met ? '' : ' unmet'}" style="border-color: ${inTeam ? 'var(--accent)' : tier.color};">
             <h3 style="color: ${tier.color}; margin-bottom: 2px;">${inTeam ? '⚔️ ' : ''}${p.title}・${p.name}</h3>

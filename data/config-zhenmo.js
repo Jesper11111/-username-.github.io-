@@ -27,6 +27,12 @@ const ZHENMO_ROUND_MS = 650;           // 每回合演出時間（×1 速；可�
 // BOSS 每次挑戰的隨機氣勢（2026-09-29）：攻擊與氣血 × (1 ± 這個比例) 均勻隨機。
 // 沒有這項時同樣數值的玩家幾乎「必勝或必敗」（難度差 5% 勝率就從 100% 掉到 14%），無法校準成「中等裝備約 8 成」這類目標
 const ZHENMO_BOSS_VARIANCE = 0.2;
+// 擊敗 BOSS 後掉落夥伴碎片（2026-09-29 使用者指定；partner.js 的 grantPartnerShards，集滿 100 片激活）：
+//   第 11～40 層（合體～渡劫）天驕、第 41～60 層（仙人～天仙）尊者；帝境、至高暫不開放
+const ZHENMO_PARTNER_MEET = [
+    { from: 11, to: 40, tiers: ["天驕"], chance: 1, shards: [8, 15] },
+    { from: 41, to: 60, tiers: ["尊者", "天驕"], chance: 1, shards: [8, 15] }
+];
 
 // 各層 BOSS（key = 樓層）。強度以「某境界某階修士」為基準（config-defense.js 的 defenseRealmAtk，與死守天南城同一條曲線）：
 //   攻擊 = defenseRealmAtk(realm, stage) × atkMult；氣血 = defenseRealmAtk(realm, stage) × hpPerAtk（沒填 = 300）× hpMult（沒填 = 1）；減傷／閃避 %；affix 異屬性（ice／fire／poison／metal／thunder）

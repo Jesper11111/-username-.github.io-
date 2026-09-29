@@ -321,6 +321,7 @@ combatTick() 每秒執行 [combat.js]
 | `enterWorld` | `data/title-screen.js` |
 | `retryLoadAfterFailure`, `showRawSaveForCopy`, `abandonSaveAndStartNew`（讀檔失敗視窗） | `data/save.js` |
 | `switchTab`（手機洞府左側「任務」= `switchTab('task')`）, `openWorldTab`（手機／PC 的「世界」導覽：切到世界分頁並跳出修仙地圖）, `openAscensionPlatform`, `showUnderConstruction`（洞府主畫面尚未實作的按鈕）, `openSystemModal`（命運與系統彈窗：手機丹藥堂上方齒輪、設定視窗內按鈕） | `data/home-ui.js` |
+| `activatePartner(id)`（情緣卡片「✨ 激活」，碎片集滿 100 片） | `data/partner.js` |
 | `openPartnerModal`（手機與 PC 的「情緣」）、`setPartnerFilter(f)`、`greetPartner(id)`／`giftPartner(id)`／`acceptBondQuest(id)`／`claimBondQuest(id)`／`abandonBondQuest(id)`／`togglePartnerTeam(id)`（情緣視窗內）、`closePartnerDialog`／`answerPartnerEaster(id, yes)`（對話框）、`closePartnerVideo`（彩蛋影片）、`talkToPartner(id)`（坊市人偶） | `data/partner.js` |
 | `craftStrangeFire(qty)`（背包異火碎片卡片）、`openCodexModal('fires')`（背包異火卡片「查看異火榜」） | `data/strange-fire.js`／`data/codex.js` |
 | PC 版洞府的所有按鈕與建築熱點（onclick 字串寫在 `config-home-pc.js` 的 `pcStageButtons[].action`，改名函式時要一起改） | 各功能檔 |
@@ -821,6 +822,11 @@ combatTick() 每秒執行 [combat.js]
     封印 `petIsSilenced(t)`（懸賞對手、心魔不能施展武學／魔功，野外妖獸本來就沒有武學）；破綻 `petVulnMult(t)`（`hitTarget` 與靈寵攻擊）。
   - **持續淨化**：`petPreTurn()` 在野外、懸賞、渡劫每回合主人行動前呼叫，清掉 `petFx.immune.v` 內的狀態。
   - 驗證（本機）：50 招逐一施放，效果與說明一致、無錯誤；野外、懸賞對決、渡劫各跑 120～200 回合無錯誤，封印、削弱、淨化、增益都有觸發；手機 375×812 選單顯示正常。
+- **只能一隻出戰**（2026-09-29，版本 `20261002w`，使用者指定）：`BEAST_ACTIVE_MAX` 1。`toggleBeastActive` 出戰另一隻時自動召回原本的；兌換新靈寵時若已有出戰中的，新的先休息；
+  復活與讀檔時 `enforceBeastActiveLimit()` 只保留排最前面的出戰中靈寵。
+- **靈寵靈力**（同日，使用者要求）：出戰靈寵 `BEAST_MP_MAX`(100) 點（state.js 的 `beastMp`，不存檔），每回合 +`BEAST_MP_REGEN`(5)（`petAssistTick`；野外刷新等待期間每秒也回），
+  技能依領悟等級耗 `BEAST_SKILL_MP_BY_LV`（Lv30 招 10／60 招 15／100 招 20／300 招 25／500 招 30／1000 招 40），`petAssistTick` 只從靈力夠的招式裡挑，一招都放不起就不出手。
+  驗證：高階技能 40 回合施放 11 次。靈獸園卡片顯示靈力；戰場下方 `#bf-companions` 顯示。
 - **陣亡與復活**：玩家死亡時所有靈寵立即陣亡（`killAllBeasts()`），輔助效果清空；
   陣亡（或休息中）的靈寵不出手、不給被動、不累積經驗。在靈獸園每隻消耗 `BEAST_REVIVE_COST_CORE`(5000) 獸丹復活。
 - 靈寵的攻擊**不經過** `resolveHit()`（不受怪物閃避/減傷影響，也不觸發屬性傷害），見第 17 節。
@@ -1373,7 +1379,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002v`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002x`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -1983,8 +1989,15 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     同日也把影片壓小：原檔 1280×720／1.78 Mbps／3.9 MB → 854×480／0.52 Mbps／1.35 MB（畫面比對 PSNR 37 dB），慢網路的等待時間約剩 1/3。
     轉檔**不需要 ffmpeg**：用 Windows 內建 Media Foundation（PowerShell 呼叫 WinRT `Windows.Media.Transcoding.MediaTranscoder`，H.264 Main），
     但它輸出的 `moov` 在檔尾，要再把 `moov` 搬到 `mdat` 前面並把 `stco`/`co64` 的偏移量加上 moov 大小（faststart），直接串流時才能邊下邊播。轉檔腳本不在專案內。
-  - 其他人預定於**秘境**相遇：`meetPartner(id, "來源文字")`，重複結識回傳 false。目前天驕級 10 位已可在「魔屠天南」遇見（第 49 節），尊者以上尚無取得管道。
-  - 未結識的夥伴仍完整顯示資料；風希顯示「可在天星城坊市遇見他」，其他人「秘境中有緣相遇」。
+  - 其他人：`meetPartner(id, "來源文字")`，重複結識回傳 false。
+  - **夥伴碎片**（2026-09-29，版本 `20261002w`；使用者要求「新增夥伴碎片，集滿 100 片激活夥伴」，並指定各評級的境界）：
+    - 死守天南城、鎮魔塔不再直接結識，改掉落某位**未結識**夥伴的碎片（`grantPartnerShards(評級陣列, 機率, [最少, 最多], 來源)`，`player.partnerShards = { id: 片數 }`，用到時才建立）。
+      掉哪位：`PARTNER_SHARD_FOCUS`（70%）給「還沒湊滿、碎片最多的那位」，其餘隨機；風希（`first`）不在池內；前一個評級都結識完才換下一個。
+    - 集滿 `PARTNER_SHARDS_NEED`（100）後，情緣視窗的卡片出現「✨ 激活」→ `activatePartner(id)` 扣 100 片並 `meetPartner`（多的保留）。未結識卡片顯示碎片進度條與取得處（`PARTNER_MEET_HINT`）。
+    - **評級與取得處**（`config-partners.js`）：天驕＝合體～渡劫：死守天南城第 11 波起、鎮魔塔第 11～40 層；尊者＝仙人～天仙：死守天南城第 40 波起、鎮魔塔第 41～60 層（風希仍在天星城坊市）；**帝境、至高暫不開放**。
+    - 掉落量：守城每守住一波 15% 掉 3～8 片（第 49 節）；鎮魔塔每擊敗 BOSS 必掉 8～15 片（`ZHENMO_PARTNER_MEET`，第 51 節）。
+    - 驗證：第 11～39 波只掉天驕、第 40 波起掉尊者；集中機制讓一位先湊滿（模擬 50 次中金角巨獸 103 片）；激活後結識、剩 3 片。
+  - 未結識的夥伴仍完整顯示資料；風希顯示「可在天星城坊市遇見他」。
 - **好感度（2026-09-27）**：每位夥伴各自累積好感點數 → 等級 `PARTNER_BOND_LEVELS`：
 
   | 等級 | 名稱 | 所需好感 |
@@ -2004,7 +2017,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     **離線／背景也會累計**（2026-09-29，版本 `20261002v`，使用者要求）：`save.js` 的 `settleIdleSeconds` 以實際擊殺數（`combatTicks ÷ getKillRewardMult()`，扣掉新制的收益補償倍率）呼叫 `onPartnerFieldKills`，
     結算訊息加一行「💞 情緣任務：野外擊殺 +N」；斬殺修士（`evilKills`）離線本來就會累計；**懸賞伏誅（LV3）仍只有線上**，因為懸賞對決只在線上發生。
   - 光靠問候＋每日贈禮約 7～8 天到熟識，情緣任務可大幅縮短。
-- **隊伍**（取代舊版單人出戰）：好感 LV4「熟識」才能 `togglePartnerTeam` 邀請入隊，**最多 `PARTNER_TEAM_MAX`(2) 名**（`player.partnerTeam`）。
+- **隊伍**（取代舊版單人出戰）：好感 LV4「熟識」才能 `togglePartnerTeam` 邀請入隊，**最多 `PARTNER_TEAM_MAX`(2) 名**（`player.partnerTeam`；2026-09-29 使用者確認）。
+  - **靈力**（2026-09-29，使用者要求「夥伴與寵物設定 MP，用完無法施放技能」）：每位夥伴各 `PARTNER_MP_MAX`(100) 點（state.js 的 `partnerMp`，不存檔、讀檔時補滿），
+    每回合 +`PARTNER_MP_REGEN`(4)（`partnerSkillTurn`；野外刷新等待期間每秒也回，`regenCompanionMp`），絕學耗 `PARTNER_SKILL_MP`（天驕 20／尊者 25／帝境 30／至高 35），不夠就不發動。
+    驗證：100 回合發動 10 次。卡片顯示耗靈，戰場玩家血條下方 `#bf-companions` 顯示每位夥伴與出戰靈寵的靈力（不夠放時紅字，ui.js 的 `updateCompanionMpLine`）。
   - 被動：隊伍中每位的 `passive` 都併入 `getBonusTotals`（`getPartnerBonusTotals`）；**LV5 ×1.2**。
   - 招牌絕學：玩家每回合出手後 `partnerSkillTurn` 讓隊伍中每位各自依 `skill.chance`（**LV5 +2%**）判定，由 `artifact.js` 的 `castProcSkill` 執行，**傷害以主人的攻擊力為基準**。
     野外（`combat.js`）、渡劫（`tribulation.js`）、懸賞對決（`bounty.js`，封印擋不住）都會觸發；被凍結的回合不會發動（在玩家出手的分支內）。
@@ -2263,7 +2279,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 裝備：一般波 6% 掉器錄**武器／防具**一件（奪寶／拍賣／可製作管道，不含秘境）；**秘境套裝部件**首領波必掉 1 件、第 20 波起一般波 3%（一次一件，不會整套）。
     品級：1～29 波 藍 50／紫 40／橙 10%，30～59 波 紫 60／橙 40%，60 波起 紫 30／橙 70%；裝備等級同奪寶（不超過人物等級的最高 `EQUIP_LEVELS`），背包滿時同 `receiveLootEquip`。
   - 稱號（`config-titles.js` 的 `defenseWave`，依歷史最高 `player.defenseBest`）：10「天南守卒」減傷 +1、30「天南守將」攻 +1%、50「鎮城仙將」血 +2%、80「魔屠天南」攻 +2%、100「天南城守護神」四維 +3%。
-  - 夥伴：守住第 51 波起每波 4% 遇見一位**尚未結識的天驕級夥伴**（`getPartnerTier(p).name === '天驕'`，共 10 位），每次守城最多 1 位（`meetPartner`）。
+  - 夥伴：~~守住第 51 波起每波 4% 遇見一位天驕~~ → 2026-09-29 改為**夥伴碎片**（第 39 節）：第 11 波起每守住一波 15% 掉 3～8 片天驕碎片，第 40 波起改掉尊者碎片（`partnerFromWave`／`partnerZunzheFromWave`／`partnerChance`／`partnerShards`）；
+    結算畫面與日誌列出「夥伴碎片」。
   - 結算畫面列出本次總收穫與新稱號；遊戲日誌「🎁 道具」分頁記一筆彙整（`logRun`，中途離開也會記）。
 - **通關紀錄**（2026-09-27）：守城畫面左上（速度鈕下方）與結算畫面各有「📜 通關紀錄」→ `#defense-records`（疊在舞台內 z-index 5，守城不暫停）。
   每場結束（`logRun` → `recordRun`，勝／敗／中途離開都記）存 `player.defenseRuns`（最新在前、最多 `DEFENSE_RUN_LOG_MAX` 20 場）：
@@ -2420,6 +2437,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     個位數 5 的層攻擊 ×1.5（「鎮關者」）、個位數 0 的層攻擊 ×2、光環 +1、獎勵 ×2（「樓主」）。減傷 15→35、閃避 8→25、屬性傷害 15→35 隨樓層提高。
   - 光環：從 10 種範本（威壓、鐵壁、迷蹤、寒獄、焚天、蝕骨、詛咒、噬命、不滅、破甲）選，2～4 個＋大關卡 1 個，強度隨樓層放大到 2 倍（最多 6 個、2.9 倍時第 100 層無人能過）。
   - 名稱＝10 個前綴 × 10 個後綴（每十層錯開一格，100 層不重複）；圖片沿用 6 張 BOSS 圖輪流；獎勵隨樓層提高（靈石 H 的 10＋0.5n 分鐘、功德、碎片、星允鐵）。
+  - **夥伴碎片**（2026-09-29，版本 `20261002w`，第 39 節）：擊敗第 11～40 層 BOSS 必掉 8～15 片天驕碎片、第 41～60 層掉尊者碎片（`ZHENMO_PARTNER_MEET`，`grantRewards` 第 3 參數為樓層），結算畫面列出。
   - **隨機氣勢**（2026-09-29，版本 `20261002u`）：每次挑戰 BOSS 的攻擊與氣血 × (1 ± `ZHENMO_BOSS_VARIANCE` 0.2) 均勻隨機，開戰時戰況顯示「今日氣勢 +N%」（`startFight`）。
     原因：同樣數值的玩家幾乎必勝或必敗（難度差 5% 勝率就從 100% 掉到 14%），無法校準成使用者指定的「中等約 8 成」；加了浮動後勝率曲線變平滑。
   - **逐層校準**（同日，使用者指定目標勝率）：`ZHENMO_GEN.tune[樓層] = [攻擊倍率, 氣血倍率]`，乘在公式算出的 `atkMult`／`hpMult` 上。以測試頁二分搜尋（含隨機氣勢，各 150～200 場）求得：
@@ -2629,8 +2647,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - **再來一次／決定**（2026-09-29，版本 `20261002j`，使用者要求）：擲完後顯示「🎲 再來一次」「✅ 決定」（`#aptitude-choice`）。結果先放在 `aptitudeFirstPending`，
     按「再來一次」（`rerollAptitudeFirst`）靈根與體質一起重抽、顯示「已再來 N 次」，**次數不限、不花費**；按「決定」（`confirmAptitudeFirst`）才寫進 `player.aptitude`、存檔並關閉視窗。
     還沒決定就關掉視窗或重新整理＝沒測，下次開啟重新測。仙府信箱賜予的部分（`player.aptitudeGift`）固定不變，只重抽另一項。
-  - **🔁 自動重抽**（同日，版本 `20261002l`，使用者要求）：按鈕下方的開關（`#aptitude-auto`，`toggleAptitudeAuto`）＋兩個停止條件「靈根至少」「體質至少」
-    （`APTITUDE_ROOT_RANKS` 偽→真→天→變異→特殊→至尊、`APTITUDE_PHYS_RANKS` 凡→靈→道→神；預設「天靈根以上」「不限」）。
+  - **🔁 自動重抽**（同日，版本 `20261002l`，使用者要求）：按鈕下方的開關（`#aptitude-auto`，`toggleAptitudeAuto`）＋停止條件。
+    停止條件原本是「靈根至少」「體質至少」兩個選單、兩項都達到才停；**版本 `20261002x` 起改為單一選單 `#aptitude-auto-target`，只選其中一種**（值 `root:等級`／`phys:等級`，
+    分「靈根」「體質」兩組；等級 `APTITUDE_ROOT_RANKS` 偽→真→天→變異→特殊→至尊、`APTITUDE_PHYS_RANKS` 凡→靈→道→神；預設「靈根：天靈根以上」），達到就停。
+  - **兩項同時最頂級 0.05%**（版本 `20261002x`，使用者指定）：`rollAptitudeFirstOnce` 每次另有 `APTITUDE_BOTH_TOP_EXTRA`（0.04%）直接給至尊靈根＋神體，
+    加上獨立擲骰本來的 0.01%，合計約 0.05%；單項約 1.04%。實測 200 萬次：兩項最頂級 0.049%、至尊靈根 1.04%、神體 1.05%。洗髓／伐骨重測（單項）不受影響。
     開啟後一直用 `rollAptitudeFirstOnce()` 重抽（計入「已再來 N 次」）：**保留滾動畫面**，靈根與體質兩格同時滾動 `APTITUDE_AUTO_FRAMES`(12) 格 × 80 毫秒 ≈ 1 秒（`playAptitudeDice` 第 5 參數），
     停下後判斷，兩項都達到就停並提示「🎯 已抽到目標」，否則停頓 `APTITUDE_AUTO_MS`(150) 毫秒再抽；仍要玩家按「決定」。（同日第一版為 0.3 秒一次、不播動畫，使用者要求改為保留滾動、每次 1 秒，版本 `20261002m`）
     關掉開關、按再來一次或決定、關閉視窗都會停（`stopAptitudeAuto`，滾動途中關掉則顯示完這次的結果就停）；仙府賜予的那項視為已達成、不播滾動。

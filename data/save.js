@@ -468,6 +468,8 @@ function applySaveData(data) {
     migrateGearCodex();     // 持有的圖鑑裝備補記進天磯錄、補齊新欄位（codex.js）
     migrateStrangeFires();  // 未命名的異火補抽成天下異火（strange-fire.js）
     migratePartners();      // 夥伴：舊版單人出戰轉為隊伍、補齊好感欄位（partner.js）
+    enforceBeastActiveLimit();   // 2026-09-29 起只能一隻靈寵出戰：舊存檔多隻出戰的，保留排最前面的那隻（beast-combat.js）
+    beastMp = {}; partnerMp = {};   // 靈寵、夥伴靈力從滿的開始
 
     // 換了一份存檔，原本進行中的戰鬥、渡劫、身上狀態都不該延續
     enemies = [];

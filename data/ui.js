@@ -159,7 +159,27 @@ function updateCombatVisualPanel() {
         if (lvEl.textContent !== lv) lvEl.textContent = lv;
     }
     updateBattleFoe();   // 右半邊敵方圖片／大 emoji（battle-fx.js）
+    updateCompanionMpLine();   // 出戰靈寵、隊伍夥伴的靈力
     flushBattleFx();   // 播放這段期間累積的飄字／爆擊特效（battle-fx.js）
+}
+
+// 戰場下方一行：出戰靈寵與隊伍夥伴的靈力（2026-09-29；不夠放最便宜的技能時標紅）
+function updateCompanionMpLine() {
+    const el = document.getElementById('bf-companions');
+    if (!el) return;
+    const parts = [];
+    (player.beasts || []).filter(isBeastActive).forEach(b => {
+        const mp = Math.floor(getBeastMp(b.id));
+        const costs = b.skills.map(getBeastSkill).filter(Boolean).map(beastSkillMp);
+        const low = costs.length && mp < Math.min(...costs);
+        parts.push(`<span class="${low ? 'low' : ''}">🐾 ${getBeastName(b)} 靈力 ${mp}/${BEAST_MP_MAX}</span>`);
+    });
+    getPartnerTeam().forEach(p => {
+        const mp = Math.floor(getPartnerMp(p.id));
+        parts.push(`<span class="${mp < partnerSkillMp(p) ? 'low' : ''}">💞 ${p.name} 靈力 ${mp}/${PARTNER_MP_MAX}</span>`);
+    });
+    const html = parts.join('');
+    if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 function updateUI() {

@@ -29,6 +29,15 @@ const BEAST_SKILL_LEVELS = [30, 60, 100, 300, 500, 1000];
 // 每隻存活靈寵每回合施展技能的機率（施展哪一招由 beast-combat.js 的 pickBeastSkill 依戰況挑）
 const BEAST_SKILL_CHANCE = 0.3;
 
+// 同時出戰的靈寵上限（2026-09-29 使用者指定：只能一隻組隊；出戰另一隻時自動召回原本的，beast.js 的 toggleBeastActive）
+const BEAST_ACTIVE_MAX = 1;
+
+// 靈寵靈力（2026-09-29 使用者要求「寵物設定 MP，用完無法施放技能」；beast-combat.js）：
+//   出戰靈寵 BEAST_MP_MAX 點，每回合回 BEAST_MP_REGEN（野外刷新等待期間每秒也回），施展技能扣該招的消耗（依領悟等級），不夠就不施展
+const BEAST_MP_MAX = 100;
+const BEAST_MP_REGEN = 5;
+const BEAST_SKILL_MP_BY_LV = { 30: 10, 60: 15, 100: 20, 300: 25, 500: 30, 1000: 40 };
+
 // 重新領悟：清空這隻靈寵已學的全部技能，重新挑選（2026-09-29 技能改版起開放）
 const BEAST_SKILL_RESET_CORE = 2000;
 

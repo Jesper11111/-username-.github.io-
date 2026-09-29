@@ -121,8 +121,11 @@ const DEFENSE_REWARDS = {
         { from: 30, odds: { "紫色": 0.6, "橙色": 0.4 } },
         { from: 60, odds: { "紫色": 0.3, "橙色": 0.7 } }
     ],
-    partnerFromWave: 51,             // 守住第 51 波起，每守住一波有機率遇見尚未結識的天驕級夥伴（每次守城最多 1 位）
-    partnerChance: 0.04
+    // 夥伴碎片（2026-09-29 使用者指定：天驕＝合體～渡劫、尊者＝仙人～天仙；集滿 100 片激活，config-partners.js）：每守住一波有機率掉一位未結識夥伴的碎片
+    partnerFromWave: 11,             // 第 11 波（合體）起：天驕
+    partnerZunzheFromWave: 40,       // 第 40 波（仙人初境）起：尊者（尊者都結識完才改掉天驕）
+    partnerChance: 0.15,
+    partnerShards: [3, 8]
 };
 // 稱號：config-titles.js 的 defenseWave 條件（10／30／50／80／100 波，依歷史最高守住波數 player.defenseBest）
 

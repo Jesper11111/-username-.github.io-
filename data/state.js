@@ -126,4 +126,6 @@ let petFx = {};
 // 護盾（受傷減少）依來源分開（2026-09-29，閃避減傷上限分「玩家本身 20／靈寵 10／夥伴 10」）：
 //   petShield* = 靈寵、partnerShield* = 夥伴絕學、selfShield* = 宗門技能守護、神器與職業技能護盾；都在 applyPetDamageReduction 套用、petAssistTick 倒數
 let partnerShieldTimer = 0, partnerShieldRate = 0;
+// 靈寵與夥伴的靈力（不存檔，進遊戲時是滿的）：{ 靈寵 id／夥伴 id: 目前靈力 }（beast-combat.js、partner.js）
+let beastMp = {}, partnerMp = {};
 let selfShieldTimer = 0, selfShieldRate = 0;

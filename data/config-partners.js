@@ -28,7 +28,26 @@ const PARTNER_BOND_LEVELS = [
     { lv: 5, name: "道侶|結拜", min: 1500 }   // 最高級；"|" 前 = 異性、後 = 同性
 ];
 const PARTNER_BOND_MAX = 1500;
-const PARTNER_TEAM_MAX = 2;            // 隊伍最多同時邀請幾名夥伴
+const PARTNER_TEAM_MAX = 2;            // 隊伍最多同時邀請幾名夥伴（2026-09-29 使用者確認最多 2 人）
+// 各評級的碎片從哪裡來（2026-09-29 使用者指定；partner.js 的 grantPartnerShards）：
+//   天驕＝合體～渡劫：死守天南城第 11 波起（defense.js）、鎮魔塔第 11～40 層（zhenmo.js）
+//   尊者＝仙人～天仙：死守天南城第 40 波起、鎮魔塔第 41～60 層（風希另外在天星城坊市）
+//   帝境、至高：暫不開放
+const PARTNER_MEET_HINT = {
+    "天驕": "碎片：死守天南城第 11 波起、鎮魔塔第 11～40 層（合體～渡劫）",
+    "尊者": "碎片：死守天南城第 40 波起、鎮魔塔第 41～60 層（仙人～天仙）",
+    "帝境": "尚未開放", "至高": "尚未開放"
+};
+// 夥伴碎片（2026-09-29 使用者要求「新增夥伴碎片，集滿 100 片激活夥伴」；partner.js 的 grantPartnerShards／activatePartner）：
+//   死守天南城、鎮魔塔不再直接結識，改掉落某位未結識夥伴的碎片（player.partnerShards），集滿 PARTNER_SHARDS_NEED 在情緣視窗按「激活」＝結識
+//   掉哪位：PARTNER_SHARD_FOCUS 機率給「碎片最多的那位」（集中湊滿一位），其餘隨機
+const PARTNER_SHARDS_NEED = 100;
+const PARTNER_SHARD_FOCUS = 0.7;
+// 夥伴絕學的靈力（2026-09-29 使用者要求「夥伴與寵物設定 MP，用完無法施放技能」；partner.js 的 partnerSkillTurn）
+//   每位夥伴各自 PARTNER_MP_MAX 點，每回合回 PARTNER_MP_REGEN（野外刷新等待期間每秒也回），發動絕學扣該評級的消耗，不夠就不發動
+const PARTNER_MP_MAX = 100;
+const PARTNER_MP_REGEN = 4;
+const PARTNER_SKILL_MP = { "天驕": 20, "尊者": 25, "帝境": 30, "至高": 35 };
 const PARTNER_TEAM_MIN_LV = 4;         // 好感度幾級才能入隊（熟識）
 const PARTNER_GREET_PTS = 20;          // 每日問候（每位每天一次）
 const PARTNER_GIFT_PTS = 15;           // 每次贈禮

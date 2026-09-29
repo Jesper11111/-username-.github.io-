@@ -215,7 +215,7 @@ const DefenseBattle = (() => {
             if (el.src !== blobUrls[c.id]) el.src = blobUrls[c.id];
             el.pause(); el.classList.remove('on'); el.playbackRate = baseRate;
         });
-        D.active = true; D.kills = 0; D.cleared = 0; D.lost = false; D.partnerMet = false; D.snap = null;
+        D.active = true; D.kills = 0; D.cleared = 0; D.lost = false; D.snap = null;
         closeRecords();
         D.gain = { coins: 0, merit: 0, shards: 0, iron: 0, gear: [], titles: [], partners: [] };
         D.titlesBefore = (player.titles || []).slice();
@@ -297,14 +297,13 @@ const DefenseBattle = (() => {
         if (boss || Math.random() < R.ironChance) g.iron += addStarIron(randInt(boss ? R.bossIron : R.iron));
         if (Math.random() < R.gearChance) dropGear(w, false);
         if (boss || (w >= 20 && Math.random() < R.setChance)) dropGear(w, true);
-        // 天驕級夥伴：守住第 partnerFromWave 波起，每波有機率遇見一位尚未結識的（每次守城最多 1 位）
-        if (w >= R.partnerFromWave && !D.partnerMet && Math.random() < R.partnerChance) {
-            const pool = partnerList.filter(p => getPartnerTier(p).name === '天驕' && !isPartnerMet(p.id));
-            if (pool.length) {
-                const p = pool[Math.floor(Math.random() * pool.length)];
-                meetPartner(p.id, `於秘境「魔屠天南」第 ${w} 波並肩守城`);
-                D.partnerMet = true; g.partners.push(`${p.title}・${p.name}`);
-                feed(`💞 天驕【${p.title}・${p.name}】前來助陣，結識了！`, 'kill');
+        // 夥伴碎片：第 partnerFromWave 波起天驕、第 partnerZunzheFromWave 波起尊者（partner.js 的 grantPartnerShards；集滿 100 片到情緣視窗激活）
+        if (w >= R.partnerFromWave) {
+            const tiers = w >= R.partnerZunzheFromWave ? ['尊者', '天驕'] : ['天驕'];
+            const got = grantPartnerShards(tiers, R.partnerChance, R.partnerShards, `第 ${w} 波守城`);
+            if (got) {
+                g.partners.push(`${got.p.name}碎片 ×${got.n}`);
+                feed(`🧩 拾得${getPartnerTier(got.p).name}【${got.p.name}】碎片 ×${got.n}`, 'kill');
             }
         }
         D.cleared = w; D.snap = spec.snap;
@@ -326,7 +325,7 @@ const DefenseBattle = (() => {
             g.gear.length ? `⚔️ 裝備 ${g.gear.length} 件` : '',
             g.blueprints ? `📜 鍛造圖紙 ×${g.blueprints}` : '',
             newTitles.length ? `🏅 新稱號 ${newTitles.join('、')}` : '',
-            g.partners.length ? `💞 結識 ${g.partners.join('、')}` : ''
+            g.partners.length ? `🧩 夥伴碎片：${g.partners.join('、')}` : ''
         ].filter(Boolean);
         return rows.join('<br>');
     }
@@ -348,7 +347,7 @@ const DefenseBattle = (() => {
         const g = D.gain;
         addLog(`🏯 秘境「魔屠天南」${win ? '守城成功' : `守住 ${D.cleared} 波`}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}`
             + `${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.gear.length ? `、裝備 ${g.gear.length} 件` : ''}`
-            + `${g.partners.length ? `、結識 ${g.partners.join('、')}` : ''}`, 'level-up', true, 'item');
+            + `${g.partners.length ? `、夥伴碎片 ${g.partners.join('、')}` : ''}`, 'level-up', true, 'item');
         D.gain = null;   // 只記一次（離開時不重複）
         recordRun(win);
     }

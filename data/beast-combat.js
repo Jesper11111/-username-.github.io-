@@ -300,6 +300,24 @@ function castBeastSkill(sk, who, living) {
     }
 }
 
+// 出戰上限（BEAST_ACTIVE_MAX）：超過的改為休息，保留 keep（剛指定出戰的那隻）或排前面的；回傳被召回的靈寵
+function enforceBeastActiveLimit(keep) {
+    const active = (player.beasts || []).filter(b => b.alive && b.active);
+    const ordered = keep && active.includes(keep) ? [keep].concat(active.filter(b => b !== keep)) : active;
+    const off = ordered.slice(BEAST_ACTIVE_MAX);
+    off.forEach(b => { b.active = false; });
+    return off;
+}
+
+// ---- 靈寵靈力（config-beasts.js 的 BEAST_MP_*；state.js 的 beastMp，不存檔）----
+function beastSkillMp(sk) { return BEAST_SKILL_MP_BY_LV[sk.minLv] || 10; }
+function getBeastMp(id) { if (typeof beastMp[id] !== 'number') beastMp[id] = BEAST_MP_MAX; return beastMp[id]; }
+// 出戰靈寵與隊伍夥伴回靈（每回合、野外刷新等待的每秒；combat.js）
+function regenCompanionMp() {
+    (player.beasts || []).forEach(b => { if (isBeastActive(b)) beastMp[b.id] = Math.min(BEAST_MP_MAX, getBeastMp(b.id) + BEAST_MP_REGEN); });
+    if (typeof getPartnerTeam === 'function') getPartnerTeam().forEach(p => { partnerMp[p.id] = Math.min(PARTNER_MP_MAX, getPartnerMp(p.id) + PARTNER_MP_REGEN); });
+}
+
 // 每回合由 fieldCombatRound／bountyDuelTick／tribulationTick 呼叫；targets 為本回合可攻擊的目標（需有 hp 屬性）
 function petAssistTick(targets) {
     // 主人身上的效果倒數
@@ -322,11 +340,14 @@ function petAssistTick(targets) {
 
     player.beasts.forEach(b => {
         if (!isBeastActive(b)) return;
-        const learned = b.skills.map(getBeastSkill).filter(Boolean);
+        beastMp[b.id] = Math.min(BEAST_MP_MAX, getBeastMp(b.id) + BEAST_MP_REGEN);   // 每回合回靈
+        // 只從「靈力夠」的招式裡挑；一招都放不起就這回合不出手
+        const learned = b.skills.map(getBeastSkill).filter(sk => sk && beastSkillMp(sk) <= beastMp[b.id]);
         if (learned.length === 0 || Math.random() >= BEAST_SKILL_CHANCE) return;
         const living = targets.filter(t => t.hp > 0);
         const sk = pickBeastSkill(learned, living);
         if (!sk) return;
+        beastMp[b.id] -= beastSkillMp(sk);
         castBeastSkill(sk, `🐾 ${getBeastName(b)}`, living);
     });
 }
