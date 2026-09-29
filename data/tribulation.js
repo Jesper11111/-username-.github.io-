@@ -50,8 +50,9 @@ function triggerTribulation() {
     if (inBountyDuel) { alert("正在與懸賞人物對決，無法分心渡劫！"); return; }
 
     let chance = getTribulationChance();
-    let demonPower = Math.floor(getPhysAttack() * HEART_DEMON_POWER_MULT * (1 + chance.hard) * (chance.hasPill ? BREAK_PILL_DEMON_POWER_MULT : 1));
-    let demonHp = Math.floor(getMaxHp() * HEART_DEMON_HP_MULT);
+    // 新制數字小（攻擊約 5～50），Math.floor 會把 9.7 捨成 9；改用 roundDmg（新制 2 位小數、舊制照舊捨去，elements.js）
+    let demonPower = roundDmg(getPhysAttack() * HEART_DEMON_POWER_MULT * (1 + chance.hard) * (chance.hasPill ? BREAK_PILL_DEMON_POWER_MULT : 1));
+    let demonHp = roundDmg(getMaxHp() * HEART_DEMON_HP_MULT);
 
     let tips = "";
     if (!player.autoHp.enabled) tips += "\n・開啟【自動補血】並備妥氣血丹藥，最多可再 +10%";
@@ -72,7 +73,7 @@ function triggerTribulation() {
         + (chance.apt ? `・⛩️ 先天資質 ${chance.apt > 0 ? '+' : '-'}${formatChance(Math.abs(chance.apt))}\n` : '')
         + (chance.hasPill ? `・🔮 破障丹 +${formatChance(chance.pill)}（將服用 1 顆，剩 ${player.breakPills - 1} 顆；心魔戰力 -10%）\n` : '')
         + (tips ? `\n提升勝算：${tips}\n` : '')
-        + `\n心魔戰力 ${demonPower.toWan()}／氣血 ${demonHp.toWan()}，會施展魔功並吸取靈力。\n`
+        + `\n心魔戰力 ${fmtCombat(demonPower)}／氣血 ${fmtCombat(demonHp)}，會施展魔功並吸取靈力。\n`
         + `渡劫失敗會重傷跌回安全區並折壽 ${getDeathLifespanCost()} 年（剩餘 ${formatLifespan(player.lifespan)} 年，渡劫期間歲月流逝加快），靈寵也會陣亡；\n`
         + `且境界跌落 ${TRIBULATION_FAIL_STAGE_DROP} 階（10 階 → ${10 - TRIBULATION_FAIL_STAGE_DROP} 階），陷入「虛弱」（攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%）直到修回 10 階。\n\n是否開始渡劫？`
     )) return;
@@ -107,7 +108,7 @@ function triggerTribulation() {
     playerStatus = newStatus();
     resetGearWave();   // 首擊、先手盾（gear.js）
 
-    addLog(`☯️ 【渡劫開始】天地變色，心魔自你識海中走出，化作與你一模一樣的魔身！（勝算 ${formatChance(chance.total)}｜戰力 ${demonPower.toWan()}／氣血 ${demonHp.toWan()}）`, "reincarnate");
+    addLog(`☯️ 【渡劫開始】天地變色，心魔自你識海中走出，化作與你一模一樣的魔身！（勝算 ${formatChance(chance.total)}｜戰力 ${fmtCombat(demonPower)}／氣血 ${fmtCombat(demonHp)}）`, "reincarnate");
     document.getElementById('combat-status').innerText = `☯️ 渡劫中：與心魔生死對決！`;
     document.getElementById('combat-status').style.color = 'var(--reincarnate-color)';
     updateUI();
@@ -124,7 +125,7 @@ function tribulationTick() {
     let selfTick = tickStatus(playerStatus);
     if (selfTick.dot > 0) {
         player.hp -= selfTick.dot;
-        addLog(`🩸 身上的異常狀態發作，損失 ${selfTick.dot.toWan()} 點氣血！`, "combat");
+        addLog(`🩸 身上的異常狀態發作，損失 ${fmtCombat(selfTick.dot)} 點氣血！`, "combat");
         if (player.hp <= 0 && !tryGearUndying()) { resolvePlayerFall(); return; }
     }
 
@@ -147,7 +148,7 @@ function tribulationTick() {
     let regen = applyRootRegen() + applyGearRegen();
     if (tags.length > 0 || demonTick.dot > 0 || regen > 0) {
         addLog(`✨ 屬性效果：${[tags.length ? summarizeTags(tags, "💨被心魔閃避") : '',
-            demonTick.dot ? `心魔受持續傷害 ${demonTick.dot.toWan()}` : '',
+            demonTick.dot ? `心魔受持續傷害 ${fmtCombat(demonTick.dot)}` : '',
             regen ? `🌿回復 ${regen.toWan()}` : ''].filter(Boolean).join("｜")}`, "skill");
     }
 
@@ -181,7 +182,7 @@ function tribulationTick() {
             let drained = Math.min(player.mp, player.maxMp * sk.drain);
             player.mp -= drained;
             demonDmg = demonBase * sk.mult;
-            addLog(`🧍 ${sk.msg}（靈力 -${Math.floor(drained)}）`, "combat");
+            addLog(`🧍 ${sk.msg}（靈力 -${fmtCombat(drained)}）`, "combat");
         } else {
             demonDmg = demonBase * sk.mult;
             addLog(`🧍 ${sk.msg}`, "combat");

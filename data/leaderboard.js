@@ -323,7 +323,7 @@ function renderLeaderboard(loading) {
     let myUid = null;
     try { myUid = firebase.auth().currentUser.uid; } catch (e) { /* SDK 還沒載入 */ }
 
-    let html = `<div class="lb-me">你的戰力：<b>${myPower.toWan()}</b>`;
+    let html = `<div class="lb-me">你的戰力：<b>${fmtCombat(myPower)}</b>`;
     if (lbRows && myUid) {
         const idx = lbRows.findIndex(r => r.id === myUid);
         html += idx >= 0 ? `　目前第 <b>${idx + 1}</b> 名` : `　未進前 ${LEADERBOARD_TOP_N} 名`;
@@ -347,7 +347,7 @@ function renderLeaderboard(loading) {
                     <div class="lbx-name">${lbEscape(r.name)}</div>
                     <div class="lbx-tags"><span>${lbEscape(realm)} ${Number(r.stage) || 1}階</span><span>Lv.${Number(r.level) || 1}</span>${r.sect ? `<span>${lbEscape(r.sect)}</span>` : ''}</div>
                 </div>
-                <div class="lbx-power"><small>戰力</small><b>${Number(r.power || 0).toWan()}</b><i>${lbTimeAgo(r.updatedAt)}</i></div>
+                <div class="lbx-power"><small>戰力</small><b>${fmtCombat(Number(r.power || 0))}</b><i>${lbTimeAgo(r.updatedAt)}</i></div>
                 <div class="lbx-img" style="background-image:url('${av.img}');background-position:${lbAvatarPos(av)}"></div>
             </div>`;
         }).join("") + `</div>`;
@@ -378,7 +378,7 @@ function defenseBoardHtml(loading) {
             const d = r.runAt ? new Date(r.runAt) : null;
             return `<div class="lb-row${r.id === myUid ? ' lb-self' : ''}">
                 <span class="lb-rank">${medal}</span>
-                <span class="lb-name">${lbEscape(r.name)}<small>${lbEscape(realms[r.realm] || "？")} ${Number(r.stage) || 1}階・戰力 ${Number(r.power || 0).toWan()}</small></span>
+                <span class="lb-name">${lbEscape(r.name)}<small>${lbEscape(realms[r.realm] || "？")} ${Number(r.stage) || 1}階・戰力 ${fmtCombat(Number(r.power || 0))}</small></span>
                 <span class="lb-power">${Number(r.best) >= DEFENSE_TOTAL_WAVES ? '🏆 全破' : `第 ${Number(r.best) || 0} 波`}<small>${d ? `${d.getMonth() + 1}/${d.getDate()} 達成` : ''}</small></span>
             </div>`;
         }).join("") + `</div>`;

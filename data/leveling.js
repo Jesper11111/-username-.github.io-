@@ -118,7 +118,7 @@ function processLevelUps() {
         player.stats.spr += statGain;
         // 新制：等級不再加屬性，只加氣血 %（NV2.levelHpPct）與靈力上限（NV2.levelMp），見 numeric.js
         addLog(NUMERIC_V2
-            ? `🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！氣血上限 +${+(gained * NV2.levelHpPct).toFixed(3)}%，靈力上限 +${+(gained * NV2.levelMp).toFixed(1)}。`
+            ? `🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！氣血上限 +${+(gained * NV2.levelHpPct).toFixed(3)}%，靈力上限 +${fmtCombat(gained * NV2.levelMp)}。`
             : `🆙 人物等級提升至【Lv.${player.level}】${gained > 1 ? `（連升 ${gained} 級）` : ''}！四維各 +${statGain}，生命上限 +${gained * LEVEL_UP_HP_GAIN}，靈力上限 +${gained * LEVEL_UP_MP_GAIN}。`, "level-up");
         if (NUMERIC_V2 && player.level >= cap && cap < MAX_PLAYER_LEVEL) {
             addLog(`🔒 人物等級已達【${realms[player.realmIndex]}】上限 Lv.${cap}，突破境界後才能繼續提升（期間的經驗會先存著）。`, "level-up");
@@ -169,7 +169,7 @@ function triggerReincarnate() {
     let pct = Math.round(REINCARNATE_KEEP_RATE * 100);
     // 新制（第 52 節）：屬性由境界計算，轉世只保留氣血上限的 NV2.reincarnateHpKeep（10%）
     let keepText = NUMERIC_V2
-        ? `・保留：氣血上限的 ${Math.round(NV2.reincarnateHpKeep * 100)}%（目前約 +${(Math.round(getMaxHp() * NV2.reincarnateHpKeep * 10) / 10).toWan()}，可逐世累積）\n`
+        ? `・保留：氣血上限的 ${Math.round(NV2.reincarnateHpKeep * 100)}%（目前約 +${fmtCombat(getMaxHp() * NV2.reincarnateHpKeep)}，可逐世累積）\n`
         : `・保留：四維與魅力的 ${pct}%、氣血上限與靈力上限的 ${pct}%\n`;
     if (confirm(`轉世輪迴將洗去此世修為：\n` +
         keepText +
@@ -183,7 +183,7 @@ function triggerReincarnate() {
         let keptMp = Math.floor(getMaxMp() * REINCARNATE_KEEP_RATE);
         // 新制：保留此世氣血上限的 10%（getMaxHp 已含前世保留量，所以會逐世累積）；舊制的 hp／mp 保留量不動，避免新舊數字混在一起
         let oldBonus = player.reincarnateBonus || {};
-        let keptNv2Hp = NUMERIC_V2 ? Math.round(getMaxHp() * NV2.reincarnateHpKeep * 10) / 10 : (oldBonus.nv2Hp || 0);
+        let keptNv2Hp = NUMERIC_V2 ? Math.round(getMaxHp() * NV2.reincarnateHpKeep * 100) / 100 : (oldBonus.nv2Hp || 0);
         if (NUMERIC_V2) { keptHp = oldBonus.hp || 0; keptMp = oldBonus.mp || 0; }
         let keep = v => 10 + Math.floor((v || 0) * REINCARNATE_KEEP_RATE);
 
@@ -210,7 +210,7 @@ function triggerReincarnate() {
         player.hp = getMaxHp();
         player.mp = getMaxMp();
         addLog(NUMERIC_V2
-            ? `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為底蘊（氣血上限 +${keptNv2Hp.toWan()}），其餘盡數遺忘。`
+            ? `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為底蘊（氣血上限 +${fmtCombat(keptNv2Hp)}），其餘盡數遺忘。`
             : `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為 ${pct}% 的底蘊（氣血上限 +${keptHp.toWan()}、靈力上限 +${keptMp.toWan()}），其餘盡數遺忘。`, "reincarnate");
         updateUI();
         updateSectFacilitiesUI();

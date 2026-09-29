@@ -139,7 +139,7 @@
             <tbody id="rows"><tr><td colspan="14" class="note">讀取中…</td></tr></tbody>
         </table></div>
         <p class="note">
-            新制（2026-09-28 上線）：戰力 = 每回合期望輸出。一般玩家倍率 = 戰力 ÷ 同境界同階一般玩家的期望輸出。規則上限 = 400 ＋ 境界 × 40（與 <code>tools/firestore.rules</code> 相同）。<br>
+            新制（2026-09-28 上線）：戰力 = 每回合期望輸出。一般玩家倍率 = 戰力 ÷ 同境界同階一般玩家的期望輸出。規則上限 = 400 ＋ 境界 × 40（內部值，與 <code>tools/firestore.rules</code> 相同；2026-09-29 起遊戲與本頁的戰力、攻擊都 ×100 顯示，等於畫面上 4 萬 ＋ 境界 × 4000）。<br>
             🔴 超過上限：新規則下已無法再上傳（含舊制的億兆級紀錄），需要手動（或巡檢）清除。🟡 佔上限 60% 以上（理論最高約 46%），或等級明顯高於境界，建議人工確認。<br>
             🟠 戰力暴增：比對該玩家的上傳歷史（最近 24 次＋每 30 分鐘一筆的兩日紀錄，共約 2 天，規則強制保留、玩家改不了）的戰力與時間，時數最多可設 48，任兩次上傳相隔不超過設定時數、且戰力成長達設定倍數（例：改存檔瞬間灌分）。
             離線很久後回來的第一次上傳相隔超過時窗，不會被誤判。「時窗內最大成長」欄可用來校準門檻；新規則發布前的舊紀錄沒有歷史，顯示「—」。<br>
@@ -306,18 +306,18 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261002y"></script>
+<script src="data/config-realms.js?v=20261002z"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261002y"></script>
-<script src="data/numeric.js?v=20261002y"></script>
-<script src="data/config-leaderboard.js?v=20261002y"></script>
-<script src="data/config-mailbox.js?v=20261002y"></script>
+<script src="data/config-numeric.js?v=20261002z"></script>
+<script src="data/numeric.js?v=20261002z"></script>
+<script src="data/config-leaderboard.js?v=20261002z"></script>
+<script src="data/config-mailbox.js?v=20261002z"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261002y"></script>
+<script src="data/config-aptitude.js?v=20261002z"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261002y"></script>
-<script src="data/bounty.js?v=20261002y"></script>
-<script src="data/config-defense.js?v=20261002y"></script>
+<script src="data/config-bounty.js?v=20261002z"></script>
+<script src="data/bounty.js?v=20261002z"></script>
+<script src="data/config-defense.js?v=20261002z"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -330,8 +330,11 @@ const FULL_LIMIT = 1000;         // 管理者一次讀取的筆數
 // 2026-09-27 依公式估算：正常修煉 1 小時最多約 4～10 倍（戰力 ≥ 100 萬時），加上換宗門／一次換裝可再 ×6～13，所以取 30 倍
 // 新制（2026-09-28）：戰力只有幾十到幾百。正常 1 小時內的跳升主要來自換武器（最多約 ×2.4）與增益（最多 +200%），暫取 4 倍；
 //   新戰力 < 60 多為新手不判定。上線後請以「時窗內最大成長」欄重新校準。儲存鍵換成 v2，避免沿用舊制的 30 倍／100 萬設定
-const JUMP_DEFAULTS = { hours: 1, ratio: 4, min: 60 };
-const JUMP_STORE_KEY = 'gm_jump_settings_v2';
+// 2026-09-29 遊戲畫面的戰鬥數字改為 ×100 顯示（data/format.js 的 fmtCombat），GM 頁的戰力／攻擊也 ×100 顯示、門檻輸入也用顯示值（6000 ＝ 內部 60）；
+//   雲端規則與存的數值不變（上限仍是內部值 400 ＋ 境界 × 40）。儲存鍵換 v3，避免沿用內部值的 60
+const DISP = 100;
+const JUMP_DEFAULTS = { hours: 1, ratio: 4, min: 6000 };
+const JUMP_STORE_KEY = 'gm_jump_settings_v3';
 // 守城審核的預設值（頁面上可改，存在本瀏覽器 localStorage）；minPct 依據見頁面下方說明與 ARCHITECTURE.md 第 50 節
 // 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望，正常落在 1.8～2.28 倍（下限固定 DEF_POWER_ATK_MIN）
 const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.4 };
@@ -340,6 +343,7 @@ const DEF_STORE_KEY = 'gm_defense_settings_v2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtP = n => fmt((Number(n) || 0) * DISP);   // 戰力、攻擊：顯示 ×100（同遊戲畫面）
 const fmt = n => { n = Number(n) || 0; const u = [['兆', 1e12], ['億', 1e8], ['萬', 1e4]]; for (const [s, v] of u) if (n >= v) return (n / v).toFixed(n / v >= 100 ? 0 : 2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') + s; return n.toLocaleString(); };
 let app, auth, db, user = null, isAdmin = false, rows = [], bans = [], patrolTimer = null;
 let defSubs = [], defBoard = {};   // 守城送審（defenseSubmit）、已登錄的守城榜（defenseBoard，依 uid）
@@ -457,11 +461,11 @@ function computeJump(r) {
         }
     }
     r._growth = best;
-    r._jump = !!(best && best.ratio >= s.ratio && best.to >= min);
+    r._jump = !!(best && best.ratio >= s.ratio && best.to * DISP >= min);   // min 是顯示值
 }
 function jumpReason(r) {
     const g = r._growth;
-    return `戰力暴增：${Math.max(1, Math.round(g.mins))} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}（${g.ratio.toFixed(1)} 倍）`;
+    return `戰力暴增：${Math.max(1, Math.round(g.mins))} 分鐘內 ${fmtP(g.from)} → ${fmtP(g.to)}（${g.ratio.toFixed(1)} 倍）`;
 }
 
 // ================== 境界異常（2026-09-28）：新面孔高境界、短時間跳境（只標記）==================
@@ -575,7 +579,7 @@ function verifyDefense(s) {
         const after = pts.find(x => x.t >= runAt && x.t - runAt <= win);
         near = { before, after, max: inWin.length ? Math.max(...inWin.map(x => x.p)) : 0 };
         if (!inWin.length) checks.push({ ok: null, text: `戰力榜沒有 ±${cfg.window} 分鐘內的紀錄` });
-        else if (power > near.max * cfg.powerTol) checks.push({ ok: false, text: `送審戰力 ${fmt(power)} 高於同時段戰力榜 ${fmt(near.max)}` });
+        else if (power > near.max * cfg.powerTol) checks.push({ ok: false, text: `送審戰力 ${fmtP(power)} 高於同時段戰力榜 ${fmtP(near.max)}` });
         else checks.push({ ok: true, text: '戰力與戰力榜相符' });
     }
     // ② 能否守住：攻擊 ÷ 該波妖潮強度
@@ -615,9 +619,9 @@ function renderDefense() {
         return `<tr class="${v.verdict === 'fail' ? 'red' : v.verdict === 'manual' ? 'yellow' : ''}">
             <td>${esc(s.name)}<div class="uid">${esc(s.id.slice(0, 10))}…</div></td>
             <td>第 ${Number(s.best) || 0} 波</td><td>${esc(realms[s.realm] || '？')} ${Number(s.stage) || 1} 階・Lv.${Number(s.level) || 1}</td>
-            <td class="num">${fmt(s.atk)}</td><td class="num">${fmt(Math.round(v.need))}</td><td class="num">${(v.ratio * 100).toPrecision(3)}%</td>
-            <td class="num">${fmt(s.power)}</td>
-            <td>${n ? `${n.before ? fmt(n.before.p) : '—'} → ${n.after ? fmt(n.after.p) : '—'}` : '—'}</td>
+            <td class="num">${fmtP(s.atk)}</td><td class="num">${fmtP(v.need)}</td><td class="num">${(v.ratio * 100).toPrecision(3)}%</td>
+            <td class="num">${fmtP(s.power)}</td>
+            <td>${n ? `${n.before ? fmtP(n.before.p) : '—'} → ${n.after ? fmtP(n.after.p) : '—'}` : '—'}</td>
             <td>${when(Number(s.runAt))}</td><td>${verdict}${detail}</td><td>${status}${s._listed ? '<div class="note">榜上：第 ' + Number(defBoard[s.id].best) + ' 波</div>' : ''}</td>
             <td class="rowbtns">${isAdmin ? `<button class="primary" onclick="defApprove('${esc(s.id)}')">登錄</button><button class="danger" onclick="defReject('${esc(s.id)}')">駁回</button>` : '—'}</td>
         </tr>`;
@@ -707,9 +711,9 @@ function renderBoard() {
         return `<tr class="${r._red ? 'red' : r._jump ? 'jump' : r._rx ? 'realmx' : r._yellow ? 'yellow' : ''}">
             <td><input type="checkbox" class="chk" value="${esc(r.id)}"></td><td>${i}</td><td>${esc(r.name)}</td>
             <td>${esc(realms[r._realm] || '？')} ${r._stage} 階</td><td>${r._level}</td><td>${esc(r.sect || '')}</td>
-            <td class="num">${fmt(r._power)}</td><td class="num">${r._ratio >= 1000 ? fmt(Math.round(r._ratio)) : r._ratio.toFixed(1)}×</td>
+            <td class="num">${fmtP(r._power)}</td><td class="num">${r._ratio >= 1000 ? fmt(Math.round(r._ratio)) : r._ratio.toFixed(1)}×</td>
             <td class="num">${r._use >= 10 ? fmt(Math.round(r._use * 100)) : (r._use * 100).toFixed(1)}%</td>
-            <td class="num" title="${g ? esc(`${Math.round(g.mins)} 分鐘內 ${fmt(g.from)} → ${fmt(g.to)}`) : '沒有時窗內的前一次上傳'}">${g ? (g.ratio >= 1000 ? fmt(Math.round(g.ratio)) : g.ratio.toFixed(2)) + '×' : '—'}</td>
+            <td class="num" title="${g ? esc(`${Math.round(g.mins)} 分鐘內 ${fmtP(g.from)} → ${fmtP(g.to)}`) : '沒有時窗內的前一次上傳'}">${g ? (g.ratio >= 1000 ? fmt(Math.round(g.ratio)) : g.ratio.toFixed(2)) + '×' : '—'}</td>
             <td>${r._days >= 999 ? '—' : r._days < 1 ? Math.round(r._days * 24) + ' 小時前' : Math.floor(r._days) + ' 天前'}</td>
             <td>${flags}</td><td class="uid">${esc(r.id.slice(0, 10))}…</td>
             <td class="rowbtns admin-only-cell">${isAdmin ? `<button class="danger" onclick="delOne('${esc(r.id)}')">刪除</button><button class="danger" onclick="banOne('${esc(r.id)}')">封鎖</button><button onclick="mailTo('${esc(r.id)}')" title="寄獎勵給這位玩家">📮</button>` : '—'}</td>
@@ -770,7 +774,7 @@ async function reloadBans() {
         bans = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
     } catch (e) { bans = []; log('讀取黑名單失敗：' + e.message, 'err'); }
     $('ban-rows').innerHTML = bans.length ? bans.map(b => `<tr>
-        <td>${esc(b.name)}</td><td>${esc(realms[b.realm] || '？')} ${Number(b.stage) || 1} 階</td><td class="num">${fmt(b.power)}</td>
+        <td>${esc(b.name)}</td><td>${esc(realms[b.realm] || '？')} ${Number(b.stage) || 1} 階</td><td class="num">${fmtP(b.power)}</td>
         <td>${esc(b.reason)}</td><td>${b.bannedAt && b.bannedAt.toDate ? b.bannedAt.toDate().toLocaleString('zh-TW', { hour12: false }) : ''}</td>
         <td class="uid">${esc(b.id)}</td><td><button onclick="unban('${esc(b.id)}')">解除封鎖</button></td></tr>`).join('')
         : '<tr><td colspan="7" class="note">黑名單是空的。</td></tr>';

@@ -65,7 +65,7 @@ function eqStatMap(eq) {
     if (!eq) return m;
     if (NUMERIC_V2) {
         if (equipTypes[eq.name] === 'weapon' || eq.category === 'weapon')
-            m.watk = ['武器攻擊', nv2WeaponAtkOf(eq, equipTypes[eq.name] === 'weapon' ? eq.name : null), ''];
+            m.watk = ['武器攻擊', nv2WeaponAtkOf(eq, equipTypes[eq.name] === 'weapon' ? eq.name : null), '', true];   // 第 4 欄 true＝戰鬥數字（畫面 ×100）
         const s = nv2GearStatsOf(eq);
         NV2_STAT_KEYS.forEach(k => { if (k !== 'cha' && s[k] > 0) m[k] = [NV2_STAT_LABELS[k], s[k], ''] ; });
     }
@@ -76,8 +76,9 @@ function eqStatMap(eq) {
 }
 
 // ---- ① ② 裝備欄（equipment.js 的 renderLingbaoUI 呼叫）----
-function eqFmt(v) { return Math.abs(v) >= 10000 ? Math.round(v).toWan() : (Math.round(v * 10) / 10).toString(); }
-function eqSign(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + eqFmt(Math.abs(v)); }
+// combat＝攻擊、氣血、靈力、戰力這類戰鬥數字：畫面 ×100 取整（format.js 的 fmtCombat）；其餘（屬性點、%）照原本 1 位小數
+function eqFmt(v, combat) { if (combat) return fmtCombat(v); return Math.abs(v) >= 10000 ? Math.round(v).toWan() : (Math.round(v * 10) / 10).toString(); }
+function eqSign(v, combat) { return (v > 0 ? '+' : v < 0 ? '−' : '') + eqFmt(Math.abs(v), combat); }
 
 function renderEquipDoll() {
     const container = document.getElementById('equipped-list-container');
@@ -99,7 +100,7 @@ function renderEquipDoll() {
             <div class="eqd-col">${EQ_DOLL_LAYOUT.left.map(cell).join('')}</div>
             <div class="eqd-hero" style="background-image:url(${hero.src}); background-position:${hero.pos}">
                 <div class="eqd-sum">${lbEscape(player.name || '')}${base.element ? `【<span class="elem-${base.element}">${base.element}</span>】` : ''}<br>
-                    戰力 <b>${eqFmt(base.power)}</b>　氣血 ${eqFmt(base.hp)}</div>
+                    戰力 <b>${eqFmt(base.power, true)}</b>　氣血 ${eqFmt(base.hp, true)}</div>
             </div>
             <div class="eqd-col">${EQ_DOLL_LAYOUT.right.map(cell).join('')}</div>
             <div class="eqd-row">${EQ_DOLL_LAYOUT.bottom.map(cell).join('')}</div>
@@ -131,7 +132,7 @@ function renderEquipSlotSheet(slot) {
         <div class="eqd-cand" onclick="openEquipCompare('${c.id}')">
             <div class="eqd-nm"><span class="quality-${c.quality}">${formatEquipTitle(c)}</span>
                 <small>${formatQualityLabel(c.quality)}・<span class="elem-${c.element}">${c.element}</span>${can.ok ? '' : '・🔒 ' + can.why}</small></div>
-            <span class="eqd-chip ${d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'eq'}">戰力 ${d > 0.05 ? '▲' : d < -0.05 ? '▼' : ''}${eqSign(d)}</span>
+            <span class="eqd-chip ${d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'eq'}">戰力 ${d > 0.05 ? '▲' : d < -0.05 ? '▼' : ''}${eqSign(d, true)}</span>
         </div>`).join('')
         : `<div class="eqd-hint">背包裡沒有「${slot}」部位的裝備。</div>`;
     return `<div class="eqd-sheet-head">更換【${slot}】<span>背包 ${list.length} 件</span></div>${curCard}
@@ -152,9 +153,9 @@ function openEquipCompare(equipId) {
     const keys = Object.keys(Object.assign({}, ma, mb));
     const cls = (x, y) => x > y ? 'better' : x < y ? 'worse' : '';
     const rowsA = keys.map(k => { const a = ma[k] ? ma[k][1] : 0, b = mb[k] ? mb[k][1] : 0, lab = (ma[k] || mb[k]);
-        return `<div class="eqc-kv"><span>${lab[0]}</span><span class="${a ? cls(a, b) : 'none'}">${a ? eqFmt(a) + lab[2] : '—'}</span></div>`; }).join('');
+        return `<div class="eqc-kv"><span>${lab[0]}</span><span class="${a ? cls(a, b) : 'none'}">${a ? eqFmt(a, lab[3]) + lab[2] : '—'}</span></div>`; }).join('');
     const rowsB = keys.map(k => { const a = ma[k] ? ma[k][1] : 0, b = mb[k] ? mb[k][1] : 0, lab = (ma[k] || mb[k]);
-        return `<div class="eqc-kv"><span>${lab[0]}</span><span class="${b ? cls(b, a) : 'none'}">${b ? eqFmt(b) + lab[2] : '—'}${Math.abs(b - a) > 0.05 ? ` <small>(${eqSign(b - a)}${lab[2]})</small>` : ''}</span></div>`; }).join('');
+        return `<div class="eqc-kv"><span>${lab[0]}</span><span class="${b ? cls(b, a) : 'none'}">${b ? eqFmt(b, lab[3]) + lab[2] : '—'}${Math.abs(b - a) > (lab[3] ? 0.005 : 0.05) ? ` <small>(${eqSign(b - a, lab[3])}${lab[2]})</small>` : ''}</span></div>`; }).join('');
     const card = (eq, tag, isPick) => eq ? `
         <div class="eqc-card ${isPick ? 'pick' : ''}"><div class="eqd-tag">${tag}</div>
             <div class="eqc-title quality-${eq.quality}">${formatEquipTitle(eq)}</div>
@@ -164,14 +165,14 @@ function openEquipCompare(equipId) {
         </div>` : `<div class="eqc-card"><div class="eqd-tag">${tag}</div><div class="eqc-title" style="color:#6b7280;">（空）</div></div>`;
 
     // 穿上後的整體變化（實算）
-    const diffRow = (label, a, b, unit, big) => {
+    const diffRow = (label, a, b, unit, big, combat) => {   // combat＝戰鬥數字（畫面 ×100）
         const d = b - a;
-        if (Math.abs(d) < 0.05) return '';
-        return `<div class="eqc-drow ${big ? 'big' : ''}"><span>${label}</span><span class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'} ${eqSign(d)}${unit || ''}　<small>${eqFmt(a)}${unit || ''} → ${eqFmt(b)}${unit || ''}</small></span></div>`;
+        if (Math.abs(d) < (combat ? 0.005 : 0.05)) return '';
+        return `<div class="eqc-drow ${big ? 'big' : ''}"><span>${label}</span><span class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'} ${eqSign(d, combat)}${unit || ''}　<small>${eqFmt(a, combat)}${unit || ''} → ${eqFmt(b, combat)}${unit || ''}</small></span></div>`;
     };
-    let delta = diffRow('戰力', before.power, after.power, '', true)
-        + diffRow('氣血', before.hp, after.hp) + diffRow('法力', before.mp, after.mp)
-        + diffRow('物理攻擊', before.phys, after.phys) + diffRow('術法攻擊', before.mag, after.mag)
+    let delta = diffRow('戰力', before.power, after.power, '', true, true)
+        + diffRow('氣血', before.hp, after.hp, '', false, true) + diffRow('法力', before.mp, after.mp, '', false, true)
+        + diffRow('物理攻擊', before.phys, after.phys, '', false, true) + diffRow('術法攻擊', before.mag, after.mag, '', false, true)
         + diffRow('減傷', before.def, after.def, '%') + diffRow('閃避', before.eva, after.eva, '%')
         + (NUMERIC_V2 ? diffRow('暴擊', before.crit, after.crit, '%') + diffRow('連擊', before.combo, after.combo, '%') : '')
         + AFFIX_TYPES.map(k => diffRow(combatAttrInfo[k].label, before.affix[k], after.affix[k], '%')).join('');

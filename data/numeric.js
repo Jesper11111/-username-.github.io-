@@ -242,7 +242,7 @@ function nv2MonsterStats(map, roll) {
     const sup = nv2SuppressMult(map);
     return {
         hp: Math.max(1, Math.round(nv2TypNormal(L) * NV2.hitsSame * sup.hp * mult)),
-        atk: Math.max(0.1, Math.round(nv2TypHp(L) * NV2.monAtkPct * (map.nv2AtkMult || 1) * sup.atk * mult / 10) / 10),   // monAtkPct 是百分比：÷100 並保留 1 位小數（elements.js 的 roundDmg）；nv2AtkMult 選填（新手圖 0.7）
+        atk: Math.max(0.01, Math.round(nv2TypHp(L) * NV2.monAtkPct * (map.nv2AtkMult || 1) * (NV2.monAtkEarly[Math.floor(L + 1e-6)] || 1) * sup.atk * mult) / 100),   // monAtkPct 是百分比：÷100 並保留 2 位小數（elements.js 的 roundDmg，畫面 ×100）；nv2AtkMult 選填（新手圖 0.7）；monAtkEarly 新手妖獸加強
         suppress: sup, L, mult
     };
 }
@@ -302,7 +302,7 @@ function nv2WaveChanceMult(map) {
 function nv2FormatEquipStats(eq) {
     const parts = [];
     const isWeapon = eq.category === 'weapon' || equipTypes[eq.name] === 'weapon';
-    if (isWeapon) parts.push(`⚔️武器攻擊 ${nv2WeaponAtkOf(eq, equipTypes[eq.name] === 'weapon' ? eq.name : null).toFixed(1)}`);
+    if (isWeapon) parts.push(`⚔️武器攻擊 ${fmtCombat(nv2WeaponAtkOf(eq, equipTypes[eq.name] === 'weapon' ? eq.name : null))}`);
     const s = nv2GearStatsOf(eq);
     NV2_STAT_KEYS.forEach(k => { if (k !== 'cha' && s[k] > 0) parts.push(`${NV2_STAT_LABELS[k]}+${s[k].toFixed(1)}`); });
     const old = getEquipEffectiveStats(eq), rest = { cha: old.cha };

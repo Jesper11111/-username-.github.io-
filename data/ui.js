@@ -218,7 +218,7 @@ function updateUI() {
                  : `${(perMin * 60).toFixed(1)}年/時`;
     rateEl.innerText = atFloor ? '（歲月已止）' : `⌛-${rateText}`;
     rateEl.style.color = atFloor ? '#ef4444' : (getAgingMultiplier() > 1 ? '#fb923c' : '#9ca3af');
-    document.getElementById('power-display').innerText = (NUMERIC_V2 ? nv2CombatPower() : getPhysAttack()).toWan();
+    document.getElementById('power-display').innerText = fmtCombat(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack());   // 畫面 ×100（format.js）
     let aptEl = document.getElementById('aptitude-display');   // 先天靈根・體質（aptitude.js），點擊查看／重測
     if (aptEl) aptEl.innerText = formatAptitudeShort();
     let coreEl = document.getElementById('core-display');   // 丹田／金丹／元嬰（golden-core.js）
@@ -285,11 +285,11 @@ function updateUI() {
 
     let hpPercent = Math.max((player.hp / player.maxHp) * 100, 0);
     document.getElementById('hp-bar').style.width = hpPercent + '%';
-    document.getElementById('hp-text').innerText = `${Math.floor(player.hp)} / ${player.maxHp}`;
+    document.getElementById('hp-text').innerText = `${fmtCombat(Math.max(0, player.hp))} / ${fmtCombat(player.maxHp)}`;
 
     let mpPercent = Math.max((player.mp / player.maxMp) * 100, 0);
     document.getElementById('mp-bar').style.width = mpPercent + '%';
-    document.getElementById('mp-text').innerText = `${Math.floor(player.mp)} / ${player.maxMp}`;
+    document.getElementById('mp-text').innerText = `${fmtCombat(Math.max(0, player.mp))} / ${fmtCombat(player.maxMp)}`;
 
     renderSkillList();
     updateStudyCountsUI();
@@ -307,7 +307,7 @@ function updateTribulationUI() {
     if (inTribulation) {
         btn.style.display = 'block';
         btn.disabled = true;
-        btn.innerText = `☯️ 渡劫中…心魔氣血 ${heartDemon ? Math.floor(heartDemon.hp).toWan() : 0}`;
+        btn.innerText = `☯️ 渡劫中…心魔氣血 ${heartDemon ? fmtCombat(Math.max(0, heartDemon.hp)) : 0}`;
     } else if (player.pendingTribulation) {
         btn.style.display = 'block';
         btn.disabled = false;
@@ -366,7 +366,7 @@ function renderSkillList() {
             ? `${typeName}・${sk.dmgType === 'mag' ? '悟性' : '力量'}・威力 ${Math.round(sk.mult * 100)}%`
             : typeName;
         if (sk.effect) detail += `・${combatAttrInfo[sk.effect.type].icon}${Math.round(sk.effect.chance * 100)}%`;
-        html += `・[${source}] ${sk.name} (${detail}, 耗魔:${skillMpCost(sk.mpCost)})<br>`;
+        html += `・[${source}] ${sk.name} (${detail}, 耗魔:${fmtCombat(skillMpCost(sk.mpCost))})<br>`;
     });
     document.getElementById('skill-list').innerHTML = html;
 }

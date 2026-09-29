@@ -59,7 +59,7 @@ function battleFxDot(t, onPlayer) {
 }
 
 function fmtFxNum(v) {
-    return v >= 10000 ? Math.floor(v).toWan() : (v < 10 ? Math.round(v * 10) / 10 : Math.floor(v));
+    return fmtCombat(v);   // 新制 ×100 取整（format.js）；舊制照原本整數
 }
 
 // 播放佇列：飄字、爆擊震屏與血條爆點

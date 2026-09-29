@@ -44,7 +44,7 @@ function renderLingbaoShopUI() {
                   + `<p style="font-size: 0.8em; color: #facc15;">【${item.itemData.name}】<span class="elem-${item.itemData.element}">${item.itemData.element}</span>｜${formatLingbaoItemStats(item)}</p>`
                   + (artSkill ? `<p style="font-size: 0.78em; color: #fca5a5;">專屬技能【${artSkill.name}】：${artSkill.desc}</p>` : '')
                   + (isArtifactItem(item) ? `<p style="font-size: 0.8em; color: #facc15;">兌換：${getLingbaoCost(item).coins.toWan()} 靈石 ＋ ${getLingbaoCost(item).rep.toWan()} 聲望</p>` : '')
-                : `<p style="font-size: 0.8em; color: #c084fc;">耗魔 ${skillMpCost(item.skillData.mpCost)}</p>`;
+                : `<p style="font-size: 0.8em; color: #c084fc;">耗魔 ${fmtCombat(skillMpCost(item.skillData.mpCost))}</p>`;
             let btnText = isSold ? '已兌換（不再補貨）' : (sectName ? '兌換' : '未拜入此階段宗門');
             return `
                 <div class="card" style="border-color: var(--reputation-color); opacity: ${isSold || !sectName ? 0.5 : 1};">

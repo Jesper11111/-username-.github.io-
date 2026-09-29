@@ -191,7 +191,7 @@ const ZhenmoTower = (() => {
             attrs.evaPen = nv2TypHit(L);   // 同階一般玩家的命中，抵銷玩家閃避（2026-09-29，numeric.js）
             const sup = nv2SuppressByL(L);   // 境界壓制：BOSS 境界高於玩家時攻擊與氣血放大（同野外、死守天南城）
             // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
-            const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 10) / 10;
+            const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 100) / 100;   // 2 位小數（畫面 ×100）
             const through = (1 - attrs.def / 100) * (1 - attrs.eva / 100);   // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完
             return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp), attrs, sup };
         }
@@ -224,7 +224,7 @@ const ZhenmoTower = (() => {
             $('zm-boss-body').innerHTML = `
                 <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
-                <p class="zm-boss-stat">攻擊 ${(NUMERIC_V2 ? b.atk : Math.round(b.atk)).toWan()}（${atkNote}）・氣血 ${Math.round(b.hp).toWan()}<br>
+                <p class="zm-boss-stat">攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
                     🛡️減傷 ${b.attrs.def}% 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
                 ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
                 ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
@@ -299,7 +299,7 @@ const ZhenmoTower = (() => {
                 const crit = hit.tags.includes('metal') || hit.tags.includes('thunder');
                 popNum('boss', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : crit ? 'crit' : '');
                 slash();
-                if (f.round % 3 === 1 || crit) fightLog(`🗡️ 你施展【${HERO_MOVES[f.round % HERO_MOVES.length]}】${hit.tags.includes('dodge') ? '，被閃開了' : `，造成 ${roundDmg(hit.dmg).toWan()} 傷害${crit ? '（暴擊）' : ''}`}`, 'me');
+                if (f.round % 3 === 1 || crit) fightLog(`🗡️ 你施展【${HERO_MOVES[f.round % HERO_MOVES.length]}】${hit.tags.includes('dodge') ? '，被閃開了' : `，造成 ${fmtCombat(hit.dmg)} 傷害${crit ? '（暴擊）' : ''}`}`, 'me');
             }
         } else if (!instant) fightLog('❄️ 你被凍結，無法出手', 'me');
         const et = tickStatus(E.st);
@@ -312,7 +312,7 @@ const ZhenmoTower = (() => {
             if (!instant) {
                 popNum('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
                 bossFlash();
-                if (f.round % 3 === 2) fightLog(`${f.boss.icon || '⚡'} ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${roundDmg(hit.dmg).toWan()} 傷害`}`, 'boss');
+                if (f.round % 3 === 2) fightLog(`${f.boss.icon || '⚡'} ${f.boss.name}施展【${f.boss.skills[f.round % f.boss.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${fmtCombat(hit.dmg)} 傷害`}`, 'boss');
             }
         }
         if (P.hp <= 0) return endFight(false, `被${f.boss.name}擊倒`);
@@ -391,16 +391,16 @@ const ZhenmoTower = (() => {
         const f = fight; if (!f) return;
         const pe = Math.max(0, f.e.hp / f.e.max), pp = Math.max(0, f.p.hp / f.p.max);
         $('zm-fight-boss-fill').style.width = `${pe * 100}%`;
-        $('zm-fight-boss-hp').textContent = `${Math.max(0, Math.floor(f.e.hp)).toWan()} / ${Math.floor(f.e.max).toWan()}`;
+        $('zm-fight-boss-hp').textContent = `${fmtCombat(Math.max(0, f.e.hp))} / ${fmtCombat(f.e.max)}`;
         $('zm-fight-me-fill').style.width = `${pp * 100}%`;
-        $('zm-fight-me-hp').textContent = `${Math.max(0, Math.floor(f.p.hp)).toWan()} / ${Math.floor(f.p.max).toWan()}`;
+        $('zm-fight-me-hp').textContent = `${fmtCombat(Math.max(0, f.p.hp))} / ${fmtCombat(f.p.max)}`;
         $('zm-fight-round').textContent = `第 ${f.round} 回合`;
     }
     function popNum(who, v, cls) {
         const box = $(who === 'boss' ? 'zm-fight-boss-fx' : 'zm-fight-hero-fx');
         const el = document.createElement('span');
         el.className = `zm-pop ${cls || ''}`;
-        el.textContent = typeof v === 'number' ? `-${roundDmg(v).toWan()}` : v;   // 舊制取整、新制 1 位小數（elements.js）
+        el.textContent = typeof v === 'number' ? `-${fmtCombat(v)}` : v;   // 舊制取整、新制 ×100（format.js）
         el.style.left = `${35 + Math.random() * 30}%`;
         box.appendChild(el);
         setTimeout(() => el.remove(), 1100);

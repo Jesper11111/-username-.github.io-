@@ -78,7 +78,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
             let fromName = player.currentMap.name;
             player.currentMap = maps[0].items[0];
             player.currentMapIsSafe = maps[0].isSafe;
-            prefix = `⚠️ 以目前實力無法在【${fromName}】久留（一波妖獸約造成 ${formatShortNumber(est.waveDamage)} 傷害，氣血上限 ${formatShortNumber(est.maxHp)}），已退回【${player.currentMap.name}】靜修。\n`;
+            prefix = `⚠️ 以目前實力無法在【${fromName}】久留（一波妖獸約造成 ${formatShortCombat(est.waveDamage)} 傷害，氣血上限 ${formatShortCombat(est.maxHp)}），已退回【${player.currentMap.name}】靜修。\n`;
         }
     }
 

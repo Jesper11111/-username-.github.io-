@@ -371,7 +371,7 @@ const DefenseBattle = (() => {
             + (runs.length ? runs.map(r => `<div class="dr-row${r.win ? ' win' : ''}">
                     <span class="dr-when">${when(r.at)}</span>
                     <span class="dr-res">${r.win ? `🏆 全數守住 ${r.cleared} 波` : r.cleared ? `守住 ${r.cleared} 波` : '一波未守住'}</span>
-                    <small>${realms[r.realm] || '？'} ${r.stage} 階・戰力 ${Number(r.power || 0).toWan()}・斬殺 ${Number(r.kills || 0).toWan()}</small>
+                    <small>${realms[r.realm] || '？'} ${r.stage} 階・戰力 ${fmtCombat(Number(r.power || 0))}・斬殺 ${Number(r.kills || 0).toWan()}</small>
                 </div>`).join('')
               : '<div class="dr-empty">尚無守城紀錄</div>')
             + `<div class="dr-note">保留最近 ${DEFENSE_RUN_LOG_MAX} 場。刷新個人最佳時自動送審，審核通過才會登上洞府「大道石碑」的守城排行榜。</div>`;

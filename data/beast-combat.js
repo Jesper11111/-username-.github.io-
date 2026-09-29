@@ -162,7 +162,7 @@ function applyPetDamageReduction(dmg, r) {
     if (partnerShieldTimer > 0) d *= 1 - partnerShieldRate;
     if (selfShieldTimer > 0) d *= 1 - selfShieldRate;
     if (r && typeof r.preDef === 'number' && r.preDef > 0 && d > 0) d = Math.max(d, r.preDef * playerDamageFloor());
-    return d === dmg ? d : roundDmg(d);   // 護盾／保底改過才重新取整（新制 1 位小數），避免 7.6000000000000005 這類尾數
+    return d === dmg ? d : roundDmg(d);   // 護盾／保底改過才重新取整（新制 2 位小數），避免 7.6000000000000005 這類尾數
 }
 // 敵人打玩家的最低傷害比例（見 config-elements.js）
 function playerDamageFloor() {
@@ -255,9 +255,9 @@ function castBeastSkill(sk, who, living) {
     const dmgBase = () => getPhysAttack() * (1 + gearFx("獸魂"));   // 獸魂（裝備特效，gear.js）
     if (sk.cat === 'attack') {
         const hit = (t, mult) => {
-            let d = dmgBase() * mult * petVulnMult(t);
+            let d = dmgBase() * mult * petVulnMult(t) * nv2DmgRoll();   // 傷害浮動 ±10%（elements.js）
             if (sk.execute && t.hp < (t.maxHp || t.hp) * 0.3) d *= 2;
-            d = roundDmg(d);   // 新制保留 1 位小數
+            d = roundDmg(d);   // 新制保留 2 位小數
             t.hp -= d;
             if (sk.burn && t.status) t.status.burn = addDotStack(t.status.burn, BURN_MAX_STACKS, BURN_TURNS, getPhysAttack() * BURN_RATE);
             if (sk.poison && t.status) for (let i = 0; i < sk.poison; i++) t.status.poison = addDotStack(t.status.poison, POISON_MAX_STACKS, POISON_TURNS, getPhysAttack() * POISON_RATE);
@@ -267,7 +267,7 @@ function castBeastSkill(sk, who, living) {
         (sk.aoe ? living : [living[0]]).forEach(t => { total += hit(t, sk.mult); });
         if (sk.splash) living.forEach(t => { if (t.hp > 0) total += hit(t, sk.splash); });
         if (sk.drain && total > 0) player.hp = Math.min(player.maxHp, player.hp + total * sk.drain);
-        addLog(`${who} 施展【${sk.name}】，造成 ${total.toWan()} 點${sk.aoe || sk.splash ? '群體' : ''}傷害！`, "skill");
+        addLog(`${who} 施展【${sk.name}】，造成 ${fmtCombat(total)} 點${sk.aoe || sk.splash ? '群體' : ''}傷害！`, "skill");
     } else if (sk.cat === 'control') {
         const parts = [];
         (sk.aoe ? living : [living[0]]).forEach(t => {

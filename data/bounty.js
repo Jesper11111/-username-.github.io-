@@ -19,7 +19,7 @@ function getBountyStats(entry) {
     if (typeof NUMERIC_V2 !== 'undefined' && NUMERIC_V2) {   // gm.html 也載入本檔但沒有新制檔案
         // 強度倍率 m（config-bounty.js 的 BOUNTY_STR_RANGE，刷榜時存進 entry.str；舊榜單沒有就取該榜中間值）：氣血 × m、攻擊 × √m
         let L = nv2Level(r, s), m = getBountyStrMult(entry);
-        return { attack: Math.round(nv2TypNormal(L) * NV2.bountyAtkMult * Math.sqrt(m) * 10) / 10, hp: Math.round(nv2TypHp(L) * NV2.bountyHpMult * m) };
+        return { attack: Math.round(nv2TypNormal(L) * NV2.bountyAtkMult * Math.sqrt(m) * 100) / 100, hp: Math.round(nv2TypHp(L) * NV2.bountyHpMult * m) };
     }
     let base = Math.pow(10, r) * 5 * s + (r === 0 ? 1 : 2 * Math.pow(10, r)) * s;
     let rank = BOUNTY_RANKS[entry.rank];
@@ -185,7 +185,7 @@ function renderBountyBoard() {
                 <h3 style="margin: 4px 0;">${getBountyIcon(entry)} ${npc.name}</h3>
                 <p style="font-size: 0.8em; color: #9ca3af; margin: 0;">「${npc.title}」・${npc.gender === 'female' ? '女' : '男'}・${getFactionLabel(entry.faction)}</p>
                 <p style="font-size: 0.85em; color: var(--accent); margin: 6px 0 2px;">${realms[entry.realmIndex]} ${entry.stage}階${NUMERIC_V2 ? `・<span style="color: ${rank.color};">強度 ×${getBountyStrMult(entry).toFixed(1)}</span>` : ''}</p>
-                <p style="font-size: 0.78em; margin: 2px 0;">攻擊 ${formatShortNumber(st.attack)}（<span style="color: ${ratioColor};">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）｜氣血 ${formatShortNumber(st.hp)}（你的 ${(st.hp / myHp).toFixed(1)} 倍）</p>
+                <p style="font-size: 0.78em; margin: 2px 0;">攻擊 ${formatShortCombat(st.attack)}（<span style="color: ${ratioColor};">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）｜氣血 ${formatShortCombat(st.hp)}（你的 ${(st.hp / myHp).toFixed(1)} 倍）</p>
                 <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️減傷 ${rank.def}% 💨閃避 ${rank.eva}% ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
                 <p style="font-size: 0.75em; color: #fca5a5; margin: 2px 0 6px;">武學：${skillNames}</p>
                 ${btn}
@@ -315,7 +315,7 @@ function bountyDuelTick() {
     let regen = applyRootRegen() + applyGearRegen();
     if (tags.length > 0 || oppTick.dot > 0 || regen > 0) {
         addLog(`✨ 屬性效果：${[tags.length ? summarizeTags(tags, `💨被${opp.name}閃避`) : '',
-            oppTick.dot ? `${opp.name}受持續傷害 ${oppTick.dot.toWan()}` : '',
+            oppTick.dot ? `${opp.name}受持續傷害 ${fmtCombat(oppTick.dot)}` : '',
             regen ? `🌿回復 ${regen.toWan()}` : ''].filter(Boolean).join("｜")}`, "skill");
     }
     if (opp.hp <= 0) { endBountyDuel("win"); return; }

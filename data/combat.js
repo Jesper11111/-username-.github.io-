@@ -166,7 +166,7 @@ function fieldCombatRound() {
     if (selfTick.dot > 0) {
         player.hp -= selfTick.dot;
         battleFxDot(selfTick, true);   // 戰鬥面板：燒傷紅字／中毒綠字（battle-fx.js）
-        addLog(`🩸 身上的${formatStatus(playerStatus) || '異常狀態'}發作，損失 ${selfTick.dot.toWan()} 點氣血！`, "combat");
+        addLog(`🩸 身上的${formatStatus(playerStatus) || '異常狀態'}發作，損失 ${fmtCombat(selfTick.dot)} 點氣血！`, "combat");
         if (player.hp <= 0 && !tryGearUndying()) { player.idleProvenMap = null; onPlayerKilledInField(); return; }
     }
 
@@ -199,7 +199,7 @@ function fieldCombatRound() {
     if (playerTags.length > 0 || dotTotal > 0 || regen > 0) {
         let parts = [];
         if (playerTags.length > 0) parts.push(summarizeTags(playerTags, "💨被閃避"));
-        if (dotTotal > 0) parts.push(`持續傷害 ${dotTotal.toWan()}`);
+        if (dotTotal > 0) parts.push(`持續傷害 ${fmtCombat(dotTotal)}`);
         if (regen > 0) parts.push(`🌿回復 ${regen.toWan()}`);
         addLog(`✨ 屬性效果：${parts.join("｜")}`, "skill");
     }
@@ -298,7 +298,7 @@ function fieldCombatRound() {
             totalDmg += applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
             enemyTags = enemyTags.concat(r.tags);
         });
-        let taken = NUMERIC_V2 ? Math.round(totalDmg * 10) / 10 : totalDmg;   // 多隻加總後去掉浮點尾數（新制 1 位小數）
+        let taken = NUMERIC_V2 ? roundDmg(totalDmg) : totalDmg;   // 多隻加總後去掉浮點尾數（新制 2 位小數）
         player.hp -= taken;
         battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）
         if (enemyTags.length > 0 || frozenCount > 0) {
@@ -391,12 +391,12 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
             let skillDmg = (skill.dmgType === 'mag' ? getMagAttack() * skill.mult : getPhysAttack() * skill.mult)
                 * getRootBonus().skillMult * (1 + (fx["法爆"] || 0));
             let attrs = withSkillEffect(baseAttrs, skill);
-            let cost = ` (消耗 ${mpCost} MP`;
+            let cost = ` (消耗 ${fmtCombat(mpCost)} 靈力`;
             // 魔功反噬：扣最大氣血的 hpCost 比例，不會因此死亡（仙法，spells.js）
             if (skill.hpCost) {
                 let lost = Math.min(Math.max(0, player.hp - 1), Math.floor(player.maxHp * skill.hpCost));
                 player.hp -= lost;
-                cost += `，反噬 ${lost.toWan()} 氣血`;
+                cost += `，反噬 ${fmtCombat(lost)} 氣血`;
             }
             cost += `)`;
             let dealt = 0;
@@ -436,7 +436,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
                 player.hp = Math.min(player.maxHp, player.hp + dealt * skill.lifesteal);
             }
         } else {
-            addLog(`💦 靈力不足 (需 ${mpCost} MP)，無法施展【${skill.name}】，改以普通攻擊迎敵！`, "skill");
+            addLog(`💦 靈力不足 (需 ${fmtCombat(mpCost)} 靈力)，無法施展【${skill.name}】，改以普通攻擊迎敵！`, "skill");
         }
     }
 

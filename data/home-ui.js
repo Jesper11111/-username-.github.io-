@@ -145,6 +145,8 @@ function openAscensionPlatform() {
 }
 
 // 數字縮寫：125.6萬、3.2億
+// 戰鬥數字（攻擊、氣血、靈力、戰力、傷害）的簡寫：先 ×100（format.js 的 combatScale）再簡寫
+function formatShortCombat(n) { return formatShortNumber((n || 0) * combatScale()); }
 function formatShortNumber(n) {
     n = Math.floor(n || 0);
     if (n >= 1e8) return (n / 1e8).toFixed(n >= 1e10 ? 0 : 1) + "億";
@@ -212,16 +214,16 @@ function updateHomeHud() {
     let levelPct = player.level >= MAX_PLAYER_LEVEL ? 100 : player.levelExp / getLevelExpNeeded(player.level) * 100;
     set('hud-level', `Lv.${player.level.toWan()}`);
     width('hud-level-bar', levelPct);
-    set('hud-power', formatShortNumber(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack()));   // 新制戰力＝每回合期望輸出（numeric.js）
+    set('hud-power', formatShortCombat(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack()));   // 新制戰力＝每回合期望輸出（numeric.js）
 
     set('hud-coins', formatShortNumber(player.coins));
     set('hud-rep', formatShortNumber(player.reputation || 0));   // 圖上的「仙玉」欄位改顯示聲望
     set('hud-core', formatShortNumber(player.beastCore || 0));   // 只有 PC 版有這一欄（元寶圖示的資源框）
 
     width('hud-hp-bar', player.hp / player.maxHp * 100);
-    set('hud-hp-text', `${formatShortNumber(player.hp)}/${formatShortNumber(player.maxHp)}`);
+    set('hud-hp-text', `${formatShortCombat(Math.max(0, player.hp))}/${formatShortCombat(player.maxHp)}`);
     width('hud-mp-bar', player.mp / player.maxMp * 100);
-    set('hud-mp-text', `${formatShortNumber(player.mp)}/${formatShortNumber(player.maxMp)}`);
+    set('hud-mp-text', `${formatShortCombat(Math.max(0, player.mp))}/${formatShortCombat(player.maxMp)}`);
     let expPct = Math.min(100, player.exp / getNextExp() * 100);
     width('hud-exp-bar', expPct);
     set('hud-exp-text', player.pendingTribulation ? '圓滿・待渡劫' : `${expPct.toFixed(1)}%`);

@@ -158,7 +158,7 @@ function resolveHit(rawDmg, attacker, defender) {
         return { dmg: 0, tags: ["dodge"] };
     }
 
-    let dmg = rawDmg;
+    let dmg = rawDmg * nv2DmgRoll();   // 新制傷害浮動 ±10%（config-numeric.js 的 dmgVariance），平均不變
     // 藏書閣屬性秘典：本命五行的直接傷害、對凍結中目標的傷害（其餘在各效果觸發時套用）
     let book = attacker.attrs.book;
     if (book) {
@@ -233,9 +233,13 @@ function resolveHit(rawDmg, attacker, defender) {
     return { dmg: roundDmg(dmg), tags, preDef };
 }
 
-// 傷害取整：舊制無條件捨去；新制數字很小（凡人氣血約 50、妖獸攻擊不到 1），保留 1 位小數，否則減傷會把傷害捨成 0
+// 傷害浮動倍率：新制回傳 1 ± NV2.dmgVariance 之間的隨機值（平均 1）；舊制固定 1
+function nv2DmgRoll() {
+    return NUMERIC_V2 && NV2.dmgVariance ? 1 + (Math.random() * 2 - 1) * NV2.dmgVariance : 1;
+}
+// 傷害取整：舊制無條件捨去；新制數字很小（凡人氣血約 50、妖獸攻擊不到 1），保留 2 位小數（畫面 ×100 後剛好是整數，format.js 的 fmtCombat）
 function roundDmg(v) {
-    return NUMERIC_V2 ? Math.round(v * 10) / 10 : Math.floor(v);
+    return NUMERIC_V2 ? Math.round(v * 100) / 100 : Math.floor(v);
 }
 
 // 疊一層持續傷害：層數 +1（有上限）、回合數刷新、每層傷害取較高者

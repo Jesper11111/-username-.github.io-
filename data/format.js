@@ -19,6 +19,13 @@ function fmtNum(n) {
     return (neg ? '-' : '') + s;
 }
 
+// 戰鬥數字的畫面倍率（2026-09-29 使用者選「顯示 ×100」）：新制內部是小數字（凡人氣血約 52、妖獸攻擊約 0.7），
+// 攻擊、氣血、靈力、傷害、回復量、戰力在畫面上一律 ×100 取整顯示（凡人氣血 5,200）；存檔、戰力榜、雲端規則的數值都不變。
+// 顯示這類數字一律用 fmtCombat(v) 或 v.toCombat()，不要直接 toWan()／toFixed()。舊制倍率 1（照原本整數顯示）
+function combatScale() { return typeof NUMERIC_V2 !== 'undefined' && NUMERIC_V2 ? 100 : 1; }
+function fmtCombat(v) { return fmtNum(Math.round(Number(v) * combatScale())); }
+Object.defineProperty(Number.prototype, 'toCombat', { value: function () { return fmtCombat(this); }, writable: true, configurable: true });
+
 // 讓所有 xxx.toWan() 都能用（取代原本的 toLocaleString()，全遊戲統一）；字串也支援，避免誤用時報錯
 Object.defineProperty(Number.prototype, 'toWan', { value: function () { return fmtNum(this); }, writable: true, configurable: true });
 Object.defineProperty(String.prototype, 'toWan', {
