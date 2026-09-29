@@ -165,6 +165,11 @@ function nv2TypNormal(L) {
     const weapon = NV2.weaponBase * nv2Growth(Math.min(L, NV2.weaponLevelSpan)) * NV2.typQuality;   // 武器等級上限 Lv.1000 ≈ L 10
     return (weapon + st * NV2.fistCoef) * (1 + st * NV2.atkPctPerPoint / 100) * (1 + nv2TypBuff(L) / 100);
 }
+// 一般玩家的命中（百分點，抵銷對方閃避）：與玩家敏捷命中 nv2Hit 同算法。2026-09-29 起妖獸、懸賞對手、鎮魔塔 BOSS 都帶這個命中
+// （使用者反映玩家閃避過高：原本敵人沒有命中，玩家閃避 40% 對所有敵人全額生效）
+function nv2TypHit(L) {
+    return nv2TypStat(L) * NV2.hitPer;
+}
 // 一般玩家的增益 %（凡人 +10%，每境界 +10%，最多 +50%）；宗門等增益同時加攻擊與氣血
 function nv2TypBuff(L) {
     return Math.min(NV2.typBuff, NV2.typBuffStart + L * NV2.typBuffPerL);
@@ -189,6 +194,11 @@ function nv2RealmGap(map) {
 }
 function nv2SuppressMult(map) {
     const gap = nv2RealmGap(map);
+    return { gap, hp: 1 + gap * NV2.suppressHp, atk: 1 + gap * NV2.suppressAtk };
+}
+// 同一套境界壓制，直接給敵人的成長位置 L（死守天南城每波、鎮魔塔 BOSS；2026-09-29 使用者反映「煉虛怎麼可能通關天仙等級關卡」）
+function nv2SuppressByL(enemyL) {
+    const gap = Math.max(0, enemyL - nv2Level(player.realmIndex, player.stage));
     return { gap, hp: 1 + gap * NV2.suppressHp, atk: 1 + gap * NV2.suppressAtk };
 }
 
@@ -263,7 +273,11 @@ function nv2EstimateIdleCombat() {
     const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
     const rateMult = Math.min(1, (gap + n * nv2TypRoundsPerKill(map)) / (gap + n * hits));
     const pAttrs = getPlayerCombatAttrs();
-    const hitTaken = ms.atk * (1 - pAttrs.eva / 100) * (1 - pAttrs.def / 100);
+    // 妖獸帶命中（rollMonsterAttrs）抵銷部分閃避；實際閃避、減傷＝玩家本身最多 20＋靈寵最多 10＋夥伴最多 10（同 resolveHit，config-elements.js）
+    const split = (tot, pet, par, pen, max) => Math.min(Math.max(0, tot - pet - par - pen), max) + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
+    const pEva = split(pAttrs.eva, pAttrs.petEva || 0, pAttrs.partnerEva || 0, nv2TypHit(ms.L), PLAYER_EFFECTIVE_EVA_MAX);
+    const pDef = split(pAttrs.def, pAttrs.petDef || 0, pAttrs.partnerDef || 0, 0, PLAYER_EFFECTIVE_DEF_MAX);
+    const hitTaken = ms.atk * (1 - pEva / 100) * (1 - pDef / 100);
     let monsterTurns = 0;
     for (let k = 1; k <= n; k++) monsterTurns += Math.max(0, k * hits - 1);
     const waveDamage = hitTaken * monsterTurns;

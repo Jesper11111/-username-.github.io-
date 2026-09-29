@@ -9,6 +9,16 @@
 const DEF_CAP = 60;     // 減傷上限 60%
 const EVA_CAP = 40;     // 閃避上限 40%（物理、術法傷害都能閃）
 const AFFIX_CAP = 50;   // 每種屬性傷害觸發率上限 50%
+// 敵人打玩家時「實際生效」的上限（2026-09-29 使用者指定：命中與傷害最低都有 8 成；靈寵最多再加 1 成、夥伴最多再加 1 成）：
+//   實際閃避＝min(玩家本身閃避 − 敵人命中, 20) ＋ min(靈寵給的閃避, 10) ＋ min(夥伴給的閃避, 10)
+//   實際減傷＝min(玩家本身減傷 − 敵人破甲, 20) ＋ min(靈寵給的減傷, 10) ＋ min(夥伴給的減傷, 10)（elements.js 的 resolveHit，attrs.isPlayer）
+//   另外的減傷機制（裝備特效金身／化勁、宗門守護、神器護盾、靈寵／夥伴護盾）算完後，最後再保底（beast-combat.js 的 applyPetDamageReduction）：
+//   傷害 ≥ 原傷害 ×（1 − 20% − 靈寵實際貢獻 − 夥伴實際貢獻），所以全部加滿閃避、減傷各最多 40%
+//   面板上的閃避／減傷仍照 EVA_CAP／DEF_CAP 累積顯示
+const PLAYER_EFFECTIVE_EVA_MAX = 20;
+const PLAYER_EFFECTIVE_DEF_MAX = 20;
+const PLAYER_PET_BONUS_MAX = 10;       // 靈寵：增益的閃避、減傷，以及靈寵護盾（受傷減少）
+const PLAYER_PARTNER_BONUS_MAX = 10;   // 夥伴：被動的閃避、減傷，以及絕學護盾
 
 // 屬性傷害效果
 const FREEZE_TURNS = 1;          // 冰：凍結 1 回合（該回合無法行動）

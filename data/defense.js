@@ -54,32 +54,41 @@ const DefenseBattle = (() => {
         const t = (w - 1) / Math.max(1, DEFENSE_TOTAL_WAVES - 1), lerp = ([a, b]) => a + (b - a) * t;
         const boss = w % DEFENSE_BOSS_EVERY === 0, E = DEFENSE_ENEMY;
         const grow = defenseWaveMult(w);   // 新制每波額外成長（config-defense.js）
-        const atk = waveAtk(w) * grow * (boss ? E.bossAtk : 1);
+        // 境界壓制（numeric.js 的 nv2SuppressByL）：這一波的境界高於玩家時，攻擊與氣血都放大（同野外）
+        const sup = NUMERIC_V2 ? nv2SuppressByL(defenseWaveL(w)) : { gap: 0, hp: 1, atk: 1 };
+        const atk = waveAtk(w) * grow * sup.atk * (boss ? E.bossAtk : 1);
         const DE = NUMERIC_V2 ? NV2.defenseEnemy : E;   // 新制減傷／閃避較平緩（config-numeric.js）
         const attrs = { def: lerp(DE.def), eva: lerp(DE.eva), ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
                         element: wuxingElements[(w * 7) % wuxingElements.length] };
         attrs[MONSTER_AFFIX_TYPES[w % MONSTER_AFFIX_TYPES.length]] = lerp(E.affix);
+        if (NUMERIC_V2) attrs.evaPen = nv2TypHit(defenseWaveL(w));   // 命中：同強度一般玩家（numeric.js），抵銷玩家閃避
         // 新制：氣血 = 攻擊 × 3.6（一般玩家的比例）× defenseHpScale，模擬時玩家氣血同樣放大（simulateWave）
         const hpPerAtk = NUMERIC_V2 ? NV2.defenseHpPerAtk * NV2.defenseHpScale : E.hpPerAtk;
-        return { atk, hp: waveAtk(w) * grow * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss };
+        // 首領光環（config-defense.js 的 DEFENSE_BOSS_AURAS，新制才有）
+        const auras = boss && NUMERIC_V2 ? DEFENSE_BOSS_AURAS[(w / DEFENSE_BOSS_EVERY - 1) % DEFENSE_BOSS_AURAS.length] || null : null;
+        return { atk, hp: waveAtk(w) * grow * sup.hp * hpPerAtk * (boss ? E.bossHp : 1), attrs, boss, auras, sup };
     }
     // 以玩家當下真實數值，用遊戲的 resolveHit／tickStatus 在背後打一場（不影響玩家實際氣血與狀態）
     function simulateWave(w) {
-        const e = waveEnemy(w), pa = getPlayerCombatAttrs();
-        const pAtk = Math.max(getPhysAttack(), getMagAttack()) * DEFENSE_PLAYER_SKILL_MULT;
+        const e = waveEnemy(w), ag = combineAuras(e.auras);   // 首領多重光環（elements.js）
+        const pa = auraPlayerAttrs(getPlayerCombatAttrs(), ag), eAttrs = auraSelfAttrs(e.attrs, ag);
+        const pAtk = Math.max(getPhysAttack(), getMagAttack()) * DEFENSE_PLAYER_SKILL_MULT * auraPlayerAtkMult(ag);
+        const eAtk = e.atk * auraSelfAtkMult(ag), curse = auraCurseMult(ag);
         const pMax = getMaxHp() * (NUMERIC_V2 ? NV2.defenseHpScale : 1);   // 新制雙方氣血一起放大，約 20 下分勝負
         let pHp = pMax, eHp = e.hp;
         const ps = newStatus(), es = newStatus();
         for (let r = 1; r <= DEFENSE_MAX_ROUNDS; r++) {
-            const st = tickStatus(ps); pHp -= st.dot;
+            const at = auraRoundTick(ag, ps, pMax, e.hp, eAtk, pa);   // 光環：凍結／燒傷／中毒／持續扣血、首領回血
+            if (at.regen) eHp = Math.min(e.hp, eHp + at.regen);
+            const st = tickStatus(ps); pHp -= st.dot + at.dot;
             if (pHp <= 0) return { win: false, rounds: r };
             if (!st.frozen) {
-                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: e.attrs, status: es }).dmg;
-                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: e.attrs, status: es }).dmg;   // 新制敏捷連擊
+                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;
+                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;   // 新制敏捷連擊
             }
             const et = tickStatus(es); eHp -= et.dot;
             if (eHp <= 0) return { win: true, rounds: r, hpLeft: pHp / pMax };
-            if (!et.frozen) pHp -= resolveHit(e.atk, { attrs: e.attrs, power: e.atk }, { attrs: pa, status: ps }).dmg;
+            if (!et.frozen) pHp -= resolveHit(eAtk, { attrs: eAttrs, power: eAtk }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
             if (pHp <= 0) return { win: false, rounds: r };
         }
         return { win: false, rounds: DEFENSE_MAX_ROUNDS, timeout: true };
@@ -233,6 +242,9 @@ const DefenseBattle = (() => {
         const bn = $('defense-banner'); bn.classList.add('on');
         clearTimeout(setWave.t); setWave.t = setTimeout(() => bn.classList.remove('on'), 1600);
         feed(spec.boss ? `👹 第 ${w} 波・首領【${spec.bossName}】來襲！（${spec.realmLabel}）` : `🌊 第 ${w} 波・${spec.th.name}妖潮（${spec.realmLabel}）`, 'wave');
+        const we = waveEnemy(w);
+        if (we.auras) feed(`🌀 ${spec.bossName}展開光環：${we.auras.map(a => a.name).join('、')}`, 'kill');   // 首領光環（config-defense.js）
+        if (we.sup && we.sup.gap >= 0.5) feed(`⚠️ 境界壓制：妖潮高你 ${we.sup.gap.toFixed(1)} 個境界（攻擊 ×${we.sup.atk.toFixed(1)}、氣血 ×${we.sup.hp.toFixed(1)}）`, 'kill');
         if (!spec.result.win) feed(spec.result.timeout ? '⚠️ 妖潮源源不絕，久戰難下……' : '⚠️ 妖潮勢大，城牆岌岌可危……', 'kill');
         weatherAcc = 0;
     }

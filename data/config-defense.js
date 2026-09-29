@@ -43,6 +43,38 @@ const DEFENSE_THEMES = [
 
 // 首領（第 10、20…100 波依序）
 const DEFENSE_BOSSES = ['九首魔蛟', '血翼魔王', '骨龍', '噬魂魔將', '赤瞳屍王', '萬足魔蠍', '幽冥鬼帝', '煉獄魔猿', '天魔化身', '魔祖真身'];
+// 首領光環（2026-09-29 使用者要求 BOSS 自帶多個光環：壓制玩家＋強化自身；格式見 elements.js 的 combineAuras），索引同 DEFENSE_BOSSES。
+// 守城一波約 20 回合分勝負，所以每回合效果比鎮魔塔（約 300 回合）強；越後面的首領光環越多
+const DEFENSE_BOSS_AURAS = [
+    [ { name: "九首毒涎", player: { poison: 0.12 }, self: { def: 5 } },
+      { name: "蛟威",     player: { atk: 0.05 }, self: { atk: 0.05 } } ],
+    [ { name: "血翼颶風", player: { eva: 5, dot: 0.01 }, self: { eva: 5 } },
+      { name: "嗜血",     player: {}, self: { regen: 0.01 } } ],
+    [ { name: "骨龍寒息", player: { freeze: 0.06 }, self: { def: 8 } },
+      { name: "枯骨詛咒", player: { curse: 0.08 }, self: {} } ],
+    [ { name: "噬魂魔音", player: { atk: 0.10 }, self: { atk: 0.08 } },
+      { name: "魂火",     player: { burn: 0.12 }, self: {} },
+      { name: "魔將鐵甲", player: {}, self: { def: 8 } } ],
+    [ { name: "屍王瘴氣", player: { poison: 0.15, dot: 0.01 }, self: {} },
+      { name: "赤瞳凝視", player: { def: 8, freeze: 0.05 }, self: {} },
+      { name: "不腐之身", player: {}, self: { regen: 0.01 } } ],
+    [ { name: "萬足劇毒", player: { poison: 0.18 }, self: { atk: 0.05 } },
+      { name: "蠍尾麻痺", player: { freeze: 0.06 }, self: {} },
+      { name: "甲殼",     player: {}, self: { def: 10 } } ],
+    [ { name: "鬼帝威壓", player: { atk: 0.10, def: 5 }, self: { atk: 0.10 } },
+      { name: "幽冥詛咒", player: { curse: 0.10, dot: 0.01 }, self: {} },
+      { name: "百鬼護駕", player: {}, self: { eva: 8, regen: 0.01 } } ],
+    [ { name: "煉獄業火", player: { burn: 0.18, dot: 0.01 }, self: { atk: 0.10 } },
+      { name: "魔猿狂暴", player: { eva: 5 }, self: { atk: 0.10 } },
+      { name: "赤鐵筋骨", player: {}, self: { def: 10 } } ],
+    [ { name: "天魔噬心", player: { atk: 0.12, curse: 0.10 }, self: {} },
+      { name: "天魔寒獄", player: { freeze: 0.08 }, self: { def: 8 } },
+      { name: "天魔不滅", player: { dot: 0.015 }, self: { regen: 0.015 } } ],
+    [ { name: "魔祖降世", player: { atk: 0.12, def: 8, eva: 5 }, self: { atk: 0.15 } },
+      { name: "萬魔詛咒", player: { curse: 0.12, dot: 0.015 }, self: {} },
+      { name: "混沌魔焰", player: { burn: 0.15, poison: 0.15 }, self: {} },
+      { name: "魔祖真身", player: { freeze: 0.06 }, self: { def: 10, regen: 0.015 } } ]
+];
 const DEFENSE_OPENERS = ['volley', 'rain', 'pillars', 'spiral', 'chain'];
 const DEFENSE_CAMERAS = ['靜止', '推近', '橫移', '拉遠', '傾斜'];
 
@@ -115,6 +147,17 @@ function defenseWaveAtk(w) {
     }
     const a = miles[miles.length - 2], b = miles[miles.length - 1];
     return b.a * Math.pow(b.a / a.a, (w - b.w) / (b.w - a.w));
+}
+// 第 w 波對應的成長位置 L（新制，里程碑之間線性內插；超過最後一個里程碑沿用最後一段的斜率，最高 15.9）：
+// 妖潮的命中＝這個 L 的一般玩家命中（defense.js 的 waveEnemy，2026-09-29 使用者要求死守天南城也加命中）
+function defenseWaveL(w) {
+    const ms = DEFENSE_MILESTONES.map(m => ({ w: m.wave, L: m.realm + ((m.stage || DEFENSE_MILESTONE_STAGE) - 1) / 10 }));
+    for (let i = 0; i < ms.length - 1; i++) {
+        const a = ms[i], b = ms[i + 1];
+        if (w <= b.w) return a.L + (b.L - a.L) * (Math.max(w, a.w) - a.w) / (b.w - a.w);
+    }
+    const a = ms[ms.length - 2], b = ms[ms.length - 1];
+    return Math.min(15.9, b.L + (b.L - a.L) * (w - b.w) / (b.w - a.w));
 }
 // 新制每波額外成長倍率（config-numeric.js 的 defenseWaveGrowth）：妖潮攻擊與氣血都乘上，舊制 = 1
 // defenseWaveAtk 仍是「同境界一般玩家」的基準（強度標籤、靈石獎勵用它），實際妖潮 = 基準 × 本倍率

@@ -104,6 +104,10 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         player.coins += coinsEarned;
         if (potion && potion.cost) player.coins = Math.max(0, player.coins - potion.cost);   // 自動購買丹藥的花費（收入入帳後再扣）
         gainKillProficiency(combatTicks * PROF_OFFLINE_RATE);   // 主修職業熟練度（離線打折，profession.js）
+        // 情緣任務（2026-09-29 使用者要求離線也能完成）：野外擊殺與隊伍夥伴的並肩擊殺也累計（partner.js 的 onPartnerFieldKills）。
+        // combatTicks 是「收益次數」（新制含每隻收益補償 getKillRewardMult），換回實際擊殺數，與線上同樣速度
+        let partnerKills = Math.floor(combatTicks / (NUMERIC_V2 ? getKillRewardMult() : 1));
+        if (partnerKills > 0) onPartnerFieldKills(partnerKills);
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
@@ -134,6 +138,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
             + (meritEarned > 0 ? `、${meritEarned.toWan()} 點功德` : '')
             + (rescuedCount > 0 ? `，並拯救了 ${rescuedCount} 名受困修士！` : '！');
         if (potion && potion.text) msg += `\n${potion.text}`;
+        if (partnerKills > 0 && (player.partners || []).length) msg += `\n💞 情緣任務：野外擊殺 +${partnerKills.toWan()}${getPartnerTeam().length ? '（隊伍夥伴的並肩擊殺同步累計）' : ''}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
                 ? `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 回合才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（達到同境界一般水準時為 100%）。`

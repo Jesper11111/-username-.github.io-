@@ -21,7 +21,11 @@ function getPlayerCombatAttrs() {
     let capOf = (k, base) => base + (extra["cap:" + k] || 0);
     // 新制（numeric.js）：敏捷提供閃避（一起套上限）、命中（加在洞察上）、暴擊率
     let agiEva = NUMERIC_V2 ? nv2AgiEva() : 0;
+    // 閃避／減傷裡屬於靈寵、夥伴的部分（敵人打玩家時各自另有上限，resolveHit）；夥伴被動已含在 b（getEquipBonus → getBonusTotals）
+    let pb = typeof getPartnerBonusTotals === 'function' ? getPartnerBonusTotals() : {};
     return {
+        petDef: petFxVal('def'), petEva: petFxVal('eva'),
+        partnerDef: pb.def || 0, partnerEva: pb.eva || 0,
         // 靈寵增益（beast-combat.js 的 petFxVal）：減傷、閃避一起套上限；暴擊、命中、破甲直接加
         def: cap(b.def + r.def + a.def + gearDef + petFxVal('def'), capOf("def", DEF_CAP)) * armor,
         eva: cap(b.eva + a.eva + agiEva + petFxVal('eva'), capOf("eva", EVA_CAP)) * armor,
@@ -51,7 +55,8 @@ function getPlayerCombatAttrs() {
         frozenBonus: fx["寒徹"] || 0,
         burnBonus: fx["焚燼"] || 0,
         poisonBonus: fx["蝕骨"] || 0,
-        poisonImmune: getAptitudeSpecial().poisonImmune   // 萬毒不侵體（aptitude.js），怪物沒有此欄位
+        poisonImmune: getAptitudeSpecial().poisonImmune,  // 萬毒不侵體（aptitude.js），怪物沒有此欄位
+        isPlayer: true   // resolveHit：敵人打玩家時閃避、減傷實際最多 PLAYER_EFFECTIVE_*_MAX（心魔鏡像也帶，雙方對稱）
     };
 }
 
@@ -76,16 +81,66 @@ function getMapCategoryIndex(mapName) {
     return maps.findIndex(cat => cat.items.some(m => m.name === mapName));
 }
 
-function rollMonsterAttrs() {
+// L（選填，新制）：妖獸的成長位置 → 帶同階一般玩家的命中 evaPen（numeric.js 的 nv2TypHit），抵銷玩家閃避
+function rollMonsterAttrs(L) {
     let profile = monsterAttrsByMapCategory[getMapCategoryIndex(player.currentMap.name)] || monsterAttrsByMapCategory[1];
     let attrs = { def: profile.def, eva: profile.eva, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0,
                   element: wuxingElements[Math.floor(Math.random() * wuxingElements.length)] };
+    if (NUMERIC_V2 && typeof L === 'number') attrs.evaPen = nv2TypHit(L);
     if (Math.random() < profile.affixProb) {
         attrs[MONSTER_AFFIX_TYPES[Math.floor(Math.random() * MONSTER_AFFIX_TYPES.length)]] = profile.affixChance;
     }
     if (DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name))) attrs.nature = "dark";   // 幽冥禁域妖獸本質為暗（光暗互剋）
     return attrs;
 }
+
+// ---- BOSS 光環（2026-09-29 使用者要求「BOSS 自帶多個光環，有負面效果也有增益效果；對玩家詛咒、冰凍、持續扣血、燒傷、中毒」）----
+// 鎮魔塔 zhenmo.js、死守天南城首領波 defense.js。BOSS 的 auras 是陣列，每個光環 = { name, player: {...}, self: {...} }，多個光環同種效果相加：
+//   player（壓制玩家）：atk −攻擊比例、def −減傷點、eva −閃避點、curse 詛咒＝受到傷害 +比例、dot 每回合扣最大氣血比例、
+//                       freeze／burn／poison 每回合各以該機率使玩家凍結 1 回合／疊 1 層燒傷／疊 1 層中毒（每層傷害以 BOSS 攻擊計）
+//   self（強化自身）：atk +攻擊比例、def +減傷點、eva +閃避點、regen 每回合回最大氣血比例
+const AURA_PLAYER_KEYS = ['atk', 'def', 'eva', 'curse', 'dot', 'freeze', 'burn', 'poison'];
+const AURA_SELF_KEYS = ['atk', 'def', 'eva', 'regen'];
+// 把多個光環合併成一個 { player, self }（沒有光環回傳 null）
+function combineAuras(auras) {
+    const list = (Array.isArray(auras) ? auras : [auras]).filter(Boolean);
+    if (!list.length) return null;
+    const sum = (part, keys) => { const o = {}; keys.forEach(k => { o[k] = list.reduce((s, a) => s + ((a[part] && a[part][k]) || 0), 0); }); return o; };
+    return { player: sum('player', AURA_PLAYER_KEYS), self: sum('self', AURA_SELF_KEYS), count: list.length };
+}
+function auraPlayerAtkMult(ag) { return ag ? Math.max(0.1, 1 - ag.player.atk) : 1; }
+function auraSelfAtkMult(ag) { return ag ? 1 + ag.self.atk : 1; }
+function auraCurseMult(ag) { return ag ? 1 + ag.player.curse : 1; }   // 敵人打玩家的傷害倍率
+// 回傳套上光環後的屬性（新物件，不改原本的）
+function auraPlayerAttrs(attrs, ag) {
+    if (!ag) return attrs;
+    return Object.assign({}, attrs, { def: Math.max(0, (attrs.def || 0) - ag.player.def), eva: Math.max(0, (attrs.eva || 0) - ag.player.eva) });
+}
+function auraSelfAttrs(attrs, ag) {
+    if (!ag) return attrs;
+    return Object.assign({}, attrs, { def: (attrs.def || 0) + ag.self.def, eva: (attrs.eva || 0) + ag.self.eva });
+}
+// 每回合開始時的光環效果：對玩家狀態 pSt 擲凍結／燒傷／中毒，回傳 { dot：這回合光環直接扣的氣血, regen：BOSS 回的氣血, tags }
+//   pMax＝玩家最大氣血、eMax＝BOSS 最大氣血、bossAtk＝BOSS 攻擊（燒傷／中毒每層傷害的基準）；freezeResist 同 resolveHit
+function auraRoundTick(ag, pSt, pMax, eMax, bossAtk, pAttrs) {
+    const out = { dot: 0, regen: 0, tags: [] };
+    if (!ag) return out;
+    if (ag.player.dot) out.dot = roundDmg(pMax * ag.player.dot);
+    if (ag.self.regen) out.regen = eMax * ag.self.regen;
+    if (ag.player.freeze && Math.random() < ag.player.freeze * (1 - ((pAttrs && pAttrs.freezeResist) || 0))) { pSt.frozen = Math.max(pSt.frozen, FREEZE_TURNS); out.tags.push('ice'); }
+    if (ag.player.burn && Math.random() < ag.player.burn) { pSt.burn = addDotStack(pSt.burn, BURN_MAX_STACKS, BURN_TURNS, bossAtk * BURN_RATE); out.tags.push('fire'); }
+    if (ag.player.poison && !(pAttrs && pAttrs.poisonImmune) && Math.random() < ag.player.poison) { pSt.poison = addDotStack(pSt.poison, POISON_MAX_STACKS, POISON_TURNS, bossAtk * POISON_RATE); out.tags.push('poison'); }
+    return out;
+}
+function describeAura(aura) {
+    if (!aura) return '';
+    const p = aura.player || {}, s = aura.self || {}, pc = v => +(v * 100).toFixed(1);
+    const neg = [p.atk && `你的攻擊 −${pc(p.atk)}%`, p.def && `你的減傷 −${p.def}`, p.eva && `你的閃避 −${p.eva}`, p.curse && `詛咒：你受到的傷害 +${pc(p.curse)}%`,
+                 p.dot && `每回合扣你 ${pc(p.dot)}% 氣血`, p.freeze && `每回合 ${pc(p.freeze)}% 凍結你`, p.burn && `每回合 ${pc(p.burn)}% 使你燒傷`, p.poison && `每回合 ${pc(p.poison)}% 使你中毒`].filter(Boolean);
+    const pos = [s.atk && `攻擊 +${pc(s.atk)}%`, s.def && `減傷 +${s.def}`, s.eva && `閃避 +${s.eva}`, s.regen && `每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
+    return `【${aura.name}】${neg.length ? neg.join('、') : ''}${neg.length && pos.length ? '；' : ''}${pos.length ? '自身' + pos.join('、') : ''}`;
+}
+function describeAuras(auras) { return (Array.isArray(auras) ? auras : [auras]).filter(Boolean).map(describeAura).join('<br>'); }
 
 // 單次命中結算（依序）：閃避 → 金重擊 → 雷擊 → 五行相剋 → 減傷（雷擊時略過）→ 附加冰/火/毒狀態
 //   attacker = { attrs, power }  power 為計算燒傷/中毒的攻擊力基準
@@ -94,6 +149,11 @@ function rollMonsterAttrs() {
 function resolveHit(rawDmg, attacker, defender) {
     let tags = [];
     let eva = (defender.attrs.eva || 0) - (attacker.attrs.evaPen || 0);   // 洞察：無視部分閃避
+    if (defender.attrs.isPlayer) {   // 敵人打玩家：玩家本身最多 20、靈寵最多 +10、夥伴最多 +10（config-elements.js）
+        const d = defender.attrs, pet = d.petEva || 0, par = d.partnerEva || 0;
+        eva = Math.min(Math.max(0, (d.eva || 0) - pet - par - (attacker.attrs.evaPen || 0)), PLAYER_EFFECTIVE_EVA_MAX)
+            + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
+    }
     if (eva > 0 && Math.random() < eva / 100) {
         return { dmg: 0, tags: ["dodge"] };
     }
@@ -142,7 +202,16 @@ function resolveHit(rawDmg, attacker, defender) {
         dmg *= NV2.critDmg;
         tags.push("crit");
     }
-    if (!thunder && !darkHit) dmg *= 1 - Math.max(0, (defender.attrs.def || 0) - (attacker.attrs.armorPen || 0)) / 100;   // 雷擊、暗蝕無視減傷   // 破甲：無視部分減傷
+    const preDef = dmg;   // 減傷前的傷害：敵人打玩家時，最後保底用（beast-combat.js 的 applyPetDamageReduction）
+    if (!thunder && !darkHit) {   // 雷擊、暗蝕無視減傷；破甲：無視部分減傷
+        let def = Math.max(0, (defender.attrs.def || 0) - (attacker.attrs.armorPen || 0));
+        if (defender.attrs.isPlayer) {   // 敵人打玩家：玩家本身最多 20、靈寵最多 +10、夥伴最多 +10（config-elements.js）
+            const d = defender.attrs, pet = d.petDef || 0, par = d.partnerDef || 0;
+            def = Math.min(Math.max(0, (d.def || 0) - pet - par - (attacker.attrs.armorPen || 0)), PLAYER_EFFECTIVE_DEF_MAX)
+                + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
+        }
+        dmg *= 1 - def / 100;
+    }
 
     let st = defender.status;
     // 冰靈根等提供的 freezeResist 會折減「被凍結」的機率
@@ -161,7 +230,7 @@ function resolveHit(rawDmg, attacker, defender) {
             attacker.power * POISON_RATE * (1 + (book ? book.poison : 0)) * (1 + (attacker.attrs.poisonBonus || 0)));
         tags.push("poison");
     }
-    return { dmg: roundDmg(dmg), tags };
+    return { dmg: roundDmg(dmg), tags, preDef };
 }
 
 // 傷害取整：舊制無條件捨去；新制數字很小（凡人氣血約 50、妖獸攻擊不到 1），保留 1 位小數，否則減傷會把傷害捨成 0

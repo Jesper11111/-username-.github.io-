@@ -235,6 +235,7 @@ function startBountyDuel(entry) {
     let attrs = { def: rank.def, eva: rank.eva, ice: 0, fire: 0, poison: 0, metal: 0, thunder: 0, element: entry.element,
                   nature: entry.faction === "邪" ? "dark" : "light" };   // 光暗互剋（config-elements.js）
     attrs[entry.affix] = rank.affix;
+    if (NUMERIC_V2) attrs.evaPen = nv2TypHit(nv2Level(entry.realmIndex, entry.stage));   // 同階一般玩家的命中，抵銷玩家閃避（numeric.js）
 
     enemies = [];
     respawnTimer = 0;
@@ -351,7 +352,7 @@ function bountyDuelTick() {
 
     let r = resolveHit(opp.attack * dmgMult, { attrs: opp.attrs, power: opp.attack }, { attrs: getPlayerCombatAttrs(), status: playerStatus });
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
-    let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags));
+    let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags), r);   // 護盾＋最低傷害保底（beast-combat.js）
     player.hp -= dealt;
     battleFxHurt(dealt, r.tags.includes("dodge"), r.tags);   // 戰鬥面板飄字（battle-fx.js）
     if (sk && dealt > 0) {

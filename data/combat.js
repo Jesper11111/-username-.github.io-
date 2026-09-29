@@ -118,7 +118,7 @@ function combatTick() {
             let one = NUMERIC_V2 ? getMapMonsterStats(player.currentMap, true) : ms;   // 新制每隻各自擲階數與強度（numeric.js）
             enemies.push({ hp: one.hp, maxHp: one.hp, attack: one.atk, nv2Lv: one.L,
                            name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
-                           attrs: rollMonsterAttrs(), status: newStatus() });
+                           attrs: rollMonsterAttrs(one.L), status: newStatus() });   // 新制帶同階一般玩家的命中（elements.js）
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
         let extraText = [];
@@ -129,7 +129,7 @@ function combatTick() {
                 enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
                                img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
-                               attrs: Object.assign(rollMonsterAttrs(), { nature: faction === "邪" ? "dark" : "light" }),   // 邪修為暗、正道為光（光暗互剋）
+                               attrs: Object.assign(rollMonsterAttrs(ms.L), { nature: faction === "邪" ? "dark" : "light" }),   // 邪修為暗、正道為光（光暗互剋）；命中同妖獸平均階數
                                status: newStatus() });
             };
             // 每波機率乘 getWaveChanceMult()：刷新變慢（新制另有每波變長）、波數變少，每小時遇到的次數維持原設計（config-maps.js）
@@ -293,11 +293,11 @@ function fieldCombatRound() {
             if (e.skipTurn) { frozenCount++; return; }
             let atk = e.attack * petEnemyAtkMult(e);   // 被靈寵削弱時攻擊降低（beast-combat.js）
             let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
-            // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）
-            totalDmg += applyGearDefense(r, e, !!e.cultivator, r.tags);
+            // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
+            totalDmg += applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
             enemyTags = enemyTags.concat(r.tags);
         });
-        let taken = applyPetDamageReduction(totalDmg);
+        let taken = totalDmg;
         player.hp -= taken;
         battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）
         if (enemyTags.length > 0 || frozenCount > 0) {
@@ -412,10 +412,10 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
                 player.buffMult = skill.mult;
                 addLog(skill.msg + cost, "skill");
             } else if (skill.type === "shield") {
-                // 守護：與靈寵土屬性共用減傷狀態，取較高值（applyPetDamageReduction 套用）
-                petShieldRate = petShieldTimer > 0 ? Math.max(petShieldRate, skill.reduce) : skill.reduce;
-                petShieldTimer = Math.max(petShieldTimer, skill.duration);
-                addLog(skill.msg + cost + ` 受到傷害 -${Math.round(petShieldRate * 100)}%`, "skill");
+                // 守護：玩家本身的護盾（selfShield*，applyPetDamageReduction 套用；與裝備減傷一起受「玩家本身 20%」上限）
+                selfShieldRate = selfShieldTimer > 0 ? Math.max(selfShieldRate, skill.reduce) : skill.reduce;
+                selfShieldTimer = Math.max(selfShieldTimer, skill.duration);
+                addLog(skill.msg + cost + ` 受到傷害 -${Math.round(selfShieldRate * 100)}%`, "skill");
             } else if (skill.type === "control") {
                 // 牽制：造成傷害並以 freeze 機率定身（沿用冰凍狀態）
                 let ctrlAttrs = Object.assign({}, attrs, { ice: Math.max(attrs.ice || 0, skill.freeze * 100) });

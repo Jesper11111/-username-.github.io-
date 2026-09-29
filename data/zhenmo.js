@@ -188,10 +188,12 @@ const ZhenmoTower = (() => {
         // 新制（第 52 節）：氣血 = 同強度一般玩家每回合輸出 × bossRounds（約 300 回合）；攻擊 = 一般玩家氣血（含增益）÷ bossHitsToKill；hpPerAtk 是舊制比例，不使用
         if (NUMERIC_V2) {
             const L = nv2Level(boss.realm, boss.stage);
+            attrs.evaPen = nv2TypHit(L);   // 同階一般玩家的命中，抵銷玩家閃避（2026-09-29，numeric.js）
+            const sup = nv2SuppressByL(L);   // 境界壓制：BOSS 境界高於玩家時攻擊與氣血放大（同野外、死守天南城）
             // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
-            const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * 10) / 10;
+            const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 10) / 10;
             const through = (1 - attrs.def / 100) * (1 - attrs.eva / 100);   // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完
-            return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1)), attrs };
+            return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp), attrs, sup };
         }
         // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
         const baseAtk = defenseRealmAtk(boss.realm, boss.stage);
@@ -224,6 +226,8 @@ const ZhenmoTower = (() => {
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
                 <p class="zm-boss-stat">攻擊 ${(NUMERIC_V2 ? b.atk : Math.round(b.atk)).toWan()}（${atkNote}）・氣血 ${Math.round(b.hp).toWan()}<br>
                     🛡️減傷 ${b.attrs.def}% 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
+                ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
+                ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>
                 <button class="zm-btn gold" onclick="startZhenmoFight()">⚔️ 挑戰${escapeZm(boss.name)}</button>
                 <p class="zm-note">挑戰失敗本層問答成績作廢，須重新答題。</p>`;
@@ -244,10 +248,12 @@ const ZhenmoTower = (() => {
         const p = z.pending && z.pending.floor === z.floor ? z.pending : null;
         if (!boss || !p || fight) return;
         const b = bossStats(boss), me = playerStats();
+        const aura = combineAuras(boss.auras);   // BOSS 多重光環合併（config-zhenmo.js；elements.js）：壓制玩家、強化自身，整場有效
+        const mood = 1 + (Math.random() * 2 - 1) * ZHENMO_BOSS_VARIANCE;   // 本次挑戰的隨機氣勢（攻擊、氣血一起浮動）
         fight = {
-            floor: z.floor, boss, mult: p.mult, round: 0, over: false, speed: fight && fight.speed || 1, tid: 0,
-            e: { atk: b.atk, hp: b.hp, max: b.hp, attrs: b.attrs, st: newStatus() },
-            p: { atk: me.atk, hp: me.hp, max: me.hp, attrs: me.attrs, st: newStatus() }
+            floor: z.floor, boss, mult: p.mult, round: 0, over: false, speed: fight && fight.speed || 1, tid: 0, aura,
+            e: { atk: b.atk * auraSelfAtkMult(aura) * mood, hp: b.hp * mood, max: b.hp * mood, attrs: auraSelfAttrs(b.attrs, aura), st: newStatus() },
+            p: { atk: me.atk * auraPlayerAtkMult(aura), hp: me.hp, max: me.hp, attrs: auraPlayerAttrs(me.attrs, aura), st: newStatus() }
         };
         const bg = $('zm-fight-bg');
         bg.style.backgroundImage = `url(${boss.img})`;
@@ -262,6 +268,9 @@ const ZhenmoTower = (() => {
         updateBars();
         show('fight');
         fightLog(`⚔️ ${boss.name}：「${boss.skills && boss.skills[0] ? '區區凡人，也敢闖塔？' : '來吧！'}」`, 'boss');
+        if (aura) (boss.auras || []).forEach(a => fightLog(`🌀 ${boss.name}展開光環${describeAura(a)}`, 'boss'));
+        const moodPct = Math.round((mood - 1) * 100);
+        fightLog(`🔥 ${boss.name}今日氣勢 ${moodPct >= 0 ? '+' : ''}${moodPct}%（攻擊與氣血）`, 'boss');
         fight.tid = setTimeout(step, 700 / fight.speed);
     }
     const HERO_MOVES = ['御劍術', '劍氣縱橫', '驚鴻一劍', '青冥劍訣', '萬劍歸宗'];
@@ -269,7 +278,12 @@ const ZhenmoTower = (() => {
     function round(instant) {
         const f = fight, P = f.p, E = f.e;
         f.round++;
+        // BOSS 光環：每回合先擲凍結／燒傷／中毒（下面 tickStatus 立刻生效）、扣玩家最大氣血比例、BOSS 回血（elements.js 的 auraRoundTick）
+        const at = auraRoundTick(f.aura, P.st, P.max, E.max, E.atk, P.attrs);
+        if (at.regen) E.hp = Math.min(E.max, E.hp + at.regen);
+        if (!instant && at.tags.length) fightLog(`🌀 光環侵蝕：${at.tags.map(t => ({ ice: '❄️凍結', fire: '🔥燒傷', poison: '☠️中毒' })[t]).join('、')}`, 'boss');
         const st = tickStatus(P.st);
+        st.dot += at.dot;
         if (st.dot) { P.hp -= st.dot; if (!instant) popNum('hero', st.dot, 'dot'); }
         if (P.hp <= 0) return endFight(false, '身中異狀，力竭倒下');
         if (!st.frozen) {
@@ -293,6 +307,7 @@ const ZhenmoTower = (() => {
         if (E.hp <= 0) return endFight(true);
         if (!et.frozen) {
             const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk }, { attrs: P.attrs, status: P.st });
+            hit.dmg *= auraCurseMult(f.aura);   // 光環詛咒：受到的傷害提高
             P.hp -= hit.dmg;
             if (!instant) {
                 popNum('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');

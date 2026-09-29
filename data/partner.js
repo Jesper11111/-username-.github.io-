@@ -408,7 +408,7 @@ function getPartnerBonusTotals() {
 function partnerSkillTurn(targets, tags) {
     getPartnerTeam().forEach(p => {
         let chance = p.skill.chance + (getBondLevel(p.id).lv >= 5 ? PARTNER_LV5_SKILL_BONUS : 0);
-        if (Math.random() < chance) castProcSkill(p.skill, targets, tags);   // artifact.js
+        if (Math.random() < chance) castProcSkill(p.skill, targets, tags, 'partner');   // artifact.js；護盾算在夥伴那 10%
     });
 }
 

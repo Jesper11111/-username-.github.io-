@@ -46,8 +46,9 @@ function artifactSkillTurn(targets, tags) {
     castProcSkill(sk, targets, tags);
 }
 
-// 依機率自動發動的技能（神器專屬技能、職業技能 profession.js 共用），欄位見 config-lingbao.js 的 artifactSkills
-function castProcSkill(sk, targets, tags) {
+// 依機率自動發動的技能（神器專屬技能、職業技能 profession.js、夥伴絕學 partner.js 共用），欄位見 config-lingbao.js 的 artifactSkills
+// source：'partner'＝夥伴絕學（護盾算在夥伴那 10%），其他＝玩家本身（護盾算在玩家本身 20%）
+function castProcSkill(sk, targets, tags, source) {
     let alive = targets.filter(t => t.hp > 0);
     if (sk.target !== 'self' && alive.length === 0) return;
 
@@ -82,10 +83,15 @@ function castProcSkill(sk, targets, tags) {
         if (mp > 0) extra.push(`回復 ${Math.floor(mp).toWan()} 靈力`);
     }
     if (sk.shield) {
-        // 與靈寵土屬性、仙法守護共用減傷狀態，取較高值（applyPetDamageReduction 套用）
-        petShieldRate = petShieldTimer > 0 ? Math.max(petShieldRate, sk.shield.reduce) : sk.shield.reduce;
-        petShieldTimer = Math.max(petShieldTimer, sk.shield.duration);
-        extra.push(`受到傷害 -${Math.round(petShieldRate * 100)}%`);
+        // 護盾依來源分開存（state.js），取較高值；applyPetDamageReduction 套用、最後保底
+        if (source === 'partner') {
+            partnerShieldRate = partnerShieldTimer > 0 ? Math.max(partnerShieldRate, sk.shield.reduce) : sk.shield.reduce;
+            partnerShieldTimer = Math.max(partnerShieldTimer, sk.shield.duration);
+        } else {
+            selfShieldRate = selfShieldTimer > 0 ? Math.max(selfShieldRate, sk.shield.reduce) : sk.shield.reduce;
+            selfShieldTimer = Math.max(selfShieldTimer, sk.shield.duration);
+        }
+        extra.push(`受到傷害 -${Math.round(sk.shield.reduce * 100)}%`);
     }
     if (sk.freezeAll) extra.push(`敵方全體凍結`);
     addLog(`${sk.msg}${dealt > 0 ? ` 造成 ${dealt.toWan()} 傷害` : ''}${extra.length ? `（${extra.join('、')}）` : ''}`, "skill");
