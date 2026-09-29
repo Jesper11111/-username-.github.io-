@@ -138,15 +138,16 @@ function setAptitudeBody(title, html) {
     document.getElementById('aptitude-body').innerHTML = html;
     document.getElementById('aptitude-modal').style.display = 'flex';
 }
-// 擲骰動畫：名稱快速輪播約 1.6 秒後停在結果（prefers-reduced-motion 時直接顯示）
-function playAptitudeDice(boxId, pool, finalHtml, done) {
+// 擲骰動畫：名稱快速輪播 frames 格（每格 80 毫秒，預設 20 格約 1.6 秒）後停在結果（prefers-reduced-motion 時直接顯示）
+function playAptitudeDice(boxId, pool, finalHtml, done, frames) {
     const box = document.getElementById(boxId);
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!box || reduce) { if (box) box.innerHTML = finalHtml; done(); return; }
     let n = 0;
+    const total = frames || 20;
     const tid = setInterval(() => {
         box.innerHTML = `<p style="font-size:1.2em; margin:18px 0;">🎲 ${pool[Math.floor(Math.random() * pool.length)]}</p>`;
-        if (++n >= 20) { clearInterval(tid); box.innerHTML = finalHtml; done(); }
+        if (++n >= total) { clearInterval(tid); box.innerHTML = finalHtml; done(); }
     }, 80);
 }
 function rootNamePool() {
@@ -158,6 +159,7 @@ function physiqueNamePool() {
 
 // 第一次測試：先擲靈根、再擲體質
 function openAptitudeTest() {
+    stopAptitudeAuto();
     aptitudeRolling = true;
     aptitudeFirstPending = null; aptitudeFirstRerolls = 0;   // 中途關掉視窗再打開＝重新測（還沒按決定就不會存）
     setAptitudeBody('⛩️ 入門資質測試', `
@@ -170,42 +172,115 @@ function openAptitudeTest() {
                 <button class="sys-btn" style="border-color:#4ade80; color:#4ade80;" onclick="confirmAptitudeFirst()">✅ 決定</button>
             </div>
             <p style="color:#9ca3af; font-size:0.78em; margin:4px 0 0;">「再來一次」會把靈根與體質一起重新抽；按「決定」後才會定下來。<span id="aptitude-reroll-count"></span></p>
+            <div class="aptitude-auto">
+                <label><input type="checkbox" id="aptitude-auto" onchange="toggleAptitudeAuto(this.checked)"> 🔁 自動重抽</label>
+                <span>抽到 靈根至少
+                    <select id="aptitude-auto-root">${APTITUDE_ROOT_RANKS.map((g, i) => `<option value="${i}" ${i === 2 ? 'selected' : ''}>${i ? g + (i < APTITUDE_ROOT_RANKS.length - 1 ? '以上' : '') : '不限'}</option>`).join('')}</select>
+                    、體質至少
+                    <select id="aptitude-auto-phys">${APTITUDE_PHYS_RANKS.map((g, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i ? g + (i < APTITUDE_PHYS_RANKS.length - 1 ? '以上' : '') : '不限'}</option>`).join('')}</select>
+                    就停</span>
+                <p id="aptitude-auto-msg"></p>
+            </div>
         </div>`);
 }
 // 第一次測試的結果先放在這裡，按「✅ 決定」才寫進 player.aptitude；按「🎲 再來一次」靈根與體質一起重抽（2026-09-29 使用者要求，次數不限）
 let aptitudeFirstPending = null, aptitudeFirstRerolls = 0;
+// 擲一次（仙府信箱賜予的資質：尚未測試時先存在 player.aptitudeGift，mailbox.js；該部分直接用賜予的，不擲骰，再來一次也不會換掉）
+// 回傳 { root, physique, rootCard, physCard, giftRoot, giftPhys }
+function rollAptitudeFirstOnce() {
+    const gift = player.aptitudeGift || {};
+    const giftRoot = !!(gift.root && describeRoot(gift.root)), giftPhys = !!(gift.physique && describePhysique(gift.physique));
+    const root = giftRoot ? gift.root : rollAptitudeRoot();
+    const physique = giftPhys ? gift.physique : rollAptitudePhysique();
+    const giftNote = '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>';
+    return { root, physique, giftRoot, giftPhys,
+        rootCard: aptitudeCard('先天靈根', describeRoot(root)) + (giftRoot ? giftNote : ''),
+        physCard: aptitudeCard('先天體質', describePhysique(physique)) + (giftPhys ? giftNote : '') };
+}
+function showAptitudeRerollCount() {
+    const n = document.getElementById('aptitude-reroll-count');
+    if (n) n.innerText = aptitudeFirstRerolls ? `已再來 ${aptitudeFirstRerolls} 次` : '';
+}
 function rollAptitudeStep() {
     const btn = document.getElementById('aptitude-btn');
     if (btn) btn.disabled = true;
     const choice = document.getElementById('aptitude-choice');
     if (choice) choice.style.display = 'none';
-    // 仙府信箱賜予的資質（尚未測試時先存在 player.aptitudeGift，mailbox.js）：該部分直接用賜予的，不擲骰，再來一次也不會換掉
-    const gift = player.aptitudeGift || {};
-    const giftRoot = gift.root && describeRoot(gift.root), giftPhys = gift.physique && describePhysique(gift.physique);
-    const root = giftRoot ? gift.root : rollAptitudeRoot();
-    const phys = giftPhys ? gift.physique : rollAptitudePhysique();
-    aptitudeFirstPending = { root, physique: phys };
-    const rootCard = aptitudeCard('先天靈根', describeRoot(root)) + (giftRoot ? '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>' : '');
-    const physCard = aptitudeCard('先天體質', describePhysique(phys)) + (giftPhys ? '<p style="color:#facc15; font-size:0.78em; margin:0;">📮 仙府賜予（再來一次不會換掉）</p>' : '');
-    playAptitudeDice('aptitude-root-box', rootNamePool(), rootCard, () => {
-        playAptitudeDice('aptitude-phys-box', physiqueNamePool(), physCard, () => {
+    const r = rollAptitudeFirstOnce();
+    aptitudeFirstPending = { root: r.root, physique: r.physique };
+    playAptitudeDice('aptitude-root-box', rootNamePool(), r.rootCard, () => {
+        playAptitudeDice('aptitude-phys-box', physiqueNamePool(), r.physCard, () => {
             if (btn) btn.style.display = 'none';
-            if (choice) {
-                choice.style.display = '';
-                const n = document.getElementById('aptitude-reroll-count');
-                if (n) n.innerText = aptitudeFirstRerolls ? `已再來 ${aptitudeFirstRerolls} 次` : '';
-            }
+            if (choice) choice.style.display = '';
+            showAptitudeRerollCount();
         });
     });
 }
 function rerollAptitudeFirst() {
     if (!aptitudeFirstPending || player.aptitude) return;
+    stopAptitudeAuto();
     aptitudeFirstRerolls++;
     rollAptitudeStep();
 }
+
+// ---- 🔁 自動重抽（2026-09-29 使用者要求）：開啟後一直重抽，每次靈根與體質同時滾動 APTITUDE_AUTO_FRAMES 格（約 1 秒）後停在結果，
+//      靈根、體質都達到選單上的「至少」等級時自動停下（仙府賜予的那項視為已達成），也可隨時關閉 ----
+const APTITUDE_AUTO_FRAMES = 12;   // × 80 毫秒 ≈ 1 秒（使用者要求保留滾動畫面、每次約 1 秒）
+const APTITUDE_AUTO_MS = 150;      // 兩次之間的停頓
+const APTITUDE_ROOT_RANKS = ["偽靈根", "真靈根", "天靈根", "變異靈根", "特殊靈根", "至尊靈根"];
+const APTITUDE_PHYS_RANKS = ["凡體", "靈體", "道體", "神體"];
+let aptitudeAutoTid = 0, aptitudeAutoOn = false;
+function aptitudeAutoTargetMet(r) {
+    const rootMin = +document.getElementById('aptitude-auto-root').value, physMin = +document.getElementById('aptitude-auto-phys').value;
+    const rootOk = r.giftRoot || APTITUDE_ROOT_RANKS.indexOf(describeRoot(r.root).grade) >= rootMin;
+    const physOk = r.giftPhys || APTITUDE_PHYS_RANKS.indexOf(describePhysique(r.physique).grade) >= physMin;
+    return rootOk && physOk;
+}
+function toggleAptitudeAuto(on) {
+    if (!on) { stopAptitudeAuto(); return; }
+    if (!aptitudeFirstPending || player.aptitude) return;
+    document.getElementById('aptitude-auto-msg').innerText = '🔁 自動重抽中…';
+    aptitudeAutoOn = true;
+    const step = () => {
+        // 視窗關掉、已決定、或開關被關 → 停
+        if (!aptitudeAutoOn || document.getElementById('aptitude-modal').style.display !== 'flex' || !aptitudeFirstPending || player.aptitude) { stopAptitudeAuto(); return; }
+        const r = rollAptitudeFirstOnce();
+        aptitudeFirstPending = { root: r.root, physique: r.physique };
+        aptitudeFirstRerolls++;
+        showAptitudeRerollCount();
+        // 靈根、體質同時滾動約 1 秒；仙府賜予的那項不動畫
+        let left = 2;
+        const done = () => {
+            if (--left > 0) return;
+            if (!aptitudeAutoOn) return;   // 滾動途中被關掉：結果照樣顯示，不再繼續
+            if (aptitudeAutoTargetMet(r)) {
+                stopAptitudeAuto('🎯 已抽到目標，自動停止。滿意就按「決定」，不滿意可再開自動或按「再來一次」。');
+                return;
+            }
+            aptitudeAutoTid = setTimeout(step, APTITUDE_AUTO_MS);
+        };
+        if (r.giftRoot) { document.getElementById('aptitude-root-box').innerHTML = r.rootCard; done(); }
+        else playAptitudeDice('aptitude-root-box', rootNamePool(), r.rootCard, done, APTITUDE_AUTO_FRAMES);
+        if (r.giftPhys) { document.getElementById('aptitude-phys-box').innerHTML = r.physCard; done(); }
+        else playAptitudeDice('aptitude-phys-box', physiqueNamePool(), r.physCard, done, APTITUDE_AUTO_FRAMES);
+    };
+    clearTimeout(aptitudeAutoTid);
+    aptitudeAutoTid = setTimeout(step, APTITUDE_AUTO_MS);
+}
+function stopAptitudeAuto(msg) {
+    aptitudeAutoOn = false;
+    clearTimeout(aptitudeAutoTid);
+    aptitudeAutoTid = 0;
+    const cb = document.getElementById('aptitude-auto');
+    if (cb) cb.checked = false;
+    const m = document.getElementById('aptitude-auto-msg');
+    if (m) m.innerText = msg || '';
+}
+
 function confirmAptitudeFirst() {
     const pend = aptitudeFirstPending;
     if (!pend || player.aptitude) return;
+    stopAptitudeAuto();
     player.aptitude = { root: pend.root, physique: pend.physique, at: Date.now() };
     player.aptitudeGift = null;
     aptitudeFirstPending = null;

@@ -335,7 +335,7 @@ combatTick() 每秒執行 [combat.js]
 | `closeDefenseBattle`（守城「↩ 離開」與結算「↩ 返回秘境」）、`setDefenseSpeed(1/2/4)`、`DefenseBattle.retry()`（載入失敗「🔄 重新載入」）、`openDefenseRecords`（守城畫面左上與結算畫面「📜 通關紀錄」）、`closeDefenseRecords`（紀錄視窗「關閉」） | `data/defense.js` |
 | `closeZhenmoTower`（鎮魔塔「↩ 離開」）、`startZhenmoQuiz`（塔廳「📜 開始問答」）、`answerZhenmo(i)`（問答選項）、`enterZhenmoBoss`（塔廳／結算「🚪 進入／開啟 BOSS 房門」）、`backToZhenmoHall`（「稍後再戰」「↩ 返回塔廳」）、`startZhenmoFight`（BOSS 介紹「⚔️ 挑戰」）、`setZhenmoFightSpeed(1/2/4)`、`skipZhenmoFight`（戰鬥「⏭ 跳過」） | `data/zhenmo.js` |
 | `chooseGender` | `data/main.js` |
-| `rollAptitudeStep`（資質測試「🎲 手按測靈石」）、`rerollAptitudeFirst`／`confirmAptitudeFirst`（「🎲 再來一次」「✅ 決定」）、`openAptitudeView`（人物面板資質）、`rerollAptitude(part)`／`finishAptitudeReroll(keepNew)`（洗髓／伐骨重測） | `data/aptitude.js` |
+| `rollAptitudeStep`（資質測試「🎲 手按測靈石」）、`rerollAptitudeFirst`／`confirmAptitudeFirst`（「🎲 再來一次」「✅ 決定」）、`toggleAptitudeAuto(on)`（「🔁 自動重抽」開關）、`openAptitudeView`（人物面板資質）、`rerollAptitude(part)`／`finishAptitudeReroll(keepNew)`（洗髓／伐骨重測） | `data/aptitude.js` |
 | `openMarketSellModal`（天星城坊市「收購商」傳送點，`config-towns.js`）、`sellEquipByQualities([...])`／`sellPill(id, qty)`／`sellMaterial('shard'/'iron', qty)`／`toggleAutoSellFull`（視窗內動態產生）、`openEstateModal`（宗門分頁「🏞️ 洞府產業」）、`collectEstate(kind)`／`upgradeEstate(kind)`（視窗內動態產生） | `data/economy.js` |
 
 ## 5. 新增功能的建議流程
@@ -1354,7 +1354,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002k`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261002m`）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2565,6 +2565,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - **再來一次／決定**（2026-09-29，版本 `20261002j`，使用者要求）：擲完後顯示「🎲 再來一次」「✅ 決定」（`#aptitude-choice`）。結果先放在 `aptitudeFirstPending`，
     按「再來一次」（`rerollAptitudeFirst`）靈根與體質一起重抽、顯示「已再來 N 次」，**次數不限、不花費**；按「決定」（`confirmAptitudeFirst`）才寫進 `player.aptitude`、存檔並關閉視窗。
     還沒決定就關掉視窗或重新整理＝沒測，下次開啟重新測。仙府信箱賜予的部分（`player.aptitudeGift`）固定不變，只重抽另一項。
+  - **🔁 自動重抽**（同日，版本 `20261002l`，使用者要求）：按鈕下方的開關（`#aptitude-auto`，`toggleAptitudeAuto`）＋兩個停止條件「靈根至少」「體質至少」
+    （`APTITUDE_ROOT_RANKS` 偽→真→天→變異→特殊→至尊、`APTITUDE_PHYS_RANKS` 凡→靈→道→神；預設「天靈根以上」「不限」）。
+    開啟後一直用 `rollAptitudeFirstOnce()` 重抽（計入「已再來 N 次」）：**保留滾動畫面**，靈根與體質兩格同時滾動 `APTITUDE_AUTO_FRAMES`(12) 格 × 80 毫秒 ≈ 1 秒（`playAptitudeDice` 第 5 參數），
+    停下後判斷，兩項都達到就停並提示「🎯 已抽到目標」，否則停頓 `APTITUDE_AUTO_MS`(150) 毫秒再抽；仍要玩家按「決定」。（同日第一版為 0.3 秒一次、不播動畫，使用者要求改為保留滾動、每次 1 秒，版本 `20261002m`）
+    關掉開關、按再來一次或決定、關閉視窗都會停（`stopAptitudeAuto`，滾動途中關掉則顯示完這次的結果就停）；仙府賜予的那項視為已達成、不播滾動。
+    實測：每次約 1.1 秒、兩格都有滾動；手動關閉、關視窗都會停；目標「天靈根以上」數次內停下；Console 無錯誤。
 - **先天靈根**（`APTITUDE_ROOT_GROUPS`，組機率，組內平均）：
 
   | 組 | 機率 | 修為（fx:悟道） | 其他 |
