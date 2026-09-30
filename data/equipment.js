@@ -208,10 +208,31 @@ function renderForgeLevelSelect() {
 function openForgeModal() {
     if (!checkSectJoined()) return;
     renderForgeLevelSelect();
+    renderForgeAutoDecompose();
     document.getElementById('forge-modal').style.display = 'flex';
 }
 
-// qty：1、10 或 'max'（靈石與背包空位允許的最多次數）
+// ---- 鍛造後自動分解（2026-09-30 使用者要求）：勾選的品級打出來直接分解成碎鐵／星允鐵，不進背包 ----
+// 存檔：player.forgeAutoDecompose = ["白色", "綠色", ...]（用到時才建立）
+const FORGE_AUTO_MAX_BATCH = 1000;   // 勾選自動分解時「最高」一次最多開爐幾次（不受背包空位限制，避免一次跑太久）
+function getForgeAutoDecompose() { return Array.isArray(player.forgeAutoDecompose) ? player.forgeAutoDecompose : []; }
+function renderForgeAutoDecompose() {
+    const box = document.getElementById('forge-auto-decompose');
+    if (!box) return;
+    const auto = getForgeAutoDecompose();
+    box.innerHTML = `<span style="color: var(--accent);">🔨 打出後自動分解：</span>`
+        + equipQualities.map(q => `<label style="margin: 0 4px; white-space: nowrap;"><input type="checkbox" ${auto.includes(q.name) ? 'checked' : ''} onchange="toggleForgeAutoDecompose('${q.name}', this)"> <span class="quality-${q.name}">${q.name.replace('色', '')}</span></label>`).join('')
+        + `<div style="color: #6b7280; font-size: 0.85em; margin-top: 2px;">勾選的品級不進背包，直接換成碎鐵／星允鐵（橙色 ${DECOMPOSE_IRON["橙色"]} 顆星允鐵）；有勾選時「最高」不受背包空位限制</div>`;
+}
+function toggleForgeAutoDecompose(quality, box) {
+    let auto = getForgeAutoDecompose().slice();
+    if (box.checked && (quality === '紫色' || quality === '橙色')
+        && !confirm(`確定要自動分解鍛造出的【${quality}】裝備？\n（${quality}有特效${quality === '橙色' ? '、鑲嵌孔' : ''}，也可能帶種族特效，分解後無法復原）`)) { box.checked = false; return; }
+    auto = box.checked ? auto.concat(auto.includes(quality) ? [] : [quality]) : auto.filter(q => q !== quality);
+    player.forgeAutoDecompose = auto;
+}
+
+// qty：1、10 或 'max'（靈石與背包空位允許的最多次數；有勾選自動分解時背包滿了才停）
 function forgeEquipment(qty = 1) {
     let level = parseInt(document.getElementById('forge-level-select').value);
     let isBlueprint = BLUEPRINT_LEVELS.includes(level);
@@ -220,7 +241,9 @@ function forgeEquipment(qty = 1) {
         alert(`靈石不足 ${cost.toWan()}！無法打造裝備。`);
         return;
     }
-    if (!hasEquipInventorySpace()) return;
+    const auto = getForgeAutoDecompose();
+    const allAuto = equipQualities.every(q => auto.includes(q.name));   // 全勾：打出來全部分解，不需要背包空位
+    if (!allAuto && !hasEquipInventorySpace()) return;
 
     let name = document.getElementById('forge-type-select').value;
     if (isBlueprint) {
@@ -231,13 +254,28 @@ function forgeEquipment(qty = 1) {
         return;
     }
 
-    let affordable = Math.min(Math.floor(player.coins / cost), MAX_EQUIP_INVENTORY - player.equipInventory.length);
+    // 有勾選自動分解時，背包空位只在打出「不分解的品級」時才用得到，改成邊打邊檢查（背包滿了就停）
+    let spaceCap = auto.length ? FORGE_AUTO_MAX_BATCH : MAX_EQUIP_INVENTORY - player.equipInventory.length;
+    let affordable = Math.min(Math.floor(player.coins / cost), spaceCap);
     if (isBlueprint) affordable = Math.min(affordable, getBlueprintCount(name, level));   // 圖紙每張打一件
     let n = resolveBatchCount(qty, affordable, "鍛造");
     if (!n) return;
 
-    let results = [];
-    for (let i = 0; i < n; i++) results.push(forgeOneEquipment(name, level, cost));
+    let results = [], decomposed = [], dShards = 0, dIron = 0, full = false;
+    for (let i = 0; i < n; i++) {
+        if (player.equipInventory.length >= MAX_EQUIP_INVENTORY) { full = true; break; }   // 背包滿（只會發生在有不分解的品級時）
+        let eq = forgeOneEquipment(name, level, cost);
+        results.push(eq);
+        if (auto.includes(eq.quality)) {
+            player.equipInventory.pop();   // forgeOneEquipment 剛放進背包的那件
+            let y = getDecomposeYield(eq);
+            dShards += y.shards; dIron += y.iron;
+            decomposed.push(eq);
+        }
+    }
+    n = results.length;
+    if (dShards) addIronShards(dShards);
+    if (dIron) player.starIron = (player.starIron || 0) + dIron;
     if (isBlueprint) { useBlueprints(name, level, n); renderForgeLevelSelect(); }
 
     addDailyProgress('forge', n);
@@ -253,10 +291,13 @@ function forgeEquipment(qty = 1) {
             + `五行：${byElement.map(([e, c]) => `<span class="elem-${e}">${e}</span>×${c}`).join('、')}`
             + (best.length ? `；橙色：<span class="quality-橙色">${best.join('、')}</span>` : ''), "equip");
     }
+    const dText = decomposed.length ? `自動分解 ${decomposed.length} 件，獲得 ${formatBulkYield(dShards, dIron)}` : '';
+    if (dText) addLog(`🔨 鍛造閣${dText}。`, "equip");
+    if (full) addLog(`⚠️ 背包已滿（${MAX_EQUIP_INVENTORY} 件），鍛造閣只打造了 ${n} 次。`, "system");
     // 製作成功提示（ui.js）：1 件顯示品質名稱，多件顯示品質分布
-    if (n === 1) showCraftSuccess(`鍛造成功`, `<span class="quality-${results[0].quality}">Lv.${level}・${results[0].quality}・${getEquipDisplayName(results[0])}</span>`);
+    if (n === 1) showCraftSuccess(`鍛造成功`, `<span class="quality-${results[0].quality}">Lv.${level}・${results[0].quality}・${getEquipDisplayName(results[0])}</span>` + (dText ? `<br>${dText}` : ''));
     else showCraftSuccess(`鍛造成功 ×${n}`, equipQualities.map(q => [q.name, results.filter(r => r.quality === q.name).length])
-        .filter(([, c]) => c > 0).map(([q, c]) => `<span class="quality-${q}">${q}×${c}</span>`).join('　'));
+        .filter(([, c]) => c > 0).map(([q, c]) => `<span class="quality-${q}">${q}×${c}</span>`).join('　') + (dText ? `<br>${dText}` : ''));
     updateUI();
 }
 
