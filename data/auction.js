@@ -318,5 +318,6 @@ function renderAuction() {
         ${renderPaidRefreshButton('auction', AUCTION_PAID_REFRESH_COST, AUCTION_PAID_REFRESH_DAILY, 'paidRefreshAuction')}
         <div class="grid-container">${cards}</div>
         ${renderIronShopSection()}
+        ${renderRaceTreasureShopSection()}
         ${renderPreciousSection()}`;
 }

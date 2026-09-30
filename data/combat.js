@@ -217,7 +217,7 @@ function fieldCombatRound() {
             coinsEarned += rollKillCoins();
             repEarned += rollKillReputation();
             killedCount++;
-            if (e.attrs && e.attrs.race) addRaceKill(e.attrs.race, 1);   // 斬妖錄（race.js）
+            if (e.attrs && e.attrs.race) { addRaceKill(e.attrs.race, 1); rollRaceTreasureDrops(e.attrs.race, 1); }   // 斬妖錄＋剋制法寶掉落（race.js）
             if (e.cultivator) slainCultivators.push(e);
             return false;
         }

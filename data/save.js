@@ -109,6 +109,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         let partnerKills = Math.floor(combatTicks / (NUMERIC_V2 ? getKillRewardMult() : 1));
         if (partnerKills > 0) onPartnerFieldKills(partnerKills);
         if (partnerKills > 0) addFieldRaceKills(player.currentMap, partnerKills);   // 斬妖錄：依這張圖的種族比例計入（race.js）
+        if (partnerKills > 0) addFieldRaceTreasureDrops(player.currentMap, partnerKills);   // 剋制法寶掉落（期望值，race.js）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;

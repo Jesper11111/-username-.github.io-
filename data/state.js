@@ -64,6 +64,8 @@ let player = {
     activeQuest: null, questTimer: 0,   // 玩家「親自」執行的任務（須待在宗門）
     currentMap: maps[0].items[0], currentMapIsSafe: true,
     raceKills: {},   // 斬妖錄：各種族累計斬殺數（race.js；舊存檔沒有此欄位時 getRaceKills 視為 0）
+    raceTreasures: [],             // 剋制法寶（race.js，第 62 節第 4 期；舊存檔沒有時 raceTreasureState 補上）
+    raceTreasureSlots: [null, null],
     sect: null, buffTimer: 0, buffMult: 1,
     sectSkills: { 1: null, 2: null, 3: null },   // 各階段已拜入（並學得技能）的宗門名稱，選定後鎖定
     learnedSkills: [],

@@ -232,6 +232,7 @@ const ZhenmoTower = (() => {
                 ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
                 ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>
+                ${zhenmoTreasureGrade(z.floor) >= 0 && b.attrs.race ? `<p class="zm-note" style="color:#fb923c;">🏺 種族關卡：${z.best < z.floor ? `首次擊敗必得【${formatRaceTreasure({ race: b.attrs.race, grade: zhenmoTreasureGrade(z.floor) })}】` : '剋制法寶已於首勝取得'}</p>` : ''}
                 <button class="zm-btn gold" onclick="startZhenmoFight()">⚔️ 挑戰${escapeZm(boss.name)}</button>
                 <p class="zm-note">挑戰失敗本層問答成績作廢，須重新答題。</p>`;
         } else {
@@ -353,11 +354,15 @@ const ZhenmoTower = (() => {
         const z = state();
         let html;
         if (win) {
+            const firstClear = z.best < f.floor;   // clearFloor 前判斷；第 100 層可重打，法寶只給首勝
             const mult = clearFloor();
             const g = grantRewards(f.boss, mult, f.floor);
+            // 種族關卡（樓主層）：首次擊敗必得該 BOSS 種族的剋制法寶（race.js）
+            const tg = zhenmoTreasureGrade(f.floor), race = zhenmoBossRace(f.boss);
+            if (firstClear && tg >= 0 && race) g.treasure = grantRaceTreasure(race, tg, `鎮壓鎮魔塔第 ${f.floor} 層樓主，`);
             html = `<div class="big win">鎮壓成功</div>
                 <p>第 ${f.floor} 層【${escapeZm(f.boss.name)}】伏誅（${f.round} 回合）</p>
-                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), PARTNER_SHARDS_NEED)}/${PARTNER_SHARDS_NEED}）` : ''}</p>
+                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), PARTNER_SHARDS_NEED)}/${PARTNER_SHARDS_NEED}）` : ''}</p>
                 <p class="zm-note">已鎮壓 ${z.best} 層，前往第 ${z.floor} 層須重新答題。</p>`;
             addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}`, 'level-up', true, 'item');
             if (g.blueprint) addLog(g.blueprint, 'level-up', true, 'item');

@@ -87,6 +87,7 @@ function renderEnhanceModal() {
     if (canEvolve(eq)) {
         let ok = iron >= EVOLVE_IRON && player.coins >= EVOLVE_COINS;
         action = `<p style="color: #e5e7eb;">已達 +${EVOLVE_LEVEL}，可進化為 <span class="quality-白金">${PLATINUM_QUALITY.label}</span>：四維倍率 ×${getEvolveStatRatio()}、特效 ×2、多一條隨機詞條</p>
+                  <p style="color: #fb7185;">進化後必帶一條種族特效（+3～4%，已有則保留種族並升級數值）</p>
                   <p>花費：🌠 ${EVOLVE_IRON} 星允鐵 ＋ ${EVOLVE_COINS.toWan()} 靈石</p>
                   <button class="sys-btn" ${ok ? '' : 'disabled'} onclick="evolveEquip()">✨ 進化為先天道器</button>`;
     } else if (info.maxed) {
@@ -109,6 +110,7 @@ function renderEnhanceModal() {
         </div>
         <p style="color: #9ca3af; font-size: 0.85em;">持有：🌠 星允鐵 <b style="color: var(--accent);">${iron.toWan()}</b>｜🔩 碎鐵 ${(player.ironShards || 0).toWan()} / ${SHARDS_PER_IRON}｜靈石 ${player.coins.toWan()}</p>
         ${action}
+        ${renderRaceReforgeSection(eq)}
         <p style="color: #6b7280; font-size: 0.75em;">每 +1 四維 +${Math.round(ENHANCE_STAT_PER_LEVEL * 100)}%；上限 白綠 +10、藍 +12、紫 +15、橙 +20。+11 起有成功率，每失敗一次同一級成功率 +${Math.round(ENHANCE_PITY_STEP * 100)}%。</p>`;
 }
 
@@ -190,6 +192,7 @@ function evolveEquip(skipConfirm) {
     else eq.stats.eva = PLATINUM_QUALITY.eva;
     eq.quality = PLATINUM_QUALITY.name;
     eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0])));
+    applyEvolveRaceGearFx(eq);   // 白金必帶種族特效（race.js，第 62 節第 5 期）
     recordGearCollected(eq);
     addLog(`✨ 天地共鳴！【${getEquipDisplayName(eq)}】進化為${PLATINUM_QUALITY.label}！`, "reincarnate");
     checkTitleUnlocks();

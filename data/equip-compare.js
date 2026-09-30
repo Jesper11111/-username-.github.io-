@@ -106,7 +106,8 @@ function renderEquipDoll() {
             <div class="eqd-row">${EQ_DOLL_LAYOUT.bottom.map(cell).join('')}</div>
         </div>
         <div class="eqd-hint">點部位換裝；綠色 <b style="color:#4ade80">▲</b>＝背包裡有穿上後戰力更高的同部位裝備</div>
-        <div class="eqd-sheet">${renderEquipSlotSheet(eqDollSlot)}</div>`;
+        <div class="eqd-sheet">${renderEquipSlotSheet(eqDollSlot)}</div>
+        <div class="eqd-sheet">${renderRaceTreasurePanel()}</div>`;
 }
 
 function selectEquipSlot(slot) { eqDollSlot = slot; renderEquipDoll(); }

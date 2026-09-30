@@ -73,6 +73,7 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
         enhance: 0
     };
     if (level) eq.level = level;   // 裝備等級：穿戴需人物等級 ≥ level
+    maybeAddRaceGearFx(eq);        // 紫／橙裝機率帶種族特效（race.js，第 62 節第 5 期）
     if (!noRecord) recordGearCollected(eq);   // 天磯錄收藏紀錄（codex.js）
     return ensureSockets(eq);      // 橙裝隨機 1~3 孔（talisman.js）
 }
@@ -242,7 +243,7 @@ function formatEquipTitle(eq) {
 function formatEquipDetails(eq) {
     let statsText = NUMERIC_V2 ? nv2FormatEquipStats(eq) : formatEquipStats(getEquipEffectiveStats(eq));   // 新制顯示武器攻擊與新屬性點（numeric.js）
     return `<p style="font-size: 0.8em; color: #facc15;">加成: ${statsText}</p>
-            ${formatGearSubs(eq)}${formatGearEffect(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
+            ${formatGearSubs(eq)}${formatGearEffect(eq)}${formatRaceGearFx(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
 }
 
 // 卡片副標：部位・四維模板・來源

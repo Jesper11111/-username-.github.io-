@@ -33,6 +33,47 @@ const RACE_TRAITS = {
     heart: { desc: "與你一模一樣的鏡像，沒有額外特性" }
 };
 
+// C 剋制法寶（第 4 期，2026-09-30；race.js 的 raceTreasure*）：角色裝備視窗的「法寶欄」2 格，穿上才生效（使用者選 2 格）
+//   player.raceTreasures = [{ id, race, grade }]（持有，上限 RACE_TREASURE_MAX）、player.raceTreasureSlots = [id|null, id|null]
+//   來源（使用者選）：鎮魔塔樓主層（10、20…100 層）首次擊敗必得該 BOSS 種族的法寶、野外擊殺有種族的敵人稀有掉落、千寶閣常駐每日限購
+//   兩格同族可疊加，但法寶對同一族合計上限 RACE_TREASURE_CAP（我訂的：斬妖錄 6%＋符寶 20%＋法寶 15%，留約 9% 給第 5 期裝備特效）
+//   合煉：3 件同族同品（未穿戴）→ 1 件高一品；出售：換 H 的 sellMinutes 分鐘靈石（economy.js 的 incomeMinutes）
+const RACE_TREASURES = {
+    beast: { name: "降妖葫蘆", icon: "🏺" },
+    ghost: { name: "鎮魂鈴",   icon: "🔔" },
+    demon: { name: "誅魔鏡",   icon: "🔮" },   // 🪞🪷 在 Windows 10 顯示成方框，改用舊版 emoji
+    heart: { name: "清心蓮台", icon: "🌸" }
+};
+const RACE_TREASURE_GRADES = [
+    { name: "下品", bonus: 0.05, color: "#60a5fa", sellMinutes: 5 },
+    { name: "中品", bonus: 0.10, color: "#c084fc", sellMinutes: 15 },
+    { name: "上品", bonus: 0.15, color: "#fb923c", sellMinutes: 45 }
+];
+const RACE_TREASURE_SLOTS = 2;
+const RACE_TREASURE_CAP = 0.15;   // 法寶對同一族合計上限
+const RACE_TREASURE_MAX = 40;     // 持有上限；滿了掉落的法寶自動出售
+const RACE_TREASURE_MERGE = 3;    // 合煉：幾件同族同品 → 1 件高一品
+// 野外掉落：每擊殺 1 隻有種族的敵人 chance 機率掉該族法寶，其中 midChance 是中品（其餘下品）；離線依地圖種族比例用期望值計算
+//   線上約每小時 1000 隻 → 約 4～5 小時一件
+const RACE_TREASURE_FIELD = { chance: 1 / 5000, midChance: 0.05 };
+// 鎮魔塔樓主層（個位數 0）＝種族關卡：首次擊敗必得該層 BOSS 種族的法寶，品階依樓層（樓層 ≤ to 取該品）
+const RACE_TREASURE_ZHENMO = [{ to: 30, grade: 0 }, { to: 70, grade: 1 }, { to: 100, grade: 2 }];
+// 千寶閣常駐：下品，四族任選，每日限購 dailyLimit 件，價格＝H 的 priceHours 小時
+const RACE_TREASURE_SHOP = { grade: 0, dailyLimit: 1, priceHours: 6 };
+
+// D 裝備種族特效（第 5 期，2026-09-30 定案）：eq.raceFx = { race, v }（v＝小數，0.02＝+2%），穿戴中才生效
+//   三種取得方式（使用者看過測試版後決定全部保留）：
+//   ① 新掉落：紫／橙裝產生時（gear.js 的 createGearEquip）dropChance 機率帶一條
+//   ② 重鑄：強化視窗「🔮 種族銘刻」，紫色以上花星允鐵＋靈石重抽種族與數值（沒有就刻上一條）
+//   ③ 白金進化：進化時必定帶一條（已有則升到白金數值）
+//   同族多件相加，上限 cap（50% − 斬妖錄 6% − 符寶 20% − 法寶 15% ＝ 9%）
+const RACE_GEAR = {
+    dropChance: { "紫色": 0.1, "橙色": 0.2 },
+    value: { "紫色": [0.01, 0.02], "橙色": [0.02, 0.03], "白金": [0.03, 0.04] },
+    cap: 0.09,
+    reforge: { iron: 50, coinsHours: 1 }   // 每次花費：星允鐵＋H 的 coinsHours 小時靈石
+};
+
 // 鎮魔塔自動產生的 BOSS（第 7～100 層，config-zhenmo.js）依名稱後綴決定種族；第 1～6 層手動 BOSS 在 ZHENMO_BOSSES 各自寫 race
 const ZHENMO_RACE_BY_SUFFIX = {
     "魔君": "demon", "屍王": "ghost", "妖皇": "beast", "鬼帝": "ghost", "魔龍": "beast",
