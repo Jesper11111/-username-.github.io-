@@ -6,7 +6,7 @@
 
 const ZHENMO_TOTAL_FLOORS = 100;
 const ZHENMO_QUIZ_COUNT = 10;          // 每層問答題數
-const ZHENMO_QUIZ_SECONDS = 20;        // 每題限時秒數（逾時算答錯，避免邊答邊查）；0 = 不限時
+const ZHENMO_QUIZ_SECONDS = 30;        // 每題限時秒數（逾時算答錯，避免邊答邊查）；0 = 不限時（2026-09-30 使用者由 20 改 30）
 const ZHENMO_REVEAL_ANSWER = false;    // false：答題後只顯示對／錯，不公布正確答案（題目不外流）
 const ZHENMO_RECENT_AVOID = 100;       // 最近出過的幾題不再出（題庫 300 題，約 3 層後才會重複）
 
