@@ -1462,7 +1462,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004k`，gm.html 同）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004n`，gm.html 同）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3041,6 +3041,14 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **修正：裝備無法上架**（2026-09-28，版本 `20260930k`，玩家手機上架 Lv.1000 橙色玄女耳墜出現「連線失敗」）：裝備隨機詞條 `eq.subs` 是 `[[屬性, 數值], …]` 巢狀陣列，**Firestore 不支援巢狀陣列**，寫入在送出前就被拒絕（`invalid-argument`），而舊版把所有非權限錯誤都顯示成「連線失敗」。
   改為寄售品的裝備存成 JSON 字串 `item.eqJson`（`mkTakeItem`），讀取一律經 `mkItemEq(item)`（相容舊格式 `item.eq`）；規則只檢查 `item is map`，不用改。上架失敗訊息改為附上錯誤代碼。本機驗證：舊格式 → invalid-argument、新格式通過用戶端驗證，取回後 subs 完整。
   **日後任何寫進 Firestore 的遊戲物件（裝備、存檔片段）都要注意巢狀陣列，最簡單是存成 JSON 字串。**
+- **修正：寄售無法出價**（2026-10-01，版本 `20261004l`～`n`，使用者問「寄賣行商品無法出價原因」）。查到兩個原因：
+  1. **瀏覽器內建 `confirm()`／`alert()` 不顯示**：Claude 預覽面板（console：「Page dialog suppressed… confirm() returned false」）與 LINE／FB 等 App 內建瀏覽器會擋掉，
+     `confirm` 直接回傳 false＝按了取消，出價靜靜結束。→ ui.js 新增遊戲內對話框 `gameConfirm(msg)`（回傳 Promise<boolean>，要 await）／`gameAlert(msg)`（不暫停程式），`#game-dialog` 動態建立、z-index 100001（index.html CSS）；
+     market.js 的 3 個 confirm、17 個 alert 全部改用。上架改成先 `mkTakeItem(f, true)` 只檢查＋給確認框看、確定後才真的扣（等待確認期間物品留在背包，避免自動存檔後關網頁遺失）；出價確認後再檢查一次靈石。
+     **新功能一律用 gameConfirm／gameAlert**；其餘 40 個檔案約 160 處 confirm／alert 是既有寫法、這次沒改。
+  2. **雲端交易回報額度已滿**：實測一般讀取（get）、寫入（被規則擋下時正常回 permission-denied）都正常，但 `runTransaction`（出價用）一直回 `resource-exhausted: Quota exceeded`（HTTP 429），SDK 重試約 7 秒後放棄，原本只顯示「連線失敗」。
+     原因要在 Firebase 主控台（Firestore 用量、配額／帳單）查，遊戲端無法修；leaderboard.js 新增 `LB_QUOTA_MSG`／`lbIsQuota(e)`，寄售各失敗訊息與榜單讀取失敗遇到時改顯示「雲端伺服器回報額度已滿（Firebase：Quota exceeded）…請通知管理者」。
+  - 驗證（本機）：用雲端不存在的假寄售品（不會寫入任何資料）按出價 → 遊戲內確認框；取消 → 無動作；確定 → 顯示額度已滿訊息、靈石沒扣；Console 無其他錯誤。
 
 ## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
 - 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。

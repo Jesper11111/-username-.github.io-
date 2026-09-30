@@ -552,6 +552,34 @@ function showToast(msg, kind) {
     setTimeout(() => t.classList.add('out'), 1800);
     setTimeout(() => t.remove(), 2200);
 }
+// ---- 遊戲內的確認框／提示框（2026-10-01）----
+// 瀏覽器內建的 confirm()／alert() 在部分環境不會顯示（Claude 預覽面板、LINE／Facebook 等 App 內建瀏覽器）：
+//   confirm() 會直接回傳 false（等於按了取消）、alert() 直接略過，玩家會覺得「按了沒反應」（使用者回報寄售無法出價）。
+// gameConfirm(msg) 回傳 Promise<boolean>，呼叫端要 await；gameAlert(msg) 不會暫停程式（跟 alert 不同），適合放在 return 前。
+// 視窗動態建立（#game-dialog），疊在所有視窗與提示條之上；新功能請用這兩個，不要再用 confirm／alert。
+function gameDialog(msg, withCancel) {
+    return new Promise(resolve => {
+        let box = document.getElementById('game-dialog');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'game-dialog';
+            box.innerHTML = `<div class="gd-card"><div class="gd-msg"></div><div class="gd-btns">
+                <button class="sys-btn gd-cancel">取消</button><button class="sys-btn gd-ok">確定</button></div></div>`;
+            document.body.appendChild(box);
+        }
+        box.querySelector('.gd-msg').textContent = String(msg == null ? '' : msg);
+        const ok = box.querySelector('.gd-ok'), cancel = box.querySelector('.gd-cancel');
+        cancel.style.display = withCancel ? '' : 'none';
+        const done = v => { box.style.display = 'none'; ok.onclick = cancel.onclick = null; resolve(v); };
+        ok.onclick = () => done(true);
+        cancel.onclick = () => done(false);
+        box.style.display = 'flex';
+        ok.focus();
+    });
+}
+function gameConfirm(msg) { return gameDialog(msg, true); }
+function gameAlert(msg) { gameDialog(msg, false); }
+
 // 購買成功提示（各商店的購買函式成交後呼叫）
 function toastBought(name) {
     showToast(`✅ 購買成功：${name}`, 'ok');

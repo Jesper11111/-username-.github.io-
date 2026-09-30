@@ -77,24 +77,25 @@ function mkLabel(item) {
     return s ? `${s.icon} ${s.label} ×${item.n}` : '？';
 }
 // 上架前檢查並從存檔扣掉；回傳 { item } 或 { error }
-function mkTakeItem(f) {
+// dryRun＝只檢查、組出 item 給確認框看，不扣（2026-10-01 確認框改成遊戲內非同步視窗：等玩家按確定的期間物品要留在背包，避免自動存檔後關網頁就遺失）
+function mkTakeItem(f, dryRun) {
     const n = Math.floor(Number(f.n) || 0);
     if (f.kind === 'blueprint') {
         const [slot, level] = String(f.key || '').split('_');
         if (!slot || n < 1 || getBlueprintCount(slot, Number(level)) < n) return { error: '圖紙數量不足。' };
-        useBlueprints(slot, Number(level), n);
+        if (!dryRun) useBlueprints(slot, Number(level), n);
         return { item: { kind: 'blueprint', key: f.key, n } };
     }
     if (f.kind === 'equip') {
         const i = player.equipInventory.findIndex(e => e.id === f.key);
         if (i < 0) return { error: '背包裡找不到這件裝備（穿在身上的要先卸下）。' };
         if (isEquipLocked(player.equipInventory[i])) return { error: '鎖定中的裝備不能上架，請先解除鎖定。' };
-        const eq = player.equipInventory.splice(i, 1)[0];
+        const eq = dryRun ? player.equipInventory[i] : player.equipInventory.splice(i, 1)[0];
         return { item: { kind: 'equip', eqJson: JSON.stringify(eq) } };
     }
     const s = mkStack(f.key);
     if (!s || n < 1 || (player[s.key] || 0) < n) return { error: '數量不足。' };
-    player[s.key] -= n;
+    if (!dryRun) player[s.key] -= n;
     return { item: { kind: s.kind, key: s.key, n } };
 }
 // 放回／交給玩家；背包裝備滿時回傳錯誤（不放）
@@ -128,16 +129,18 @@ async function marketCreate() {
     const hours = Number(document.getElementById('mk-hours').value) || 24;
     f.key = document.getElementById('mk-item') ? document.getElementById('mk-item').value : '';
     f.n = document.getElementById('mk-n') ? document.getElementById('mk-n').value : 1;
-    if (!f.key) { alert('請選擇要寄售的物品。'); return; }
-    if (price < 1 || price > MARKET_MAX_PRICE) { alert('起標價要是 1 以上的整數靈石。'); return; }
+    if (!f.key) { gameAlert('請選擇要寄售的物品。'); return; }
+    if (price < 1 || price > MARKET_MAX_PRICE) { gameAlert('起標價要是 1 以上的整數靈石。'); return; }
     if (!MARKET_HOURS.includes(hours)) return;
-    if (lbBanned) { alert('你已被禁止交易。'); return; }
+    if (lbBanned) { gameAlert('你已被禁止交易。'); return; }
     const active = mkMine.filter(d => mkMs(d.endsAt) > Date.now()).length;
-    if (active >= MARKET_MAX_ACTIVE) { alert(`同時最多寄售 ${MARKET_MAX_ACTIVE} 件。`); return; }
-    const taken = mkTakeItem(f);
-    if (taken.error) { alert(taken.error); return; }
-    const label = mkLabel(taken.item);
-    if (!confirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n成交抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回。\n確定上架？`)) { mkGiveItem(taken.item); return; }
+    if (active >= MARKET_MAX_ACTIVE) { gameAlert(`同時最多寄售 ${MARKET_MAX_ACTIVE} 件。`); return; }
+    const preview = mkTakeItem(f, true);   // 先只檢查，確認後才扣
+    if (preview.error) { gameAlert(preview.error); return; }
+    const label = mkLabel(preview.item);
+    if (!(await gameConfirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n成交抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回。\n確定上架？`))) return;
+    const taken = mkTakeItem(f);           // 等待確認期間背包可能變了，重新檢查一次
+    if (taken.error) { gameAlert(taken.error); return; }
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_COLLECTION).add({
@@ -150,7 +153,7 @@ async function marketCreate() {
         console.warn('上架失敗：', e);
         mkGiveItem(taken.item);   // 失敗就放回
         // 附上錯誤代碼，方便玩家截圖回報（例：invalid-argument＝資料格式被雲端拒絕，不是網路問題）
-        alert(e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : `上架失敗，請稍後再試。（${(e && (e.code || e.message)) || '未知錯誤'}）`);
+        gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : `上架失敗，請稍後再試。（${(e && (e.code || e.message)) || '未知錯誤'}）`);
         saveLocal(); renderLeaderboard(false);
         return;
     }
@@ -165,9 +168,11 @@ async function marketBid(id) {
     const input = document.getElementById('mk-bid-' + id);
     const amount = Math.floor(Number(input && input.value) || 0);
     const min = mkMinBid(d);
-    if (amount < min) { alert(`出價至少 ${min.toWan()} 靈石。`); return; }
-    if (amount > player.coins) { alert(`靈石不足（持有 ${player.coins.toWan()}）。出價會先扣除，被超過時退回。`); return; }
-    if (!confirm(`出價 ${amount.toWan()} 靈石競標【${d.label}】？\n靈石會先扣除；被別人超過時退回（到「待處理」領回）。`)) return;
+    if (amount < min) { gameAlert(`出價至少 ${min.toWan()} 靈石。`); return; }
+    if (amount > player.coins) { gameAlert(`靈石不足（持有 ${player.coins.toWan()}）。出價會先扣除，被超過時退回。`); return; }
+    // 2026-10-01：原本用 confirm()，在預覽面板／App 內建瀏覽器會直接回傳「取消」，玩家按出價沒反應（使用者回報）→ 改遊戲內確認框
+    if (!(await gameConfirm(`出價 ${amount.toWan()} 靈石競標【${d.label}】？\n靈石會先扣除；被別人超過時退回（到「待處理」領回）。`))) return;
+    if (amount > player.coins) { gameAlert(`靈石不足（持有 ${player.coins.toWan()}）。`); return; }   // 等待確認期間靈石可能變少
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         const ref = db.collection(MARKET_COLLECTION).doc(id);
@@ -190,7 +195,7 @@ async function marketBid(id) {
     } catch (e) {
         console.warn('出價失敗：', e);
         const m = String(e && e.message || '');
-        alert(m === 'ended' ? '拍賣已結束。' : m === 'self' ? '不能競標自己的寄售品。' : m === 'top' ? '你已經是目前最高出價。'
+        gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : m === 'ended' ? '拍賣已結束。' : m === 'self' ? '不能競標自己的寄售品。' : m === 'top' ? '你已經是目前最高出價。'
             : m.startsWith('low:') ? `有人搶先出價了，現在至少要 ${Number(m.slice(4)).toWan()} 靈石。`
             : m === 'gone' ? '此寄售品已下架。' : e && e.code === 'permission-denied' ? '出價失敗（可能剛好被超過或已結束），請重新整理後再試。' : '連線失敗，請稍後再試。');
         refreshLeaderboard(false);
@@ -209,7 +214,7 @@ async function marketClaimRefund(rid) {
     try {
         const { db } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_REFUND_COLLECTION).doc(rid).delete());
-    } catch (e) { console.warn(e); alert('領回失敗，請稍後再試。'); return; }
+    } catch (e) { console.warn(e); gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : '領回失敗，請稍後再試。'); return; }
     player.coins += Math.floor(Number(r.amount) || 0);
     mkRefunds = mkRefunds.filter(x => x.id !== rid);
     mkDone(`🏪 出價被超過，領回 ${Number(r.amount).toWan()} 靈石（${r.label}）。`);
@@ -218,7 +223,7 @@ async function marketClaimRefund(rid) {
 async function marketClaim(id, type) {
     const d = mkMine.concat(mkWins).find(x => x.id === id);
     if (!d) return;
-    if (type === 'item') { const sp = mkCheckSpace(d.item); if (sp) { alert(sp); return; } }
+    if (type === 'item') { const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; } }
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_CLAIM_COLLECTION).doc(`${id}_${type}`).set({
@@ -231,8 +236,8 @@ async function marketClaim(id, type) {
             .then(s => { if (s.exists) return db.collection(MARKET_COLLECTION).doc(id).delete(); }).catch(() => {});
     } catch (e) {
         console.warn(e);
-        if (e && e.code === 'permission-denied') { markMarketClaimed(id, type); alert('已經領取過了。'); renderLeaderboard(false); }
-        else alert('連線失敗，請稍後再試。');
+        if (e && e.code === 'permission-denied') { markMarketClaimed(id, type); gameAlert('已經領取過了。'); renderLeaderboard(false); }
+        else gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : '連線失敗，請稍後再試。');
         return;
     }
     if (type === 'item') { mkGiveItem(d.item); showToast(`🎉 得標成功：${d.label} 已入袋`, 'ok'); mkDone(`🏪 得標領取【${d.label}】（${Number(d.bid).toWan()} 靈石）！`); }
@@ -243,12 +248,12 @@ async function marketClaim(id, type) {
 async function marketCancel(id) {
     const d = mkMine.find(x => x.id === id);
     if (!d || d.bidder) return;
-    const sp = mkCheckSpace(d.item); if (sp) { alert(sp); return; }
-    if (!confirm(`下架【${d.label}】並領回？`)) return;
+    const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; }
+    if (!(await gameConfirm(`下架【${d.label}】並領回？`))) return;
     try {
         const { db } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_COLLECTION).doc(id).delete());
-    } catch (e) { console.warn(e); alert(e && e.code === 'permission-denied' ? '已經有人出價，不能下架。' : '連線失敗，請稍後再試。'); refreshLeaderboard(false); return; }
+    } catch (e) { console.warn(e); gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied' ? '已經有人出價，不能下架。' : '連線失敗，請稍後再試。'); refreshLeaderboard(false); return; }
     mkGiveItem(d.item);
     mkMine = mkMine.filter(x => x.id !== id);
     mkDone(`🏪 下架領回【${d.label}】。`);

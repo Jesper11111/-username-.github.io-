@@ -267,11 +267,20 @@ async function refreshLeaderboard(manual) {
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
-        lbError = e && e.code === 'permission-denied'
+        lbError = lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
             ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "留言板尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
             : "連線失敗，請稍後再試。";
     }
     renderLeaderboard(false);
+}
+
+// Firebase 回報額度已滿：Firestore 回 resource-exhausted（HTTP 429「Quota exceeded」），SDK 內部重試約 7 秒才放棄。
+// 2026-10-01 使用者回報寄售無法出價：實測一般讀取、寫入都正常，只有交易（runTransaction：出價）一直回 429，原本只顯示「連線失敗」看不出來。
+//   原因要到 Firebase 主控台（用量與帳單／配額）查；Spark 免費方案的每日額度在美西午夜（台灣時間約下午 3～4 點）重置
+const LB_QUOTA_MSG = "雲端伺服器回報額度已滿（Firebase：Quota exceeded），這個操作暫時無法完成，請稍後再試；若持續發生請通知管理者。";
+function lbIsQuota(e) {
+    const s = String((e && (e.code || '')) + ' ' + (e && e.message || ''));
+    return /resource-exhausted|quota/i.test(s);
 }
 
 function lbWithTimeout(promise) {
