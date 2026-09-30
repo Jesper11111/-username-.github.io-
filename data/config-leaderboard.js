@@ -14,6 +14,10 @@ const LEADERBOARD_FIREBASE_CONFIG = {
     appId: "1:77737588639:web:9bf58facab1b552863afaa"
 };
 
+// 暫停紀錄（2026-09-30 使用者要求）：true 時天下戰力榜不上傳戰力、死守天南城不送審（也不排入待送），榜單仍可查看（停在暫停前的名次）；
+// 留言板、寄售不受影響。只擋玩家端，雲端規則沒改。恢復改成 false
+const LEADERBOARD_PAUSED = true;
+
 const LEADERBOARD_SDK_BASE = "https://www.gstatic.com/firebasejs/10.14.1";   // compat 版，傳統 <script> 可直接用全域 firebase
 const LEADERBOARD_COLLECTION = "leaderboard";          // 每位玩家一筆，文件 id = 匿名登入的 uid
 const LEADERBOARD_BANNED_COLLECTION = "banned";        // GM 黑名單（gm.html），文件 id = 被封鎖的 uid；規則擋下其上傳

@@ -75,6 +75,7 @@ function initLeaderboardBackend() {
 // 上傳自己的戰力；遊戲結束、讀檔失敗（角色不是真的）或距上次不到 60 秒時不上傳
 async function uploadLeaderboard() {
     if (!isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed) return;
+    if (LEADERBOARD_PAUSED) return;   // 暫停紀錄（config-leaderboard.js）
     if (lbBanned || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;
     lbLastUploadAt = Date.now();
     try {
@@ -130,6 +131,7 @@ let lbDefenseMine = null;      // 自己送審紀錄的審核狀態（defenseSub
 let lbTab = 'power';
 
 function submitDefenseRecord(run) {
+    if (LEADERBOARD_PAUSED) return;   // 暫停紀錄：這段期間的紀錄不排入送審
     if (run.cleared <= (player.defenseSubmitted || 0)) return;
     if (player.defensePending && player.defensePending.cleared >= run.cleared) return;
     player.defensePending = run;
@@ -138,7 +140,7 @@ function submitDefenseRecord(run) {
 
 async function flushDefenseSubmit() {
     const run = player.defensePending;
-    if (!run || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
+    if (!run || LEADERBOARD_PAUSED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
     if (flushDefenseSubmit.busy) return;
     flushDefenseSubmit.busy = true;
     try {
@@ -170,6 +172,7 @@ async function flushDefenseSubmit() {
 // 守城介面「通關紀錄」上的一行狀態
 function getDefenseRankStatusText() {
     if (!isLeaderboardConfigured()) return '';
+    if (LEADERBOARD_PAUSED) return '⏸️ 守城排行榜暫停紀錄中（榜單維持暫停前的名次）';
     if (lbBanned) return '⛔ 已被移出排行榜';
     if (player.defensePending) return `🏯 守城排行榜：第 ${player.defensePending.cleared} 波紀錄等待上傳`;
     if (!player.defenseSubmitted) return '🏯 守城排行榜：尚未送審（守住至少 1 波後自動送審）';
@@ -329,6 +332,7 @@ function renderLeaderboard(loading) {
         html += idx >= 0 ? `　目前第 <b>${idx + 1}</b> 名` : `　未進前 ${LEADERBOARD_TOP_N} 名`;
     }
     html += `</div>`;
+    if (LEADERBOARD_PAUSED) html += `<p class="lb-note" style="color:#facc15;">⏸️ 天下戰力榜暫停紀錄中：目前不會上傳戰力，榜單維持暫停前的名次。</p>`;
     if (lbBanned) html += `<p class="lb-note" style="color:#f87171;">⛔ 你的戰力紀錄因資料異常已被移出戰力榜，無法再上榜。</p>`;
     if (loading) html += `<p class="lb-note">讀取中…</p>`;
     if (lbError) html += `<p class="lb-note" style="color:#f87171;">${lbError}</p>`;
@@ -352,7 +356,7 @@ function renderLeaderboard(loading) {
             </div>`;
         }).join("") + `</div>`;
     }
-    html += `<p class="lb-note">在線時每 5 分鐘自動回報一次戰力（不含禁術等暫時增益）。</p>`;
+    if (!LEADERBOARD_PAUSED) html += `<p class="lb-note">在線時每 5 分鐘自動回報一次戰力（不含禁術等暫時增益）。</p>`;
     box.innerHTML = html;
 }
 

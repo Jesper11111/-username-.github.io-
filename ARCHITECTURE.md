@@ -1388,7 +1388,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261003n`）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261003o`，gm.html 同）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2116,7 +2116,13 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **目前狀態（2026-09-28 已開通）**：Firebase 專案 `k5596101`（擁有者 k559610142@gmail.com）、網頁應用程式 `xiuxian-web`、Firestore 地區 asia-east1、匿名登入已啟用、規則已發布。
   本機實測通過：匿名登入、上傳、讀榜；改別人資料／戰力 1e30／多塞欄位／60 秒內重複上傳皆被規則擋下（permission-denied）。
   測試時在榜上留下一筆「韓立／戰力 55／凡人 1 階」，可到主控台 Firestore → leaderboard 手動刪除。
-- **關閉方式**：`LEADERBOARD_FIREBASE_CONFIG = null` → 不載入 SDK、不連網、不上傳；點 HUD 戰力只顯示「尚未開通」。
+- **關閉方式**：`LEADERBOARD_FIREBASE_CONFIG = null` → 不載入 SDK、不連網、不上傳；點 HUD 戰力只顯示「尚未開通」（⚠️ 留言板、寄售也會一起關掉）。
+- **暫停紀錄**（2026-09-30，版本 `20261003o`，使用者要求「天下戰力榜、死守天南城榜單暫停紀錄」；**目前 `LEADERBOARD_PAUSED = true`**）：
+  - `uploadLeaderboard` 直接返回（不上傳戰力）；`submitDefenseRecord` 不排入待送、`flushDefenseSubmit` 不送審（暫停期間的守城紀錄不會事後補送；暫停前已排隊的 `defensePending` 留著，恢復後才送）。
+  - 榜單仍可讀，停在暫停前的名次；戰力分頁顯示黃字「⏸️ 天下戰力榜暫停紀錄中」、隱藏「每 5 分鐘回報」說明；守城分頁／守城介面狀態列 `getDefenseRankStatusText` 顯示「⏸️ 守城排行榜暫停紀錄中」。留言板、寄售照常。
+  - 只擋玩家端：雲端規則沒改，還沒更新到新版的玩家（快取舊 JS）重新整理前仍會上傳；要完全封住得改 `tools/firestore.rules`。gm.html 不受影響。
+  - 恢復：`LEADERBOARD_PAUSED = false` 並更新版本號。
+  - 驗證（本機，真實 Firebase 唯讀）：上傳被略過（`lbLastUploadAt` 不變）、守城 99 波未排入；兩個分頁都顯示暫停提示且榜單讀取正常。
 
 ### 開通步驟（管理者做一次）
 1. 到 https://console.firebase.google.com 建立專案（可關閉 Google Analytics）。
