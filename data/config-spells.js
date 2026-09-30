@@ -11,6 +11,10 @@
 
 const SPELL_EVIL_POWER = 1.25;   // 魔功傷害倍率
 const SPELL_SLOT_LEVEL_STEP = 100;   // 每幾級多開一格技能格（Lv1 即有 1 格）
+// 下品武學秘典碎片（2026-10-01 使用者要求「新增下品武學秘典碎片，100 個可合成，在奇遇機緣等探索發現」）：
+//   player.spellShards；武學密典視窗「合成」→ 隨機習得一招尚未學會的下品仙法（spells.js 的 synthesizeSpell）；來源見 config-encounter.js
+const SPELL_SHARD_NEED = 100;
+const SPELL_SHARD_GRADE = "low";
 
 const SPELL_GRADES = {
     low:      { name: "下品", color: "#9ca3af" },

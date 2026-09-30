@@ -8,7 +8,7 @@ const equipTypes = {
 };
 
 // 背包裝備上限（不含已穿戴的）：已滿時無法鍛造、購買、卸下裝備（舊存檔超過上限的不會被刪除）
-const MAX_EQUIP_INVENTORY = 100;
+const MAX_EQUIP_INVENTORY = 500;   // 2026-10-01 使用者要求由 100 增加到 500
 
 // 不可在鍛造閣打造的部位（神器只能於靈寶閣高級宗門兌換）
 const NON_FORGEABLE_SLOTS = ["神器"];

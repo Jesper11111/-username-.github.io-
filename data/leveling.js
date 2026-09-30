@@ -160,9 +160,9 @@ function advanceRealm() {
     gainRealmLifespan();
 }
 
-function triggerReincarnate() {
+async function triggerReincarnate() {
     if (player.realmIndex < 10) {
-        alert("境界未達【仙人初境】，無法進行轉世輪迴！");
+        gameAlert("境界未達【仙人初境】，無法進行轉世輪迴！");
         return;
     }
 
@@ -171,9 +171,10 @@ function triggerReincarnate() {
     let keepText = NUMERIC_V2
         ? `・保留：氣血上限的 ${Math.round(NV2.reincarnateHpKeep * 100)}%（目前約 +${fmtCombat(getMaxHp() * NV2.reincarnateHpKeep)}，可逐世累積）\n`
         : `・保留：四維與魅力的 ${pct}%、氣血上限與靈力上限的 ${pct}%\n`;
-    if (confirm(`轉世輪迴將洗去此世修為：\n` +
+    if (await gameConfirm(`轉世輪迴將洗去此世修為：\n` +
         keepText +
         `・遺忘：境界、人物等級、宗門（須重新拜入）與宗門技能、藏書閣古籍與屬性秘典\n` +
+        `・身上的裝備全部卸下，放回背包（人物等級回到 Lv.1，要重新達到裝備等級才能再穿）\n` +
         `・壽元回到凡人的 ${lifespanByRealm[0].gain} 年\n` +
         `此操作無法復原，是否確定輪迴？`)) {
         // 先記下此世的數值，再依比例保留（上一世留下的部分已包含在內，會自然累積）
@@ -207,11 +208,20 @@ function triggerReincarnate() {
         player.studyCounts = { str: 0, con: 0, int: 0, spr: 0 };
         player.elementStudy = {};
         player.goldenCore = null;   // 丹田／金丹／元嬰隨轉世重來（golden-core.js）
+        // 裝備全部卸下放回背包（2026-10-01 使用者指定）；強制卸下不受背包上限限制，超過上限的照舊保留（見 config-equipment.js）
+        let takenOff = 0;
+        Object.keys(player.equipment).forEach(slot => {
+            if (!player.equipment[slot]) return;
+            player.equipInventory.push(player.equipment[slot]);
+            player.equipment[slot] = null;
+            takenOff++;
+        });
         player.hp = getMaxHp();
         player.mp = getMaxMp();
         addLog(NUMERIC_V2
             ? `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為底蘊（氣血上限 +${fmtCombat(keptNv2Hp)}），其餘盡數遺忘。`
             : `🌀 成功轉世輪迴！第 ${player.reincarnations} 次輪迴，前世修為化為 ${pct}% 的底蘊（氣血上限 +${keptHp.toWan()}、靈力上限 +${keptMp.toWan()}），其餘盡數遺忘。`, "reincarnate");
+        if (takenOff) addLog(`🛡️ 輪迴之際，身上 ${takenOff} 件裝備盡數卸下，已放回背包。`, "equip");
         updateUI();
         updateSectFacilitiesUI();
     }

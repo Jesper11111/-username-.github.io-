@@ -1,0 +1,772 @@
+<title>闖關戰棋原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* 版面：夜色墨青的遊戲介面，左邊是棋盤／地圖，右邊是狀態與操作；手機改成上下堆疊 */
+:root{
+  --ink:#0e1217; --panel:#161b22; --panel2:#1d242d; --line:#2b3540;
+  --fg:#e8e3d6; --mute:#99a1a8;
+  --jade:#5fc8a2; --cinna:#e2604f; --gold:#d8b25a; --azure:#6aa5e0; --violet:#a493e6;
+  --f-display:"LXGW WenKai TC","Kaiti TC","KaiTi","STKaiti",serif;
+  --f-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--ink);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;padding:24px 16px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--f-display);font-size:clamp(28px,5vw,40px);margin:0;letter-spacing:.06em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--mute);max-width:62ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:inherit;background:var(--panel);color:var(--mute);border:1px solid var(--line);padding:8px 16px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);background:var(--gold);border-color:var(--gold);font-weight:700}
+.tab:focus-visible,button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.game{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.game{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.box h2{font-family:var(--f-display);font-size:20px;margin:0 0 4px;letter-spacing:.04em}
+.sub{color:var(--mute);font-size:13px;margin:0}
+.btn{font:inherit;font-size:14px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--jade)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--jade);color:var(--ink);border-color:var(--jade);font-weight:700}
+.btn.warn{border-color:var(--cinna);color:var(--cinna)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+.bar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--cinna);transition:width .25s}
+.bar.mp>i{background:var(--azure)}
+.bar.jade>i{background:var(--jade)}
+.stat{display:grid;grid-template-columns:3.2em minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.chip.art{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.log{font-size:13px;color:var(--mute);max-height:170px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:2px;border-top:1px solid var(--line);padding-top:8px}
+.log b{color:var(--fg);font-weight:500}
+.log .g{color:var(--jade)} .log .r{color:var(--cinna)} .log .y{color:var(--gold)}
+.scene{background:var(--panel2);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.scene h3{font-family:var(--f-display);font-size:19px;margin:0}
+.intent{font-size:13px;color:var(--gold)}
+.choice{text-align:left;display:flex;flex-direction:column;gap:2px}
+.choice small{color:var(--mute);font-size:12px}
+.kbd{font-variant-numeric:tabular-nums}
+
+/* 闖關地圖 */
+.rmap{position:relative;height:540px;margin-top:10px;border-radius:8px;background:
+  radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--jade) 10%,transparent),transparent 60%),var(--panel2)}
+.rmap svg{position:absolute;inset:0;width:100%;height:100%}
+.rmap line{stroke:var(--line);stroke-width:2}
+.rmap line.done{stroke:var(--gold)}
+.rmap line.open{stroke:var(--jade);stroke-dasharray:4 4}
+.node{position:absolute;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--panel);color:var(--mute);font-family:var(--f-display);font-size:18px;display:grid;place-items:center;cursor:default;padding:0}
+.node.t-精{color:var(--violet)} .node.t-寶{color:var(--gold)} .node.t-息{color:var(--jade)} .node.t-奇{color:var(--azure)} .node.t-戰{color:var(--fg)}
+.node.boss{width:58px;height:58px;font-size:24px;color:var(--cinna);border-color:var(--cinna)}
+.node.open{border-color:var(--jade);cursor:pointer;box-shadow:0 0 0 4px color-mix(in srgb,var(--jade) 22%,transparent);animation:pulse 1.6s ease-in-out infinite}
+.node.done{background:color-mix(in srgb,var(--gold) 22%,var(--panel));border-color:var(--gold);opacity:.8}
+.node.here{border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 35%,transparent)}
+.node.lock{opacity:.45}
+@keyframes pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--jade) 8%,transparent)}}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px}
+.legend span b{font-family:var(--f-display);font-weight:400;margin-right:3px}
+
+/* 戰棋 */
+.board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;margin-top:10px;max-width:560px;width:100%;background:var(--line);border:2px solid var(--line);border-radius:6px;overflow:hidden}
+.cell{position:relative;aspect-ratio:1;max-width:100%;border:0;padding:0;font:inherit;cursor:pointer;background:var(--panel2);color:var(--fg)}
+.cell .tl{position:absolute;left:3px;top:1px;font-family:var(--f-display);font-size:11px;opacity:.55;pointer-events:none}
+.ter-山{background:linear-gradient(160deg,#3a3326,#2a2620)} .ter-山 .tl{color:#d1b27a}
+.ter-河{background:linear-gradient(160deg,#1c3550,#16283c);cursor:default} .ter-河 .tl{color:var(--azure)}
+.ter-林{background:linear-gradient(160deg,#1d3a2c,#172b22)} .ter-林 .tl{color:var(--jade)}
+.ter-泉{background:radial-gradient(circle,color-mix(in srgb,var(--jade) 35%,#1d242d),#1d242d 70%)} .ter-泉 .tl{color:var(--jade)}
+.cell.reach::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--jade) 32%,transparent);pointer-events:none}
+.cell.danger::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--cinna) 28%,transparent) 0 4px,transparent 4px 8px);pointer-events:none}
+.cell.target{box-shadow:inset 0 0 0 3px var(--cinna)}
+.cell.sel{box-shadow:inset 0 0 0 3px var(--gold)}
+.tok{position:absolute;inset:12%;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:clamp(14px,3.4vw,22px);background:var(--panel);border:2px solid var(--jade);color:var(--fg);pointer-events:none;transition:transform .2s;z-index:1}
+.tok.foe{border-color:var(--cinna)} .tok.boss{border-color:var(--gold);color:var(--gold)}
+.tok.acted{filter:grayscale(1) brightness(.6)}
+.tok .hp{position:absolute;left:8%;right:8%;bottom:-7px;height:4px;border-radius:2px;background:#000a;overflow:hidden}
+.tok .hp i{display:block;height:100%;background:var(--jade)} .tok.foe .hp i,.tok.boss .hp i{background:var(--cinna)}
+.tok .el{position:absolute;right:-6px;top:-6px;font-size:10px;font-family:var(--f-body);background:var(--ink);border:1px solid var(--line);border-radius:999px;padding:0 4px;line-height:1.5}
+.cell.hit .tok{animation:hit .35s}
+@keyframes hit{30%{transform:translateX(-4px) scale(.94)}60%{transform:translateX(4px)}}
+.ucard{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px;font-variant-numeric:tabular-nums}
+.ucard dt{color:var(--mute)} .ucard dd{margin:0}
+.wheel{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--mute)}
+.wheel b{color:var(--fg);font-weight:500}
+.banner{font-family:var(--f-display);font-size:22px;text-align:center;padding:10px;border-radius:8px}
+.banner.win{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--gold)}
+.banner.lose{background:color-mix(in srgb,var(--cinna) 18%,transparent);color:var(--cinna)}
+
+/* 說明頁 */
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.notes ul{margin:8px 0 0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:500;font-size:13px}
+td.hl{color:var(--gold)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>闖關戰棋原型</h1>
+    <p>兩個可以直接玩的小原型，給《凡塵修仙傳》挑新玩法用。數字刻意用小數字（接近第 52 節的新制），第三頁是接進遊戲的想法。</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="rogue" id="tab-rogue">闖關・虛天殿</button>
+    <button class="tab" role="tab" data-tab="tactics" id="tab-tactics">戰棋・血色禁地</button>
+    <button class="tab" role="tab" data-tab="notes" id="tab-notes">接進遊戲的想法</button>
+  </nav>
+
+  <!-- 闖關 -->
+  <section id="panel-rogue" class="game" role="tabpanel">
+    <div class="box">
+      <h2>虛天殿・八層闖關</h2>
+      <p class="sub">從最上面往下走，每層選一個相連的節點。第八層是守鼎傀儡。路線自己挑：精英給好功法，但比較危險。</p>
+      <div class="rmap" id="rmap"></div>
+      <div class="legend">
+        <span><b>戰</b>妖獸</span><span><b style="color:var(--violet)">精</b>精英</span><span><b style="color:var(--azure)">奇</b>奇遇</span>
+        <span><b style="color:var(--gold)">寶</b>寶箱</span><span><b style="color:var(--jade)">息</b>調息</span><span><b style="color:var(--cinna)">王</b>首領</span>
+      </div>
+    </div>
+    <div class="box stack">
+      <div class="stack" id="rstat"></div>
+      <div class="scene" id="rscene"></div>
+      <div class="log" id="rlog"></div>
+      <div class="row"><button class="btn warn" id="rrestart">重新闖關</button></div>
+    </div>
+  </section>
+
+  <!-- 戰棋 -->
+  <section id="panel-tactics" class="game" role="tabpanel" hidden>
+    <div class="box">
+      <h2>血色禁地・墨蛟巢穴</h2>
+      <p class="sub">勝利：擊敗墨蛟。失敗：韓立陣亡。點我方單位 → 點綠色格子移動 → 點紅框敵人攻擊。</p>
+      <div class="board" id="board"></div>
+      <div class="legend">
+        <span><b>山</b>移動 2 格、防禦 +3</span><span><b style="color:var(--jade)">林</b>受到傷害 −25%</span>
+        <span><b style="color:var(--azure)">河</b>無法通過</span><span><b style="color:var(--jade)">泉</b>回合開始回 6 氣血</span>
+      </div>
+    </div>
+    <div class="box stack">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <strong id="tturn" class="kbd"></strong>
+        <div class="row">
+          <button class="btn" id="tdanger">顯示敵方範圍</button>
+          <button class="btn primary" id="tend">結束回合</button>
+        </div>
+      </div>
+      <div class="scene" id="tinfo"></div>
+      <div class="wheel"><span>五行相剋 攻方 +30%／被剋 −20%：</span><b>金→木→土→水→火→金</b></div>
+      <div class="log" id="tlog"></div>
+      <div class="row"><button class="btn warn" id="trestart">重新開局</button></div>
+    </div>
+  </section>
+
+  <!-- 想法 -->
+  <section id="panel-notes" role="tabpanel" hidden class="stack">
+    <div class="notes">
+      <div class="box">
+        <h2>闖關（Roguelike 爬塔）</h2>
+        <p class="sub">類似《殺戮尖塔》：分岔路線、看得到敵人下一步、每場勝利三選一功法。</p>
+        <ul>
+          <li>放在秘境入口（第 43 節），和鎮魔塔、魔屠天南並列，每日次數限制。</li>
+          <li>進場時把玩家的攻防氣血換算成小數字，功法只在這一趟有效，出來就清空，不會影響戰力平衡。</li>
+          <li>結算依層數給獎勵：圖紙（第 55 節）、異火碎片（第 38 節）、夥伴碎片，每 10 層一個種族首領可直接用第 62 節的種族標籤與剋制法寶。</li>
+          <li>敵人「預告意圖」讓玩家自己決定防守或搶攻，比現在的自動戰鬥多了操作感，而且一場只要 1～2 分鐘，手機好按。</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>戰棋（回合制格子戰）</h2>
+        <p class="sub">類似《火焰紋章》：走位、地形、五行相剋、反擊。</p>
+        <ul>
+          <li>我方單位直接用現有的：主角、出戰夥伴（第 39 節）、上陣三隻靈寵（第 16 節），讓養成的東西有新的舞台。</li>
+          <li>五行相剋（第 17 節）和種族剋制（第 62 節）變成站位與配隊的考量，不只是數字加成。</li>
+          <li>關卡可以做成劇情篇章：血色禁地、虛天殿、墜魔谷，每章 3～5 關，首通給獎。</li>
+          <li>開發量比闖關大：要有敵方 AI、關卡編輯、畫面在手機 8×8 格剛好，再大就要捲動。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box">
+      <h2>比較</h2>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th></th><th>闖關・虛天殿</th><th>戰棋・血色禁地</th></tr></thead>
+          <tbody>
+            <tr><th>一場時間</th><td>1～2 分鐘一戰，一趟 10 分鐘</td><td>一關 5～10 分鐘</td></tr>
+            <tr><th>重玩性</th><td class="hl">高：路線、功法每趟都不同</td><td>中：固定關卡，靠配隊變化</td></tr>
+            <tr><th>重用現有系統</th><td>玩家屬性、種族、掉落表</td><td class="hl">夥伴、靈寵、五行、種族全部用上</td></tr>
+            <tr><th>手機操作</th><td class="hl">只按按鈕，最輕鬆</td><td>要點格子，8×8 可以</td></tr>
+            <tr><th>開發量（估）</th><td class="hl">小：一支 js＋一個 config</td><td>大：AI、地圖、關卡資料</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sub" style="margin-top:10px">建議先做闖關，當成第三個秘境上線；戰棋等夥伴與靈寵的數值穩定後再做成劇情篇章。</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- 分頁 ---------- */
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === id));
+  ['rogue', 'tactics', 'notes'].forEach(k => { $('#panel-' + k).hidden = k !== id; });
+  try { localStorage.setItem('proto-tab', id); } catch (e) {}
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+let startTab = 'rogue';
+try { startTab = localStorage.getItem('proto-tab') || startTab; } catch (e) {}
+if (location.hash === '#tactics' || location.hash === '#notes') startTab = location.hash.slice(1);
+showTab(startTab);
+
+/* =====================================================
+   闖關・虛天殿
+   ===================================================== */
+const ARTS = [
+  { id: 'qy', name: '青元劍訣', desc: '攻擊 +25%', apply: p => p.atkPct += 0.25 },
+  { id: 'ly', name: '羅煙步', desc: '15% 機率閃避攻擊', apply: p => p.evade += 0.15 },
+  { id: 'dy', name: '大衍訣', desc: '法術消耗 −5 靈力', apply: p => p.mpDisc += 5 },
+  { id: 'cc', name: '長春功', desc: '每場勝利回復 12% 氣血', apply: p => p.postHeal += 0.12 },
+  { id: 'xb', name: '玄冰甲', desc: '防禦 +3', apply: p => p.def += 3 },
+  { id: 'sj', name: '噬金蟲', desc: '每回合額外造成 4 點傷害', apply: p => p.extra += 4 },
+  { id: 'xl', name: '血靈鑽', desc: '劍訣傷害的 20% 轉為氣血', apply: p => p.steal += 0.2 },
+  { id: 'zy', name: '紫羅極火', desc: '法術倍率 1.8 → 2.4', apply: p => p.spellMult = 2.4 },
+  { id: 'gl', name: '乾藍冰焰', desc: '每場戰鬥開場獲得 10 點護體', apply: p => p.startBlock += 10 },
+  { id: 'ds', name: '大庚劍陣', desc: '劍訣無視 3 點防禦並 +2 傷害', apply: p => p.pierce += 3 },
+];
+const FOES = {
+  normal: [
+    { name: '噬金蟲群', hp: 22, atk: 6, def: 0, pat: ['atk', 'atk', 'multi'] },
+    { name: '血線蛟', hp: 28, atk: 7, def: 1, pat: ['atk', 'guard', 'heavy'] },
+    { name: '鬼靈門弟子', hp: 26, atk: 8, def: 0, pat: ['atk', 'charge', 'heavy'] },
+    { name: '陰羅宗傀儡', hp: 30, atk: 6, def: 2, pat: ['guard', 'atk', 'multi'] },
+  ],
+  elite: [
+    { name: '金背蒼猿', hp: 52, atk: 9, def: 3, pat: ['atk', 'guard', 'atk', 'heavy'] },
+    { name: '化形火蟒', hp: 48, atk: 10, def: 1, pat: ['charge', 'heavy', 'atk', 'multi'] },
+  ],
+  boss: { name: '虛天殿・守鼎傀儡', hp: 170, atk: 15, def: 3, pat: ['atk', 'guard', 'charge', 'heavy', 'multi'] },
+};
+const ROWS = 8, COLS = 4;
+let P, MAP, C, RMODE, RDATA;
+
+function rlog(html) {
+  const d = document.createElement('div'); d.innerHTML = html;
+  $('#rlog').prepend(d);
+}
+function newRun() {
+  P = { hp: 60, maxHp: 60, atk: 10, def: 2, mp: 30, maxMp: 30, pills: 2, stones: 0, arts: [],
+        atkPct: 0, evade: 0, mpDisc: 0, postHeal: 0, extra: 0, steal: 0, spellMult: 1.8, startBlock: 0, pierce: 0,
+        block: 0, pos: null };
+  MAP = buildMap(); C = null; RMODE = 'map'; RDATA = null;
+  $('#rlog').innerHTML = '';
+  rlog('踏入<b>虛天殿</b>。選一條路往下走。');
+  renderRogue();
+}
+function buildMap() {
+  const rows = [];
+  for (let r = 0; r < ROWS; r++) {
+    if (r === ROWS - 1) { rows.push([{ r, c: 1.5, type: '王' }]); continue; }
+    const n = r === 0 ? 3 : 2 + rnd(3);
+    const cols = shuffle([0, 1, 2, 3]).slice(0, n).sort((a, b) => a - b);
+    rows.push(cols.map(c => ({ r, c, type: nodeType(r) })));
+  }
+  const nodes = [];
+  rows.forEach(row => row.forEach(nd => { nd.id = nodes.length; nd.next = []; nd.prev = 0; nodes.push(nd); }));
+  for (let r = 0; r < ROWS - 1; r++) {
+    const nxt = rows[r + 1];
+    rows[r].forEach(a => {
+      let cand = nxt.filter(b => Math.abs(b.c - a.c) <= 1);
+      if (!cand.length) { const m = Math.min(...nxt.map(b => Math.abs(b.c - a.c))); cand = nxt.filter(b => Math.abs(b.c - a.c) === m); }
+      shuffle(cand).slice(0, 1 + (cand.length > 1 && Math.random() < 0.45 ? 1 : 0)).forEach(b => link(a, b));
+    });
+    nxt.forEach(b => {
+      if (b.prev) return;
+      const m = Math.min(...rows[r].map(a => Math.abs(b.c - a.c)));
+      link(pick(rows[r].filter(a => Math.abs(b.c - a.c) === m)), b);
+    });
+  }
+  return { rows, nodes };
+}
+function link(a, b) { if (!a.next.includes(b.id)) { a.next.push(b.id); b.prev++; } }
+function nodeType(r) {
+  if (r === 0) return '戰';
+  if (r === ROWS - 2) return '息';
+  const pool = [['戰', 45], ['奇', 22], ['寶', 10]];
+  if (r >= 2) pool.push(['精', 14]);
+  if (r >= 3) pool.push(['息', 9]);
+  let t = rnd(pool.reduce((s, x) => s + x[1], 0));
+  for (const [k, w] of pool) { if ((t -= w) < 0) return k; }
+  return '戰';
+}
+function openNodes() {
+  if (RMODE !== 'map') return [];
+  if (P.pos === null) return MAP.rows[0].map(n => n.id);
+  return MAP.nodes[P.pos].next;
+}
+function stats() { return { atk: Math.round(P.atk * (1 + P.atkPct)), def: P.def }; }
+function spellCost() { return Math.max(4, 14 - P.mpDisc); }
+function heal(n) { const b = P.hp; P.hp = Math.min(P.maxHp, P.hp + n); return P.hp - b; }
+
+function renderRogue() { renderMap(); renderRStat(); renderScene(); }
+function renderMap() {
+  const open = openNodes();
+  const X = n => (n.c + 0.5) / COLS * 100, Y = n => (n.r + 0.5) / ROWS * 100;
+  let svg = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">';
+  MAP.nodes.forEach(a => a.next.forEach(bid => {
+    const b = MAP.nodes[bid];
+    const cls = a.done && b.done ? 'done' : (a.id === P.pos && open.includes(bid) ? 'open' : '');
+    svg += `<line class="${cls}" x1="${X(a)}" y1="${Y(a)}" x2="${X(b)}" y2="${Y(b)}" vector-effect="non-scaling-stroke"/>`;
+  }));
+  svg += '</svg>';
+  const btns = MAP.nodes.map(n => {
+    const cls = ['node', 't-' + n.type, n.type === '王' ? 'boss' : '',
+      open.includes(n.id) ? 'open' : '', n.done ? 'done' : '', n.id === P.pos ? 'here' : '',
+      !open.includes(n.id) && !n.done ? 'lock' : ''].join(' ');
+    return `<button class="${cls}" style="left:${X(n)}%;top:${Y(n)}%" data-id="${n.id}" aria-label="第${n.r + 1}層 ${n.type}" ${open.includes(n.id) ? '' : 'tabindex="-1"'}>${n.type}</button>`;
+  }).join('');
+  $('#rmap').innerHTML = svg + btns;
+  $('#rmap').querySelectorAll('.node.open').forEach(b => b.onclick = () => enterNode(+b.dataset.id));
+}
+function renderRStat() {
+  const s = stats();
+  $('#rstat').innerHTML = `
+    <div class="stat"><span>氣血</span><div class="bar"><i style="width:${P.hp / P.maxHp * 100}%"></i></div><span>${P.hp}/${P.maxHp}</span></div>
+    <div class="stat"><span>靈力</span><div class="bar mp"><i style="width:${P.mp / P.maxMp * 100}%"></i></div><span>${P.mp}/${P.maxMp}</span></div>
+    <div class="row kbd" style="font-size:13px;color:var(--mute);gap:14px">
+      <span>攻擊 <b style="color:var(--fg)">${s.atk}</b></span><span>防禦 <b style="color:var(--fg)">${s.def}</b></span>
+      <span>丹藥 <b style="color:var(--fg)">${P.pills}</b></span><span>靈石 <b style="color:var(--gold)">${P.stones}</b></span>
+      <span>第 <b style="color:var(--fg)">${P.pos === null ? 0 : MAP.nodes[P.pos].r + 1}</b>／${ROWS} 層</span>
+    </div>
+    <div class="chips">${P.arts.length ? P.arts.map(a => `<span class="chip art" title="${a.desc}">${a.name}</span>`).join('') : '<span class="chip">尚未習得功法</span>'}</div>`;
+}
+function enterNode(id) {
+  const n = MAP.nodes[id];
+  P.pos = id; n.done = true;
+  if (n.type === '戰' || n.type === '精' || n.type === '王') startFight(n);
+  else if (n.type === '奇') { RMODE = 'event'; RDATA = pick(EVENTS); rlog(`奇遇：<b>${RDATA.title}</b>`); }
+  else if (n.type === '寶') {
+    const g = 20 + rnd(21); P.stones += g;
+    let msg = `打開古修遺寶，得到 <span class="y">${g} 靈石</span>`;
+    if (Math.random() < 0.5) { P.pills++; msg += '，還有一顆<span class="g">回春丹</span>'; }
+    rlog(msg + '。'); RMODE = 'map';
+  }
+  else if (n.type === '息') { RMODE = 'rest'; }
+  renderRogue();
+}
+
+/* 戰鬥 */
+function startFight(n) {
+  const tpl = n.type === '王' ? FOES.boss : pick(n.type === '精' ? FOES.elite : FOES.normal);
+  const k = n.type === '王' ? 0 : n.r;  // 首領數值固定，不吃層數成長
+  const hp = Math.round(tpl.hp * (1 + 0.15 * k));
+  C = { e: { ...tpl, hp, maxHp: hp, atk: Math.round(tpl.atk * (1 + 0.1 * k)), block: 0, charged: false, i: 0 },
+        kind: n.type, over: false };
+  P.block = P.startBlock;
+  RMODE = 'fight';
+  rlog(`遭遇 <b>${C.e.name}</b>！`);
+}
+function intentOf(e) {
+  const t = e.pat[e.i % e.pat.length];
+  if (t === 'atk') return { t, text: `攻擊 ${e.atk}` };
+  if (t === 'heavy') return { t, text: `重擊 ${Math.round(e.atk * (e.charged ? 2.2 : 1.6))}` };
+  if (t === 'multi') return { t, text: `連擊 ${Math.max(1, Math.round(e.atk * 0.5))}×3` };
+  if (t === 'guard') return { t, text: `護體 ${6 + e.def * 2}` };
+  return { t, text: '蓄力（下次重擊大幅提升）' };
+}
+function hitEnemy(d) {
+  const e = C.e, ab = Math.min(e.block, d);
+  e.block -= ab; e.hp -= d - ab; return d - ab;
+}
+function hitPlayer(raw) {
+  if (Math.random() < P.evade) { rlog('<span class="g">羅煙步閃過一擊。</span>'); return; }
+  let d = Math.max(1, raw - P.def);
+  const ab = Math.min(P.block, d); P.block -= ab; d -= ab;
+  P.hp -= d;
+  rlog(`受到 <span class="r">${d}</span> 點傷害${ab ? `（護體擋下 ${ab}）` : ''}。`);
+}
+function act(kind) {
+  if (!C || C.over) return;
+  const s = stats(), e = C.e;
+  if (kind === 'pill') {
+    if (P.pills <= 0) return;
+    P.pills--; rlog(`服下回春丹，回復 <span class="g">${heal(Math.round(P.maxHp * 0.35))}</span> 氣血。`);
+    return renderRogue();
+  }
+  if (kind === 'sword') {
+    const d = hitEnemy(Math.max(1, s.atk - Math.max(0, e.def - P.pierce) + (P.pierce ? 2 : 0)));
+    rlog(`劍訣斬出 <b>${d}</b> 點傷害。`);
+    if (P.steal && d > 0) heal(Math.round(d * P.steal));
+  } else if (kind === 'spell') {
+    if (P.mp < spellCost()) return;
+    P.mp -= spellCost();
+    const d = hitEnemy(Math.round(s.atk * P.spellMult));
+    rlog(`法術轟出 <b>${d}</b> 點傷害（無視防禦）。`);
+  } else if (kind === 'guard') {
+    P.block += s.def * 2 + 6; P.mp = Math.min(P.maxMp, P.mp + 8);
+    rlog(`運轉護體靈光，護體 <span class="g">${P.block}</span>，靈力 +8。`);
+  }
+  if (P.extra && e.hp > 0) { const d = hitEnemy(P.extra); rlog(`噬金蟲啃咬 ${d} 點。`); }
+  if (e.hp <= 0) return winFight();
+  enemyTurn();
+  if (P.hp <= 0) { P.hp = 0; C.over = true; RMODE = 'dead'; rlog('<span class="r">身死道消……</span>'); return renderRogue(); }
+  P.block = 0;
+  P.mp = Math.min(P.maxMp, P.mp + 3);
+  renderRogue();
+}
+function enemyTurn() {
+  const e = C.e, it = intentOf(e);
+  e.block = 0;
+  if (it.t === 'atk') hitPlayer(e.atk);
+  else if (it.t === 'heavy') { hitPlayer(Math.round(e.atk * (e.charged ? 2.2 : 1.6))); e.charged = false; }
+  else if (it.t === 'multi') { for (let i = 0; i < 3 && P.hp > 0; i++) hitPlayer(Math.max(1, Math.round(e.atk * 0.5))); }
+  else if (it.t === 'guard') { e.block = 6 + e.def * 2; rlog(`${e.name} 築起護體（${e.block}）。`); }
+  else { e.charged = true; rlog(`${e.name} 正在蓄力！`); }
+  e.i++;
+}
+function winFight() {
+  C.over = true;
+  const g = C.kind === '王' ? 0 : (C.kind === '精' ? 30 : 12) + rnd(10);
+  P.stones += g;
+  rlog(`擊敗 <b>${C.e.name}</b>${g ? `，得 <span class="y">${g} 靈石</span>` : ''}。`);
+  if (P.postHeal) heal(Math.round(P.maxHp * P.postHeal));
+  if (C.kind === '王') { RMODE = 'win'; return renderRogue(); }
+  if (C.kind === '精') { P.pills++; rlog('精英身上搜出一顆<span class="g">回春丹</span>。'); }
+  const owned = new Set(P.arts.map(a => a.id));
+  RDATA = shuffle(ARTS.filter(a => !owned.has(a.id))).slice(0, 3);
+  RMODE = 'reward';
+  renderRogue();
+}
+function takeArt(i) {
+  if (i < 0) { P.stones += 20; rlog('放棄功法，改拿 20 靈石。'); }
+  else { const a = RDATA[i]; P.arts.push(a); a.apply(P); rlog(`習得 <span class="y">${a.name}</span>：${a.desc}。`); }
+  RMODE = 'map'; C = null; renderRogue();
+}
+
+/* 奇遇 */
+const EVENTS = [
+  { title: '散修求救', text: '一名散修被血線蛟圍住，向你大喊救命。', opts: [
+    { t: '出手相救', d: '失去 12 氣血，得到一門功法', f: () => { P.hp = Math.max(1, P.hp - 12); giveRandomArt(); } },
+    { t: '視而不見', d: '什麼都不發生', f: () => rlog('你默默繞路離開。') } ] },
+  { title: '古修洞府', text: '石門上的禁制已經殘破，裡面隱約有靈光。', opts: [
+    { t: '強行破禁', d: '一半機率得 40 靈石與丹藥，一半機率受傷 15', f: () => {
+      if (Math.random() < 0.5) { P.stones += 40; P.pills++; rlog('禁制破開！得 <span class="y">40 靈石</span>與<span class="g">回春丹</span>。'); }
+      else { P.hp = Math.max(1, P.hp - 15); rlog('<span class="r">禁制反噬，氣血 −15。</span>'); } } },
+    { t: '離開', d: '什麼都不發生', f: () => rlog('你沒有冒險。') } ] },
+  { title: '神秘商販', text: '一個戴斗笠的老者擺著小攤：「道友，看看？」', opts: [
+    { t: '買回春丹', d: '30 靈石', need: () => P.stones >= 30, f: () => { P.stones -= 30; P.pills++; rlog('買到一顆<span class="g">回春丹</span>。'); } },
+    { t: '換一門功法', d: '50 靈石', need: () => P.stones >= 50, f: () => { P.stones -= 50; giveRandomArt(); } },
+    { t: '離開', d: '', f: () => rlog('老者笑了笑，收起攤子。') } ] },
+  { title: '地底靈泉', text: '一汪泛著綠光的泉水，靈氣濃郁。', opts: [
+    { t: '飲用', d: '回復 20 氣血', f: () => rlog(`回復 <span class="g">${heal(20)}</span> 氣血。`) },
+    { t: '以泉淬體', d: '最大氣血 +8', f: () => { P.maxHp += 8; P.hp += 8; rlog('筋骨更加堅韌，最大氣血 +8。'); } } ] },
+  { title: '心魔低語', text: '「只要放下顧忌，你會更強……」', opts: [
+    { t: '接受', d: '攻擊 +3，最大氣血 −8', f: () => { P.atk += 3; P.maxHp -= 8; P.hp = Math.min(P.hp, P.maxHp); rlog('<span class="r">心魔入體</span>，攻擊 +3。'); } },
+    { t: '抵抗', d: '最大靈力 +5', f: () => { P.maxMp += 5; P.mp += 5; rlog('道心更堅，最大靈力 +5。'); } } ] },
+];
+function giveRandomArt() {
+  const owned = new Set(P.arts.map(a => a.id));
+  const left = ARTS.filter(a => !owned.has(a.id));
+  if (!left.length) { P.stones += 20; rlog('功法已全數習得，改得 20 靈石。'); return; }
+  const a = pick(left); P.arts.push(a); a.apply(P); rlog(`習得 <span class="y">${a.name}</span>：${a.desc}。`);
+}
+
+function renderScene() {
+  const el = $('#rscene');
+  if (RMODE === 'map') {
+    const n = P.pos === null ? null : MAP.nodes[P.pos];
+    el.innerHTML = `<h3>${n ? '選擇下一步' : '入殿'}</h3><p class="sub">在地圖上點亮起的節點。</p>`;
+  } else if (RMODE === 'fight') {
+    const e = C.e, it = intentOf(e), cost = spellCost();
+    el.innerHTML = `
+      <h3>${e.name}${C.kind === '精' ? '（精英）' : C.kind === '王' ? '（首領）' : ''}</h3>
+      <div class="stat"><span>氣血</span><div class="bar"><i style="width:${Math.max(0, e.hp) / e.maxHp * 100}%"></i></div><span>${Math.max(0, e.hp)}/${e.maxHp}</span></div>
+      <div class="intent">下一步：${it.text}${e.block ? `｜護體 ${e.block}` : ''}${P.block ? `｜你的護體 ${P.block}` : ''}</div>
+      <div class="row">
+        <button class="btn primary choice" data-act="sword">劍訣<small>${Math.max(1, stats().atk - Math.max(0, e.def - P.pierce) + (P.pierce ? 2 : 0))} 傷害</small></button>
+        <button class="btn choice" data-act="spell" ${P.mp < cost ? 'disabled' : ''}>法術<small>${Math.round(stats().atk * P.spellMult)} 傷害・${cost} 靈力</small></button>
+        <button class="btn choice" data-act="guard">護體<small>擋 ${stats().def * 2 + 6}・靈力 +8</small></button>
+        <button class="btn choice" data-act="pill" ${P.pills ? '' : 'disabled'}>服丹<small>回 35%・不耗回合</small></button>
+      </div>`;
+    el.querySelectorAll('[data-act]').forEach(b => b.onclick = () => act(b.dataset.act));
+  } else if (RMODE === 'reward') {
+    el.innerHTML = `<h3>戰利品：三選一功法</h3><div class="stack">${RDATA.map((a, i) =>
+      `<button class="btn choice" data-i="${i}">${a.name}<small>${a.desc}</small></button>`).join('')}
+      <button class="btn choice" data-i="-1">不要功法<small>改拿 20 靈石</small></button></div>`;
+    el.querySelectorAll('[data-i]').forEach(b => b.onclick = () => takeArt(+b.dataset.i));
+  } else if (RMODE === 'event') {
+    el.innerHTML = `<h3>${RDATA.title}</h3><p class="sub">${RDATA.text}</p><div class="stack">${RDATA.opts.map((o, i) =>
+      `<button class="btn choice" data-o="${i}" ${o.need && !o.need() ? 'disabled' : ''}>${o.t}${o.d ? `<small>${o.d}</small>` : ''}</button>`).join('')}</div>`;
+    el.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { RDATA.opts[+b.dataset.o].f(); RMODE = 'map'; renderRogue(); });
+  } else if (RMODE === 'rest') {
+    el.innerHTML = `<h3>洞府調息</h3><p class="sub">找到一處安全的石室。</p><div class="stack">
+      <button class="btn choice" data-r="heal">打坐調息<small>回復 35% 氣血與全部靈力</small></button>
+      <button class="btn choice" data-r="train">參悟劍意<small>攻擊永久 +2</small></button></div>`;
+    el.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
+      if (b.dataset.r === 'heal') { const h = heal(Math.round(P.maxHp * 0.35)); P.mp = P.maxMp; rlog(`調息完畢，回復 <span class="g">${h}</span> 氣血。`); }
+      else { P.atk += 2; rlog('劍意更進一步，攻擊 +2。'); }
+      RMODE = 'map'; renderRogue();
+    });
+  } else if (RMODE === 'win') {
+    el.innerHTML = `<div class="banner win">虛天殿・通關</div><p class="sub">帶走 ${P.stones} 靈石、${P.arts.length} 門功法。正式版這裡會換算成秘境獎勵。</p>`;
+  } else if (RMODE === 'dead') {
+    el.innerHTML = `<div class="banner lose">身死道消</div><p class="sub">倒在第 ${MAP.nodes[P.pos].r + 1} 層。按「重新闖關」換一條路。</p>`;
+  }
+}
+$('#rrestart').onclick = newRun;
+newRun();
+
+/* =====================================================
+   戰棋・血色禁地
+   ===================================================== */
+const TMAP = [
+  '..^..~~.',
+  '.#..^.~.',
+  '....#...',
+  '..*....^',
+  '^...~...',
+  '..#.~.#.',
+  '........',
+  '.^...*..',
+];
+const TER = {
+  '.': { n: '', cost: 1 }, '^': { n: '山', cost: 2, def: 3 }, '~': { n: '河', cost: 99 },
+  '#': { n: '林', cost: 1, cut: 0.25 }, '*': { n: '泉', cost: 1, heal: 6 },
+};
+const BEATS = { 金: '木', 木: '土', 土: '水', 水: '火', 火: '金' };
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+let T;
+
+function newBattle() {
+  const U = (o) => ({ acted: false, ...o, maxHp: o.hp });
+  T = {
+    turn: 1, phase: 'player', sel: null, mode: 'idle', reach: [], targets: [], prev: null, danger: false, info: null, over: null, flash: [],
+    units: [
+      U({ id: 'hl', name: '韓立', g: '韓', side: 'ally', cls: '劍修', elem: '金', hp: 42, atk: 15, def: 5, mv: 4, rmin: 1, rmax: 1, x: 2, y: 7, lead: true }),
+      U({ id: 'nw', name: '南宮婉', g: '婉', side: 'ally', cls: '法修', elem: '水', hp: 30, atk: 14, def: 2, mv: 3, rmin: 2, rmax: 2, x: 3, y: 7 }),
+      U({ id: 'th', name: '啼魂獸', g: '啼', side: 'ally', cls: '靈寵', elem: '土', hp: 36, atk: 11, def: 4, mv: 5, rmin: 1, rmax: 1, x: 4, y: 6 }),
+      U({ id: 'w1', name: '血狼', g: '狼', side: 'foe', cls: '妖獸', elem: '木', hp: 22, atk: 10, def: 1, mv: 4, rmin: 1, rmax: 1, x: 1, y: 0 }),
+      U({ id: 'w2', name: '血狼', g: '狼', side: 'foe', cls: '妖獸', elem: '木', hp: 22, atk: 10, def: 1, mv: 4, rmin: 1, rmax: 1, x: 3, y: 1 }),
+      U({ id: 'sc', name: '毒蠍', g: '蠍', side: 'foe', cls: '妖獸', elem: '火', hp: 18, atk: 9, def: 1, mv: 3, rmin: 1, rmax: 2, x: 5, y: 2 }),
+      U({ id: 'bs', name: '墨蛟', g: '蛟', side: 'foe', cls: '首領', elem: '水', hp: 55, atk: 14, def: 4, mv: 3, rmin: 1, rmax: 1, x: 4, y: 0, boss: true }),
+    ],
+  };
+  $('#tlog').innerHTML = '';
+  tlog('墨蛟盤踞在禁地北方。<b>先清掉血狼，再合力圍殺墨蛟。</b>');
+  renderTactics();
+}
+function tlog(html) { const d = document.createElement('div'); d.innerHTML = html; $('#tlog').prepend(d); }
+const alive = () => T.units.filter(u => u.hp > 0);
+const allies = () => alive().filter(u => u.side === 'ally');
+const foes = () => alive().filter(u => u.side === 'foe');
+const unitAt = (x, y) => alive().find(u => u.x === x && u.y === y);
+const byId = id => T.units.find(u => u.id === id);
+const ter = (x, y) => TER[TMAP[y][x]];
+function elemMult(a, b) { if (BEATS[a] === b) return 1.3; if (BEATS[b] === a) return 0.8; return 1; }
+function dmgCalc(att, tgt) {
+  const t = ter(tgt.x, tgt.y);
+  let d = att.atk * elemMult(att.elem, tgt.elem);
+  if (t.cut) d *= 1 - t.cut;
+  d -= tgt.def + (t.def || 0);
+  return Math.max(1, Math.round(d));
+}
+function inRange(u, x, y, t) { const d = Math.abs(x - t.x) + Math.abs(y - t.y); return d >= u.rmin && d <= u.rmax; }
+function reach(u) {
+  const best = { [u.x + ',' + u.y]: 0 }, q = [[u.x, u.y, 0]];
+  while (q.length) {
+    q.sort((a, b) => a[2] - b[2]);
+    const [x, y, c] = q.shift();
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx > 7 || ny > 7) continue;
+      const cost = ter(nx, ny).cost; if (cost >= 99) continue;
+      const o = unitAt(nx, ny); if (o && o.side !== u.side) continue;
+      const nc = c + cost; if (nc > u.mv) continue;
+      const k = nx + ',' + ny; if (best[k] !== undefined && best[k] <= nc) continue;
+      best[k] = nc; q.push([nx, ny, nc]);
+    }
+  }
+  return Object.keys(best).map(k => k.split(',').map(Number)).filter(([x, y]) => { const o = unitAt(x, y); return !o || o === u; });
+}
+function dangerSet() {
+  const s = new Set();
+  foes().forEach(f => reach(f).forEach(([x, y]) => {
+    for (let ty = 0; ty < 8; ty++) for (let tx = 0; tx < 8; tx++) if (inRange(f, x, y, { x: tx, y: ty })) s.add(tx + ',' + ty);
+  }));
+  return s;
+}
+function attack(a, t) {
+  const d = dmgCalc(a, t), m = elemMult(a.elem, t.elem);
+  t.hp -= d; T.flash.push(t.x + ',' + t.y);
+  tlog(`${a.name} 攻擊 ${t.name}，造成 <b class="${a.side === 'ally' ? 'g' : 'r'}">${d}</b>${m > 1 ? '（剋制）' : m < 1 ? '（被剋）' : ''}。`);
+  if (t.hp <= 0) { t.hp = 0; tlog(`<span class="y">${t.name} 倒下。</span>`); return; }
+  if (inRange(t, t.x, t.y, a)) {
+    const c = dmgCalc(t, a); a.hp -= c; T.flash.push(a.x + ',' + a.y);
+    tlog(`${t.name} 反擊，造成 <b class="${t.side === 'ally' ? 'g' : 'r'}">${c}</b>。`);
+    if (a.hp <= 0) { a.hp = 0; tlog(`<span class="y">${a.name} 倒下。</span>`); }
+  }
+}
+function checkEnd() {
+  if (T.over) return true;
+  if (byId('bs').hp <= 0) { T.over = 'win'; tlog('<span class="y">墨蛟伏誅，血色禁地平定！</span>'); }
+  else if (byId('hl').hp <= 0) { T.over = 'lose'; tlog('<span class="r">韓立陣亡，撤出禁地。</span>'); }
+  return !!T.over;
+}
+function springHeal(side) {
+  alive().filter(u => u.side === side && ter(u.x, u.y).heal).forEach(u => {
+    const h = Math.min(u.maxHp - u.hp, ter(u.x, u.y).heal);
+    if (h > 0) { u.hp += h; tlog(`${u.name} 在靈泉回復 <span class="g">${h}</span>。`); }
+  });
+}
+
+function cellClick(x, y) {
+  if (T.phase !== 'player' || T.over) return;
+  const u = unitAt(x, y), s = T.sel ? byId(T.sel) : null;
+  if (T.mode === 'target') {
+    if (u && T.targets.includes(u)) { doAttack(s, u); }
+    return;
+  }
+  if (T.mode === 'move' && T.reach.some(([a, b]) => a === x && b === y)) {
+    T.prev = { x: s.x, y: s.y }; s.x = x; s.y = y;
+    T.mode = 'target'; T.targets = foes().filter(f => inRange(s, s.x, s.y, f));
+    return renderTactics();
+  }
+  if (u && u.side === 'ally' && !u.acted) {
+    T.sel = u.id; T.info = u.id; T.mode = 'move'; T.reach = reach(u); T.targets = [];
+    return renderTactics();
+  }
+  T.sel = null; T.mode = 'idle'; T.reach = []; T.info = u ? u.id : null;
+  renderTactics();
+}
+function doAttack(s, u) {
+  attack(s, u); s.acted = true; finishUnit();
+}
+function finishUnit() {
+  T.sel = null; T.mode = 'idle'; T.reach = []; T.targets = []; T.prev = null;
+  renderTactics();
+  if (checkEnd()) return renderTactics();
+  if (allies().every(a => a.acted)) setTimeout(enemyPhase, 350);
+}
+function waitUnit() { const s = byId(T.sel); if (!s) return; s.acted = true; tlog(`${s.name} 待命。`); finishUnit(); }
+function cancelMove() {
+  const s = byId(T.sel); if (!s) return;
+  if (T.prev) { s.x = T.prev.x; s.y = T.prev.y; }
+  T.mode = 'move'; T.prev = null; T.reach = reach(s); T.targets = [];
+  renderTactics();
+}
+function plan(f) {
+  const tiles = reach(f); let best = null;
+  for (const [x, y] of tiles) {
+    for (const a of allies()) {
+      if (!inRange(f, x, y, a)) continue;
+      const d = dmgCalc(f, a);
+      let sc = d + (d >= a.hp ? 40 : 0) + (a.lead ? 4 : 0);
+      if (d < a.hp && inRange(a, a.x, a.y, { x, y })) sc -= dmgCalc(a, { ...f, x, y }) * 0.6;
+      const t = ter(x, y); sc += (t.def || 0) * 0.5 + (t.cut ? 2 : 0);
+      if (!best || sc > best.sc) best = { x, y, t: a, sc };
+    }
+  }
+  if (best) return best;
+  if (f.boss && T.turn < 3) return { x: f.x, y: f.y, t: null };
+  let mv = null;
+  for (const [x, y] of tiles) {
+    const dist = Math.min(...allies().map(a => Math.abs(a.x - x) + Math.abs(a.y - y)));
+    if (!mv || dist < mv.dist) mv = { x, y, dist };
+  }
+  return { x: mv.x, y: mv.y, t: null };
+}
+async function enemyPhase() {
+  if (T.over || T.phase !== 'player') return;
+  T.phase = 'enemy'; T.sel = null; T.mode = 'idle'; T.reach = []; T.targets = [];
+  springHeal('foe'); renderTactics();
+  for (const f of foes()) {
+    await sleep(420);
+    if (f.hp <= 0) continue;
+    const p = plan(f);
+    f.x = p.x; f.y = p.y; renderTactics();
+    if (p.t) { await sleep(300); attack(f, p.t); renderTactics(); }
+    if (checkEnd()) return renderTactics();
+  }
+  await sleep(300);
+  T.turn++; T.phase = 'player';
+  allies().forEach(a => a.acted = false);
+  springHeal('ally');
+  tlog(`— 第 ${T.turn} 回合 —`);
+  renderTactics();
+}
+
+function renderTactics() {
+  const reachSet = new Set(T.reach.map(([x, y]) => x + ',' + y));
+  const danger = T.danger ? dangerSet() : new Set();
+  const flash = new Set(T.flash); T.flash = [];
+  let html = '';
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const k = x + ',' + y, t = ter(x, y), u = unitAt(x, y);
+    const cls = ['cell', t.n ? 'ter-' + t.n : '', T.mode === 'move' && reachSet.has(k) ? 'reach' : '',
+      danger.has(k) ? 'danger' : '', u && T.targets.includes(u) ? 'target' : '',
+      u && u.id === T.sel ? 'sel' : '', flash.has(k) ? 'hit' : ''].join(' ');
+    let tok = '';
+    if (u) {
+      const c = ['tok', u.side === 'foe' ? (u.boss ? 'boss' : 'foe') : '', u.side === 'ally' && u.acted && T.phase === 'player' ? 'acted' : ''].join(' ');
+      tok = `<div class="${c}">${u.g}<span class="el">${u.elem}</span><div class="hp"><i style="width:${u.hp / u.maxHp * 100}%"></i></div></div>`;
+    }
+    html += `<button class="${cls}" data-x="${x}" data-y="${y}" aria-label="${x + 1},${y + 1}${t.n ? ' ' + t.n : ''}${u ? ' ' + u.name : ''}">${t.n ? `<span class="tl">${t.n}</span>` : ''}${tok}</button>`;
+  }
+  $('#board').innerHTML = html;
+  $('#board').querySelectorAll('.cell').forEach(c => c.onclick = () => cellClick(+c.dataset.x, +c.dataset.y));
+  $('#tturn').textContent = `第 ${T.turn} 回合・${T.over ? '戰鬥結束' : T.phase === 'player' ? '我方行動' : '敵方行動中…'}`;
+  $('#tend').disabled = T.phase !== 'player' || !!T.over;
+  $('#tdanger').textContent = T.danger ? '隱藏敵方範圍' : '顯示敵方範圍';
+  renderTInfo();
+}
+function unitCard(u) {
+  const t = ter(u.x, u.y);
+  return `<h3>${u.name}<span class="sub" style="margin-left:8px">${u.cls}・${u.elem}</span></h3>
+    <div class="stat"><span>氣血</span><div class="bar ${u.side === 'ally' ? 'jade' : ''}"><i style="width:${u.hp / u.maxHp * 100}%"></i></div><span>${u.hp}/${u.maxHp}</span></div>
+    <dl class="ucard"><dt>攻擊</dt><dd>${u.atk}</dd><dt>防禦</dt><dd>${u.def}${t.def ? `＋${t.def}（山）` : ''}${t.cut ? '・林中減傷 25%' : ''}</dd>
+    <dt>移動</dt><dd>${u.mv}</dd><dt>射程</dt><dd>${u.rmin === u.rmax ? u.rmin : u.rmin + '～' + u.rmax}${u.rmin >= 2 ? '（近身無法反擊）' : ''}</dd></dl>`;
+}
+function renderTInfo() {
+  const el = $('#tinfo');
+  if (T.over) {
+    el.innerHTML = `<div class="banner ${T.over}">${T.over === 'win' ? '墨蛟伏誅' : '撤出禁地'}</div>
+      <p class="sub">${T.over === 'win' ? `用了 ${T.turn} 回合。正式版可依回合數給星等與首通獎勵。` : '試試讓啼魂獸（土）去打墨蛟（水），韓立（金）專心砍血狼（木）。'}</p>`;
+    return;
+  }
+  const s = T.sel ? byId(T.sel) : null;
+  if (s && T.mode === 'target') {
+    const list = T.targets.map((f, i) => {
+      const d = dmgCalc(s, f), m = elemMult(s.elem, f.elem);
+      const back = d < f.hp && inRange(f, f.x, f.y, s) ? dmgCalc(f, s) : 0;
+      return `<button class="btn choice" data-t="${i}">攻擊 ${f.name}（${f.hp}/${f.maxHp}）<small>造成 ${d}${m > 1 ? '・剋制' : m < 1 ? '・被剋' : ''}${d >= f.hp ? '・擊殺' : ''}${back ? `｜反擊 ${back}` : '｜不會被反擊'}</small></button>`;
+    }).join('');
+    el.innerHTML = unitCard(s) + `<div class="stack">${list || '<p class="sub">射程內沒有敵人。</p>'}
+      <div class="row"><button class="btn" id="twait">待命</button><button class="btn" id="tcancel">取消移動</button></div></div>`;
+    el.querySelectorAll('[data-t]').forEach(b => b.onclick = () => doAttack(s, T.targets[+b.dataset.t]));
+    $('#twait').onclick = waitUnit; $('#tcancel').onclick = cancelMove;
+    return;
+  }
+  if (s && T.mode === 'move') {
+    el.innerHTML = unitCard(s) + `<p class="sub">點綠色格子移動（點自己原地不動）。</p><div class="row"><button class="btn" id="twait">原地待命</button></div>`;
+    $('#twait').onclick = waitUnit;
+    return;
+  }
+  const info = T.info ? byId(T.info) : null;
+  if (info && info.hp > 0) { el.innerHTML = unitCard(info); return; }
+  const left = allies().filter(a => !a.acted).map(a => a.name).join('、');
+  el.innerHTML = `<h3>${T.phase === 'player' ? '選擇單位' : '敵方行動中'}</h3>
+    <p class="sub">${T.phase === 'player' ? (left ? `還能行動：${left}` : '全員已行動') : '墨蛟在前兩回合會守在巢穴不動。'}</p>`;
+}
+$('#tend').onclick = () => { if (T.phase === 'player' && !T.over) { if (T.prev) cancelMove(); enemyPhase(); } };
+$('#tdanger').onclick = () => { T.danger = !T.danger; renderTactics(); };
+$('#trestart').onclick = newBattle;
+newBattle();
+</script>

@@ -1,0 +1,565 @@
+<title>三界戰場原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* 版面：夜色擂台。左欄是你的賽程與對決，右欄是積分榜／對陣表；手機上下堆疊 */
+:root{
+  --ink:#100f14; --panel:#18171e; --panel2:#211f28; --line:#302d39;
+  --fg:#ebe5d8; --mute:#9d97a3;
+  --gold:#dcb35c; --cinna:#e0604e; --jade:#5fc8a2;
+  --ren:#d9a86a; --ling:#79b3e6; --mo:#c179d8;
+  --f-display:"LXGW WenKai TC","Kaiti TC","KaiTi","STKaiti",serif;
+  --f-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--ink);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;padding:24px 16px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--f-display);font-size:clamp(30px,6vw,46px);margin:0;letter-spacing:.12em;text-wrap:balance}
+header h1 span{color:var(--gold)}
+header p{margin:4px 0 0;color:var(--mute);max-width:64ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.box h2{font-family:var(--f-display);font-size:21px;margin:0;letter-spacing:.05em}
+.sub{color:var(--mute);font-size:13px;margin:0}
+.btn{font:inherit;font-size:14px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;transition:border-color .15s}
+.btn:hover:not(:disabled){border-color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+.btn:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+label.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+input[type=text]{font:inherit;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:12em;max-width:100%}
+input[type=range]{width:100%;accent-color:var(--gold)}
+.kbd{font-variant-numeric:tabular-nums}
+
+/* 賽程條 */
+.stages{display:flex;flex-wrap:wrap;gap:4px}
+.stg{font-size:12px;padding:3px 8px;border-radius:4px;background:var(--panel2);color:var(--mute);border:1px solid transparent}
+.stg.done{color:var(--gold)}
+.stg.now{border-color:var(--gold);color:var(--fg)}
+.stg.lost{color:var(--cinna);text-decoration:line-through}
+
+/* 對決 */
+.vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center}
+.fighter{background:var(--panel2);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fighter.right{text-align:right}
+.fighter .nm{font-family:var(--f-display);font-size:19px;overflow-wrap:anywhere}
+.fighter .meta{font-size:12px;color:var(--mute)}
+.vs .mid{font-family:var(--f-display);font-size:26px;color:var(--cinna)}
+.hp{height:8px;background:var(--ink);border-radius:4px;overflow:hidden}
+.hp i{display:block;height:100%;background:var(--jade);transition:width .3s}
+.right .hp i{background:var(--cinna);margin-left:auto}
+.realm{display:inline-block;font-size:11px;padding:0 6px;border-radius:999px;border:1px solid currentColor;line-height:1.6}
+.r-人界{color:var(--ren)} .r-靈界{color:var(--ling)} .r-魔界{color:var(--mo)}
+.stances{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stance{display:flex;flex-direction:column;gap:2px;text-align:left}
+.stance small{color:var(--mute);font-size:12px}
+.hint{font-size:13px;color:var(--gold)}
+.duellog{font-size:13px;color:var(--mute);min-height:6.5em;max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;background:var(--panel2);border-radius:8px;padding:8px 10px}
+.duellog b{color:var(--fg);font-weight:500}
+.result{font-family:var(--f-display);font-size:24px;text-align:center;padding:8px;border-radius:8px}
+.result.win{color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.result.lose{color:var(--cinna);background:color-mix(in srgb,var(--cinna) 14%,transparent)}
+.path{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.path div{display:grid;grid-template-columns:6.5em minmax(0,1fr) auto;gap:8px}
+.path .w{color:var(--jade)} .path .l{color:var(--cinna)}
+
+/* 榜單 */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--mute);border-radius:999px;padding:4px 12px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--panel2);color:var(--fg);border-color:var(--gold)}
+.tblwrap{overflow-x:auto;max-height:520px;overflow-y:auto;border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:500;position:sticky;top:0;background:var(--panel)}
+tr.me td{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--fg)}
+tr.cut td{border-bottom:2px dashed var(--cinna)}
+tr.gap td{color:var(--mute);text-align:center}
+td.num{text-align:right}
+.realms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rstat{background:var(--panel2);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}
+.rstat b{font-family:var(--f-display);font-size:24px;font-weight:400}
+.bracket{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;overflow-x:auto}
+.bcol{display:flex;flex-direction:column;justify-content:space-around;gap:6px;min-width:120px}
+.bcol h4{margin:0;font-size:12px;color:var(--mute);font-weight:500}
+.bm{background:var(--panel2);border-radius:6px;padding:4px 8px;font-size:12px;display:flex;flex-direction:column}
+.bm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm .win{color:var(--gold)} .bm .los{color:var(--mute);text-decoration:line-through}
+.bm .me{font-weight:700}
+.champ{font-family:var(--f-display);font-size:18px;color:var(--gold)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.notes ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>三界<span>戰場</span></h1>
+    <p>千人淘汰爭霸賽原型。人界、靈界、魔界共 1000 名修士報名：海選 5 輪，積分前 100 名晉級百強，百強單淘汰，最後一人封「三界至尊」。對手全是 NPC，不需要雲端。</p>
+  </header>
+
+  <div class="grid">
+    <div class="stack" style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <section class="box" id="setup">
+        <h2>報名</h2>
+        <div class="row" style="align-items:flex-end;gap:16px">
+          <label class="field">道號<input type="text" id="pname" value="韓立" maxlength="8"></label>
+          <label class="field" style="flex:1;min-width:200px">實力定位：千人中約第 <b id="prank" class="kbd" style="color:var(--fg)">150</b> 名（戰力 <span id="ppow" class="kbd"></span>）
+            <input type="range" id="pslider" min="1" max="1000" value="150"></label>
+        </div>
+        <p class="sub">正式版會用玩家自己的戰鬥屬性換算；這裡用滑桿模擬強弱。第 150 名左右要靠戰法與運氣才進得了百強。</p>
+        <div class="row"><button class="btn primary" id="start">報名開賽</button></div>
+      </section>
+
+      <section class="box" id="arena" hidden>
+        <div class="row" style="justify-content:space-between">
+          <h2 id="rtitle"></h2>
+          <span class="sub kbd" id="rsub"></span>
+        </div>
+        <div class="stages" id="stages"></div>
+        <div id="match"></div>
+      </section>
+
+      <section class="box" id="pathbox" hidden>
+        <h2>晉級之路</h2>
+        <div class="path" id="path"></div>
+      </section>
+    </div>
+
+    <section class="box" id="side">
+      <div class="row" style="justify-content:space-between">
+        <h2>戰況</h2>
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-v="board" id="v-board">積分榜</button>
+          <button class="tab" role="tab" data-v="ko" id="v-ko">淘汰賽</button>
+          <button class="tab" role="tab" data-v="realm" id="v-realm">三界</button>
+        </div>
+      </div>
+      <div id="view"></div>
+    </section>
+  </div>
+
+  <section class="notes">
+    <div class="box">
+      <h2>名次獎勵（建議）</h2>
+      <div class="tblwrap" style="max-height:none">
+        <table>
+          <thead><tr><th>名次</th><th>稱號</th><th>獎勵（H＝每小時練功收入）</th></tr></thead>
+          <tbody>
+            <tr><td>冠軍</td><td style="color:var(--gold)">三界至尊</td><td>H×48 靈石、專屬頭像框、上品剋制法寶 1 件</td></tr>
+            <tr><td>亞軍</td><td>三界天驕</td><td>H×32 靈石、頭像框</td></tr>
+            <tr><td>四強</td><td>問鼎修士</td><td>H×24 靈石</td></tr>
+            <tr><td>八強</td><td>八方豪雄</td><td>H×16 靈石</td></tr>
+            <tr><td>十六～三十二強</td><td>—</td><td>H×8～12 靈石、夥伴碎片</td></tr>
+            <tr><td>百強～六十四強</td><td>百強修士</td><td>H×4～6 靈石</td></tr>
+            <tr><td>海選</td><td>—</td><td>每勝一場 H×0.5 靈石</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="box">
+      <h2>接進遊戲的想法</h2>
+      <ul>
+        <li>每週一屆：週一報名、每天開放 2～3 輪，週日決賽；也可以做成一次打完的「單機賽」。</li>
+        <li>玩家戰力用 <code>getPlayerCombatAttrs</code> 的快照，報名後鎖定，避免賽中換裝。</li>
+        <li>999 名 NPC 依玩家境界產生（同境界為主、上下各一境），用和懸賞對決（第 36 節）一樣的戰鬥引擎決勝負，五行、種族剋制照算。</li>
+        <li>獎勵走仙府信箱（第 56 節），稱號進天磯錄；完全在本機，不碰 Firestore 額度。</li>
+        <li>日後想要真人，可把 NPC 換成其他玩家上傳的戰鬥快照，賽制不用改。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const sleep = ms => new Promise(r => setTimeout(r, FAST ? 0 : ms));
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let FAST = false;
+const fmt = n => n >= 1e8 ? (n / 1e8).toFixed(2) + '億' : n >= 1e4 ? (n / 1e4).toFixed(1) + '萬' : String(Math.round(n));
+function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+/* ---------- 資料 ---------- */
+const REALMS = {
+  人界: ['黃楓谷', '掩月宗', '靈獸山', '鬼靈門', '合歡宗', '天闕堡', '落雲宗', '星宮', '太一門', '天道盟'],
+  靈界: ['天淵城', '木族', '天鵬族', '九仙宮', '萬寶閣', '天鼎宮', '天雲十三族'],
+  魔界: ['元剎宗', '血魂殿', '噬靈教', '玄陰魔宮', '六道門', '天魔宗'],
+};
+const STANCES = [
+  { n: '猛攻', d: '全力搶攻', beats: 2 },
+  { n: '穩守', d: '先守後攻', beats: 0 },
+  { n: '奇襲', d: '身法遊鬥', beats: 1 },
+];
+const STYLES = [
+  { n: '劍修', pref: 0, moves: ['青元劍芒', '萬劍歸宗', '劍氣縱橫', '飛劍穿雲'] },
+  { n: '體修', pref: 1, moves: ['金剛不壞', '崩山拳', '明王訣', '銅皮鐵骨'] },
+  { n: '法修', pref: 2, moves: ['紫雷破空', '冰魄寒光', '三昧真火', '五行遁法'] },
+  { n: '魔修', pref: 2, moves: ['血影遁', '噬魂魔音', '天魔解體', '陰羅幡'] },
+  { n: '陣修', pref: 1, moves: ['顛倒五行陣', '困龍陣', '周天星斗陣', '玄武陣'] },
+  { n: '符修', pref: 0, moves: ['雷火符', '金光符', '千劍符', '定身符'] },
+];
+const SUR = '韓南厲李王張陳墨董紅向田呂葉林蕭慕容宋孟白凌趙秦魏柳沈雲寒陸顧溫蘇紫青玄'.split('');
+const GIV = '天元青玄明雪星月寒霜風雷雲山海靈清虛道真嵐凌峰塵淵陽華松鶴烈焰影幽夜冰蓮瑤夢璃瀾若輕逸'.split('');
+const LEGENDS = ['大衍神君', '元剎聖祖', '寶花老祖', '銀月仙子', '天瀾聖獸', '向之禮', '蟹道人', '玄骨上人', '極陰老祖', '萬天明'];
+function genName(used) {
+  for (;;) {
+    const n = pick(SUR) + pick(GIV) + (Math.random() < 0.7 ? pick(GIV) : '');
+    if (!used.has(n)) { used.add(n); return n; }
+  }
+}
+
+/* ---------- 狀態 ---------- */
+const SWISS_ROUNDS = 5, TOP = 100;
+let NPCPOW = [];           // 999 名 NPC 的戰力（由高到低），報名前就生成，滑桿據此定位
+let G = null;
+let VIEW = 'board';
+
+function genPowers() {
+  NPCPOW = Array.from({ length: 999 }, () => Math.round(Math.exp(Math.log(80000) + 0.55 * gauss())))
+    .sort((a, b) => b - a);
+}
+function playerPow() {
+  const r = +$('#pslider').value;
+  const i = Math.min(998, Math.max(0, r - 1));
+  return Math.round(NPCPOW[i] * 1.001);
+}
+function updateSetup() { $('#prank').textContent = $('#pslider').value; $('#ppow').textContent = fmt(playerPow()); }
+
+function start() {
+  const used = new Set(LEGENDS);
+  const realmKeys = Object.keys(REALMS);
+  const ents = NPCPOW.map((pow, i) => {
+    const realm = i < 10 ? pick(['靈界', '魔界']) : pick(realmKeys);
+    return { id: i + 1, name: i < 10 ? LEGENDS[i] : genName(used), realm, sect: pick(REALMS[realm]),
+             style: pick(STYLES), pow, w: 0, l: 0, opps: [], me: false };
+  });
+  const name = ($('#pname').value.trim() || '無名散修').slice(0, 8);
+  const me = { id: 0, name, realm: '人界', sect: '黃楓谷', style: STYLES[0], pow: playerPow(), w: 0, l: 0, opps: [], me: true };
+  ents.push(me);
+  G = { ents, me, phase: 'swiss', round: 1, pairs: [], cur: null, path: [], alive: [], koRound: 0, koHist: [], place: null, champion: null, busy: false, done: false };
+  makeSwissPairs();
+  $('#setup').hidden = true; $('#arena').hidden = false; $('#pathbox').hidden = false;
+  VIEW = 'board';
+  render();
+}
+
+/* ---------- 勝負 ---------- */
+function stanceMult(a, b) { return STANCES[a].beats === b ? 1.12 : STANCES[b].beats === a ? 1 / 1.12 : 1; }
+function winProb(pa, pb) { const r = pa / pb; return 1 / (1 + Math.pow(r, -4)); }
+function npcStance(e) { return Math.random() < 0.7 ? e.style.pref : rnd(3); }
+function decide(a, b, sa, sb) {
+  if (sa === undefined) sa = npcStance(a);
+  if (sb === undefined) sb = npcStance(b);
+  const p = winProb(a.pow * stanceMult(sa, sb), b.pow);
+  return { aWins: Math.random() < p, sa, sb, p };
+}
+
+/* ---------- 海選（瑞士制） ---------- */
+function makeSwissPairs() {
+  // 同勝場分一組，組內依戰力分上下兩半，上半第 i 名對下半第 i 名；奇數多出的人降到下一組
+  const groups = {};
+  G.ents.forEach(e => (groups[e.w] = groups[e.w] || []).push(e));
+  const pairs = [];
+  let carry = [];
+  Object.keys(groups).map(Number).sort((a, b) => b - a).forEach(w => {
+    const g = carry.concat(groups[w].sort((a, b) => b.pow - a.pow));
+    carry = g.length % 2 ? [g.pop()] : [];
+    const half = g.length / 2, top = g.slice(0, half), bot = g.slice(half);
+    top.forEach((a, i) => {
+      let j = bot.findIndex(b => !a.opps.includes(b.id));
+      if (j < 0) j = 0;
+      pairs.push([a, bot.splice(j, 1)[0]]);
+    });
+  });
+  G.pairs = pairs;
+  G.cur = pairs.find(p => p[0].me || p[1].me) || null;
+  if (G.cur && G.cur[1].me) G.cur.reverse();
+}
+function buchholz(e) { return e.opps.reduce((s, id) => s + G.ents.find(x => x.id === id).w, 0); }
+function swissStanding() {
+  G.ents.forEach(e => e.bh = buchholz(e));
+  return G.ents.slice().sort((a, b) => b.w - a.w || b.bh - a.bh || b.pow - a.pow);
+}
+function settleSwissOthers() {
+  G.pairs.forEach(([a, b]) => {
+    if (a.me || b.me) return;
+    const r = decide(a, b);
+    recSwiss(r.aWins ? a : b, r.aWins ? b : a);
+  });
+}
+function recSwiss(w, l) { w.w++; l.l++; w.opps.push(l.id); l.opps.push(w.id); }
+
+/* ---------- 淘汰賽 ---------- */
+const KO_NAMES = { 100: '百強賽', 64: '六十四強', 32: '三十二強', 16: '十六強', 8: '八強賽', 4: '準決賽', 2: '決賽' };
+const PLACE_NAMES = { 100: '百強', 64: '六十四強', 32: '三十二強', 16: '十六強', 8: '八強', 4: '四強', 2: '亞軍', 1: '三界至尊' };
+function startKO() {
+  const st = swissStanding();
+  G.seedOf = new Map(st.map((e, i) => [e.id, i + 1]));
+  G.alive = st.slice(0, TOP);
+  G.phase = 'ko';
+  if (!G.alive.includes(G.me)) { G.place = `海選第 ${G.seedOf.get(G.me.id)} 名`; G.out = true; }
+  makeKOPairs();
+}
+function makeKOPairs() {
+  const n = G.alive.length;
+  let next = 1; while (next * 2 < n) next *= 2;
+  const matches = n - next;                 // 需要比賽的場數，其餘輪空
+  const byes = n - matches * 2;
+  const s = G.alive.slice().sort((a, b) => G.seedOf.get(a.id) - G.seedOf.get(b.id));
+  G.byes = s.slice(0, byes);
+  const pool = s.slice(byes);
+  G.pairs = [];
+  for (let i = 0; i < pool.length / 2; i++) G.pairs.push([pool[i], pool[pool.length - 1 - i]]);
+  G.roundName = KO_NAMES[n] || `${n} 強`;
+  G.cur = G.out ? null : G.pairs.find(p => p[0].me || p[1].me) || null;
+  if (G.cur && G.cur[1].me) G.cur.reverse();
+  G.myBye = !G.out && G.byes.includes(G.me);
+}
+function settleKO(meResult) {
+  const winners = G.byes.slice();
+  const hist = [];
+  G.pairs.forEach(p => {
+    let w, l;
+    if (p === G.cur && meResult) { w = meResult.w; l = meResult.l; }
+    else { const r = decide(p[0], p[1]); w = r.aWins ? p[0] : p[1]; l = r.aWins ? p[1] : p[0]; }
+    winners.push(w); hist.push({ a: p[0], b: p[1], w });
+    if (l.me) { G.out = true; G.place = PLACE_NAMES[G.alive.length] || `${G.alive.length} 強`; }
+  });
+  G.koHist.push({ n: G.alive.length, name: G.roundName, matches: hist, byes: G.byes.slice() });
+  G.alive = winners;
+  if (G.alive.length === 1) {
+    G.champion = G.alive[0]; G.done = true; G.phase = 'done';
+    if (G.champion.me) G.place = '三界至尊';
+  } else makeKOPairs();
+}
+
+/* ---------- 對決演出 ---------- */
+async function duel(stance) {
+  if (G.busy || !G.cur) return;
+  G.busy = true;
+  const [me, op] = G.cur;
+  const r = decide(me, op, stance);
+  renderMatch({ stance, opStance: r.sb, p: r.p });
+  const log = $('#dlog');
+  const line = h => { const d = document.createElement('div'); d.innerHTML = h; log.append(d); log.scrollTop = log.scrollHeight; };
+  line(`你以<b>${STANCES[stance].n}</b>迎戰，${op.name} 使出<b>${STANCES[r.sb].n}</b>${stanceMult(stance, r.sb) > 1 ? '，<span style="color:var(--jade)">戰法剋制！</span>' : stanceMult(stance, r.sb) < 1 ? '，<span style="color:var(--cinna)">被對方剋制。</span>' : '。'}`);
+  const steps = 3 + rnd(3), winnerEnd = 12 + rnd(55);
+  let hMe = 100, hOp = 100;
+  for (let i = 1; i <= steps; i++) {
+    const lose = i === steps ? 0 : Math.max(4, Math.round(100 * (1 - i / steps) + (Math.random() * 14 - 7)));
+    const keep = Math.round(100 - (100 - winnerEnd) * (i / steps) + (i === steps ? 0 : Math.random() * 8 - 4));
+    const [nMe, nOp] = r.aWins ? [keep, lose] : [lose, keep];
+    const first = Math.random() < 0.5;
+    const hits = [[me, op, hOp - nOp, () => hOp = nOp], [op, me, hMe - nMe, () => hMe = nMe]];
+    if (!first) hits.reverse();
+    for (const [a, b, d, apply] of hits) {
+      if (d <= 0) continue;
+      await sleep(REDUCED ? 60 : 420);
+      apply();
+      line(`${a.me ? '你' : a.name} 施展「${pick(a.style.moves)}」，${b.me ? '你' : b.name} 氣血 −${d}%`);
+      $('#hpme').style.width = Math.max(0, hMe) + '%';
+      $('#hpop').style.width = Math.max(0, hOp) + '%';
+    }
+  }
+  await sleep(300);
+  const win = r.aWins;
+  G.path.push({ round: G.phase === 'swiss' ? `海選第 ${G.round} 輪` : G.roundName, op, win });
+  if (G.phase === 'swiss') { recSwiss(win ? me : op, win ? op : me); settleSwissOthers(); G.lastResult = win; G.after = 'swiss'; }
+  else { G.lastResult = win; G.after = 'ko'; settleKO({ w: win ? me : op, l: win ? op : me }); }
+  G.busy = false; G.cur = null;
+  render();
+}
+function nextRound() {
+  G.lastResult = undefined;
+  if (G.phase === 'swiss') {
+    if (G.round < SWISS_ROUNDS) { G.round++; makeSwissPairs(); }
+    else startKO();
+  } else if (G.phase === 'ko' && G.myBye) {
+    G.path.push({ round: G.roundName, op: null, win: true });
+    settleKO(null);
+  }
+  render();
+}
+function watchToEnd() {
+  if (G.phase === 'swiss') {
+    while (G.round <= SWISS_ROUNDS) { if (G.cur) { const r = decide(G.me, G.cur[1], undefined); recSwiss(r.aWins ? G.me : G.cur[1], r.aWins ? G.cur[1] : G.me); G.path.push({ round: `海選第 ${G.round} 輪`, op: G.cur[1], win: r.aWins }); } settleSwissOthers(); if (G.round === SWISS_ROUNDS) break; G.round++; makeSwissPairs(); }
+    startKO();
+  }
+  while (!G.done) {
+    if (G.cur) {
+      const r = decide(G.me, G.cur[1]);
+      G.path.push({ round: G.roundName, op: G.cur[1], win: r.aWins });
+      settleKO({ w: r.aWins ? G.me : G.cur[1], l: r.aWins ? G.cur[1] : G.me });
+    } else {
+      if (G.myBye) G.path.push({ round: G.roundName, op: null, win: true });
+      settleKO(null);
+    }
+  }
+  G.lastResult = undefined;
+  VIEW = 'ko';
+  render();
+}
+
+/* ---------- 畫面 ---------- */
+function realmTag(e) { return `<span class="realm r-${e.realm}">${e.realm}</span>`; }
+function render() {
+  if (!G) return;
+  const st = G.phase === 'swiss' ? `海選第 ${G.round}／${SWISS_ROUNDS} 輪` : G.done ? '爭霸結束' : G.roundName;
+  $('#rtitle').textContent = st;
+  $('#rsub').textContent = G.phase === 'swiss' ? `戰績 ${G.me.w} 勝 ${G.me.l} 敗` : G.done ? '' : `剩 ${G.alive.length} 人`;
+  renderStages(); renderMatch(); renderPath(); renderView();
+}
+function renderStages() {
+  const labels = ['海選', '百強', '64', '32', '16', '8強', '4強', '決賽'];
+  const sizes = [1000, 100, 64, 32, 16, 8, 4, 2];
+  const cur = G.phase === 'swiss' ? 1000 : G.done ? 1 : G.alive.length;
+  const lostAt = G.out ? (G.phase === 'swiss' || !G.koHist.length ? 1000 : null) : null;
+  $('#stages').innerHTML = sizes.map((s, i) => {
+    let c = 'stg';
+    if (s > cur) c += ' done'; else if (s === cur) c += ' now';
+    return `<span class="${c}">${labels[i]}</span>`;
+  }).join('');
+}
+function fighter(e, side, hpId) {
+  const seed = G.seedOf ? G.seedOf.get(e.id) : null;
+  return `<div class="fighter ${side}">
+    <span class="nm">${e.me ? e.name + '（你）' : e.name}</span>
+    <span class="meta">${realmTag(e)} ${e.sect}・${e.style.n}</span>
+    <span class="meta kbd">戰力 ${fmt(e.pow)}${G.phase === 'swiss' ? `・${e.w} 勝 ${e.l} 敗` : seed ? `・種子 ${seed}` : ''}</span>
+    <div class="hp"><i id="${hpId}" style="width:100%"></i></div></div>`;
+}
+function renderMatch(duelInfo) {
+  const el = $('#match');
+  const actions = `<div class="row"><button class="btn" id="fast">略過演出，直接打完全部賽程</button></div>`;
+  // 對決中
+  if (G.busy && duelInfo) {
+    const [me, op] = G.cur;
+    el.innerHTML = `<div class="vs">${fighter(me, '', 'hpme')}<span class="mid">戰</span>${fighter(op, 'right', 'hpop')}</div>
+      <div class="duellog" id="dlog"></div>`;
+    return;
+  }
+  // 剛打完
+  if (G.lastResult !== undefined) {
+    const last = G.path[G.path.length - 1];
+    const moreSwiss = G.after === 'swiss';
+    let msg = '', btn = '';
+    if (moreSwiss) {
+      msg = G.round < SWISS_ROUNDS ? `目前 ${G.me.w} 勝 ${G.me.l} 敗，海選暫列第 ${swissStanding().indexOf(G.me) + 1} 名。` : '海選五輪結束，公布百強名單。';
+      btn = `<button class="btn primary" id="next">${G.round < SWISS_ROUNDS ? '下一輪' : '公布百強'}</button>`;
+    } else if (G.done) {
+      msg = G.champion.me ? '一路過關斬將，你就是三界至尊！' : `冠軍是 ${G.champion.name}（${G.champion.realm}）。`;
+    } else if (G.out) {
+      msg = `止步${G.place}。`;
+      btn = `<button class="btn primary" id="watch">觀戰到決賽</button>`;
+    } else {
+      msg = `晉級${G.roundName}。`;
+      btn = `<button class="btn primary" id="next">進入${G.roundName}</button>`;
+    }
+    el.innerHTML = `<div class="result ${last.win ? 'win' : 'lose'}">${last.win ? '勝' : '敗'}・${last.op.name}</div>
+      <p class="sub">${msg}</p><div class="row">${btn}</div>`;
+    const n = $('#next'); if (n) n.onclick = () => { G.lastResult = undefined; if (moreSwiss) nextRound(); else render(); };
+    const w = $('#watch'); if (w) w.onclick = watchToEnd;
+    return;
+  }
+  if (G.phase === 'ko' && G.out && !G.done) {
+    el.innerHTML = `<p class="sub">你${G.place.startsWith('海選') ? `在${G.place}，未進百強` : `止步${G.place}`}。</p>
+      <div class="row"><button class="btn primary" id="watch">觀戰到決賽</button></div>`;
+    $('#watch').onclick = watchToEnd; return;
+  }
+  if (G.done) {
+    el.innerHTML = `<div class="result ${G.champion.me ? 'win' : 'lose'}">${G.champion.me ? '三界至尊・' + G.me.name : '冠軍・' + G.champion.name}</div>
+      <p class="sub">你的最終名次：<b style="color:var(--fg)">${G.place}</b>。${G.champion.me ? '' : `冠軍來自${G.champion.realm}${G.champion.sect}，戰力 ${fmt(G.champion.pow)}。`}</p>
+      <div class="row"><button class="btn primary" id="again">再辦一屆</button></div>`;
+    $('#again').onclick = () => { genPowers(); updateSetup(); G = null; $('#setup').hidden = false; $('#arena').hidden = true; $('#pathbox').hidden = true; renderView(); };
+    return;
+  }
+  if (G.phase === 'ko' && G.myBye) {
+    el.innerHTML = `<p class="sub">你是第 ${G.seedOf.get(G.me.id)} 號種子，本輪<b style="color:var(--gold)">輪空</b>，直接晉級。</p>
+      <div class="row"><button class="btn primary" id="bye">晉級下一輪</button></div>`;
+    $('#bye').onclick = nextRound; return;
+  }
+  // 選戰法
+  const [me, op] = G.cur;
+  const pref = STANCES[op.style.pref].n;
+  el.innerHTML = `<div class="vs">${fighter(me, '', 'hpme')}<span class="mid">戰</span>${fighter(op, 'right', 'hpop')}</div>
+    <p class="hint">探子回報：${op.name} 是${op.style.n}，慣用「${pref}」。猛攻剋奇襲、奇襲剋穩守、穩守剋猛攻，剋制時實力 ×1.12。</p>
+    <div class="stances">${STANCES.map((s, i) => `<button class="btn stance" data-s="${i}">${s.n}<small>${s.d}・勝率 ${Math.round(expectedWin(i) * 100)}%</small></button>`).join('')}</div>
+    ${actions}`;
+  el.querySelectorAll('[data-s]').forEach(b => b.onclick = () => duel(+b.dataset.s));
+  $('#fast').onclick = () => { FAST = true; watchToEnd(); FAST = false; };
+}
+function expectedWin(s) {
+  const [me, op] = G.cur;
+  let p = 0;
+  for (let o = 0; o < 3; o++) {
+    const w = o === op.style.pref ? 0.7 + 0.1 : 0.1;
+    p += w * winProb(me.pow * stanceMult(s, o), op.pow);
+  }
+  return p;
+}
+function renderPath() {
+  $('#path').innerHTML = G.path.length ? G.path.map(p => `<div><span>${p.round}</span><span>${p.op ? `${p.op.name} ${realmTag(p.op)}` : '輪空'}</span><span class="${p.win ? 'w' : 'l'}">${p.win ? '勝' : '敗'}</span></div>`).join('')
+    : '<p class="sub">還沒開打。</p>';
+}
+function renderView() {
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.v === VIEW));
+  const el = $('#view');
+  if (!G) { el.innerHTML = '<p class="sub">報名後這裡會顯示 1000 人的海選積分榜、百強對陣與三界勢力。</p>'; return; }
+  if (VIEW === 'board') {
+    const st = swissStanding(); const myIdx = st.indexOf(G.me);
+    const show = new Set([...Array(15).keys(), 97, 98, 99, 100, 101, myIdx - 1, myIdx, myIdx + 1].filter(i => i >= 0 && i < st.length));
+    let rows = '', prev = -1;
+    [...show].sort((a, b) => a - b).forEach(i => {
+      if (prev >= 0 && i > prev + 1) rows += `<tr class="gap"><td colspan="5">⋯</td></tr>`;
+      const e = st[i];
+      rows += `<tr class="${e.me ? 'me' : ''} ${i === TOP - 1 ? 'cut' : ''}"><td class="num">${i + 1}</td><td>${e.name}</td><td>${realmTag(e)}</td><td>${e.w}–${e.l}</td><td class="num">${fmt(e.pow)}</td></tr>`;
+      prev = i;
+    });
+    el.innerHTML = `<p class="sub">海選依勝場排序，同分比對手勝場總和（小分），再比戰力。紅虛線以上晉級百強。</p>
+      <div class="tblwrap"><table><thead><tr><th>名次</th><th>道號</th><th>界</th><th>戰績</th><th>戰力</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else if (VIEW === 'ko') {
+    el.innerHTML = koView();
+  } else {
+    const pool = G.phase === 'swiss' ? G.ents : G.alive;
+    const cnt = { 人界: 0, 靈界: 0, 魔界: 0 }; pool.forEach(e => cnt[e.realm]++);
+    const hist = G.koHist.map(h => {
+      const c = { 人界: 0, 靈界: 0, 魔界: 0 }; [...h.byes, ...h.matches.map(m => m.w)].forEach(e => c[e.realm]++);
+      return `<tr><td>${h.name}後</td><td class="num">${c.人界}</td><td class="num">${c.靈界}</td><td class="num">${c.魔界}</td></tr>`;
+    }).join('');
+    el.innerHTML = `<p class="sub">${G.phase === 'swiss' ? '報名總數' : G.done ? '冠軍所屬' : '目前還在場上'}</p>
+      <div class="realms">${Object.keys(cnt).map(k => `<div class="rstat r-${k}"><span>${k}</span><b class="kbd">${cnt[k]}</b></div>`).join('')}</div>
+      ${hist ? `<div class="tblwrap"><table><thead><tr><th>輪次</th><th>人界</th><th>靈界</th><th>魔界</th></tr></thead><tbody>${hist}</tbody></table></div>` : ''}`;
+  }
+}
+function koView() {
+  if (G.phase === 'swiss') return '<p class="sub">海選結束後公布百強對陣。百強依海選名次當種子：前 28 名輪空，第 29～100 名兩兩對決（最高對最低），之後每輪都依種子重排。</p>';
+  const nm = e => `<span class="${e.me ? 'me' : ''}">${G.seedOf.get(e.id)}. ${e.name}</span>`;
+  // 八強以後畫成對陣圖
+  const late = G.koHist.filter(h => h.n <= 8);
+  let bracket = '';
+  if (late.length || (G.alive.length <= 8 && !G.done)) {
+    const cols = late.map(h => `<div class="bcol"><h4>${h.name}</h4>${h.matches.map(m =>
+      `<div class="bm"><span class="${m.w === m.a ? 'win' : 'los'} ${m.a.me ? 'me' : ''}">${G.seedOf.get(m.a.id)}. ${m.a.name}</span><span class="${m.w === m.b ? 'win' : 'los'} ${m.b.me ? 'me' : ''}">${G.seedOf.get(m.b.id)}. ${m.b.name}</span></div>`).join('')}</div>`);
+    if (!G.done && G.alive.length <= 8) cols.push(`<div class="bcol"><h4>${G.roundName}</h4>${G.pairs.map(p => `<div class="bm">${nm(p[0])}${nm(p[1])}</div>`).join('')}</div>`);
+    if (G.done) cols.push(`<div class="bcol"><h4>冠軍</h4><div class="champ">${G.champion.name}</div><span class="realm r-${G.champion.realm}" style="align-self:flex-start">${G.champion.realm}</span></div>`);
+    bracket = `<div class="bracket">${cols.join('')}</div>`;
+  }
+  let cur = '';
+  if (!G.done && G.alive.length > 8) {
+    cur = `<p class="sub">${G.roundName}：${G.pairs.length} 場${G.byes.length ? `，${G.byes.length} 人輪空` : ''}</p>
+      <div class="tblwrap"><table><thead><tr><th>種子</th><th>對陣</th><th>種子</th></tr></thead><tbody>${G.pairs.map(p =>
+      `<tr class="${p[0].me || p[1].me ? 'me' : ''}"><td class="num">${G.seedOf.get(p[0].id)}</td><td>${p[0].name} vs ${p[1].name}</td><td class="num">${G.seedOf.get(p[1].id)}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  const early = G.koHist.filter(h => h.n > 8).map(h => `<span class="stg done">${h.name}：${h.matches.length} 場</span>`).join(' ');
+  return `${early ? `<div class="stages">${early}</div>` : ''}${cur}${bracket}`;
+}
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { VIEW = t.dataset.v; renderView(); });
+$('#pslider').oninput = updateSetup;
+$('#start').onclick = start;
+genPowers(); updateSetup(); renderView();
+</script>

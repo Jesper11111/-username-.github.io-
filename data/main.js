@@ -17,6 +17,7 @@ function initGame() {
     startMailboxSync();       // 仙府信箱：進遊戲後與每 30 分鐘檢查新信（mailbox.js）
     setTimeout(showNumericV2Notice, 800);   // 數值重做上線：老玩家第一次進來跳一次改版公告（第 52 節）
     setTimeout(checkAptitudeTest, 1200);   // 已在宗門但還沒測過資質的老玩家：補測（aptitude.js）
+    initEncounters();   // 奇遇：封存入口、過期檢查、上次中斷的異界作廢（encounter.js）
 }
 
 // 由標題畫面的 enterWorld() 呼叫（title-screen.js）

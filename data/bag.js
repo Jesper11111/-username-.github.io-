@@ -6,7 +6,7 @@ function openBagModal() { document.getElementById('bag-modal').style.display = '
 // 所有「會把裝備放進背包」的地方都要在扣資源「之前」先呼叫：鍛造、千寶閣、靈寶閣、卸下裝備。
 function hasEquipInventorySpace() {
     if (player.equipInventory.length < MAX_EQUIP_INVENTORY) return true;
-    alert(`背包裝備已滿（${player.equipInventory.length} / ${MAX_EQUIP_INVENTORY} 件）！\n請先穿戴或刪除部分裝備。`);
+    gameAlert(`背包裝備已滿（${player.equipInventory.length} / ${MAX_EQUIP_INVENTORY} 件）！\n請先穿戴或刪除部分裝備。`);
     return false;
 }
 

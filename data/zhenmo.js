@@ -362,7 +362,7 @@ const ZhenmoTower = (() => {
             if (firstClear && tg >= 0 && race) g.treasure = grantRaceTreasure(race, tg, `鎮壓鎮魔塔第 ${f.floor} 層樓主，`);
             html = `<div class="big win">鎮壓成功</div>
                 <p>第 ${f.floor} 層【${escapeZm(f.boss.name)}】伏誅（${f.round} 回合）</p>
-                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), PARTNER_SHARDS_NEED)}/${PARTNER_SHARDS_NEED}）` : ''}</p>
+                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), getPartnerShardsNeed(g.partner.p))}/${getPartnerShardsNeed(g.partner.p)}）` : ''}</p>
                 <p class="zm-note">已鎮壓 ${z.best} 層，前往第 ${z.floor} 層須重新答題。</p>`;
             addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}`, 'level-up', true, 'item');
             if (g.blueprint) addLog(g.blueprint, 'level-up', true, 'item');

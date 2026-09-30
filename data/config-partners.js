@@ -32,16 +32,20 @@ const PARTNER_TEAM_MAX = 2;            // 隊伍最多同時邀請幾名夥伴�
 // 各評級的碎片從哪裡來（2026-09-29 使用者指定；partner.js 的 grantPartnerShards）：
 //   天驕＝合體～渡劫：死守天南城第 11 波起（defense.js）、鎮魔塔第 11～40 層（zhenmo.js）
 //   尊者＝仙人～天仙：死守天南城第 40 波起、鎮魔塔第 41～60 層（風希另外在天星城坊市）
-//   帝境、至高：暫不開放
+//   帝境：奇遇「強者現身」（2026-10-01 使用者要求「奇遇可以碰見尊者或帝境強者」，encounter.js）
+//   至高：三界戰場前四強（encounter.js；使用者只指定片數，來源是我訂的）
 const PARTNER_MEET_HINT = {
     "天驕": "碎片：死守天南城第 11 波起、鎮魔塔第 11～40 層（合體～渡劫）",
-    "尊者": "碎片：死守天南城第 40 波起、鎮魔塔第 41～60 層（仙人～天仙）",
-    "帝境": "尚未開放", "至高": "尚未開放"
+    "尊者": "碎片：死守天南城第 40 波起、鎮魔塔第 41～60 層（仙人～天仙）、奇遇「強者現身」",
+    "帝境": "碎片：奇遇「強者現身」",
+    "至高": "碎片：奇遇「三界戰場」前四強"
 };
 // 夥伴碎片（2026-09-29 使用者要求「新增夥伴碎片，集滿 100 片激活夥伴」；partner.js 的 grantPartnerShards／activatePartner）：
 //   死守天南城、鎮魔塔不再直接結識，改掉落某位未結識夥伴的碎片（player.partnerShards），集滿 PARTNER_SHARDS_NEED 在情緣視窗按「激活」＝結識
 //   掉哪位：PARTNER_SHARD_FOCUS 機率給「碎片最多的那位」（集中湊滿一位），其餘隨機
 const PARTNER_SHARDS_NEED = 100;
+// 依評級需要的片數（2026-10-01 使用者指定：帝境 300、至高 500；partner.js 的 getPartnerShardsNeed）
+const PARTNER_SHARDS_NEED_BY_TIER = { "天驕": 100, "尊者": 100, "帝境": 300, "至高": 500 };
 const PARTNER_SHARD_FOCUS = 0.7;
 // 夥伴絕學的靈力（2026-09-29 使用者要求「夥伴與寵物設定 MP，用完無法施放技能」；partner.js 的 partnerSkillTurn）
 //   每位夥伴各自 PARTNER_MP_MAX 點，每回合回 PARTNER_MP_REGEN（野外刷新等待期間每秒也回），發動絕學扣該評級的消耗，不夠就不發動

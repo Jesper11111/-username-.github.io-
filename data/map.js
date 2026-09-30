@@ -214,4 +214,5 @@ function changeMap(cIndex, iIndex) {
         addLog(`🗺️ 深入野外 ${player.currentMap.name}，四周充滿危險氣息。`);
     }
     updateCombatVisualPanel();
+    onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇：秘密路線、累計次數、空間裂縫、三界戰場（encounter.js，第 63 節）
 }
