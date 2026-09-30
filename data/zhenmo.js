@@ -261,7 +261,10 @@ const ZhenmoTower = (() => {
         };
         const bg = $('zm-fight-bg');
         bg.style.backgroundImage = `url(${boss.img})`;
-        bg.style.backgroundPosition = boss.imgPos || 'center';
+        bg.style.backgroundPosition = boss.imgFit ? (boss.imgFitPos || '50% 8%') : (boss.imgPos || 'center');
+        // imgFit: 'contain'＝橫圖完整顯示在戰鬥畫面上方、其餘補暗底色（例：第 9 層雙人 BOSS，cover 會裁掉一人）
+        bg.style.backgroundSize = boss.imgFit || '';
+        bg.style.backgroundColor = boss.imgFit ? (boss.imgBg || '#120e0b') : '';
         $('zm-fight-hero').src = player.gender === 'female' ? ZHENMO_HERO_IMG.female : ZHENMO_HERO_IMG.male;
         $('zm-fight-boss-name').textContent = `${boss.name}・${realms[boss.realm]} ${boss.stage} 階`;
         $('zm-fight-me-name').textContent = player.name || '你';
@@ -271,7 +274,7 @@ const ZhenmoTower = (() => {
         setFightSpeed(fight.speed);
         updateBars();
         show('fight');
-        fightLog(`⚔️ ${boss.name}：「${boss.skills && boss.skills[0] ? '區區凡人，也敢闖塔？' : '來吧！'}」`, 'boss');
+        fightLog(`⚔️ ${boss.name}：「${boss.taunt || (boss.skills && boss.skills[0] ? '區區凡人，也敢闖塔？' : '來吧！')}」`, 'boss');   // taunt：選填開場台詞
         if (aura) (boss.auras || []).forEach(a => fightLog(`🌀 ${boss.name}展開光環${describeAura(a)}`, 'boss'));
         const moodPct = Math.round((mood - 1) * 100);
         fightLog(`🔥 ${boss.name}今日氣勢 ${moodPct >= 0 ? '+' : ''}${moodPct}%（攻擊與氣血）`, 'boss');
