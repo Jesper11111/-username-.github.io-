@@ -19,8 +19,30 @@ const BATTLE_FX_ELEMS = [
 
 let battleFxQueue = [];
 
+// 收起對戰圖（2026-09-30 使用者要求「戰場實況加一個小開關可以關閉畫面」）：標題列右側按鈕，只藏中間的對戰圖（立繪、敵方圖、飄字），
+// 敵方血條與我方狀態列照常顯示。是這台裝置的偏好，存在 localStorage，不寫進遊戲存檔（同 settings.js 的顯示尺寸）
+const BATTLE_SCENE_HIDDEN_KEY = 'xiuxian_battle_scene_hidden';
+function isBattleSceneHidden() {
+    try { return localStorage.getItem(BATTLE_SCENE_HIDDEN_KEY) === '1'; } catch (e) { return false; }
+}
+function applyBattleSceneHidden() {
+    const hidden = isBattleSceneHidden();
+    const panel = document.getElementById('combat-visual-panel');
+    if (panel) panel.classList.toggle('bf-scene-off', hidden);
+    const btn = document.getElementById('bf-scene-toggle');
+    if (btn) { btn.textContent = hidden ? '👁️ 顯示畫面' : '🙈 隱藏畫面'; btn.setAttribute('aria-pressed', hidden ? 'true' : 'false'); }
+    if (hidden) battleFxQueue = [];
+}
+function toggleBattleScene() {
+    try { localStorage.setItem(BATTLE_SCENE_HIDDEN_KEY, isBattleSceneHidden() ? '0' : '1'); } catch (e) {}
+    applyBattleSceneHidden();
+    if (!isBattleSceneHidden() && typeof layoutBattleHero === 'function') layoutBattleHero();   // 重新顯示時依目前寬度排立繪
+}
+document.addEventListener('DOMContentLoaded', applyBattleSceneHidden);
+
 function battleFxActive() {
     if (document.hidden) return false;
+    if (isBattleSceneHidden()) return false;   // 對戰圖收起時不播飄字與特效
     const stage = document.getElementById('combat-visual-panel');
     return !!(stage && stage.offsetParent !== null);
 }

@@ -1394,7 +1394,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261003r`，gm.html 同）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261003s`，gm.html 同）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3026,6 +3026,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `updateCombatVisualPanel()` 最後呼叫 `flushBattleFx()` 播放：一次最多約 4～5 個字，多的合併成「×N」；暴擊（tag `crit`，新制敏捷）大字漸層＋「暴擊」＋震屏＋閃光，重擊（`metal`）／雷擊（`thunder`）中字＋爆點，受傷紅字＋畫面紅框，閃避灰字。
   面板看不到（`document.hidden` 或面板 `offsetParent === null`）時不排佇列，只影響畫面、不影響結算。`prefers-reduced-motion` 時不震屏、立繪不動。
 - 鎮魔塔（第 51 節）、死守天南城（第 49 節）有各自的戰鬥畫面，不受影響。
+- **隱藏畫面開關**（2026-09-30，版本 `20261003s`，使用者要求「仙魔戰場實況加一個小開關可以關閉畫面」）：標題列右側小按鈕 `#bf-scene-toggle`（「🙈 隱藏畫面」／「👁️ 顯示畫面」）→ battle-fx.js 的 `toggleBattleScene()`。
+  只收起中間對戰圖 `.bf-scene`（立繪、敵方圖、飄字、閃光；`#combat-visual-panel.bf-scene-off`），敵方血條列、我方狀態列、夥伴列、行動說明照常顯示。
+  收起時 `battleFxActive()` 回傳 false（不排飄字佇列，省效能）；重新顯示時 `layoutBattleHero()` 重排立繪。
+  是這台裝置的偏好：存在 localStorage `xiuxian_battle_scene_hidden`（'1'＝收起），不寫進遊戲存檔；`DOMContentLoaded` 時 `applyBattleSceneHidden()` 套用。
+  ⚠️ 手機版全域 `button` 樣式（寬 100%、padding 12px）會把按鈕撐滿整列蓋住標題，CSS 選擇器用 `#battle-panel .bf-scene-toggle` 並明確設 `left: auto; width: auto; margin: 0`。
+  驗證（本機，手機 375×812）：按鈕在標題右側不擋字；收起後圖高 0、血條保留、`battleFxActive` false；再按恢復 145px；重新整理後維持收起；Console 無錯誤。
 
 ## 60. 角色裝備視窗改版：人形裝備欄＋裝備對比（`equip-compare.js`；2026-09-28，版本 `20260930n`）
 - 玩家反映：換裝很不方便、無法對照屬性；提供暗黑破壞神式的人形裝備欄參考圖，要求「選擇的裝備跟使用中的兩樣顯示，增加什麼減少什麼」。先做模板 `tools/裝備介面模板.html`（假資料）給玩家確認後實作。
