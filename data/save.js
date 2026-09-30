@@ -329,8 +329,11 @@ function migrateActivityFields() {
 
 // 舊存檔相容：存檔內的 currentMap 是當時的地圖物件副本，改指向最新設定（倍率調整才會生效）。
 // 已不存在的地圖（例如合併進「宗門」的洞府 / 弟子居、演武學宮、後山禁地）一律回到宗門。
+// 改名／併入其他地圖的舊名稱 → 新名稱（找不到的名稱才回宗門）
+const MAP_RENAMES = { "天南市集": "天南城" };   // 2026-09-30 天南市集併入天南城的城內場景
 function migrateCurrentMap() {
     let name = player.currentMap && player.currentMap.name;
+    if (MAP_RENAMES[name]) name = MAP_RENAMES[name];
     for (let cat of maps) {
         let found = cat.items.find(item => item.name === name);
         if (found) {
