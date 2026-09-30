@@ -380,7 +380,7 @@ const DefenseBattle = (() => {
                     <small>${realms[r.realm] || '？'} ${r.stage} 階・戰力 ${fmtCombat(Number(r.power || 0))}・斬殺 ${Number(r.kills || 0).toWan()}</small>
                 </div>`).join('')
               : '<div class="dr-empty">尚無守城紀錄</div>')
-            + `<div class="dr-note">保留最近 ${DEFENSE_RUN_LOG_MAX} 場。刷新個人最佳時自動送審，審核通過才會登上洞府「大道石碑」的守城排行榜。</div>`;
+            + `<div class="dr-note">保留最近 ${DEFENSE_RUN_LOG_MAX} 場。${LEADERBOARD_RANKS_REMOVED ? '' : '刷新個人最佳時自動送審，審核通過才會登上洞府「大道石碑」的守城排行榜。'}</div>`;
         $('defense-records').classList.add('on');
     }
     function closeRecords() { $('defense-records').classList.remove('on'); }

@@ -75,7 +75,7 @@ function initLeaderboardBackend() {
 // 上傳自己的戰力；遊戲結束、讀檔失敗（角色不是真的）或距上次不到 60 秒時不上傳
 async function uploadLeaderboard() {
     if (!isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed) return;
-    if (LEADERBOARD_PAUSED) return;   // 暫停紀錄（config-leaderboard.js）
+    if (LEADERBOARD_RANKS_REMOVED) return;   // 排行榜已移除（config-leaderboard.js）
     if (lbBanned || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;
     lbLastUploadAt = Date.now();
     try {
@@ -131,7 +131,7 @@ let lbDefenseMine = null;      // 自己送審紀錄的審核狀態（defenseSub
 let lbTab = 'power';
 
 function submitDefenseRecord(run) {
-    if (LEADERBOARD_PAUSED) return;   // 暫停紀錄：這段期間的紀錄不排入送審
+    if (LEADERBOARD_RANKS_REMOVED) return;   // 排行榜已移除：紀錄不排入送審
     if (run.cleared <= (player.defenseSubmitted || 0)) return;
     if (player.defensePending && player.defensePending.cleared >= run.cleared) return;
     player.defensePending = run;
@@ -140,7 +140,7 @@ function submitDefenseRecord(run) {
 
 async function flushDefenseSubmit() {
     const run = player.defensePending;
-    if (!run || LEADERBOARD_PAUSED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
+    if (!run || LEADERBOARD_RANKS_REMOVED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
     if (flushDefenseSubmit.busy) return;
     flushDefenseSubmit.busy = true;
     try {
@@ -172,7 +172,7 @@ async function flushDefenseSubmit() {
 // 守城介面「通關紀錄」上的一行狀態
 function getDefenseRankStatusText() {
     if (!isLeaderboardConfigured()) return '';
-    if (LEADERBOARD_PAUSED) return '⏸️ 守城排行榜暫停紀錄中（榜單維持暫停前的名次）';
+    if (LEADERBOARD_RANKS_REMOVED) return '';   // 守城介面不顯示排行榜狀態
     if (lbBanned) return '⛔ 已被移出排行榜';
     if (player.defensePending) return `🏯 守城排行榜：第 ${player.defensePending.cleared} 波紀錄等待上傳`;
     if (!player.defenseSubmitted) return '🏯 守城排行榜：尚未送審（守住至少 1 波後自動送審）';
@@ -204,7 +204,12 @@ function switchLeaderboardTab(tab) {
 // 分頁：power 戰力榜／defense 守城榜／board 修仙留言板（msgboard.js，第 57 節）／market 寄售拍賣（market.js，第 58 節）
 function applyLeaderboardTab(tab) {
     lbTab = ['defense', 'board', 'market'].includes(tab) ? tab : 'power';
-    document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => b.classList.toggle('on', b.dataset.lbTab === lbTab));
+    // 排行榜已移除（config-leaderboard.js）：戰力榜／守城榜分頁藏起來，一律改開留言板
+    if (LEADERBOARD_RANKS_REMOVED && (lbTab === 'power' || lbTab === 'defense')) lbTab = 'board';
+    document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => {
+        b.classList.toggle('on', b.dataset.lbTab === lbTab);
+        if (LEADERBOARD_RANKS_REMOVED && (b.dataset.lbTab === 'power' || b.dataset.lbTab === 'defense')) b.style.display = 'none';
+    });
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '💬 修仙留言板', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
 }
@@ -226,7 +231,7 @@ async function checkLeaderboardBan(db, uid) {
 
 // 由 main.js 的 initGame() 呼叫
 function startLeaderboardSync() {
-    if (!isLeaderboardConfigured()) return;
+    if (!isLeaderboardConfigured() || LEADERBOARD_RANKS_REMOVED) return;
     setTimeout(uploadLeaderboard, LEADERBOARD_FIRST_UPLOAD_DELAY_MS);
     setInterval(uploadLeaderboard, LEADERBOARD_UPLOAD_INTERVAL_MS);
 }
@@ -332,7 +337,6 @@ function renderLeaderboard(loading) {
         html += idx >= 0 ? `　目前第 <b>${idx + 1}</b> 名` : `　未進前 ${LEADERBOARD_TOP_N} 名`;
     }
     html += `</div>`;
-    if (LEADERBOARD_PAUSED) html += `<p class="lb-note" style="color:#facc15;">⏸️ 天下戰力榜暫停紀錄中：目前不會上傳戰力，榜單維持暫停前的名次。</p>`;
     if (lbBanned) html += `<p class="lb-note" style="color:#f87171;">⛔ 你的戰力紀錄因資料異常已被移出戰力榜，無法再上榜。</p>`;
     if (loading) html += `<p class="lb-note">讀取中…</p>`;
     if (lbError) html += `<p class="lb-note" style="color:#f87171;">${lbError}</p>`;
@@ -356,7 +360,7 @@ function renderLeaderboard(loading) {
             </div>`;
         }).join("") + `</div>`;
     }
-    if (!LEADERBOARD_PAUSED) html += `<p class="lb-note">在線時每 5 分鐘自動回報一次戰力（不含禁術等暫時增益）。</p>`;
+    html += `<p class="lb-note">在線時每 5 分鐘自動回報一次戰力（不含禁術等暫時增益）。</p>`;
     box.innerHTML = html;
 }
 

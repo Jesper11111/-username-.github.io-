@@ -14,9 +14,10 @@ const LEADERBOARD_FIREBASE_CONFIG = {
     appId: "1:77737588639:web:9bf58facab1b552863afaa"
 };
 
-// 暫停紀錄（2026-09-30 使用者要求）：true 時天下戰力榜不上傳戰力、死守天南城不送審（也不排入待送），榜單仍可查看（停在暫停前的名次）；
-// 留言板、寄售不受影響。只擋玩家端，雲端規則沒改。恢復改成 false
-const LEADERBOARD_PAUSED = true;
+// 移除排行榜（2026-09-30 使用者要求：先「暫停紀錄」，後改為「刪除戰力榜與死守天南城榜」）：
+//   true 時不上傳戰力、守城不送審（也不排入待送），大道石碑沒有戰力榜／守城榜分頁（只剩留言板、寄售），HUD 戰力數字不能點。
+//   雲端資料由 GM 在 gm.html 按「💥 清空全部榜單」刪除；雲端規則沒改。要恢復改成 false（程式都還在）
+const LEADERBOARD_RANKS_REMOVED = true;
 
 const LEADERBOARD_SDK_BASE = "https://www.gstatic.com/firebasejs/10.14.1";   // compat 版，傳統 <script> 可直接用全域 firebase
 const LEADERBOARD_COLLECTION = "leaderboard";          // 每位玩家一筆，文件 id = 匿名登入的 uid

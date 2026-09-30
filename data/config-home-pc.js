@@ -23,7 +23,7 @@ const pcStageButtons = [
     { id: 'portal',   kind: 'hotspot', label: '傳送門',   rect: [268, 525, 40, 115], enabled: false,   action: "openWorldMapModal()" },
     { id: 'auction',  kind: 'hotspot', label: '千寶閣',   rect: [712, 610, 110, 95],  plaque: 'right', action: "openActivity('auction')" },
     { id: 'codex',    kind: 'hotspot', label: '天磯錄',   rect: [760, 160, 120, 130], plaque: 'right', action: "openCodexModal()" },   // 寶塔右側尖峰（codex.js）
-    { id: 'stele',    kind: 'hotspot', label: '大道石碑', rect: [724, 185, 34, 125],  plaque: 'stele', action: "openLeaderboardModal()" },   // 升仙台與天磯錄之間；圖上沒畫，石碑由 .plaque-stele 畫出（天下戰力榜，leaderboard.js）
+    { id: 'stele',    kind: 'hotspot', label: '大道石碑', rect: [724, 185, 34, 125],  plaque: 'stele', action: "openLeaderboardModal()" },   // 升仙台與天磯錄之間；圖上沒畫，石碑由 .plaque-stele 畫出（leaderboard.js；2026-09-30 戰力榜移除後開留言板）
 
     // ---- 左側按鈕 ----
     { id: 'task',      kind: 'button', label: '任務',     rect: [18, 460, 64, 85],   action: "switchTab('task')", nav: 'task' },   // 圖上原字「信件」已改畫成「任務」（2026-09-27）；同手機版左側「任務」
