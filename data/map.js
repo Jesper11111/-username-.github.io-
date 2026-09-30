@@ -39,6 +39,23 @@ function renderTownTeleports() {
     }).join('');
 }
 
+// 依地圖名稱傳送（靈界地圖的紅點用，config-towns.js；免得寫死 maps 索引）
+// 進不去時用遊戲內提示條（showToast）說明原因並留在地圖上：changeMap 用的 alert 在部分 App 內建瀏覽器／預覽面板不會顯示，
+// 玩家會以為「按了沒有任何反應」（2026-10-01 使用者回報）
+function goToMapByName(name) {
+    const f = findMapByName(name);
+    if (!f) return;
+    const block = getMapEntryBlock(f.c, f.i);
+    if (block) { showToast(block.msg.split('\n')[0]); return; }
+    selectMap(f.c, f.i);
+}
+
+// 依城鎮名稱傳送並進城（人界地圖的傳送點用，config-towns.js；免得寫死 maps 索引）
+function goToTownByName(name) {
+    const i = maps[0].items.findIndex(item => item.name === name);
+    if (i >= 0) goToTown(i);
+}
+
 // 點城鎮傳送點：不在該城就傳送過去；有城內場景（town.js）就開啟城內畫面
 function goToTown(i) {
     let item = maps[0].items[i];
@@ -122,33 +139,52 @@ function getMapDifficultyText(item) {
 }
 
 function selectMap(cIndex, iIndex) {
+    const target = maps[cIndex].items[iIndex];
     changeMap(cIndex, iIndex);
     closeModal('map-category-modal');
     closeModal('world-map-modal');
+    // 從人界／靈界地圖（town.js）選好地圖：傳送成功才一併關掉地圖回到遊戲（境界不足等被擋時留在地圖上；城鎮由 goToTown 接著開城內場景）
+    if (typeof currentTownScene !== 'undefined' && (currentTownScene === WORLD_SCENE_KEY || currentTownScene === LINGJIE_SCENE_KEY)
+        && player.currentMap && player.currentMap.name === target.name) closeTownScene();
+}
+
+// 進入地圖的門檻檢查：回傳 { msg: 完整提示, short: 地圖紅點旁的短字 }，可以進入回傳 null（changeMap 與人界／靈界地圖紅點共用）
+function getMapEntryBlock(cIndex, iIndex) {
+    const targetMap = maps[cIndex].items[iIndex];
+    const minRealm = getMapMinRealm(targetMap);
+    if (minRealm && player.realmIndex < minRealm)
+        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界）`, short: `🔒${realms[minRealm]}` };
+    // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
+    const minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
+    if (minS) {
+        const st = k => NUMERIC_V2 ? nv2Stat(k) : player.stats[k];
+        if (["str", "con", "int", "spr"].some(k => st(k) < minS))
+            return { msg: `進入【${targetMap.name}】失敗！四維屬性全數必須大於 ${minS} 方可進入。`, short: `🔒四維${minS}` };
+    }
+    // 暫存區滿了不能外出練功（enhance.js）
+    if (!maps[cIndex].isSafe && isGearStashFull())
+        return { msg: `暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}）！\n請先到背包處理暫存區的橙色裝備（移入背包、分解或毀棄），才能外出練功。`, short: '🔒暫存區滿' };
+    return null;
+}
+function findMapByName(name) {
+    for (let c = 0; c < maps.length; c++) {
+        const i = maps[c].items.findIndex(item => item.name === name);
+        if (i >= 0) return { c, i };
+    }
+    return null;
+}
+// 地圖紅點旁的鎖定短字（town.js 的 renderTownHotspots；可以進入回傳空字串）
+function getMapLockShort(name) {
+    const f = findMapByName(name);
+    const b = f && getMapEntryBlock(f.c, f.i);
+    return b ? b.short : '';
 }
 
 function changeMap(cIndex, iIndex) {
     let targetMap = maps[cIndex].items[iIndex];
 
-    const minRealm = getMapMinRealm(targetMap);
-    if (minRealm && player.realmIndex < minRealm) {
-        alert(`進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界）`);
-        return;
-    }
-    // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
-    let minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
-    if (minS) {
-        let st = k => NUMERIC_V2 ? nv2Stat(k) : player.stats[k];
-        if (["str", "con", "int", "spr"].some(k => st(k) < minS)) {
-            alert(`進入【${targetMap.name}】失敗！四維屬性全數必須大於 ${minS} 方可進入。`);
-            return;
-        }
-    }
-    // 暫存區滿了不能外出練功（enhance.js）
-    if (!maps[cIndex].isSafe && isGearStashFull()) {
-        alert(`暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}）！\n請先到背包處理暫存區的橙色裝備（移入背包、分解或毀棄），才能外出練功。`);
-        return;
-    }
+    const block = getMapEntryBlock(cIndex, iIndex);
+    if (block) { alert(block.msg); return; }
 
     // 懸賞對決中換地圖＝逃離對決（懸賞保留，bounty.js）
     if (inBountyDuel) endBountyDuel("flee");

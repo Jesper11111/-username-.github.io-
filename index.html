@@ -1150,6 +1150,48 @@
             position: absolute; top: 12px; left: 12px; z-index: 1; width: auto; margin: 0; padding: 8px 16px; white-space: nowrap;
             color: #fde68a; background: rgba(20, 14, 8, 0.8); border: 1px solid #b08d4a; border-radius: 8px;
         }
+        /* 小紅點傳送點（config-towns.js 的 pin: true，人界地圖）：只有紅點不寫名稱，外圈光暈呼吸提示可以點 */
+        .town-hotspot.pin { border-radius: 50%; }
+        .town-hotspot.pin:hover { background: transparent; box-shadow: none; }
+        .town-dot { width: clamp(10px, 1.8vmin, 16px); height: clamp(10px, 1.8vmin, 16px); border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ff8a8a, #e11d1d 60%, #7f1010); border: 2px solid #fff3e0;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 1px 3px rgba(0,0,0,0.8); animation: townDotPulse 1.8s ease-out infinite; }
+        .town-hotspot.pin:hover .town-dot { transform: scale(1.3); }
+        /* 還進不去的地圖（config-towns.js 的 mapName，map.js 的 getMapLockShort）：紅點變灰、不閃，小字後面加「🔒境界」 */
+        .town-hotspot.pin.locked .town-dot { background: radial-gradient(circle at 35% 35%, #d1d5db, #6b7280 60%, #374151); animation: none; }
+        .town-hotspot.pin.locked .town-dot-label { color: #d1d5db; }
+        .town-dot-label small { color: #fca5a5; font-size: 0.85em; }
+        /* 紅點下方的小字（config-towns.js 的 showLabel，靈界地圖用） */
+        .town-dot-label { position: absolute; top: calc(50% + 10px); left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+            padding: 0 6px; font-family: "KaiTi", "DFKai-SB", "BiauKai", "STKaiti", serif; font-weight: bold; font-size: clamp(12px, 1.9vmin, 16px); letter-spacing: 0.08em;
+            color: #fde68a; text-shadow: 0 1px 2px #000; background: rgba(20, 12, 6, 0.72); border: 1px solid rgba(201, 164, 92, 0.7); border-radius: 4px; }
+        @keyframes townDotPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 1px 3px rgba(0,0,0,0.8); } 100% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0), 0 1px 3px rgba(0,0,0,0.8); } }
+        @media (prefers-reduced-motion: reduce) { .town-dot { animation: none; } }
+        /* 人界地圖分區點擊效果（town.js 的 openWorldRegion）：原畫面上，使用者畫的分區（clip-path 多邊形）原地浮起——微放大、上移、金色光邊＋陰影，其他地方變暗 */
+        #world-region-dim { display: none; position: absolute; inset: 0; pointer-events: none; background: rgba(3, 5, 10, 0); transition: background 0.35s ease; }
+        #world-region-dim.on { background: rgba(3, 5, 10, 0.55); }
+        #world-region-lift { display: none; position: absolute; inset: 0; pointer-events: none;
+            transition: transform 0.35s cubic-bezier(.2,.8,.2,1.2), filter 0.35s ease; }
+        #world-region-lift.on { transform: translateY(-1.5%) scale(1.07);
+            filter: drop-shadow(0 0 2px #fde68a) drop-shadow(0 0 10px rgba(253, 230, 138, 0.7)) drop-shadow(0 16px 14px rgba(0, 0, 0, 0.85)); }
+        #world-region-lift-img { position: absolute; inset: 0; background-size: 100% 100%; background-repeat: no-repeat; }
+        @media (prefers-reduced-motion: reduce) { #world-region-lift { transition: none; } }
+        /* 城池圖畫面（town.js 的 openCityGate）：同一張圖模糊當底、中央金框大圖＋城名，淡入放大 */
+        #city-gate { position: absolute; inset: 0; z-index: 6; background: #05070c; }
+        .city-gate-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(14px) brightness(0.35); transform: scale(1.1); }
+        .city-gate-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px;
+            opacity: 0; transform: scale(0.94); transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.2,.8,.2,1); }
+        #city-gate.on .city-gate-inner { opacity: 1; transform: none; }
+        .city-gate-name { font-family: "KaiTi", "DFKai-SB", "BiauKai", "STKaiti", serif; font-weight: bold; font-size: clamp(26px, 5vmin, 44px); letter-spacing: 0.4em;
+            color: #fde68a; text-shadow: 0 0 12px rgba(253, 230, 138, 0.5), 0 2px 3px #000; }
+        #city-gate .city-gate-pic { width: min(92vw, 760px, 150vh); margin: 0; padding: 0; border: 3px double #c9a45c; border-radius: 10px; overflow: hidden; background: #000; cursor: pointer;
+            box-shadow: 0 0 22px rgba(253, 230, 138, 0.35), 0 20px 50px rgba(0, 0, 0, 0.8); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        #city-gate .city-gate-pic:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(253, 230, 138, 0.6), 0 20px 50px rgba(0, 0, 0, 0.8); }
+        .city-gate-pic img { display: block; width: 100%; height: auto; }
+        .city-gate-hint { color: #e5e7eb; font-size: 0.95em; text-shadow: 0 1px 2px #000; animation: townPinHint 1.8s ease-in-out infinite; }
+        @keyframes townPinHint { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .city-gate-inner { transition: none; } .city-gate-hint { animation: none; } }
+        .town-scene-extra { left: auto; right: 12px; }   /* 場景右上角的額外按鈕（config-towns.js 的 extraButton） */
         /* 城名：左側直書、墨色底，仿天星城縮圖的書法題字 */
         #town-scene-title {
             position: absolute; left: 14px; top: 64px; z-index: 1; pointer-events: none;
@@ -1647,7 +1689,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261003t"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261004k"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -2232,7 +2274,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261003t" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261004k" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-name">
@@ -2576,15 +2618,29 @@
         <div id="town-scene-stage">
             <img id="town-scene-img" alt="">
             <div id="town-scene-hotspots"></div>
+            <!-- 人界地圖分區點擊效果（town.js 的 openWorldRegion）：其他地方變暗＋分區在原位浮起 -->
+            <div id="world-region-dim"></div>
+            <div id="world-region-lift"><div id="world-region-lift-img"></div></div>
         </div>
     </div>
     <button class="town-scene-back" onclick="closeTownScene()">↩ 離開</button>
+    <button id="town-scene-extra" class="town-scene-back town-scene-extra" style="display: none;"></button>
     <div id="town-scene-title"></div>
     <div id="town-scene-hint">↔ 左右滑動瀏覽</div>
+    <!-- 城池圖畫面（town.js 的 openCityGate）：人界地圖紅點 → 分區浮起 → 這裡顯示該城的圖，點圖才進城內場景 -->
+    <div id="city-gate" style="display: none;">
+        <div id="city-gate-bg" class="city-gate-bg"></div>
+        <div class="city-gate-inner">
+            <div id="city-gate-name" class="city-gate-name"></div>
+            <button class="city-gate-pic" onclick="enterCityGate()" aria-label="進城"><img id="city-gate-img" alt=""></button>
+            <div class="city-gate-hint">✨ 點擊圖片進城</div>
+        </div>
+        <button class="town-scene-back" onclick="closeCityGate()">↩ 返回人界</button>
+    </div>
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261003t" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261004k" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -3100,108 +3156,108 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20261003t"></script>
-<script src="data/config-realms.js?v=20261003t"></script>
-<script src="data/config-level.js?v=20261003t"></script>
-<script src="data/config-lifespan.js?v=20261003t"></script>
-<script src="data/config-maps.js?v=20261003t"></script>
-<script src="data/config-sects.js?v=20261003t"></script>
-<script src="data/config-lingbao.js?v=20261003t"></script>
-<script src="data/config-shop.js?v=20261003t"></script>
-<script src="data/config-beasts.js?v=20261003t"></script>
-<script src="data/config-servants.js?v=20261003t"></script>
-<script src="data/config-equipment.js?v=20261003t"></script>
-<script src="data/config-gear-catalog.js?v=20261003t"></script>
-<script src="data/config-gear.js?v=20261003t"></script>
-<script src="data/config-enhance.js?v=20261003t"></script>
-<script src="data/config-sets.js?v=20261003t"></script>
-<script src="data/config-profession.js?v=20261003t"></script>
-<script src="data/config-aptitude.js?v=20261003t"></script>
-<script src="data/config-golden-core.js?v=20261003t"></script>
-<script src="data/config-mailbox.js?v=20261003t"></script>
-<script src="data/config-titles.js?v=20261003t"></script>
-<script src="data/config-tribulation.js?v=20261003t"></script>
-<script src="data/config-quests.js?v=20261003t"></script>
-<script src="data/config-activities.js?v=20261003t"></script>
-<script src="data/config-daily-quests.js?v=20261003t"></script>
-<script src="data/config-elements.js?v=20261003t"></script>
-<script src="data/config-merit.js?v=20261003t"></script>
-<script src="data/config-bounty.js?v=20261003t"></script>
-<script src="data/config-talisman.js?v=20261003t"></script>
-<script src="data/config-avatars.js?v=20261003t"></script>
-<script src="data/config-avatar-frames.js?v=20261003t"></script>
-<script src="data/config-spells.js?v=20261003t"></script>
-<script src="data/config-strange-fire.js?v=20261003t"></script>
-<script src="data/config-partners.js?v=20261003t"></script>
-<script src="data/config-towns.js?v=20261003t"></script>
-<script src="data/config-casino.js?v=20261003t"></script>
-<script src="data/config-leaderboard.js?v=20261003t"></script>
-<script src="data/config-secret-realms.js?v=20261003t"></script>
-<script src="data/config-defense.js?v=20261003t"></script>
-<script src="data/config-zhenmo.js?v=20261003t"></script>
-<script src="data/config-zhenmo-questions.js?v=20261003t"></script>
-<script src="data/config-numeric.js?v=20261003t"></script>
-<script src="data/config-economy.js?v=20261003t"></script>
-<script src="data/config-race.js?v=20261003t"></script>
-<script src="data/state.js?v=20261003t"></script>
-<script src="data/stats.js?v=20261003t"></script>
-<script src="data/numeric.js?v=20261003t"></script>
-<script src="data/elements.js?v=20261003t"></script>
-<script src="data/race.js?v=20261003t"></script>
-<script src="data/battle-fx.js?v=20261003t"></script>
-<script src="data/ui.js?v=20261003t"></script>
-<script src="data/map.js?v=20261003t"></script>
-<script src="data/town.js?v=20261003t"></script>
-<script src="data/casino.js?v=20261003t"></script>
-<script src="data/combat.js?v=20261003t"></script>
-<script src="data/leveling.js?v=20261003t"></script>
-<script src="data/lifespan.js?v=20261003t"></script>
-<script src="data/tribulation.js?v=20261003t"></script>
-<script src="data/sect.js?v=20261003t"></script>
-<script src="data/shop.js?v=20261003t"></script>
-<script src="data/bag.js?v=20261003t"></script>
-<script src="data/equipment.js?v=20261003t"></script>
-<script src="data/equip-compare.js?v=20261003t"></script>
-<script src="data/gear.js?v=20261003t"></script>
-<script src="data/enhance.js?v=20261003t"></script>
-<script src="data/profession.js?v=20261003t"></script>
-<script src="data/aptitude.js?v=20261003t"></script>
-<script src="data/golden-core.js?v=20261003t"></script>
-<script src="data/codex.js?v=20261003t"></script>
-<script src="data/lingbao-shop.js?v=20261003t"></script>
-<script src="data/artifact.js?v=20261003t"></script>
-<script src="data/servant.js?v=20261003t"></script>
-<script src="data/quest.js?v=20261003t"></script>
-<script src="data/activity.js?v=20261003t"></script>
-<script src="data/daily-quest.js?v=20261003t"></script>
-<script src="data/auction.js?v=20261003t"></script>
-<script src="data/merit.js?v=20261003t"></script>
-<script src="data/bounty.js?v=20261003t"></script>
-<script src="data/talisman.js?v=20261003t"></script>
-<script src="data/strange-fire.js?v=20261003t"></script>
-<script src="data/partner.js?v=20261003t"></script>
-<script src="data/field.js?v=20261003t"></script>
-<script src="data/economy.js?v=20261003t"></script>
-<script src="data/beast-combat.js?v=20261003t"></script>
-<script src="data/spells.js?v=20261003t"></script>
-<script src="data/beast.js?v=20261003t"></script>
-<script src="data/library.js?v=20261003t"></script>
-<script src="data/alchemy.js?v=20261003t"></script>
-<script src="data/player-profile.js?v=20261003t"></script>
-<script src="data/save.js?v=20261003t"></script>
-<script src="data/config-home-pc.js?v=20261003t"></script>
-<script src="data/home-ui.js?v=20261003t"></script>
-<script src="data/settings.js?v=20261003t"></script>
-<script src="data/avatar.js?v=20261003t"></script>
-<script src="data/leaderboard.js?v=20261003t"></script>
-<script src="data/mailbox.js?v=20261003t"></script>
-<script src="data/msgboard.js?v=20261003t"></script>
-<script src="data/market.js?v=20261003t"></script>
-<script src="data/secret-realm.js?v=20261003t"></script>
-<script src="data/defense.js?v=20261003t"></script>
-<script src="data/zhenmo.js?v=20261003t"></script>
-<script src="data/title-screen.js?v=20261003t"></script>
-<script src="data/main.js?v=20261003t"></script>
+<script src="data/format.js?v=20261004k"></script>
+<script src="data/config-realms.js?v=20261004k"></script>
+<script src="data/config-level.js?v=20261004k"></script>
+<script src="data/config-lifespan.js?v=20261004k"></script>
+<script src="data/config-maps.js?v=20261004k"></script>
+<script src="data/config-sects.js?v=20261004k"></script>
+<script src="data/config-lingbao.js?v=20261004k"></script>
+<script src="data/config-shop.js?v=20261004k"></script>
+<script src="data/config-beasts.js?v=20261004k"></script>
+<script src="data/config-servants.js?v=20261004k"></script>
+<script src="data/config-equipment.js?v=20261004k"></script>
+<script src="data/config-gear-catalog.js?v=20261004k"></script>
+<script src="data/config-gear.js?v=20261004k"></script>
+<script src="data/config-enhance.js?v=20261004k"></script>
+<script src="data/config-sets.js?v=20261004k"></script>
+<script src="data/config-profession.js?v=20261004k"></script>
+<script src="data/config-aptitude.js?v=20261004k"></script>
+<script src="data/config-golden-core.js?v=20261004k"></script>
+<script src="data/config-mailbox.js?v=20261004k"></script>
+<script src="data/config-titles.js?v=20261004k"></script>
+<script src="data/config-tribulation.js?v=20261004k"></script>
+<script src="data/config-quests.js?v=20261004k"></script>
+<script src="data/config-activities.js?v=20261004k"></script>
+<script src="data/config-daily-quests.js?v=20261004k"></script>
+<script src="data/config-elements.js?v=20261004k"></script>
+<script src="data/config-merit.js?v=20261004k"></script>
+<script src="data/config-bounty.js?v=20261004k"></script>
+<script src="data/config-talisman.js?v=20261004k"></script>
+<script src="data/config-avatars.js?v=20261004k"></script>
+<script src="data/config-avatar-frames.js?v=20261004k"></script>
+<script src="data/config-spells.js?v=20261004k"></script>
+<script src="data/config-strange-fire.js?v=20261004k"></script>
+<script src="data/config-partners.js?v=20261004k"></script>
+<script src="data/config-towns.js?v=20261004k"></script>
+<script src="data/config-casino.js?v=20261004k"></script>
+<script src="data/config-leaderboard.js?v=20261004k"></script>
+<script src="data/config-secret-realms.js?v=20261004k"></script>
+<script src="data/config-defense.js?v=20261004k"></script>
+<script src="data/config-zhenmo.js?v=20261004k"></script>
+<script src="data/config-zhenmo-questions.js?v=20261004k"></script>
+<script src="data/config-numeric.js?v=20261004k"></script>
+<script src="data/config-economy.js?v=20261004k"></script>
+<script src="data/config-race.js?v=20261004k"></script>
+<script src="data/state.js?v=20261004k"></script>
+<script src="data/stats.js?v=20261004k"></script>
+<script src="data/numeric.js?v=20261004k"></script>
+<script src="data/elements.js?v=20261004k"></script>
+<script src="data/race.js?v=20261004k"></script>
+<script src="data/battle-fx.js?v=20261004k"></script>
+<script src="data/ui.js?v=20261004k"></script>
+<script src="data/map.js?v=20261004k"></script>
+<script src="data/town.js?v=20261004k"></script>
+<script src="data/casino.js?v=20261004k"></script>
+<script src="data/combat.js?v=20261004k"></script>
+<script src="data/leveling.js?v=20261004k"></script>
+<script src="data/lifespan.js?v=20261004k"></script>
+<script src="data/tribulation.js?v=20261004k"></script>
+<script src="data/sect.js?v=20261004k"></script>
+<script src="data/shop.js?v=20261004k"></script>
+<script src="data/bag.js?v=20261004k"></script>
+<script src="data/equipment.js?v=20261004k"></script>
+<script src="data/equip-compare.js?v=20261004k"></script>
+<script src="data/gear.js?v=20261004k"></script>
+<script src="data/enhance.js?v=20261004k"></script>
+<script src="data/profession.js?v=20261004k"></script>
+<script src="data/aptitude.js?v=20261004k"></script>
+<script src="data/golden-core.js?v=20261004k"></script>
+<script src="data/codex.js?v=20261004k"></script>
+<script src="data/lingbao-shop.js?v=20261004k"></script>
+<script src="data/artifact.js?v=20261004k"></script>
+<script src="data/servant.js?v=20261004k"></script>
+<script src="data/quest.js?v=20261004k"></script>
+<script src="data/activity.js?v=20261004k"></script>
+<script src="data/daily-quest.js?v=20261004k"></script>
+<script src="data/auction.js?v=20261004k"></script>
+<script src="data/merit.js?v=20261004k"></script>
+<script src="data/bounty.js?v=20261004k"></script>
+<script src="data/talisman.js?v=20261004k"></script>
+<script src="data/strange-fire.js?v=20261004k"></script>
+<script src="data/partner.js?v=20261004k"></script>
+<script src="data/field.js?v=20261004k"></script>
+<script src="data/economy.js?v=20261004k"></script>
+<script src="data/beast-combat.js?v=20261004k"></script>
+<script src="data/spells.js?v=20261004k"></script>
+<script src="data/beast.js?v=20261004k"></script>
+<script src="data/library.js?v=20261004k"></script>
+<script src="data/alchemy.js?v=20261004k"></script>
+<script src="data/player-profile.js?v=20261004k"></script>
+<script src="data/save.js?v=20261004k"></script>
+<script src="data/config-home-pc.js?v=20261004k"></script>
+<script src="data/home-ui.js?v=20261004k"></script>
+<script src="data/settings.js?v=20261004k"></script>
+<script src="data/avatar.js?v=20261004k"></script>
+<script src="data/leaderboard.js?v=20261004k"></script>
+<script src="data/mailbox.js?v=20261004k"></script>
+<script src="data/msgboard.js?v=20261004k"></script>
+<script src="data/market.js?v=20261004k"></script>
+<script src="data/secret-realm.js?v=20261004k"></script>
+<script src="data/defense.js?v=20261004k"></script>
+<script src="data/zhenmo.js?v=20261004k"></script>
+<script src="data/title-screen.js?v=20261004k"></script>
+<script src="data/main.js?v=20261004k"></script>
 
 </body>
 </html>

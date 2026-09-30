@@ -18,14 +18,24 @@ function pickTownView(scene) {
 function openTownScene(name) {
     const scene = townScenes[name];
     if (!scene) return;
+    hideWorldRegionNow();   // 從人界地圖進城：分區效果與城池圖畫面先收掉
+    closeCityGate();
     currentTownScene = name;
     currentTownView = null;   // 強制 applyTownView 重新套用
     document.getElementById('town-scene-title').innerText = scene.title;
+    // 場景右上角的額外按鈕（config-towns.js 的 extraButton，例：人界地圖的「地圖列表」）
+    const extra = document.getElementById('town-scene-extra');
+    if (extra) {
+        extra.style.display = scene.extraButton ? '' : 'none';
+        if (scene.extraButton) { extra.innerText = scene.extraButton.label; extra.setAttribute('onclick', scene.extraButton.action); }
+    }
     document.getElementById('town-scene').style.display = 'block';
     applyTownView(true);
 }
 
 function closeTownScene() {
+    hideWorldRegionNow();
+    closeCityGate();
     currentTownScene = null;
     currentTownView = null;
     document.getElementById('town-scene').style.display = 'none';
@@ -58,8 +68,13 @@ function renderTownHotspots(view) {
     }).join('');
     layer.innerHTML = figures + (view.hotspots || []).filter(h => h.enabled !== false).map(h => {
         const [x, y, w, hh] = h.rect;
-        return `<button class="town-hotspot" style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};"
-                    onclick="${h.action}" aria-label="${h.label}"><span class="town-plaque">${h.label}</span></button>`;
+        // pin：小紅點樣式（人界地圖用）＝ rect 正中央一顆會呼吸發光的紅點，不顯示名稱（label 只當 title／aria-label）
+        // showLabel：紅點下方加小字（靈界地圖：圖上沒有這些地名）
+        // mapName：這個紅點傳送到哪張地圖；還進不去時紅點變灰、小字後面加「🔒境界」（map.js 的 getMapLockShort；每次開地圖重算）
+        const lock = h.mapName && typeof getMapLockShort === 'function' ? getMapLockShort(h.mapName) : '';
+        const inner = h.pin ? `<span class="town-dot"></span>${h.showLabel ? `<span class="town-dot-label">${h.label}${lock ? ` <small>${lock}</small>` : ''}</span>` : ''}` : `<span class="town-plaque">${h.label}</span>`;
+        return `<button class="town-hotspot${h.pin ? ' pin' : ''}${lock ? ' locked' : ''}" style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};"
+                    onclick="${h.action}" aria-label="${h.label}"${h.pin ? ` title="${h.label}"` : ''}>${inner}</button>`;
     }).join('');
 }
 
@@ -86,6 +101,71 @@ function layoutTownScene(recenter) {
 
 window.addEventListener('resize', () => { if (currentTownScene) applyTownView(false); });
 
+// ---- 人界地圖的分區點擊效果（config-towns.js 的 worldRegions）----
+// 2026-09-30 使用者要求：點天南地區紅點 → 「不要彈出新視窗，就原畫面一個點擊效果」，範圍（shape）由使用者畫出。
+// 做法：#town-scene-stage 裡疊一層同一張人界地圖（#world-region-lift-img），以 clip-path 只留下分區多邊形；
+//       外層 #world-region-lift 做浮起（以分區中心微放大、上移、金色光邊＋陰影；filter 放外層才不會被 clip-path 裁掉），
+//       #world-region-dim 讓其他地方變暗。WORLD_REGION_MS 後執行分區的 action（進城），進城／離開時 hideWorldRegionNow 收掉。
+let worldRegionKey = null;      // 正在播效果的分區（null = 沒有）
+let worldRegionTimer = null;
+const WORLD_REGION_MS = 750;    // 浮起後停留多久才執行 action（浮起動畫本身 0.35 秒，index.html 的 #world-region-lift）
+
+function openWorldRegion(key) {
+    const reg = worldRegions[key], scene = townScenes[currentTownScene];
+    if (!reg || !scene || worldRegionKey) return;   // 效果播放中重複點擊不理會
+    worldRegionKey = key;
+    const W = scene.imgW, H = scene.imgH;
+    const lift = document.getElementById('world-region-lift'), img = document.getElementById('world-region-lift-img'), dim = document.getElementById('world-region-dim');
+    img.style.backgroundImage = `url('${scene.img}')`;
+    img.style.clipPath = `polygon(${reg.shape.map(([x, y]) => `${(x / W * 100).toFixed(3)}% ${(y / H * 100).toFixed(3)}%`).join(', ')})`;
+    // 以分區外框中心放大，看起來是那一塊原地浮起
+    const xs = reg.shape.map(p => p[0]), ys = reg.shape.map(p => p[1]);
+    lift.style.transformOrigin = `${((Math.min(...xs) + Math.max(...xs)) / 2 / W * 100).toFixed(2)}% ${((Math.min(...ys) + Math.max(...ys)) / 2 / H * 100).toFixed(2)}%`;
+    lift.classList.remove('on'); dim.classList.remove('on');
+    lift.style.display = dim.style.display = 'block';
+    void lift.offsetWidth;                               // 強制套用起點，下一步才有動畫
+    lift.classList.add('on'); dim.classList.add('on');
+    clearTimeout(worldRegionTimer);
+    worldRegionTimer = setTimeout(() => {
+        try { new Function(reg.action)(); } finally { if (worldRegionKey === key) hideWorldRegionNow(); }   // action 沒有換畫面（例：傳送被擋）也要收掉效果
+    }, WORLD_REGION_MS);
+}
+// ---- 城池圖畫面（2026-09-30 使用者指定「紅點 → 天南城圖 → 點了進市集」）----
+// 人界地圖分區浮起後開啟：全螢幕顯示該城的圖（修仙地圖城鎮卡片的縮圖，map.js 的 getMapThumb，天南城依性別），點圖才傳送並開城內場景（goToTownByName）；
+// 「↩ 返回人界」回到人界地圖。疊在 #town-scene 裡（人界地圖還在底下），進城時 openTownScene 會收掉。
+let cityGateName = null;
+function openCityGate(name) {
+    const item = maps[0].items.find(it => it.name === name);
+    if (!item) return;
+    cityGateName = name;
+    const img = getMapThumb(item) || '';
+    document.getElementById('city-gate-img').src = img;
+    document.getElementById('city-gate-img').alt = name;
+    document.getElementById('city-gate-bg').style.backgroundImage = img ? `url('${img}')` : '';
+    document.getElementById('city-gate-name').innerText = name;
+    const box = document.getElementById('city-gate');
+    box.classList.remove('on');
+    box.style.display = 'block';
+    void box.offsetWidth;
+    box.classList.add('on');
+}
+function enterCityGate() { if (cityGateName) goToTownByName(cityGateName); }
+function closeCityGate() {
+    cityGateName = null;
+    const box = document.getElementById('city-gate');
+    if (box) { box.style.display = 'none'; box.classList.remove('on'); }
+}
+
+// 收掉效果（進城、離開人界地圖時）
+function hideWorldRegionNow() {
+    clearTimeout(worldRegionTimer);
+    worldRegionKey = null;
+    ['world-region-lift', 'world-region-dim'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.remove('on'); el.style.display = 'none'; }
+    });
+}
+
 // 電腦版瀏覽：滑鼠滾輪改成左右平移（畫面只有左右可捲時）、按住拖曳平移；手機直接用手指滑動（瀏覽器原生捲動）
 (function initTownScenePan() {
     const view = document.getElementById('town-scene-view');
@@ -102,7 +182,7 @@ window.addEventListener('resize', () => { if (currentTownScene) applyTownView(fa
     window.addEventListener('mousemove', e => {
         if (!drag) return;
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-        if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 6) return;   // 小於 6px 視為點擊，不拖曳
+        if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 10) return;   // 小於 10px 視為點擊，不拖曳（原 6px，點紅點時手一抖就被當成拖曳而不觸發）
         drag.moved = true;
         view.scrollLeft = drag.left - dx;
         view.scrollTop = drag.top - dy;
