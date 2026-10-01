@@ -147,8 +147,10 @@ function selectMap(cIndex, iIndex) {
     closeModal('map-category-modal');
     closeModal('world-map-modal');
     // 從人界／靈界地圖（town.js）選好地圖：傳送成功才一併關掉地圖回到遊戲（境界不足等被擋時留在地圖上；城鎮由 goToTown 接著開城內場景）
-    if (typeof currentTownScene !== 'undefined' && (currentTownScene === WORLD_SCENE_KEY || currentTownScene === LINGJIE_SCENE_KEY)
-        && player.currentMap && player.currentMap.name === target.name) closeTownScene();
+    const arrived = player.currentMap && player.currentMap.name === target.name;
+    if (typeof currentTownScene !== 'undefined' && (currentTownScene === WORLD_SCENE_KEY || currentTownScene === LINGJIE_SCENE_KEY) && arrived) closeTownScene();
+    // 選了戰鬥地圖：傳送成功就切到「戰鬥」分頁，第一眼看到「仙魔戰場實況」（2026-10-01 使用者要求；城鎮等安全區不切）
+    if (arrived && !maps[cIndex].isSafe) switchTab('battle');
 }
 
 // 進入地圖的門檻檢查：回傳 { msg: 完整提示, short: 地圖紅點旁的短字 }，可以進入回傳 null（changeMap 與人界／靈界地圖紅點共用）
