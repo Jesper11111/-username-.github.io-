@@ -685,6 +685,23 @@ async function exportSave() {
     }
 }
 
+// 攻略站「屬性與技能」頁（網址中的中文已編碼，請原樣保留；2026-10-01 使用者提供，ARCHITECTURE.md 第 19 節）
+// 存檔代碼放在網址的 #（不會送到伺服器），由攻略頁的程式讀取後試算
+const GUIDE_CALC_URL = "https://jtnhrbpvvm-spec.github.io/taiwan_game2/%E5%87%A1%E5%A1%B5%E4%BF%AE%E4%BB%99%E5%82%B3/%E5%B1%AC%E6%80%A7%E8%88%87%E6%8A%80%E8%83%BD.html";
+function openGuideCalc() {
+    // 先同步開視窗，再等代碼產生完才導向；
+    // 如果等 await 之後才 window.open，手機瀏覽器會當成彈出視窗擋掉
+    const win = window.open("about:blank", "_blank");
+    player.lastSaveTime = Date.now();
+    encodeSaveCode(player).then(code => {
+        const url = GUIDE_CALC_URL + "#save=" + encodeURIComponent(code);   // Base64 有 + / =，一定要編碼
+        if (win) win.location.href = url; else location.href = url;
+    }).catch(e => {
+        if (win) win.close();
+        addLog("開啟攻略試算失敗：" + e.message, "system");
+    });
+}
+
 function selectSaveCodeText() {
     const box = document.getElementById('save-code-text');
     box.focus();

@@ -317,7 +317,7 @@ combatTick() 每秒執行 [combat.js]
 | `triggerReincarnate` | `data/leveling.js` |
 | `triggerTribulation` | `data/tribulation.js` |
 | `setShopQty`, `setShopQtyMax`, `updateShopTotal` | `data/shop.js` |
-| `resetGameCompletely`, `saveLocal`, `reloadLocalSave`, `exportSave`, `importSave`, `copySaveCode`, `downloadSaveCode`, `pasteSaveCodeFromClipboard`, `importSaveFromFile`, `confirmImportSave`, `resetImportConfirm` | `data/save.js` |
+| `resetGameCompletely`, `saveLocal`, `reloadLocalSave`, `exportSave`, `openGuideCalc`, `importSave`, `copySaveCode`, `downloadSaveCode`, `pasteSaveCodeFromClipboard`, `importSaveFromFile`, `confirmImportSave`, `resetImportConfirm` | `data/save.js` |
 | `updateAutoSettings` | `data/ui.js` |
 | `closeModal`, `toggleDrawer`, `toggleAllBulkQualities` | `data/ui.js` |
 | `bulkDeleteEquipment` | `data/bag.js` |
@@ -1034,6 +1034,13 @@ combatTick() 每秒執行 [combat.js]
 - **手機背景存檔**：`main.js` 的 `initGame()` 在 `visibilitychange`（切到背景）與 `pagehide`（關閉分頁）時立刻 `saveLocal()`。
   手機瀏覽器常在背景直接結束分頁，只靠 30 秒自動存檔會遺失最後一段進度，重開時像是「讀檔失敗、進度倒退」。
 - **修改道號**（`player-profile.js`）也改用 `#name-modal` 視窗（不用 `prompt()`），最多 12 字，並移除 `< > & " ' \`` 等字元。
+- **📊 開啟攻略試算**（2026-10-01，版本 `20261004u`，使用者指定）：「💾 存檔管理」抽屜（`#drawer-save`）在「📤 匯出存檔代碼」下方的按鈕 → save.js 的 `openGuideCalc()`。
+  開新分頁到攻略站「屬性與技能」頁（`GUIDE_CALC_URL`，網址中文已編碼、原樣保留），網址後加 `#save=` + `encodeURIComponent(存檔代碼)`：
+  - 用 `#` 不用 `?`：hash 不會送到伺服器，由攻略頁的程式讀取；Base64 有 `+ / =` 所以一定要 `encodeURIComponent`。
+  - **先同步 `window.open("about:blank")`、等 `encodeSaveCode` 完成才導向**：若在 await 之後才開，手機瀏覽器會當彈出視窗擋掉；開不了視窗時改在本頁導向。失敗只寫日誌，不用 alert／confirm。
+  - 驗證（本機）：網址 1,463 字、`#save=` 後無未編碼的 `+ / =`、解回來與目前存檔一致；在攻略頁開啟後顯示「讀取完成，已帶入『韓立』的數字與裝備」，
+    物理攻擊 100／術法攻擊 100／氣血上限 5,100 與遊戲人物面板相同（測試角色為凡人 1 階新角色）。
+  - 注意：攻略頁的說明文字寫「在遊戲的『命運與系統』按匯出」，但遊戲裡這個抽屜叫「💾 存檔管理」。
 - **仍使用原生對話框的地方**（在 App 內建瀏覽器可能失效）：拜入宗門、渡劫、靈寶閣兌換、轉世、完全重置等的 `confirm()` 確認，
   以及各處資源不足的 `alert()` 提示。若玩家回報這些按鈕在 LINE 內沒反應，比照本節改為視窗內確認。
 
@@ -1475,7 +1482,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004t`，gm.html 同）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004u`，gm.html 同）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
