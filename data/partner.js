@@ -497,6 +497,7 @@ function showPartnerDialog(p, lines, note, afterId, choices) {
 
 function closePartnerDialog() {
     closeModal('partner-dialog-modal');
+    if (typeof onTownNpcDialogClosed === 'function') onTownNpcDialogClosed();   // 城內隱藏 NPC 問句：關掉＝直接開打（town-npc.js）
     let id = document.getElementById('partner-dialog-after').value;
     if (id) openPartnerModal(id);
 }

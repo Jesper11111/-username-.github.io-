@@ -30,6 +30,7 @@ function openTownScene(name) {
         if (scene.extraButton) { extra.innerText = scene.extraButton.label; extra.setAttribute('onclick', scene.extraButton.action); }
     }
     document.getElementById('town-scene').style.display = 'block';
+    rollTownNpcs(name);   // 隱藏 NPC：這次進城有沒有躲在角落（town-npc.js）
     applyTownView(true);
 }
 
@@ -59,10 +60,11 @@ function applyTownView(recenter) {
 function renderTownHotspots(view) {
     const layer = document.getElementById('town-scene-hotspots');
     const pct = (v, total) => (v / total * 100).toFixed(3) + '%';
-    // 人偶（figures）畫在傳送點底下；有 action 的才可點
-    const figures = (view.figures || []).filter(f => f.enabled !== false).map(f => {
+    // 人偶（figures）畫在傳送點底下；有 action 的才可點；隨機躲在角落的 NPC（town-npc.js）一起畫，cls 加額外樣式
+    const figures = (view.figures || []).filter(f => f.enabled !== false).concat(getTownNpcFigures(currentTownScene, view)).map(f => {
         const [x, y, w, hh] = f.rect;
-        const click = f.action ? `onclick="${f.action}" class="town-figure clickable"` : 'class="town-figure"';
+        const cls = 'town-figure' + (f.action ? ' clickable' : '') + (f.cls ? ' ' + f.cls : '');
+        const click = (f.action ? `onclick="${f.action}" ` : '') + `class="${cls}"`;
         return `<img ${click} src="${f.img}" alt="${f.name || ''}" title="${f.name || ''}"
                     style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};">`;
     }).join('');

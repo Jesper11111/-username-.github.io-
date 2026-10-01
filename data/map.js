@@ -59,6 +59,9 @@ function goToTownByName(name) {
 // 點城鎮傳送點：不在該城就傳送過去；有城內場景（town.js）就開啟城內畫面
 function goToTown(i) {
     let item = maps[0].items[i];
+    // 被城內隱藏 NPC 打爆後的禁入時間（town-npc.js）：不傳送、只提示
+    const ban = getTownBanLeftMin(item.name);
+    if (ban) { showToast(`😵 滿臉都是香腸油，還沒臉回${item.name}……（剩 ${ban} 分鐘）`); return; }
     if (player.currentMap.name !== item.name) selectMap(0, i);
     else closeModal('world-map-modal');
     if (player.currentMap.name === item.name && hasTownScene(item.name)) openTownScene(item.name);

@@ -12,6 +12,9 @@
 // figures    = 場景上的人偶（透明 PNG，擺在圖上當裝飾），同樣用圖上像素：
 //   { id, name: "名稱", img: "images/towns/xxx.png", rect: [左, 上, 寬, 高] }
 //   rect 的寬高比請和圖片一致（避免變形）；底邊 = 人偶腳下站的位置。選填 action 可讓人偶可點
+// hiddenNpcs = 隨機躲在角落的 NPC（town-npc.js）：每次進城依 chance 決定是否出現、從 spots 隨機挑一處；當天處理過（吃／決鬥）就不再出現
+//   { id, partnerId, name, place: 日誌裡的地名, chance, spots: [{ img, rect }], gift: 碎片數, duelMult: 戰力倍數, penalty: { banMinutes, coinPct }, duelImg: 決鬥畫面海報, lines: {...} }
+//   spots 的 PNG 已先調色、並把被前景（甕）擋住的部分挖空，所以不需要另外的前景圖層
 
 // 人界地圖（2026-09-30 玩家提供《凡人修仙傳》人界地圖 1408×768）：按「世界」導覽開啟（home-ui.js 的 openWorldTab），不是城鎮地圖、不會出現在城鎮卡片
 //   使用者要求「傳送點再來分開設計」→ hotspots 先空著，之後依圖上地名（天南地區、亂星海、天星城、大晉王朝…）加傳送點；座標用網址 ?townedit=1 量
@@ -178,7 +181,33 @@ const townScenes = {
         img: "images/towns/tiannan-market.jpg",
         imgW: 848, imgH: 1264,
         hotspots: [],
-        figures: []
+        figures: [],
+        // 香腸大師・奧斯卡（2026-10-01 使用者要求「隨機進入天南市集，躲藏在角落」）：被發現後問要不要吃大香腸
+        //   吃 → 見面禮：奧斯卡夥伴碎片 ×20（已結識改加好感）；不吃 → 他發起決鬥，戰力＝玩家 ×50，必敗（氣血剩 1、被轟出市集，不折壽）
+        //   人物圖：玩家提供的 3D 立繪去背，原本發光的香腸改畫成不發光的烤香腸（使用者要求）；1＝右側巷口大甕後、2＝左側磚柱邊紅甕後（左右翻轉）
+        hiddenNpcs: [{
+            id: "aosika", partnerId: "aosika", name: "香腸大師・奧斯卡", place: "天南市集", chance: 0.3,
+            spots: [
+                { img: "images/towns/npc-aosika-1.png", rect: [710, 802, 50, 100] },
+                { img: "images/towns/npc-aosika-2.png", rect: [102, 830, 50, 100] }
+            ],
+            gift: 20, duelMult: 50,
+            // 被打爆的小懲罰（2026-10-01 使用者要求「加一點小懲罰，10 分鐘內不能進天南市集，或扣少量靈石」→ 兩個都做）：
+            //   banMinutes 分鐘內進不了這個城（map.js 的 goToTown 擋下、不傳送）；coinPct＝被收走身上靈石的比例（香腸錢）
+            penalty: { banMinutes: 10, coinPct: 0.03 },
+            // 「吃」按鈕刻意縮小，eatWindowMs 後消失並自動當成「不吃」進入戰鬥（使用者指定 2 秒）
+            eatWindowMs: 2000,
+            // 決鬥畫面的海報（使用者提供 848×1264，圖上已有台詞「小子不吃的香腸 看我怎麼打爆你!! 你來當灌腸!」，所以不另外顯示拒絕台詞）
+            duelImg: "images/towns/duel-aosika.jpg",
+            lines: {
+                ask: "你要我的大香腸嗎？好吃還能噴你滿臉！",
+                // 問句下方的旁白（不加「」；2026-10-01 使用者指定）
+                tease: ["你看著他鬆開褲頭……往裡一直掏！！", "黑色的香腸！！！！！！", "你決定是吃，還是不吃？"],
+                eat: ["哈哈哈！好吃吧？我就說會噴你滿臉！", "初次見面，這是見面禮，收下吧！"],
+                eatAgain: ["哈哈，又來吃香腸啦？嘴角的油記得擦一擦！"],
+                shout: "我有一根大香腸——噴！"
+            }
+        }]
     },
     "天星城": {
         title: "天星城・坊市",

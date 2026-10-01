@@ -31,7 +31,10 @@ images/               圖片素材
   avatars/            可解鎖更換的頭像（256×256 正方形、臉部置中，由玩家提供的原圖裁切縮小），見第 32 節
   towns/              城內場景圖（玩家提供，第 20 節）：tianxing-market.jpg 天星城坊市橫圖（1582×672）、
                       tianxing-market-portrait.jpg 手機直式（704×1520，9:19.4）、
-                      npc-fengxi.png 亂星海第一大善人・風希人偶（252×400 透明 PNG，由玩家提供的插畫手動描邊去背）
+                      npc-fengxi.png 亂星海第一大善人・風希人偶（252×400 透明 PNG，由玩家提供的插畫手動描邊去背）、
+                      npc-aosika-1.png／npc-aosika-2.png 天南市集隱藏 NPC 香腸大師・奧斯卡的兩個藏身點（150×300 透明 PNG＝場景座標 ×3；
+                      玩家提供的灰底 3D 立繪去背、發光香腸改畫成不發光的烤香腸、調暗偏暖、自帶接地陰影、被甕擋住的部分已挖空；2 號左右翻轉）、
+                      duel-aosika.jpg 奧斯卡決鬥畫面海報（848×1264，玩家提供，圖上已有台詞與《斗羅大陸》字樣，原檔照用 299KB）
   maps/               world-renjie.jpg 人界地圖（1408×768，玩家提供，「世界」導覽開啟的全螢幕地圖，第 20 節）；world-lingjie.jpg 靈界地圖（1024×559，玩家提供，人界「飛升點」進入）；safe-zone.jpg 安全區（宗門、天南城、天星城）的戰場實況圖（config-maps.js 的 SAFE_ZONE_IMG，第 59 節；玩家提供 848×1264 縮成 480×715、88KB）；
                       修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
@@ -113,6 +116,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
                       內含虛天殿（闖關）、血色禁地（戰棋）、三界戰場（千人淘汰）＋機緣：強者現身、靈獸競速、古洞尋寶、丹爐試火、機緣任務（支線）；全部包在 IIFE `Encounter` 內，對外只有 onEncounterMapChange／initEncounters／openEncounterList
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
+  town-npc.js         城內隱藏 NPC（第 20 節「天南市集・香腸大師奧斯卡」）：進城擲骰躲在角落、被發現後吃／不吃、必敗決鬥演出（設定在 config-towns.js 的 hiddenNpcs）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
   codex.js            天磯錄：收藏紀錄、60 個稱號、器錄／套裝／異火／稱號／職業視窗（第 37 節）
@@ -151,6 +155,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 - `strange-fire.js`、`partner.js` 載入時會建 `strangeFireById`／`partnerById`，必須分別排在 `config-strange-fire.js`、`config-partners.js` 之後。
 - `defense.js` 載入時就建立 `DefenseBattle`（讀 `DEFENSE_*` 常數），必須排在 `config-defense.js` 之後；它在 DOMContentLoaded 抓 `#defense-vwrap` 的影片元素。
 - `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
+- `town-npc.js` 緊接在 `partner.js` 後（第 20 節）：只宣告函式，執行期才讀 `townScenes`／`partnerById`，位置其實不受限。
 - `config-encounter.js` 緊接在 `config-economy.js` 後、`encounter.js` 緊接在 `economy.js` 後（第 63 節）；兩者載入時只宣告常數與建立 IIFE，不讀其他檔，位置其實不受限。
 
 | # | 檔案 | 責任 | 依賴（讀取哪些全域） | 被誰依賴 / 誰會呼叫它 |
@@ -184,7 +189,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15j | `config-sets.js` | `GEAR_SET_MIN_QUALITY`、`gearSets`(30 組：主題＋五行)、`gearSetThemes`(2/4/6 件加成) | 無 | `gear.js`、`codex.js` |
 | 15k | `config-profession.js` | `PROFESSION_SWITCH_COST`、`PROFESSION_MIN_LEVEL`、`PROF_MAP_MULT`/`PROF_BOUNTY_GAIN`/`PROF_OFFLINE_RATE`、`PROF_RANK_EXP`/`PROF_WEAPON_BONUS`、`professions`(6 職業：階名、被動、技能) | 無 | `profession.js` |
 | 15m | `config-strange-fire.js` | 異火（第 38 節）：`STRANGE_FIRE_SHARDS_PER_FIRE`(100 片合 1 朵)/`STRANGE_FIRE_REALM_REDUCE`(每朵秘境受傷 -3%)/`STRANGE_FIRE_REALM_REDUCE_MAX`(上限 30%)、品階 `STRANGE_FIRE_TIERS`(weight/color)、`strangeFireItems`(碎片與異火的顯示資料)、`strangeFireList`(50 種：id/name/tier/origin/desc/bonus；檔尾有新增模板) | 無 | `strange-fire.js` |
-| 15o | `config-towns.js` | `townScenes`（key = 城鎮地圖名稱：title、img、imgW／imgH、選填 `portrait`（手機直式圖，自有 img／imgW／imgH／hotspots／figures）、`figures` 場景人偶 `{ id, name, img, rect, action? }`、`hotspots` 傳送點 `{ id, label, rect:[x,y,w,h] 圖上像素, action, enabled }`；檔內有模板） | 無 | `town.js`、`map.js`(hasTownScene) |
+| 15o | `config-towns.js` | `townScenes`（key = 城鎮地圖名稱：title、img、imgW／imgH、選填 `portrait`（手機直式圖，自有 img／imgW／imgH／hotspots／figures）、`figures` 場景人偶 `{ id, name, img, rect, action? }`、`hotspots` 傳送點 `{ id, label, rect:[x,y,w,h] 圖上像素, action, enabled }`、選填 `hiddenNpcs` 隨機躲在角落的 NPC `{ id, partnerId, name, place, chance, spots:[{img, rect}], gift, duelMult, lines }`；檔內有模板） | 無 | `town.js`、`town-npc.js`、`map.js`(hasTownScene) |
 | 15n | `config-partners.js` | 夥伴（第 39 節）：`PARTNER_TIERS`(評級門檻與數值建議)、`PARTNER_POWER_LABELS`(六維名稱)、`partnerList`(39 位：出處、世界、巔峰、六維戰力、分析、被動、絕學；檔尾有新增模板) | 無 | `partner.js` |
 | 15l | `config-titles.js` | `titleList`（60 個稱號：條件 cond、加成 bonus；含 4 個賭運稱號） | 無 | `codex.js`、`casino.js`(紀錄頁列出賭運稱號) |
 | 15p | `config-casino.js` | 天星賭坊（第 40 節）：`CASINO_TOWN`、每日上限 `CASINO_DAILY_LIMIT_BY_REALM`、`CASINO_DICE_MAX_RATIO`/`CASINO_DICE_MIN_BET`/`CASINO_CONFIRM_RATIO`、`casinoStones`(三種隕石：價格、結果權重表)、`CASINO_VALUE`(估值)、`CASINO_CUT_LINES`、擲骰 `CASINO_DICE_BETS`/`CASINO_TOTAL_PAYOUT`/`CASINO_DICE_FACES` | 無 | `casino.js` |
@@ -222,8 +227,9 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34e | `enhance.js` | `randInt`、星允鐵 `addStarIron`/`addIronShards`、`locateEquip`/`removeLocatedEquip`、強化 `getEnhanceInfo`/`canEvolve`/`enhanceEquipId`/`openEnhanceModal`/`renderEnhanceModal`/`getEvolveStatRatio`/`enhanceEquip`/`promptEvolveEquip`(+20 系統通知)/`evolveEquip(skipConfirm)`、分解 `getDecomposeYield`/`formatDecomposeYield`/`decomposeEquip`/`bulkDecomposeEquipment`、暫存區 `isGearStashFull`/`receiveLootEquip`/`enforceGearStashLimit`/`moveStashToBag`/`deleteStashEquip`/`renderStashSection`、`refreshEquipViews`、千寶閣 `getIronShopState`/`renderIronShopSection`/`buyStarIron`/`rollIronBagItem` | `config-enhance.js`、`gear.js`、`codex.js`(checkTitleUnlocks、稱號強化成功率)、`map.js`(changeMap)、`ui.js` | `bag.js`/`equipment.js`(按鈕與暫存區)、`auction.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵)、`map.js`/`save.js`(暫存區滿) |
 | 34h | `strange-fire.js` | 異火（第 38 節）：**載入時**建 `strangeFireById`；`addFireShards(n, source)`(取得碎片，供未來秘境掉落呼叫)/`rollStrangeFire`/`gainStrangeFire`/`craftStrangeFire(qty)`(合成，數字或 'max')/`getStrangeFireRealmReduction`(秘境受傷減免比例)/`getStrangeFireBonusTotals`(收錄加成)/`countCollectedFires`/`migrateStrangeFires`(舊存檔)/`renderStrangeFireCards`(背包卡片)/`renderCodexFires`(天磯錄分頁) | `config-strange-fire.js`、`player.fireShards`/`strangeFires`/`fireCollection`、`codex.js`(describeTitleBonus、openCodexModal)、`ui.js` | `bag.js`(renderBag)、`gear.js`(getBonusTotals)、`codex.js`(異火分頁、頂端統計)、`save.js`(applySaveData)；未來秘境（掉落、受擊減傷） |
 | 34k | `casino.js` | 天星賭坊（第 40 節）：狀態 `casinoTab`/`casinoBusy`/`casinoResultHtml`/`casinoDice`；`getCasinoState`(跨日重置)/`getCasinoDailyLimit`/`getCasinoRemaining`/`getDiceMaxBet`/`isInCasinoTown`/`checkCasinoSpend`(城鎮、靈石、上限、大額確認)/`recordCasino`；隕石 `randCasino`/`rollStoneOutcome`/`grantStoneOutcome`/`cutStone(id, count)`；擲骰 `setDiceType`/`setDicePick`/`setDiceTotal`/`setDiceAmount`/`addDiceAmount`/`setDiceMax`/`getDicePayout`/`describeDiceBet`/`judgeDice`/`rollDice`；視窗 `openCasinoModal`/`setCasinoTab`/`renderCasino`/`renderCasinoStones`/`renderCasinoDice`/`renderCasinoRecord` | `config-casino.js`、`player.casino`/`coins`/`ore`/`realmIndex`/`currentMap`、`enhance.js`(addStarIron/addIronShards)、`strange-fire.js`(addFireShards/rollStrangeFire/gainStrangeFire)、`gear.js`(tryLootDrop 的 casinoPurple/casinoOrange)、`codex.js`(checkTitleUnlocks/describeTitle*)、`ui.js` | `config-towns.js`(天星城石拱門傳送點)、`codex.js`(賭運稱號條件讀 player.casino) |
-| 34j | `town.js` | 城內場景：`currentTownScene`/`currentTownView`/`hasTownScene`/`pickTownView`(直向用 portrait)/`openTownScene(name)`/`closeTownScene`/`applyTownView(recenter)`(換圖＋重排)/`renderTownHotspots(view)`(人偶＋傳送點)/`layoutTownScene(recenter)`；頂層註冊 resize 監聽與 `initTownScenePan`（滾輪左右平移、拖曳平移、`?townedit=1` 座標工具），只綁事件、無其他副作用 | `config-towns.js`、`#town-scene` DOM | `map.js`(goToTown／renderTownTeleports)、HTML 離開按鈕、傳送點 action |
-| 34i | `partner.js` | 夥伴（第 39 節）：**載入時**建 `partnerById`；`getPartnerPowerAvg`/`getPartnerTier`/`isPartnerMet`；好感 `getBond`/`getBondLevel`/`getBondLevelName`(LV5 道侶／結拜)/`addBond`/`reduceBond`/`nextBondMin`/`todayKey`/`greetPartner`/`pickGreetLine`/`getGiftCost`/`getGiftsLeft`/`giftPartner`；情緣任務 `getQuestStat`/`describeBondQuest`/`acceptBondQuest`/`getBondQuestProgress`/`claimBondQuest`/`abandonBondQuest`/`onPartnerFieldKills`；結識 `meetPartner`/`talkToPartner`(場景人偶)；彩蛋 `askPartnerEaster`/`answerPartnerEaster`/`playPartnerVideo`/`getPlayedSeconds`/`onPartnerVideoEnded`/`closePartnerVideo`、狀態 `partnerVideoCtx`；隊伍 `getPartnerTeam`/`isInTeam`/`togglePartnerTeam`/`getPartnerBonusTotals`/`partnerSkillTurn`/`migratePartners`；對話 `showPartnerDialog(p, lines, note, afterId, choices)`/`closePartnerDialog`；視窗 `partnerFilter`/`openPartnerModal(focusId)`/`setPartnerFilter`/`formatPartnerOrigin`/`renderBondSection`/`renderPartnerCard`/`renderPartnerModal` | `config-partners.js`、`player.partners`/`partnerTeam`/`partnerBond`/`fieldKills`/`evilKills`/`bountyKills`/`gender`/`coins`、`artifact.js`(castProcSkill)、`codex.js`(describeTitleBonus)、`ui.js` | `gear.js`(getBonusTotals)、`combat.js`(partnerSkillTurn、擊殺後 onPartnerFieldKills)/`tribulation.js`/`bounty.js`、`save.js`(migratePartners)、`config-towns.js`(風希人偶 talkToPartner)、HTML 情緣導覽與對話框 |
+| 34j | `town.js` | 城內場景：`currentTownScene`/`currentTownView`/`hasTownScene`/`pickTownView`(直向用 portrait)/`openTownScene(name)`/`closeTownScene`/`applyTownView(recenter)`(換圖＋重排)/`renderTownHotspots(view)`(人偶＋傳送點)/`layoutTownScene(recenter)`；頂層註冊 resize 監聽與 `initTownScenePan`（滾輪左右平移、拖曳平移、`?townedit=1` 座標工具），只綁事件、無其他副作用 | `config-towns.js`、`#town-scene` DOM、`town-npc.js`(rollTownNpcs／getTownNpcFigures，執行期才呼叫) | `map.js`(goToTown／renderTownTeleports)、HTML 離開按鈕、傳送點 action |
+| 34i | `partner.js` | 夥伴（第 39 節）：**載入時**建 `partnerById`；`getPartnerPowerAvg`/`getPartnerTier`/`isPartnerMet`；好感 `getBond`/`getBondLevel`/`getBondLevelName`(LV5 道侶／結拜)/`addBond`/`reduceBond`/`nextBondMin`/`todayKey`/`greetPartner`/`pickGreetLine`/`getGiftCost`/`getGiftsLeft`/`giftPartner`；情緣任務 `getQuestStat`/`describeBondQuest`/`acceptBondQuest`/`getBondQuestProgress`/`claimBondQuest`/`abandonBondQuest`/`onPartnerFieldKills`；結識 `meetPartner`/`talkToPartner`(場景人偶)；彩蛋 `askPartnerEaster`/`answerPartnerEaster`/`playPartnerVideo`/`getPlayedSeconds`/`onPartnerVideoEnded`/`closePartnerVideo`、狀態 `partnerVideoCtx`；隊伍 `getPartnerTeam`/`isInTeam`/`togglePartnerTeam`/`getPartnerBonusTotals`/`partnerSkillTurn`/`migratePartners`；對話 `showPartnerDialog(p, lines, note, afterId, choices)`/`closePartnerDialog`；視窗 `partnerFilter`/`openPartnerModal(focusId)`/`setPartnerFilter`/`formatPartnerOrigin`/`renderBondSection`/`renderPartnerCard`/`renderPartnerModal` | `config-partners.js`、`player.partners`/`partnerTeam`/`partnerBond`/`fieldKills`/`evilKills`/`bountyKills`/`gender`/`coins`、`artifact.js`(castProcSkill)、`codex.js`(describeTitleBonus)、`ui.js` | `gear.js`(getBonusTotals)、`combat.js`(partnerSkillTurn、擊殺後 onPartnerFieldKills)/`tribulation.js`/`bounty.js`、`save.js`(migratePartners)、`config-towns.js`(風希人偶 talkToPartner)、`town-npc.js`(showPartnerDialog／addPartnerShards／addBond)、HTML 情緣導覽與對話框；`closePartnerDialog` 會呼叫 town-npc.js 的 `onTownNpcDialogClosed`（有定義才呼叫） |
+| 34l | `town-npc.js` | 城內隱藏 NPC（第 20 節）：狀態 `townNpcSpots`（{ 城名: { npc, spot } }，本次進城擲出的結果）/`townNpcDuelTimers`/`townNpcDuelPlace`/`townNpcAskAt`（防連點，`TOWN_NPC_CHOICE_GUARD_MS`）/`townNpcAutoTimer`（「吃」消失後自動開打）/`townNpcAsking`（還沒選的城名）；`onTownNpcDialogClosed`（partner.js 的 closePartnerDialog 呼叫：問句被關掉＝開打）；`closeTownNpcDuel`（離開決鬥畫面＝關掉城內場景）；`isTownNpcDoneToday`/`markTownNpcDone`（`player.townNpc = { id: 日期 }`，用到才建立）、`getTownBanLeftMin(城名)`（`player.townBan`，被打爆後的禁入；map.js 的 goToTown 呼叫）、`rollTownNpcs(城名)`、`getTownNpcFigures(城名, view)`（只畫在主圖）、`removeTownNpc`、`talkToTownNpc`/`answerTownNpc(城名, 吃?)`、`startTownNpcDuel`；只有函式定義、無載入時副作用 | `config-towns.js`(hiddenNpcs)、`partner.js`(partnerById、showPartnerDialog、addPartnerShards、addBond、todayKey…)、`town.js`(currentTownScene、renderTownHotspots、closeTownScene)、`numeric.js`/`stats.js`(戰力、getMaxHp)、`format.js`(fmtCombat)、`#partner-dialog-modal`／`#town-duel` DOM | `town.js`(openTownScene 擲骰、renderTownHotspots 併入人偶)、`map.js`(goToTown 檢查禁入)、人偶 onclick |
 | 34f | `profession.js` | `getProfession`/`getProfRank`/`getProfRankName`/`getProfessionPassive`/`getProfWeaponMult`/`gainProficiency`/`gainKillProficiency`/`professionSkillTurn`/`formatProfessionTag`/`chooseProfession`/`renderProfessionTab` | `config-profession.js`、`artifact.js`(castProcSkill)、`elements.js`(getMapCategoryIndex)、`codex.js` | `stats.js`(主修武器加成)、`gear.js`(被動)、`combat.js`/`tribulation.js`/`bounty.js`(職業技能、熟練度)、`save.js`(離線熟練度)、`codex.js` |
 | 34g | `codex.js` | 收藏 `recordGearCollected`/`migrateGearCodex`/`hasCollected`/`getOpenGear`/`getTitleGear`(收藏類稱號範圍，固定不含秘境)/`countCollected`/`countCollectedQuality`、稱號 `getTitleName`/`isTitleConditionMet`/`describeTitleCondition`/`describeTitleBonus`/`getTitleBonusTotals`/`checkTitleUnlocks`/`getNameTag`/`setActiveTitle`、視窗 `codexTab`/`codexSlot`/`openCodexModal`/`setCodexTab`/`setCodexSlot`/`renderCodexModal`/`formatCodexStars`/`formatCodexStarLegend`(星星六色，第 48 節)/`CODEX_QUALITIES`/`renderCodexGear`/`renderCodexSets`/`renderCodexTitles`（異火分頁在 strange-fire.js） | `config-titles.js`、`gear.js`、`profession.js`、`strange-fire.js`(renderCodexFires/countCollectedFires)、`merit.js`(getKarmaState)、`stats.js`(getSectTier) | `gear.js`(收藏、稱號加成)、`enhance.js`、`profession.js`、`ui.js`(updateUI 每秒 checkTitleUnlocks)、`home-ui.js`(道號旁標籤)、`save.js`、HTML 天磯錄熱點 |
 | 35 | `field.js` | `herbRecipes`、`openFieldModal`/`plantHerb` | `player.spiritGrass`/`player.herbs`/`player.coins`、`ui.js`(resolveBatchCount) | HTML 按鈕（僅在「宗門」顯示） |
@@ -339,6 +345,7 @@ combatTick() 每秒執行 [combat.js]
 | `switchTab`（手機洞府左側「任務」= `switchTab('task')`）, `openWorldTab`（手機／PC 的「世界」導覽：切到世界分頁並跳出修仙地圖）, `openAscensionPlatform`, `showUnderConstruction`（洞府主畫面尚未實作的按鈕）, `openSystemModal`（命運與系統彈窗：手機丹藥堂上方齒輪、設定視窗內按鈕） | `data/home-ui.js` |
 | `activatePartner(id)`（情緣卡片「✨ 激活」，碎片集滿 100 片） | `data/partner.js` |
 | `openPartnerModal`（手機與 PC 的「情緣」）、`setPartnerFilter(f)`、`greetPartner(id)`／`giftPartner(id)`／`acceptBondQuest(id)`／`claimBondQuest(id)`／`abandonBondQuest(id)`／`togglePartnerTeam(id)`（情緣視窗內）、`closePartnerDialog`／`answerPartnerEaster(id, yes)`（對話框）、`closePartnerVideo`（彩蛋影片）、`talkToPartner(id)`（坊市人偶） | `data/partner.js` |
+| `talkToTownNpc(城名)`（城內隱藏 NPC 人偶，town.js 動態產生）、`answerTownNpc(城名, 吃?)`（對話框「🌭 吃／不吃」）、`closeTownNpcDuel`（決鬥畫面「↩ 被轟出天南市集」） | `data/town-npc.js` |
 | `craftStrangeFire(qty)`（背包異火碎片卡片）、`openCodexModal('fires')`（背包異火卡片「查看異火榜」） | `data/strange-fire.js`／`data/codex.js` |
 | PC 版洞府的所有按鈕與建築熱點（onclick 字串寫在 `config-home-pc.js` 的 `pcStageButtons[].action`，改名函式時要一起改） | 各功能檔 |
 | `openSettingsModal`（洞府右上 ⚙️、PC 版「設置」）、`setDisplayMode(mode)`、`toggleFullscreen`、`setFontScale('s'/'m'/'l')`（後三者由 `renderSettingsModal()` 動態產生） | `data/settings.js` |
@@ -1124,6 +1131,39 @@ combatTick() 每秒執行 [combat.js]
     場景改為 `townScenes["天南城"]`（標題仍是「天南城・市集」）→ 修仙地圖城鎮卡片只剩天南城、天星城，點天南城＝傳送並開市集場景。
     舊存檔停在「天南市集」的由 save.js `migrateCurrentMap` 的 `MAP_RENAMES`（舊名 → 新名）改到天南城（不會被送回宗門）；日後地圖改名也加在這張表。
     驗證（本機）：城鎮卡片「天南城／天星城」、點天南城進入「天南城・市集」、currentMap「天南市集」讀檔後變天南城（安全區）；Console 無錯誤。
+  - **隱藏 NPC・香腸大師奧斯卡**（2026-10-01，版本 `20261004x`；使用者提供 3D 立繪，要求「隨機進入天南市集，躲藏在角落」「香腸做成不發光」，
+    並指定「被發現後問：你要我的大香腸，好吃還能噴你滿臉；選項吃／不吃；吃了見面禮送 20 碎片；不吃對玩家發起決鬥，NPC 戰力是玩家的 50 倍，打爆玩家」）：
+    - 人物＝夥伴 `aosika`（《斗羅大陸》奧斯卡，天驕級，第 39 節），所以「20 碎片」＝奧斯卡本人的夥伴碎片（`addPartnerShards`，集滿 100 片到情緣視窗激活）。
+    - 設定：`config-towns.js` 的 `townScenes["天南城"].hiddenNpcs`（`chance` 0.3、兩個藏身點 `spots`、`gift` 20、`duelMult` 50、台詞 `lines`）；邏輯在 `town-npc.js`。
+      town.js 的 `openTownScene` 每次進城呼叫 `rollTownNpcs` 擲骰（實測 3000 次 31.3%），`renderTownHotspots` 把 `getTownNpcFigures` 的結果併進 `figures`（加 class `town-npc`）。
+      **當天吃過或打過就不再出現**（`player.townNpc = { aosika: 日期 }`）；沒處理（關掉對話框）下次進城重擲。
+    - 藏身點（圖上像素，只在主圖；天南市集沒有 portrait）：1＝右側石牆巷口大甕後 `[710, 802, 50, 100]`（只露上半身與香腸）、2＝左側磚柱轉角紅甕後 `[102, 830, 50, 100]`（人物左右翻轉、香腸朝外）。
+      PNG 已調暗偏暖並**把被甕擋住的部分挖空**，所以不用前景圖層；`.town-figure.town-npc` 取消外陰影（會落在甕上露餡），滑過才微微發光。手機 375×812 時人物約 32×64px。
+      （曾試第 3 處「右下店鋪門內」，前面沒有遮擋、像貼上去的，沒有採用。）圖片製作：灰底依每列左右邊緣估背景色、從邊緣擴散去背；香腸的光暈依顏色清掉，
+      再沿手描的中心線畫一條有圓柱明暗與高光的紅褐色香腸（一次性腳本，不在專案內）。
+    - **問句**（同日使用者加料）：問句下方加旁白 `lines.tease`（「你看著他鬆開褲頭……往裡一直掏！！」「黑色的香腸！！！！！！」（`.town-npc-tease.shock` 放大紅字）「你決定是吃，還是不吃？」）。
+      「🌭 吃」**刻意縮小**（`.town-npc-eat`，選項格改 `auto 1fr`），`eatWindowMs`（2000）後縮掉消失、「不吃」亮起（`.picked`），再 0.5 秒自動 `answerTownNpc(城, false)` 進入戰鬥（`townNpcAutoTimer`）。
+      2 秒內按得到「吃」照樣吃。**關掉對話框也逃不掉**（使用者指定）：partner.js 的 `closePartnerDialog`（點背景）呼叫 `onTownNpcDialogClosed`，
+      還在問（`townNpcAsking`）就跳過防連點、直接 `answerTownNpc(城, false)` 開打；已經選完（吃了之後的見面禮對話框）關掉不受影響。
+      驗證：等 2 秒 → 自動決鬥；1 秒時按小「吃」→ 碎片 20、關掉見面禮對話框也沒有決鬥；開了 0.2 秒就點背景 → 立刻進入決鬥；Console 無錯誤。
+    - **吃**：見面禮碎片 ×20（已結識改加好感 +20），對話框顯示碎片進度，存檔。
+    - **不吃**：`startTownNpcDuel` 跳出**決鬥畫面** `#town-duel`（同日使用者提供海報並要求「發起挑戰會跳出戰鬥畫面」；z-index 96，城內場景之上、彈窗之下）：
+      海報 `duelImg`（`images/towns/duel-aosika.jpg`）以 contain 置中（底部有台詞不能裁；手機 375×812 時 375×560），同一張圖模糊當底；
+      上方面板＝雙方名字、血條、戰力（先顯示「？」）、VS、最近 2 行戰報（原 3 行，窄螢幕面板會長到蓋住奧斯卡的臉）。
+      **防連點**：問句對話框的「不吃」按鈕剛好跳在大甕後人偶的位置，實測一次點擊就直接選到「不吃」→ 對話框出現後 `TOWN_NPC_CHOICE_GUARD_MS`（400ms）內 `answerTownNpc` 不理會。時間軸約 5.3 秒：發起決鬥 → 揭露戰力（新制 `nv2CombatPower`、舊制 `getPhysAttack`，`fmtCombat` 顯示；奧斯卡 ×50）
+      → 你出手（小閃白，對方血條幾乎不動）→「我有一根大香腸——噴！」→ 大閃白＋震屏、造成氣血上限 ×50 的傷害、你的血條歸零 → 左側蓋紅色「敗北」印章、出現「↩ 被轟出天南市集」
+      （`closeTownNpcDuel`：關掉決鬥畫面與城內場景，回洞府）。海報上已有拒絕台詞，所以戰報不再重複（設定的 `lines.refuse` 已刪）。
+      「敗北」原本是單字「敗」放在中央，會蓋在奧斯卡臉上像是他輸了，改放左側路人處。`prefers-reduced-motion` 時不震屏。
+      **結果一開始就套用**（氣血剩 1、寫戰鬥日誌、存檔；之後安全區照常回血），中途重新整理也一樣。（第一版是在夥伴對話框逐行顯示，已改掉。）
+      **不算戰死**：不折壽、靈寵不陣亡（使用者只說「打爆玩家」；要改成戰死可呼叫 `onPlayerKilledInField()`，但壽元見底時會身死道消，需謹慎）。
+      **小懲罰**（同日，使用者測試後覺得「氣血剩 1」在安全區幾秒就回滿、沒感覺，選「10 分鐘內不能進天南市集，或扣少量靈石」→ 兩個都做）：設定 `penalty: { banMinutes: 10, coinPct: 0.03 }`——
+      被收走身上靈石 3%（香腸錢，無條件捨去）＋ `player.townBan = { 城名: 解禁時間戳 }`；map.js 的 `goToTown` 傳送前呼叫 `getTownBanLeftMin`，禁入中只 `showToast`「😵 滿臉都是香腸油，還沒臉回天南城……（剩 N 分鐘）」、不傳送
+      （人界地圖 → 城池圖 → 點圖進城也走 goToTown，會停在城池圖畫面）。懲罰寫進戰鬥日誌，決鬥畫面最後多一行「💸 被收走香腸錢 N 靈石，10 分鐘內沒臉回天南市集！」。
+      驗證：靈石 100 萬 → 97 萬、禁入剩 10 分鐘、從宗門點天南城被擋（留在宗門）、把時間調到過期後可正常進城；Console 無錯誤。
+    - 驗證（本機，停用存檔）：強制出現在 1 號點，手機畫面上幾乎看不出來（截圖確認）；點擊 → 問句＋「🌭 吃／不吃」；吃 → 碎片 20/100、人偶消失、當天擲骰不再出現；
+      2 號點不吃 → 演出 7 行、戰力 200 對 1萬、氣血 1、城內畫面關閉；Console 無錯誤。
+      決鬥畫面（手機 375×812，截圖）：血條、VS、戰報、敗北印章、離開按鈕位置正確；按離開 → 決鬥畫面與城內場景都關閉；Console 無錯誤。
+      （預覽面板模擬手機尺寸時，工具的點擊座標會偏掉、按不到按鈕；改回一般尺寸點擊正常，不是遊戲問題。）
 - **人界地圖**（2026-09-30，版本 `20261003u`，玩家提供《凡人修仙傳》人界地圖 `images/maps/world-renjie.jpg` 1408×768；使用者要求「原有世界點入變成分區地圖畫面，傳送點再來分開設計」）：
   - 「世界」導覽（手機底部、PC `nav-world`）→ home-ui.js `openWorldTab()` 改開全螢幕人界地圖 `openTownScene(WORLD_SCENE_KEY)`（原本直接跳出修仙地圖清單）。沿用城內場景（town.js）：手機直向高度填滿、左右滑動，電腦拖曳／滾輪平移。
   - 設定：config-towns.js 的 `townScenes[WORLD_SCENE_KEY]`（`WORLD_SCENE_KEY = "人界"`，不是地圖名稱，所以不會出現在城鎮卡片、`hasTownScene` 對地圖都不受影響）；左側直書標題「人界」。
@@ -1487,7 +1527,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004w`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004x`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2117,6 +2157,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     - 掉落量：守城每守住一波 15% 掉 3～8 片（第 49 節）；鎮魔塔每擊敗 BOSS 必掉 8～15 片（`ZHENMO_PARTNER_MEET`，第 51 節）。
     - 驗證：第 11～39 波只掉天驕、第 40 波起掉尊者；集中機制讓一位先湊滿（模擬 50 次中金角巨獸 103 片）；激活後結識、剩 3 片。
   - 未結識的夥伴仍完整顯示資料；風希顯示「可在天星城坊市遇見他」。
+  - **奧斯卡另有來源**（2026-10-01，版本 `20261004x`）：天南市集隱藏 NPC，找到他並「吃」大香腸，每天一次碎片 ×20（第 20 節）。情緣卡片的取得處提示（`PARTNER_MEET_HINT`）沒有改，仍只寫天驕的共通來源。
 - **好感度（2026-09-27）**：每位夥伴各自累積好感點數 → 等級 `PARTNER_BOND_LEVELS`：
 
   | 等級 | 名稱 | 所需好感 |
