@@ -227,6 +227,7 @@ const DefenseBattle = (() => {
         D.titlesBefore = (player.titles || []).slice();
         parts = []; caption = null;
         $('defense-wavebox').style.visibility = 'visible';
+        $('defense-skip').style.display = '';   // 一鍵結束：守城進行中才顯示
         feed(`🏯 妖潮壓境！死守天南城，共 ${D.total} 波（今日剩 ${getSecretRealmAttemptsLeft(realmId)} 次）`, 'wave');
         setWave(1);
         playClip(spec.clip);
@@ -338,6 +339,7 @@ const DefenseBattle = (() => {
     // 結束（勝或敗）：結算畫面＋遊戲日誌（道具分頁）一筆彙整
     function settle(win) {
         D.active = false;
+        $('defense-skip').style.display = 'none';
         $('defense-result-title').textContent = win ? '守城成功' : '天南失守';
         $('defense-result-title').style.color = win ? '' : '#fca5a5';
         const head = win ? `守住全部 ${D.total} 波妖潮` : `守住 ${D.cleared} 波，第 ${D.wave} 波失守`;
@@ -627,12 +629,27 @@ const DefenseBattle = (() => {
         if (D.active && !confirm(`確定要離開嗎？\n已守住的 ${D.cleared || 0} 波獎勵會保留，但今日這次挑戰次數已使用。`)) return;
         if (D.active) logRun(false);
         opened = false; D.active = false;
+        $('defense-skip').style.display = 'none';
         if (aborter) aborter.abort();
         if (rafId) cancelAnimationFrame(rafId); rafId = 0;
         Object.values(clipEls).forEach(v => { v.pause(); v.classList.remove('on'); });
         video = null; parts = []; caption = null;
         $('defense-loading').classList.remove('on');
         $('defense-scene').style.display = 'none';
+    }
+
+    // 一鍵結束（2026-10-01 使用者要求）：不看演出，從目前這一波起依同一套 simulateWave 判定一路打下去，
+    // 守住就照常發獎勵（grantWave）、守不住就結算失守；斬殺數比照影片招式的範圍補上（一般波約 6～14、首領波另加首領 1 隻）
+    function finishNow() {
+        if (!D.active) return;
+        feed(`⏭ 一鍵結束：從第 ${D.wave} 波直接打到底`, 'wave');
+        while (D.active) {
+            if (!spec.result.win) { settle(false); break; }
+            if (spec.boss) { kill(6, 12); kill(1, 1, 'demon'); } else kill(6, 14);
+            grantWave(D.wave);
+            if (D.wave < D.total) setWave(D.wave + 1);
+            else { settle(true); break; }
+        }
     }
 
     function setSpeed(r) {
@@ -659,7 +676,7 @@ const DefenseBattle = (() => {
         return maxParts;
     }
 
-    return { open, close, setSpeed, retry: startLoading, openRecords, closeRecords, waveSpec, waveAtk, waveRealmLabel, waveEnemy, simulateWave, _sim,
+    return { open, close, setSpeed, finishNow, retry: startLoading, openRecords, closeRecords, waveSpec, waveAtk, waveRealmLabel, waveEnemy, simulateWave, _sim,
              _grantWave: grantWave, _settle: settle, _setWave: setWave,   // 測試用：直接發某一波的獎勵／結算／切波（不播影片）
              _state: () => ({ D, spec, parts: parts.length, video: video && video.dataset.clip }) };
 })();
@@ -668,5 +685,6 @@ const DefenseBattle = (() => {
 function openDefenseBattle(realmId) { DefenseBattle.open(realmId); }
 function closeDefenseBattle() { DefenseBattle.close(); }
 function setDefenseSpeed(r) { DefenseBattle.setSpeed(r); }
+function finishDefenseNow() { DefenseBattle.finishNow(); }
 function openDefenseRecords() { DefenseBattle.openRecords(); }
 function closeDefenseRecords() { DefenseBattle.closeRecords(); }
