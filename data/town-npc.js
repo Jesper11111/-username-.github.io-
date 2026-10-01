@@ -27,6 +27,68 @@ function getTownBanLeftMin(name) {
     return left > 0 ? Math.ceil(left / 60000) : 0;
 }
 
+// ---- 定時出現的場景人偶（config-towns.js figures 的 schedule: { everyHours, stayMinutes }）----
+// 例：天星城賭坊前的大主宰・牧塵（2026-10-01 使用者指定「2 天出現一次，出現後停留 30 分鐘；相逢即是有緣，贈 20 碎片」）
+// 紀錄 player.townFigureSched[id] = { shownAt 這次出現的時間, nextAt 下次可以出現的時間, gift 這次出現是否已送過 }
+// 「出現」＝到了 nextAt 之後玩家第一次進城：從那一刻起停留 stayMinutes，下次要等 everyHours 之後
+function getFigureSched(id) {
+    if (!player.townFigureSched || typeof player.townFigureSched !== 'object') player.townFigureSched = {};
+    if (!player.townFigureSched[id]) player.townFigureSched[id] = { shownAt: 0, nextAt: 0, gift: false };
+    return player.townFigureSched[id];
+}
+function getScheduledFigureLeftMs(f) {
+    const s = getFigureSched(f.id);
+    return Math.max(0, s.shownAt + f.schedule.stayMinutes * 60000 - Date.now());
+}
+// town.js 的 rollTownFigures 呼叫：這次進城他在不在（到時間就開始新的一次停留）
+function isScheduledFigureHere(f) {
+    const s = getFigureSched(f.id), now = Date.now();
+    if (s.shownAt && getScheduledFigureLeftMs(f) > 0) return true;
+    if (now >= (s.nextAt || 0)) {
+        s.shownAt = now;
+        s.nextAt = now + f.schedule.everyHours * 3600000;
+        s.gift = false;
+        addLog(`✨ ${f.name}出現在${townScenes[currentTownScene] ? townScenes[currentTownScene].title : '城中'}，只停留 ${f.schedule.stayMinutes} 分鐘。`, "system");
+        return true;
+    }
+    return false;
+}
+// 點定時人偶：每次出現第一次點送碎片（已結識改加好感），之後只打招呼；停留時間過了就提示他已離開
+function talkToScheduledFigure(id) {
+    const scene = townScenes[currentTownScene];
+    if (!scene) return;
+    const f = [...(scene.figures || []), ...((scene.portrait && scene.portrait.figures) || [])].find(x => x.id === id && x.schedule);
+    if (!f) return;
+    const p = partnerById[f.partnerId];
+    const left = getScheduledFigureLeftMs(f);
+    if (!p || left <= 0) {
+        showToast(`${f.name}已經離開了……`);
+        rollTownFigures(scene);
+        if (currentTownView) renderTownHotspots(currentTownView);
+        return;
+    }
+    const s = getFigureSched(id), mins = Math.ceil(left / 60000);
+    // 對話框上方加立繪（f.portraitImg）
+    const withPortrait = () => {
+        if (!f.portraitImg) return;
+        document.getElementById('partner-dialog-body').insertAdjacentHTML('afterbegin', `<img class="partner-portrait" src="${f.portraitImg}" alt="${f.name}">`);
+    };
+    if (s.gift) { showPartnerDialog(p, f.linesAgain || f.lines, `（他還會在這裡停留約 ${mins} 分鐘）`); withPortrait(); return; }
+    s.gift = true;
+    let note;
+    if (!isPartnerMet(p.id)) {
+        addPartnerShards(p, f.gift, `在${scene.title}偶遇${p.title}・${p.name}，相逢即是有緣`);
+        note = `🧩 獲贈【${p.title}・${p.name}】碎片 ×${f.gift}（${Math.min(getPartnerShards(p.id), getPartnerShardsNeed(p))}/${getPartnerShardsNeed(p)}）`;
+    } else {
+        const add = addBond(p.id, f.gift, `在${scene.title}偶遇${p.name}`);
+        note = add > 0 ? `💗 好感 +${add}` : '💗 好感已滿';
+    }
+    showPartnerDialog(p, f.lines, note);
+    withPortrait();
+    saveLocal();
+    updateUI();
+}
+
 // 進城時擲骰（town.js 的 openTownScene 呼叫）
 function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];

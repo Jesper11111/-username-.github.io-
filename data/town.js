@@ -31,10 +31,12 @@ function openTownScene(name) {
     }
     document.getElementById('town-scene').style.display = 'block';
     rollTownNpcs(name);   // 隱藏 NPC：這次進城有沒有躲在角落（town-npc.js）
+    rollTownFigures(scene);
     applyTownView(true);
 }
 
 function closeTownScene() {
+    clearTimeout(townFigureTimer);
     hideWorldRegionNow();
     closeCityGate();
     currentTownScene = null;
@@ -57,11 +59,37 @@ function applyTownView(recenter) {
     layoutTownScene(recenter);
 }
 
+// 有 chance／schedule 的人偶：每次進城判斷一次這次在不在（以 id 為準，橫圖與直式圖同一個 id 結果相同，轉向不會忽隱忽現）
+//   chance：機率；schedule：定時出現（town-npc.js 的 isScheduledFigureHere，例：牧塵每 2 天出現一次、停留 30 分鐘）
+//   有 schedule 的人偶在場景開著時到點會自己離開（townFigureTimer 重判一次）
+let townFigureShown = {};
+let townFigureTimer = null;
+function rollTownFigures(scene) {
+    townFigureShown = {};
+    clearTimeout(townFigureTimer);
+    let leaveIn = Infinity;
+    [...(scene.figures || []), ...((scene.portrait && scene.portrait.figures) || [])].forEach(f => {
+        if (f.id in townFigureShown) return;
+        if (f.schedule) {
+            townFigureShown[f.id] = isScheduledFigureHere(f);
+            if (townFigureShown[f.id]) leaveIn = Math.min(leaveIn, getScheduledFigureLeftMs(f));
+        } else if (f.chance != null) townFigureShown[f.id] = Math.random() < f.chance;
+    });
+    if (leaveIn < Infinity) {
+        const name = currentTownScene;
+        townFigureTimer = setTimeout(() => {
+            if (currentTownScene !== name) return;
+            rollTownFigures(scene);
+            if (currentTownView) renderTownHotspots(currentTownView);
+        }, leaveIn + 500);
+    }
+}
+
 function renderTownHotspots(view) {
     const layer = document.getElementById('town-scene-hotspots');
     const pct = (v, total) => (v / total * 100).toFixed(3) + '%';
-    // 人偶（figures）畫在傳送點底下；有 action 的才可點；隨機躲在角落的 NPC（town-npc.js）一起畫，cls 加額外樣式
-    const figures = (view.figures || []).filter(f => f.enabled !== false).concat(getTownNpcFigures(currentTownScene, view)).map(f => {
+    // 人偶（figures）畫在傳送點底下；有 action 的才可點；有 chance 的看這次進城擲的結果；隨機躲在角落的 NPC（town-npc.js）一起畫，cls 加額外樣式
+    const figures = (view.figures || []).filter(f => f.enabled !== false && ((f.chance == null && !f.schedule) || townFigureShown[f.id])).concat(getTownNpcFigures(currentTownScene, view)).map(f => {
         const [x, y, w, hh] = f.rect;
         const cls = 'town-figure' + (f.action ? ' clickable' : '') + (f.cls ? ' ' + f.cls : '');
         const click = (f.action ? `onclick="${f.action}" ` : '') + `class="${cls}"`;

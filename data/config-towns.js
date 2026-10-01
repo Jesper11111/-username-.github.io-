@@ -12,6 +12,8 @@
 // figures    = 場景上的人偶（透明 PNG，擺在圖上當裝飾），同樣用圖上像素：
 //   { id, name: "名稱", img: "images/towns/xxx.png", rect: [左, 上, 寬, 高] }
 //   rect 的寬高比請和圖片一致（避免變形）；底邊 = 人偶腳下站的位置。選填 action 可讓人偶可點
+//   選填 chance（0～1）：每次進城擲一次決定這次在不在（town.js 的 rollTownFigures，同 id 橫直圖結果相同）；選填 cls：額外 class（baked＝不加外陰影、town-top＝疊在傳送點上面）
+//   選填 schedule: { everyHours, stayMinutes }：定時出現（town-npc.js 的 isScheduledFigureHere，例：TX_MUCHEN）
 // hiddenNpcs = 隨機躲在角落的 NPC（town-npc.js）：每次進城依 chance 決定是否出現、從 spots 隨機挑一處；當天處理過（吃／決鬥）就不再出現
 //   { id, partnerId, name, place: 日誌裡的地名, chance, spots: [{ img, rect }], gift: 碎片數, duelMult: 戰力倍數, penalty: { banMinutes, coinPct }, duelImg: 決鬥畫面海報, lines: {...} }
 //   spots 的 PNG 已先調色、並把被前景（甕）擋住的部分挖空，所以不需要另外的前景圖層
@@ -123,6 +125,18 @@ const worldRegions = {
     }
 };
 
+// 天星城賭坊前的大主宰・牧塵（夥伴 muchen，帝境）：定時出現的場景人偶（town.js 的 rollTownFigures、town-npc.js 的 talkToScheduledFigure）
+//   2026-10-01 使用者指定：「相逢即是有緣，贈 20 碎片；2 天出現一次在賭坊前，出現後停留 30 分鐘」
+//   schedule：到時間後玩家第一次進城就出現、停留 stayMinutes；下次要等 everyHours。每次出現第一次點送 gift 片碎片（已結識改加好感）
+//   cls: "baked"（影子已在圖裡）、"town-top"（疊在賭坊傳送點上面，點得到他）
+const TX_MUCHEN = {
+    id: "muchen", partnerId: "muchen", name: "大主宰・牧塵", cls: "baked town-top",
+    schedule: { everyHours: 48, stayMinutes: 30 }, gift: 20,
+    lines: ["相逢即是有緣。"], linesAgain: ["有緣自會再見。"],
+    // 點他時對話框上方的立繪（使用者提供 1285×1920，縮成 640 寬；town-npc.js 的 talkToScheduledFigure）
+    portraitImg: "images/towns/muchen-portrait.jpg",
+    action: "talkToScheduledFigure('muchen')"
+};
 const townScenes = {
     [LINGJIE_SCENE_KEY]: {
         title: "靈界",
@@ -211,7 +225,7 @@ const townScenes = {
     },
     "天星城": {
         title: "天星城・坊市",
-        img: "images/towns/tianxing-market.jpg",
+        img: "images/towns/tianxing-market-v2.jpg",   // v2＝擦掉白衣女子的版本（她改成隨機出現的人偶）；原圖 tianxing-market.jpg 保留
         imgW: 1582, imgH: 672,
         hotspots: [
             // 右側雕花石拱門（含上方佛像雕飾）
@@ -223,11 +237,14 @@ const townScenes = {
         ],
         figures: [
             // 亂星海第一大善人・風希（坐在木台上的人偶，252×400，寬高比 0.63）：紅色小攤車左邊；點他 = 第一次結識、之後每日問候（partner.js）
-            { id: "fengxi", name: "亂星海第一大善人・風希", img: "images/towns/npc-fengxi.png", rect: [862, 446, 95, 150], action: "talkToPartner('dashanren')" }
+            { id: "fengxi", name: "亂星海第一大善人・風希", img: "images/towns/npc-fengxi.png", rect: [862, 446, 95, 150], action: "talkToPartner('dashanren')" },
+            // 賭坊石拱門前的白衣身影＝大主宰・牧塵（2026-10-01 使用者先要求「設定成 NPC，有時出現有時消失」，再指定為牧塵、定時出現，設定見上方 TX_MUCHEN）：原本畫在背景圖裡，
+            //   背景圖改用擦掉他的 tianxing-market-v2.jpg（新檔名，PWA 圖片快取不會拿到舊圖；原圖 tianxing-market.jpg 保留），這張 PNG 是從原圖剪下、疊回原位
+            { ...TX_MUCHEN, img: "images/towns/npc-baiyi.png", rect: [1193, 474, 61, 155] }
         ],
         // 手機直式（704×1520，9:19.4，玩家提供）
         portrait: {
-            img: "images/towns/tianxing-market-portrait.jpg",
+            img: "images/towns/tianxing-market-portrait-v2.jpg",   // v2＝擦掉白衣女子；原圖保留
             imgW: 704, imgH: 1520,
             hotspots: [
                 // 右側雕花石拱門（含上方佛像雕飾）
@@ -236,7 +253,8 @@ const townScenes = {
                 { id: "market-sell", label: "收購商", rect: [0, 1060, 220, 360], action: "openMarketSellModal()" },
             ],
             figures: [
-                { id: "fengxi", name: "亂星海第一大善人・風希", img: "images/towns/npc-fengxi.png", rect: [226, 1110, 126, 200], action: "talkToPartner('dashanren')" }
+                { id: "fengxi", name: "亂星海第一大善人・風希", img: "images/towns/npc-fengxi.png", rect: [226, 1110, 126, 200], action: "talkToPartner('dashanren')" },
+                { ...TX_MUCHEN, img: "images/towns/npc-baiyi-portrait.png", rect: [527, 1120, 61, 246] }
             ]
         }
     }
