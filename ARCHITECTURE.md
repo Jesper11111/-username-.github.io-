@@ -1530,7 +1530,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004x`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004y`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3373,6 +3373,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - ⚠️ **iPhone 主畫面版與 Safari 的存檔是分開的**（Android 同網域共用）：安裝說明提醒先匯出存檔代碼；主畫面版第一次開啟且沒有存檔時跳一次說明（`localStorage['xiuxian_pwa_hint']`）。
 - **index.html head**：`<link rel="manifest">`、`theme-color`、favicon、`apple-touch-icon`、`apple-mobile-web-app-capable`、標題「凡塵修仙傳」；
   狀態列用 `black`（不用 `black-translucent`：頁面會畫到狀態列底下，頂部 HUD 沒有留安全區會被時鐘蓋住）。
+- ⚠️ **事故（2026-10-01）：同一個版本號推送兩次，手機 PWA 不更新**。`20261004x` 推上去後又改了 map.js／town-npc.js／partner.js，版本號沒換就再推一次 →
+  手機的 `fanchen-core-20261004x` 已存了舊 JS（快取優先），sw.js?v= 也沒變（不會重裝 SW），pwa.js 比對版本號相同（不會跳更新提示）→ 一直跑舊程式。線上檔案其實是新的。
+  處理：版本號換成 `20261004y` 再推。**規則：只要版本號已經推過，之後任何 JS 修改都必須先換新版本號才能再推**（看 GitHub Pages 的 index.html 是不是已經是目前版本號）。
 - **發佈注意**：照舊把所有 `?v=` 換新即可，SW 會跟著版本號換新快取；**不要**讓 sw.js 被瀏覽器長期快取（GitHub Pages 預設 10 分鐘，可接受）。sw.js 必須在網站根目錄。
 - **驗證（本機）**：SW 註冊並接管頁面、預存 index＋105 支 JS、3 個 manifest 圖示 200；**停掉伺服器後重新整理，遊戲完整載入**（全部模組存在）；
   模擬換版本號：舊 `fanchen-core-*` 被刪、新的建立、`fanchen-assets` 保留（15 張圖）；版本偵測正確、更新提示置中顯示；安裝說明與設定按鈕正常；恢復連線後 113 個資源無失敗。
