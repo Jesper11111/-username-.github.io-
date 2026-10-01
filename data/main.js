@@ -63,6 +63,7 @@ function closeNumericV2Notice() {
 
 window.onload = function() {
     applyFontScale();   // 字級：套用這台裝置選的 小／中／大（settings.js）
+    initPwa();          // PWA：Service Worker、持久儲存、新版本提示（pwa.js，第 64 節）
     initModalTopClose();   // 每個彈窗右上角加 ✕（ui.js）
     initHomeUi();       // 洞府主畫面：舞台縮放與預設分頁（home-ui.js）
     restoreLogTab();    // 歷練日誌：還原上次選的分頁（ui.js）

@@ -10,6 +10,8 @@
 ```
 gm.html               戰力榜 GM 後台（第 50 節）：只有 Firestore admins 名單內的 Google 帳號能刪除／封鎖／審核守城榜；不是遊戲頁面，遊戲內沒有連結
                       （載入 data/config-realms、config-leaderboard、config-bounty、bounty、config-defense.js）
+manifest.json         PWA 設定（名稱、圖示、standalone、底色 #05070c；第 64 節）
+sw.js                 Service Worker（必須放在根目錄，範圍才涵蓋整個遊戲）：頁面網路優先、帶 ?v= 的 JS 快取優先、其他圖片先給快取再背景更新；影片與外部網域不攔（第 64 節）
 index.html            唯一的遊戲 HTML 進入點：畫面結構、CSS（含手機 RWD，見第 6 節）、
                       彈窗(modal) DOM、<script src> 載入清單
                       ※ 檔名必須是 index.html（GitHub Pages 只把 index.html 當作預設首頁）
@@ -22,8 +24,10 @@ images/               圖片素材
   evil-hall.jpg       殺手殿堂場景背景（937×625，玩家提供；獵殺邪修入口，見第 27 節）
   secret/             秘境海報（config-secret-realms.js 的 img，第 43 節）：zhenmo-tower.jpg 鎮魔塔（768×1365，9:16，玩家提供的水墨海報，圖上已有標題與標語）、
                       motu-tiannan.jpg 魔屠天南手機版（852×1846）／motu-tiannan-pc.jpg PC 版（1024×1536），玩家提供的 webp 以瀏覽器轉 JPG（圖上無字，標題由程式疊上，第 49 節）
-  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄（橫圖劇照，待使用者放入））：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
+  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄 848×1264 直式插畫）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
                       黑底依亮度轉透明並還原邊緣顏色，tools 外的一次性腳本；460×843／459×843），boss-qitianshen.jpg 第 1 層 BOSS 棄天神（2026-09-27 換成玩家提供的直式版 848×1264，2:3，左上有字）、boss-bumiegu.jpg 第 2 層 BOSS 不滅骨（2026-09-27 換成玩家提供的直式版 848×1264，2:3）、boss-zhuzhou.jpg 第 3 層 BOSS 主咒之王、boss-guihu.jpg 第 4 層 BOSS 幽冥鬼虎、boss-qingming.jpg 第 5 層 BOSS 青瞑爪龍（皆 848×1264）、boss-pharaoh.jpg 第 6 層 BOSS 黑暗法老王（玩家提供 687×1024，2:3，右下角有極小的「1024x1536」字樣）
+  icons/              PWA 圖示（第 64 節）：icon-192／icon-512（any）、icon-maskable-512（Android 自適應，取景較寬讓標題落在中間 80% 安全區）、
+                      apple-touch-icon（180）、favicon-32；皆由玩家提供的 1024×1024 海報 icon-source-1024.jpg 裁出（2026-10-01 第二版：韓立、南宮婉對望＋中間金色直式書法標題，取標題特寫、左右各露半張臉；第一版海報留在 icon-source-1024-v1.jpg）
   avatars/            可解鎖更換的頭像（256×256 正方形、臉部置中，由玩家提供的原圖裁切縮小），見第 32 節
   towns/              城內場景圖（玩家提供，第 20 節）：tianxing-market.jpg 天星城坊市橫圖（1582×672）、
                       tianxing-market-portrait.jpg 手機直式（704×1520，9:19.4）、
@@ -123,6 +127,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   home-ui.js          洞府主畫面：舞台縮放（手機／PC 版面）、HUD 數值、底部導覽分頁、建築熱點、興建中提示（第 31 節）
   settings.js         設定視窗（洞府右上 ⚙️）：顯示尺寸 手機 9:16／PC 16:9／自動、全螢幕（第 34 節）、字級 小／中／大（第 45 節）
   title-screen.js     遊戲主頁（標題畫面）與進入世界
+  pwa.js              PWA（第 64 節）：註冊 sw.js、持久儲存、安裝到主畫面說明、新版本提示（排在 main.js 之前）
   main.js             initGame()/startGame() 與 window.onload，遊戲啟動進入點
 ```
 
@@ -317,7 +322,7 @@ combatTick() 每秒執行 [combat.js]
 | `triggerReincarnate` | `data/leveling.js` |
 | `triggerTribulation` | `data/tribulation.js` |
 | `setShopQty`, `setShopQtyMax`, `updateShopTotal` | `data/shop.js` |
-| `resetGameCompletely`, `saveLocal`, `reloadLocalSave`, `exportSave`, `openGuideCalc`, `importSave`, `copySaveCode`, `downloadSaveCode`, `pasteSaveCodeFromClipboard`, `importSaveFromFile`, `confirmImportSave`, `resetImportConfirm` | `data/save.js` |
+| `resetGameCompletely`, `saveLocal`, `reloadLocalSave`, `exportSave`, `openGuideCalc`, `openInstallGuide`（pwa.js）, `importSave`, `copySaveCode`, `downloadSaveCode`, `pasteSaveCodeFromClipboard`, `importSaveFromFile`, `confirmImportSave`, `resetImportConfirm` | `data/save.js` |
 | `updateAutoSettings` | `data/ui.js` |
 | `closeModal`, `toggleDrawer`, `toggleAllBulkQualities` | `data/ui.js` |
 | `bulkDeleteEquipment` | `data/bag.js` |
@@ -1040,7 +1045,7 @@ combatTick() 每秒執行 [combat.js]
   - **先同步 `window.open("about:blank")`、等 `encodeSaveCode` 完成才導向**：若在 await 之後才開，手機瀏覽器會當彈出視窗擋掉；開不了視窗時改在本頁導向。失敗只寫日誌，不用 alert／confirm。
   - 驗證（本機）：網址 1,463 字、`#save=` 後無未編碼的 `+ / =`、解回來與目前存檔一致；在攻略頁開啟後顯示「讀取完成，已帶入『韓立』的數字與裝備」，
     物理攻擊 100／術法攻擊 100／氣血上限 5,100 與遊戲人物面板相同（測試角色為凡人 1 階新角色）。
-  - 注意：攻略頁的說明文字寫「在遊戲的『命運與系統』按匯出」，但遊戲裡這個抽屜叫「💾 存檔管理」。
+  - 位置：「⚙️ 命運與系統」視窗（`#system-modal`）→「💾 存檔管理」抽屜，與攻略頁的說明一致。
 - **仍使用原生對話框的地方**（在 App 內建瀏覽器可能失效）：拜入宗門、渡劫、靈寶閣兌換、轉世、完全重置等的 `confirm()` 確認，
   以及各處資源不足的 `alert()` 提示。若玩家回報這些按鈕在 LINE 內沒反應，比照本節改為視窗內確認。
 
@@ -1482,7 +1487,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004u`，gm.html 同）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261004w`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2586,7 +2591,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     （`nv2TypStat × critPer`、`nv2TypHit`）；以此設定第 7 層跑出 78%（紀錄 77～80%），證實與原腳本一致（不帶暴擊命中只有 60%）。
     二分搜尋後 `atkMult` **2.53**：中等 80%（1500 場）、強力 100%、一般玩家 0%。（原自動產生的第 8 層在同一模擬為 73%。）
 - **第 9 層「襲胸雙雄・自封紅十字軍」**（2026-10-01，版本 `20261004t`）：使用者指定名稱，圖用使用者提供的**電影劇照**（橫圖約 660×379，兩名披紅十字白袍的怪人、畫面有字幕與浮水印；
-  已提醒版權／肖像與構圖問題，使用者選「就用這張劇照」、主題「搞笑魔性雙人組」）。圖檔路徑 `images/zhenmo/boss-xixiong.jpg`，**檔案需由使用者放入**（對話中的圖沒有存成檔案）。
+  已提醒版權／肖像與構圖問題，使用者選「就用這張劇照」、主題「搞笑魔性雙人組」）。同日玩家改提供**直式插畫** 848×1264、319KB（紅色牛角魔握細劍＋紫色骨爪魔，頭戴方帽、身披紅十字白袍，下方石碑刻「我們是紅十字軍」），存為 `images/zhenmo/boss-xixiong.jpg`，取代劇照；改回一般 cover、`imgPos` 50% 28%，介紹改為魔化外型，數值不變。
   - 雙人合成一個 BOSS 單位；名稱無種族後綴＝人修。沿用自動產生第 9 層的境界（煉虛 9 階）、`hpMult` 1.531、獎勵；主題改滑溜偷襲：減傷 10 閃避 20、金重擊 15、五行金、
     光環「紅十字軍旗號」（你的攻擊 −5%）＋「雙雄夾擊」（詛咒 +6%）、開場台詞 `taunt`「我們是紅十字軍！」。校準 `atkMult` **2.71**：中等 79%（2000 場）、強力 100%、一般 0%。
   - **新增 BOSS 選填欄位**（zhenmo.js `startFight`）：`imgFit`（例 `'contain'`：橫圖完整顯示在直式戰鬥畫面上方，其餘補 `imgBg` 暗色，位置 `imgFitPos` 預設 50% 8%；
@@ -3302,3 +3307,29 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - `grant()` 新增 `spellShards`、`beastCore`、`breakPills`（經信箱欄位）、`partnerShards: { p, n }`（指定夥伴）。清單「奇遇紀錄」列出秘典碎片進度與七種玩法、機緣任務統計。
 - **驗證（本機，停用存檔）**：強者三種應對（段德 尊者 12／6 片、蕭炎 帝境 16/300 片、護法扣 284 萬）；競速鞭策兩次奪冠（獸丹 3000、秘典 20）；尋寶隨機挖完結算；
   丹爐精準計時 10 分極品（破障丹 +1）、隨機亂按 0 分廢丹；機緣任務「古籍殘頁」天南城 → 亂星海 → 擊殺 71 完成（靈石＋秘典 25）；秘典合成；帝境 300 片激活；Console 無錯誤。
+
+## 64. PWA：安裝到主畫面、離線、自動更新（`manifest.json`、`sw.js`、`data/pwa.js`；2026-10-01，版本 `20261004v`）
+
+- **目的**（使用者問「適合做成 PWA 嗎」→ 提供圖示後實作）：① iPhone Safari 可能清掉 7 天沒開的網站資料，加到主畫面的版本不受此限，並向瀏覽器申請持久儲存（`navigator.storage.persist()`），保護 localStorage 存檔；
+  ② 從主畫面開沒有網址列（iOS 不支援全螢幕 API，第 34 節的全螢幕在 iPhone 無效）；③ 不再經過 LINE／FB 內建瀏覽器（原生對話框被擋的問題）；④ 核心玩法離線可玩（信箱、寄售、留言板仍需網路）。
+  **不會**讓遊戲在背景繼續跑，背景掛機仍靠離線結算（第 33 節）。
+- **圖示**：玩家提供 1024×1024 海報，縮到手機實際大小（約 60px）比較 4 種裁法。第一版海報只取書法標題最清楚；玩家改給第二版（韓立、南宮婉對望，中間直式金色標題）後，取**標題特寫**（裁切 330,20 起 360×360：標題居中、左右各露半張臉，金藍對比），maskable 版取景放寬為 290,0 起 440×440。見第 1 節 images/icons/。
+- **sw.js 快取策略**（以 `sw.js?v=版本號` 註冊，版本號取自 pwa.js 自己的 `?v=`）：
+  - 頁面（`index.html`、`gm.html`、`/`、帶 `?reload=` 的首頁）：**網路優先**，`fetch(..., { cache: 'no-cache' })` 每次向 GitHub Pages 確認（沒改過只回 304，不重新下載），失敗才用快取。
+    ⚠️ index.html 決定所有 JS 的版本號，絕不能先用舊的（第 30 節 9/23 事故）。
+  - 帶 `?v=` 的 JS：**快取優先**，存在 `fanchen-core-版本號`。安裝時先抓最新 index.html，把裡面所有 `data/*.js?v=` 預先存好（實測 105 支）。
+  - 其他同網域檔案（圖片、manifest）：**先給快取、背景更新**，存在跨版本保留的 `fanchen-assets`（圖片可能同檔名替換，例：鎮魔塔 BOSS 圖）；安裝時預存 index.html 直接引用的 10 張圖（約 1.9MB）。
+  - 不攔：影片（10～18MB、有分段請求）、外部網域（Firebase 等）、非 GET。
+  - 新 SW 安裝後立刻 `skipWaiting`＋`clients.claim`（頁面本來就網路優先，不會新舊混用）；啟用時刪掉其他版本的 `fanchen-core-*`。
+- **pwa.js**（main.js `window.onload` 呼叫 `initPwa()`）：
+  - **新版本提示**：每 30 分鐘與切回前景時（至少隔 5 分鐘）抓 index.html，比對 `data/pwa.js?v=` 與目前版本，不同就在畫面下方顯示「🔄 有新版本，點此更新」（`#pwa-update`）；
+    按下先 `saveLocal()` 再重新整理。**不自動重新整理**（避免戰鬥、奇遇進行中被打斷）。
+  - **📲 安裝到主畫面**（⚙️ 設定視窗）：`openInstallGuide()`——已是主畫面版就提示不用裝；Android／電腦 Chrome 有 `beforeinstallprompt` 就直接跳系統安裝視窗；
+    LINE／FB 等內建瀏覽器提示改用預設瀏覽器開；iPhone 顯示「分享 → 加入主畫面」步驟。全部用 `gameAlert`。
+  - ⚠️ **iPhone 主畫面版與 Safari 的存檔是分開的**（Android 同網域共用）：安裝說明提醒先匯出存檔代碼；主畫面版第一次開啟且沒有存檔時跳一次說明（`localStorage['xiuxian_pwa_hint']`）。
+- **index.html head**：`<link rel="manifest">`、`theme-color`、favicon、`apple-touch-icon`、`apple-mobile-web-app-capable`、標題「凡塵修仙傳」；
+  狀態列用 `black`（不用 `black-translucent`：頁面會畫到狀態列底下，頂部 HUD 沒有留安全區會被時鐘蓋住）。
+- **發佈注意**：照舊把所有 `?v=` 換新即可，SW 會跟著版本號換新快取；**不要**讓 sw.js 被瀏覽器長期快取（GitHub Pages 預設 10 分鐘，可接受）。sw.js 必須在網站根目錄。
+- **驗證（本機）**：SW 註冊並接管頁面、預存 index＋105 支 JS、3 個 manifest 圖示 200；**停掉伺服器後重新整理，遊戲完整載入**（全部模組存在）；
+  模擬換版本號：舊 `fanchen-core-*` 被刪、新的建立、`fanchen-assets` 保留（15 張圖）；版本偵測正確、更新提示置中顯示；安裝說明與設定按鈕正常；恢復連線後 113 個資源無失敗。
+  實機安裝（Android 安裝視窗、iPhone 加入主畫面）需推上 GitHub Pages 後用手機測。
