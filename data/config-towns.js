@@ -133,8 +133,9 @@ const TX_MUCHEN = {
     id: "muchen", partnerId: "muchen", name: "大主宰・牧塵", cls: "baked town-top",
     schedule: { everyHours: 48, stayMinutes: 30 }, gift: 20,
     lines: ["相逢即是有緣。"], linesAgain: ["有緣自會再見。"],
-    // 點他時對話框上方的立繪（使用者提供 1285×1920，縮成 640 寬；town-npc.js 的 talkToScheduledFigure）
-    portraitImg: "images/towns/muchen-portrait.jpg",
+    // 點他時對話框上方的立繪（town-npc.js 的 talkToScheduledFigure）；2026-10-02 換成玩家提供的第二版（846×1264，無平台標誌），縮成 640 寬
+    //   用新檔名 -v2：PWA 的圖片是「先給快取、背景更新」，同檔名替換時玩家第一次還會看到舊圖
+    portraitImg: "images/towns/muchen-portrait-v2.jpg",
     action: "talkToScheduledFigure('muchen')"
 };
 const townScenes = {
