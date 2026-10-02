@@ -96,7 +96,9 @@ function renderTownHotspots(view) {
         return `<img ${click} src="${f.img}" alt="${f.name || ''}" title="${f.name || ''}"
                     style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};">`;
     }).join('');
-    layer.innerHTML = figures + (view.hotspots || []).filter(h => h.enabled !== false).map(h => {
+    // 場景異象（effects，例：人界地圖飛升點上方雷電交加）：畫在最底層、不擋點擊
+    const effects = (view.effects || []).map(e => TOWN_SCENE_FX[e.fx] ? TOWN_SCENE_FX[e.fx](view, e.at, e) : '').join('');
+    layer.innerHTML = effects + figures + (view.hotspots || []).filter(h => h.enabled !== false).map(h => {
         const [x, y, w, hh] = h.rect;
         // pin：小紅點樣式（人界地圖用）＝ rect 正中央一顆會呼吸發光的紅點，不顯示名稱（label 只當 title／aria-label）
         // showLabel：紅點下方加小字（靈界地圖：圖上沒有這些地名）
@@ -107,6 +109,62 @@ function renderTownHotspots(view) {
                     onclick="${h.action}" aria-label="${h.label}"${h.pin ? ` title="${h.label}"` : ''}>${inner}</button>`;
     }).join('');
 }
+
+// 場景異象（config-towns.js 的 effects：{ fx, at: [圖上 x, y] }）：回傳疊在場景上的 HTML，位置一律換成圖上百分比
+const TOWN_SCENE_FX = {
+    // 雷電交加（2026-10-02 使用者：「外面的世界地圖能做點異相嗎，比如該地圖上方雷電交加」）：
+    //   at＝被劈的點（飛升點三角標記）；正上方一團旋轉烏雲，三道閃電週期不同（看起來不規則）劈下來，打雷時烏雲內部跟著亮、落點閃光
+    thunderStorm(view, [x, y]) {
+        const W = view.imgW, H = view.imgH;
+        const box = (l, t, w, h) => `left: ${(l / W * 100).toFixed(3)}%; top: ${(t / H * 100).toFixed(3)}%; width: ${(w / W * 100).toFixed(3)}%; height: ${(h / H * 100).toFixed(3)}%;`;
+        const cloudY = y - 95, boltTop = cloudY + 22, boltH = y - boltTop;
+        // 閃電：viewBox 寬 120、高 100，中間那道劈到落點（x 60、y 100）
+        const bolts = [
+            { d: 'M58 0 L49 22 L62 27 L50 52 L61 56 L52 78 L60 100', branch: 'M50 52 L38 64 L42 70', cls: 'b1' },
+            { d: 'M28 0 L35 16 L24 26 L33 44 L22 64', branch: 'M33 44 L42 52', cls: 'b2' },
+            { d: 'M96 0 L88 18 L99 27 L86 48 L93 56 L87 70', branch: 'M99 27 L108 36', cls: 'b3' }
+        ];
+        // 烏雲＝多團雲塊（雲框內的 中心 x%、y%、寬%、高%），各自緩慢起伏
+        const puffs = [[50, 52, 70, 80], [28, 58, 44, 62], [72, 58, 44, 62], [40, 40, 40, 56], [62, 38, 42, 58], [14, 66, 28, 40], [86, 66, 28, 40], [50, 70, 60, 46]];
+        return `<div class="tfx-storm" aria-hidden="true">
+            <div class="tfx-cloud" style="${box(x - 115, cloudY - 50, 230, 100)}">
+                ${puffs.map(([cx, cy, w, h], i) => `<i style="left: ${cx}%; top: ${cy}%; width: ${w}%; height: ${h}%; animation-delay: ${(-i * 0.9).toFixed(1)}s"></i>`).join('')}
+                <div class="tfx-cloud-swirl"></div><div class="tfx-cloud-glow"></div></div>
+            <svg class="tfx-bolts" style="${box(x - 60, boltTop, 120, boltH)}" viewBox="0 0 120 100" preserveAspectRatio="none">
+                ${bolts.map(b => `<g class="tfx-bolt ${b.cls}"><path d="${b.d}"/><path d="${b.branch}"/></g>`).join('')}
+            </svg>
+            <div class="tfx-strike" style="${box(x - 30, y - 18, 60, 36)}"></div>
+        </div>`;
+    },
+    // 漩渦（2026-10-03 使用者：「亂星海也加入漩渦意象」）：at＝漩渦中心、opt.r＝半徑（圖上像素）；整個壓扁成透視橢圓，
+    //   深色渦眼＋兩組螺旋浪紋（白色快轉、藍色慢轉）＋反轉的浪花虛線圈＋往外擴散的水紋
+    whirlpool(view, [x, y], opt) {
+        const W = view.imgW, H = view.imgH, r = (opt && opt.r) || 45;
+        const style = `left: ${((x - r) / W * 100).toFixed(3)}%; top: ${((y - r) / H * 100).toFixed(3)}%; width: ${(2 * r / W * 100).toFixed(3)}%; height: ${(2 * r / H * 100).toFixed(3)}%;`;
+        // 螺旋臂：r = 5 + 41 × 進度，轉 2.6 圈（viewBox 100、中心 50）
+        const arm = (k, n, turns) => {
+            const pts = [];
+            for (let i = 0; i <= 60; i++) {
+                const t = i / 60, a = t * turns * Math.PI * 2 + k * Math.PI * 2 / n, rr = 5 + 41 * t;
+                pts.push(`${(50 + rr * Math.cos(a)).toFixed(1)},${(50 + rr * Math.sin(a)).toFixed(1)}`);
+            }
+            return `<polyline points="${pts.join(' ')}"/>`;
+        };
+        const grad = (id, color) => `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="50" cy="50" r="47">
+            <stop offset="0" stop-color="${color}" stop-opacity="0"/><stop offset=".25" stop-color="${color}" stop-opacity=".9"/>
+            <stop offset=".7" stop-color="${color}" stop-opacity=".6"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>`;
+        // opt.seeThrough：底下的地名要透出來（混色模式，index.html 的 .tfx-wp.see-through）
+        // 每一層各自壓扁（.tfx-wp-flat），不包在同一個 transform 容器裡：容器有 transform 會自成一組，裡面的混色模式就混不到底下的地圖
+        return `<div class="tfx-wp${opt && opt.seeThrough ? ' see-through' : ''}" style="${style}" aria-hidden="true">
+            <div class="tfx-wp-water"></div>
+            <i class="tfx-wp-ripple"></i><i class="tfx-wp-ripple r2"></i>
+            <div class="tfx-wp-flat"><svg class="tfx-wp-arms slow" viewBox="0 0 100 100">${grad('tfx-wp-b', '#7dd3fc')}<g stroke="url(#tfx-wp-b)">${[0, 1, 2, 3].map(k => arm(k, 4, 1.4)).join('')}</g></svg></div>
+            <div class="tfx-wp-flat"><svg class="tfx-wp-arms" viewBox="0 0 100 100">${grad('tfx-wp-w', '#f0f9ff')}<g stroke="url(#tfx-wp-w)">${[0, 1, 2].map(k => arm(k, 3, 2.2)).join('')}</g></svg></div>
+            <div class="tfx-wp-flat"><svg class="tfx-wp-foam" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="27"/></svg></div>
+            <div class="tfx-wp-eye"></div>
+        </div>`;
+    }
+};
 
 // 依視窗大小設定舞台尺寸
 function layoutTownScene(recenter) {
@@ -163,28 +221,78 @@ function openWorldRegion(key) {
 // ---- 城池圖畫面（2026-09-30 使用者指定「紅點 → 天南城圖 → 點了進市集」）----
 // 人界地圖分區浮起後開啟：全螢幕顯示該城的圖（修仙地圖城鎮卡片的縮圖，map.js 的 getMapThumb，天南城依性別），點圖才傳送並開城內場景（goToTownByName）；
 // 「↩ 返回人界」回到人界地圖。疊在 #town-scene 裡（人界地圖還在底下），進城時 openTownScene 會收掉。
+// 不是城鎮的入口（config-towns.js 的 CITY_GATES，例：飛升點）用自己的圖、提示、action 與特效（fx）。
 let cityGateName = null;
+let cityGateBusy = false;   // 飛升演出中，重複點擊不理會
+const CITY_GATE_ASCEND_MS = 900;   // 點飛升台後光柱爆亮多久才進靈界（index.html 的 #city-gate.ascend）
 function openCityGate(name) {
-    const item = maps[0].items.find(it => it.name === name);
-    if (!item) return;
+    const gate = CITY_GATES[name];
+    const item = gate ? null : maps[0].items.find(it => it.name === name);
+    if (!gate && !item) return;
     cityGateName = name;
-    const img = getMapThumb(item) || '';
+    cityGateBusy = false;
+    const img = gate ? gate.img : (getMapThumb(item) || '');
     document.getElementById('city-gate-img').src = img;
     document.getElementById('city-gate-img').alt = name;
     document.getElementById('city-gate-bg').style.backgroundImage = img ? `url('${img}')` : '';
     document.getElementById('city-gate-name').innerText = name;
+    document.getElementById('city-gate-hint').innerText = (gate && gate.hint) || '✨ 點擊圖片進城';
+    document.getElementById('city-gate-fx').innerHTML = gate && CITY_GATE_FX[gate.fx] ? CITY_GATE_FX[gate.fx]() : '';
     const box = document.getElementById('city-gate');
-    box.classList.remove('on');
+    box.classList.remove('on', 'ascend');
+    box.classList.toggle('portrait', !!(gate && gate.imgH > gate.imgW));
     box.style.display = 'block';
     void box.offsetWidth;
     box.classList.add('on');
 }
-function enterCityGate() { if (cityGateName) goToTownByName(cityGateName); }
+function enterCityGate() {
+    if (!cityGateName || cityGateBusy) return;
+    const gate = CITY_GATES[cityGateName];
+    if (!gate) { goToTownByName(cityGateName); return; }
+    if (!gate.fx) { new Function(gate.action)(); return; }
+    // 有特效的入口：光柱爆亮、畫面轉白，再執行 action
+    cityGateBusy = true;
+    document.getElementById('city-gate').classList.add('ascend');
+    setTimeout(() => { cityGateBusy = false; if (cityGateName) new Function(gate.action)(); }, CITY_GATE_ASCEND_MS);
+}
 function closeCityGate() {
     cityGateName = null;
     const box = document.getElementById('city-gate');
-    if (box) { box.style.display = 'none'; box.classList.remove('on'); }
+    if (box) { box.style.display = 'none'; box.classList.remove('on', 'ascend'); }
+    const fx = document.getElementById('city-gate-fx');
+    if (fx) fx.innerHTML = '';
 }
+
+// 入口圖上的特效（CITY_GATES 的 fx）：座標是圖上的百分比
+const CITY_GATE_FX = {
+    // 飛升台（600×894）：中央大陣中心約 (330, 505)、寬約 250；五個小陣依圖上位置配五行；光柱從大陣中心往上直衝天頂漩渦
+    feisheng() {
+        const nodes = [['金', '#facc15', 30, 58.4], ['木', '#4ade80', 47.2, 49.9], ['火', '#f87171', 77, 53], ['水', '#38bdf8', 80.8, 61.1], ['土', '#f59e0b', 67, 66]];
+        // 大陣：外圈符紋（虛線）、五行五角星、五個屬性色的頂點
+        const pts = [0, 1, 2, 3, 4].map(i => { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; return [100 + 62 * Math.cos(a), 100 + 62 * Math.sin(a)]; });
+        const star = [0, 2, 4, 1, 3].map(i => pts[i].map(v => v.toFixed(1)).join(',')).join(' ');
+        const big = `<svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="96" fill="none" stroke="#fbbf24" stroke-width="3.5"/>
+            <circle cx="100" cy="100" r="86" fill="none" stroke="#7dd3fc" stroke-width="8" stroke-dasharray="2 6"/>
+            <circle cx="100" cy="100" r="62" fill="none" stroke="#e0f2fe" stroke-width="2.5"/>
+            <polygon points="${star}" fill="none" stroke="#fcd34d" stroke-width="3.5"/>
+            <circle cx="100" cy="100" r="26" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="6 4"/>
+            ${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="${nodes[i][1]}"/>`).join('')}
+        </svg>`;
+        const ring = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="4"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="3 6"/>
+            <circle cx="50" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/></svg>`;   // 中央留空給貼地的屬性字
+        const sparks = Array.from({ length: 12 }, (_, i) =>
+            `<span style="left: ${(49 + Math.random() * 13).toFixed(1)}%; animation-delay: ${(-i * 0.35).toFixed(2)}s; animation-duration: ${(2.6 + Math.random() * 1.6).toFixed(2)}s"></span>`).join('');
+        return `<div class="fs-glow"></div>
+            <div class="fs-pillar"><i></i></div>
+            <div class="fs-array"><div class="fs-spin">${big}</div></div>
+            ${nodes.map(([n, c, x, y], i) => `<div class="fs-node" style="left: ${x}%; top: ${y}%; --c: ${c}; --d: ${(-i * 0.5).toFixed(1)}s">
+                <div class="fs-node-ring"><div class="fs-spin">${ring}</div></div><b class="fs-node-glyph">${n}</b><i class="fs-node-beam"></i></div>`).join('')}
+            <div class="fs-sparks">${sparks}</div>
+            <div class="fs-flash"></div>`;
+    }
+};
 
 // 收掉效果（進城、離開人界地圖時）
 function hideWorldRegionNow() {

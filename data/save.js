@@ -18,7 +18,8 @@ function calcOfflineProgress() {
     if (rawSeconds > OFFLINE_MAX_SECONDS) msg += `\n⏰ 離線 ${formatIdleDuration(rawSeconds)}，最多結算 ${OFFLINE_MAX_SECONDS / 3600} 小時。`;
     player.lastSaveTime = Date.now();
     addLog(`🌙 ${msg}`, "system");
-    setTimeout(() => { alert(`【離線掛機收益結算】\n${msg}`); }, 500);
+    // 遊戲內提示框（ui.js 的 gameAlert）：原生 alert 在 LINE／FB 內建瀏覽器、預覽面板不會顯示，玩家看不到結算（2026-10-02 改）
+    setTimeout(() => { gameAlert(`【離線掛機收益結算】\n${msg}`); }, 500);
 }
 
 // 背景補發：分頁縮小／切到其他 App／鎖螢幕時，瀏覽器會放慢甚至暫停 setInterval，
