@@ -266,6 +266,11 @@ const Encounter = (() => {
     // 結算畫面：win＝勝負樣式，lines＝獎勵文字
     function showResult(win, title, msg, lines) {
         setAction(null);
+        // 化神訣殘本（元神，config-yuanshen.js）：每次異界結算 50～150（勝負都給）
+        if (typeof addHuashenScroll === 'function') {
+            const n = addHuashenScroll(rollHuashenScroll(HUASHEN_SCROLL_DROPS.encounter));
+            if (n) { lines = lines.concat(`📖 化神訣殘本 ×${n}`); addLog(`🌀 異界結算：化神訣殘本 ×${n}`, 'level-up', false, 'item'); }
+        }
         $('enc-body').innerHTML = `<div class="enc-result ${win ? 'win' : 'lose'}">${title}</div>
             <p class="enc-muted" style="text-align:center">${msg}</p>
             <div class="enc-rewards">${lines.length ? lines.map(l => `<div>${l}</div>`).join('') : '<div class="enc-muted">沒有獲得獎勵。</div>'}</div>

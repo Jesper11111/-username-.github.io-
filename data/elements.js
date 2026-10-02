@@ -57,6 +57,7 @@ function getPlayerCombatAttrs() {
         poisonBonus: fx["蝕骨"] || 0,
         poisonImmune: getAptitudeSpecial().poisonImmune,  // 萬毒不侵體（aptitude.js），怪物沒有此欄位
         raceDmg: typeof getRaceDmgBonus === 'function' ? getRaceDmgBonus() : null,   // 種族剋制（race.js）：{ beast, ghost, demon, heart }，對方 attrs.race 對上時增傷
+        yuanshen: typeof getYuanshenDmg === 'function' ? getYuanshenDmg() : null,   // 元神偏好屬性傷害（yuanshen.js）：{ elem, affix, pct }，獨立倍率
         isPlayer: true   // resolveHit：敵人打玩家時閃避、減傷實際最多 PLAYER_EFFECTIVE_*_MAX（心魔鏡像也帶，雙方對稱）
     };
 }
@@ -162,6 +163,10 @@ function resolveHit(rawDmg, attacker, defender) {
     let dmg = rawDmg * nv2DmgRoll();   // 新制傷害浮動 ±10%（config-numeric.js 的 dmgVariance），平均不變
     // 種族剋制（race.js）：攻擊方對防守方種族的傷害加成（已套上限 RACE_DMG_CAP）
     if (attacker.attrs.raceDmg && defender.attrs.race) dmg *= 1 + (attacker.attrs.raceDmg[defender.attrs.race] || 0);
+    // 元神偏好屬性（yuanshen.js）：五行元神鎖定本命五行，帶該五行的傷害 ×(1+pct)；雷元神在雷擊觸發時另乘（下方）
+    //   風元神：combat.js 的風擊追加那一擊帶 attrs.ysWind；有加成的擊中都加 tag "yuanshen"（battle-fx.js 飄字顯示「💧+30%」）
+    const ys = attacker.attrs.yuanshen;
+    if (ys && ((ys.elem && attacker.attrs.element === ys.elem) || (ys.affix === 'wind' && attacker.attrs.ysWind))) { dmg *= 1 + ys.pct; tags.push("yuanshen"); }
     // 藏書閣屬性秘典：本命五行的直接傷害、對凍結中目標的傷害（其餘在各效果觸發時套用）
     let book = attacker.attrs.book;
     if (book) {
@@ -177,6 +182,7 @@ function resolveHit(rawDmg, attacker, defender) {
     let thunder = attacker.attrs.thunder > 0 && Math.random() < attacker.attrs.thunder / 100;
     if (thunder) {
         dmg *= (1 + THUNDER_BONUS) * (1 + (book ? book.thunder : 0));
+        if (ys && ys.affix === 'thunder') { dmg *= 1 + ys.pct; tags.push("yuanshen"); }   // 雷元神
         tags.push("thunder");
     }
     // 五行聖靈根：任一方持有即不受相剋影響（雙向都不生效）
@@ -225,7 +231,7 @@ function resolveHit(rawDmg, attacker, defender) {
     }
     if (attacker.attrs.fire > 0 && Math.random() < attacker.attrs.fire / 100) {
         st.burn = addDotStack(st.burn, attacker.attrs.burnMax || BURN_MAX_STACKS, BURN_TURNS,
-            attacker.power * BURN_RATE * (1 + (book ? book.fire : 0)) * (1 + (attacker.attrs.burnBonus || 0)));
+            attacker.power * BURN_RATE * (1 + (book ? book.fire : 0)) * (1 + (attacker.attrs.burnBonus || 0)) * (ys && ys.elem === '火' ? 1 + ys.pct : 1));   // 火元神：燒傷也加成
         tags.push("fire");
     }
     if (attacker.attrs.poison > 0 && !defender.attrs.poisonImmune && Math.random() < attacker.attrs.poison / 100) {
@@ -291,7 +297,7 @@ function summarizeTags(tags, dodgeLabel) {
                   // 變異屬性與光暗互剋（config-elements.js）
                   wind: "🌪️風擊", light: "☀️聖光", dark: "🌑暗蝕", lightdark: "☯️光暗相剋" };
     let counts = {};
-    tags.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+    tags.forEach(t => { if (names[t] !== undefined) counts[t] = (counts[t] || 0) + 1; });   // 沒有名稱的標籤（例：元神 yuanshen，只給飄字用）不寫進日誌
     return Object.keys(counts).map(t => `${names[t]}${counts[t] > 1 ? '×' + counts[t] : ''}`).join(" ");
 }
 

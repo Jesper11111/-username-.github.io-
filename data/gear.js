@@ -130,7 +130,8 @@ function getBonusTotals() {
     add(getStrangeFireBonusTotals());   // 天下異火收錄加成（strange-fire.js）
     add(getPartnerBonusTotals());       // 出戰夥伴被動（partner.js）
     add(getAptitudeBonusTotals());      // 先天靈根與體質（aptitude.js）
-    add(getGoldenCoreBonusTotals());    // 金丹（氣血／靈力 %）、元嬰（術法 %）（golden-core.js）
+    add(getGoldenCoreBonusTotals());    // 金丹（氣血／靈力 %）、元嬰（術法 %）（golden-core.js）；凝聚元神後為空
+    add(getYuanshenBonusTotals());      // 元神：修為速度（yuanshen.js）；偏好屬性傷害是獨立倍率，在 resolveHit
     return t;
 }
 

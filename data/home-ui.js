@@ -170,6 +170,21 @@ const HUD_AVATAR_BOXES = { 'hud-avatar': [3.98, 2.24, 17.61, 8.16], 'pc-hud-avat
 // 頭像光環（avatar.js 的 getPlayerFrame）：#hud-avatar-frame／#pc-hud-avatar-frame 依頭像方框換算位置，讓框內的洞對準頭像
 function updateHudAvatarFrames() {
     const fr = getPlayerFrame();
+    // 元神光暈（yuanshen.js，第 65 節）：頭像外圈屬性色光，比頭像大 30%；天元神旋轉、地元神靜態
+    const ys = typeof getYuanshenInfo === 'function' ? getYuanshenInfo() : null, ysFx = ys ? getYuanshenFx() : null;
+    for (let id in HUD_AVATAR_BOXES) {
+        const aura = document.getElementById(id + '-aura');
+        if (!aura) continue;
+        if (!ys || !ysFx) { aura.style.display = 'none'; continue; }
+        const [l, t, w, h] = HUD_AVATAR_BOXES[id], k = 1.3;
+        aura.style.display = 'block';
+        aura.style.left = (l - w * (k - 1) / 2) + '%';
+        aura.style.top = (t - h * (k - 1) / 2) + '%';
+        aura.style.width = (w * k) + '%';
+        aura.style.height = (h * k) + '%';
+        aura.style.setProperty('--ysc', ysFx.color);
+        aura.classList.toggle('heaven', ys.tier === 'heaven');
+    }
     for (let id in HUD_AVATAR_BOXES) {
         const el = document.getElementById(id + '-frame');
         if (!el) continue;

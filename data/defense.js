@@ -313,6 +313,9 @@ const DefenseBattle = (() => {
                 feed(`🧩 拾得${getPartnerTier(got.p).name}【${got.p.name}】碎片 ×${got.n}`, 'kill');
             }
         }
+        // 化神訣殘本（元神，config-yuanshen.js）：每守住一波 30% 掉 3～8、首領波必掉 20～40
+        const SD = HUASHEN_SCROLL_DROPS;
+        if (boss || Math.random() < SD.defenseChance) g.scrolls = (g.scrolls || 0) + addHuashenScroll(rollHuashenScroll(boss ? SD.defenseBoss : SD.defense));
         D.cleared = w; D.snap = spec.snap;
         if (w > (player.defenseBest || 0)) { player.defenseBest = w; checkTitleUnlocks(); }
         if (boss) settleMeritStones();   // 功德滿額自動凝結七彩補天石（merit.js）
@@ -331,6 +334,7 @@ const DefenseBattle = (() => {
             g.shards ? `🔥 異火碎片 ×${g.shards}` : '', g.iron ? `🌠 星允鐵 ×${g.iron}` : '',
             g.gear.length ? `⚔️ 裝備 ${g.gear.length} 件` : '',
             g.blueprints ? `📜 鍛造圖紙 ×${g.blueprints}` : '',
+            g.scrolls ? `📖 化神訣殘本 ×${g.scrolls}` : '',
             newTitles.length ? `🏅 新稱號 ${newTitles.join('、')}` : '',
             g.partners.length ? `🧩 夥伴碎片：${g.partners.join('、')}` : ''
         ].filter(Boolean);
@@ -355,7 +359,7 @@ const DefenseBattle = (() => {
         const g = D.gain;
         addLog(`🏯 秘境「魔屠天南」${win ? '守城成功' : `守住 ${D.cleared} 波`}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}`
             + `${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.gear.length ? `、裝備 ${g.gear.length} 件` : ''}`
-            + `${g.partners.length ? `、夥伴碎片 ${g.partners.join('、')}` : ''}`, 'level-up', true, 'item');
+            + `${g.partners.length ? `、夥伴碎片 ${g.partners.join('、')}` : ''}${g.scrolls ? `、化神訣殘本 ×${g.scrolls}` : ''}`, 'level-up', true, 'item');
         D.gain = null;   // 只記一次（離開時不重複）
         recordRun(win);
     }

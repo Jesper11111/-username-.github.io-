@@ -22,6 +22,11 @@ function checkAvatarCondition(unlock) {
         case "level":       return { ok: player.level >= v, text: `人物等級 Lv.${v.toWan()}`, now: `Lv.${player.level.toWan()}` };
         case "reputation":  return { ok: (player.reputation || 0) >= v, text: `聲望達 ${v.toWan()}`, now: (player.reputation || 0).toWan() };
         case "tribulation": return { ok: (player.tribulationCount || 0) >= v, text: `累計渡劫成功 ${v} 次`, now: `${player.tribulationCount || 0} 次` };
+        case "yuanshen": {   // 凝聚該偏好屬性的元神（yuanshen.js；v＝五行或 thunder／wind）
+            const y = typeof getYuanshenInfo === 'function' ? getYuanshenInfo() : null;
+            const label = v === 'thunder' ? '雷' : v === 'wind' ? '風' : v;
+            return { ok: !!y && (y.elem || y.affix) === v, text: `凝聚${label}屬性元神`, now: y ? y.name : '未凝聚元神' };
+        }
         default:            return { ok: false, text: "未知條件", now: "" };
     }
 }

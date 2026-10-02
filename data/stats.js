@@ -94,6 +94,9 @@ function getRootBonus() {
 // 本命五行（五行相剋用）：已穿戴裝備（不含神器）中數量最多的五行；
 // 同數時取部位順序（equipTypes，武器在前）中最先出現者。沒穿任何裝備則為 null（不參與相剋）。
 function getPlayerElement() {
+    // 五行偏好的元神：本命五行鎖定為元神屬性（yuanshen.js）
+    const ys = typeof getYuanshenElement === 'function' ? getYuanshenElement() : null;
+    if (ys) return ys;
     let counts = {};
     let order = [];
     for (let key of Object.keys(equipTypes)) {

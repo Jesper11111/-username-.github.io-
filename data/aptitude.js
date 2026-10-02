@@ -303,17 +303,20 @@ function openAptitudeView() {
     if (!player.aptitude) { if (player.sect) openAptitudeTest(); else alert('拜入宗門後才會進行資質測試。'); return; }
     const r = describeRoot(player.aptitude.root), p = describePhysique(player.aptitude.physique);
     const rp = player.rootPills || 0, pp = player.physiquePills || 0;
+    const locked = typeof hasYuanshen === 'function' && hasYuanshen();   // 凝聚元神後資質鎖定（yuanshen.js）
     setAptitudeBody('⛩️ 先天資質', `${aptitudeCard('先天靈根', r)}${aptitudeCard('先天體質', p)}
+        ${locked ? `<p style="color:#f472b6; font-size:0.85em;">🔮 已凝聚元神，先天資質已鎖定，不能再重測（轉世後元神消散才解鎖）。</p>` : `
         <div class="batch-btns">
             <button class="sys-btn" ${rp > 0 ? '' : 'disabled'} onclick="rerollAptitude('root')">🧪 洗髓丹重測靈根（持有 ${rp}）</button>
             <button class="sys-btn" ${pp > 0 ? '' : 'disabled'} onclick="rerollAptitude('physique')">🦴 伐骨丹重測體質（持有 ${pp}）</button>
-        </div>
+        </div>`}
         <p style="color:#6b7280; font-size:0.78em;">洗髓丹、伐骨丹可在千寶閣「珍貴物資」以 ${APTITUDE_REROLL_COST} 顆七彩補天石購買。</p>
         <button class="close-btn" onclick="closeModal('aptitude-modal')">關閉</button>`);
 }
 // 重測：消耗 1 顆，擲出新結果後由玩家選擇保留新或舊
 function rerollAptitude(part) {
     const isRoot = part === 'root', key = isRoot ? 'rootPills' : 'physiquePills';
+    if (typeof hasYuanshen === 'function' && hasYuanshen()) { gameAlert('已凝聚元神，先天資質已鎖定，不能再重測。'); return; }
     if (!(player[key] > 0) || !player.aptitude) return;
     player[key]--;
     const label = isRoot ? '先天靈根' : '先天體質';
@@ -357,6 +360,10 @@ function offerAptitudeGift(gift) {
     if (gift && gift.root && describeRoot(gift.root)) parts.push({ part: 'root', value: gift.root });
     if (gift && gift.physique && describePhysique(gift.physique)) parts.push({ part: 'physique', value: gift.physique });
     if (!parts.length) return;
+    if (typeof hasYuanshen === 'function' && hasYuanshen()) {   // 凝聚元神後資質鎖定（yuanshen.js）
+        addLog(`📮 仙府賜予了先天資質，但你已凝聚元神、資質鎖定，無法接受。`, "system");
+        return;
+    }
     if (!player.aptitude) {
         player.aptitudeGift = Object.assign(player.aptitudeGift || {}, ...parts.map(x => ({ [x.part]: x.value })));
         addLog(`📮 仙府賜予的先天資質已記下，拜入宗門測試資質時直接生效。`, "system");

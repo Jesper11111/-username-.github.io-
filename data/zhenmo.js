@@ -365,9 +365,9 @@ const ZhenmoTower = (() => {
             if (firstClear && tg >= 0 && race) g.treasure = grantRaceTreasure(race, tg, `鎮壓鎮魔塔第 ${f.floor} 層樓主，`);
             html = `<div class="big win">鎮壓成功</div>
                 <p>第 ${f.floor} 層【${escapeZm(f.boss.name)}】伏誅（${f.round} 回合）</p>
-                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), getPartnerShardsNeed(g.partner.p))}/${getPartnerShardsNeed(g.partner.p)}）` : ''}</p>
+                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.scroll ? `<br>📖 化神訣殘本 ×${g.scroll}` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), getPartnerShardsNeed(g.partner.p))}/${getPartnerShardsNeed(g.partner.p)}）` : ''}</p>
                 <p class="zm-note">已鎮壓 ${z.best} 層，前往第 ${z.floor} 層須重新答題。</p>`;
-            addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}`, 'level-up', true, 'item');
+            addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.scroll ? `、化神訣殘本 ×${g.scroll}` : ''}`, 'level-up', true, 'item');
             if (g.blueprint) addLog(g.blueprint, 'level-up', true, 'item');
         } else {
             z.pending = null;   // 挑戰失敗：本層問答成績作廢
@@ -396,6 +396,8 @@ const ZhenmoTower = (() => {
         // 夥伴相遇（config-zhenmo.js 的 ZHENMO_PARTNER_MEET）
         const meet = ZHENMO_PARTNER_MEET.find(m => floor >= m.from && floor <= m.to);
         if (meet) g.partner = grantPartnerShards(meet.tiers, meet.chance, meet.shards, `鎮壓鎮魔塔第 ${floor} 層`);   // { p, n } 或 null
+        // 化神訣殘本（元神，config-yuanshen.js）：每層 30～80，樓主層加倍
+        g.scroll = addHuashenScroll(rollHuashenScroll(HUASHEN_SCROLL_DROPS.zhenmo) * (floor % 10 === 0 ? HUASHEN_SCROLL_DROPS.zhenmoGate10Mult : 1));
         return g;
     }
 

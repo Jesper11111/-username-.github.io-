@@ -400,6 +400,7 @@ function endBountyDuel(result) {
         let ironRange = IRON_BOUNTY_AMOUNT[opp.rank];
         if (ironRange) addStarIron(randInt(ironRange[0], ironRange[1]), `從${opp.name}的遺物中取得星允鐵`);
         gainProficiency(PROF_BOUNTY_GAIN);   // 主修職業熟練度（profession.js）
+        addHuashenScroll(HUASHEN_SCROLL_DROPS.bounty[opp.rank] || 0, `從${opp.name}的遺物中翻出殘頁`);   // 化神訣殘本（元神，config-yuanshen.js）
         let loot = tryLootDrop(opp.rank);
         if (loot) addLog(loot, "equip");
         // 天榜：鍛造圖紙（Lv.1500 以上，equipment.js）

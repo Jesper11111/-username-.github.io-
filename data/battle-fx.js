@@ -59,7 +59,8 @@ function battleFxHit(dmg, tags) {
     if (!(dmg > 0)) return;
     const kind = tags && tags.includes("crit") ? "crit" : (tags && (tags.includes("metal") || tags.includes("thunder")) ? "heavy" : "hit");
     battleFxQueue.push({ kind, side: "foe", dmg, elem: battleFxElemOf(tags),
-        label: kind === "crit" ? "暴擊" : (kind === "heavy" ? (tags.includes("thunder") ? "雷擊" : "重擊") : "") });
+        label: kind === "crit" ? "暴擊" : (kind === "heavy" ? (tags.includes("thunder") ? "雷擊" : "重擊") : ""),
+        ys: tags && tags.includes("yuanshen") ? getYuanshenFxLabel() : '' });   // 元神偏好屬性加成生效（resolveHit 的 tag，yuanshen.js）
 }
 
 // 玩家受到傷害（dodged：全部閃掉）；tags＝對方攻擊觸發的屬性（上色用）
@@ -189,7 +190,7 @@ function spawnBattleFloat(layer, e) {
     else {
         const icon = e.elem ? (BATTLE_FX_ELEMS.find(x => x[0] === e.elem) || [])[1] || '' : '';
         const small = [e.label, e.combo ? '×' + e.combo : ''].filter(Boolean).join(' ');
-        d.innerHTML = `${small ? `<small>${small}</small>` : ''}${icon && e.kind !== 'crit' ? `<i>${icon}</i>` : ''}-${fmtFxNum(e.dmg)}`;
+        d.innerHTML = `${small ? `<small>${small}</small>` : ''}${icon && e.kind !== 'crit' ? `<i>${icon}</i>` : ''}-${fmtFxNum(e.dmg)}${e.ys ? `<em class="bf-ys-tag">${e.ys}</em>` : ''}`;
     }
     const onFoe = e.side === "foe";
     // 暴擊在敵方圖片中央偏上；其他字依 slot 輪流排在下方／上方／更下方，左右稍微錯開
@@ -286,6 +287,14 @@ function updateBattleHero() {
         if (box.dataset.el) box.classList.remove(box.dataset.el);
         box.classList.add(cls);
         box.dataset.el = cls;
+    }
+    // 元神虛影（yuanshen.js）：立繪上疊屬性色的元神光（螢幕混色，立繪是不透明 JPG 所以疊在上面）；天元神多一圈旋轉符環
+    const ys = typeof getYuanshenInfo === 'function' ? getYuanshenInfo() : null, ysEl = document.getElementById('bf-ys');
+    const ysKey = ys ? ys.id : '';
+    if (ysEl && ysEl.dataset.k !== ysKey) {
+        ysEl.dataset.k = ysKey;
+        ysEl.className = 'bf-ys' + (ys ? ' on ' + ys.tier : '');
+        if (ys) { const fx = getYuanshenFx(); ysEl.style.setProperty('--ysc', fx.color); ysEl.querySelector('.bf-ys-glyph').textContent = ys.icon; ysEl.title = ys.name; }
     }
     layoutBattleHero();
 }

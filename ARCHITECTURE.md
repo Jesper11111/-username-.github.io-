@@ -46,7 +46,7 @@ images/               圖片素材
                       heart-demon-male.jpg／heart-demon-female.jpg 男／女角渡劫心魔（config-tribulation.js 的 HEART_DEMON_IMGS，第 7 節；皆 480×715，80／75KB）
   equip/              角色裝備欄中間的人物正面圖（第 60 節）：hero-male.jpg 520×592／hero-female.jpg 520×459（玩家提供，縮小）
   battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（2026-09-28 版本 `20260930w` 換成玩家提供的「站在飛劍上的背影」新圖：男 480×531、女 480×594（女圖原本四角有圓形玻璃框，裁掉兩側與上緣）；舊圖留在 hero-male-v1.jpg／hero-female-v1.jpg；版本 `20260930z` 起玩家要求「人物取完整、露出整把武器、貼左邊」：`.bf-hero` 改 `object-fit: contain` 靠左下、寬 44%（斜切線最左點，劍尖不會被切），上緣與右緣用 mask 淡出，後面墊 `#bf-hero-bg`＝同一張圖模糊放大（`updateBattleHero` 設背景）；呼吸動畫改為只上下浮動、前衝與閃避改為只平移，不再放大以免切到頭或劍尖），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
-  frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節
+  frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節；frame-ys-*.png 7 個元神環（程式繪製，第 65 節）
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
 videos/               影片：fengxi-dance.mp4 風希跳舞彩蛋（玩家提供；2026-09-27 壓成 854×480、18 秒、約 0.52 Mbps＋AAC 64k 單聲道、1.35 MB，第 39 節）
@@ -77,7 +77,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -110,7 +110,8 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
-  golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）
+  golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）；凝聚元神後加成消失
+  yuanshen.js         元神（第 65 節）：天元神／地元神資格、元嬰化神法（凝聚）、偏好屬性傷害、化神訣殘本掉落、元神視窗
   mailbox.js          仙府信箱與兌換碼：讀信、領取、兌換、獎勵發放（第 56 節；設定 config-mailbox.js，GM 端在 gm.html）
   msgboard.js         修仙留言板：大道石碑第三個分頁，讀最新 50 則、留言（每 60 秒一則）、刪自己的留言、髒話過濾（第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*）
   economy.js          賺錢管道（第 61 節）：H＝境界每小時練功收入、坊市回收（天星城收購商）、商隊收益與每日趟數、洞府產業（靈田／礦脈）、懸賞賞金
@@ -157,6 +158,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 - `strange-fire.js`、`partner.js` 載入時會建 `strangeFireById`／`partnerById`，必須分別排在 `config-strange-fire.js`、`config-partners.js` 之後。
 - `defense.js` 載入時就建立 `DefenseBattle`（讀 `DEFENSE_*` 常數），必須排在 `config-defense.js` 之後；它在 DOMContentLoaded 抓 `#defense-vwrap` 的影片元素。
 - `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
+- `config-yuanshen.js` 接在 `config-golden-core.js` 後、`yuanshen.js` 接在 `golden-core.js` 後（第 65 節）：只宣告常數與函式，執行期才互相呼叫。
 - `town-npc.js` 緊接在 `partner.js` 後（第 20 節）：只宣告函式，執行期才讀 `townScenes`／`partnerById`，位置其實不受限。
 - `config-encounter.js` 緊接在 `config-economy.js` 後、`encounter.js` 緊接在 `economy.js` 後（第 63 節）；兩者載入時只宣告常數與建立 IIFE，不讀其他檔，位置其實不受限。
 
@@ -231,6 +233,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34k | `casino.js` | 天星賭坊（第 40 節）：狀態 `casinoTab`/`casinoBusy`/`casinoResultHtml`/`casinoDice`；`getCasinoState`(跨日重置)/`getCasinoDailyLimit`/`getCasinoRemaining`/`getDiceMaxBet`/`isInCasinoTown`/`checkCasinoSpend`(城鎮、靈石、上限、大額確認)/`recordCasino`；隕石 `randCasino`/`rollStoneOutcome`/`grantStoneOutcome`/`cutStone(id, count)`；擲骰 `setDiceType`/`setDicePick`/`setDiceTotal`/`setDiceAmount`/`addDiceAmount`/`setDiceMax`/`getDicePayout`/`describeDiceBet`/`judgeDice`/`rollDice`；視窗 `openCasinoModal`/`setCasinoTab`/`renderCasino`/`renderCasinoStones`/`renderCasinoDice`/`renderCasinoRecord` | `config-casino.js`、`player.casino`/`coins`/`ore`/`realmIndex`/`currentMap`、`enhance.js`(addStarIron/addIronShards)、`strange-fire.js`(addFireShards/rollStrangeFire/gainStrangeFire)、`gear.js`(tryLootDrop 的 casinoPurple/casinoOrange)、`codex.js`(checkTitleUnlocks/describeTitle*)、`ui.js` | `config-towns.js`(天星城石拱門傳送點)、`codex.js`(賭運稱號條件讀 player.casino) |
 | 34j | `town.js` | 城內場景：`currentTownScene`/`currentTownView`/`hasTownScene`/`pickTownView`(直向用 portrait)/`openTownScene(name)`/`closeTownScene`/`applyTownView(recenter)`(換圖＋重排)/`renderTownHotspots(view)`(人偶＋傳送點；有 `chance`／`schedule` 的人偶看 `townFigureShown`)/`rollTownFigures(scene)`(openTownScene 時判斷；schedule 人偶到點自動離開 `townFigureTimer`)/`layoutTownScene(recenter)`；頂層註冊 resize 監聽與 `initTownScenePan`（滾輪左右平移、拖曳平移、`?townedit=1` 座標工具），只綁事件、無其他副作用 | `config-towns.js`、`#town-scene` DOM、`town-npc.js`(rollTownNpcs／getTownNpcFigures，執行期才呼叫) | `map.js`(goToTown／renderTownTeleports)、HTML 離開按鈕、傳送點 action |
 | 34i | `partner.js` | 夥伴（第 39 節）：**載入時**建 `partnerById`；`getPartnerPowerAvg`/`getPartnerTier`/`isPartnerMet`；好感 `getBond`/`getBondLevel`/`getBondLevelName`(LV5 道侶／結拜)/`addBond`/`reduceBond`/`nextBondMin`/`todayKey`/`greetPartner`/`pickGreetLine`/`getGiftCost`/`getGiftsLeft`/`giftPartner`；情緣任務 `getQuestStat`/`describeBondQuest`/`acceptBondQuest`/`getBondQuestProgress`/`claimBondQuest`/`abandonBondQuest`/`onPartnerFieldKills`；結識 `meetPartner`/`talkToPartner`(場景人偶)；彩蛋 `askPartnerEaster`/`answerPartnerEaster`/`playPartnerVideo`/`getPlayedSeconds`/`onPartnerVideoEnded`/`closePartnerVideo`、狀態 `partnerVideoCtx`；隊伍 `getPartnerTeam`/`isInTeam`/`togglePartnerTeam`/`getPartnerBonusTotals`/`partnerSkillTurn`/`migratePartners`；對話 `showPartnerDialog(p, lines, note, afterId, choices)`/`closePartnerDialog`；視窗 `partnerFilter`/`openPartnerModal(focusId)`/`setPartnerFilter`/`formatPartnerOrigin`/`renderBondSection`/`renderPartnerCard`/`renderPartnerModal` | `config-partners.js`、`player.partners`/`partnerTeam`/`partnerBond`/`fieldKills`/`evilKills`/`bountyKills`/`gender`/`coins`、`artifact.js`(castProcSkill)、`codex.js`(describeTitleBonus)、`ui.js` | `gear.js`(getBonusTotals)、`combat.js`(partnerSkillTurn、擊殺後 onPartnerFieldKills)/`tribulation.js`/`bounty.js`、`save.js`(migratePartners)、`config-towns.js`(風希人偶 talkToPartner)、`town-npc.js`(showPartnerDialog／addPartnerShards／addBond)、HTML 情緣導覽與對話框；`closePartnerDialog` 會呼叫 town-npc.js 的 `onTownNpcDialogClosed`（有定義才呼叫） |
+| 34m | `yuanshen.js` | 元神（第 65 節）：`hasYuanshen`/`getYuanshenInfo`/`getYuanshenCandidate`（資質判斷）、`getYuanshenBonusTotals`（修為）、`getYuanshenElement`（本命五行鎖定）、`getYuanshenDmg`（偏好屬性傷害）、`addHuashenScroll`/`rollHuashenScroll`/`rollFieldHuashenScroll`/`checkDailyHuashenBonus`（化神訣殘本）、`formatYuanshenShort`、`openYuanshenModal`/`condenseYuanshen`；只有函式、無載入時副作用 | `config-yuanshen.js`、`aptitude.js`(describePhysique、formatAptitudeShort)、`map.js`(getMapSuitRange)、`ui.js`(gameConfirm、addLog)、`#yuanshen-modal` DOM | `gear.js`(getBonusTotals)、`stats.js`(getPlayerElement)、`elements.js`(getPlayerCombatAttrs → resolveHit)、`combat.js`(風擊、野外掉落)、`golden-core.js`(凝聚後加成歸零)、`aptitude.js`(鎖定)、`leveling.js`(轉世清空)、`zhenmo.js`／`defense.js`／`encounter.js`／`bounty.js`／`daily-quest.js`(殘本)、`bag.js`、`ui.js`(updateUI) |
 | 34l | `town-npc.js` | 城內隱藏 NPC（第 20 節）：狀態 `townNpcSpots`（{ 城名: { npc, spot } }，本次進城擲出的結果）/`townNpcDuelTimers`/`townNpcDuelPlace`/`townNpcAskAt`（防連點，`TOWN_NPC_CHOICE_GUARD_MS`）/`townNpcAutoTimer`（「吃」消失後自動開打）/`townNpcAsking`（還沒選的城名）；`onTownNpcDialogClosed`（partner.js 的 closePartnerDialog 呼叫：問句被關掉＝開打）；`closeTownNpcDuel`（離開決鬥畫面＝關掉城內場景）；`isTownNpcDoneToday`/`markTownNpcDone`（`player.townNpc = { id: 日期 }`，用到才建立）、`getTownBanLeftMin(城名)`（`player.townBan`，被打爆後的禁入；map.js 的 goToTown 呼叫）、定時人偶 `getFigureSched`/`getScheduledFigureLeftMs`/`isScheduledFigureHere`（town.js 的 rollTownFigures 呼叫）/`talkToScheduledFigure(id)`（`player.townFigureSched`）、`rollTownNpcs(城名)`、`getTownNpcFigures(城名, view)`（只畫在主圖）、`removeTownNpc`、`talkToTownNpc`/`answerTownNpc(城名, 吃?)`、`startTownNpcDuel`；只有函式定義、無載入時副作用 | `config-towns.js`(hiddenNpcs)、`partner.js`(partnerById、showPartnerDialog、addPartnerShards、addBond、todayKey…)、`town.js`(currentTownScene、renderTownHotspots、closeTownScene)、`numeric.js`/`stats.js`(戰力、getMaxHp)、`format.js`(fmtCombat)、`#partner-dialog-modal`／`#town-duel` DOM | `town.js`(openTownScene 擲骰、renderTownHotspots 併入人偶)、`map.js`(goToTown 檢查禁入)、人偶 onclick |
 | 34f | `profession.js` | `getProfession`/`getProfRank`/`getProfRankName`/`getProfessionPassive`/`getProfWeaponMult`/`gainProficiency`/`gainKillProficiency`/`professionSkillTurn`/`formatProfessionTag`/`chooseProfession`/`renderProfessionTab` | `config-profession.js`、`artifact.js`(castProcSkill)、`elements.js`(getMapCategoryIndex)、`codex.js` | `stats.js`(主修武器加成)、`gear.js`(被動)、`combat.js`/`tribulation.js`/`bounty.js`(職業技能、熟練度)、`save.js`(離線熟練度)、`codex.js` |
 | 34g | `codex.js` | 收藏 `recordGearCollected`/`migrateGearCodex`/`hasCollected`/`getOpenGear`/`getTitleGear`(收藏類稱號範圍，固定不含秘境)/`countCollected`/`countCollectedQuality`、稱號 `getTitleName`/`isTitleConditionMet`/`describeTitleCondition`/`describeTitleBonus`/`getTitleBonusTotals`/`checkTitleUnlocks`/`getNameTag`/`setActiveTitle`、視窗 `codexTab`/`codexSlot`/`openCodexModal`/`setCodexTab`/`setCodexSlot`/`renderCodexModal`/`formatCodexStars`/`formatCodexStarLegend`(星星六色，第 48 節)/`CODEX_QUALITIES`/`renderCodexGear`/`renderCodexSets`/`renderCodexTitles`（異火分頁在 strange-fire.js） | `config-titles.js`、`gear.js`、`profession.js`、`strange-fire.js`(renderCodexFires/countCollectedFires)、`merit.js`(getKarmaState)、`stats.js`(getSectTier) | `gear.js`(收藏、稱號加成)、`enhance.js`、`profession.js`、`ui.js`(updateUI 每秒 checkTitleUnlocks)、`home-ui.js`(道號旁標籤)、`save.js`、HTML 天磯錄熱點 |
@@ -361,7 +364,8 @@ combatTick() 每秒執行 [combat.js]
 | `closeDefenseBattle`（守城「↩ 離開」與結算「↩ 返回秘境」）、`setDefenseSpeed(1/2/4)`、`finishDefenseNow`（守城中「⏭ 一鍵結束」）、`DefenseBattle.retry()`（載入失敗「🔄 重新載入」）、`openDefenseRecords`（守城畫面左上與結算畫面「📜 通關紀錄」）、`closeDefenseRecords`（紀錄視窗「關閉」） | `data/defense.js` |
 | `closeZhenmoTower`（鎮魔塔「↩ 離開」）、`startZhenmoQuiz`（塔廳「📜 開始問答」）、`answerZhenmo(i)`（問答選項）、`enterZhenmoBoss`（塔廳／結算「🚪 進入／開啟 BOSS 房門」）、`backToZhenmoHall`（「稍後再戰」「↩ 返回塔廳」）、`startZhenmoFight`（BOSS 介紹「⚔️ 挑戰」）、`setZhenmoFightSpeed(1/2/4)`、`skipZhenmoFight`（戰鬥「⏭ 跳過」） | `data/zhenmo.js` |
 | `chooseGender` | `data/main.js` |
-| `rollAptitudeStep`（資質測試「🎲 手按測靈石」）、`rerollAptitudeFirst`／`confirmAptitudeFirst`（「🎲 再來一次」「✅ 決定」）、`toggleAptitudeAuto(on)`（「🔁 自動重抽」開關）、`openAptitudeView`（人物面板資質）、`rerollAptitude(part)`／`finishAptitudeReroll(keepNew)`（洗髓／伐骨重測） | `data/aptitude.js` |
+| `rollAptitudeStep`（資質測試「🎲 手按測靈石」）、`rerollAptitudeFirst`／`confirmAptitudeFirst`（「🎲 再來一次」「✅ 決定」）、`toggleAptitudeAuto(on)`（「🔁 自動重抽」開關）、`openAptitudeView`（人物面板資質）、`rerollAptitude(part)`／`finishAptitudeReroll(keepNew)`（洗髓／伐骨重測；凝聚元神後鎖定） | `data/aptitude.js` |
+| `openYuanshenModal`（人物面板「元神」）、`condenseYuanshen`（元神視窗「🔮 凝聚元神」） | `data/yuanshen.js` |
 | `openMarketSellModal`（天星城坊市「收購商」傳送點，`config-towns.js`）、`sellEquipByQualities([...])`／`sellPill(id, qty)`／`sellMaterial('shard'/'iron', qty)`／`toggleAutoSellFull`（視窗內動態產生）、`openEstateModal`（宗門分頁「🏞️ 洞府產業」）、`collectEstate(kind)`／`upgradeEstate(kind)`（視窗內動態產生） | `data/economy.js` |
 
 ## 5. 新增功能的建議流程
@@ -1550,7 +1554,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005c`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005d`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2930,6 +2934,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **加成套用**：`getAptitudeBonusTotals()` 併入 gear.js 的 `getBonusTotals`（含條件式：武器體質裝備該武器時的技能傷害、本源體的本命五行攻擊）；
   `getAptitudeSpecial()`：`trib` → tribulation.js 的勝算（確認視窗多一行「先天資質」）、`ambushMult` → combat.js 暗殺者機率、`poisonImmune` → `resolveHit` 與懸賞「蝕骨毒功」不上毒、`weapons` → `getProfWeaponMult`（不論主修）、`nature` → 光暗本質。
 - **顯示**：人物面板「資質：木水雙靈根・乙木本源體」（`#aptitude-display`，點擊 `openAptitudeView()` 查看與重測）。
+- **凝聚元神後資質鎖定**（第 65 節，2026-10-02）：不能重測、不接受仙府賜予資質；轉世元神消散後解鎖。
 - **重測**：千寶閣「珍貴物資」新增【洗髓丹】（重測靈根）、【伐骨丹】（重測體質），各 `APTITUDE_REROLL_COST` 1 顆七彩補天石（2026-09-29 由 10 改 1；`buyAptitudePill`，背包也會顯示）。
   使用後擲出新結果，**玩家選擇保留新的或原本的**（`finishAptitudeReroll`）。存檔：`player.aptitude = { root: { group, id?, elems? }, physique, at }`、`player.rootPills`、`player.physiquePills`（用到時才建立）。
 
@@ -2967,6 +2972,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **老玩家**（`migrateGoldenCore`，save.js 讀檔時；存檔沒有 goldenCore 才做）：金丹期以上補發中品金丹、元嬰期以上補發地元嬰・中。
   ⚠️ 補發只在讀檔時做：advanceRealm 會在晉升後立刻算氣血，若在取值時補發，剛進金丹的新玩家會被誤判成老玩家。
 - **轉世**：`goldenCore` 清空，重新累積。
+- **凝聚元神後**（第 65 節，2026-10-02）：金丹與元嬰化入元神，`getGoldenCoreBonusTotals` 回傳空、`getCoreTribBonus` 回傳 0，人物面板顯示「已化入元神」。
 - 人物面板「金丹：」一行（`#core-display`，`formatCoreShort`）：築基期顯示丹田 % 與可結成的品級，之後顯示金丹、溫養、元嬰。
 - 驗證（本機）：修完築基 丹田 51.5% → 待渡劫再練半個境界 77% → 上品金丹；溫養 62% → 地元嬰・中（術法 +20%）；
   人元嬰化神 −10%、靈果 +10% 並消耗；凝元丹 10 顆 30% → 80%；新制下 下品＋人下 → 超品＋天上：氣血 88 → 123、靈力 952 → 1375、術攻 17 → 25；Console 無錯誤。
@@ -3443,3 +3449,44 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **驗證（本機）**：SW 註冊並接管頁面、預存 index＋105 支 JS、3 個 manifest 圖示 200；**停掉伺服器後重新整理，遊戲完整載入**（全部模組存在）；
   模擬換版本號：舊 `fanchen-core-*` 被刪、新的建立、`fanchen-assets` 保留（15 張圖）；版本偵測正確、更新提示置中顯示；安裝說明與設定按鈕正常；恢復連線後 113 個資源無失敗。
   實機安裝（Android 安裝視窗、iPhone 加入主畫面）需推上 GitHub Pages 後用手機測。
+
+## 65. 元神・元嬰化神法（`config-yuanshen.js`、`yuanshen.js`；2026-10-02，版本 `20261005d`）
+
+- **使用者設計**：神體＋至尊靈根合成「天元神」、道體＋特殊靈根合成「地元神」，各依種類分 6 種；能力相加＋基本修為速度、依屬性增加偏好屬性傷害；以「元嬰化神法」凝聚，材料化神訣殘本 1 萬＋破障丹、洗髓丹、伐骨丹、化神靈果各 5。
+  使用者對方案的決定：**沒有達標組合就沒有元神**（神體＋特殊、道體＋至尊、靈體等都不行）；**地元神偏好屬性 +10%**（天元神 +30%）；「學元嬰化神法＝凝聚元神」（沒有地→天進化）；**凝聚後資質鎖定**；
+  **轉世清空、要重新凝聚**；殘本來源照我提的表；偏好屬性傷害做成**獨立倍率**；另加「**合成元神後原有的金丹跟元嬰都會消失**」。
+- **種類**（`YUANSHEN_TYPES`，key＝先天體質 id；名稱與屬性對應我暫定）：
+  天元神：荒古聖體 庚金（金）、先天聖體道胎 乙木（木）、重瞳 癸水（水）、蒼天霸體 丙火（火）、至尊骨 戊土（土）、混沌體 混沌（雷）；
+  地元神：先天劍體 劍心（金）、霸刀戰體 刀魄（火）、風靈仙體 風靈（風）、神射之體 神目（木）、天籟道體 天籟（水）、符靈道體 符籙（雷）。
+  資格 `getYuanshenCandidate`：體質所屬組（`describePhysique().grade`）＝ `YUANSHEN_TIERS[tier].physGrade` 且 `aptitude.root.group`＝`rootGroup`（supreme／special）。
+- **效果**：
+  - 體質與靈根原有能力照常（各自計算，不重複加）。
+  - 修為速度：`getYuanshenBonusTotals` → `fx:悟道` +0.5／+0.2（gear.js 的 `getBonusTotals`，進增益池）。
+  - 偏好屬性（**獨立倍率，不進增益池**）：五行元神 → `stats.js` 的 `getPlayerElement` 鎖定本命五行為該屬性（五行相剋照舊），
+    `resolveHit` 在攻擊方 `attrs.yuanshen.elem` 與 `attrs.element` 相同時傷害 ×(1+pct)（＝自己的普攻、技能等直接傷害都吃），火元神燒傷每層也 ×(1+pct)；
+    雷元神 → 雷擊觸發時再 ×(1+pct)；風元神 → combat.js 風擊追加的那一擊 ×(1+pct)。`getPlayerCombatAttrs` 帶 `yuanshen: getYuanshenDmg()`（心魔鏡像複製玩家屬性也會帶，雙方對稱）。
+  - **金丹、元嬰化入元神**：golden-core.js 的 `getGoldenCoreBonusTotals` 回傳空（氣血／靈力 %、術法 % 消失）、`getCoreTribBonus` 回傳 0（元嬰期凝聚後化神勝算不再吃元嬰品級）、人物面板金丹一行顯示「已化入元神」。`goldenCore` 資料保留不刪。
+- **凝聚**（人物面板「元神：」一行 `#yuanshen-display` → `openYuanshenModal()`，視窗 `#yuanshen-modal`）：列出天／地規則、可凝聚的元神與效果、境界（元嬰 `YUANSHEN_MIN_REALM` 4 以上）、五項材料持有／需求（綠＝足夠）；
+  全部達標按「🔮 凝聚元神」→ `gameConfirm`（列出金丹元嬰消失、資質鎖定、轉世消散）→ 扣材料、`player.yuanshen = { type, tier, at }`、日誌（天元神另有天地異象）、卡片凝聚動畫 `.ys-born`。
+  面板文字：已凝聚＝元神名稱；可凝聚＝「可凝聚【X】」；境界未到＝「可凝聚天／地元神（元嬰期學元嬰化神法）」；不達標＝「資質未達（需神體＋至尊靈根或道體＋特殊靈根）」。
+- **資質鎖定**（aptitude.js）：`openAptitudeView` 不顯示重測按鈕、改顯示鎖定說明；`rerollAptitude` 擋下並 `gameAlert`；`offerAptitudeGift`（仙府信箱賜予資質）寫日誌後不接受。洗髓丹／伐骨丹仍可購買（是凝聚材料）。
+- **轉世**（leveling.js `triggerReincarnate`）：`player.yuanshen = null`（資質隨之解鎖），化神訣殘本保留；確認視窗多一行「元神消散，需重新凝聚」。
+- **化神訣殘本**（`player.huashenScrolls`，`HUASHEN_SCROLL_DROPS`；背包有卡片 x/1萬）：
+  鎮魔塔擊敗 BOSS 30～80（樓主層 ×2；結算畫面與日誌）、魔屠天南每守住一波 30% 掉 3～8／首領波必掉 20～40（結算彙整）、奇遇每次結算 50～150（`showResult`，勝負都給）、
+  懸賞伏誅 天 40／地 25／人 15、每日任務一輪 10 項全部領完 50（`checkDailyHuashenBonus`，標記在該輪第一項 `ysBonus`，每 4 小時一輪）、
+  野外：目前地圖 `getMapSuitRange` 下限 ≥ 化神時每隻 0.5% 掉 1～3（`rollFieldHuashenScroll`，只有線上擊殺，離線結算不掉）。
+- **驗證（本機，停用存檔）**：重瞳＋混沌靈根元嬰角色凝聚癸水天元神：材料扣足（殘本 10020→20 等）、修為 1.02→1.52、氣血 104→79（極品金丹 +35% 消失）、術法 +45%→0、本命五行→水；
+  `resolveHit` 2 萬次平均 水元神 ×1.30、雷元神（雷擊 100%）×1.30；資格：神體＋至尊 ✔、道體＋特殊 ✔、神體＋特殊／道體＋至尊／靈體＋至尊 ✘；
+  資質視窗無重測按鈕、`rerollAptitude` 被擋且不扣丹；鎮魔塔第 10 層勝 +152 頁（結算畫面列出）；每日任務最後一項領完才 +50、不重複、新一輪重置；
+  亂星海 10 萬隻約每隻 0.009 頁、靈山大川 0；風靈地元神轉世後 `yuanshen` 清空、殘本保留；Console 無錯誤。
+- **元神視覺特效**（同日，使用者問「凝鍊元神後人物有什麼特效」，選項四個「全部都做」；顏色／圖示在 `YUANSHEN_FX`，金 #facc15、木 #4ade80、水 #38bdf8、火 #f87171、土 #f59e0b、雷 #a78bfa、風 #5eead4）：
+  1. **洞府頭像光暈**：index.html `#hud-avatar-aura`／`#pc-hud-avatar-aura`（`.ys-hud-aura`），home-ui.js 的 `updateHudAvatarFrames` 依 `HUD_AVATAR_BOXES` 放在頭像外、放大 1.3 倍，`--ysc` 屬性色、呼吸脈動；天元神（`.heaven`）多一圈 conic 旋轉符環。
+  2. **戰場元神虛影**：`#bf-hero-box` 內 `#bf-ys`（`.bf-ys-glow` 屬性色光暈、`.bf-ys-ring` 天元神旋轉符環、`.bf-ys-glyph` 頭頂浮動元神圖示），battle-fx.js 的 `updateBattleHero` 依 `getYuanshenInfo` 切換。
+     立繪是不透明 JPG，所以光暈與符環用 `mix-blend-mode: screen` 疊在上面；圖示不混色（第一版整層混色，圖示太淡看不清，已改）。
+  3. **出手飄字**：`resolveHit` 在元神加成生效時加 tag `"yuanshen"`（五行元神：本命五行相同的擊中；雷元神：雷擊；風元神：combat.js 風擊追加那一擊帶 `attrs.ysWind`，加成也移到 resolveHit），
+     battle-fx.js 的 `battleFxHit` 帶 `ys: getYuanshenFxLabel()`，飄字數字右邊多一個小標「💧+30%」（`.bf-ys-tag`）。`summarizeTags` 略過沒有名稱的標籤，戰鬥日誌不會多出元神字樣。
+  4. **專屬頭像框**：config-avatar-frames.js 新增 7 個「X元神環」（`ys-metal`～`ys-wind`，`images/frames/frame-ys-*.png` 512×512，程式繪製：屬性色雙環＋24 顆符紋＋8 道尖芒＋頂端屬性字徽記，洞 r 0.36），
+     解鎖條件 `{ type: "yuanshen", value: 五行或 thunder／wind }`（avatar.js `checkAvatarCondition`：目前元神的偏好屬性相同），凝聚後 `updateUI` 自動解鎖並寫日誌；頭像框永久保留（轉世元神消散也不收回）。
+  - 驗證（本機）：癸水天元神 → 洞府頭像外藍色光暈＋旋轉符環；戰場立繪頭頂 💧、藍色光暈與符環；打怪飄字「-443 💧+30%」；癸水元神環自動解鎖、可配戴，其他六個顯示「🔒 凝聚X屬性元神」；Console 無錯誤。- **遊戲確認框防連點**（同日，ui.js 的 `gameDialog`）：實測點「凝聚元神」時，確認框的「確定」剛好跳在同一位置，同一次點擊就直接確認（奇遇奧斯卡問句也發生過，第 20 節）。
+  `gameConfirm`（有取消鈕的）出現後 `GAME_DIALOG_GUARD_MS`（400ms）內不接受「確定」；`gameAlert` 不受影響。所有用 gameConfirm 的地方（轉世、守城離開以外的確認等）一起受惠。
+  驗證：點「凝聚元神」→ 確認框停住等玩家 → 按確定 → 凝聚動畫、彩虹字「癸水天元神」；資質視窗顯示鎖定說明、沒有重測按鈕。

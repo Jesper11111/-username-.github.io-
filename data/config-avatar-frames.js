@@ -34,7 +34,16 @@ const avatarFrameList = [
     { id: "f22", name: "貴賓金環・VIP 3", img: "images/frames/frame-22.png", ring: { cx: 0.5, cy: 0.560, r: 0.300 }, unlock: { type: "coins", value: 100000000 } },
     { id: "f21", name: "貴賓金冠・VIP 4", img: "images/frames/frame-21.png", ring: { cx: 0.5, cy: 0.572, r: 0.292 }, unlock: { type: "coins", value: 300000000 } },
     { id: "f20", name: "貴賓王冠・VIP 5", img: "images/frames/frame-20.png", ring: { cx: 0.5, cy: 0.604, r: 0.267 }, unlock: { type: "coins", value: 1000000000 } },
-    { id: "f25", name: "翠玉象神・5VIP", img: "images/frames/frame-25.png", ring: { cx: 0.5, cy: 0.483, r: 0.254 }, unlock: { type: "coins", value: 3000000000 } }
+    { id: "f25", name: "翠玉象神・5VIP", img: "images/frames/frame-25.png", ring: { cx: 0.5, cy: 0.483, r: 0.254 }, unlock: { type: "coins", value: 3000000000 } },
+    // ---- 元神專屬（2026-10-02，第 65 節）：凝聚該偏好屬性的元神時解鎖（unlock.type "yuanshen"，value＝五行或 thunder／wind）；
+    //      圖由程式繪製（屬性色雙環＋符紋＋頂端屬性字徽記，512×512，洞 r 0.36），轉世元神消散也保留 ----
+    { id: "ys-metal",   name: "庚金元神環", img: "images/frames/frame-ys-metal.png",   ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "金" } },
+    { id: "ys-wood",    name: "乙木元神環", img: "images/frames/frame-ys-wood.png",    ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "木" } },
+    { id: "ys-water",   name: "癸水元神環", img: "images/frames/frame-ys-water.png",   ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "水" } },
+    { id: "ys-fire",    name: "丙火元神環", img: "images/frames/frame-ys-fire.png",    ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "火" } },
+    { id: "ys-earth",   name: "戊土元神環", img: "images/frames/frame-ys-earth.png",   ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "土" } },
+    { id: "ys-thunder", name: "紫雷元神環", img: "images/frames/frame-ys-thunder.png", ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "thunder" } },
+    { id: "ys-wind",    name: "青風元神環", img: "images/frames/frame-ys-wind.png",    ring: { cx: 0.5, cy: 0.5, r: 0.36 }, unlock: { type: "yuanshen", value: "wind" } }
 ];
 
 // 頭像與光環內洞的大小比：< 1 表示洞比頭像略小，頭像邊緣會被框的內緣蓋住，不會露出縫隙

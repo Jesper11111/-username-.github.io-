@@ -238,6 +238,7 @@ function fieldCombatRound() {
         player.reputation = (player.reputation || 0) + repEarned;
         addDailyProgress('kill', killedCount);
         onPartnerFieldKills(killedCount);   // 情緣任務的野外擊殺／並肩擊殺（partner.js）
+        rollFieldHuashenScroll(killedCount);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;
@@ -465,7 +466,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
     }
     // 風擊（變異屬性）：每回合機率追加一擊 ×WIND_HIT_MULT
     if (baseAttrs.wind > 0 && Math.random() < baseAttrs.wind / 100 && targets.some(t => t.hp > 0)) {
-        hitTarget(firstAlive(), getPhysAttack() * WIND_HIT_MULT, baseAttrs);
+        hitTarget(firstAlive(), getPhysAttack() * WIND_HIT_MULT, Object.assign({}, baseAttrs, { ysWind: true }));   // ysWind：風元神加成（resolveHit）
         tags.push("wind");
     }
     // 追擊：追加一次攻擊 ×0.6

@@ -109,6 +109,16 @@ function renderBag() {
             </div>`);
     });
 
+    // 化神訣殘本（元神，yuanshen.js）
+    if (player.huashenScrolls > 0) {
+        hasItems = true;
+        parts.push(`
+            <div class="card" style="border-color: #f472b6;">
+                <h3 style="color: #f472b6;">${HUASHEN_SCROLL.icon} ${HUASHEN_SCROLL.name} <span style="font-size:0.8em;">(x${player.huashenScrolls.toWan()} / ${YUANSHEN_COST[0].n.toWan()})</span></h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">${HUASHEN_SCROLL.desc}</p>
+            </div>`);
+    }
+
     // 鍛造圖紙（equipment.js，第 55 節）：分部位、分等級
     let bps = listBlueprints();
     if (bps.length) {

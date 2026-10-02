@@ -225,6 +225,8 @@ function updateUI() {
     if (aptEl) aptEl.innerText = formatAptitudeShort();
     let coreEl = document.getElementById('core-display');   // 丹田／金丹／元嬰（golden-core.js）
     if (coreEl) coreEl.innerHTML = formatCoreShort();
+    let ysEl = document.getElementById('yuanshen-display');   // 元神（yuanshen.js），點擊開元神視窗
+    if (ysEl) ysEl.innerHTML = formatYuanshenShort();
     document.getElementById('sect-display').innerText = player.sect ? player.sect.name : "散修 (無技能)";
     document.getElementById('coins-display').innerText = player.coins.toWan();
     document.getElementById('reputation-display').innerText = (player.reputation || 0).toWan();
@@ -557,6 +559,7 @@ function showToast(msg, kind) {
 //   confirm() 會直接回傳 false（等於按了取消）、alert() 直接略過，玩家會覺得「按了沒反應」（使用者回報寄售無法出價）。
 // gameConfirm(msg) 回傳 Promise<boolean>，呼叫端要 await；gameAlert(msg) 不會暫停程式（跟 alert 不同），適合放在 return 前。
 // 視窗動態建立（#game-dialog），疊在所有視窗與提示條之上；新功能請用這兩個，不要再用 confirm／alert。
+const GAME_DIALOG_GUARD_MS = 400;
 function gameDialog(msg, withCancel) {
     return new Promise(resolve => {
         let box = document.getElementById('game-dialog');
@@ -571,7 +574,10 @@ function gameDialog(msg, withCancel) {
         const ok = box.querySelector('.gd-ok'), cancel = box.querySelector('.gd-cancel');
         cancel.style.display = withCancel ? '' : 'none';
         const done = v => { box.style.display = 'none'; ok.onclick = cancel.onclick = null; resolve(v); };
-        ok.onclick = () => done(true);
+        // 防連點（2026-10-02）：確認框的「確定」常剛好跳在剛才按的按鈕位置，手機連點兩下會直接確認（例：凝聚元神、轉世這類不能反悔的操作）
+        //   → 確認框出現後 GAME_DIALOG_GUARD_MS 內不接受「確定」
+        const shownAt = Date.now();
+        ok.onclick = () => { if (withCancel && Date.now() - shownAt < GAME_DIALOG_GUARD_MS) return; done(true); };
         cancel.onclick = () => done(false);
         box.style.display = 'flex';
         ok.focus();

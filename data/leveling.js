@@ -176,6 +176,7 @@ async function triggerReincarnate() {
         `・遺忘：境界、人物等級、宗門（須重新拜入）與宗門技能、藏書閣古籍與屬性秘典\n` +
         `・身上的裝備全部卸下，放回背包（人物等級回到 Lv.1，要重新達到裝備等級才能再穿）\n` +
         `・壽元回到凡人的 ${lifespanByRealm[0].gain} 年\n` +
+        (typeof hasYuanshen === 'function' && hasYuanshen() ? `・元神消散，需重新凝聚（資質解鎖；化神訣殘本保留）\n` : '') +
         `此操作無法復原，是否確定輪迴？`)) {
         // 先記下此世的數值，再依比例保留（上一世留下的部分已包含在內，會自然累積）
         player.weakened = false;   // 轉世洗去虛弱，且保留值以未虛弱的上限計算
@@ -208,6 +209,7 @@ async function triggerReincarnate() {
         player.studyCounts = { str: 0, con: 0, int: 0, spr: 0 };
         player.elementStudy = {};
         player.goldenCore = null;   // 丹田／金丹／元嬰隨轉世重來（golden-core.js）
+        player.yuanshen = null;     // 元神隨轉世消散、資質解鎖（yuanshen.js；化神訣殘本保留）
         // 裝備全部卸下放回背包（2026-10-01 使用者指定）；強制卸下不受背包上限限制，超過上限的照舊保留（見 config-equipment.js）
         let takenOff = 0;
         Object.keys(player.equipment).forEach(slot => {

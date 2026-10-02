@@ -73,6 +73,7 @@ function claimDailyQuest(index) {
     q.claimed = true;
 
     addLog(`📅 完成每日任務【${def.name}】：獲得 ${reward.coins.toWan()} 靈石、${reward.reputation} 聲望、${reward.martialPoints} 武學積分`, "quest");
+    checkDailyHuashenBonus();   // 一輪全部領完：化神訣殘本（yuanshen.js）
     renderDailyQuests();
     updateUI();
 }
@@ -95,6 +96,7 @@ function claimAllDailyQuests() {
     player.martialPoints += mp;
 
     addLog(`📅 一次領取 ${ready.length} 項每日任務獎勵：${coins.toWan()} 靈石、${rep} 聲望、${mp} 武學積分`, "quest");
+    checkDailyHuashenBonus();   // 一輪全部領完：化神訣殘本（yuanshen.js）
     renderDailyQuests();
     updateUI();
 }
