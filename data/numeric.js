@@ -83,7 +83,8 @@ function nv2WeaponAtkOf(eq, slot) {
     if (NV2.blueprintWeaponL[eq.level]) L = NV2.blueprintWeaponL[eq.level];   // 圖紙裝備（Lv.1500 以上）
     const lb = !eq.level && nv2LingbaoItem(eq);   // 靈寶閣武器沒有裝備等級：依兌換階段給固定成長位置
     if (lb) L = NV2.lingbaoWeaponL[lb.tier] || 0;
-    return NV2.weaponBase * nv2Growth(L) * nv2QualityMult(eq.quality) * (1 + (eq.enhance || 0) * NV2.enhancePerLevel)
+    const bp = NV2.blueprintWeaponMult[eq.level] || 1;   // 圖紙武器額外倍率（每檔總攻擊約 +18～21%）
+    return NV2.weaponBase * nv2Growth(L) * bp * nv2QualityMult(eq.quality) * (1 + (eq.enhance || 0) * NV2.enhancePerLevel)
          * (slot ? getProfWeaponMult(slot) : 1);
 }
 // 主武器 = 身上攻擊最高的一把（6 種武器部位不疊加，其他武器只提供屬性）
@@ -96,7 +97,26 @@ function nv2WeaponAtk() {
     return best;
 }
 
-// ---- 增益：全部相加，最多 +200% ----
+// ---- 圖紙防具氣血（Lv.1500 以上的防具，獨立倍率、不進增益池）----
+// 單件的氣血 %（例 7.5 = +7.5%）；不是圖紙防具回傳 0
+function nv2ArmorHpPctOf(eq, slot) {
+    const base = eq && NV2.blueprintArmorHpPct[eq.level];
+    if (!base || equipTypes[slot || eq.name] !== 'armor') return 0;
+    const enh = (1 + (eq.enhance || 0) * NV2.enhancePerLevel) / (1 + 20 * NV2.enhancePerLevel);   // 以 +20 為基準
+    return base * nv2QualityMult(eq.quality) / NV2.quality["橙色"] * enh;
+}
+// 身上所有防具相加後的氣血倍率（1 = 沒有）
+function nv2ArmorHpMult() {
+    let pct = 0;
+    for (const slot in player.equipment) pct += nv2ArmorHpPctOf(player.equipment[slot], slot);
+    return 1 + pct / 100;
+}
+
+// ---- 增益：全部相加，最多 +200%（仙人初境起依境界提高，NV2.buffCapByRealm）----
+// 目前境界的增益上限（%）
+function nv2BuffCap() {
+    return NV2.buffCapByRealm[player.realmIndex] || NV2.buffCap;
+}
 // kind：'phys'／'mag'／'hp'；回傳比例（0.5 = +50%）
 function nv2BuffPct(kind) {
     let p = getGearPctBonus(kind);                                   // 裝備詞條、套裝、稱號、職業、異火、夥伴
@@ -111,7 +131,7 @@ function nv2BuffPct(kind) {
         if (player.buffTimer > 0 && player.buffMult) p += player.buffMult - 1;
         if (petBuffTimer > 0 && petBuffMult) p += petBuffMult - 1;
     }
-    return Math.max(-0.9, Math.min(NV2.buffCap / 100, p));
+    return Math.max(-0.9, Math.min(nv2BuffCap() / 100, p));
 }
 
 // ---- 攻擊、氣血、靈力 ----
@@ -127,7 +147,7 @@ function nv2MaxHp() {
     const L = nv2Level(player.realmIndex, player.stage);
     const reinc = (player.reincarnateBonus && player.reincarnateBonus.nv2Hp) || 0;   // 轉世保留的氣血上限（leveling.js）
     const v = (NV2.weaponBase * NV2.hpBaseMult * nv2Growth(L) * (1 + nv2Stat('con') * NV2.conPct / 100)
-            * (1 + nv2BuffPct('hp')) * (1 + player.level * NV2.levelHpPct / 100) + reinc) * getWeaknessMult();
+            * (1 + nv2BuffPct('hp')) * nv2ArmorHpMult() * (1 + player.level * NV2.levelHpPct / 100) + reinc) * getWeaknessMult();
     return Math.max(1, Math.round(v));
 }
 // 技能實際耗魔：新制 × NV2.mpScale（0.1）無條件進位；舊制原值。施放（combat.js）與所有顯示耗魔的地方都要經過這裡
@@ -310,6 +330,8 @@ function nv2FormatEquipStats(eq) {
     const parts = [];
     const isWeapon = eq.category === 'weapon' || equipTypes[eq.name] === 'weapon';
     if (isWeapon) parts.push(`⚔️武器攻擊 ${fmtCombat(nv2WeaponAtkOf(eq, equipTypes[eq.name] === 'weapon' ? eq.name : null))}`);
+    const armorHp = nv2ArmorHpPctOf(eq);   // 圖紙防具
+    if (armorHp > 0) parts.push(`🛡️氣血 +${armorHp.toFixed(1)}%`);
     const s = nv2GearStatsOf(eq);
     NV2_STAT_KEYS.forEach(k => { if (k !== 'cha' && s[k] > 0) parts.push(`${NV2_STAT_LABELS[k]}+${s[k].toFixed(1)}`); });
     const old = getEquipEffectiveStats(eq), rest = { cha: old.cha };
