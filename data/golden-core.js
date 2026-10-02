@@ -82,9 +82,8 @@ function onRealmAdvancedCore() {
 
 
 // ---- 加成 ----
-// 凝聚元神後金丹與元嬰化入元神（2026-10-02 使用者指定「合成元神後原有的金丹跟元嬰都會消失」，yuanshen.js）：加成與化神勝算都不再計算
+// 凝聚元神後金丹與元嬰加成照常保留（2026-10-02 使用者改為「全部保留」；原本做成凝聚後消失，見 ARCHITECTURE.md 第 65 節）
 function getGoldenCoreBonusTotals() {
-    if (typeof hasYuanshen === 'function' && hasYuanshen()) return {};
     const g = getGoldenCore(), t = {};
     if (g.core !== null && CORE_GRADES[g.core]) { const c = CORE_GRADES[g.core]; if (c.hpMpPct) { t.hpPct = c.hpMpPct; t.mpPct = c.hpMpPct; } }
     if (g.infant !== null && INFANT_GRADES[g.infant] && INFANT_GRADES[g.infant].magPct) t.magPct = INFANT_GRADES[g.infant].magPct;
@@ -93,7 +92,6 @@ function getGoldenCoreBonusTotals() {
 // 化神渡劫（元嬰 → 化神）時元嬰品級的勝算加減
 function getCoreTribBonus() {
     if (player.realmIndex !== SPIRIT_FRUIT.realmIndex) return 0;
-    if (typeof hasYuanshen === 'function' && hasYuanshen()) return 0;   // 元嬰已化入元神
     const g = getGoldenCore();
     return g.infant !== null && INFANT_GRADES[g.infant] ? INFANT_GRADES[g.infant].trib : 0;
 }
@@ -104,7 +102,6 @@ function formatCoreName(item) {
 }
 // 人物面板「金丹」一行
 function formatCoreShort() {
-    if (typeof hasYuanshen === 'function' && hasYuanshen()) return '<span style="color:#9ca3af;">已化入元神（金丹、元嬰加成消失）</span>';
     const g = getGoldenCore(), kind = getCoreFillKind();
     const parts = [];
     if (kind === 'dantian') parts.push(`丹田 ${Math.floor(g.dantian * 100)}%（結丹可成${CORE_GRADES[coreGradeByFill(g.dantian, true)].name}）`);

@@ -69,12 +69,13 @@ function addHuashenScroll(n, source) {
 }
 function rollHuashenScroll([a, b]) { return a + Math.floor(Math.random() * (b - a + 1)); }
 // 野外擊殺（combat.js）：適合境界化神以上的地圖，每隻機率掉落；回傳掉落頁數
-function rollFieldHuashenScroll(kills) {
+// silent＝離線／背景結算用（save.js 的 settleIdleSeconds）：不寫日誌，由結算訊息列出
+function rollFieldHuashenScroll(kills, silent) {
     const D = HUASHEN_SCROLL_DROPS, suit = typeof getMapSuitRange === 'function' ? getMapSuitRange(player.currentMap) : null;
     if (!suit || suit[0] < D.fieldMinRealm || !(kills > 0)) return 0;
     let n = 0;
     for (let i = 0; i < kills; i++) if (Math.random() < D.fieldChance) n += rollHuashenScroll(D.field);
-    return n ? addHuashenScroll(n, '斬殺妖獸，從遺骸中翻出殘頁') : 0;
+    return n ? addHuashenScroll(n, silent ? null : '斬殺妖獸，從遺骸中翻出殘頁') : 0;
 }
 // 每日任務一輪 10 項全部領完（daily-quest.js）：每一輪只給一次（記在第一項上，刷新後是新陣列）
 function checkDailyHuashenBonus() {
@@ -112,7 +113,7 @@ function openYuanshenModal() {
                 <h3 class="${y.tierInfo.rainbow ? 'rainbow-text' : ''}" style="${y.tierInfo.rainbow ? '' : `color:${y.tierInfo.color};`}">${y.name}</h3>
                 <p class="ys-sub">${y.tierInfo.name}・偏好${yuanshenPrefLabel(y)}</p>
                 <p>${yuanshenEffectText(y)}</p>
-                <p class="ys-note">先天靈根與體質的能力照常生效；原有金丹、元嬰已化入元神。資質已鎖定，轉世時元神消散、需重新凝聚。</p>
+                <p class="ys-note">先天靈根與體質、金丹與元嬰的加成都照常生效。資質已鎖定，轉世時元神消散、需重新凝聚。</p>
             </div>`;
     } else {
         const c = getYuanshenCandidate();
@@ -126,7 +127,7 @@ function openYuanshenModal() {
                  : `<p class="ys-warn">你的資質（${formatAptitudeShort()}）無法凝聚元神。</p>`}
             <div class="ys-req${realmOk ? ' ok' : ''}">境界：元嬰期以上（目前 ${realms[player.realmIndex]}）</div>
             <div class="ys-costs">${yuanshenCostRows()}</div>
-            <p class="ys-note">⚠️ 凝聚後：原有金丹與元嬰化入元神（其加成消失）、資質鎖定不能再重測；轉世時元神消散。</p>
+            <p class="ys-note">⚠️ 凝聚後：金丹、元嬰加成保留；先天資質鎖定不能再重測；轉世時元神消散。</p>
             <button class="sys-btn ys-go" ${c && realmOk && costOk ? '' : 'disabled'} onclick="condenseYuanshen()">🔮 凝聚元神</button>`;
     }
     box.innerHTML = html + `<button class="close-btn" onclick="closeModal('yuanshen-modal')">關閉</button>`;
@@ -136,10 +137,10 @@ async function condenseYuanshen() {
     const c = getYuanshenCandidate();
     if (!c || hasYuanshen() || player.realmIndex < YUANSHEN_MIN_REALM) return;
     if (!YUANSHEN_COST.every(k => (player[k.key] || 0) >= k.n)) { gameAlert('材料不足！'); return; }
-    if (!(await gameConfirm(`確定以【元嬰化神法】凝聚【${c.name}】嗎？\n\n・原有金丹與元嬰會化入元神，加成消失\n・先天資質從此鎖定，不能再重測\n・轉世時元神消散`))) return;
+    if (!(await gameConfirm(`確定以【元嬰化神法】凝聚【${c.name}】嗎？\n\n・金丹、元嬰的加成照常保留\n・先天資質從此鎖定，不能再重測\n・轉世時元神消散`))) return;
     YUANSHEN_COST.forEach(k => { player[k.key] -= k.n; });
     player.yuanshen = { type: c.id, tier: c.tier, at: Date.now() };
-    addLog(`🔮 修成【元嬰化神法】，金丹元嬰盡化神識，凝聚【${c.name}】！${yuanshenEffectText(c)}。`, "reincarnate");
+    addLog(`🔮 修成【元嬰化神法】，元嬰神識凝練，凝聚【${c.name}】！${yuanshenEffectText(c)}。`, "reincarnate");
     if (c.tier === 'heaven') addLog('🌈 天地異象：九天之上星河倒懸，一尊天元神破識海而出！', "reincarnate");
     if (typeof saveLocal === 'function') saveLocal();
     updateUI();
