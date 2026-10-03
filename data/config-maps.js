@@ -50,7 +50,7 @@ const maps = [
         { name: "崑吾山", expRate: 1600, nv2FixedL: 7.9, nv2Str: [5, 10], diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 合體・挑戰
         { name: "蠻荒古地", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },        // 大乘・普通
         { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 大乘・挑戰
-        { name: "血天大陸", expRate: 2500, diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通
+        { name: "血天大陸", expRate: 2500, nv2Str: [3, 8], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通（2026-10-03 使用者指定強度 3～8 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
         { name: "星空古路", expRate: 3000, nv2Str: [10, 15], diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 仙人初境・挑戰
