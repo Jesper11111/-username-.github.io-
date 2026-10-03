@@ -54,7 +54,7 @@ const maps = [
         { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
         { name: "星空古路", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通
         { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 仙人初境・挑戰
-        { name: "九天仙域", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] },   // 天仙・普通
+        { name: "九天仙域", expRate: 5000, nv2Str: [10, 15], diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] },   // 天仙・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "太初古礦", expRate: 6500, nv2FixedL: 10.9, nv2Str: [15, 30], diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 仙人初境・挑戰
         { name: "上蒼（葬天島）", expRate: 8000, nv2FixedL: 11.9, nv2Str: [15, 40], diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 天仙・挑戰
     ]},
