@@ -26,7 +26,9 @@ function formatQualityLabel(quality) {
 
 // 裝備卡片的外框：造化神器用七彩發光框（index.html 的 .rainbow-glow）
 function getEquipCardClass(eq) {
-    return eq && eq.quality === ARTIFACT_QUALITY ? 'card rainbow-glow' : 'card';
+    if (eq && eq.quality === ARTIFACT_QUALITY) return 'card rainbow-glow';
+    const A = eq && typeof GEAR_ANCIENT !== 'undefined' && GEAR_ANCIENT[eq.ancient];   // 遠古／太古的發光邊框（第 67 節 D3）
+    return A ? 'card ' + A.cls : 'card';
 }
 
 // 裝備卡片用：神器全名與專屬技能（背包、角色裝備欄）

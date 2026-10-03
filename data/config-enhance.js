@@ -93,6 +93,14 @@ const REFINE_STONE_MAX = 10;
 const REFINE_COINS_HOURS = 0.5;
 const REFINE_ZHENMO = { base: 1, perFloors: 20 };
 
+// ---- 遠古／太古（第 67 節 D3）：橙色裝備產生時擲一次；進化成白金、洗煉都保留 ----
+//   遠古：詞條至少「地」級（minTier 2）、四維 ×1.1；太古：詞條全部「天」級且取上限（maxRoll）、多 1 條詞條、四維 ×1.2
+const GEAR_ANCIENT = {
+    1: { name: "遠古", chance: 0.02,  minTier: 2, statMult: 1.1, extraSubs: 0, cls: "eq-ancient" },
+    2: { name: "太古", chance: 0.002, minTier: 1, maxRoll: true, statMult: 1.2, extraSubs: 1, cls: "eq-primal" }
+};
+const GEAR_ANCIENT_QUALITY = "橙色";
+
 // ---- 暫存區：背包滿時新掉落的橙色以上放這裡；滿了不能外出練功 ----
 const GEAR_STASH_MAX = 50;
 
