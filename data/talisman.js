@@ -23,6 +23,7 @@ function formatTalisman(type, grade) {
     let v = getTalismanValue(type, grade);
     let gn = g.color ? `<span style="color:${g.color};">${g.icon || ''}${g.name}</span>` : g.name;   // 極品：金字＋🌟
     if (t.kind === "race") return `${t.icon}${gn}${t.name}（對${RACES[t.race].name} +${v}%）`;   // 剋制符（種族剋制，race.js）
+    if (POINT_STAT_KEYS.includes(t.key)) return `${t.icon}${gn}${t.name}（${t.key === 'def' ? '防禦' : t.key === 'eva' ? '閃避' : '魔防'} +${v}）`;   // 防禦／閃避是點數（第 66 節），不是 %
     return `${t.icon}${gn}${t.name}（${t.kind === "flat" ? `+${NUMERIC_V2 ? v.toFixed(1) : v.toWan()}` : `+${v}%`}）`;
 }
 
@@ -92,7 +93,7 @@ function renderTalismanWorkshop() {
     // 煉製區：種類與品階全部隨機，只選次數
     let c = TALISMAN_CRAFT_COST;
     let gradeText = talismanGrades.filter(g => g.chance > 0).map(g =>
-        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${NUMERIC_V2 ? talismanFlatOf(g).toFixed(1) : g.flat.toWan()}／屬性 +${g.pct}%）`).join("｜");
+        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${NUMERIC_V2 ? talismanFlatOf(g).toFixed(1) : g.flat.toWan()}／防禦·閃避 +${g.pct}／五行 +${g.pct}%）`).join("｜");
     let craftCard = `
         <div class="card" style="max-width: 460px; margin: 0 auto;">
             <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">每次煉製：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>
