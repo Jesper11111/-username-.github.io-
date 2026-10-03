@@ -90,6 +90,7 @@ function mkTakeItem(f, dryRun) {
         const i = player.equipInventory.findIndex(e => e.id === f.key);
         if (i < 0) return { error: '背包裡找不到這件裝備（穿在身上的要先卸下）。' };
         if (isEquipLocked(player.equipInventory[i])) return { error: '鎖定中的裝備不能上架，請先解除鎖定。' };
+        if (player.equipInventory[i].corrupt) return { error: '入魔淬煉過的裝備不能交易。' };   // 腐化裝備不可交易（第 69 節）
         const eq = dryRun ? player.equipInventory[i] : player.equipInventory.splice(i, 1)[0];
         return { item: { kind: 'equip', eqJson: JSON.stringify(eq) } };
     }
@@ -123,6 +124,11 @@ function mkDone(msg) {
 }
 
 // ---- 上架 ----
+// 上架登錄費（不退）
+function marketListFee(price) {
+    const H = typeof getHourlyIncome === 'function' ? getHourlyIncome() : 0;
+    return Math.max(Math.ceil(price * MARKET_LIST_FEE.pct), Math.floor(H * MARKET_LIST_FEE.minHours));
+}
 async function marketCreate() {
     const f = mkForm;
     const price = Math.floor(Number(document.getElementById('mk-price').value) || 0);
@@ -138,9 +144,13 @@ async function marketCreate() {
     const preview = mkTakeItem(f, true);   // 先只檢查，確認後才扣
     if (preview.error) { gameAlert(preview.error); return; }
     const label = mkLabel(preview.item);
-    if (!(await gameConfirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n成交抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回。\n確定上架？`))) return;
+    const fee = marketListFee(price);
+    if (player.coins < fee) { gameAlert(`上架登錄費 ${fee.toWan()} 靈石，靈石不足。`); return; }
+    if (!(await gameConfirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n上架登錄費 ${fee.toWan()} 靈石（現在扣，不論成交與否都不退）\n成交另抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回物品。\n確定上架？`))) return;
+    if (player.coins < fee) { gameAlert('靈石不足。'); return; }
     const taken = mkTakeItem(f);           // 等待確認期間背包可能變了，重新檢查一次
     if (taken.error) { gameAlert(taken.error); return; }
+    player.coins -= fee;
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_COLLECTION).add({
@@ -152,12 +162,13 @@ async function marketCreate() {
     } catch (e) {
         console.warn('上架失敗：', e);
         mkGiveItem(taken.item);   // 失敗就放回
+        player.coins += fee;      // 登錄費也退回
         // 附上錯誤代碼，方便玩家截圖回報（例：invalid-argument＝資料格式被雲端拒絕，不是網路問題）
         gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : `上架失敗，請稍後再試。（${(e && (e.code || e.message)) || '未知錯誤'}）`);
         saveLocal(); renderLeaderboard(false);
         return;
     }
-    mkDone(`🏪 寄售上架【${label}】，起標 ${price.toWan()} 靈石、${hours} 小時。`);
+    mkDone(`🏪 寄售上架【${label}】，起標 ${price.toWan()} 靈石、${hours} 小時（登錄費 ${fee.toWan()} 靈石）。`);
     refreshLeaderboard(false);
 }
 
@@ -271,7 +282,7 @@ function isMarketClaimed(id, type) { return (player.marketClaimed || []).include
 function marketSetKind(kind) { mkForm = { kind, open: true }; renderLeaderboard(false); }
 function marketItemOptions(kind) {
     if (kind === 'blueprint') return listBlueprints().map(b => [`${b.slot}_${b.level}`, `${b.slot}・${b.level} 等（持有 ${b.count}）`]);
-    if (kind === 'equip') return player.equipInventory.filter(e => !isEquipLocked(e))
+    if (kind === 'equip') return player.equipInventory.filter(e => !isEquipLocked(e) && !e.corrupt)   // 入魔過的不能交易
         .map(e => [e.id, `${e.level ? `Lv.${e.level} ` : ''}${e.quality}・${getEquipDisplayName(e)}${e.enhance ? ` +${e.enhance}` : ''}`]);
     return MARKET_STACKS.filter(s => s.kind === kind && (player[s.key] || 0) > 0).map(s => [s.key, `${s.icon} ${s.label}（持有 ${(player[s.key] || 0).toWan()}）`]);
 }
@@ -289,7 +300,7 @@ function marketHtml(loading) {
         <label>起標價 <input id="mk-price" type="number" min="1" placeholder="靈石"></label>
         <label>時間 <select id="mk-hours">${MARKET_HOURS.map(h => `<option value="${h}"${h === 24 ? ' selected' : ''}>${h} 小時</option>`).join('')}</select></label>
         <button class="sys-btn" onclick="marketCreate()">🏪 上架</button>` : `<p class="lb-note">沒有可寄售的${kinds.find(k => k[0] === mkForm.kind)[1].slice(3)}。</p>`}
-        <p class="lb-note">同時最多 ${MARKET_MAX_ACTIVE} 件；成交抽 ${Math.round(MARKET_FEE * 100)}%；沒人出價可隨時下架領回。</p></details>`;
+        <p class="lb-note">同時最多 ${MARKET_MAX_ACTIVE} 件；上架登錄費＝起標價 ${Math.round(MARKET_LIST_FEE.pct * 100)}%（至少 ${Math.round(MARKET_LIST_FEE.minHours * 60)} 分鐘收入，不退）；成交抽 ${Math.round(MARKET_FEE * 100)}%；沒人出價可隨時下架領回物品；入魔淬煉過的裝備不能交易。</p></details>`;
     // 待處理
     const todo = [];
     mkRefunds.forEach(r => todo.push(`<div class="mk-todo">↩️ 出價被超過：${lbEscape(r.label)}｜退回 ${Number(r.amount).toWan()} 靈石 <button onclick="marketClaimRefund('${lbEscape(r.id)}')">領回</button></div>`));
