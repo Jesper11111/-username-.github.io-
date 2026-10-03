@@ -69,7 +69,7 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
         element: def.element,
         gearId: def.id,
         stats: buildGearStats(def, qualityObj, base),
-        subs: rollGearSubs(qualityObj.name, !!GEAR_CHANNELS[def.channel].external, GEAR_SUB_COUNT[qualityObj.name] || 0, null, def.category),
+        subs: rollGearSubs(qualityObj.name, !!GEAR_CHANNELS[def.channel].external, GEAR_SUB_COUNT[qualityObj.name] || 0, null, def.category, level),
         enhance: 0
     };
     if (level) eq.level = level;   // 裝備等級：穿戴需人物等級 ≥ level
@@ -79,26 +79,74 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
 }
 
 // ---- 隨機詞條（config-enhance.js 的 gearSubAffixes）----
-// 抽 count 條不重複的詞條，回傳 [[key, value], ...]；exclude = 已有的 key（進化時多抽 1 條用）；category＝裝備分類（詞條的 only 限定分類，例：魔防只出在飾品）
-function rollGearSubs(quality, external, count, exclude, category) {
-    let scale = GEAR_SUB_QUALITY_SCALE[quality] || 0;
-    let pool = gearSubAffixes.filter(s => !(exclude || []).includes(s.key) && (!s.only || s.only === category));
+// 抽 count 條不重複的詞條，回傳 [[key, value, 分級], ...]；exclude = 已有的 key（進化時多抽 1 條用）
+//   category＝裝備分類：依詞條的 w 權重抽（武器偏攻擊、防具偏生存、飾品偏輔助；only 限定分類），level＝裝備等級：決定能抽到的分級（第 67 節 D1）
+//   opts.minTier／opts.maxRoll：遠古、太古用（D3）
+function gearSubWeight(s, category) {
+    if (s.only && s.only !== category) return 0;
+    const w = s.w || {};
+    return typeof w[category] === 'number' ? w[category] : 1;
+}
+function rollGearSubTier(level, minTier) {
+    const lv = typeof level === 'number' ? level : GEAR_SUB_TIER_NOLEVEL;
+    const band = GEAR_SUB_TIER_WEIGHTS.filter(b => lv >= b.minLv).pop() || GEAR_SUB_TIER_WEIGHTS[0];
+    const w = band.w.map((x, i) => (minTier && i + 1 > minTier ? 0 : x));
+    let tot = w.reduce((a, b) => a + b, 0);
+    if (!tot) return minTier || 3;
+    let r = Math.random() * tot;
+    for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i + 1; }
+    return 3;
+}
+function gearSubTierInfo(tier) { return GEAR_SUB_TIERS.find(t => t.id === tier) || null; }
+// 單條詞條的數值（重鑄 D2 也用）
+function rollGearSubValue(s, quality, external, tier, maxRoll) {
+    const scale = GEAR_SUB_QUALITY_SCALE[quality] || 0;
+    const r = maxRoll ? 1 : external ? 0.5 + Math.random() * 0.5 : Math.random();
+    const v = (s.min + (s.max - s.min) * r) * scale * ((gearSubTierInfo(tier) || { mult: 1 }).mult);
+    return s.fmt === 'pct' ? +v.toFixed(4) : +v.toFixed(1);
+}
+function pickGearSubAffix(pool, category) {
+    let tot = pool.reduce((a, s) => a + gearSubWeight(s, category), 0);
+    if (tot <= 0) return -1;
+    let r = Math.random() * tot;
+    for (let i = 0; i < pool.length; i++) { r -= gearSubWeight(pool[i], category); if (r < 0) return i; }
+    return pool.length - 1;
+}
+function rollGearSubs(quality, external, count, exclude, category, level, opts) {
+    opts = opts || {};
+    let pool = gearSubAffixes.filter(s => !(exclude || []).includes(s.key) && gearSubWeight(s, category) > 0);
     let subs = [];
     for (let i = 0; i < count && pool.length; i++) {
-        let s = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-        let r = external ? 0.5 + Math.random() * 0.5 : Math.random();
-        let v = (s.min + (s.max - s.min) * r) * scale;
-        subs.push([s.key, s.fmt === 'pct' ? +v.toFixed(4) : +v.toFixed(1)]);
+        let idx = pickGearSubAffix(pool, category);
+        if (idx < 0) break;
+        let s = pool.splice(idx, 1)[0];
+        let tier = rollGearSubTier(level, opts.minTier);
+        subs.push([s.key, rollGearSubValue(s, quality, external, tier, opts.maxRoll), tier]);
     }
     return subs;
 }
 
+// ---- 前綴／後綴命名（第 67 節 D1）：依最強的兩條詞綴，例「破軍青竹蜂雲劍・不滅」 ----
+//   強弱：分級高者優先（舊詞條沒有分級視為「玄」），同級比「數值 ÷ 該詞條上限」
+function rankGearSubs(eq) {
+    if (!eq || !Array.isArray(eq.subs)) return [];
+    return eq.subs.map(([k, v, t]) => {
+        const s = gearSubAffixes.find(x => x.key === k);
+        return s ? { s, score: (6 - (t || 3)) * 10 + v / (s.max || 1) } : null;
+    }).filter(Boolean).sort((a, b) => b.score - a.score);
+}
+function getGearAffixName(eq) {
+    const r = rankGearSubs(eq);
+    return { pre: r[0] ? r[0].s.pre : '', suf: r[1] ? r[1].s.suf : '' };
+}
+
 function formatGearSubs(eq) {
     if (!eq || !Array.isArray(eq.subs) || eq.subs.length === 0) return '';
-    let parts = eq.subs.map(([key, v]) => {
+    let parts = eq.subs.map(([key, v, tier]) => {
         let info = gearSubAffixes.find(s => s.key === key);
         if (!info) return '';
-        return `${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}${POINT_STAT_KEYS.includes(key) ? '' : '%'}`;   // 防禦是點數（第 66 節）
+        let t = gearSubTierInfo(tier);   // 分級標籤〔天〕〔地〕…（第 67 節 D1；舊詞條沒有）
+        return `${t ? `<span style="color:${t.color}">〔${t.name}〕</span>` : ''}${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}${POINT_STAT_KEYS.includes(key) ? '' : '%'}`;   // 防禦是點數（第 66 節）
     }).filter(Boolean);
     return `<p class="gear-subs">◆ ${parts.join('、')}</p>`;
 }
@@ -225,7 +273,10 @@ function tryLootDrop(source) {
 function getEquipDisplayName(eq) {
     if (!eq) return '';
     let def = getGearDef(eq);
-    if (def) return (eq.quality === PLATINUM_QUALITY.name ? EVOLVE_NAME_PREFIX : '') + def.name;
+    if (def) {
+        const an = getGearAffixName(eq);   // 前綴／後綴（第 67 節 D1）
+        return (eq.quality === PLATINUM_QUALITY.name ? EVOLVE_NAME_PREFIX : '') + an.pre + def.name + (an.suf ? '・' + an.suf : '');
+    }
     if (eq.lingbaoId) {
         let item = lingbaoShopItems.find(i => i.id === eq.lingbaoId);
         if (item) return item.name.replace(/^神器・/, '');
