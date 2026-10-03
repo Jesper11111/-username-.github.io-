@@ -86,5 +86,6 @@ const monsterAttrsByMapCategory = {
     2: { def: 5,  eva: 4, affixProb: 0.5, affixChance: 10 },   // 開放世界
     3: { def: 10, eva: 6, affixProb: 0.7, affixChance: 15 },   // 上古禁區
     4: { def: 10, eva: 6, affixProb: 0.7, affixChance: 15 },   // 幽冥禁域（同上古禁區）
-    5: { def: 15, eva: 8, affixProb: 0.9, affixChance: 20 }    // 諸天至高戰場
+    5: { def: 15, eva: 8, affixProb: 0.9, affixChance: 20 },   // 諸天至高戰場
+    6: { def: 10, eva: 6, affixProb: 0.7, affixChance: 15 }    // 無邊海（2026-10-03 由第三區拆出，同上古禁區）
 };

@@ -49,7 +49,28 @@ const maps = [
         { name: "黑風海域", expRate: 1400, diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },        // 合體・普通
         { name: "崑吾山", expRate: 1600, nv2FixedL: 7.9, nv2Str: [5, 10], diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 合體・挑戰
         { name: "蠻荒古地", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },        // 大乘・普通
-        { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 大乘・挑戰
+        { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] }        // 大乘・挑戰
+    ]},
+    // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
+    // 2026-10-03 使用者指定：第四區強度 40～80 倍、依地圖排列分段（nv2Str）；進入條件依排列設等級 minL（成長位置＝境界＋(階−1)/10：真仙 1／4／7／10 階，map.js 的 getMapMinLevel）
+    { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
+        { name: "不死山", expRate: 6000, nv2Str: [40, 50], minL: 12, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
+        { name: "神墟", expRate: 7000, nv2Str: [50, 60], minL: 12.3, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 12.3, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
+        { name: "仙陵", expRate: 8000, nv2Str: [60, 70], minL: 12.6, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12.6, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
+        { name: "冥界", expRate: 9000, nv2Str: [70, 80], minL: 12.9, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 12.9, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
+    ]},
+    // 上蒼之後（含諸天戰場）一律維持在每小時 800～1000 萬，不再隨難度放大；
+    // 這幾張圖的差異改由經驗與聲望體現，靈石封頂。
+    // 2026-10-03 使用者指定：第五區強度 80～200 倍、依地圖排列分段；進入條件 minL＝該圖境界 1 階（大羅金仙／混元大羅金仙／混沌道祖，不再能越級，越級走挑戰模式）
+    { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
+        { name: "仙界戰場", expRate: 15000, nv2Str: [80, 120], minL: 13, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
+        { name: "萬界戰場", expRate: 25000, nv2Str: [120, 160], minL: 14, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
+        { name: "混沌初界", expRate: 50000, nv2Str: [160, 200], minL: 15, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
+    ]},
+    // 無邊海（2026-10-03 使用者要求：第三區雷鳴大陸之後 7 張圖搬來這裡；世界地圖「無邊海」區塊開這一區）
+    // ⚠️ 加在最後（索引 6），不插在第三區後面：分類索引被 monsterAttrsByMapCategory／REPUTATION_MAX_BY_MAP_CATEGORY／PROF_MAP_MULT／LIFESPAN_DANGER_MULT／DARK_MAP_CATEGORIES 等使用，
+    //    插在中間會讓幽冥禁域、諸天戰場的索引全部位移。各表的索引 6 一律同第三區
+    { category: "無邊海 (渡劫解鎖·高難)", isSafe: false, items: [
         { name: "血天大陸", expRate: 2500, nv2Str: [3, 8], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通（2026-10-03 使用者指定強度 3～8 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
         { name: "星空古路", expRate: 3000, nv2Str: [10, 15], diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
@@ -57,20 +78,6 @@ const maps = [
         { name: "九天仙域", expRate: 5000, nv2Str: [10, 15], diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] },   // 天仙・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "太初古礦", expRate: 6500, nv2FixedL: 10.9, nv2Str: [15, 30], diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 仙人初境・挑戰
         { name: "上蒼（葬天島）", expRate: 8000, nv2FixedL: 11.9, nv2Str: [15, 40], diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 天仙・挑戰
-    ]},
-    // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
-    { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
-        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
-        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 12.3, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
-        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12.6, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
-        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 12.9, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
-    ]},
-    // 上蒼之後（含諸天戰場）一律維持在每小時 800～1000 萬，不再隨難度放大；
-    // 這幾張圖的差異改由經驗與聲望體現，靈石封頂。
-    { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
-        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
-        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
-        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
     ]}
 ];
 
@@ -85,7 +92,8 @@ const REPUTATION_MAX_BY_MAP_CATEGORY = {
     2: 10,    // 二、開放世界
     3: 30,    // 三、上古禁區
     4: 30,    // 四、幽冥禁域（同上古禁區）
-    5: 100    // 五、諸天至高戰場
+    5: 100,   // 五、諸天至高戰場
+    6: 30     // 無邊海（同上古禁區）
 };
 
 // 離線掛機的「每秒戰鬥次數」：離線收益 = 離線秒數 × 此係數 × 每次的經驗/靈石。
