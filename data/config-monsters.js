@@ -1,0 +1,71 @@
+// 野外妖獸：型態、圖鑑、各地圖出沒組合（2026-10-03《天堂2》式戰鬥第 2 期，ARCHITECTURE.md 第 66 節）
+// 邏輯在 monster.js；數值仍由 numeric.js 的 nv2MonsterStats 依「同境界一般玩家」算，型態只是在上面乘倍率。
+
+// ---- 型態 ----
+//   hp：氣血倍率；def：減傷 %（加在地圖分類的減傷上，最低 0）；eva：「超出一般玩家命中」的閃避 %；crit：暴擊率（傷害 × NV2.critDmg）
+//   攻擊倍率不在這裡填：monster.js 依「一般玩家殺一隻要幾回合 × 暴擊期望」自動反推，讓每個型態對一般玩家造成的「每隻總傷害」相同
+//   （皮厚型打得久但打得輕、猛攻型死得快但會爆擊），所以生存與收益不因型態改變；擊殺時間的差異由收益補償吸收（nv2TypRoundsPerKill）。
+const MONSTER_TYPES = {
+    balanced: { name: "均衡", icon: "⚖️", hp: 1.0,  def: 0,  eva: 0,  crit: 0.05, desc: "各項平均" },
+    tank:     { name: "皮厚", icon: "🛡️", hp: 1.1,  def: 15, eva: 0,  crit: 0.03, desc: "減傷高、打得慢；破甲、雷擊剋制" },
+    agile:    { name: "敏捷", icon: "💨", hp: 0.8,  def: -5, eva: 15, crit: 0.08, desc: "很會閃避；命中（敏捷、洞察）剋制" },
+    brute:    { name: "猛攻", icon: "⚔️", hp: 0.85, def: 0,  eva: 0,  crit: 0.12, desc: "攻擊猛、常暴擊；防禦剋制" },
+    caster:   { name: "術法", icon: "🔮", hp: 0.9,  def: -5, eva: 5,  crit: 0.05, desc: "皮薄、會閃避，屬性異狀較多" }
+};
+// 術法型帶異屬性（冰／毒／雷）的機率加成（乘在地圖分類的 affixProb 上，最多 1）
+const MONSTER_CASTER_AFFIX_MULT = 1.5;
+
+// ---- 圖鑑 ----
+// img 沒有的顯示大號 emoji（battle-fx.js）；之後放圖到 images/monsters/、在這裡補 img／pos 即可（只影響外觀）
+// race：config-race.js 的四族；心魔不放在野外（斬妖錄心魔門檻 50／100／200 是依渡劫心魔的稀有度訂的）
+const FIELD_MONSTERS = [
+    { id: "dragon",  name: "青鱗蒼龍", icon: "🐉", img: "images/monsters/dragon.jpg",        pos: "62% 30%", race: "beast", type: "balanced" },
+    { id: "tiger",   name: "雪紋白虎", icon: "🐅", img: "images/monsters/white-tiger.jpg",   pos: "78% 35%", race: "beast", type: "brute" },
+    { id: "qilin",   name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%", race: "beast", type: "tank" },
+    { id: "fox",     name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%", race: "beast", type: "agile" },
+    { id: "phoenix", name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%", race: "beast", type: "caster" },
+    { id: "turtle",  name: "玄甲靈龜", icon: "🐢", race: "beast", type: "tank" },
+    { id: "spider",  name: "碧眼毒蛛", icon: "🕷️", race: "beast", type: "agile" },
+    { id: "ghostGen", name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", race: "ghost", type: "caster" },
+    { id: "yaksha",  name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", race: "ghost", type: "brute" },
+    { id: "zombie",  name: "百年殭屍", icon: "🧟", race: "ghost", type: "tank" },
+    { id: "wraith",  name: "怨魂",     icon: "🌫️", race: "ghost", type: "agile" },
+    { id: "bloodCult", name: "血煞魔修", icon: "😈", img: "images/monsters/demonic-cultivator.jpg", pos: "50% 30%", race: "demon", type: "brute" },
+    { id: "puppet",  name: "傀儡魔偶", icon: "🗿", race: "demon", type: "tank" },
+    { id: "sorcerer", name: "魔道術士", icon: "🧙", race: "demon", type: "caster" }
+];
+
+// ---- 各地圖出沒組合 [[圖鑑 id, 權重], …]（每張 3～5 種）；沒列的地圖用舊規則（幽冥禁域只出鬼物，其餘全部）----
+// 幽冥禁域只放鬼物（DARK_MAP_CATEGORIES，本質為暗）；魔修只在幾張魔氣重的圖出現（斬妖錄魔修門檻 2000／2 萬／3 萬是依野外邪修的頻率訂的）
+const FIELD_MONSTER_POOLS = {
+    // 一、野外歷練
+    "靈山大川": [["tiger", 3], ["fox", 3], ["qilin", 2], ["turtle", 2]],
+    "深淵險地": [["fox", 3], ["spider", 3], ["dragon", 2], ["yaksha", 2]],
+    "上古遺跡": [["qilin", 3], ["phoenix", 2], ["ghostGen", 3], ["zombie", 2]],
+    // 二、開放世界
+    "天南":     [["dragon", 3], ["tiger", 3], ["spider", 2], ["fox", 2]],
+    "亂星海":   [["dragon", 3], ["turtle", 3], ["phoenix", 2], ["yaksha", 2]],
+    "鬼谷八荒": [["yaksha", 3], ["ghostGen", 3], ["wraith", 2], ["tiger", 2]],
+    "墜魔谷":   [["bloodCult", 4], ["puppet", 3], ["sorcerer", 3]],
+    // 三、上古禁區
+    "黑風海域": [["turtle", 3], ["dragon", 3], ["spider", 2], ["yaksha", 2]],
+    "崑吾山":   [["qilin", 3], ["tiger", 3], ["fox", 2], ["phoenix", 2]],
+    "蠻荒古地": [["tiger", 3], ["qilin", 2], ["spider", 3], ["zombie", 2]],
+    "雷鳴大陸": [["dragon", 4], ["phoenix", 3], ["turtle", 3]],
+    "血天大陸": [["bloodCult", 4], ["sorcerer", 3], ["yaksha", 3]],
+    "天淵戰場": [["puppet", 3], ["bloodCult", 3], ["ghostGen", 2], ["tiger", 2]],
+    "星空古路": [["dragon", 3], ["fox", 3], ["phoenix", 2], ["wraith", 2]],
+    "荒古禁地": [["qilin", 3], ["turtle", 3], ["zombie", 2], ["tiger", 2]],
+    "九天仙域": [["phoenix", 3], ["fox", 3], ["dragon", 2], ["qilin", 2]],
+    "太初古礦": [["puppet", 3], ["turtle", 3], ["spider", 2], ["zombie", 2]],
+    "上蒼（葬天島）": [["dragon", 3], ["ghostGen", 3], ["sorcerer", 2], ["fox", 2]],
+    // 四、幽冥禁域（只有鬼物）
+    "不死山":   [["zombie", 4], ["yaksha", 3], ["ghostGen", 3]],
+    "神墟":     [["ghostGen", 4], ["wraith", 3], ["yaksha", 3]],
+    "仙陵":     [["zombie", 3], ["wraith", 3], ["ghostGen", 4]],
+    "冥界":     [["yaksha", 3], ["wraith", 3], ["zombie", 2], ["ghostGen", 2]],
+    // 五、諸天至高戰場
+    "仙界戰場": [["dragon", 3], ["phoenix", 2], ["ghostGen", 2], ["bloodCult", 2], ["fox", 1]],
+    "萬界戰場": [["tiger", 2], ["qilin", 2], ["yaksha", 2], ["puppet", 2], ["wraith", 2]],
+    "混沌初界": [["dragon", 2], ["fox", 2], ["zombie", 2], ["sorcerer", 2], ["turtle", 2]]
+};

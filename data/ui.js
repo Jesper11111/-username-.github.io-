@@ -119,7 +119,7 @@ function updateCombatVisualPanel() {
             totalMaxEnemyHp += e.maxHp;
         });
         let cultN = enemies.filter(e => e.cultivator).length;
-        // 標題與圖示跟著「目前在打的那隻」（第一隻還活著的）；妖獸名稱來自 FIELD_MONSTERS（config-maps.js）
+        // 標題與圖示跟著「目前在打的那隻」（第一隻還活著的）；妖獸名稱來自 FIELD_MONSTERS（config-monsters.js）
         let front = enemies.find(e => e.hp > 0) || enemies[0];
         let frontName = front.name || (front.ambush ? "暗殺者" : front.cultivator ? `${front.cultivator}道修士` : "妖獸");
         document.getElementById('battle-enemy-title').innerText = `${frontName}${enemies.length > 1 ? `（共 ${enemies.length} 隻${cultN ? `｜修士×${cultN}` : ''}）` : ''}`;
@@ -137,7 +137,8 @@ function updateCombatVisualPanel() {
         showEnemyBar(totalEnemyHp, totalMaxEnemyHp);   // 多隻時為總血量
         // 種族（race.js），例：「🐉妖獸×2 😈魔修×1」；人修（正道修士）不列
         let raceText = RACE_KEYS.map(k => [k, enemies.filter(e => e.attrs && e.attrs.race === k).length]).filter(([, c]) => c > 0).map(([k, c]) => `${raceTag(k)}×${c}`).join(' ');
-        document.getElementById('battle-enemy-info').innerText = [raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
+        let typeText = front.mtype ? monsterTypeTag({ type: front.mtype }) : '';   // 目前在打的那隻的型態（monster.js，第 66 節）
+        document.getElementById('battle-enemy-info').innerText = [typeText, raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
         document.getElementById('battle-action-desc').innerText = `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;
     } else {
         document.getElementById('battle-enemy-title').innerText = "索敵中";

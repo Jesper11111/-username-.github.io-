@@ -123,17 +123,4 @@ const OFFLINE_REPUTATION_RATE_OFFLINE = 1.1;
 // 離線最多結算幾秒（2026-09-28 使用者決定由 24 小時改為 12 小時）；背景補發同一個上限
 const OFFLINE_MAX_SECONDS = 12 * 3600;
 
-// 野外小怪（2026-09-28 玩家提供的 7 張圖，裁成 480×480 放 images/monsters/；戰場實況右半邊顯示，battle-fx.js 第 59 節）
-// 每隻妖獸隨機抽一種；幽冥禁域（DARK_MAP_CATEGORIES）只出 dark 的鬼怪，其餘地圖全部都會出
-// pos：圖片在右半邊的對焦位置（CSS object-position），讓頭部不被左邊斜切線切掉
-// 之後要加怪物：放圖、加一行即可（只影響外觀與名稱，不影響數值）
-const FIELD_MONSTERS = [
-// race：種族（config-race.js，2026-09-30）：妖獸 beast／鬼物 ghost
-    { name: "青鱗蒼龍", icon: "🐉", img: "images/monsters/dragon.jpg",        pos: "62% 30%", race: "beast" },
-    { name: "雪紋白虎", icon: "🐅", img: "images/monsters/white-tiger.jpg",   pos: "78% 35%", race: "beast" },
-    { name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%", race: "beast" },
-    { name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%", race: "beast" },
-    { name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%", race: "beast" },
-    { name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", dark: true, race: "ghost" },
-    { name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", dark: true, race: "ghost" }
-];
+// 野外小怪的圖鑑、型態與各地圖的出沒組合：見 config-monsters.js（2026-10-03 起，ARCHITECTURE.md 第 66 節第 2 期）
