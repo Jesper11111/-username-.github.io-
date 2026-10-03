@@ -115,7 +115,8 @@ function nv2ArmorHpMult() {
 // ---- 增益：全部相加，最多 +200%（仙人初境起依境界提高，NV2.buffCapByRealm）----
 // 目前境界的增益上限（%）
 function nv2BuffCap() {
-    return NV2.buffCapByRealm[player.realmIndex] || NV2.buffCap;
+    // 天賦「萬法歸宗」等 buffCap（talent.js，第 68 節）另外加上去
+    return (NV2.buffCapByRealm[player.realmIndex] || NV2.buffCap) + (typeof getTalentBonusTotals === 'function' ? (getTalentBonusTotals().buffCap || 0) : 0);
 }
 // kind：'phys'／'mag'／'hp'；回傳比例（0.5 = +50%）
 function nv2BuffPct(kind) {
@@ -138,7 +139,8 @@ function nv2BuffPct(kind) {
 function nv2Attack(statKey, kind) {
     const st = nv2Stat(statKey);
     const base = (nv2WeaponAtk() + st * NV2.fistCoef) * (1 + st * NV2.atkPctPerPoint / 100);
-    const v = base * (1 + nv2BuffPct(kind)) * getDuelWeakenMult() * getWeaknessMult();
+    const tm = typeof talentMult === 'function' ? talentMult(kind) : 1;   // 天賦核心的獨立倍率（不進增益池，第 68 節）
+    const v = base * (1 + nv2BuffPct(kind)) * tm * getDuelWeakenMult() * getWeaknessMult();
     return Math.max(1, Math.round(v));
 }
 function nv2PhysAttack() { return nv2Attack('str', 'phys'); }
@@ -147,7 +149,7 @@ function nv2MaxHp() {
     const L = nv2Level(player.realmIndex, player.stage);
     const reinc = (player.reincarnateBonus && player.reincarnateBonus.nv2Hp) || 0;   // 轉世保留的氣血上限（leveling.js）
     const v = (NV2.weaponBase * NV2.hpBaseMult * nv2Growth(L) * (1 + nv2Stat('con') * NV2.conPct / 100)
-            * (1 + nv2BuffPct('hp')) * nv2ArmorHpMult() * (1 + player.level * NV2.levelHpPct / 100) + reinc) * getWeaknessMult();
+            * (1 + nv2BuffPct('hp')) * nv2ArmorHpMult() * (1 + player.level * NV2.levelHpPct / 100) * (typeof talentMult === 'function' ? talentMult('hp') : 1) + reinc) * getWeaknessMult();
     return Math.max(1, Math.round(v));
 }
 // 技能實際耗魔：新制 × NV2.mpScale（0.1）無條件進位；舊制原值。施放（combat.js）與所有顯示耗魔的地方都要經過這裡
