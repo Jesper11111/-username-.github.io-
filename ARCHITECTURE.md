@@ -79,7 +79,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）/ monsters（野外妖獸型態、圖鑑、各地圖出沒組合，第 66 節；`FIELD_MONSTERS` 由 config-maps.js 搬來，載入在 config-maps.js 之後）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -88,6 +88,8 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
+  monster.js          野外妖獸的型態與出沒組合（第 66 節第 2 期）：pickFieldMonster、applyMonsterType（減傷／閃避／暴擊、氣血與攻擊倍率）、fieldMonsterRoundsFactor（收益補償）、地圖卡片出沒列
+                      （設定在 config-monsters.js：MONSTER_TYPES 五型態、FIELD_MONSTERS 圖鑑、FIELD_MONSTER_POOLS 各地圖組合；載入在 race.js 之後）
   race.js             種族剋制（第 62 節）：種族標籤文字、剋制加成 getRaceDmgBonus、斬妖錄擊殺數與天磯錄分頁、剋制法寶（法寶欄、掉落、合煉、千寶閣）（設定在 config-race.js，載入在 elements.js 之後）
   equip-compare.js    角色裝備視窗：人形裝備欄、部位換裝、裝備對比與穿上後試算（第 60 節）
   battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏（第 59 節）
@@ -170,7 +172,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 1 | `config-realms.js` | `realms` 境界名稱陣列、修煉節奏表 `realmPacing`（每境界目標時數/主要地圖/估算加成）、`REALM_PACING_KILLS_PER_SEC` | 無（`realmPacing.map` 是地圖名稱字串，執行期才查 `maps`） | `stats.js`(getRealmStageExp/getNextExp)、`lifespan.js`(getAgingHours)、`ui.js`、`leveling.js` |
 | 2 | `config-level.js` | `MAX_PLAYER_LEVEL`、`LEVEL_UP_*` 成長值、`LEVEL_EXP_SEGMENTS` 經驗曲線 | 無 | `stats.js`(getLevelExpNeeded、getMaxHp/getMaxMp)、`leveling.js`(gainLevelExp)、`ui.js` |
 | 3 | `config-lifespan.js` | `lifespanByRealm` 各境界壽元增加量與死亡折壽、歲月流逝常數 `LIFESPAN_MIN_AGING_HOURS`/`LIFESPAN_PACE_MULT`/`LIFESPAN_DANGER_MULT`/`LIFESPAN_TRIBULATION_MULT`/`LIFESPAN_OFFLINE_RATE`/`LIFESPAN_FLOOR_DEATHS`、起始年齡 `LIFESPAN_START_AGE` | 無 | `lifespan.js`、`leveling.js`(轉世重設壽元與年齡)、`ui.js`(年齡顯示) |
-| 4 | `config-maps.js` | `SECT_MAP_NAME`（"宗門"，唯一安全區的名稱）、`maps` 地圖資料（含各圖 `coins` 每隻靈石）、`KILLS_PER_HOUR_ESTIMATE`、`REPUTATION_MAX_BY_MAP_CATEGORY`（各區擊殺聲望上限）、`OFFLINE_COMBAT_RATE`/`OFFLINE_REPUTATION_RATE`、離線實力估算 `IDLE_WAVE_AVG_MONSTERS`/`IDLE_WAVE_GAP_TICKS`/線上實戰證明門檻 `IDLE_PROVEN_SECONDS`、怪物刷新 `MONSTER_RESPAWN_SECONDS`(10)／收益補償 `KILL_REWARD_MULT`／打坐日誌間隔 `MEDITATE_LOG_SECONDS`（第 33 節末）、`monsterIcons` | 無 | `state.js`、`map.js`(isInSect)、`combat.js`、`ui.js`、`save.js`(migrateCurrentMap) |
+| 4 | `config-maps.js` | `SECT_MAP_NAME`（"宗門"，唯一安全區的名稱）、`maps` 地圖資料（含各圖 `coins` 每隻靈石）、`KILLS_PER_HOUR_ESTIMATE`、`REPUTATION_MAX_BY_MAP_CATEGORY`（各區擊殺聲望上限）、`OFFLINE_COMBAT_RATE`/`OFFLINE_REPUTATION_RATE`、離線實力估算 `IDLE_WAVE_AVG_MONSTERS`/`IDLE_WAVE_GAP_TICKS`/線上實戰證明門檻 `IDLE_PROVEN_SECONDS`、怪物刷新 `MONSTER_RESPAWN_SECONDS`(10)／收益補償 `KILL_REWARD_MULT`／打坐日誌間隔 `MEDITATE_LOG_SECONDS`（第 33 節末）、`monsterIcons`；野外妖獸圖鑑 `FIELD_MONSTERS` 已搬到緊接在後的 `config-monsters.js`（型態、各地圖出沒組合，邏輯 `monster.js` 排在 race.js 之後，第 66 節） | 無 | `state.js`、`map.js`(isInSect)、`combat.js`、`ui.js`、`save.js`(migrateCurrentMap) |
 | 5 | `config-sects.js` | `sectData` 宗門與技能表（宗門可選填 `faction: "邪"`，目前為皇朝、天魔教、九幽黃泉；沒寫 = 正）、`SECT_SKILL_BONUS`、`SECT_TIER_NAMES`、`findSectByName()`；尾端迴圈替每招補上 `tier`/`mult` | 無 | `sect.js`、`stats.js`(getSectTier/getAllSkills)、`ui.js`、`save.js`(重新綁定宗門)、`merit.js`(getPlayerFaction) |
 | 6 | `config-lingbao.js` | `legacySkillAdjustments` 舊版禁術下修數值、`artifactSkills` 神器專屬技能（key = 商品 id）、`lingbaoTierCosts` 各階段兌換價格、`ARTIFACT_COST_COINS` 神器靈石價（1 億）、`lingbaoShopItems` 三階段戰略級寶物與武學 | 無 | `lingbao-shop.js`、`equipment.js`(五行說明列固定屬性裝備)、`artifact.js` |
 | 7 | `config-shop.js` | `shopItems` 丹藥堂商品、`shopSections` 分區、`POTION_COOLDOWN_SECONDS` 丹藥冷卻、`SHOP_MAX_BUY_QTY` 單次購買上限(9999) | 無 | `shop.js`、`bag.js`、`combat.js`(自動補血補魔) |
@@ -1588,7 +1590,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005j`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005k`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3275,7 +3277,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 ## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
 - 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
-  **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
+  **野外小怪圖鑑 `FIELD_MONSTERS`**（2026-10-03 起搬到 config-monsters.js，加型態與各地圖組合，見第 66 節第 2 期；原 config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
   `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
   敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`（依陣營取 `CULTIVATOR_IMGS`，第 27 節）、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；
   **安全區**（2026-09-29，版本 `20261002d`）顯示 `SAFE_ZONE_IMG`（config-maps.js，宗門景色；個別安全地圖可加 `battleImg`／`battleImgPos` 蓋過），同時 `.bf-scene` 加 `.bf-safe` 隱藏「VS」（渡劫、懸賞對決除外）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
@@ -3424,6 +3426,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - ② 重鑄：強化視窗（enhance.js `renderEnhanceModal`）下方「🔮 種族銘刻」`renderRaceReforgeSection`／`reforgeRaceGearFx`：紫色以上，每次 50 星允鐵＋H 1 小時靈石，重抽種族與數值（已有時先確認）。
   - ③ 白金進化：enhance.js `evolveEquip` → `applyEvolveRaceGearFx`：必帶一條白金數值；原本有就保留種族。進化說明多一行提示。
   - 驗證（本機）：紫／橙各 2000 件 → 215／396 件帶特效（10.8%／19.8%）、數值 1～3%、藍色 0；兩件妖獸 5%＋6% → 9% 封頂；重鑄兩次扣 100 鐵、進化後 3.79% 保留魔修；手機強化視窗正常；Console 無錯誤。
+- **野外種族比例**（2026-10-03，第 66 節第 2 期）：`fieldRaceCounts` 改依地圖出沒組合的權重（`fieldMonsterPool`），不再是全部 7 種平均；斬妖錄、離線擊殺與法寶掉落跟著變。
 - **日後新增來源**（符寶、法寶、裝備特效）一律加在 `race.js` 的 `getRaceDmgBonus()` 裡再套上限；新增敵人時記得給 `attrs.race`（沒有＝人修）。
 
 ## 63. 奇遇・異界空間（`config-encounter.js`、`encounter.js`；2026-10-01，版本 `20261004q`）
@@ -3583,4 +3586,19 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     「破甲：無視目標 N 減傷」照舊（對敵人仍是 %）。
   - 鎮魔塔再校準見第 51 節（`ZHENMO_L2_ATK`）。死守天南城（各 15 次中位數，舊／新）：煉虛 10 中等 9／9、強力 19／19；渡劫 10 35／35、44／46；真仙 10 62／62、69／69；混沌道祖 10 79／79、99／100——幾乎不變，不調。
   - 驗證（本機）：108 個腳本語法正確；人物面板、裝備卡片、詞條、特效、光環、BOSS 房顯示正確（手機 390×844）；新角色在靈山大川實際戰鬥 25 秒、鎮魔塔第 60 層開打與跳過、gm.html 載入皆無錯誤。
+- **第 2 期：怪物型態、各地圖出沒組合、怪物閃避與暴擊**（2026-10-03，版本 `20261005k`）
+  - 新檔 `config-monsters.js`（資料）＋ `monster.js`（邏輯）；`FIELD_MONSTERS` 由 config-maps.js 搬過來，每筆加 `id`、`type`。index.html 載入順序：config-maps → **config-monsters**、race → **monster**。
+  - **五型態** `MONSTER_TYPES`：均衡（氣血 ×1、暴擊 5%）、🛡️皮厚（×1.1、減傷 +15、暴擊 3%）、💨敏捷（×0.8、減傷 −5、閃避 +15、暴擊 8%）、⚔️猛攻（×0.85、暴擊 12%）、🔮術法（×0.9、減傷 −5、閃避 +5、暴擊 5%，帶異屬性機率 ×1.5）。
+    - 閃避是「超出一般玩家命中」的部分：`attrs.eva = max(原閃避, nv2TypHit(L)) + eva`（原本地圖分類的 2～8% 幾乎都被一般玩家的命中抵銷，妖獸等於不會閃）→ 命中（敏捷、洞察）變得有用。
+    - 暴擊 `attrs.crit`，傷害 × `NV2.critDmg`（2），`resolveHit` 本來就認；戰況「💥暴擊」，玩家受傷飄字加「暴擊」小字（battle-fx.js `battleFxHurt`）。
+    - **攻擊倍率自動反推**（`monsterTypeAtkMult`）＝ 1 ÷（一般玩家殺牠的回合倍率 × 暴擊期望），讓每個型態「每隻對一般玩家的總傷害」與改版前相同（皮厚打得久但輕、猛攻死得快但會爆擊）。
+      型態造成的擊殺時間差異由收益補償吸收：`nv2TypRoundsPerKill` 乘 `fieldMonsterRoundsFactor(map)`（出沒組合的平均回合倍率；gm.html 沒載入 monster.js 時視為 1），離線估算 `nv2EstimateIdleCombat` 同樣乘、每下傷害 ÷ 同倍率。
+  - **圖鑑 14 種**：妖獸 蒼龍（均衡）、白虎（猛攻）、麒麟（皮厚）、九尾天狐（敏捷）、火鳳（術法）、玄甲靈龜（皮厚）、碧眼毒蛛（敏捷）；鬼物 鬼將（術法）、夜叉（猛攻）、百年殭屍（皮厚）、怨魂（敏捷）；
+    魔修 血煞魔修（猛攻，借用野外邪修圖）、傀儡魔偶（皮厚）、魔道術士（術法）。靈龜、毒蛛、殭屍、怨魂、傀儡、術士**沒有圖，顯示大號 emoji**——玩家之後提供圖，在 `FIELD_MONSTERS` 補 `img／pos` 即可。
+  - **各地圖出沒組合** `FIELD_MONSTER_POOLS`（25 張戰鬥地圖，每張 3～5 種、帶權重）；沒列的地圖走舊規則（幽冥禁域只出鬼物，其餘出妖獸與鬼物）。
+    幽冥禁域只放鬼物（本質為暗）；**魔修只在墜魔谷、血天大陸、天淵戰場、上蒼、仙界／萬界／混沌戰場**（斬妖錄魔修門檻 2000／2 萬／3 萬依野外邪修頻率訂）；**心魔不放野外**（門檻 50／100／200 依渡劫心魔稀有度訂）。
+  - 顯示：地圖卡片「出沒 🐅雪紋白虎⚔️、🦊九尾天狐💨…」（`formatFieldMonsterMix`，滑鼠移上去看型態說明）；戰場資訊列最前面是「目前在打的那隻」的型態（例「⚔️猛攻｜🐉妖獸×3｜…」）。
+  - 驗證（本機，新舊程式各 1500 隻／地圖，一般玩家無防禦、同境界 5 階）：25 張地圖「每隻對玩家的總傷害」新／舊差 ±2% 內（魔修圖墜魔谷、血天、天淵少 5～9%），
+    「實際每隻回合 ÷ 收益補償用的回合」新／舊差 ≤ 2%（每小時收益不變）；每隻回合數依地圖組合 −16%～+23%（例：血天大陸 12 → 9.7、荒古禁地 102 → 126）。
+    實戰：靈山大川 40 秒出現麒麟（皮厚）、白虎（猛攻），怪物暴擊 6 次；天南戰場面板「⚔️猛攻｜🐉妖獸×3」；地圖卡片出沒列正常；遊戲與 gm.html 無 Console 錯誤。
 

@@ -314,11 +314,10 @@ function formatRaceDmgLine() {
     return parts.join('｜');
 }
 
-// 野外妖獸的種族比例（依這張圖會出現的 FIELD_MONSTERS，combat.js 同規則）：例 { beast: 5, ghost: 2 }
+// 野外妖獸的種族比例（依這張圖的出沒組合權重，monster.js 的 fieldMonsterPool，combat.js 同規則）：例 { beast: 7, ghost: 3 }
 function fieldRaceCounts(map) {
-    const dark = DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(map.name));
     const out = {};
-    FIELD_MONSTERS.filter(m => !dark || m.dark).forEach(m => { out[m.race] = (out[m.race] || 0) + 1; });
+    fieldMonsterPool(map).forEach(x => { out[x.m.race] = (out[x.m.race] || 0) + x.w; });
     return out;
 }
 function formatFieldRaceMix(map) {

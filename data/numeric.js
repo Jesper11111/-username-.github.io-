@@ -277,7 +277,8 @@ function nv2TypRoundsPerKill(map) {
     const fixed = typeof map.nv2FixedL === 'number' ? nv2TypNormal(map.nv2FixedL) / nv2TypNormal(L) : 1;
     // 種族特性（config-race.js）：妖獸氣血加成、鬼物閃避讓一般玩家要多打幾下 → 收益補償跟著放大（gm.html 沒載 race.js，視為 1）
     const race = typeof fieldRaceKillMult === 'function' ? fieldRaceKillMult(map, a.eva, nv2TypStat(L) * NV2.hitPer) : 1;
-    return NV2.hitsSame * nv2MonsterStrMult(false, L, map) * fixed * race / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
+    const mtype = typeof fieldMonsterRoundsFactor === 'function' ? fieldMonsterRoundsFactor(map) : 1;   // 妖獸型態（monster.js，第 66 節；gm.html 沒載入時視為 1）
+    return NV2.hitsSame * nv2MonsterStrMult(false, L, map) * fixed * race * mtype / nv2TypRoundMult(L) / (1 - a.def / 100) / (1 - eva / 100);
 }
 // 擊殺收益補償：舊制設計是「一波 3 隻、一擊一隻、每波 6 秒」＝每秒 1/3 隻；
 // 新制一般玩家每秒擊殺 = 每波隻數 ÷ (刷新間隔 + 每波隻數 × 每隻回合數)，每隻收益乘上兩者比例，讓每小時經驗／靈石／聲望維持 realmPacing 的節奏
@@ -296,14 +297,15 @@ function nv2EstimateIdleCombat() {
     const round = Math.max(nv2PhysAttack(), nv2MagAttack()) * (1 + nv2Crit() * (NV2.critDmg - 1)) * (1 + nv2Combo()) * NV2.typSkillAvg;
     const eva = Math.max(0, a.eva - nv2Hit());
     const raceMult = typeof fieldRaceKillMult === 'function' ? fieldRaceKillMult(map, a.eva, nv2Hit()) : 1;   // 種族特性（race.js）
-    const hits = Math.max(1, ms.hp / Math.max(0.01, round * (1 - a.def / 100)) / (1 - eva / 100) * raceMult);
+    const mtype = typeof fieldMonsterRoundsFactor === 'function' ? fieldMonsterRoundsFactor(map) : 1;   // 妖獸型態（monster.js，第 66 節）
+    const hits = Math.max(1, ms.hp / Math.max(0.01, round * (1 - a.def / 100)) / (1 - eva / 100) * raceMult * mtype);
     const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
     const rateMult = Math.min(1, (gap + n * nv2TypRoundsPerKill(map)) / (gap + n * hits));
     const pAttrs = getPlayerCombatAttrs();
     // 妖獸帶命中（rollMonsterAttrs）抵銷部分閃避；實際閃避＝玩家本身最多 20＋靈寵最多 10＋夥伴最多 10（同 resolveHit，config-elements.js）
     const split = (tot, pet, par, pen, max) => Math.min(Math.max(0, tot - pet - par - pen), max) + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
     const pEva = split(pAttrs.eva, pAttrs.petEva || 0, pAttrs.partnerEva || 0, nv2TypHit(ms.L), PLAYER_EFFECTIVE_EVA_MAX);
-    const hitTaken = ms.atk * (1 - pEva / 100) * defMult(pAttrs.def);   // 防禦《天堂2》式（第 66 節）
+    const hitTaken = ms.atk * (1 - pEva / 100) * defMult(pAttrs.def) / mtype;   // 防禦《天堂2》式；型態讓每隻總傷害不變（回合變 mtype 倍、每下 ÷ mtype），第 66 節
     let monsterTurns = 0;
     for (let k = 1; k <= n; k++) monsterTurns += Math.max(0, k * hits - 1);
     const waveDamage = hitTaken * monsterTurns;

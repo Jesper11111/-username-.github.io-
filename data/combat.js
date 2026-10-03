@@ -111,16 +111,15 @@ function combatTick() {
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
         waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
-        // 外觀（名稱／圖示／圖片）從 FIELD_MONSTERS 抽（config-maps.js），幽冥禁域只出鬼怪
-        let isDarkMap = DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name));
-        let pool = FIELD_MONSTERS.filter(m => !isDarkMap || m.dark);
+        // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
         for (let i = 0; i < count; i++) {
-            let look = pool[Math.floor(Math.random() * pool.length)];
+            let look = pickFieldMonster(player.currentMap);
             let one = NUMERIC_V2 ? getMapMonsterStats(player.currentMap, true) : ms;   // 新制每隻各自擲階數與強度（numeric.js）
-            let hp = one.hp * raceHpMult(look.race);   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
-            enemies.push({ hp, maxHp: hp, attack: one.atk, nv2Lv: one.L,
-                           name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
-                           attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race })), status: newStatus() });   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
+            let attrs = applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race }));   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
+            let tm = applyMonsterType(attrs, look, one.L, player.currentMap);   // 型態：減傷、閃避、暴擊，回傳氣血／攻擊倍率
+            let hp = one.hp * raceHpMult(look.race) * tm.hp;   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
+            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type,
+                           name: look.name, icon: look.icon, img: look.img, imgPos: look.pos, attrs, status: newStatus() });
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
         let extraText = [];
@@ -287,7 +286,7 @@ function fieldCombatRound() {
         }
         waveSummary = null;
     } else {
-        // ---- 怪物回合：每隻各自命中判定（玩家的閃避/減傷生效，怪物的屬性傷害可施加在玩家身上）----
+        // ---- 怪物回合：每隻各自命中判定（玩家的閃避/防禦生效，怪物的屬性傷害可施加在玩家身上；妖獸會暴擊，第 66 節）----
         let playerDef = { attrs: getPlayerCombatAttrs(), status: playerStatus };
         let totalDmg = 0;
         let enemyTags = [];
