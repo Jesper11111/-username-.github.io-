@@ -304,6 +304,10 @@ const DefenseBattle = (() => {
         const merit = randInt(boss ? R.bossMerit : R.merit); player.merit = (player.merit || 0) + merit; g.merit += merit;
         if (boss || Math.random() < R.shardChance) g.shards += addFireShards(randInt(boss ? R.bossShard : R.shard));
         if (boss || Math.random() < R.ironChance) g.iron += addStarIron(randInt(boss ? R.bossIron : R.iron));
+        if (w % CRAFT_DROPS.defenseHunyuanEvery === 0) {   // 做裝通貨：每 20 波 1 顆混元晶（craft.js，第 69 節）
+            g.hunyuan = (g.hunyuan || 0) + addCraftCur('hunyuan', 1);
+            feed(`💠 拾得混元晶 ×1`, 'kill');
+        }
         if (Math.random() < R.gearChance) dropGear(w, false);
         if (boss || (w >= 20 && Math.random() < R.setChance)) dropGear(w, true);
         // 夥伴碎片：第 partnerFromWave 波起天驕、第 partnerZunzheFromWave 波起尊者（partner.js 的 grantPartnerShards；集滿 100 片到情緣視窗激活）

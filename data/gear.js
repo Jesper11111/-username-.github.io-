@@ -340,7 +340,7 @@ function formatEquipTitle(eq) {
 function formatEquipDetails(eq) {
     let statsText = NUMERIC_V2 ? nv2FormatEquipStats(eq) : formatEquipStats(getEquipEffectiveStats(eq));   // 新制顯示武器攻擊與新屬性點（numeric.js）
     return `<p style="font-size: 0.8em; color: #facc15;">加成: ${statsText}</p>
-            ${formatGearSubs(eq)}${formatGearLegend(eq)}${formatGearEffect(eq)}${formatRaceGearFx(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
+            ${formatGearSubs(eq)}${typeof formatGearCraftTag === 'function' ? formatGearCraftTag(eq) : ''}${formatGearLegend(eq)}${formatGearEffect(eq)}${formatRaceGearFx(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
 }
 
 // 卡片副標：部位・四維模板・來源

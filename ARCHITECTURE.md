@@ -116,6 +116,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   talisman.js         符寶坊：礦石煉製符寶、橙裝孔位鑲嵌／打掉（第 28 節）
   gear.js             裝備圖鑑 850 種：產生裝備、隨機詞條、特效、套裝、加成彙總、奪寶掉落、舊裝備轉換（第 37 節）
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
+  craft.js            做裝系統（第 69 節）：四種通貨（天機石／混元晶／破虛石／造化玉）的掉落與使用、鍛紋台、入魔淬煉；介面嵌在強化視窗
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
   golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）；凝聚元神後加成消失
@@ -236,6 +237,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34c | `bounty.js` | `getBountyRefSectMult`/`getBountyStats`/`getBountyNpc`/`getBountyIcon`/`refreshBountyIfDue`/`rollBountyBoard`/`getTrackedBountyIds`(舊存檔 activeBountyId 轉陣列)/`getActiveBounties`/`acceptBounty`/`acceptAllBounties`/`abandonBounty(id?)`/`renderBountyBoard`/`renderBountyBulkButtons`、對決 `tryStartBountyDuel`/`startBountyDuel`/`clearDuelDebuffs`/`getDuelWeakenMult`/`getDuelArmorMult`/`bountyDuelTick`/`endBountyDuel` | `config-bounty.js`、`realms`、`wuxingElements`/`MONSTER_AFFIX_TYPES`、`elements.js`、`combat.js`(playerAttackTurn/checkAutoHealAndMana/applyRootRegen/onPlayerKilledInField)、`beast-combat.js`、`merit.js`(陣營、善惡、settleMeritStones) | `combat.js`、`merit.js`(renderEvilHunt)、`stats.js`/`elements.js`(負面狀態)、`map.js`、`save.js`、`ui.js`(戰鬥實況)、`tribulation.js`(對決中不能渡劫) |
 | 34b | `talisman.js` | `talismanKey`/`getTalismanType`/`getTalismanGrade`/`getTalismanValue`/`formatTalisman`/`ensureSockets`(橙裝開孔，可重複呼叫)/`getSocketStats`/`formatSockets`/`findEquipById`/`openTalismanModal`/`renderTalismanWorkshop`/`renderSocketCard`/`craftTalisman`/`inlayTalisman`/`removeTalisman` | `config-talisman.js`、`equipTypes`、`player.talismans`/`ore`/`coins`/`equipment`/`equipInventory`、`ui.js`(resolveBatchCount)、`sect.js`(checkSectJoined) | `stats.js`(getEquipBonus 加總符寶)、`equipment.js`/`auction.js`/`lingbao-shop.js`(取得橙裝時 ensureSockets)、`bag.js`/`equipment.js`/`auction.js`(formatSockets 顯示)、`save.js`(migrateEquipSockets)、HTML 符寶坊按鈕 |
 | 34d | `gear.js` | **載入時執行** 展開 `gearList`/`gearById`/`gearBySlot`；`getGearDef`/`getQualityObj`/`getCraftChannel`/`pickGearDef`/`buildGearStats`/`createGearEquip`（鍛造、千寶閣、奪寶共用）、隨機詞條 `rollGearSubs`/`formatGearSubs`/`getGearSubTotals`、加成彙總 `getBonusTotals`（詞條＋套裝＋稱號＋職業）/`getGearPctBonus`、套裝 `getEquippedSetCounts`/`resolveSetTier`/`getSetBonusTotals`/`formatSetInfo`/`hasSetSpecial`、強化倍率 `getEnhanceMult`/`getEquipEffectiveStats`、奪寶 `tryLootDrop`、顯示 `getEquipDisplayName`/`formatEquipTitle`/`formatEquipDetails`/`formatGearSubline`/`describeGearEffect`/`formatGearEffect`、特效 `getGearEffects`/`gearFx`、每波狀態 `gearWaveRound`/`gearFirstStrikeUsed`/`gearUndyingUsed`/`gearDodgeStrikeReady`/`resetGearWave`、戰鬥 `getGearHitMult`/`applyGearHitChain`/`applyGearDefense`/`applyGearRegen`/`tryGearUndying`、舊存檔 `migrateGearIds` | `config-gear*.js`、`config-enhance.js`、`config-sets.js`、`equipTypes`/`equipQualities`/`EQUIP_LEVELS`、`lingbaoShopItems`、`talisman.js`(ensureSockets)、`codex.js`、`profession.js`、`enhance.js`(receiveLootEquip) | `equipment.js`/`auction.js`(產生裝備)、`stats.js`/`elements.js`/`combat.js`/`tribulation.js`/`bounty.js`(加成與特效)、`bag.js`/`equipment.js`/`auction.js`/`talisman.js`(卡片)、`save.js` |
+| 34e2 | `craft.js` | 做裝（第 69 節）：通貨 `getCraftCur`/`addCraftCur`/`formatCraftGain`/`craftGainSuffix`、掉落 `rollCraftFieldDrops`/`onCraftFieldKills`/`rollCraftZhenmo`/`rollCraftDecompose`/`rollCraftDecomposeMany`、`canCraft`/`craftSubCap`/`craftPoxuLockLeft`/`isCraftSealed`/`setSubTier`、操作 `useCraftCur(k)`/`forgeCraftSub`(鍛紋台，`craftForgeKey`)/`corruptEquip`(入魔淬煉)、顯示 `renderCraftSection`/`formatGearCraftTag` | `config-enhance.js`(CRAFT_*)、`gear.js`(rollGearSubs/rollGearSubTier/rollGearSubValue/gearRollOpts)、`enhance.js`(enhanceEquipId/locateEquip/renderEnhanceModal/formatOneSub)、`save.js`(saveLocal) | `enhance.js`(強化視窗、分解)、`equipment.js`(鍛造自動分解)、`gear.js`(卡片標籤)、`combat.js`(野外擊殺)、`save.js`(離線)、`zhenmo.js`、`defense.js` |
 | 34e | `enhance.js` | `randInt`、星允鐵 `addStarIron`/`addIronShards`、`locateEquip`/`removeLocatedEquip`、強化 `getEnhanceInfo`/`canEvolve`/`enhanceEquipId`/`openEnhanceModal`/`renderEnhanceModal`/`getEvolveStatRatio`/`enhanceEquip`/`promptEvolveEquip`(+20 系統通知)/`evolveEquip(skipConfirm)`、分解 `getDecomposeYield`/`formatDecomposeYield`/`decomposeEquip`/`bulkDecomposeEquipment`、暫存區 `isGearStashFull`/`receiveLootEquip`/`enforceGearStashLimit`/`moveStashToBag`/`deleteStashEquip`/`renderStashSection`、`refreshEquipViews`、千寶閣 `getIronShopState`/`renderIronShopSection`/`buyStarIron`/`rollIronBagItem` | `config-enhance.js`、`gear.js`、`codex.js`(checkTitleUnlocks、稱號強化成功率)、`map.js`(changeMap)、`ui.js` | `bag.js`/`equipment.js`(按鈕與暫存區)、`auction.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵)、`map.js`/`save.js`(暫存區滿) |
 | 34h | `strange-fire.js` | 異火（第 38 節）：**載入時**建 `strangeFireById`；`addFireShards(n, source)`(取得碎片，供未來秘境掉落呼叫)/`rollStrangeFire`/`gainStrangeFire`/`craftStrangeFire(qty)`(合成，數字或 'max')/`getStrangeFireRealmReduction`(秘境受傷減免比例)/`getStrangeFireBonusTotals`(收錄加成)/`countCollectedFires`/`migrateStrangeFires`(舊存檔)/`renderStrangeFireCards`(背包卡片)/`renderCodexFires`(天磯錄分頁) | `config-strange-fire.js`、`player.fireShards`/`strangeFires`/`fireCollection`、`codex.js`(describeTitleBonus、openCodexModal)、`ui.js` | `bag.js`(renderBag)、`gear.js`(getBonusTotals)、`codex.js`(異火分頁、頂端統計)、`save.js`(applySaveData)；未來秘境（掉落、受擊減傷） |
 | 34k | `casino.js` | 天星賭坊（第 40 節）：狀態 `casinoTab`/`casinoBusy`/`casinoResultHtml`/`casinoDice`；`getCasinoState`(跨日重置)/`getCasinoDailyLimit`/`getCasinoRemaining`/`getDiceMaxBet`/`isInCasinoTown`/`checkCasinoSpend`(城鎮、靈石、上限、大額確認)/`recordCasino`；隕石 `randCasino`/`rollStoneOutcome`/`grantStoneOutcome`/`cutStone(id, count)`；擲骰 `setDiceType`/`setDicePick`/`setDiceTotal`/`setDiceAmount`/`addDiceAmount`/`setDiceMax`/`getDicePayout`/`describeDiceBet`/`judgeDice`/`rollDice`；視窗 `openCasinoModal`/`setCasinoTab`/`renderCasino`/`renderCasinoStones`/`renderCasinoDice`/`renderCasinoRecord` | `config-casino.js`、`player.casino`/`coins`/`ore`/`realmIndex`/`currentMap`、`enhance.js`(addStarIron/addIronShards)、`strange-fire.js`(addFireShards/rollStrangeFire/gainStrangeFire)、`gear.js`(tryLootDrop 的 casinoPurple/casinoOrange)、`codex.js`(checkTitleUnlocks/describeTitle*)、`ui.js` | `config-towns.js`(天星城石拱門傳送點)、`codex.js`(賭運稱號條件讀 player.casino) |
@@ -1596,7 +1598,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005t`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005u`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3717,3 +3719,24 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 驗證（本機）：點數 Lv.10／50／100／1000／10000 ＝ 1／5／10／28／64，轉世 1／3／9／100 次 ＝ 3／9／15／15，總計最多 79；第二重未投入 5 點時被擋；第 3 個核心被擋；
   血祭 物攻 11 → 15、氣血 189 → 145；金剛 防禦 35 → 52.5、閃避 35 → 0；重置第一次免費、第二次 1,949 萬靈石；轉世後（等級 1、輪迴 100 次）可用 15 點；手機 390×844 視窗正常；Console 無錯誤。
 
+## 69. 做裝系統（精簡版 POE：四種通貨、鍛紋台、入魔淬煉；`craft.js`；2026-10-03，版本 `20261005u`）
+
+- **規劃**（使用者 2026-10-03 定案）：參考《流亡黯道》做裝，但精簡成 4 種通貨＋鍛紋台；難度選「**C 偏難**」（原提案掉率 ×0.5，一件接近畢業的裝備約 1 個月）；
+  **不做毀裝懲罰**（同強化：失敗不掉級、不毀裝），另加可選的賭博「入魔淬煉」（最壞是封印定型，裝備不會消失）。
+- **存檔**：`player.craftCur = { tianji, hunyuan, poxu, zaohua }`（state.js 預設；舊存檔讀檔時由預設值補上）。裝備多 `poxuAt`（最後一次破虛石的時間）、`forged`（用過鍛紋台）、`corrupt`（1 入魔／2 走火入魔封印）、`corruptExtra`（入魔大成功多出的詞綴上限）。只新增欄位。
+- **通貨**（config-enhance.js 的 `CRAFT_CURRENCIES`；每次使用另扣靈石 H × `CRAFT_COINS_HOURS` 0.5 小時）：
+  | 通貨 | 效果 | 野外每隻 | 其他來源 |
+  |---|---|---|---|
+  | 🔷 天機石 | 整件詞綴重擲品級與數值（種類不變） | 1/4000 | 鎮魔塔每層 10%；分解橙裝 5% |
+  | 💠 混元晶 | 整件詞綴全部重洗（種類、品級、數值，條數不變；洗煉鎖定解除） | 1/8000 | 鎮魔塔 30 層起 15%；守城每 20 波 1 顆 |
+  | ⚫ 破虛石 | 隨機刪一條詞綴；之後 24 小時（`CRAFT_POXU_LOCK_MS`）這件不能用造化玉／鍛紋台 | 1/20000 | 鎮魔塔樓主層（每 10 層）50% |
+  | 🔮 造化玉 | 加一條隨機詞綴（不超過 `craftSubCap`＝品質條數＋太古 1＋入魔 1） | 1/80000 | 鎮魔塔 50 層起樓主層 12.5%；分解太古裝 1 顆 |
+  鎮魔塔機率 × 問答倍率（最高 100%，`rollCraftZhenmo`）；野外以實際擊殺數擲（`onCraftFieldKills`，combat.js），離線／背景用同掉率（save.js，結算訊息列出）。
+  每天掛機 24 小時（約 2.8 萬隻）期望：天機 7、混元 3.5、破虛 1.4、造化 0.35。
+- **鍛紋台**（`forgeCraftSub`）：從該部位可出的詞綴中指定一條（品級依裝備等級隨機），花 🌀 50 洗煉石＋🔮 2 造化玉＋靈石，**每件限一次**；詞綴滿了要先破虛。
+- **入魔淬煉**（`corruptEquip`，`CRAFT_CORRUPT`）：花 🌀 20＋💠 1＋靈石，每件限一次。30% 大成功（一半機率多一條詞綴可超過上限，否則隨機一條升為天級）、30% 隨機一條品級 +1（已是天級則數值拉滿）、25% 無事、
+  15% 走火入魔：隨機一條降一級並 `corrupt = 2` 封印——之後不能洗煉（`canRefine` 擋下）也不能做裝，屬性照常生效。
+- **介面**：強化視窗洗煉區下方 `renderCraftSection`（持有數、四顆通貨按鈕、鍛紋台下拉選單、入魔淬煉）；裝備卡片詞條下方 `formatGearCraftTag`（😈 已入魔／走火入魔・封印、⚒️ 已鍛紋）。
+  分解（手動、一鍵、暫存區、背包滿自動、鍛造自動）都會擲做裝通貨並寫在日誌。
+- **驗證**（本機）：Lv.2500 橙劍依序用天機／混元／造化（滿了被擋）／破虛（冷卻 24h、造化被擋）／鍛紋台都正常；入魔 2000 次：走火 16%、多一條 15%、其餘符合；封印後洗煉與混元都被擋；
+  野外 10 天份擊殺得 天機 69／混元 34／破虛 14／造化 4（符合期望）；鎮魔塔 1～100 層一輪 天機 15／混元 10／破虛 4／造化 1；存檔重新整理後通貨保留；野外實戰 15 秒；Console 無錯誤。

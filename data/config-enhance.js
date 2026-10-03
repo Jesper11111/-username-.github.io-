@@ -143,3 +143,27 @@ const IRON_AUCTION_PRICE = 300000;               // 每顆靈石
 const IRON_BAG_CHANCE = 0.05;                    // 千寶閣每格上架「星允鐵袋」的機率
 const IRON_BAG_AMOUNT = [10, 30];
 const IRON_BAG_PRICE = { coins: 400000, rep: 20 };   // 每顆
+
+// ---- 做裝通貨（精簡版 POE，第 69 節；使用者 2026-10-03 定案難度「C 偏難」＝原提案掉率 ×0.5）----
+//   存檔 player.craftCur = { tianji, hunyuan, poxu, zaohua }；field＝野外每隻（實際擊殺數）掉 1 顆的機率，離線／背景同規則
+//   每次使用另扣 靈石 H × CRAFT_COINS_HOURS；入魔封印的裝備不能再做裝（含洗煉）
+const CRAFT_CURRENCIES = {
+    tianji:  { name: "天機石", icon: "🔷", desc: "整件詞綴重擲品級與數值（詞綴種類不變）", field: 1 / 4000 },
+    hunyuan: { name: "混元晶", icon: "💠", desc: "整件詞綴全部重洗（種類、品級、數值，條數不變）", field: 1 / 8000 },
+    poxu:    { name: "破虛石", icon: "⚫", desc: "隨機刪掉一條詞綴（之後 24 小時這件不能加詞綴）", field: 1 / 20000 },
+    zaohua:  { name: "造化玉", icon: "🔮", desc: "新增一條隨機詞綴（不超過品質上限）", field: 1 / 80000 }
+};
+const CRAFT_CUR_KEYS = ["tianji", "hunyuan", "poxu", "zaohua"];
+const CRAFT_COINS_HOURS = 0.5;
+const CRAFT_POXU_LOCK_MS = 24 * 3600 * 1000;      // 破虛石後多久不能用造化玉／鍛紋台
+const CRAFT_FORGE = { stones: 50, zaohua: 2 };     // 鍛紋台：指定加一條詞綴（品級隨機），每件限一次
+// 入魔淬煉：每件限一次；15% 走火入魔（一條詞綴降一級＋封印，之後不能再做裝；裝備不會消失）
+const CRAFT_CORRUPT = { stones: 20, hunyuan: 1, big: 0.30, small: 0.30, none: 0.25 };   // 剩下 0.15 為走火入魔
+// 其他來源（已含 ×0.5）：鎮魔塔每層 BOSS 天機石 10%、30 層起混元晶 15%、樓主層（每 10 層）破虛石 50%、50 層起樓主層造化玉 12.5%（皆 × 問答倍率，最高 100%）
+//   守城每 20 波 1 顆混元晶；分解橙裝 5% 天機石、分解太古裝 1 顆造化玉
+const CRAFT_DROPS = {
+    zhenmo: { tianji: 0.10, hunyuanFrom: 30, hunyuan: 0.15, poxuGate: 0.5, zaohuaFrom: 50, zaohuaGate: 0.125 },
+    defenseHunyuanEvery: 20,
+    decomposeTianji: { "橙色": 0.05 },
+    decomposePrimalZaohua: 1
+};
