@@ -49,7 +49,9 @@ const MARKET_REFUND_COLLECTION = "marketRefunds"; // 被超過出價時的退款
 const MARKET_CLAIM_COLLECTION = "marketClaims";   // 結標領取紀錄（id = 拍賣品id_item 或 _coins），每種只能建立一次
 const MARKET_HOURS = [12, 24, 48];                // 賣家可選的拍賣時間
 const MARKET_MIN_RAISE = 0.05;                    // 每次出價至少比目前最高價多 5%（規則同樣限制）
-const MARKET_FEE = 0.05;                          // 成交抽 5%，賣家拿 95%
+const MARKET_FEE = 0.10;                          // 成交手續費 10%，賣家拿 90%（2026-10-03 由 5% 調高，回收多餘靈石）
+// 上架登錄費（2026-10-03 使用者新增，回收多餘靈石）：max(起標價 × pct, 每小時收入 × minHours)，上架時先扣、不論成交與否都不退（雲端寫入失敗才退）
+const MARKET_LIST_FEE = { pct: 0.02, minHours: 0.25 };
 const MARKET_EXTEND_SEC = 300;                    // 最後 5 分鐘有人出價，結束時間延到出價後 5 分鐘（避免最後一秒搶標）
 const MARKET_MAX_ACTIVE = 5;                      // 每人同時最多掛幾件（玩家端檢查）
 const MARKET_SHOW_N = 50;                         // 拍賣中的清單最多讀幾件（規則限制單次最多 50）
