@@ -128,7 +128,7 @@ function describeTitleCondition(c) {
 
 function describeTitleBonus(bonus) {
     // 稱號、天下異火（strange-fire.js）、夥伴（partner.js）共用
-    let labels = { statPct: '四維', atkPct: '攻擊', hpPct: '氣血', sprPct: '靈力', def: '減傷', eva: '閃避', enhanceChance: '強化成功率',
+    let labels = { statPct: '四維', atkPct: '攻擊', hpPct: '氣血', sprPct: '靈力', def: '防禦', eva: '閃避', enhanceChance: '強化成功率',
                    physPct: '物理攻擊', magPct: '術法攻擊', strPct: '力量', conPct: '體質', intPct: '悟性', chaPct: '魅力',
                    ice: '冰傷', fire: '火傷', poison: '毒傷', metal: '金傷', thunder: '雷傷',
                    'fx:聚財': '野外靈石', 'fx:悟道': '修為', 'fx:積德': '功德', 'fx:法爆': '技能傷害',
@@ -139,7 +139,7 @@ function describeTitleBonus(bonus) {
         let v = bonus[k];
         let label = labels[k] || (k.startsWith('elemDmg:') ? `本命五行為${k.slice(8)}時傷害` : k);
         let isPoint = ['def', 'eva', 'ice', 'fire', 'poison', 'metal', 'thunder'].includes(k);
-        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}%`;
+        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}${k === 'def' ? '' : '%'}`;   // 防禦是點數（第 66 節）
     }).join('、');
 }
 

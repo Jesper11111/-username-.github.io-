@@ -6,14 +6,24 @@ function newStatus() {
     return { frozen: 0, burn: null, poison: null };
 }
 
+// ---- 防禦（《天堂2》式，config-elements.js 的 DEF_K；ARCHITECTURE.md 第 66 節）----
+// 防禦點數 → 受到傷害的倍率（0 防禦 = 1，DEF_K 防禦 = 0.5）
+function defMult(points) { return DEF_K / (DEF_K + Math.max(0, points || 0)); }
+// 敵人的減傷 % ↔ 等效防禦點數（顯示用；敵人的實際計算仍用 %，效果與改版前相同）
+function pctToDefPoints(pct) { const p = Math.min(95, Math.max(0, pct || 0)); return DEF_K * p / (100 - p); }
+// 顯示：玩家「防禦 60（減傷 33%）」
+function formatDefPoints(points) { return `${+(points || 0).toFixed(1)}（減傷 ${+((1 - defMult(points)) * 100).toFixed(1)}%）`; }
+// 顯示：敵人「防禦 44（減傷 27%）」
+function formatEnemyDef(pct) { return `${Math.round(pctToDefPoints(pct))}（減傷 ${+(pct || 0).toFixed(1)}%）`; }
+
 // 玩家目前的戰鬥屬性：裝備 + 靈根加成（一起套上限）＋本命五行
 function getPlayerCombatAttrs() {
     let b = getEquipBonus();
     let r = getRootBonus();
     let a = getSpellAuraBonus();   // 仙法被動光環（spells.js），與裝備、靈根一起套上限
     const cap = (v, max) => Math.max(0, Math.min(max, v));
-    let armor = getDuelArmorMult();   // 懸賞對決中被「破甲」：減傷與閃避減半（bounty.js）
-    // 裝備特效（gear.js）：護體（低血量）、先手盾（每波前 2 回合）加減傷，一起套上限
+    let armor = getDuelArmorMult();   // 懸賞對決中被「破甲」：防禦與閃避減半（bounty.js）
+    // 裝備特效（gear.js）：護體（低血量）、先手盾（每波前 2 回合）加防禦
     let fx = getGearEffects();
     let gearDef = (fx["護體"] && player.hp < player.maxHp * 0.3 ? fx["護體"] : 0)
                 + (fx["先手盾"] && gearWaveRound <= 2 ? fx["先手盾"] : 0);
@@ -21,13 +31,13 @@ function getPlayerCombatAttrs() {
     let capOf = (k, base) => base + (extra["cap:" + k] || 0);
     // 新制（numeric.js）：敏捷提供閃避（一起套上限）、命中（加在洞察上）、暴擊率
     let agiEva = NUMERIC_V2 ? nv2AgiEva() : 0;
-    // 閃避／減傷裡屬於靈寵、夥伴的部分（敵人打玩家時各自另有上限，resolveHit）；夥伴被動已含在 b（getEquipBonus → getBonusTotals）
+    // 閃避裡屬於靈寵、夥伴的部分（敵人打玩家時各自另有上限，resolveHit）；夥伴被動已含在 b（getEquipBonus → getBonusTotals）
     let pb = typeof getPartnerBonusTotals === 'function' ? getPartnerBonusTotals() : {};
     return {
-        petDef: petFxVal('def'), petEva: petFxVal('eva'),
-        partnerDef: pb.def || 0, partnerEva: pb.eva || 0,
-        // 靈寵增益（beast-combat.js 的 petFxVal）：減傷、閃避一起套上限；暴擊、命中、破甲直接加
-        def: cap(b.def + r.def + a.def + gearDef + petFxVal('def'), capOf("def", DEF_CAP)) * armor,
+        petEva: petFxVal('eva'), partnerEva: pb.eva || 0,
+        // 防禦點數（第 66 節）：裝備、靈根、仙法、特效、靈寵增益、夥伴被動全部相加，沒有上限（套裝的 cap:def 已無作用）
+        // 靈寵增益（beast-combat.js 的 petFxVal）：閃避一起套上限；暴擊、命中、破甲直接加
+        def: Math.max(0, b.def + r.def + a.def + gearDef + petFxVal('def')) * armor,
         eva: cap(b.eva + a.eva + agiEva + petFxVal('eva'), capOf("eva", EVA_CAP)) * armor,
         crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100,
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
@@ -137,17 +147,17 @@ function auraRoundTick(ag, pSt, pMax, eMax, bossAtk, pAttrs) {
 function describeAura(aura) {
     if (!aura) return '';
     const p = aura.player || {}, s = aura.self || {}, pc = v => +(v * 100).toFixed(1);
-    const neg = [p.atk && `你的攻擊 −${pc(p.atk)}%`, p.def && `你的減傷 −${p.def}`, p.eva && `你的閃避 −${p.eva}`, p.curse && `詛咒：你受到的傷害 +${pc(p.curse)}%`,
+    const neg = [p.atk && `你的攻擊 −${pc(p.atk)}%`, p.def && `你的防禦 −${p.def}`, p.eva && `你的閃避 −${p.eva}`, p.curse && `詛咒：你受到的傷害 +${pc(p.curse)}%`,
                  p.dot && `每回合扣你 ${pc(p.dot)}% 氣血`, p.freeze && `每回合 ${pc(p.freeze)}% 凍結你`, p.burn && `每回合 ${pc(p.burn)}% 使你燒傷`, p.poison && `每回合 ${pc(p.poison)}% 使你中毒`].filter(Boolean);
-    const pos = [s.atk && `攻擊 +${pc(s.atk)}%`, s.def && `減傷 +${s.def}`, s.eva && `閃避 +${s.eva}`, s.regen && `每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
+    const pos = [s.atk && `攻擊 +${pc(s.atk)}%`, s.def && `減傷 +${s.def}%`, s.eva && `閃避 +${s.eva}`, s.regen && `每回合回 ${pc(s.regen)}% 氣血`].filter(Boolean);
     return `【${aura.name}】${neg.length ? neg.join('、') : ''}${neg.length && pos.length ? '；' : ''}${pos.length ? '自身' + pos.join('、') : ''}`;
 }
 function describeAuras(auras) { return (Array.isArray(auras) ? auras : [auras]).filter(Boolean).map(describeAura).join('<br>'); }
 
-// 單次命中結算（依序）：閃避 → 金重擊 → 雷擊 → 五行相剋 → 減傷（雷擊時略過）→ 附加冰/火/毒狀態
+// 單次命中結算（依序）：閃避 → 金重擊 → 雷擊 → 五行相剋 → 暴擊 → 防禦（雷擊、暗蝕時略過）→ 附加冰/火/毒狀態
 //   attacker = { attrs, power }  power 為計算燒傷/中毒的攻擊力基準
 //   defender = { attrs, status }
-// 回傳 { dmg, tags }，tags 為本次觸發的效果（供日誌彙整），呼叫端自行扣 hp
+// 回傳 { dmg, tags, preDef, postDef }，tags 為本次觸發的效果（供日誌彙整），呼叫端自行扣 hp
 function resolveHit(rawDmg, attacker, defender) {
     let tags = [];
     let eva = (defender.attrs.eva || 0) - (attacker.attrs.evaPen || 0);   // 洞察：無視部分閃避
@@ -211,16 +221,13 @@ function resolveHit(rawDmg, attacker, defender) {
         dmg *= NV2.critDmg;
         tags.push("crit");
     }
-    const preDef = dmg;   // 減傷前的傷害：敵人打玩家時，最後保底用（beast-combat.js 的 applyPetDamageReduction）
-    if (!thunder && !darkHit) {   // 雷擊、暗蝕無視減傷；破甲：無視部分減傷
-        let def = Math.max(0, (defender.attrs.def || 0) - (attacker.attrs.armorPen || 0));
-        if (defender.attrs.isPlayer) {   // 敵人打玩家：玩家本身最多 20、靈寵最多 +10、夥伴最多 +10（config-elements.js）
-            const d = defender.attrs, pet = d.petDef || 0, par = d.partnerDef || 0;
-            def = Math.min(Math.max(0, (d.def || 0) - pet - par - (attacker.attrs.armorPen || 0)), PLAYER_EFFECTIVE_DEF_MAX)
-                + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
-        }
-        dmg *= 1 - def / 100;
+    const preDef = dmg;   // 防禦前的傷害
+    if (!thunder && !darkHit) {   // 雷擊、暗蝕無視防禦；破甲：無視部分防禦
+        const pen = attacker.attrs.armorPen || 0;
+        if (defender.attrs.isPlayer) dmg *= defMult((defender.attrs.def || 0) - pen);   // 玩家：防禦點數，《天堂2》式（第 66 節）
+        else dmg *= 1 - Math.max(0, (defender.attrs.def || 0) - pen) / 100;          // 敵人：減傷 %（與改版前相同）
     }
+    const postDef = dmg;   // 防禦後的傷害：敵人打玩家時，護盾類的最後保底以它為準（beast-combat.js 的 applyPetDamageReduction）
 
     let st = defender.status;
     // 冰靈根等提供的 freezeResist 會折減「被凍結」的機率
@@ -239,7 +246,7 @@ function resolveHit(rawDmg, attacker, defender) {
             attacker.power * POISON_RATE * (1 + (book ? book.poison : 0)) * (1 + (attacker.attrs.poisonBonus || 0)));
         tags.push("poison");
     }
-    return { dmg: roundDmg(dmg), tags, preDef };
+    return { dmg: roundDmg(dmg), tags, preDef, postDef };
 }
 
 // 傷害浮動倍率：新制回傳 1 ± NV2.dmgVariance 之間的隨機值（平均 1）；舊制固定 1
@@ -306,6 +313,6 @@ function formatEquipStats(stats) {
     let base = [["str", "力量"], ["con", "體質"], ["int", "悟性"], ["spr", "靈力"], ["cha", "魅力"]]
         .filter(([k]) => stats[k]).map(([k, label]) => `${label}+${stats[k].toWan()}`);
     let attrs = ["def", "eva"].concat(AFFIX_TYPES)
-        .filter(k => stats[k]).map(k => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label}+${stats[k]}%`);
+        .filter(k => stats[k]).map(k => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label}+${stats[k]}${k === 'def' ? '' : '%'}`);   // 防禦是點數（第 66 節）
     return base.concat(attrs).join("、") || "無";
 }

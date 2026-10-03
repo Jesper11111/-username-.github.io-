@@ -88,7 +88,7 @@ function getAptitudeWeaponPct(slot) {
 const APTITUDE_BONUS_LABELS = {
     "fx:悟道": ["修為速度", "pct"], atkPct: ["攻擊", "pct"], physPct: ["物理攻擊", "pct"], magPct: ["術法攻擊", "pct"], hpPct: ["氣血上限", "pct"],
     statPct: ["全屬性", "pct"], strPct: ["力量", "pct"], conPct: ["體質", "pct"], intPct: ["悟性", "pct"], sprPct: ["靈力", "pct"], agiPct: ["敏捷", "pct"],
-    def: ["減傷", "pt"], eva: ["閃避", "pt"], ice: ["冰傷", "pt"], fire: ["火傷", "pt"], poison: ["毒傷", "pt"], metal: ["金傷", "pt"], thunder: ["雷傷", "pt"],
+    def: ["防禦", "num"], eva: ["閃避", "pt"], ice: ["冰傷", "pt"], fire: ["火傷", "pt"], poison: ["毒傷", "pt"], metal: ["金傷", "pt"], thunder: ["雷傷", "pt"],
     "fx:回春": ["每回合回血", "pct"], "fx:法爆": ["技能傷害", "pct"], "fx:吸血": ["吸血", "pct"], "fx:破甲": ["無視減傷", "pt"], "fx:洞察": ["無視閃避", "pt"],
     "fx:定神": ["抗凍結", "pct"], "fx:丹心": ["丹藥效果", "pct"], "fx:剋敵": ["剋制傷害", "pct"], "fx:噬魂": ["擊殺回血", "pct"],
     wind: ["風擊", "pt"], light: ["聖光", "pt"], dark: ["暗蝕", "pt"]
@@ -98,7 +98,7 @@ function formatAptitudeEffects(d) {
     for (const k in d.bonus) {
         const [label, fmt] = APTITUDE_BONUS_LABELS[k] || [k, "pt"];
         const v = d.bonus[k];
-        parts.push(`${label} ${v > 0 ? '+' : ''}${fmt === 'pct' ? +(v * 100).toFixed(1) + '%' : +v.toFixed(1) + '%'}`);
+        parts.push(`${label} ${v > 0 ? '+' : ''}${fmt === 'pct' ? +(v * 100).toFixed(1) + '%' : +v.toFixed(1) + (fmt === 'num' ? '' : '%')}`);
     }
     const s = d.special;
     if (s.weapon) parts.push(`裝備${s.weapon}時：${s.weapon}的${NUMERIC_V2 ? '武器攻擊' : '四維'} +${Math.round(s.weaponPct * 100)}%、技能傷害 +${Math.round(s.skillPct * 100)}%`);

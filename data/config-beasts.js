@@ -129,7 +129,7 @@ beastSkills.forEach(s => { beastSkillById[s.id] = s; });
 
 // 增益種類的顯示名稱（describeBeastSkill、戰況日誌）
 const BEAST_BUFF_LABELS = {
-    atk: "攻擊", reduce: "受傷減少", def: "減傷", eva: "閃避", crit: "暴擊率", combo: "連擊率",
+    atk: "攻擊", reduce: "受傷減少", def: "防禦", eva: "閃避", crit: "暴擊率", combo: "連擊率",
     hit: "命中", lifesteal: "吸血", armorPen: "破甲"
 };
 const BEAST_DEBUFF_LABELS = { poison: "中毒", burn: "燒傷", freeze: "凍結", silence: "封印", weaken: "化功", armor: "破甲" };

@@ -259,6 +259,7 @@ function updateUI() {
     document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
+        if (k === 'def') return `<span${tip}>${info.icon}${info.label} <b>${formatDefPoints(attrs.def)}</b></span>`;   // 防禦點數（第 66 節）
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
     }).join('') + natureHtml
         + (formatRaceDmgLine() ? `<span title="種族剋制：對該族的傷害加成（天磯錄・斬妖錄等，合計上限 +${Math.round(RACE_DMG_CAP * 100)}%）">⚔️剋制 <b>${formatRaceDmgLine()}</b></span>` : '');

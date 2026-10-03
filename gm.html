@@ -306,18 +306,18 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005i"></script>
+<script src="data/config-realms.js?v=20261005j"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005i"></script>
-<script src="data/numeric.js?v=20261005i"></script>
-<script src="data/config-leaderboard.js?v=20261005i"></script>
-<script src="data/config-mailbox.js?v=20261005i"></script>
+<script src="data/config-numeric.js?v=20261005j"></script>
+<script src="data/numeric.js?v=20261005j"></script>
+<script src="data/config-leaderboard.js?v=20261005j"></script>
+<script src="data/config-mailbox.js?v=20261005j"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005i"></script>
+<script src="data/config-aptitude.js?v=20261005j"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005i"></script>
-<script src="data/bounty.js?v=20261005i"></script>
-<script src="data/config-defense.js?v=20261005i"></script>
+<script src="data/config-bounty.js?v=20261005j"></script>
+<script src="data/bounty.js?v=20261005j"></script>
+<script src="data/config-defense.js?v=20261005j"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -336,10 +336,11 @@ const DISP = 100;
 const JUMP_DEFAULTS = { hours: 1, ratio: 4, min: 6000 };
 const JUMP_STORE_KEY = 'gm_jump_settings_v3';
 // 守城審核的預設值（頁面上可改，存在本瀏覽器 localStorage）；minPct 依據見頁面下方說明與 ARCHITECTURE.md 第 50 節
-// 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望，正常落在 1.8～2.28 倍（下限固定 DEF_POWER_ATK_MIN）
-const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.4 };
+// 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望（下限固定 DEF_POWER_ATK_MIN）
+// 2026-10-03 暴擊改 ×2（ARCHITECTURE.md 第 66 節）：正常落在 1.8～2.58 倍（暴擊 30%、連擊 10% 時 1.3 × 1.1 × 1.8）→ 上限預設 2.4 改 2.6，設定鍵換 v3 讓舊的 2.4 不再沿用
+const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.6 };
 const DEF_POWER_ATK_MIN = 1.7;
-const DEF_STORE_KEY = 'gm_defense_settings_v2';
+const DEF_STORE_KEY = 'gm_defense_settings_v3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -587,7 +588,7 @@ function verifyDefense(s) {
     const ratio = atk / need;
     if (ratio * 100 < cfg.minPct) checks.push({ ok: false, text: `攻擊只有第 ${best} 波強度的 ${(ratio * 100).toPrecision(2)}%，守不住` });
     else checks.push({ ok: true, text: '攻擊足以守住' });
-    // ③ 數值一致（新制）：戰力 ÷ 攻擊 應在 1.7～設定值（預設 2.4）之間（戰力 = 攻擊 × 暴擊連擊技能期望）
+    // ③ 數值一致（新制）：戰力 ÷ 攻擊 應在 1.7～設定值（預設 2.6）之間（戰力 = 攻擊 × 暴擊連擊技能期望）
     const pa = atk > 0 ? power / atk : Infinity;
     if (pa < DEF_POWER_ATK_MIN || pa > cfg.atkMult) checks.push({ ok: false, text: `戰力是攻擊的 ${isFinite(pa) ? pa.toFixed(2) : '∞'} 倍，不在 ${DEF_POWER_ATK_MIN}～${cfg.atkMult} 倍之間（數值不一致）` });
     const verdict = checks.some(c => c.ok === false) ? 'fail' : checks.some(c => c.ok === null) ? 'manual' : 'pass';

@@ -46,10 +46,10 @@ const SPELL_GRADE_STATS = {
 };
 
 // 被動光環可用的欄位：physPct/magPct（物理／術法攻擊 %）、hpPct/mpPct（氣血／靈力上限 %）、
-//   def/eva（減傷／閃避 %）、fire/ice/poison/metal/thunder（屬性傷害機率 %）。負值為魔功的代價。
+//   def/eva（防禦點數／閃避 %）、fire/ice/poison/metal/thunder（屬性傷害機率 %）。負值為魔功的代價。
 const SPELL_AURA_LABELS = {
     physPct: "物理攻擊", magPct: "術法攻擊", hpPct: "氣血上限", mpPct: "靈力上限",
-    def: "減傷", eva: "閃避", fire: "燒傷機率", ice: "冰凍機率", poison: "中毒機率", metal: "金重擊機率", thunder: "雷擊機率"
+    def: "防禦", eva: "閃避", fire: "燒傷機率", ice: "冰凍機率", poison: "中毒機率", metal: "金重擊機率", thunder: "雷擊機率"
 };
 
 // ---- 10 種屬性 ----

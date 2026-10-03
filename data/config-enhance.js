@@ -16,7 +16,7 @@ const gearSubAffixes = [
     { key: "chaPct", label: "魅力",       fmt: "pct", min: 0.02,  max: 0.05 },
     { key: "atkPct", label: "攻擊",       fmt: "pct", min: 0.02,  max: 0.04 },
     { key: "hpPct",  label: "氣血上限",   fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "def",     label: "減傷",      fmt: "pt",  min: 1,     max: 3 },
+    { key: "def",     label: "防禦",      fmt: "pt",  min: 1,     max: 3 },
     { key: "eva",     label: "閃避",      fmt: "pt",  min: 1,     max: 2 },
     { key: "ice",     label: "冰傷",      fmt: "pt",  min: 2,     max: 5 },
     { key: "fire",    label: "火傷",      fmt: "pt",  min: 2,     max: 5 },
