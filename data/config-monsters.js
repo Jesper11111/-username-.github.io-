@@ -76,7 +76,7 @@ const FIELD_MONSTER_POOLS = {
     "崑吾山":   [["qilin", 3], ["tiger", 3], ["fox", 2], ["phoenix", 2]],
     "蠻荒古地": [["tiger", 3], ["qilin", 2], ["spider", 3], ["zombie", 2]],
     "雷鳴大陸": [["dragon", 4], ["phoenix", 3], ["turtle", 3]],
-    "血天大陸": [["bloodCult", 4], ["sorcerer", 3], ["yaksha", 3]],
+    "血天大陸": [["bloodCult", 2], ["puppet", 2], ["yaksha", 2], ["zombie", 2], ["tiger", 2]],   // 2026-10-03 使用者反映強度倍率異常：原 血煞4／術士3／夜叉3 平均攻擊 ×1.05、術法 70%（普通圖最高），改成攻擊 ×0.87、術法 41%
     "天淵戰場": [["puppet", 3], ["bloodCult", 3], ["ghostGen", 2], ["tiger", 2]],
     "星空古路": [["dragon", 3], ["fox", 3], ["phoenix", 2], ["wraith", 2]],
     "荒古禁地": [["qilin", 3], ["turtle", 3], ["zombie", 2], ["tiger", 2]],
