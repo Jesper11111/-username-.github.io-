@@ -73,10 +73,30 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
         enhance: 0
     };
     if (level) eq.level = level;   // 裝備等級：穿戴需人物等級 ≥ level
+    rollGearAncient(eq, def);      // 橙裝機率成為遠古／太古（第 67 節 D3）
+    if (eq.ancient && !noRecord) addLog(`${eq.ancient === 2 ? '🔴 太古神兵現世' : '🟡 遠古遺寶出土'}！獲得【${getEquipDisplayName(eq)}】！`, "reincarnate");
     maybeAddRaceGearFx(eq);        // 紫／橙裝機率帶種族特效（race.js，第 62 節第 5 期）
     if (!noRecord) recordGearCollected(eq);   // 天磯錄收藏紀錄（codex.js）
     return ensureSockets(eq);      // 橙裝隨機 1~3 孔（talisman.js）
 }
+
+// ---- 遠古／太古（config-enhance.js 的 GEAR_ANCIENT，第 67 節 D3）----
+function rollGearAncient(eq, def) {
+    if (eq.quality !== GEAR_ANCIENT_QUALITY) return;
+    const r = Math.random();
+    const a = r < GEAR_ANCIENT[2].chance ? 2 : r < GEAR_ANCIENT[2].chance + GEAR_ANCIENT[1].chance ? 1 : 0;
+    if (!a) return;
+    const A = GEAR_ANCIENT[a];
+    eq.ancient = a;
+    BASE_STAT_KEYS.forEach(k => { if (eq.stats[k]) eq.stats[k] = Math.floor(eq.stats[k] * A.statMult); });
+    eq.subs = rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, (GEAR_SUB_COUNT[eq.quality] || 0) + A.extraSubs, null, def.category, eq.level, gearRollOpts(eq));
+}
+// 這件裝備擲詞條的下限（遠古、太古；新抽詞條、白金進化、洗煉共用）；一般裝備回傳 undefined
+function gearRollOpts(eq) {
+    const A = eq && GEAR_ANCIENT[eq.ancient];
+    return A ? { minTier: A.minTier, maxRoll: !!A.maxRoll } : undefined;
+}
+function gearAncientTag(eq) { const A = eq && GEAR_ANCIENT[eq.ancient]; return A ? A.name + '・' : ''; }
 
 // ---- 隨機詞條（config-enhance.js 的 gearSubAffixes）----
 // 抽 count 條不重複的詞條，回傳 [[key, value, 分級], ...]；exclude = 已有的 key（進化時多抽 1 條用）
@@ -275,7 +295,7 @@ function getEquipDisplayName(eq) {
     let def = getGearDef(eq);
     if (def) {
         const an = getGearAffixName(eq);   // 前綴／後綴（第 67 節 D1）
-        return (eq.quality === PLATINUM_QUALITY.name ? EVOLVE_NAME_PREFIX : '') + an.pre + def.name + (an.suf ? '・' + an.suf : '');
+        return (eq.quality === PLATINUM_QUALITY.name ? EVOLVE_NAME_PREFIX : '') + gearAncientTag(eq) + an.pre + def.name + (an.suf ? '・' + an.suf : '');
     }
     if (eq.lingbaoId) {
         let item = lingbaoShopItems.find(i => i.id === eq.lingbaoId);

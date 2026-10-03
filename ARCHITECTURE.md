@@ -1593,7 +1593,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005q`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005r`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3671,6 +3671,13 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     鎮魔塔每層 BOSS `REFINE_ZHENMO`＝(1 ＋ 樓層 ÷ 20) × 問答倍率（結算畫面列出）。
   - 洗煉（enhance.js 強化視窗下方 `renderRefineSection`／`refineEquip`／`chooseRefine`）：選一條詞條 → 花 洗煉石 `REFINE_STONE_BASE` 1 ＋ 已洗次數（最多 `REFINE_STONE_MAX` 10）＋ 靈石 H × 0.5 小時 →
     依該裝備的分類與等級擲 `REFINE_CANDIDATES` 2 條新詞條（不會和其他條重複，可洗回同一種），「保留原本／新 1／新 2」三選一。**第一次洗煉就鎖定該條**，之後只能洗同一條（暗黑 3 規則）。
-    只限 850 種圖鑑裝備（有 `gearId` 與詞條；神器、靈寶閣寶物不行）。強化視窗持有列多「🌀 洗煉石」。`gearRollOpts(eq)` 預留給 D3 遠古／太古的擲骰下限。
+    只限 850 種圖鑑裝備（有 `gearId` 與詞條；神器、靈寶閣寶物不行）。強化視窗持有列多「🌀 洗煉石」。`gearRollOpts(eq)`（gear.js）傳入遠古／太古的擲骰下限（D3）。
   - 驗證（本機）：分解橙＋紫得 3 顆；洗第 2 條 → 擲出 2 條候選、選第 1 條後詞條更換、鎖定位置 1、下次費用 2 顆；再洗時選第 0 條也只會洗第 1 條；Console 無錯誤。
+- **D3：遠古／太古**（版本 `20261005r`）
+  - 設定 config-enhance.js 的 `GEAR_ANCIENT`：只對 `GEAR_ANCIENT_QUALITY` 橙色在產生時擲一次（所有管道：鍛造、奪寶、千寶閣、守城…，`createGearEquip` → `rollGearAncient`）。
+    遠古 2%：詞條至少「地」級（`minTier` 2）、四維 ×1.1；太古 0.2%：詞條全部「天」級且取範圍上限（`maxRoll`）、多 1 條詞條、四維 ×1.2。存成 `eq.ancient`（1／2）。
+  - `gearRollOpts(eq)` 回傳擲骰下限，白金進化多抽的一條、洗煉的候選都套用 → 遠古／太古進化成白金、洗煉後仍維持品質。
+  - 顯示：名稱加「遠古・」「太古・」（`gearAncientTag`，在「先天・」之後）；卡片 `getEquipCardClass` 加 `eq-ancient`（金色發光框）／`eq-primal`（赤紅脈動框，`prefers-reduced-motion` 時不動）；
+    產生時（非千寶閣上架）寫日誌「🟡 遠古遺寶出土／🔴 太古神兵現世」。
+  - 驗證（本機）：橙色 2 萬件 → 遠古 435（2.2%）、太古 34（0.17%）；太古劍 4 條全天級、進化白金後多的一條也是天級（5 條）；遠古戒指 3 條地級；卡片邊框正常；Console 無錯誤。
 
