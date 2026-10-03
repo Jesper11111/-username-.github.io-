@@ -128,7 +128,7 @@ const NV2 = {
     // 轉世（leveling.js 的 triggerReincarnate，2026-09-27 使用者指定）：保留此世氣血上限的 10%（累加在 reincarnateBonus.nv2Hp，不動舊制的 hp／mp）
     reincarnateHpKeep: 0.1,
     // 符寶（talisman.js 的 talismanFlatOf）：四維符每枚的新制點數（舊制 100／400／1500）。全身橙裝約 30 孔全鑲上品同一種 ≈ +18，與丹藥上限 +20 相當
-    talismanFlat: { 1: 0.1, 2: 0.3, 3: 0.6 }
+    talismanFlat: { 1: 0.1, 2: 0.3, 3: 0.6, 4: 1.0 }   // 4＝極品（只能合成，config-talisman.js 的 TALISMAN_MERGE）
 };
 
 // 第六屬性：敏捷（舊制沒有，新制才顯示）
