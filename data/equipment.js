@@ -269,7 +269,7 @@ function forgeEquipment(qty = 1) {
         if (auto.includes(eq.quality)) {
             player.equipInventory.pop();   // forgeOneEquipment 剛放進背包的那件
             let y = getDecomposeYield(eq);
-            dShards += y.shards; dIron += y.iron;
+            dShards += y.shards; dIron += y.iron; addRefineStones(y.refine);   // 洗煉石（第 67 節 D2）
             decomposed.push(eq);
         }
     }

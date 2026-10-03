@@ -81,6 +81,17 @@ const EVOLVE_NAME_PREFIX = "先天・";
 const DECOMPOSE_SHARDS = { "白色": 10, "綠色": 20, "藍色": 40, "紫色": 80 };
 const SHARDS_PER_IRON = 500;
 const DECOMPOSE_IRON = { "橙色": 3, "白金": 15 };
+// 分解另得洗煉石（第 67 節 D2）
+const DECOMPOSE_REFINE = { "紫色": 1, "橙色": 2, "白金": 10 };
+
+// ---- 洗煉（暗黑式附魔重鑄，第 67 節 D2）：選一條詞條重擲，從「保留原本＋REFINE_CANDIDATES 條新的」三選一 ----
+//   同一件裝備第一次洗煉後就鎖定那一條（之後只能洗那一條）；費用：洗煉石 REFINE_STONE_BASE ＋ 已洗次數（最多 REFINE_STONE_MAX）＋ 靈石 H × REFINE_COINS_HOURS
+//   洗煉石來源：分解（DECOMPOSE_REFINE）、鎮魔塔每層 BOSS（REFINE_ZHENMO：1 ＋ 樓層 ÷ 20，× 問答倍率）
+const REFINE_CANDIDATES = 2;
+const REFINE_STONE_BASE = 1;
+const REFINE_STONE_MAX = 10;
+const REFINE_COINS_HOURS = 0.5;
+const REFINE_ZHENMO = { base: 1, perFloors: 20 };
 
 // ---- 暫存區：背包滿時新掉落的橙色以上放這裡；滿了不能外出練功 ----
 const GEAR_STASH_MAX = 50;
