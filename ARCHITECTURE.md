@@ -42,7 +42,8 @@ images/               圖片素材
                       feisheng-gate.jpg 飛升台（玩家提供 848×1264 縮成 600×894、145KB；人界飛升點浮起後的入口畫面，圖上疊五行法陣與光柱，第 20 節）；safe-zone.jpg 安全區（宗門、天南城、天星城）的戰場實況圖（config-maps.js 的 SAFE_ZONE_IMG，第 59 節；玩家提供 848×1264 縮成 480×715、88KB）；
                       修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
-  monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
+  monsters/           野外小怪（第 59 節 FIELD_MONSTERS，2026-10-03 起在 config-monsters.js）：spider／turtle／wraith／zombie／sorcerer／puppet.jpg＝碧眼毒蛛、玄甲靈龜、怨魂、百年殭屍、魔道術士、傀儡魔偶
+                      （2026-10-03 玩家提供 1408×768 合成圖，圖上中文標籤先用旁邊背景羽化覆蓋，再依主體裁出 200×195～475×423，13～60KB；第 66 節）；dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
                       righteous-cultivator.jpg 野外正道修士（config-merit.js 的 CULTIVATOR_IMGS，第 27、59 節；玩家提供 848×1264 直式縮成 480×715、77KB）、
                       assassin.jpg 暗殺者（AMBUSH_IMG；玩家提供 687×1024 縮成 480×715、72KB）、demonic-cultivator.jpg 野外魔道修士（CULTIVATOR_IMGS；848×1264 縮成 480×715、73KB）、
                       heart-demon-male.jpg／heart-demon-female.jpg 男／女角渡劫心魔（config-tribulation.js 的 HEART_DEMON_IMGS，第 7 節；皆 480×715，80／75KB）
@@ -1591,7 +1592,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005l`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005m`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -3617,4 +3618,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - ⚠️ 自癒原本不限次數：挑戰圖（荒古禁地、太初古礦、雷鳴大陸、崑吾山，強度 5～40 倍、一般玩家要打上百回合）會補得比玩家打得快（荒古禁地 132 → 1281 回合），改為每隻最多 2 次。
   - 驗證（本機）：各地圖每種圖鑑（種族特性另計）對一般玩家每隻總傷害 = 均衡無技能的 0.96～1.08 倍；與第 2 期對照（各 1500 隻／地圖）一般地圖「每隻總傷害」差 ±3%、收益補償比例差 ≤ 3%；
     挑戰圖較難約 5～7%（長時間戰鬥自癒必用滿 2 次）、每小時收益約少同比例——挑戰圖本來就是牆，接受。實戰：天南 60 秒觸發重擊 8、幻身 1、毒牙 1 次，行動說明與飄字正常；Console 無錯誤。
+- **6 隻怪物圖**（2026-10-03，版本 `20261005m`）：玩家提供一張合成圖（毒蛛、靈龜、怨魂、殭屍、術士、傀儡，圖上有中文標籤），以 ImageMagick 把 9 個標籤用相鄰背景（羽化遮罩）覆蓋後各自裁切，
+  存成 images/monsters/spider／turtle／wraith／zombie／sorcerer／puppet.jpg，`FIELD_MONSTERS` 補上 img／pos。殭屍與術士在原圖重疊，殭屍只取上半身（200×195）。至此 14 種野外妖獸都有圖。
+  驗證：戰場實況逐一顯示 6 隻，主體與臉都在畫面內；Console 無錯誤。
 

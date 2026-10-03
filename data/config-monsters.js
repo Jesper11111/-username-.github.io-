@@ -38,6 +38,7 @@ const MONSTER_SKILLS = {
 
 // ---- 圖鑑 ----
 // img 沒有的顯示大號 emoji（battle-fx.js）；之後放圖到 images/monsters/、在這裡補 img／pos 即可（只影響外觀）
+// 2026-10-03 玩家提供 6 隻合成圖（1408×768，圖上有中文標籤）：標籤以旁邊背景覆蓋後裁出 spider／turtle／wraith／zombie／sorcerer／puppet.jpg（第 66 節）
 // skills：技能（上方 MONSTER_SKILLS，第 3 期）
 // race：config-race.js 的四族；心魔不放在野外（斬妖錄心魔門檻 50／100／200 是依渡劫心魔的稀有度訂的）
 const FIELD_MONSTERS = [
@@ -46,15 +47,15 @@ const FIELD_MONSTERS = [
     { id: "qilin",   name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%", race: "beast", type: "tank", skills: ["flame", "heal"] },
     { id: "fox",     name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%", race: "beast", type: "agile", skills: ["phantom"] },
     { id: "phoenix", name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%", race: "beast", type: "caster", skills: ["flame"] },
-    { id: "turtle",  name: "玄甲靈龜", icon: "🐢", race: "beast", type: "tank", skills: ["heal", "frost"] },
-    { id: "spider",  name: "碧眼毒蛛", icon: "🕷️", race: "beast", type: "agile", skills: ["poison"] },
+    { id: "turtle",  name: "玄甲靈龜", icon: "🐢", img: "images/monsters/turtle.jpg",   pos: "35% 45%", race: "beast", type: "tank", skills: ["heal", "frost"] },
+    { id: "spider",  name: "碧眼毒蛛", icon: "🕷️", img: "images/monsters/spider.jpg",   pos: "55% 25%", race: "beast", type: "agile", skills: ["poison"] },
     { id: "ghostGen", name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", race: "ghost", type: "caster", skills: ["frost", "sunder"] },
     { id: "yaksha",  name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", race: "ghost", type: "brute", skills: ["bite", "heavy"] },
-    { id: "zombie",  name: "百年殭屍", icon: "🧟", race: "ghost", type: "tank", skills: ["poison", "bite"] },
-    { id: "wraith",  name: "怨魂",     icon: "🌫️", race: "ghost", type: "agile", skills: ["phantom"] },
+    { id: "zombie",  name: "百年殭屍", icon: "🧟", img: "images/monsters/zombie.jpg",   pos: "50% 20%", race: "ghost", type: "tank", skills: ["poison", "bite"] },
+    { id: "wraith",  name: "怨魂",     icon: "🌫️", img: "images/monsters/wraith.jpg",   pos: "65% 25%", race: "ghost", type: "agile", skills: ["phantom"] },
     { id: "bloodCult", name: "血煞魔修", icon: "😈", img: "images/monsters/demonic-cultivator.jpg", pos: "50% 30%", race: "demon", type: "brute", skills: ["rage", "bite"] },
-    { id: "puppet",  name: "傀儡魔偶", icon: "🗿", race: "demon", type: "tank", skills: ["sunder", "heavy"] },
-    { id: "sorcerer", name: "魔道術士", icon: "🧙", race: "demon", type: "caster", skills: ["flame", "poison"] }
+    { id: "puppet",  name: "傀儡魔偶", icon: "🗿", img: "images/monsters/puppet.jpg",   pos: "50% 55%", race: "demon", type: "tank", skills: ["sunder", "heavy"] },
+    { id: "sorcerer", name: "魔道術士", icon: "🧙", img: "images/monsters/sorcerer.jpg", pos: "50% 25%", race: "demon", type: "caster", skills: ["flame", "poison"] }
 ];
 
 // ---- 各地圖出沒組合 [[圖鑑 id, 權重], …]（每張 3～5 種）；沒列的地圖用舊規則（幽冥禁域只出鬼物，其餘全部）----
