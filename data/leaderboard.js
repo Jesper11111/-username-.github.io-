@@ -76,7 +76,7 @@ function initLeaderboardBackend() {
 async function uploadLeaderboard() {
     if (!isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed) return;
     if (LEADERBOARD_RANKS_REMOVED) return;   // 排行榜已移除（config-leaderboard.js）
-    if (lbBanned || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;
+    if (lbBanned || isSaveFlagged() || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;   // 存檔驗證異常不上傳（integrity.js）
     lbLastUploadAt = Date.now();
     try {
         const { db, uid } = await initLeaderboardBackend();
@@ -140,7 +140,7 @@ function submitDefenseRecord(run) {
 
 async function flushDefenseSubmit() {
     const run = player.defensePending;
-    if (!run || LEADERBOARD_RANKS_REMOVED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
+    if (!run || LEADERBOARD_RANKS_REMOVED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned || isSaveFlagged()) return;
     if (flushDefenseSubmit.busy) return;
     flushDefenseSubmit.busy = true;
     try {
@@ -347,6 +347,7 @@ function renderLeaderboard(loading) {
     }
     html += `</div>`;
     if (lbBanned) html += `<p class="lb-note" style="color:#f87171;">⛔ 你的戰力紀錄因資料異常已被移出戰力榜，無法再上榜。</p>`;
+    else if (isSaveFlagged()) html += `<p class="lb-note" style="color:#f87171;">⚠️ 存檔驗證異常（${lbEscape(player.integrity.reason || '')}），無法上榜。</p>`;
     if (loading) html += `<p class="lb-note">讀取中…</p>`;
     if (lbError) html += `<p class="lb-note" style="color:#f87171;">${lbError}</p>`;
 

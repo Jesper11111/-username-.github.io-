@@ -51,6 +51,7 @@ function checkBackgroundCatchUp() {
 // label 只影響文字（"離線"／"背景掛機時"）
 // isOffline：true = 關掉遊戲的離線（練功收益打折，OFFLINE_REWARD_MULT）；背景補發不傳，維持原比例
 function settleIdleSeconds(offlineSeconds, label, isOffline) {
+    igAddPlaySeconds(offlineSeconds);   // 遊玩時數（合理性檢查，integrity.js 第 72 節）
     let expEarned = 0;
     let coinsEarned = 0;
     let msg = "";
@@ -431,7 +432,7 @@ function saveLocal() {
     if (gameOver) return;   // 壽元耗盡後存檔已清除，不可再寫回
     if (saveLoadFailed) return;   // 讀檔失敗期間禁止寫入，保護原本的存檔
     player.lastSaveTime = Date.now();
-    localStorage.setItem('xiuxian_save', JSON.stringify(player));
+    localStorage.setItem('xiuxian_save', igPrepareSave());   // 帶簽章＋合理性檢查（integrity.js，第 72 節）
     addLog("💾 遊戲存檔成功！", "system");
 }
 
@@ -526,8 +527,10 @@ function loadLocal() {
         reportLoadFailure(save, `存檔內容無法解析（${e.message}）`, false);
         return false;
     }
+    const tampered = igVerifyLocal(data);   // 存檔簽章（integrity.js，第 72 節）；會拿掉 data._sig
     try {
         applySaveData(data);
+        if (tampered) flagSave(tampered);
     } catch (e) {
         console.error("讀檔失敗：", e);
         // 找不到畫面元素（null）幾乎都是新舊版本檔案混用，重新整理即可
@@ -662,6 +665,7 @@ function setSaveCodeStatus(msg, type) {
 }
 
 let pendingImportData = null;   // 已解析、等待第二次確認的存檔
+let pendingImportTamper = null; // 匯入代碼的簽章檢查結果（null＝通過，integrity.js）
 
 function resetImportConfirm() {
     pendingImportData = null;
@@ -692,7 +696,7 @@ async function exportSave() {
     setSaveCodeStatus("產生代碼中…", "warn");
     try {
         player.lastSaveTime = Date.now();
-        box.value = await encodeSaveCode(player);
+        box.value = await encodeSaveCode(igSignedCopy(player));   // 帶簽章（integrity.js，第 72 節）
         setSaveCodeStatus(`代碼長度：${box.value.length.toWan()} 字${box.value.startsWith(SAVE_CODE_PREFIX) ? '（已壓縮）' : ''}`, "ok");
     } catch(e) {
         setSaveCodeStatus("匯出存檔失敗：" + e.message, "error");
@@ -801,6 +805,7 @@ async function confirmImportSave() {
         try {
             data = await decodeSaveCode(code);
             if (!data || typeof data !== 'object' || typeof data.realmIndex === 'undefined') throw new Error("存檔結構不符");
+            pendingImportTamper = igVerifyImport(data);   // 存檔簽章（integrity.js，第 72 節）；會拿掉 data._sig
         } catch(e) {
             let reason = e.message && e.message.startsWith("此瀏覽器") ? e.message : "請確認完整複製了整段代碼（可能只複製到一部分，或通訊軟體把它拆成好幾則訊息）。";
             setSaveCodeStatus("「存檔代碼無效」！" + reason, "error");
@@ -808,7 +813,8 @@ async function confirmImportSave() {
         }
         pendingImportData = data;
         btn.innerText = "⚠️ 再按一次，覆蓋目前進度";
-        setSaveCodeStatus(`讀取到【${sanitizePlayerName(data.name) || '無名修士'}】（${realms[data.realmIndex] || ''}）的存檔。再按一次按鈕即匯入，目前的進度會被覆蓋。`, "warn");
+        setSaveCodeStatus(`讀取到【${sanitizePlayerName(data.name) || '無名修士'}】（${realms[data.realmIndex] || ''}）的存檔。再按一次按鈕即匯入，目前的進度會被覆蓋。`
+            + (pendingImportTamper ? `\n⚠️ 存檔驗證未通過（${pendingImportTamper}）：匯入後將無法使用戰力榜與寄售。` : ''), "warn");
         return;
     }
 
@@ -816,6 +822,7 @@ async function confirmImportSave() {
     let backup = JSON.stringify(player);
     try {
         applySaveData(data);
+        if (pendingImportTamper) flagSave(pendingImportTamper);
         saveLocal();   // 立刻寫入本地存檔，避免重新整理後又回到舊進度
         resetImportConfirm();
         closeModal('save-code-modal');

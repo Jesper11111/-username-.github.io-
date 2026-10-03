@@ -243,8 +243,8 @@ function settleIdleQuests(seconds) {
     const before = {};
     fields.concat(['starIron']).forEach(f => { before[f] = player[f] || 0; });
     let servantTrips = 0, ownTrips = 0, stopped = 0;
-    const savedLog = window.addLog;
-    window.addLog = () => {};   // 逐趟日誌（含星允鐵、每日任務）不寫，最後彙總
+    const savedLog = addLog;   // 直接改函式本身（建置後各檔包在同一個範圍，window.addLog 不是遊戲用的那個，第 72 節）
+    addLog = () => {};   // 逐趟日誌（含星允鐵、每日任務）不寫，最後彙總
     try {
         (player.servants || []).forEach(s => {
             if (!s.quest) return;
@@ -276,7 +276,7 @@ function settleIdleQuests(seconds) {
             }
         }
     } finally {
-        window.addLog = savedLog;
+        addLog = savedLog;
     }
     if (!servantTrips && !ownTrips) return '';
     const gains = Object.values(questRewardInfo)

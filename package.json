@@ -1,0 +1,7 @@
+{
+  "name": "fanchen-xiuxian",
+  "private": true,
+  "description": "凡塵修仙傳-紅塵篇：建置工具（tools/build.js，ARCHITECTURE.md 第 72 節）",
+  "scripts": { "build": "node tools/build.js" },
+  "devDependencies": { "acorn": "^8.14.0", "terser": "^5.36.0" }
+}
