@@ -59,6 +59,12 @@ function notifyMarketResults() {
 
 // ---- 物品：說明、從存檔取出、放回存檔 ----
 function mkStack(key) { return MARKET_STACKS.find(s => s.key === key); }
+// 數量型物品的持有數／增減（做裝通貨存在 player.craftCur，其餘是 player 的欄位）
+function mkStackHave(s) { return s.cur ? getCraftCur(s.cur) : (player[s.key] || 0); }
+function mkStackAdd(s, n) {
+    if (s.cur) { if (n > 0) addCraftCur(s.cur, n); else spendCraftCur(s.cur, -n); }
+    else player[s.key] = (player[s.key] || 0) + n;
+}
 // 寄售品裡的裝備：雲端存成 JSON 字串 eqJson（2026-09-28 修正：裝備詞條 subs 是 [[屬性, 數值], …] 巢狀陣列，
 // Firestore 不支援巢狀陣列，直接存物件會被拒絕、上架失敗）；舊格式 item.eq 仍可讀
 function mkItemEq(item) {
@@ -95,8 +101,8 @@ function mkTakeItem(f, dryRun) {
         return { item: { kind: 'equip', eqJson: JSON.stringify(eq) } };
     }
     const s = mkStack(f.key);
-    if (!s || n < 1 || (player[s.key] || 0) < n) return { error: '數量不足。' };
-    if (!dryRun) player[s.key] -= n;
+    if (!s || n < 1 || mkStackHave(s) < n) return { error: '數量不足。' };
+    if (!dryRun) mkStackAdd(s, -n);
     return { item: { kind: s.kind, key: s.key, n } };
 }
 // 放回／交給玩家；背包裝備滿時回傳錯誤（不放）
@@ -114,7 +120,7 @@ function mkGiveItem(item) {
         recordGearCollected(eq);   // 天磯錄（含圖紙器錄）
     } else {
         const s = mkStack(item.key);
-        if (s) player[s.key] = (player[s.key] || 0) + item.n;
+        if (s) mkStackAdd(s, item.n);
     }
 }
 function mkDone(msg) {
@@ -284,7 +290,7 @@ function marketItemOptions(kind) {
     if (kind === 'blueprint') return listBlueprints().map(b => [`${b.slot}_${b.level}`, `${b.slot}・${b.level} 等（持有 ${b.count}）`]);
     if (kind === 'equip') return player.equipInventory.filter(e => !isEquipLocked(e) && !e.corrupt)   // 入魔過的不能交易
         .map(e => [e.id, `${e.level ? `Lv.${e.level} ` : ''}${e.quality}・${getEquipDisplayName(e)}${e.enhance ? ` +${e.enhance}` : ''}`]);
-    return MARKET_STACKS.filter(s => s.kind === kind && (player[s.key] || 0) > 0).map(s => [s.key, `${s.icon} ${s.label}（持有 ${(player[s.key] || 0).toWan()}）`]);
+    return MARKET_STACKS.filter(s => s.kind === kind && mkStackHave(s) > 0).map(s => [s.key, `${s.icon} ${s.label}（持有 ${mkStackHave(s).toWan()}）`]);
 }
 function marketHtml(loading) {
     let myUid = null;

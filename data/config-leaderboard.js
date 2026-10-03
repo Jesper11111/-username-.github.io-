@@ -61,6 +61,12 @@ const MARKET_STACKS = [
     { key: "starIron",      label: "星允鐵",     icon: "🌠", kind: "material" },
     { key: "butianStones",  label: "七彩補天石", icon: "🌈", kind: "material" },
     { key: "fireShards",    label: "異火碎片",   icon: "🔥", kind: "material" },
+    // 2026-10-03 使用者開放：洗煉石與做裝通貨（第 69 節）；cur＝存在 player.craftCur 裡的那一格
+    { key: "refineStones",  label: "洗煉石",     icon: "🌀", kind: "material" },
+    { key: "craft:tianji",  label: "天機石",     icon: "🔷", kind: "material", cur: "tianji" },
+    { key: "craft:hunyuan", label: "混元晶",     icon: "💠", kind: "material", cur: "hunyuan" },
+    { key: "craft:poxu",    label: "破虛石",     icon: "⚫", kind: "material", cur: "poxu" },
+    { key: "craft:zaohua",  label: "造化玉",     icon: "🔮", kind: "material", cur: "zaohua" },
     { key: "rootPills",     label: "洗髓丹",     icon: "🧪", kind: "item" },
     { key: "physiquePills", label: "伐骨丹",     icon: "🦴", kind: "item" },
     { key: "spiritFruits",  label: "化神靈果",   icon: "🍑", kind: "item" },
