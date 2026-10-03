@@ -9,19 +9,18 @@
 //   （防禦 30 = 減傷 20%、60 = 33%、120 = 50%）。敵人（妖獸、BOSS、懸賞、守城）的 def 仍是「減傷 %」，效果與改版前完全相同；
 //   畫面上以 pctToDefPoints() 換算成等效防禦點數一起顯示。
 const DEF_K = 120;
+// 以「點數」顯示（不加 %）的戰鬥屬性：防禦、閃避（迴避值）；其餘屬性傷害仍是機率 %
+const POINT_STAT_KEYS = ['def', 'eva'];
 
-// 玩家從裝備累積的上限（技能自帶的屬性機率不受 AFFIX_CAP 限制）；防禦沒有上限（見上）
-const EVA_CAP = 40;     // 閃避上限 40%（物理、術法傷害都能閃）
+// 玩家從裝備累積的上限（技能自帶的屬性機率不受 AFFIX_CAP 限制）；防禦、閃避沒有上限
 const AFFIX_CAP = 50;   // 每種屬性傷害觸發率上限 50%
-// 敵人打玩家時「實際生效」的閃避上限（2026-09-29 使用者指定：命中最低 8 成；靈寵最多再加 1 成、夥伴最多再加 1 成）：
-//   實際閃避＝min(玩家本身閃避 − 敵人命中, 20) ＋ min(靈寵給的閃避, 10) ＋ min(夥伴給的閃避, 10)（elements.js 的 resolveHit，attrs.isPlayer）
-//   面板上的閃避仍照 EVA_CAP 累積顯示
+// 閃避（2026-10-03 起《天堂2》式，第 66 節第 4 期）：eva 是「迴避值」，命中 evaPen 是「命中值」，被閃掉的機率＝evaDodge(迴避 − 命中)＝D ÷ (D + 100)（numeric.js），
+//   玩家與敵人都適用；原本的面板上限 40% 與「本身 20＋靈寵 10＋夥伴 10」實際上限取消
 // 護盾類（裝備特效金身／化勁、宗門守護、神器護盾、靈寵／夥伴護盾）在防禦之後再算，最後保底（beast-combat.js 的 applyPetDamageReduction）：
 //   傷害 ≥ 防禦後的傷害 ×（1 − 本身護盾最多 20% − 靈寵護盾最多 10% − 夥伴護盾最多 10%）
-const PLAYER_EFFECTIVE_EVA_MAX = 20;
 const PLAYER_SELF_SHIELD_MAX = 20;     // 本身的護盾類減傷（裝備特效、宗門守護、神器）
-const PLAYER_PET_BONUS_MAX = 10;       // 靈寵：增益的閃避，以及靈寵護盾（受傷減少）
-const PLAYER_PARTNER_BONUS_MAX = 10;   // 夥伴：被動的閃避，以及絕學護盾
+const PLAYER_PET_BONUS_MAX = 10;       // 靈寵護盾（受傷減少）
+const PLAYER_PARTNER_BONUS_MAX = 10;   // 夥伴絕學護盾
 
 // 屬性傷害效果
 const FREEZE_TURNS = 1;          // 冰：凍結 1 回合（該回合無法行動）
@@ -37,7 +36,7 @@ const THUNDER_BONUS = 0.3;       // 雷：雷擊，該次傷害額外 +30%，且
 // 屬性顯示資訊（key 對應 stats 內的欄位名稱）
 const combatAttrInfo = {
     def:    { label: "防禦", icon: "🛡️", desc: `受到的傷害 × ${DEF_K} ÷ (${DEF_K} + 防禦)，越堆越有效但遞減` },
-    eva:    { label: "閃避", icon: "💨" },
+    eva:    { label: "閃避", icon: "💨", desc: "迴避值：被閃掉的機率 = (迴避 − 對方命中) ÷ (迴避 − 對方命中 + 100)" },
     ice:    { label: "冰傷", icon: "❄️", desc: `觸發時凍結目標 ${FREEZE_TURNS} 回合` },
     fire:   { label: "火傷", icon: "🔥", desc: `燒傷，最多 ${BURN_MAX_STACKS} 層、持續 ${BURN_TURNS} 回合` },
     poison: { label: "毒傷", icon: "☠️", desc: `中毒，最多 ${POISON_MAX_STACKS} 層、持續 ${POISON_TURNS} 回合` },

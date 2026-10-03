@@ -98,7 +98,7 @@ function formatGearSubs(eq) {
     let parts = eq.subs.map(([key, v]) => {
         let info = gearSubAffixes.find(s => s.key === key);
         if (!info) return '';
-        return `${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}${key === 'def' ? '' : '%'}`;   // 防禦是點數（第 66 節）
+        return `${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}${POINT_STAT_KEYS.includes(key) ? '' : '%'}`;   // 防禦是點數（第 66 節）
     }).filter(Boolean);
     return `<p class="gear-subs">◆ ${parts.join('、')}</p>`;
 }

@@ -195,7 +195,7 @@ const ZhenmoTower = (() => {
             // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
             const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 100) / 100;   // 2 位小數（畫面 ×100）
             // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完；閃避用 BOSS 本身的值（不含種族特性加的閃避，否則氣血會被扣回來、特性等於沒有）
-            const through = (1 - attrs.def / 100) * (1 - (boss.eva || 0) / 100);
+            const through = (1 - attrs.def / 100) * (1 - evaDodge(boss.eva || 0));   // 閃避曲線（numeric.js，第 66 節第 4 期）
             return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp * raceHpMult(attrs.race)), attrs, sup };
         }
         // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
@@ -228,7 +228,7 @@ const ZhenmoTower = (() => {
                 <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階${b.attrs.race ? `・種族 ${raceTag(b.attrs.race)}（${raceTrait(b.attrs.race).desc}）` : ''}</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
                 <p class="zm-boss-stat">攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
-                    🛡️防禦 ${formatEnemyDef(b.attrs.def)} 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
+                    🛡️防禦 ${formatEnemyDef(b.attrs.def)} 💨閃避 ${+(b.attrs.eva || 0).toFixed(1)}${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
                 ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
                 ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>

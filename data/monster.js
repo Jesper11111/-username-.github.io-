@@ -24,7 +24,7 @@ function pickFieldMonster(map) {
 // 型態對「一般玩家殺一隻要幾回合」的倍率（均衡型 = 1）：氣血 × 減傷差 × 額外閃避；d0＝地圖分類的減傷 %
 function monsterTypeRounds(t, d0) {
     const d = Math.max(0, d0 + t.def);
-    return t.hp * (1 - d0 / 100) / (1 - d / 100) / (1 - t.eva / 100);
+    return t.hp * (1 - d0 / 100) / (1 - d / 100) / (1 - evaDodge(t.eva));
 }
 // 技能的補償倍率（config-monsters.js 的 MONSTER_SKILLS[].comp，第 3 期）：該圖鑑所有技能相乘。
 //   comp 是「只有這一招」時量的；有 n 招主動技能時每招只有 1/n 的出手機會，所以效果按 1/n 折算（狂暴是被動，不折）
