@@ -74,7 +74,8 @@ function rollFieldHuashenScroll(kills, silent) {
     const D = HUASHEN_SCROLL_DROPS, suit = typeof getMapSuitRange === 'function' ? getMapSuitRange(typeof getRewardMap === 'function' ? getRewardMap() : player.currentMap) : null;   // 挑戰模式照主要地圖（第 70 節）
     if (!suit || suit[0] < D.fieldMinRealm || !(kills > 0)) return 0;
     let n = 0;
-    for (let i = 0; i < kills; i++) if (Math.random() < D.fieldChance) n += rollHuashenScroll(D.field);
+    const rolls = Math.floor(kills) + (Math.random() < kills % 1 ? 1 : 0);   // kills 可為小數（掉寶次數，combat.js 的 takeDropRolls，第 71 節）
+    for (let i = 0; i < rolls; i++) if (Math.random() < D.fieldChance) n += rollHuashenScroll(D.field);
     return n ? addHuashenScroll(n, silent ? null : '斬殺妖獸，從遺骸中翻出殘頁') : 0;
 }
 // 每日任務一輪 10 項全部領完（daily-quest.js）：每一輪只給一次（記在第一項上，刷新後是新陣列）

@@ -84,6 +84,7 @@ function combatTick() {
 
     // 線上實戰證明（背景／離線結算用，save.js）：同一張野外地圖連續撐過 IDLE_PROVEN_SECONDS 秒就記下這張地圖
     fieldOnlineTicks++;
+    tickDropBudget();   // 掉寶額度（第 71 節）
     if (fieldOnlineTicks >= IDLE_PROVEN_SECONDS) player.idleProvenMap = player.currentMap.name;
 
     if (enemies.length === 0) {
@@ -135,13 +136,13 @@ function combatTick() {
                                status: newStatus() });
             };
             // 每波機率乘 getWaveChanceMult()：刷新變慢（新制另有每波變長）、波數變少，每小時遇到的次數維持原設計（config-maps.js）
-            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * getWaveChanceMult()) {
+            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * getWaveChanceMult() * waveRewardAdj) {   // × waveRewardAdj：殺太快（低等地圖秒怪）不會多遇修士、多掉裝備（第 71 節）
                 let faction = Math.random() < 0.5 ? "正" : "邪";
                 addCultivator(faction, false);
                 extraText.push(`一名${CULTIVATOR_ICONS[faction]}${faction === "邪" ? "魔道" : "正道"}修士`);
             }
             let karma = getKarmaState().key;
-            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * getWaveChanceMult() * getAptitudeSpecial().ambushMult) {
+            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * getWaveChanceMult() * waveRewardAdj * getAptitudeSpecial().ambushMult) {
                 let faction = karma === "good" ? "邪" : "正";
                 addCultivator(faction, true);
                 extraText.push(`一名${AMBUSH_ICON}${faction === "邪" ? "邪派刺客（衝著你的善名而來）" : "正道獵魔人（前來為民除害）"}`);
@@ -210,6 +211,7 @@ function fieldCombatRound() {
     let repEarned = 0;
     let killedCount = 0;
     let slainCultivators = [];
+    let raceKilled = {};
 
     enemies = enemies.filter(e => {
         if (e.hp <= 0) {
@@ -217,7 +219,7 @@ function fieldCombatRound() {
             coinsEarned += rollKillCoins();
             repEarned += rollKillReputation();
             killedCount++;
-            if (e.attrs && e.attrs.race) { addRaceKill(e.attrs.race, 1); rollRaceTreasureDrops(e.attrs.race, 1); }   // 斬妖錄＋剋制法寶掉落（race.js）
+            if (e.attrs && e.attrs.race) { addRaceKill(e.attrs.race, 1); raceKilled[e.attrs.race] = (raceKilled[e.attrs.race] || 0) + 1; }   // 斬妖錄（剋制法寶掉落在下面依掉寶次數擲，第 71 節）
             if (e.cultivator) slainCultivators.push(e);
             return false;
         }
@@ -238,8 +240,11 @@ function fieldCombatRound() {
         player.reputation = (player.reputation || 0) + repEarned;
         addDailyProgress('kill', killedCount);
         onPartnerFieldKills(killedCount);   // 情緣任務的野外擊殺／並肩擊殺（partner.js）
-        rollFieldHuashenScroll(killedCount);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
-        onCraftFieldKills(killedCount);        // 做裝通貨（craft.js，第 69 節）
+        // 掉寶（第 71 節）：rolls＝這批擊殺換算的掉寶次數（每小時最多 1200 次；難圖每隻多擲補回）
+        let rolls = takeDropRolls(killedCount), base = getDropBaseMult();
+        Object.keys(raceKilled).forEach(r => rollRaceTreasureDrops(r, rolls * raceKilled[r] / killedCount / base));   // 剋制法寶（race.js）
+        rollFieldHuashenScroll(rolls / base);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
+        onCraftFieldKills(rolls);               // 做裝通貨（craft.js，第 69 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;
@@ -339,6 +344,24 @@ function getMapMonsterStats(map, roll) {
 let waveRewardAdj = 1;
 function getKillRewardMult() {
     return NUMERIC_V2 ? nv2KillRewardMult(getRewardMap()) * waveRewardAdj : KILL_REWARD_MULT;   // 挑戰模式用主要地圖的補償（第 70 節）
+}
+// 掉寶次數（第 71 節，2026-10-03 使用者選「每小時封頂＋難圖補償」）：
+//   想要的次數＝擊殺數 × 所在地圖的刷新補償（nv2KillRewardMult：一般玩家在任何地圖每小時都是 1200 次，難圖殺得慢、每隻多擲）；
+//   但不能超過「野外實際經過秒數 ÷ 3」累積的額度 dropBudget（每秒 +1/3、最多存 DROP_BUDGET_MAX）→ 殺再快每小時也最多 1200 次（低等地圖秒怪不再多掉）。
+//   用所在地圖而非挑戰模式的主要地圖，所以越級挑戰的掉寶照實際難度補償（經驗則照主要地圖）
+let dropBudget = 0;
+const DROP_BUDGET_MAX = 60;
+function tickDropBudget() { dropBudget = Math.min(DROP_BUDGET_MAX, dropBudget + 1 / 3); }
+function takeDropRolls(kills) {
+    if (!NUMERIC_V2) return kills;
+    const got = Math.min(kills * nv2KillRewardMult(player.currentMap), dropBudget);
+    dropBudget -= got;
+    return got;
+}
+// 法寶、化神訣殘本原本以「實際擊殺數」校準：除以自己境界主要地圖的補償，一般玩家在主要地圖每小時掉量不變
+function getDropBaseMult() {
+    const m = typeof getMainMapForRealm === 'function' && getMainMapForRealm();
+    return NUMERIC_V2 && m ? nv2KillRewardMult(m) : 1;
 }
 // 「每波」遭遇機率（野外修士、暗殺者、懸賞人物）的補償倍率：每小時波數變少多少就放大多少
 function getWaveChanceMult() {
