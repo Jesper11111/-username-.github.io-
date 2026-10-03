@@ -8,6 +8,9 @@
 ## 1. 專案結構
 
 ```
+package.json          建置工具相依（terser、acorn；node_modules/ 與 dist/ 在 .gitignore）。第 72 節
+.github/workflows/pages.yml  GitHub Actions：main 有新提交 → node tools/build.js → 發佈 dist/ 到 GitHub Pages（Pages 來源需設為 GitHub Actions，第 72 節）
+tools/build.js        建置：data/*.js 打包進同一個函式範圍＋terser 混淆 → dist/（遊戲資料不再是全域變數；只公開事件用到的函式，第 72 節）
 CLAUDE.md             給 Claude 的工作規則（2026-10-03）：修改前先讀本檔、修改後同步更新本檔、回覆用繁體中文、驗證後自動開 PR 並合併進 main 發佈
 gm.html               戰力榜 GM 後台（第 50 節）：只有 Firestore admins 名單內的 Google 帳號能刪除／封鎖／審核守城榜；不是遊戲頁面，遊戲內沒有連結
                       （載入 data/config-realms、config-leaderboard、config-bounty、bounty、config-defense.js）
@@ -116,6 +119,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   talisman.js         符寶坊：礦石煉製符寶、橙裝孔位鑲嵌／打掉（第 28 節）
   gear.js             裝備圖鑑 850 種：產生裝備、隨機詞條、特效、套裝、加成彙總、奪寶掉落、舊裝備轉換（第 37 節）
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
+  integrity.js        存檔簽章與合理性檢查（第 72 節）：存檔／存檔代碼帶 _sig、修煉進度對遊玩時數、異常時停用戰力榜與寄售（載入在 save.js 之後）
   craft.js            做裝系統（第 69 節）：四種通貨（天機石／混元晶／破虛石／造化玉）的掉落與使用、鍛紋台、入魔淬煉；介面嵌在強化視窗
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
@@ -237,6 +241,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34c | `bounty.js` | `getBountyRefSectMult`/`getBountyStats`/`getBountyNpc`/`getBountyIcon`/`refreshBountyIfDue`/`rollBountyBoard`/`getTrackedBountyIds`(舊存檔 activeBountyId 轉陣列)/`getActiveBounties`/`acceptBounty`/`acceptAllBounties`/`abandonBounty(id?)`/`renderBountyBoard`/`renderBountyBulkButtons`、對決 `tryStartBountyDuel`/`startBountyDuel`/`clearDuelDebuffs`/`getDuelWeakenMult`/`getDuelArmorMult`/`bountyDuelTick`/`endBountyDuel` | `config-bounty.js`、`realms`、`wuxingElements`/`MONSTER_AFFIX_TYPES`、`elements.js`、`combat.js`(playerAttackTurn/checkAutoHealAndMana/applyRootRegen/onPlayerKilledInField)、`beast-combat.js`、`merit.js`(陣營、善惡、settleMeritStones) | `combat.js`、`merit.js`(renderEvilHunt)、`stats.js`/`elements.js`(負面狀態)、`map.js`、`save.js`、`ui.js`(戰鬥實況)、`tribulation.js`(對決中不能渡劫) |
 | 34b | `talisman.js` | `talismanKey`/`getTalismanType`/`getTalismanGrade`/`getTalismanValue`/`formatTalisman`/`ensureSockets`(橙裝開孔，可重複呼叫)/`getSocketStats`/`formatSockets`/`findEquipById`/`openTalismanModal`/`renderTalismanWorkshop`/`renderSocketCard`/`craftTalisman`/`inlayTalisman`/`removeTalisman` | `config-talisman.js`、`equipTypes`、`player.talismans`/`ore`/`coins`/`equipment`/`equipInventory`、`ui.js`(resolveBatchCount)、`sect.js`(checkSectJoined) | `stats.js`(getEquipBonus 加總符寶)、`equipment.js`/`auction.js`/`lingbao-shop.js`(取得橙裝時 ensureSockets)、`bag.js`/`equipment.js`/`auction.js`(formatSockets 顯示)、`save.js`(migrateEquipSockets)、HTML 符寶坊按鈕 |
 | 34d | `gear.js` | **載入時執行** 展開 `gearList`/`gearById`/`gearBySlot`；`getGearDef`/`getQualityObj`/`getCraftChannel`/`pickGearDef`/`buildGearStats`/`createGearEquip`（鍛造、千寶閣、奪寶共用）、隨機詞條 `rollGearSubs`/`formatGearSubs`/`getGearSubTotals`、加成彙總 `getBonusTotals`（詞條＋套裝＋稱號＋職業）/`getGearPctBonus`、套裝 `getEquippedSetCounts`/`resolveSetTier`/`getSetBonusTotals`/`formatSetInfo`/`hasSetSpecial`、強化倍率 `getEnhanceMult`/`getEquipEffectiveStats`、奪寶 `tryLootDrop`、顯示 `getEquipDisplayName`/`formatEquipTitle`/`formatEquipDetails`/`formatGearSubline`/`describeGearEffect`/`formatGearEffect`、特效 `getGearEffects`/`gearFx`、每波狀態 `gearWaveRound`/`gearFirstStrikeUsed`/`gearUndyingUsed`/`gearDodgeStrikeReady`/`resetGearWave`、戰鬥 `getGearHitMult`/`applyGearHitChain`/`applyGearDefense`/`applyGearRegen`/`tryGearUndying`、舊存檔 `migrateGearIds` | `config-gear*.js`、`config-enhance.js`、`config-sets.js`、`equipTypes`/`equipQualities`/`EQUIP_LEVELS`、`lingbaoShopItems`、`talisman.js`(ensureSockets)、`codex.js`、`profession.js`、`enhance.js`(receiveLootEquip) | `equipment.js`/`auction.js`(產生裝備)、`stats.js`/`elements.js`/`combat.js`/`tribulation.js`/`bounty.js`(加成與特效)、`bag.js`/`equipment.js`/`auction.js`/`talisman.js`(卡片)、`save.js` |
+| 33b | `integrity.js` | 存檔驗證（第 72 節）：`igSign`/`igHash`、`igPrepareSave`(saveLocal 寫入字串，嵌 _sig)/`igVerifyLocal`(loadLocal)/`igSignedCopy`(匯出)/`igVerifyImport`(匯入)、`isSaveFlagged`/`flagSave`、合理性 `igProgressHours`/`igAuditCheck`/`igAddPlaySeconds`（頂層 setInterval 每秒累計遊玩時數） | `player`、`realmPacing`、`stats.js`(getNextExp)、`main.js`(gameStarted)、`ui.js`(addLog) | `save.js`(存讀檔、匯入匯出、離線秒數)、`leaderboard.js`(不上傳)、`market.js`(不能寄售／出價) |
 | 34e2 | `craft.js` | 做裝（第 69 節）：通貨 `getCraftCur`/`addCraftCur`/`formatCraftGain`/`craftGainSuffix`、掉落 `rollCraftFieldDrops`/`onCraftFieldKills`/`rollCraftZhenmo`/`rollCraftDecompose`/`rollCraftDecomposeMany`、`canCraft`/`craftSubCap`/`craftPoxuLockLeft`/`isCraftSealed`/`setSubTier`、操作 `useCraftCur(k)`/`forgeCraftSub`(鍛紋台，`craftForgeKey`)/`corruptEquip`(入魔淬煉)、顯示 `renderCraftSection`/`formatGearCraftTag` | `config-enhance.js`(CRAFT_*)、`gear.js`(rollGearSubs/rollGearSubTier/rollGearSubValue/gearRollOpts)、`enhance.js`(enhanceEquipId/locateEquip/renderEnhanceModal/formatOneSub)、`save.js`(saveLocal) | `enhance.js`(強化視窗、分解)、`equipment.js`(鍛造自動分解)、`gear.js`(卡片標籤)、`combat.js`(野外擊殺)、`save.js`(離線)、`zhenmo.js`、`defense.js` |
 | 34e | `enhance.js` | `randInt`、星允鐵 `addStarIron`/`addIronShards`、`locateEquip`/`removeLocatedEquip`、強化 `getEnhanceInfo`/`canEvolve`/`enhanceEquipId`/`openEnhanceModal`/`renderEnhanceModal`/`getEvolveStatRatio`/`enhanceEquip`/`promptEvolveEquip`(+20 系統通知)/`evolveEquip(skipConfirm)`、分解 `getDecomposeYield`/`formatDecomposeYield`/`decomposeEquip`/`bulkDecomposeEquipment`、暫存區 `isGearStashFull`/`receiveLootEquip`/`enforceGearStashLimit`/`moveStashToBag`/`deleteStashEquip`/`renderStashSection`、`refreshEquipViews`、千寶閣 `getIronShopState`/`renderIronShopSection`/`buyStarIron`/`rollIronBagItem` | `config-enhance.js`、`gear.js`、`codex.js`(checkTitleUnlocks、稱號強化成功率)、`map.js`(changeMap)、`ui.js` | `bag.js`/`equipment.js`(按鈕與暫存區)、`auction.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵)、`map.js`/`save.js`(暫存區滿) |
 | 34h | `strange-fire.js` | 異火（第 38 節）：**載入時**建 `strangeFireById`；`addFireShards(n, source)`(取得碎片，供未來秘境掉落呼叫)/`rollStrangeFire`/`gainStrangeFire`/`craftStrangeFire(qty)`(合成，數字或 'max')/`getStrangeFireRealmReduction`(秘境受傷減免比例)/`getStrangeFireBonusTotals`(收錄加成)/`countCollectedFires`/`migrateStrangeFires`(舊存檔)/`renderStrangeFireCards`(背包卡片)/`renderCodexFires`(天磯錄分頁) | `config-strange-fire.js`、`player.fireShards`/`strangeFires`/`fireCollection`、`codex.js`(describeTitleBonus、openCodexModal)、`ui.js` | `bag.js`(renderBag)、`gear.js`(getBonusTotals)、`codex.js`(異火分頁、頂端統計)、`save.js`(applySaveData)；未來秘境（掉落、受擊減傷） |
@@ -1473,7 +1478,7 @@ combatTick() 每秒執行 [combat.js]
   | 渡劫 | 天淵戰場（同上） | 30 天 | 12 億（原 5 億） |
   | 仙人初境 | 荒古禁地 | 50 天 | 60 億 |
   | 天仙 | 上蒼（葬天島） | 100 天 | 200 億 |
-  | 真仙 | 冥界 | 150 天 | 540 億 |
+  | 真仙 | 不死山（2026-10-03 前為冥界） | 150 天 | 360 億（原 540 億） |
   | 大羅金仙 | 仙界戰場 | 200 天 | 1,200 億 |
   | 混元大羅金仙 | 萬界戰場 | 200 天 | 2,000 億 |
   | 混沌道祖 | 混沌初界 | 300 天 | 6,000 億 |
@@ -1603,9 +1608,10 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005H`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005K`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
+- **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
 
 ### 2. 讀檔失敗保護（`save.js`）
 - `loadLocal()` 分開處理兩種失敗：`JSON.parse` 失敗（存檔真的壞了）與 `applySaveData()` 拋錯（多半是版本混用）。
@@ -3147,6 +3153,15 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     （上蒼 147 回合／2989% 仍較難）；每小時經驗／靈石由 `nv2TypRoundsPerKill` 自動補償不變。⚠️ 九天仙域是天仙的主要練功圖（realmPacing），一般配置離線估算撐不住會被送回宗門靜修。
   - **星空古路強度 1.5～3 → 10～15**（2026-10-03，版本 `20261005G`，使用者指定，同九天仙域作法）：一般玩家每隻 12.4 → 65.8 回合、耗血 18% → 569%（荒古禁地 151／1622%）；仙人初境的主要練功圖，一般配置離線同樣撐不住。
   - **血天大陸強度 1.5～3 → 3～8**（2026-10-03，版本 `20261005H`，使用者指定）：一般玩家每隻 12.1 → 29.1 回合、耗血 17% → 108%（天淵戰場 86／945%）；渡劫的主要練功圖，一般配置離線可能撐不住。
+  - **地圖重整**（2026-10-03，版本 `20261005J`，使用者指定）：
+    - **無邊海**：第三區雷鳴大陸之後的 7 張（血天大陸、天淵戰場、星空古路、荒古禁地、九天仙域、太初古礦、上蒼）搬到新分類「無邊海 (渡劫解鎖·高難)」＝`maps[6]`，數值不變；第三區只剩 黑風海域／崑吾山／蠻荒古地／雷鳴大陸。
+      ⚠️ 新分類**加在最後**（索引 6）：分類索引被 `monsterAttrsByMapCategory`、`REPUTATION_MAX_BY_MAP_CATEGORY`、`PROF_MAP_MULT`、`LIFESPAN_DANGER_MULT`、`DARK_MAP_CATEGORIES` 使用，各表索引 6 一律同第三區；插在中間會讓第四、五區的索引位移。
+      世界地圖的「無邊海」區塊（config-towns.js 的 `worldRegions.wubian`）從「尚未開放」改成 `openMapCategoryModal(6)`；修仙地圖彈窗多一顆「🌊 無邊海」按鈕。
+    - **第四區強度 40～80 倍**依地圖排列：不死山 40～50、神墟 50～60、仙陵 60～70、冥界 70～80（`nv2Str`）；**第五區 80～200 倍**：仙界戰場 80～120、萬界戰場 120～160、混沌初界 160～200。
+    - **進入條件依排列**：新欄位 `minL`（成長位置＝境界＋(階−1)/10）。第四區 不死山 真仙 1 階／神墟 4 階／仙陵 7 階／冥界 10 階；第五區 仙界戰場 大羅金仙 1 階／萬界戰場 混元大羅金仙 1 階／混沌初界 混沌道祖 1 階（不再能越級）。
+      map.js 新增 `getMapMinLevel(item)`、`isBelowMapLevel(item)`；`getMapMinRealm` 也納入 `minL` 的境界；進入檢查、地圖卡片「限制：真仙4階以上」、挑戰模式判定（第 70 節）、讀檔時送回宗門（save.js 的 migrateCurrentMap）都改看等級門檻。等級不夠一樣可以走挑戰模式。
+    - 真仙的修煉節奏主圖（realmPacing）原本是冥界（現在真仙 10 階才能進）→ 使用者選 A：改成**不死山**（版本 `20261005K`）。每階經驗照不死山重算 540 億 → 360 億（經驗倍率 6000／9000），升階總時數 150 天不變；
+      已在真仙、修為超過新門檻的玩家下次獲得經驗時連續升階（gainExp）。挑戰模式的收益地圖（getMainMapForRealm）也跟著變成不死山。
   靈石、nv2L（境界壓制起點）、進入條件不變。一般玩家在這六張圖掛不住（離線會被送回宗門），定位為強者的高報酬挑戰圖。
   - 使用者選「**升階門檻不變**」＋「**每個境界補一張普通圖**」：第三區最前面新增 黑風海域（合體）、蠻荒古地（大乘）、血天大陸（渡劫）、星空古路（仙人初境）、九天仙域（天仙），
     一般規則（隨玩家階數、1.5～3 倍），經驗與靈石沿用挑戰圖改版前的值（1400／1900／2500／3000／5000；2700／2950／3150／3350／6900）；
@@ -3801,3 +3816,30 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 離線／背景：做裝通貨改用收益次數 `combatTicks` 擲（同線上 1200 次／小時基準 × 離線速率）；法寶、殘本仍用實際擊殺數（離線本來就有速率上限）。
   - `rollFieldHuashenScroll` 的次數可為小數（整數部分必擲、小數部分擲一次）。
 - **驗證**（本機，線上實戰）：渡劫一擊必殺去天南（元嬰圖）60 秒：擊殺每小時 540 隻、掉寶次數每小時 1080（上限 1200；改前照擊殺數且通貨不補償）；去天淵戰場 40 秒：870 次／小時（未超過上限）；Console 無錯誤。
+
+## 72. 防竄改：建置混淆、隱藏全域變數、存檔簽章、合理性檢查（`tools/build.js`、`integrity.js`；2026-10-03，版本 `20261005I`）
+
+- **目的**（使用者 2026-10-03「要如何讓玩家無法竄改資料」，選 1～4 全做）：純前端無法 100% 防止，目標是擋住一般玩家用主控台、文字編輯器改資料，並讓被改過的存檔碰不到牽涉其他玩家的功能（戰力榜、寄售）。
+- **① 建置＋混淆（`tools/build.js`、`package.json`）**：`npm ci && node tools/build.js` → `dist/`。
+  - index.html 的 113＋支 `data/*.js` 依原順序接成一支，包進 `(function(){ … })()`：`player`、`enemies` 與所有函式都變成區域名稱，**主控台打 `player.coins = …` 會出現 player is not defined**。
+  - **事件字串**（HTML／模板字串的 `onclick="…"` 等、config 的 `action: "…"`（town.js 用 `new Function` 執行）、活動的 `openFn: "…"`（activity.js 的 `window[act.openFn]`））用到的頂層函式，建置時自動掃描後掛回 `window`
+    （約 244 個，都是「按按鈕」本來就能做的事）；用到的頂層變數用 getter／setter 掛回（`refineSelIdx`、`craftForgeKey`、`mkForm`、`LINGJIE_SCENE_KEY`、`WORLD_SCENE_KEY`）。
+    `player`、`enemies`、`DefenseBattle`、`ZhenmoTower` 列在 `FORBIDDEN`，事件字串裡直接用到會建置失敗（守城的「重新載入」因此改成 `retryDefenseBattle()`）。
+  - ⚠️ **寫程式的新規則**：事件字串裡只能呼叫頂層函式（或上述變數），不要寫 `player.xxx`；程式內不要用 `window.某函式 = …` 來替換遊戲函式（包起來後替換不到遊戲用的那個，servant.js 的日誌靜音已改成直接 `addLog = …`）。
+  - terser：compress 2 輪＋mangle（函式範圍內名稱全換）、移除註解；1293 KB → 684 KB。HTML 註解一併移除。gm.html 的 data 腳本另接成 `data/gm-lib.js`（只壓縮，不包範圍，GM 頁內嵌程式要用全域名稱）。
+  - 不複製到 dist：`*.md`、`tools/`、原始 `data/*.js`、`package*.json`、`.` 開頭的檔案。sw.js 照舊從 index.html 找 `data/…?v=` 預先快取（現在只有 game.js 一支）。pwa.js 的 `document.currentScript` 在 game.js 裡同樣取得版本號。
+  - **開發與測試照舊用原始 index.html**（各檔分開、全域），Playwright 測試不用改；發佈前另外 `node tools/build.js`、在 `dist/` 開伺服器跑一次（掃描畫面上所有 on* 事件的函式都存在於 window）。
+- **② 發佈（`.github/workflows/pages.yml`）**：main 有新提交 → checkout → `npm ci` → 建置 → `upload-pages-artifact`（dist）→ `deploy-pages`。
+  **需要作者一次性設定**：GitHub 倉庫 Settings → Pages → Build and deployment → Source 選「**GitHub Actions**」。在那之前網站照舊直接提供原始檔（不混淆、但功能正常），Actions 的 deploy 步驟會失敗。
+  配合「原始碼倉庫改私人」（需 GitHub Pro）就連原始碼也看不到。
+- **③ 存檔簽章（`integrity.js`）**：`igSign` = 兩次 cyrb53（各帶 `IG_SALT`）共 32 位十六進位。
+  - 本機存檔：`saveLocal` 寫入 `igPrepareSave()`＝`JSON.stringify(player)`（含 `_ig: 1`）尾端再嵌 `"_sig":"…"`（同一次寫入，多分頁不會錯開）；`loadLocal` 在 `applySaveData` 前 `igVerifyLocal(data)`（拿掉 `_sig`、重新 stringify 比對）。
+    沒有 `_ig` 的改版前存檔直接接受（下次存檔補簽）；有 `_ig` 但簽章不符或遺失 → `flagSave('存檔內容被修改')`。讀檔失敗時顯示的原始存檔代碼也帶 `_sig`，貼回匯入一樣驗證得過。
+  - 存檔代碼：`exportSave` 匯出 `igSignedCopy(player)`；`confirmImportSave` 解析後 `igVerifyImport(data)`，第一次按時提示驗證結果，匯入後套用標記。
+    沒有簽章的舊代碼：存檔時間早於 `IG_UNSIGNED_UNTIL`（2026-10-06 00:00 台灣時間）才接受，否則視為被修改。攻略試算（openGuideCalc）不簽。
+- **④ 合理性檢查**：`player.audit = { play, max, used }`。`play`＝線上每秒（integrity.js 頂層 setInterval，遊戲開始、未結束、讀檔沒失敗時）＋離線／背景結算秒數（`settleIdleSeconds` 開頭）。
+  `igProgressHours()`＝realmPacing 節奏時數（已過境界合計＋目前境界的經驗比例：第 k 階需 k 份、一個境界 55 份）。每次存檔 `igAuditCheck()`：進度超過歷史最高 `max` 的部分累加到 `used`（轉世後重爬不計）；
+  `used > 2 小時 + 遊玩小時 × IG_SPEED_MAX(10)` → `flagSave('修煉進度過快…')`。改版前的存檔以第一次讀取時的進度為起點。靈石等其他數值目前不檢查（來源太多，容易誤判）。
+- **標記的效果**：`player.integrity = { flagged, reason, at }`（存在存檔裡、受簽章保護）。戰力榜上傳與守城送審略過、戰力榜頁顯示原因（leaderboard.js）；寄售上架與出價擋下（market.js）。**不刪檔、不擋單機遊玩**（避免誤判害玩家失去進度）。
+- **驗證**（本機）：改版前存檔讀取不標記且補簽；正常重新整理不標記；用文字改本機存檔的靈石 → 標記「存檔內容被修改」；匯出代碼原樣匯入通過、改過靈石再匯入 → 標記；新角色直接改成渡劫 → 標記「修煉進度過快」；標記後寄售被擋。
+  建置版：主控台 `typeof player` 為 undefined、`player.coins = …` 失敗；開 28 個畫面後掃描所有 on* 事件，缺少的函式 0 個；野外戰鬥、存讀檔、gm.html 正常；Console 無錯誤（只有沙箱連不到外部的憑證錯誤）。

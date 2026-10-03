@@ -145,6 +145,7 @@ async function marketCreate() {
     if (price < 1 || price > MARKET_MAX_PRICE) { gameAlert('起標價要是 1 以上的整數靈石。'); return; }
     if (!MARKET_HOURS.includes(hours)) return;
     if (lbBanned) { gameAlert('你已被禁止交易。'); return; }
+    if (isSaveFlagged()) { gameAlert('存檔驗證異常，無法寄售。'); return; }   // integrity.js（第 72 節）
     const active = mkMine.filter(d => mkMs(d.endsAt) > Date.now()).length;
     if (active >= MARKET_MAX_ACTIVE) { gameAlert(`同時最多寄售 ${MARKET_MAX_ACTIVE} 件。`); return; }
     const preview = mkTakeItem(f, true);   // 先只檢查，確認後才扣
@@ -185,6 +186,7 @@ async function marketBid(id) {
     const input = document.getElementById('mk-bid-' + id);
     const amount = Math.floor(Number(input && input.value) || 0);
     const min = mkMinBid(d);
+    if (isSaveFlagged()) { gameAlert('存檔驗證異常，無法出價。'); return; }   // integrity.js（第 72 節）
     if (amount < min) { gameAlert(`出價至少 ${min.toWan()} 靈石。`); return; }
     if (amount > player.coins) { gameAlert(`靈石不足（持有 ${player.coins.toWan()}）。出價會先扣除，被超過時退回。`); return; }
     // 2026-10-01：原本用 confirm()，在預覽面板／App 內建瀏覽器會直接回傳「取消」，玩家按出價沒反應（使用者回報）→ 改遊戲內確認框

@@ -693,6 +693,7 @@ const DefenseBattle = (() => {
 
 // ---- onclick 用（index.html #defense-scene、secret-realm.js）----
 function openDefenseBattle(realmId) { DefenseBattle.open(realmId); }
+function retryDefenseBattle() { DefenseBattle.retry(); }   // 載入失敗的「重新載入」按鈕（建置後 DefenseBattle 不是全域，第 72 節）
 function closeDefenseBattle() { DefenseBattle.close(); }
 function setDefenseSpeed(r) { DefenseBattle.setSpeed(r); }
 function finishDefenseNow() { DefenseBattle.finishNow(); }

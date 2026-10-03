@@ -87,8 +87,8 @@ function openMapCategoryModal(catIndex) {
                 <p style="font-size:0.85em; color:#9ca3af;">${cat.isSafe   // 城鎮（安全區）沒有妖獸：新制上線後曾誤顯示妖獸數值（2026-09-30 修正）
                     ? `🏯 安全區：可打坐靜修`
                     : `經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}`}</p>
-                ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${player.realmIndex < getMapMinRealm(item) ? '#f87171' : '#9ca3af'};">${player.realmIndex < getMapMinRealm(item) ? '🔒 ' : ''}限制：${realms[getMapMinRealm(item)]}以上</p>` : ''}
-                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && player.realmIndex < getMapMinRealm(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
+                ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${isBelowMapLevel(item) ? '#f87171' : '#9ca3af'};">${isBelowMapLevel(item) ? '🔒 ' : ''}限制：${typeof item.minL === 'number' ? nv2LevelLabel(getMapMinLevel(item)) : realms[getMapMinRealm(item)]}以上</p>` : ''}
+                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && isBelowMapLevel(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
             </div>
         `;
     });
@@ -125,8 +125,14 @@ function returnToSect() {
 function getMapMinRealm(item) {
     let r = item.minRealm || 0;
     if (NUMERIC_V2 && typeof item.nv2L === 'number') r = Math.max(r, Math.floor(item.nv2L + 1e-9) - 1);
+    if (NUMERIC_V2 && typeof item.minL === 'number') r = Math.max(r, Math.floor(item.minL + 1e-9));
     return Math.max(0, r);
 }
+// 地圖的等級門檻（成長位置 L＝境界＋(階−1)/10）：config 的 minL（2026-10-03 第四、五區依地圖排列設定，例：神墟 12.3＝真仙 4 階），沒有就是境界門檻的 1 階
+function getMapMinLevel(item) {
+    return Math.max(getMapMinRealm(item), NUMERIC_V2 && typeof item.minL === 'number' ? item.minL : 0);
+}
+function isBelowMapLevel(item) { return nv2Level(player.realmIndex, player.stage) < getMapMinLevel(item) - 1e-9; }
 
 // 地圖卡片的難度文字：舊制顯示 diff；新制顯示妖獸氣血／攻擊（numeric.js 的 nv2MonsterStats）
 function getMapDifficultyText(item) {
@@ -162,8 +168,8 @@ function afterMapArrive(cIndex, target) {
 function getMapEntryBlock(cIndex, iIndex) {
     const targetMap = maps[cIndex].items[iIndex];
     const minRealm = getMapMinRealm(targetMap);
-    if (minRealm && player.realmIndex < minRealm)   // realm: true＝可改用挑戰模式進入（第 70 節）
-        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界；可用「⚔️ 挑戰模式」越級進入）`, short: `⚔️挑戰`, realm: true };
+    if (minRealm && isBelowMapLevel(targetMap))   // realm: true＝可改用挑戰模式進入（第 70 節）
+        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${typeof targetMap.minL === 'number' ? nv2LevelLabel(getMapMinLevel(targetMap)) : realms[minRealm]}】。\n（可用「⚔️ 挑戰模式」越級進入）`, short: `⚔️挑戰`, realm: true };
     // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
     const minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
     if (minS) {
@@ -240,10 +246,10 @@ function isChallengeMap(item) {
     if (!item || (item === player.currentMap && player.currentMapIsSafe)) return false;
     const f = findMapByName(item.name);
     if (!f || maps[f.c].isSafe) return false;
-    return player.realmIndex < getMapMinRealm(item);
+    return isBelowMapLevel(item);
 }
 // 越過門檻幾個境界（0＝不是挑戰）
-function getChallengeOver(item) { item = item || player.currentMap; return isChallengeMap(item) ? getMapMinRealm(item) - player.realmIndex : 0; }
+function getChallengeOver(item) { item = item || player.currentMap; return isChallengeMap(item) ? Math.max(1, getMapMinRealm(item) - player.realmIndex) : 0; }   // 同境界但階數不夠（minL）算越 1 境
 function getChallengeCraftMult() {
     const o = getChallengeOver();
     return o <= 0 ? 1 : (CHALLENGE_CRAFT_MULT[Math.min(o, CHALLENGE_CRAFT_MULT.length - 1)] || 1);
@@ -267,7 +273,7 @@ function challengeStrengthText(item) {
 }
 async function confirmChallengeMap(cIndex, iIndex) {
     const item = maps[cIndex].items[iIndex];
-    const suit = getMapSuitRange(item), mapRealm = suit ? suit[0] : getMapMinRealm(item) + 1, gap = Math.max(1, mapRealm - player.realmIndex), over = getMapMinRealm(item) - player.realmIndex;
+    const suit = getMapSuitRange(item), mapRealm = suit ? suit[0] : getMapMinRealm(item) + 1, gap = Math.max(1, mapRealm - player.realmIndex), over = Math.max(1, getMapMinRealm(item) - player.realmIndex);
     const cm = CHALLENGE_CRAFT_MULT[Math.min(over, CHALLENGE_CRAFT_MULT.length - 1)] || 1;
     const msg = `⚔️ 挑戰模式：越級進入【${item.name}】\n`
         + `境界差 ${gap}（妖獸約${realms[Math.min(mapRealm, realms.length - 1)]}，你是${realms[player.realmIndex]}）\n`

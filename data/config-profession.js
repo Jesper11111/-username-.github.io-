@@ -11,7 +11,7 @@ const SECT_LEGACY_BONUS = {
     3: { weaponPct: 0.30, profMult: 2.0 }    // 至高聖地
 };   // 人物等級達此才能選主修職業（2026-09-27 使用者指定；已選過的老玩家不受影響）
 // 熟練度來源：野外每擊殺一隻 +1 × 地圖分類倍率（野外歷練 1、開放世界 2、上古禁區 3、幽冥禁域 3、諸天戰場 4）；懸賞伏誅 +PROF_BOUNTY_GAIN；離線 × PROF_OFFLINE_RATE
-const PROF_MAP_MULT = { 1: 1, 2: 2, 3: 3, 4: 3, 5: 4 };
+const PROF_MAP_MULT = { 1: 1, 2: 2, 3: 3, 4: 3, 5: 4, 6: 3 };   // 6＝無邊海（同第三區）
 const PROF_BOUNTY_GAIN = 200;
 const PROF_OFFLINE_RATE = 0.5;
 // 10 階的累計熟練度門檻，與主修武器（該部位那一件）的四維加成

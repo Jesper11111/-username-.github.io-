@@ -9,3 +9,6 @@
 4. **自動發佈（使用者 2026-10-03 授權）**：改完並驗證（Console 無錯誤、必要時實際走一次畫面）後，
    commit → 推到工作分支 → 開 PR 到 `main` → **直接合併**，GitHub Pages 約 1～2 分鐘後上線，不必再請使用者手動按合併。
    記得先換 `?v=` 版本號（`ARCHITECTURE.md` 第 30 節）。驗證沒過或改動有風險（存檔結構、刪除資料）時，先問使用者再合併。
+5. **建置與防竄改（`ARCHITECTURE.md` 第 72 節）**：網站可由 GitHub Actions 發佈 `tools/build.js` 建置的混淆版（所有 `data/*.js` 包進同一個函式範圍）。
+   事件字串（`onclick="…"`、config 的 `action`／`openFn`）只能呼叫頂層函式，不要直接寫 `player`；不要用 `window.某函式 = …` 替換遊戲函式。
+   發佈前除了原本的測試，再跑 `npm ci && node tools/build.js`，在 `dist/` 開伺服器確認遊戲能進、Console 無錯誤。
