@@ -112,6 +112,7 @@ function renderEnhanceModal() {
         ${action}
         ${renderRaceReforgeSection(eq)}
         ${renderRefineSection(eq)}
+        ${renderLegendRerollSection(eq)}
         <p style="color: #6b7280; font-size: 0.75em;">每 +1 四維 +${Math.round(ENHANCE_STAT_PER_LEVEL * 100)}%；上限 白綠 +10、藍 +12、紫 +15、橙 +20。+11 起有成功率，每失敗一次同一級成功率 +${Math.round(ENHANCE_PITY_STEP * 100)}%。</p>`;
 }
 
@@ -194,6 +195,7 @@ function evolveEquip(skipConfirm) {
     eq.quality = PLATINUM_QUALITY.name;
     eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0]), eq.category, eq.level, gearRollOpts(eq)));   // 遠古／太古保留擲骰下限（第 67 節 D3）
     applyEvolveRaceGearFx(eq);   // 白金必帶種族特效（race.js，第 62 節第 5 期）
+    ensureGearLegend(eq);        // 白金傳奇威能（第 67 節 D4）
     recordGearCollected(eq);
     addLog(`✨ 天地共鳴！【${getEquipDisplayName(eq)}】進化為${PLATINUM_QUALITY.label}！`, "reincarnate");
     checkTitleUnlocks();
@@ -503,6 +505,32 @@ function chooseRefine(k) {
     if (k >= 0 && P.cands[k]) eq.subs[P.idx] = P.cands[k];
     delete eq.refinePending;
     addLog(k >= 0 ? `🌀 【${getEquipDisplayName(eq)}】洗煉：${before} → ${formatOneSub(eq.subs[P.idx]).replace(/<[^>]+>/g, '')}。` : `🌀 【${getEquipDisplayName(eq)}】洗煉後保留原本的 ${before}。`, "equip");
+    renderEnhanceModal();
+    refreshEquipViews();
+    updateUI();
+}
+
+// ==================== 重塑傳奇威能（第 67 節 D4）====================
+function legendRerollCost() { return { stones: LEGEND_REROLL_STONES, coins: Math.floor(getHourlyIncome() * LEGEND_REROLL_COINS_HOURS) }; }
+function renderLegendRerollSection(eq) {
+    if (!canHaveLegend(eq)) return '';
+    const L = getGearLegend(eq), c = legendRerollCost(), ok = (player.refineStones || 0) >= c.stones && player.coins >= c.coins;
+    return `<div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 10px; padding-top: 8px;">
+        <p style="color: #fde68a;">🌟 重塑傳奇威能：隨機換成另一種（共 ${GEAR_LEGENDS.length} 種）${L ? `，目前【${L.icon}${L.name}】` : ''}</p>
+        <p>每次花費：🌀 ${c.stones} 洗煉石 ＋ ${c.coins.toWan()} 靈石</p>
+        <button class="sys-btn" ${ok ? '' : 'disabled'} onclick="rerollGearLegend()">🌟 重塑威能</button></div>`;
+}
+function rerollGearLegend() {
+    const loc = enhanceEquipId && locateEquip(enhanceEquipId);
+    if (!loc || !canHaveLegend(loc.eq)) return;
+    const eq = loc.eq, c = legendRerollCost(), old = getGearLegend(eq);
+    if ((player.refineStones || 0) < c.stones || player.coins < c.coins) { alert('洗煉石或靈石不足！'); return; }
+    if (old && !confirm(`重塑會取代目前的【${old.name}】，確定？`)) return;
+    player.refineStones -= c.stones;
+    player.coins -= c.coins;
+    eq.legend = rollGearLegendId(eq.legend);
+    const L = getGearLegend(eq);
+    addLog(`🌟 【${getEquipDisplayName(eq)}】重塑傳奇威能：${old ? old.name + ' → ' : ''}【${L.icon}${L.name}】${L.desc}。`, "reincarnate");
     renderEnhanceModal();
     refreshEquipViews();
     updateUI();

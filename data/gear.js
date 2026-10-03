@@ -98,6 +98,29 @@ function gearRollOpts(eq) {
 }
 function gearAncientTag(eq) { const A = eq && GEAR_ANCIENT[eq.ancient]; return A ? A.name + '・' : ''; }
 
+// ---- 傳奇威能（config-enhance.js 的 GEAR_LEGENDS，只出在白金，第 67 節 D4）----
+function getGearLegend(eq) { return eq && eq.legend ? GEAR_LEGENDS.find(l => l.id === eq.legend) || null : null; }
+function rollGearLegendId(exclude) {
+    const pool = GEAR_LEGENDS.filter(l => l.id !== exclude);
+    return pool[Math.floor(Math.random() * pool.length)].id;
+}
+// 白金且是圖鑑裝備才有威能（神器、靈寶閣寶物沒有）
+function canHaveLegend(eq) { return !!(eq && eq.quality === PLATINUM_QUALITY.name && eq.gearId); }
+function ensureGearLegend(eq) { if (canHaveLegend(eq) && !getGearLegend(eq)) eq.legend = rollGearLegendId(); return eq; }
+// 穿戴中白金的威能加成總和（併入 getBonusTotals）
+function getGearLegendBonusTotals() {
+    const t = {};
+    for (let key in player.equipment) {
+        const L = getGearLegend(player.equipment[key]);
+        if (L) for (let k in L.bonus) t[k] = (t[k] || 0) + L.bonus[k];
+    }
+    return t;
+}
+function formatGearLegend(eq) {
+    const L = getGearLegend(eq);
+    return L ? `<p style="font-size: 0.8em; color: #fde68a; text-shadow: 0 0 6px rgba(251,191,36,0.6);">🌟 傳奇威能【${L.icon}${L.name}】${L.desc}</p>` : '';
+}
+
 // ---- 隨機詞條（config-enhance.js 的 gearSubAffixes）----
 // 抽 count 條不重複的詞條，回傳 [[key, value, 分級], ...]；exclude = 已有的 key（進化時多抽 1 條用）
 //   category＝裝備分類：依詞條的 w 權重抽（武器偏攻擊、防具偏生存、飾品偏輔助；only 限定分類），level＝裝備等級：決定能抽到的分級（第 67 節 D1）
@@ -200,6 +223,7 @@ function getBonusTotals() {
     add(getAptitudeBonusTotals());      // 先天靈根與體質（aptitude.js）
     add(getGoldenCoreBonusTotals());    // 金丹（氣血／靈力 %）、元嬰（術法 %）（golden-core.js）；凝聚元神後為空
     add(getYuanshenBonusTotals());      // 元神：修為速度（yuanshen.js）；偏好屬性傷害是獨立倍率，在 resolveHit
+    add(getGearLegendBonusTotals());    // 白金傳奇威能（第 67 節 D4）
     return t;
 }
 
@@ -315,7 +339,7 @@ function formatEquipTitle(eq) {
 function formatEquipDetails(eq) {
     let statsText = NUMERIC_V2 ? nv2FormatEquipStats(eq) : formatEquipStats(getEquipEffectiveStats(eq));   // 新制顯示武器攻擊與新屬性點（numeric.js）
     return `<p style="font-size: 0.8em; color: #facc15;">加成: ${statsText}</p>
-            ${formatGearSubs(eq)}${formatGearEffect(eq)}${formatRaceGearFx(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
+            ${formatGearSubs(eq)}${formatGearLegend(eq)}${formatGearEffect(eq)}${formatRaceGearFx(eq)}${formatSetInfo(eq)}${formatSockets(eq)}`;
 }
 
 // 卡片副標：部位・四維模板・來源
