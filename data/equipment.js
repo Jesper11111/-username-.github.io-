@@ -270,6 +270,8 @@ function forgeEquipment(qty = 1) {
             player.equipInventory.pop();   // forgeOneEquipment 剛放進背包的那件
             let y = getDecomposeYield(eq);
             dShards += y.shards; dIron += y.iron; addRefineStones(y.refine);   // 洗煉石（第 67 節 D2）
+            const cg = formatCraftGain(rollCraftDecompose(eq));   // 做裝通貨（craft.js，第 69 節）
+            if (cg) addLog(`🔨 自動分解【${getEquipDisplayName(eq)}】額外得到 ${cg}。`, "equip");
             decomposed.push(eq);
         }
     }

@@ -112,6 +112,7 @@ function renderEnhanceModal() {
         ${action}
         ${renderRaceReforgeSection(eq)}
         ${renderRefineSection(eq)}
+        ${renderCraftSection(eq)}
         ${renderLegendRerollSection(eq)}
         <p style="color: #6b7280; font-size: 0.75em;">每 +1 四維 +${Math.round(ENHANCE_STAT_PER_LEVEL * 100)}%；上限 白綠 +10、藍 +12、紫 +15、橙 +20。+11 起有成功率，每失敗一次同一級成功率 +${Math.round(ENHANCE_PITY_STEP * 100)}%。</p>`;
 }
@@ -231,7 +232,8 @@ function decomposeEquip(equipId) {
     if (y.iron) player.starIron = (player.starIron || 0) + y.iron;
     else addIronShards(y.shards);
     addRefineStones(y.refine);
-    addLog(`🔨 分解【${name}】，獲得 ${formatDecomposeYield(y)}。`, "equip");
+    const cg = rollCraftDecompose(eq);   // 做裝通貨（craft.js，第 69 節）
+    addLog(`🔨 分解【${name}】，獲得 ${formatDecomposeYield(y)}${craftGainSuffix(cg)}。`, "equip");
     refreshEquipViews();
     updateUI();
 }
@@ -259,7 +261,8 @@ function bulkDecomposeEquipment() {
     if (shards) addIronShards(shards);
     if (iron) player.starIron = (player.starIron || 0) + iron;
     addRefineStones(refine);
-    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 ${formatBulkYield(shards, iron, refine)}。`, "equip");
+    const cg = rollCraftDecomposeMany(targets);   // 做裝通貨（craft.js，第 69 節）
+    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 ${formatBulkYield(shards, iron, refine)}${craftGainSuffix(cg)}。`, "equip");
     renderBag();
     updateUI();
 }
@@ -283,8 +286,9 @@ function bulkStashEquip(mode) {
     player.gearStash = player.gearStash.filter(eq => !targets.includes(eq));
     if (iron) player.starIron = (player.starIron || 0) + iron;
     addRefineStones(refine);
+    const cg = mode === 'decompose' ? rollCraftDecomposeMany(targets) : {};   // 做裝通貨（craft.js，第 69 節）
     addLog(mode === 'decompose'
-        ? `🔨 一鍵分解暫存區 ${targets.length} 件橙色裝備，獲得 ${formatBulkYield(0, iron, refine)}。`
+        ? `🔨 一鍵分解暫存區 ${targets.length} 件橙色裝備，獲得 ${formatBulkYield(0, iron, refine)}${craftGainSuffix(cg)}。`
         : `🗑️ 一鍵毀棄了暫存區 ${targets.length} 件橙色裝備。`, "equip");
     renderBag();
     updateUI();
@@ -321,7 +325,8 @@ function receiveLootEquip(eq) {
     let y = getDecomposeYield(eq);
     player.starIron = (player.starIron || 0) + y.iron;
     addRefineStones(y.refine);
-    return `暫存區已滿，自動分解為 ${formatDecomposeYield(y)}`;
+    const cg = rollCraftDecompose(eq);
+    return `暫存區已滿，自動分解為 ${formatDecomposeYield(y)}${craftGainSuffix(cg)}`;
 }
 
 // 暫存區滿時：不能待在野外（combat.js 每回合、map.js 換地圖時檢查）；回傳 true 代表已被擋下
@@ -453,7 +458,7 @@ let refineSelIdx = 0;
 function refineCost(eq) {
     return { stones: Math.min(REFINE_STONE_MAX, REFINE_STONE_BASE + (eq.refineCount || 0)), coins: Math.floor(getHourlyIncome() * REFINE_COINS_HOURS) };
 }
-function canRefine(eq) { return !!(eq && eq.gearId && Array.isArray(eq.subs) && eq.subs.length && getGearDef(eq)); }
+function canRefine(eq) { return !!(eq && eq.gearId && Array.isArray(eq.subs) && eq.subs.length && getGearDef(eq) && eq.corrupt !== 2); }   // 走火入魔封印的不能洗（craft.js）
 function formatOneSub(sub) {
     return formatGearSubs({ subs: [sub] }).replace(/^<p class="gear-subs">◆ /, '').replace(/<\/p>$/, '');
 }
