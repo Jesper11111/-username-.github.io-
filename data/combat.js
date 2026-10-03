@@ -109,6 +109,7 @@ function combatTick() {
         let count = NUMERIC_V2 ? randInt(NV2.waveMin, NV2.waveMax) : Math.floor(Math.random() * 5) + 1;   // 新制每波 1～3 隻（config-numeric.js）
         let ms = getMapMonsterStats(player.currentMap);
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
+        resetMonsterSkillWave();   // 怪物技能的破甲計時（monster.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
         waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
         // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
@@ -118,7 +119,7 @@ function combatTick() {
             let attrs = applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race }));   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
             let tm = applyMonsterType(attrs, look, one.L, player.currentMap);   // 型態：減傷、閃避、暴擊，回傳氣血／攻擊倍率
             let hp = one.hp * raceHpMult(look.race) * tm.hp;   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
-            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type,
+            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type, mskills: look.skills || [],
                            name: look.name, icon: look.icon, img: look.img, imgPos: look.pos, attrs, status: newStatus() });
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
@@ -287,21 +288,26 @@ function fieldCombatRound() {
         waveSummary = null;
     } else {
         // ---- 怪物回合：每隻各自命中判定（玩家的閃避/防禦生效，怪物的屬性傷害可施加在玩家身上；妖獸會暴擊，第 66 節）----
-        let playerDef = { attrs: getPlayerCombatAttrs(), status: playerStatus };
+        let basePlayerAttrs = getPlayerCombatAttrs();
+        let playerDef = { attrs: playerAttrsUnderSunder(basePlayerAttrs), status: playerStatus };   // 被怪物「破甲」時防禦打折（monster.js）
         let totalDmg = 0;
         let enemyTags = [];
         let frozenCount = 0;
+        lastMonsterSkillText = '';
         enemies.forEach(e => {
             if (e.hp <= 0) return;   // 被反震／閃擊反擊打倒的，下一回合才結算擊殺
             if (e.skipTurn) { frozenCount++; return; }
-            let atk = e.attack * petEnemyAtkMult(e);   // 被靈寵削弱時攻擊降低（beast-combat.js）
+            let ms = monsterPreAttack(e);   // 怪物技能：狂暴、重擊、自癒、幻身（monster.js，第 66 節第 3 期）
+            let atk = e.attack * petEnemyAtkMult(e) * ms.atkMult;   // 被靈寵削弱時攻擊降低（beast-combat.js）
             let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
             // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
             let dealt = applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
             totalDmg += dealt;
             if (e.hp > 0) e.hp = Math.min(e.maxHp, e.hp + raceLifestealHeal(e.attrs, dealt));   // 種族特性：魔修吸血（race.js）
+            monsterPostHit(e, ms.skill, r, dealt, atk, basePlayerAttrs);   // 撕咬、毒牙、烈焰、寒息、破甲
             enemyTags = enemyTags.concat(r.tags);
         });
+        if (fieldSunderTurns > 0) fieldSunderTurns--;
         let taken = NUMERIC_V2 ? roundDmg(totalDmg) : totalDmg;   // 多隻加總後去掉浮點尾數（新制 2 位小數）
         player.hp -= taken;
         battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）

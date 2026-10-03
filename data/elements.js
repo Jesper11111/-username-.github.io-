@@ -303,6 +303,8 @@ function summarizeTags(tags, dodgeLabel) {
                   crit: "💥暴擊", combo: "⚡連擊",
                   // 變異屬性與光暗互剋（config-elements.js）
                   wind: "🌪️風擊", light: "☀️聖光", dark: "🌑暗蝕", lightdark: "☯️光暗相剋" };
+    // 怪物技能（monster.js，第 66 節第 3 期）：標籤 msk_重擊等
+    if (typeof MONSTER_SKILLS !== 'undefined') Object.keys(MONSTER_SKILLS).forEach(k => { names['msk_' + k] = MONSTER_SKILLS[k].icon + MONSTER_SKILLS[k].name; });
     let counts = {};
     tags.forEach(t => { if (names[t] !== undefined) counts[t] = (counts[t] || 0) + 1; });   // 沒有名稱的標籤（例：元神 yuanshen，只給飄字用）不寫進日誌
     return Object.keys(counts).map(t => `${names[t]}${counts[t] > 1 ? '×' + counts[t] : ''}`).join(" ");
