@@ -124,3 +124,6 @@ const OFFLINE_REPUTATION_RATE_OFFLINE = 1.1;
 const OFFLINE_MAX_SECONDS = 12 * 3600;
 
 // 野外小怪的圖鑑、型態與各地圖的出沒組合：見 config-monsters.js（2026-10-03 起，ARCHITECTURE.md 第 66 節第 2 期）
+
+// 挑戰模式（越級進入境界不足的地圖，map.js，第 70 節）：做裝通貨掉率倍數，索引＝越過門檻幾個境界（1 → ×1.5、2 → ×2、3 以上 → ×3）
+const CHALLENGE_CRAFT_MULT = [1, 1.5, 2, 3];

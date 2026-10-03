@@ -111,7 +111,7 @@ function combatTick() {
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         resetMonsterSkillWave();   // 怪物技能的破甲計時（monster.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
-        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
+        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap()) : 1;   // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）
         // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
         for (let i = 0; i < count; i++) {
             let look = pickFieldMonster(player.currentMap);
@@ -213,7 +213,7 @@ function fieldCombatRound() {
 
     enemies = enemies.filter(e => {
         if (e.hp <= 0) {
-            expEarned += player.currentMap.expRate * 15;
+            expEarned += getRewardMap().expRate * 15;   // 挑戰模式照自己境界的主要地圖（map.js，第 70 節）
             coinsEarned += rollKillCoins();
             repEarned += rollKillReputation();
             killedCount++;
@@ -338,7 +338,7 @@ function getMapMonsterStats(map, roll) {
 // 新制另乘 waveRewardAdj：殺得比同境界一般玩家快太多時打折，每小時收益最多 NV2.rewardSpeedCap 倍（numeric.js 的 nv2RewardSpeedAdj）
 let waveRewardAdj = 1;
 function getKillRewardMult() {
-    return NUMERIC_V2 ? nv2KillRewardMult(player.currentMap) * waveRewardAdj : KILL_REWARD_MULT;
+    return NUMERIC_V2 ? nv2KillRewardMult(getRewardMap()) * waveRewardAdj : KILL_REWARD_MULT;   // 挑戰模式用主要地圖的補償（第 70 節）
 }
 // 「每波」遭遇機率（野外修士、暗殺者、懸賞人物）的補償倍率：每小時波數變少多少就放大多少
 function getWaveChanceMult() {
@@ -347,14 +347,15 @@ function getWaveChanceMult() {
 
 // 擊殺一隻妖獸的靈石：該地圖的 coins ±20%（數值表與每小時上限見 config-maps.js）
 function rollKillCoins() {
-    let base = player.currentMap.coins;
-    if (typeof base !== 'number') base = player.currentMap.diff * 10;   // 保險：舊資料沒有 coins 時沿用舊公式
+    const m = getRewardMap();   // 挑戰模式照自己境界的主要地圖（map.js，第 70 節）
+    let base = m.coins;
+    if (typeof base !== 'number') base = m.diff * 10;   // 保險：舊資料沒有 coins 時沿用舊公式
     return Math.floor(base * (0.8 + Math.random() * 0.4));
 }
 
 // 擊殺一隻妖獸的聲望：依所在地圖分類隨機 1 ~ 上限（見 config-maps.js 的 REPUTATION_MAX_BY_MAP_CATEGORY）
 function rollKillReputation() {
-    let max = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
+    let max = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(getRewardMap().name)] || 1;
     return Math.floor(Math.random() * max) + 1;
 }
 
