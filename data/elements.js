@@ -39,8 +39,11 @@ function getPlayerCombatAttrs() {
         // 防禦點數（第 66 節）：裝備、靈根、仙法、特效、靈寵增益、夥伴被動全部相加，沒有上限（套裝的 cap:def 已無作用）
         // 靈寵增益（beast-combat.js 的 petFxVal）：閃避一起套上限；暴擊、命中、破甲直接加
         def: Math.max(0, b.def + r.def + a.def + gearDef + petFxVal('def')) * armor,
+        // 魔防（第 66 節第 4 期 A）：防禦 × 0.6 ＋ 靈力 × 0.1 ＋ 飾品詞條（config-elements.js）
+        mdef: Math.max(0, (b.def + r.def + a.def + gearDef + petFxVal('def')) * MDEF_FROM_DEF + (NUMERIC_V2 ? nv2Stat('spr') : 0) * MDEF_PER_SPR + (extra.mdef || 0)) * armor,
         eva: Math.max(0, b.eva + a.eva + agiEva + petFxVal('eva')) * armor,   // 迴避值（第 66 節第 4 期）：沒有上限，夥伴被動已含在 b
         crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100,
+        magCrit: (NUMERIC_V2 ? nv2MagCrit() : 0) + petFxVal('crit') / 100,   // 魔法暴擊（悟性，第 66 節第 4 期 A）：術法技能用
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
         fire: cap(b.fire + r.fire + a.fire, capOf("fire", AFFIX_CAP)),
         poison: cap(b.poison + r.poison + a.poison, capOf("poison", AFFIX_CAP)),
@@ -127,7 +130,7 @@ function auraCurseMult(ag) { return ag ? 1 + ag.player.curse : 1; }   // 敵人�
 // 回傳套上光環後的屬性（新物件，不改原本的）
 function auraPlayerAttrs(attrs, ag) {
     if (!ag) return attrs;
-    return Object.assign({}, attrs, { def: Math.max(0, (attrs.def || 0) - ag.player.def), eva: Math.max(0, (attrs.eva || 0) - ag.player.eva) });
+    return Object.assign({}, attrs, { def: Math.max(0, (attrs.def || 0) - ag.player.def), mdef: Math.max(0, (attrs.mdef || 0) - ag.player.def), eva: Math.max(0, (attrs.eva || 0) - ag.player.eva) });   // 破甲光環也削魔防（第 66 節第 4 期 A）
 }
 function auraSelfAttrs(attrs, ag) {
     if (!ag) return attrs;
@@ -158,6 +161,7 @@ function describeAuras(auras) { return (Array.isArray(auras) ? auras : [auras]).
 // 單次命中結算（依序）：閃避 → 金重擊 → 雷擊 → 五行相剋 → 暴擊 → 防禦（雷擊、暗蝕時略過）→ 附加冰/火/毒狀態
 //   attacker = { attrs, power }  power 為計算燒傷/中毒的攻擊力基準
 //   defender = { attrs, status }
+//   attacker.dmgType：'mag'＝術法（走魔防／魔抗、魔法暴擊），其餘＝物理（第 66 節第 4 期 A）
 // 回傳 { dmg, tags, preDef, postDef }，tags 為本次觸發的效果（供日誌彙整），呼叫端自行扣 hp
 function resolveHit(rawDmg, attacker, defender) {
     let tags = [];
@@ -213,16 +217,19 @@ function resolveHit(rawDmg, attacker, defender) {
     }
     let darkHit = attacker.attrs.dark > 0 && Math.random() < attacker.attrs.dark / 100;
     if (darkHit) tags.push("dark");
-    // 新制：敏捷暴擊（attrs.crit 為機率 0～0.3，只有新制的玩家有此欄位）
-    if (attacker.attrs.crit > 0 && Math.random() < attacker.attrs.crit) {
+    // 新制：暴擊（attrs.crit 為機率 0～0.3）；術法攻擊用魔法暴擊 magCrit（悟性，第 66 節第 4 期 A；敵人沒有 magCrit 就用 crit）
+    const mag = attacker.dmgType === 'mag';
+    const critRate = mag && typeof attacker.attrs.magCrit === 'number' ? attacker.attrs.magCrit : attacker.attrs.crit;
+    if (critRate > 0 && Math.random() < critRate) {
         dmg *= NV2.critDmg;
         tags.push("crit");
     }
     const preDef = dmg;   // 防禦前的傷害
     if (!thunder && !darkHit) {   // 雷擊、暗蝕無視防禦；破甲：無視部分防禦
         const pen = attacker.attrs.armorPen || 0;
-        if (defender.attrs.isPlayer) dmg *= defMult((defender.attrs.def || 0) - pen);   // 玩家：防禦點數，《天堂2》式（第 66 節）
-        else dmg *= 1 - Math.max(0, (defender.attrs.def || 0) - pen) / 100;          // 敵人：減傷 %（與改版前相同）
+        const da = defender.attrs;
+        if (da.isPlayer) dmg *= defMult((mag ? (da.mdef || 0) : (da.def || 0)) - pen);   // 玩家：防禦／魔防點數，《天堂2》式（第 66 節）
+        else dmg *= 1 - Math.max(0, (mag && typeof da.mres === 'number' ? da.mres : (da.def || 0)) - pen) / 100;   // 敵人：減傷 %／魔抗 %（沒填魔抗＝同減傷）
     }
     const postDef = dmg;   // 防禦後的傷害：敵人打玩家時，護盾類的最後保底以它為準（beast-combat.js 的 applyPetDamageReduction）
 

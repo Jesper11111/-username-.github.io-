@@ -74,7 +74,9 @@ const DefenseBattle = (() => {
     function simulateWave(w) {
         const e = waveEnemy(w), ag = combineAuras(e.auras);   // 首領多重光環（elements.js）
         const pa = auraPlayerAttrs(getPlayerCombatAttrs(), ag), eAttrs = auraSelfAttrs(e.attrs, ag);
-        const pAtk = Math.max(getPhysAttack(), getMagAttack()) * DEFENSE_PLAYER_SKILL_MULT * auraPlayerAtkMult(ag);
+        const pPhys = getPhysAttack(), pMag = getMagAttack(), pType = pMag > pPhys ? 'mag' : undefined;   // 術攻較高時算術法（第 66 節第 4 期 A）
+        const pAtk = Math.max(pPhys, pMag) * DEFENSE_PLAYER_SKILL_MULT * auraPlayerAtkMult(ag);
+        const eType = eAttrs.race === 'demon' ? 'mag' : undefined;   // 首領（魔修）＝術法攻擊
         const eAtk = e.atk * auraSelfAtkMult(ag), curse = auraCurseMult(ag);
         const pMax = getMaxHp() * (NUMERIC_V2 ? NV2.defenseHpScale : 1);   // 新制雙方氣血一起放大，約 20 下分勝負
         let pHp = pMax, eHp = e.hp;
@@ -85,13 +87,13 @@ const DefenseBattle = (() => {
             const st = tickStatus(ps); pHp -= st.dot + at.dot;
             if (pHp <= 0) return { win: false, rounds: r };
             if (!st.frozen) {
-                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;
-                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;   // 新制敏捷連擊
+                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk, dmgType: pType }, { attrs: eAttrs, status: es }).dmg;
+                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk, dmgType: pType }, { attrs: eAttrs, status: es }).dmg;   // 新制敏捷連擊
             }
             const et = tickStatus(es); eHp -= et.dot;
             if (eHp <= 0) return { win: true, rounds: r, hpLeft: pHp / pMax };
             if (!et.frozen) {
-                const d = resolveHit(eAtk, { attrs: eAttrs, power: eAtk }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
+                const d = resolveHit(eAtk, { attrs: eAttrs, power: eAtk, dmgType: eType }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
                 pHp -= d;
                 eHp = Math.min(e.hp, eHp + raceLifestealHeal(eAttrs, d));   // 種族特性：魔修吸血（race.js）
             }

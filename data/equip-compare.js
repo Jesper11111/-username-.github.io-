@@ -32,7 +32,7 @@ function eqSnapshot() {
         power: NUMERIC_V2 ? nv2CombatPower() : getPhysAttack(),
         hp: getMaxHp(), mp: getMaxMp(),
         phys: getPhysAttack(), mag: getMagAttack(),
-        def: a.def, eva: a.eva,
+        def: a.def, mdef: a.mdef, eva: a.eva,
         crit: NUMERIC_V2 ? nv2Crit() * 100 : 0, combo: NUMERIC_V2 ? nv2Combo() * 100 : 0,
         affix: Object.fromEntries(AFFIX_TYPES.map(k => [k, a[k] || 0])),
         element: getPlayerElement(),
@@ -174,7 +174,7 @@ function openEquipCompare(equipId) {
     let delta = diffRow('戰力', before.power, after.power, '', true, true)
         + diffRow('氣血', before.hp, after.hp, '', false, true) + diffRow('法力', before.mp, after.mp, '', false, true)
         + diffRow('物理攻擊', before.phys, after.phys, '', false, true) + diffRow('術法攻擊', before.mag, after.mag, '', false, true)
-        + diffRow('防禦', before.def, after.def, '') + diffRow('閃避', before.eva, after.eva, '')
+        + diffRow('防禦', before.def, after.def, '') + diffRow('魔防', before.mdef, after.mdef, '') + diffRow('閃避', before.eva, after.eva, '')
         + (NUMERIC_V2 ? diffRow('暴擊', before.crit, after.crit, '%') + diffRow('連擊', before.combo, after.combo, '%') : '')
         + AFFIX_TYPES.map(k => diffRow(combatAttrInfo[k].label, before.affix[k], after.affix[k], '%')).join('');
     if (!delta) delta = '<div class="eqc-drow"><span>整體數值沒有變化</span></div>';

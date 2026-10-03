@@ -119,7 +119,7 @@ function combatTick() {
             let attrs = applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race }));   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
             let tm = applyMonsterType(attrs, look, one.L, player.currentMap);   // 型態：減傷、閃避、暴擊，回傳氣血／攻擊倍率
             let hp = one.hp * raceHpMult(look.race) * tm.hp;   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
-            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type, mskills: look.skills || [],
+            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type, mskills: look.skills || [], atkType: tm.atkType,
                            name: look.name, icon: look.icon, img: look.img, imgPos: look.pos, attrs, status: newStatus() });
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
@@ -128,7 +128,7 @@ function combatTick() {
             let addCultivator = (faction, ambush) => {
                 let mult = ambush ? AMBUSH_POWER_MULT : FIELD_CULTIVATOR_POWER_MULT;
                 let look = ambush ? AMBUSH_IMG : CULTIVATOR_IMGS[faction];   // 戰場實況的圖（config-merit.js，只影響外觀）
-                enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
+                enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult * fieldMagicAtkComp(ms.L), atkType: 'mag',   // 修士為術法攻擊（魔防；攻擊補回一般玩家魔防，monster.js）
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
                                img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
                                attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(ms.L), { nature: faction === "邪" ? "dark" : "light", race: faction === "邪" ? "demon" : null })),   // 邪修為暗、正道為光（光暗互剋）；邪修＝魔修（種族剋制），正道＝人修無種族
@@ -299,9 +299,9 @@ function fieldCombatRound() {
             if (e.skipTurn) { frozenCount++; return; }
             let ms = monsterPreAttack(e);   // 怪物技能：狂暴、重擊、自癒、幻身（monster.js，第 66 節第 3 期）
             let atk = e.attack * petEnemyAtkMult(e) * ms.atkMult;   // 被靈寵削弱時攻擊降低（beast-combat.js）
-            let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
-            // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
-            let dealt = applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
+            let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk, dmgType: e.atkType }, playerDef);   // 術法型、魔修、修士為術法攻擊（走魔防，第 66 節第 4 期 A）
+            // 裝備特效：物理攻擊吃金身、術法攻擊吃化勁；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
+            let dealt = applyPetDamageReduction(applyGearDefense(r, e, e.atkType === 'mag', r.tags), r);
             totalDmg += dealt;
             if (e.hp > 0) e.hp = Math.min(e.maxHp, e.hp + raceLifestealHeal(e.attrs, dealt));   // 種族特性：魔修吸血（race.js）
             monsterPostHit(e, ms.skill, r, dealt, atk, basePlayerAttrs);   // 撕咬、毒牙、烈焰、寒息、破甲
@@ -376,10 +376,11 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
     let dealtTotal = 0;
     let baseAttrs = getPlayerCombatAttrs();
     let firstAlive = () => targets.find(t => t.hp > 0) || targets[0];
-    let hitTarget = (target, dmg, attrs) => {
+    // dmgType：'mag'＝術法技能（走敵人魔抗、魔法暴擊，第 66 節第 4 期 A）；普攻與物理技能不給
+    let hitTarget = (target, dmg, attrs, dmgType) => {
         if (!target) return 0;
         // petVulnMult：目標被靈寵施加「破綻」時受到的傷害提高（beast-combat.js）
-        let r = resolveHit(dmg * getGearHitMult(fx, target) * petVulnMult(target), { attrs, power: getPhysAttack() }, { attrs: target.attrs || {}, status: target.status || newStatus() });
+        let r = resolveHit(dmg * getGearHitMult(fx, target) * petVulnMult(target), { attrs, power: dmgType === 'mag' ? getMagAttack() : getPhysAttack(), dmgType }, { attrs: target.attrs || {}, status: target.status || newStatus() });
         target.hp -= r.dmg;
         r.tags.forEach(t => tags.push(t));
         let dealt = r.dmg + applyGearHitChain(fx, target, targets, r, tags);
@@ -414,7 +415,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
 
             if (skill.type === "aoe") {
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => targets.forEach(e => { dealt += hitTarget(e, skillDmg, attrs); });
+                skillHits = () => targets.forEach(e => { dealt += hitTarget(e, skillDmg, attrs, skill.dmgType); });
             } else if (skill.type === "heal") {
                 player.hp = Math.min(player.maxHp, player.hp + player.maxHp * skill.mult);
                 addLog(skill.msg + cost, "heal");
@@ -431,10 +432,10 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
                 // 牽制：造成傷害並以 freeze 機率定身（沿用冰凍狀態）
                 let ctrlAttrs = Object.assign({}, attrs, { ice: Math.max(attrs.ice || 0, skill.freeze * 100) });
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => (skill.aoe ? targets : [firstAlive()]).forEach(e => { dealt += hitTarget(e, skillDmg, ctrlAttrs); });
+                skillHits = () => (skill.aoe ? targets : [firstAlive()]).forEach(e => { dealt += hitTarget(e, skillDmg, ctrlAttrs, skill.dmgType); });
             } else {
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => { dealt += hitTarget(firstAlive(), skillDmg, attrs); };
+                skillHits = () => { dealt += hitTarget(firstAlive(), skillDmg, attrs, skill.dmgType); };
             }
             if (skillHits) {
                 skillHits();

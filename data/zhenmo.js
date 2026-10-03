@@ -206,7 +206,8 @@ const ZhenmoTower = (() => {
     // 回合上限：新制 BOSS 要打約 300 回合，上限放寬到 bossMaxRounds（600）
     function maxRounds() { return NUMERIC_V2 ? NV2.bossMaxRounds : ZHENMO_MAX_ROUNDS; }
     function playerStats() {
-        return { atk: Math.max(getPhysAttack(), getMagAttack()) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs() };
+        const phys = getPhysAttack(), mag = getMagAttack();   // 取較高的；術攻較高時算術法（走 BOSS 魔抗、魔法暴擊，第 66 節第 4 期 A）
+        return { atk: Math.max(phys, mag) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs(), dmgType: mag > phys ? 'mag' : undefined };
     }
     function enterBoss() {
         const z = state();
@@ -227,8 +228,8 @@ const ZhenmoTower = (() => {
             $('zm-boss-body').innerHTML = `
                 <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階${b.attrs.race ? `・種族 ${raceTag(b.attrs.race)}（${raceTrait(b.attrs.race).desc}）` : ''}</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
-                <p class="zm-boss-stat">攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
-                    🛡️防禦 ${formatEnemyDef(b.attrs.def)} 💨閃避 ${+(b.attrs.eva || 0).toFixed(1)}${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
+                <p class="zm-boss-stat">${['demon', 'heart'].includes(b.attrs.race) ? '🔮術法' : '⚔️物理'}攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
+                    🛡️防禦 ${formatEnemyDef(b.attrs.def)}${typeof b.attrs.mres === 'number' && b.attrs.mres !== b.attrs.def ? ` 🔮魔抗 ${b.attrs.mres}%` : ''} 💨閃避 ${+(b.attrs.eva || 0).toFixed(1)}${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
                 ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
                 ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>
@@ -257,7 +258,8 @@ const ZhenmoTower = (() => {
         fight = {
             floor: z.floor, boss, mult: p.mult, round: 0, over: false, speed: fight && fight.speed || 1, tid: 0, aura,
             e: { atk: b.atk * auraSelfAtkMult(aura) * mood, hp: b.hp * mood, max: b.hp * mood, attrs: auraSelfAttrs(b.attrs, aura), st: newStatus() },
-            p: { atk: me.atk * auraPlayerAtkMult(aura), hp: me.hp, max: me.hp, attrs: auraPlayerAttrs(me.attrs, aura), st: newStatus() }
+            p: { atk: me.atk * auraPlayerAtkMult(aura), hp: me.hp, max: me.hp, attrs: auraPlayerAttrs(me.attrs, aura), st: newStatus(), dmgType: me.dmgType },
+            eType: ['demon', 'heart'].includes(b.attrs.race) ? 'mag' : undefined   // 魔修、心魔 BOSS＝術法攻擊（走魔防，第 66 節第 4 期 A）
         };
         const bg = $('zm-fight-bg');
         bg.style.backgroundImage = `url(${boss.img})`;
@@ -294,11 +296,11 @@ const ZhenmoTower = (() => {
         if (st.dot) { P.hp -= st.dot; if (!instant) popNum('hero', st.dot, 'dot'); }
         if (P.hp <= 0) return endFight(false, '身中異狀，力竭倒下');
         if (!st.frozen) {
-            const hit = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
+            const hit = resolveHit(P.atk, { attrs: P.attrs, power: P.atk, dmgType: P.dmgType }, { attrs: E.attrs, status: E.st });
             E.hp -= hit.dmg;
             // 新制敏捷連擊：再打一下（第 52 節）
             if (NUMERIC_V2 && Math.random() < nv2Combo()) {
-                const extra = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
+                const extra = resolveHit(P.atk, { attrs: P.attrs, power: P.atk, dmgType: P.dmgType }, { attrs: E.attrs, status: E.st });
                 E.hp -= extra.dmg;
                 if (!instant && !extra.tags.includes('dodge')) popNum('boss', extra.dmg, 'crit');
             }
@@ -313,7 +315,7 @@ const ZhenmoTower = (() => {
         if (et.dot) { E.hp -= et.dot; if (!instant) popNum('boss', et.dot, 'dot'); }
         if (E.hp <= 0) return endFight(true);
         if (!et.frozen) {
-            const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk }, { attrs: P.attrs, status: P.st });
+            const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk, dmgType: f.eType }, { attrs: P.attrs, status: P.st });
             hit.dmg *= auraCurseMult(f.aura);   // 光環詛咒：受到的傷害提高
             P.hp -= hit.dmg;
             E.hp = Math.min(E.max, E.hp + raceLifestealHeal(E.attrs, hit.dmg));   // 種族特性：魔修吸血（race.js）

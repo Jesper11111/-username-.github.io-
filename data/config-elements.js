@@ -9,8 +9,13 @@
 //   （防禦 30 = 減傷 20%、60 = 33%、120 = 50%）。敵人（妖獸、BOSS、懸賞、守城）的 def 仍是「減傷 %」，效果與改版前完全相同；
 //   畫面上以 pctToDefPoints() 換算成等效防禦點數一起顯示。
 const DEF_K = 120;
-// 以「點數」顯示（不加 %）的戰鬥屬性：防禦、閃避（迴避值）；其餘屬性傷害仍是機率 %
-const POINT_STAT_KEYS = ['def', 'eva'];
+// 魔防（2026-10-03《天堂2》式，第 66 節第 4 期 A）：擋術法傷害，公式同防禦（× DEF_K ÷ (DEF_K + 魔防)）。
+//   玩家魔防 = 防禦 × MDEF_FROM_DEF ＋ 靈力（新制屬性點）× MDEF_PER_SPR ＋ 裝備詞條「魔防」（gearSubAffixes，只出在飾品）——老玩家不用換裝備就有魔防
+//   敵人用「魔抗 %」attrs.mres（沒填＝同減傷 %）；術法攻擊（技能 dmgType 'mag'、敵人 atkType 'mag'）走魔防／魔抗，物理走防禦／減傷
+const MDEF_FROM_DEF = 0.6;
+const MDEF_PER_SPR = 0.1;
+// 以「點數」顯示（不加 %）的戰鬥屬性：防禦、閃避（迴避值）、魔防；其餘屬性傷害仍是機率 %
+const POINT_STAT_KEYS = ['def', 'eva', 'mdef'];
 
 // 玩家從裝備累積的上限（技能自帶的屬性機率不受 AFFIX_CAP 限制）；防禦、閃避沒有上限
 const AFFIX_CAP = 50;   // 每種屬性傷害觸發率上限 50%
@@ -36,6 +41,7 @@ const THUNDER_BONUS = 0.3;       // 雷：雷擊，該次傷害額外 +30%，且
 // 屬性顯示資訊（key 對應 stats 內的欄位名稱）
 const combatAttrInfo = {
     def:    { label: "防禦", icon: "🛡️", desc: `受到的傷害 × ${DEF_K} ÷ (${DEF_K} + 防禦)，越堆越有效但遞減` },
+    mdef:   { label: "魔防", icon: "🔮", desc: `擋術法傷害：受到的術法傷害 × ${DEF_K} ÷ (${DEF_K} + 魔防)；來源：防禦 × ${MDEF_FROM_DEF}、靈力 × ${MDEF_PER_SPR}、飾品詞條` },
     eva:    { label: "閃避", icon: "💨", desc: "迴避值：被閃掉的機率 = (迴避 − 對方命中) ÷ (迴避 − 對方命中 + 100)" },
     ice:    { label: "冰傷", icon: "❄️", desc: `觸發時凍結目標 ${FREEZE_TURNS} 回合` },
     fire:   { label: "火傷", icon: "🔥", desc: `燒傷，最多 ${BURN_MAX_STACKS} 層、持續 ${BURN_TURNS} 回合` },

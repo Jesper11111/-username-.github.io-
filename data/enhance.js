@@ -191,7 +191,7 @@ function evolveEquip(skipConfirm) {
     else if (def.category === 'armor') eq.stats.def = PLATINUM_QUALITY.def * (def.slot === '盔甲' ? GEAR_ARMOR_DEF_MULT : 1);
     else eq.stats.eva = PLATINUM_QUALITY.eva;
     eq.quality = PLATINUM_QUALITY.name;
-    eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0])));
+    eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0]), eq.category));
     applyEvolveRaceGearFx(eq);   // 白金必帶種族特效（race.js，第 62 節第 5 期）
     recordGearCollected(eq);
     addLog(`✨ 天地共鳴！【${getEquipDisplayName(eq)}】進化為${PLATINUM_QUALITY.label}！`, "reincarnate");

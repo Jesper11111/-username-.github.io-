@@ -59,7 +59,7 @@ function castProcSkill(sk, targets, tags, source) {
         for (let k in (sk.attrs || {})) attrs[k] = Math.max(attrs[k] || 0, sk.attrs[k]);
         let dmg = (sk.dmgType === 'mag' ? getMagAttack() : getPhysAttack()) * sk.mult;
         (sk.target === 'aoe' ? alive : [alive[0]]).forEach(t => {
-            let r = resolveHit(dmg, { attrs, power: getPhysAttack() }, { attrs: t.attrs || {}, status: t.status || newStatus() });
+            let r = resolveHit(dmg, { attrs, power: sk.dmgType === 'mag' ? getMagAttack() : getPhysAttack(), dmgType: sk.dmgType }, { attrs: t.attrs || {}, status: t.status || newStatus() });   // 術法絕學走魔抗、魔法暴擊（第 66 節第 4 期 A）
             t.hp -= r.dmg;
             dealt += r.dmg;
             r.tags.forEach(tag => tags.push(tag));
