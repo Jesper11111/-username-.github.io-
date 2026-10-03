@@ -139,7 +139,7 @@ function updateCombatVisualPanel() {
         let raceText = RACE_KEYS.map(k => [k, enemies.filter(e => e.attrs && e.attrs.race === k).length]).filter(([, c]) => c > 0).map(([k, c]) => `${raceTag(k)}×${c}`).join(' ');
         let typeText = front.mtype ? monsterTypeTag({ type: front.mtype }) : '';   // 目前在打的那隻的型態（monster.js，第 66 節）
         document.getElementById('battle-enemy-info').innerText = [typeText, raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
-        document.getElementById('battle-action-desc').innerText = `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;
+        document.getElementById('battle-action-desc').innerText = lastMonsterSkillText || `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;   // 怪物放技能時顯示（monster.js）
     } else {
         document.getElementById('battle-enemy-title').innerText = "索敵中";
         document.getElementById('battle-enemy-icon').innerText = "🔍";

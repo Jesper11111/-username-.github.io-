@@ -64,12 +64,18 @@ function battleFxHit(dmg, tags) {
 }
 
 // 玩家受到傷害（dodged：全部閃掉）；tags＝對方攻擊觸發的屬性（上色用）
+// 受傷飄字的小字：怪物技能名（monster.js）＋暴擊
+function battleFxHurtLabel(tags) {
+    if (!tags) return "";
+    const sk = tags.filter(t => t.startsWith('msk_')).map(t => (MONSTER_SKILLS[t.slice(4)] || {}).name).filter(Boolean);
+    return sk.concat(tags.includes("crit") ? ["暴擊"] : []).slice(0, 2).join(' ');
+}
 function battleFxHurt(dmg, dodged, tags) {
     if (!battleFxActive()) return;
     if (dodged) { battleFxQueue.push({ kind: "dodge", side: "hero" }); return; }
     // 多隻妖獸時：閃掉其中幾隻、仍被其他隻打中 → 同時顯示「閃避」（立繪往左閃）與受傷數字
     if (tags && tags.includes("dodge")) battleFxQueue.push({ kind: "dodge", side: "hero" });
-    if (dmg > 0) battleFxQueue.push({ kind: "hurt", side: "hero", dmg, elem: battleFxElemOf(tags), label: tags && tags.includes("crit") ? "暴擊" : "" });   // 妖獸暴擊（第 66 節）
+    if (dmg > 0) battleFxQueue.push({ kind: "hurt", side: "hero", dmg, elem: battleFxElemOf(tags), label: battleFxHurtLabel(tags) });   // 妖獸暴擊、技能名（第 66 節）
 }
 
 // 持續傷害（elements.js 的 tickStatus 回傳 { burn, poison }）：燒傷紅字、中毒綠字；onPlayer＝發作在玩家身上
