@@ -261,6 +261,8 @@ function updateUI() {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
         if (k === 'def') return `<span${tip}>${info.icon}${info.label} <b>${formatDefPoints(attrs.def)}</b></span>`;   // 防禦點數（第 66 節）
+        if (k === 'eva') return `<span${tip}>${info.icon}${info.label} <b>${formatEvaPoints(attrs.eva)}</b></span>`   // 迴避值（第 66 節第 4 期）
+            + `<span title="命中值：抵銷對方的迴避值（敏捷、洞察、靈寵）">🎯命中 <b>${+(attrs.evaPen || 0).toFixed(1)}</b></span>`;
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
     }).join('') + natureHtml
         + (formatRaceDmgLine() ? `<span title="種族剋制：對該族的傷害加成（天磯錄・斬妖錄等，合計上限 +${Math.round(RACE_DMG_CAP * 100)}%）">⚔️剋制 <b>${formatRaceDmgLine()}</b></span>` : '');

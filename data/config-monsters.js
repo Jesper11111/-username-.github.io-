@@ -2,7 +2,7 @@
 // 邏輯在 monster.js；數值仍由 numeric.js 的 nv2MonsterStats 依「同境界一般玩家」算，型態只是在上面乘倍率。
 
 // ---- 型態 ----
-//   hp：氣血倍率；def：減傷 %（加在地圖分類的減傷上，最低 0）；eva：「超出一般玩家命中」的閃避 %；crit：暴擊率（傷害 × NV2.critDmg）
+//   hp：氣血倍率；def：減傷 %（加在地圖分類的減傷上，最低 0）；eva：「超出一般玩家命中」的迴避值（閃避機率見 numeric.js 的 evaDodge）；crit：暴擊率（傷害 × NV2.critDmg）
 //   攻擊倍率不在這裡填：monster.js 依「一般玩家殺一隻要幾回合 × 暴擊期望」自動反推，讓每個型態對一般玩家造成的「每隻總傷害」相同
 //   （皮厚型打得久但打得輕、猛攻型死得快但會爆擊），所以生存與收益不因型態改變；擊殺時間的差異由收益補償吸收（nv2TypRoundsPerKill）。
 const MONSTER_TYPES = {

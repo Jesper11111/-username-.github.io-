@@ -20,7 +20,7 @@ function raceLifestealHeal(attrs, dealt) { return attrs && attrs.lifesteal && de
 function fieldRaceKillMult(map, baseEva, hit) {
     const c = fieldRaceCounts(map), total = Object.values(c).reduce((s, v) => s + v, 0);
     if (!total) return 1;
-    const through = e => 1 - Math.max(0, Math.min(95, e - hit)) / 100;
+    const through = e => 1 - evaDodge(e - hit);   // 閃避曲線（numeric.js，第 66 節第 4 期）
     let sum = 0;
     Object.keys(c).forEach(k => { const t = raceTrait(k); sum += c[k] / total * raceHpMult(k) * through(baseEva) / through(baseEva + (t.eva || 0)); });
     return sum;

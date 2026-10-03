@@ -13,6 +13,8 @@ function defMult(points) { return DEF_K / (DEF_K + Math.max(0, points || 0)); }
 function pctToDefPoints(pct) { const p = Math.min(95, Math.max(0, pct || 0)); return DEF_K * p / (100 - p); }
 // 顯示：玩家「防禦 60（減傷 33%）」
 function formatDefPoints(points) { return `${+(points || 0).toFixed(1)}（減傷 ${+((1 - defMult(points)) * 100).toFixed(1)}%）`; }
+// 顯示：玩家「閃避 25（對命中 0 的敵人迴避 20%）」
+function formatEvaPoints(points) { return `${+(points || 0).toFixed(1)}（迴避 ${+(evaDodge(points) * 100).toFixed(1)}%）`; }
 // 顯示：敵人「防禦 44（減傷 27%）」
 function formatEnemyDef(pct) { return `${Math.round(pctToDefPoints(pct))}（減傷 ${+(pct || 0).toFixed(1)}%）`; }
 
@@ -34,11 +36,10 @@ function getPlayerCombatAttrs() {
     // 閃避裡屬於靈寵、夥伴的部分（敵人打玩家時各自另有上限，resolveHit）；夥伴被動已含在 b（getEquipBonus → getBonusTotals）
     let pb = typeof getPartnerBonusTotals === 'function' ? getPartnerBonusTotals() : {};
     return {
-        petEva: petFxVal('eva'), partnerEva: pb.eva || 0,
         // 防禦點數（第 66 節）：裝備、靈根、仙法、特效、靈寵增益、夥伴被動全部相加，沒有上限（套裝的 cap:def 已無作用）
         // 靈寵增益（beast-combat.js 的 petFxVal）：閃避一起套上限；暴擊、命中、破甲直接加
         def: Math.max(0, b.def + r.def + a.def + gearDef + petFxVal('def')) * armor,
-        eva: cap(b.eva + a.eva + agiEva + petFxVal('eva'), capOf("eva", EVA_CAP)) * armor,
+        eva: Math.max(0, b.eva + a.eva + agiEva + petFxVal('eva')) * armor,   // 迴避值（第 66 節第 4 期）：沒有上限，夥伴被動已含在 b
         crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100,
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
         fire: cap(b.fire + r.fire + a.fire, capOf("fire", AFFIX_CAP)),
@@ -160,13 +161,9 @@ function describeAuras(auras) { return (Array.isArray(auras) ? auras : [auras]).
 // 回傳 { dmg, tags, preDef, postDef }，tags 為本次觸發的效果（供日誌彙整），呼叫端自行扣 hp
 function resolveHit(rawDmg, attacker, defender) {
     let tags = [];
-    let eva = (defender.attrs.eva || 0) - (attacker.attrs.evaPen || 0);   // 洞察：無視部分閃避
-    if (defender.attrs.isPlayer) {   // 敵人打玩家：玩家本身最多 20、靈寵最多 +10、夥伴最多 +10（config-elements.js）
-        const d = defender.attrs, pet = d.petEva || 0, par = d.partnerEva || 0;
-        eva = Math.min(Math.max(0, (d.eva || 0) - pet - par - (attacker.attrs.evaPen || 0)), PLAYER_EFFECTIVE_EVA_MAX)
-            + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
-    }
-    if (eva > 0 && Math.random() < eva / 100) {
+    // 閃避：迴避值 − 命中值（洞察、敏捷），被閃掉的機率 evaDodge＝D ÷ (D + 100)（numeric.js；第 66 節第 4 期，玩家與敵人相同）
+    const eva = (defender.attrs.eva || 0) - (attacker.attrs.evaPen || 0);
+    if (eva > 0 && Math.random() < evaDodge(eva)) {
         return { dmg: 0, tags: ["dodge"] };
     }
 
@@ -315,6 +312,6 @@ function formatEquipStats(stats) {
     let base = [["str", "力量"], ["con", "體質"], ["int", "悟性"], ["spr", "靈力"], ["cha", "魅力"]]
         .filter(([k]) => stats[k]).map(([k, label]) => `${label}+${stats[k].toWan()}`);
     let attrs = ["def", "eva"].concat(AFFIX_TYPES)
-        .filter(k => stats[k]).map(k => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label}+${stats[k]}${k === 'def' ? '' : '%'}`);   // 防禦是點數（第 66 節）
+        .filter(k => stats[k]).map(k => `${combatAttrInfo[k].icon}${combatAttrInfo[k].label}+${stats[k]}${POINT_STAT_KEYS.includes(k) ? '' : '%'}`);   // 防禦是點數（第 66 節）
     return base.concat(attrs).join("、") || "無";
 }

@@ -139,7 +139,7 @@ function describeTitleBonus(bonus) {
         let v = bonus[k];
         let label = labels[k] || (k.startsWith('elemDmg:') ? `本命五行為${k.slice(8)}時傷害` : k);
         let isPoint = ['def', 'eva', 'ice', 'fire', 'poison', 'metal', 'thunder'].includes(k);
-        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}${k === 'def' ? '' : '%'}`;   // 防禦是點數（第 66 節）
+        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}${POINT_STAT_KEYS.includes(k) ? '' : '%'}`;   // 防禦、閃避是點數（第 66 節）
     }).join('、');
 }
 
