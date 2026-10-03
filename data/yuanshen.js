@@ -71,7 +71,7 @@ function rollHuashenScroll([a, b]) { return a + Math.floor(Math.random() * (b - 
 // 野外擊殺（combat.js）：適合境界化神以上的地圖，每隻機率掉落；回傳掉落頁數
 // silent＝離線／背景結算用（save.js 的 settleIdleSeconds）：不寫日誌，由結算訊息列出
 function rollFieldHuashenScroll(kills, silent) {
-    const D = HUASHEN_SCROLL_DROPS, suit = typeof getMapSuitRange === 'function' ? getMapSuitRange(player.currentMap) : null;
+    const D = HUASHEN_SCROLL_DROPS, suit = typeof getMapSuitRange === 'function' ? getMapSuitRange(typeof getRewardMap === 'function' ? getRewardMap() : player.currentMap) : null;   // 挑戰模式照主要地圖（第 70 節）
     if (!suit || suit[0] < D.fieldMinRealm || !(kills > 0)) return 0;
     let n = 0;
     for (let i = 0; i < kills; i++) if (Math.random() < D.fieldChance) n += rollHuashenScroll(D.field);

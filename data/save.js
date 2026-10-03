@@ -62,6 +62,13 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
     // 依實力估算野外戰鬥：撐不住就退回宗門靜修；打得慢則按比例降低戰鬥次數（防止進高階地圖後直接離線刷收益）
     let est = null;
     // 暫存區滿了不能外出練功（enhance.js）：離線期間改在宗門靜修，沒有野外收益
+    // 挑戰模式（越級地圖，map.js，第 70 節）：不能離線／背景掛機，一律退回宗門、沒有野外收益（也堵住線上撐過 60 秒就信任的 idleProvenMap）
+    if (!player.currentMapIsSafe && typeof isChallengeMap === 'function' && isChallengeMap()) {
+        let fromName = player.currentMap.name;
+        player.currentMap = maps[0].items[0];
+        player.currentMapIsSafe = maps[0].isSafe;
+        prefix = `⚔️ 挑戰模式不能離線／背景掛機，已從【${fromName}】退回【${player.currentMap.name}】靜修。\n`;
+    }
     if (!player.currentMapIsSafe && isGearStashFull()) {
         let fromName = player.currentMap.name;
         player.currentMap = maps[0].items[0];

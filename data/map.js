@@ -46,8 +46,8 @@ function goToMapByName(name) {
     const f = findMapByName(name);
     if (!f) return;
     const block = getMapEntryBlock(f.c, f.i);
-    if (block) { showToast(block.msg.split('\n')[0]); return; }
-    selectMap(f.c, f.i);
+    if (block && !block.realm) { showToast(block.msg.split('\n')[0]); return; }
+    selectMap(f.c, f.i);   // 境界不足：changeMap 會跳挑戰模式警告（第 70 節）
 }
 
 // 依城鎮名稱傳送並進城（人界地圖的傳送點用，config-towns.js；免得寫死 maps 索引）
@@ -88,7 +88,7 @@ function openMapCategoryModal(catIndex) {
                     ? `🏯 安全區：可打坐靜修`
                     : `經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}`}</p>
                 ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${player.realmIndex < getMapMinRealm(item) ? '#f87171' : '#9ca3af'};">${player.realmIndex < getMapMinRealm(item) ? '🔒 ' : ''}限制：${realms[getMapMinRealm(item)]}以上</p>` : ''}
-                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? '當前所在區域' : '前往此區域'}</button>
+                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && player.realmIndex < getMapMinRealm(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
             </div>
         `;
     });
@@ -143,9 +143,14 @@ function getMapDifficultyText(item) {
 
 function selectMap(cIndex, iIndex) {
     const target = maps[cIndex].items[iIndex];
+    const b = getMapEntryBlock(cIndex, iIndex);
+    if (b && b.realm) { confirmChallengeMap(cIndex, iIndex); return; }   // 挑戰模式：取消時留在地圖視窗（第 70 節）
     changeMap(cIndex, iIndex);
     closeModal('map-category-modal');
     closeModal('world-map-modal');
+    afterMapArrive(cIndex, target);
+}
+function afterMapArrive(cIndex, target) {
     // 從人界／靈界地圖（town.js）選好地圖：傳送成功才一併關掉地圖回到遊戲（境界不足等被擋時留在地圖上；城鎮由 goToTown 接著開城內場景）
     const arrived = player.currentMap && player.currentMap.name === target.name;
     if (typeof currentTownScene !== 'undefined' && (currentTownScene === WORLD_SCENE_KEY || currentTownScene === LINGJIE_SCENE_KEY) && arrived) closeTownScene();
@@ -157,8 +162,8 @@ function selectMap(cIndex, iIndex) {
 function getMapEntryBlock(cIndex, iIndex) {
     const targetMap = maps[cIndex].items[iIndex];
     const minRealm = getMapMinRealm(targetMap);
-    if (minRealm && player.realmIndex < minRealm)
-        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界）`, short: `🔒${realms[minRealm]}` };
+    if (minRealm && player.realmIndex < minRealm)   // realm: true＝可改用挑戰模式進入（第 70 節）
+        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界；可用「⚔️ 挑戰模式」越級進入）`, short: `⚔️挑戰`, realm: true };
     // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
     const minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
     if (minS) {
@@ -185,11 +190,12 @@ function getMapLockShort(name) {
     return b ? b.short : '';
 }
 
-function changeMap(cIndex, iIndex) {
+function changeMap(cIndex, iIndex, challengeOk) {
     let targetMap = maps[cIndex].items[iIndex];
 
     const block = getMapEntryBlock(cIndex, iIndex);
-    if (block) { alert(block.msg); return; }
+    if (block && block.realm && !challengeOk) { confirmChallengeMap(cIndex, iIndex); return; }   // 挑戰模式：先跳警告（第 70 節）
+    if (block && !block.realm) { alert(block.msg); return; }
 
     // 懸賞對決中換地圖＝逃離對決（懸賞保留，bounty.js）
     if (inBountyDuel) endBountyDuel("flee");
@@ -215,9 +221,66 @@ function changeMap(cIndex, iIndex) {
     refreshCombatStatusText();
     if (player.currentMapIsSafe) {
         addLog(`🗺️ 回到安全區 ${player.currentMap.name}，開始打坐療傷。`);
+    } else if (isChallengeMap()) {
+        addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；離線或切到背景會被送回宗門。`, "combat");
     } else {
         addLog(`🗺️ 深入野外 ${player.currentMap.name}，四周充滿危險氣息。`);
     }
     updateCombatVisualPanel();
     onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇：秘密路線、累計次數、空間裂縫、三界戰場（encounter.js，第 63 節）
+}
+
+// ==================== 挑戰模式（全地圖開放，第 70 節；2026-10-03 使用者定案）====================
+// 境界不足（getMapEntryBlock 的 realm）的地圖可以確認警告後越級進入：
+//   1. 進入前跳警告（境界差、妖獸比主修地圖強幾倍）  2. 戰死照常折壽、扣靈石（combat.js 的 onPlayerKilledInField，不另外處理）
+//   3. 不能離線／背景掛機：結算時一律退回宗門、沒有野外收益（save.js）  4. 經驗、靈石、聲望、刷新補償照「自己境界的主要地圖」（getRewardMap）
+//   5. 做裝通貨掉率 × getChallengeCraftMult（越 1 境 ×1.5、2 境 ×2、3 境以上 ×3，craft.js）
+function isChallengeMap(item) {
+    item = item || player.currentMap;
+    if (!item || (item === player.currentMap && player.currentMapIsSafe)) return false;
+    const f = findMapByName(item.name);
+    if (!f || maps[f.c].isSafe) return false;
+    return player.realmIndex < getMapMinRealm(item);
+}
+// 越過門檻幾個境界（0＝不是挑戰）
+function getChallengeOver(item) { item = item || player.currentMap; return isChallengeMap(item) ? getMapMinRealm(item) - player.realmIndex : 0; }
+function getChallengeCraftMult() {
+    const o = getChallengeOver();
+    return o <= 0 ? 1 : (CHALLENGE_CRAFT_MULT[Math.min(o, CHALLENGE_CRAFT_MULT.length - 1)] || 1);
+}
+// 自己境界的主要練功地圖（config-realms.js 的 realmPacing）
+function getMainMapForRealm() {
+    const pace = realmPacing[Math.min(player.realmIndex, realmPacing.length - 1)];
+    const f = pace && findMapByName(pace.map);
+    return f ? maps[f.c].items[f.i] : null;
+}
+// 擊殺收益用的地圖：挑戰模式＝自己境界的主要地圖，否則＝所在地圖
+function getRewardMap() {
+    return isChallengeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;
+}
+function challengeStrengthText(item) {
+    const main = getMainMapForRealm();
+    if (!NUMERIC_V2 || !main || typeof nv2MonsterStats !== 'function') return '';
+    const a = nv2MonsterStats(item), b = nv2MonsterStats(main);
+    const r = (x, y) => (y > 0 ? x / y : 0);
+    return `妖獸攻擊約為你主修地圖【${main.name}】的 ${r(a.atk, b.atk).toFixed(1)} 倍、氣血 ${r(a.hp, b.hp).toFixed(1)} 倍`;
+}
+async function confirmChallengeMap(cIndex, iIndex) {
+    const item = maps[cIndex].items[iIndex];
+    const suit = getMapSuitRange(item), mapRealm = suit ? suit[0] : getMapMinRealm(item) + 1, gap = Math.max(1, mapRealm - player.realmIndex), over = getMapMinRealm(item) - player.realmIndex;
+    const cm = CHALLENGE_CRAFT_MULT[Math.min(over, CHALLENGE_CRAFT_MULT.length - 1)] || 1;
+    const msg = `⚔️ 挑戰模式：越級進入【${item.name}】\n`
+        + `境界差 ${gap}（妖獸約${realms[Math.min(mapRealm, realms.length - 1)]}，你是${realms[player.realmIndex]}）\n`
+        + (challengeStrengthText(item) ? challengeStrengthText(item) + '\n' : '')
+        + `\n・戰死照常折損壽元、遺失 10% 靈石（壽元歸零會刪檔），風險自負\n`
+        + `・不能離線／背景掛機：離線或切到背景會被送回宗門\n`
+        + `・經驗、靈石照你境界的主要地圖計算，不會因越級暴增\n`
+        + `・做裝通貨掉率 ×${cm}\n\n確定進入？`;
+    const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : confirm(msg);
+    if (!ok) return;
+    changeMap(cIndex, iIndex, true);
+    const target = maps[cIndex].items[iIndex];
+    closeModal('map-category-modal');
+    closeModal('world-map-modal');
+    afterMapArrive(cIndex, target);
 }
