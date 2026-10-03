@@ -8,7 +8,7 @@
 ## 1. 專案結構
 
 ```
-CLAUDE.md             給 Claude 的工作規則（2026-10-03）：修改前先讀本檔、修改後同步更新本檔、回覆用繁體中文
+CLAUDE.md             給 Claude 的工作規則（2026-10-03）：修改前先讀本檔、修改後同步更新本檔、回覆用繁體中文、驗證後自動開 PR 並合併進 main 發佈
 gm.html               戰力榜 GM 後台（第 50 節）：只有 Firestore admins 名單內的 Google 帳號能刪除／封鎖／審核守城榜；不是遊戲頁面，遊戲內沒有連結
                       （載入 data/config-realms、config-leaderboard、config-bounty、bounty、config-defense.js）
 manifest.json         PWA 設定（名稱、圖示、standalone、底色 #05070c；第 64 節）
