@@ -3832,6 +3832,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **② 發佈（`.github/workflows/pages.yml`）**：main 有新提交 → checkout → `npm ci` → 建置 → `upload-pages-artifact`（dist）→ `deploy-pages`。
   **需要作者一次性設定**：GitHub 倉庫 Settings → Pages → Build and deployment → Source 選「**GitHub Actions**」。在那之前網站照舊直接提供原始檔（不混淆、但功能正常），Actions 的 deploy 步驟會失敗。
   配合「原始碼倉庫改私人」（需 GitHub Pro）就連原始碼也看不到。
+  - 實測（2026-10-03 合併 PR #27）：Source 還是「Deploy from a branch」時，push 到 main 會**兩個流程都跑**（內建的 pages build and deployment 發原始檔＋本流程發 dist），哪個最後完成網站就是哪一版（那次剛好是混淆版）。
+    切到「GitHub Actions」後只剩本流程。檢查方式：Actions 頁面，最新一次 push 只出現「Build & Deploy Pages」、沒有「pages build and deployment」＝已切換；線上 index.html 只載入 `data/game.js?v=…`＝混淆版。
 - **③ 存檔簽章（`integrity.js`）**：`igSign` = 兩次 cyrb53（各帶 `IG_SALT`）共 32 位十六進位。
   - 本機存檔：`saveLocal` 寫入 `igPrepareSave()`＝`JSON.stringify(player)`（含 `_ig: 1`）尾端再嵌 `"_sig":"…"`（同一次寫入，多分頁不會錯開）；`loadLocal` 在 `applySaveData` 前 `igVerifyLocal(data)`（拿掉 `_sig`、重新 stringify 比對）。
     沒有 `_ig` 的改版前存檔直接接受（下次存檔補簽）；有 `_ig` 但簽章不符或遺失 → `flagSave('存檔內容被修改')`。讀檔失敗時顯示的原始存檔代碼也帶 `_sig`，貼回匯入一樣驗證得過。
