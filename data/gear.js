@@ -224,6 +224,7 @@ function getBonusTotals() {
     add(getGoldenCoreBonusTotals());    // 金丹（氣血／靈力 %）、元嬰（術法 %）（golden-core.js）；凝聚元神後為空
     add(getYuanshenBonusTotals());      // 元神：修為速度（yuanshen.js）；偏好屬性傷害是獨立倍率，在 resolveHit
     add(getGearLegendBonusTotals());    // 白金傳奇威能（第 67 節 D4）
+    if (typeof getTalentBonusTotals === 'function') add(getTalentBonusTotals());   // 天賦樹（talent.js，第 68 節）
     return t;
 }
 

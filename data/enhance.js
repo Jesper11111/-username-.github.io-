@@ -206,7 +206,7 @@ function evolveEquip(skipConfirm) {
 
 // ---- 分解 ----
 function getDecomposeYield(eq) {
-    const refine = DECOMPOSE_REFINE[eq.quality] || 0;   // 洗煉石（第 67 節 D2）
+    const refine = Math.round((DECOMPOSE_REFINE[eq.quality] || 0) * (1 + ((typeof getTalentBonusTotals === 'function' && getTalentBonusTotals().decomposeRefine) || 0)));   // 洗煉石（第 67 節 D2）；天賦「點石成金」+50%
     if (DECOMPOSE_IRON[eq.quality]) return { iron: DECOMPOSE_IRON[eq.quality], shards: 0, refine };
     return { iron: 0, shards: DECOMPOSE_SHARDS[eq.quality] || DECOMPOSE_SHARDS["白色"], refine };
 }

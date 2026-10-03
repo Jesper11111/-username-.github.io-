@@ -80,7 +80,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）/ monsters（野外妖獸型態、圖鑑、各地圖出沒組合，第 66 節；`FIELD_MONSTERS` 由 config-maps.js 搬來，載入在 config-maps.js 之後）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）/ talents（天賦樹 6 路線 48 節點，第 68 節）/ monsters（野外妖獸型態、圖鑑、各地圖出沒組合，第 66 節；`FIELD_MONSTERS` 由 config-maps.js 搬來，載入在 config-maps.js 之後）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -89,6 +89,8 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
+  talent.js           天賦樹（第 68 節）：點數（等級＋轉世）、加點、重置、加成彙總 getTalentBonusTotals（併入 getBonusTotals）、獨立倍率 talentMult、天賦視窗 #talent-modal
+                      （設定在 config-talents.js；載入在 monster.js 之後）
   monster.js          野外妖獸的型態、出沒組合與技能（第 66 節第 2、3 期）：pickFieldMonster、applyMonsterType（減傷／閃避／暴擊、氣血與攻擊倍率）、fieldMonsterRoundsFactor（收益補償）、地圖卡片出沒列；
                       技能 monsterPreAttack／monsterPostHit／playerAttrsUnderSunder（破甲計時 fieldSunderTurns、戰場說明 lastMonsterSkillText）
                       （設定在 config-monsters.js：MONSTER_TYPES 五型態、FIELD_MONSTERS 圖鑑、FIELD_MONSTER_POOLS 各地圖組合；載入在 race.js 之後）
@@ -757,6 +759,7 @@ combatTick() 每秒執行 [combat.js]
   以擊殺經驗估算：天南（每殺約 4,500）約可練到 Lv100 附近；禁區可推到數千級；
   Lv10000 需在最高戰場（每殺約 500 萬）長期掛機。
 - 等級與壽元、戰力無掛鉤（戰力不影響壽元）。轉世輪迴會把人物等級**重置為 Lv1**（見第 25 節）。
+- **天賦點**（2026-10-03，第 68 節）：Lv.1～100 每 10 級 1 點、100～1000 每 50 級、1000～10000 每 250 級（滿級 64 點）。
 - **境界等級上限**（2026-09-27 使用者同意，**只在新制 `NUMERIC_V2` 生效**，第 52 節；舊制每級加四維，現在上線會削弱線上玩家）：
   `config-level.js` 的 `LEVEL_CAP_BY_REALM`：凡人 50、煉氣 70、築基 100、金丹 150、元嬰 200、化神 300、煉虛 500、合體 700、大乘 1000、渡劫 1500、
   仙人初境 2500、天仙 3500、真仙 5000、大羅金仙 6500、混元大羅金仙 8000、混沌道祖 10000（依原本經驗曲線的自然進度訂，裝備等級 10～1000 在大乘以前對上境界）。
@@ -1431,7 +1434,7 @@ combatTick() 每秒執行 [combat.js]
 |---|---|
 | 保留 5% | 四維與魅力：新值 = `10 + floor(前世 player.stats × 5%)`（只看基礎屬性，不含裝備） |
 | 保留 5% | 氣血上限、靈力上限：取前世 `getMaxHp()`/`getMaxMp()`（含裝備、宗門、靈根、等級）的 5%，存入 `player.reincarnateBonus = { hp, mp }`，由 `getMaxHp()`/`getMaxMp()` 加上 |
-| 遺忘 | 境界（回凡人 1 階）、人物等級（Lv1）、`sect`（變回散修）與 `sectSkills`（可重新選宗門）、門派任務 `activeQuest`、四維古籍 `studyCounts`、屬性秘典 `elementStudy` |
+| 遺忘 | 天賦分配（`player.talents` 清空重新點；轉世天賦點依輪迴次數另給，第 68 節）、境界（回凡人 1 階）、人物等級（Lv1）、`sect`（變回散修）與 `sectSkills`（可重新選宗門）、門派任務 `activeQuest`、四維古籍 `studyCounts`、屬性秘典 `elementStudy` |
 | 重設 | 壽元回到凡人的 60 年、年齡回到 16 歲，氣血／靈力補滿新上限，輪迴次數 +1 |
 | 卸下 | 身上裝備（`player.equipment` 各部位）全部放回背包 `equipInventory`，強制卸下不受背包上限 `MAX_EQUIP_INVENTORY` 限制；日誌記「輪迴之際，身上 N 件裝備盡數卸下」（2026-10-01 使用者指定，版本 `20261004o`；人物等級回 Lv1，要重新達到裝備等級才能再穿） |
 | 不動 | 背包、靈石等資源、功德／七彩補天石／破障丹、僕從、靈寵（等級可能高於 Lv1 的人物，但之後的經驗受人物等級上限卡住）、靈寶閣武學 `learnedSkills` 與 `lingbaoSold`、每日任務／千寶閣 |
@@ -1593,7 +1596,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005s`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005t`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 
@@ -2750,6 +2753,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   種族也維持 😈**魔修**（奉天庭之命下界鎮塔的天人，被塔中魔氣侵染、審判走樣；吸血 10%；樓主首勝法寶仍是中品誅魔鏡）→ 2026-09-30 的校準（強力約 82%、中等 0%）不變，沒有重跑模擬。
   光環改名不改效果（「天裁審判」詛咒 +7.8%、「聖光禁錮」凍結 3.1%、「六翼天威」雙方攻擊 ±7.8%、「罪業焚魂」每回合扣 0.2% 氣血）、出手閃光改聖光金 `rgba(253, 224, 71, 0.38)`、圖示 ⚡、
   開場「天道在上——汝罪，當裁。」、招式 七曜神杖／聖羽天罰／天裁神雷／萬罪歸一、`imgPos` 50% 22%（臉在約 22% 高度）。以 Node 載入 config 確認第 60 層各數值與原自動產生版本逐項相同、第 61 層仍是自動產生。
+- **天賦樹後的再校準**（2026-10-03，版本 `20261005t`，第 68 節）：一般玩家改為點「該境界等級上限可得點數的一半」（輪流 鋒芒／銅皮／破甲／護魂，最多 20 點）。無天賦時半點天賦讓勝率 76～81% → 97～100%，
+  所以同方法對齊改版前勝率，第 5、7～100 層 BOSS 攻擊 ×1.12～1.68（約 1.4，乘進 `ZHENMO_L2_ATK`）。驗證（1000 場）：半點天賦 72～81%（改版前 75～81%）；**完全沒點天賦 36～62%**。
 - **魔攻／魔防後的再校準**（2026-10-03，版本 `20261005o`，第 66 節第 4 期 A）：魔修、心魔 BOSS 改術法攻擊（走魔防），同下方方法對齊改版前勝率，倍率多在 0.97～1.05；只套用偏離 ≥ 2% 的 33 層。
   驗證（1000 場）與改版前差 ±3 個百分點內（16 層 68→65、55 層 61→63、85 層 67→69）。BOSS 介紹多「🔮術法攻擊／⚔️物理攻擊」與魔抗（和減傷不同時才顯示）。
 - **閃避曲線後的再校準**（2026-10-03，版本 `20261005n`，第 66 節第 4 期）：`ZHENMO_L2_ATK` 改為第 1～100 層都可能有值（兩次校準相乘）。每層先在改版前程式量勝率（1500 場），再於新程式二分搜尋同勝率的倍率（×0.85～1.02，高樓層閃避效果略降所以 BOSS 攻擊調低），
@@ -3690,4 +3695,25 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 顯示：裝備卡片詞條下方金字「🌟 傳奇威能【🗡️萬劍歸宗】…」（`formatGearLegend`）。
   - 平衡：威能是白金（橙 +20 進化）的終局獎勵，會讓頂尖玩家變強；鎮魔塔／守城的校準配置不含裝備特效，沒有因此重調。
   - 驗證（本機）：橙 +20 進化白金得威能；沒有威能的舊白金存檔、重新整理後自動補上；穿「金剛不壞」防禦 0 → 23.8、金身 22%；重塑換成別種；穿「天罡之怒」野外實戰 15 秒（`hasSetSpecial('rage')` 為 true）；Console 無錯誤。
+
+## 68. 天賦樹（`config-talents.js`、`talent.js`；2026-10-03，版本 `20261005t`）
+
+- **規劃**（使用者 2026-10-03 定案）：依「戰鬥風格」分 6 條路線（不依職業、不依五行——職業已有主修與熟練度、五行已用在本命／共鳴／元神／相剋），讓人物等級重新有意義、build 多樣化。
+  防無限膨脹（使用者指出「轉世 100 次就能 6 條點滿」）：轉世點數遞減且封頂、整棵樹點數遠大於可得點數、核心天賦同時最多 2 個。
+- **點數**：等級 `TALENT_LEVEL_STEPS`（Lv.1～100 每 10 級、100～1000 每 50 級、1000～10000 每 250 級 → 滿級 64）＋ 轉世 `TALENT_REINCARNATE_POINTS`（第 1～3 次各 +3、第 4～9 次各 +1、之後 0 → 最多 15）＝ **最多 79 點**。
+  整棵樹 6 × 28 ＝ 168 點 → 最多點滿約 2.8 條。轉世時 `triggerReincarnate` 清空 `player.talents`；點數不足時（等級降低）`validateTalents()` 全部退回。
+- **結構**（`TALENT_BRANCHES`）：⚔️攻伐（暴擊、破甲、斬殺、金傷）／🔮術法（魔法暴擊、法爆、雷冰、連雷）／🛡️金身（防禦、魔防、回血、金身化勁）／💨身法（閃避、命中、追擊、疾風、閃擊、洞察）／
+  🐉御靈（獸魂、反震、噬魂、吸血、橫掃）／☯️造化（悟道、聚財、尋鐵、積德、奪寶、丹心）。每條 4 排：第一重 2 個 ×5、第二重 2 個 ×5（需本路線 5 點）、第三重要訣 2 個 ×3（需 12 點）、
+  第四重核心 2 個 ×1（需 20 點）。**核心天賦同時最多 `TALENT_KEYSTONE_MAX` 2 個**（全樹合計）。
+  核心：血祭（物攻 ×1.35、氣血 ×0.75）、破釜沉舟（暴擊 +10%、防禦減半）、天人合一（術攻 ×1.35、物攻 ×0.7）、萬法歸宗（增益上限 +20%）、金剛（防禦 ×1.5、閃避歸零）、不滅（每波保 1 血、氣血 ×1.1）、
+  無相（閃避 ×1.5、防禦歸零）、流光（閃避後強擊、追擊 +8%）、獸神附體（靈寵 +80%、攻擊 ×0.85）、群魔亂舞（普攻群攻、橫掃）、天道酬勤（修為靈石 +15%、攻擊 ×0.9）、點石成金（分解洗煉石 +50%）。
+- **加成**：`getTalentBonusTotals()`（以 JSON 字串比對做快取）併入 gear.js 的 `getBonusTotals()`，所以 def／eva／mdef／屬性傷害／fx:特效（不受特效上限）／special: 都走既有實作。
+  **天賦不給「攻擊 +%」這類進增益池的加成**（頂尖玩家的增益早已封頂）。新 key：
+  `crit`／`magCrit`／`hit`／`critDmg`（elements.js `getPlayerCombatAttrs`；`resolveHit` 暴擊改乘 `attacker.attrs.critDmg`）、`mult:phys／mag／hp／def／eva`（獨立倍率 `talentMult()`：numeric.js 的 `nv2Attack`、`nv2MaxHp`，elements.js 的防禦、閃避）、
+  `buffCap`（numeric.js `nv2BuffCap`）、`decomposeRefine`（enhance.js `getDecomposeYield`）。戰力 `nv2CombatPower` 不含天賦暴擊（GM 的戰力 ÷ 攻擊 檢查不受影響）。
+- **重置**：`respecTalents()`，前 `TALENT_RESPEC_FREE` 1 次免費，之後 靈石 H × 2 小時 × 已重置次數（最多 ×5）。存檔：`player.talents`、`player.talentRespecs`（state.js 預設值，舊存檔讀檔時補上，只新增欄位）。
+- **介面**：人物面板（修仙分頁）「天賦：可用 N 點」→ `#talent-modal`（index.html；6 個分頁按鈕、每排兩格節點卡＋「+1」按鈕，不能點時按鈕顯示原因；核心天賦實線粗框、要訣虛線框）。
+- **鎮魔塔**：見第 51 節「天賦樹後的再校準」（以半點天賦為一般玩家，沒點天賦的玩家會變難）。野外、守城的校準基準不含天賦，天賦等於玩家變強。
+- 驗證（本機）：點數 Lv.10／50／100／1000／10000 ＝ 1／5／10／28／64，轉世 1／3／9／100 次 ＝ 3／9／15／15，總計最多 79；第二重未投入 5 點時被擋；第 3 個核心被擋；
+  血祭 物攻 11 → 15、氣血 189 → 145；金剛 防禦 35 → 52.5、閃避 35 → 0；重置第一次免費、第二次 1,949 萬靈石；轉世後（等級 1、輪迴 100 次）可用 15 點；手機 390×844 視窗正常；Console 無錯誤。
 

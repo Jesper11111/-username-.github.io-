@@ -38,12 +38,13 @@ function getPlayerCombatAttrs() {
     return {
         // 防禦點數（第 66 節）：裝備、靈根、仙法、特效、靈寵增益、夥伴被動全部相加，沒有上限（套裝的 cap:def 已無作用）
         // 靈寵增益（beast-combat.js 的 petFxVal）：閃避一起套上限；暴擊、命中、破甲直接加
-        def: Math.max(0, b.def + r.def + a.def + gearDef + petFxVal('def')) * armor,
+        def: Math.max(0, b.def + r.def + a.def + gearDef + petFxVal('def')) * armor * (typeof talentMult === 'function' ? talentMult('def') : 1),   // 天賦核心（金剛、無相…）的獨立倍率
         // 魔防（第 66 節第 4 期 A）：防禦 × 0.6 ＋ 靈力 × 0.1 ＋ 飾品詞條（config-elements.js）
         mdef: Math.max(0, (b.def + r.def + a.def + gearDef + petFxVal('def')) * MDEF_FROM_DEF + (NUMERIC_V2 ? nv2Stat('spr') : 0) * MDEF_PER_SPR + (extra.mdef || 0)) * armor,
-        eva: Math.max(0, b.eva + a.eva + agiEva + petFxVal('eva')) * armor,   // 迴避值（第 66 節第 4 期）：沒有上限，夥伴被動已含在 b
-        crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100,
-        magCrit: (NUMERIC_V2 ? nv2MagCrit() : 0) + petFxVal('crit') / 100,   // 魔法暴擊（悟性，第 66 節第 4 期 A）：術法技能用
+        eva: Math.max(0, b.eva + a.eva + agiEva + petFxVal('eva')) * armor * (typeof talentMult === 'function' ? talentMult('eva') : 1),   // 迴避值（第 66 節第 4 期）：沒有上限，夥伴被動已含在 b
+        crit: (NUMERIC_V2 ? nv2Crit() : 0) + petFxVal('crit') / 100 + (extra.crit || 0),            // 天賦 crit／magCrit（第 68 節）
+        magCrit: (NUMERIC_V2 ? nv2MagCrit() : 0) + petFxVal('crit') / 100 + (extra.magCrit || 0),
+        critDmg: (NUMERIC_V2 ? NV2.critDmg : 2) + (extra.critDmg || 0),                             // 暴擊傷害倍率（天賦「劍意」）   // 魔法暴擊（悟性，第 66 節第 4 期 A）：術法技能用
         ice: cap(b.ice + r.ice + a.ice, capOf("ice", AFFIX_CAP)),
         fire: cap(b.fire + r.fire + a.fire, capOf("fire", AFFIX_CAP)),
         poison: cap(b.poison + r.poison + a.poison, capOf("poison", AFFIX_CAP)),
@@ -64,7 +65,7 @@ function getPlayerCombatAttrs() {
         book: getElementBookBonus(),
         // 裝備特效（gear.js），怪物沒有這些欄位（視為 0）
         armorPen: (fx["破甲"] || 0) + petFxVal('armorPen'),
-        evaPen: (fx["洞察"] || 0) + (NUMERIC_V2 ? nv2Hit() : 0) + petFxVal('hit'),
+        evaPen: (fx["洞察"] || 0) + (NUMERIC_V2 ? nv2Hit() : 0) + petFxVal('hit') + (extra.hit || 0),   // 天賦「鷹眼」命中
         counterBonus: fx["剋敵"] || 0,
         frozenBonus: fx["寒徹"] || 0,
         burnBonus: fx["焚燼"] || 0,
@@ -221,7 +222,7 @@ function resolveHit(rawDmg, attacker, defender) {
     const mag = attacker.dmgType === 'mag';
     const critRate = mag && typeof attacker.attrs.magCrit === 'number' ? attacker.attrs.magCrit : attacker.attrs.crit;
     if (critRate > 0 && Math.random() < critRate) {
-        dmg *= NV2.critDmg;
+        dmg *= attacker.attrs.critDmg || NV2.critDmg;   // 玩家的暴擊倍率可被天賦提高（第 68 節）
         tags.push("crit");
     }
     const preDef = dmg;   // 防禦前的傷害

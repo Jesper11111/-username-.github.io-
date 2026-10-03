@@ -222,6 +222,8 @@ function updateUI() {
     rateEl.innerText = atFloor ? '（歲月已止）' : `⌛-${rateText}`;
     rateEl.style.color = atFloor ? '#ef4444' : (getAgingMultiplier() > 1 ? '#fb923c' : '#9ca3af');
     document.getElementById('power-display').innerText = fmtCombat(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack());   // 畫面 ×100（format.js）
+    let talentEl = document.getElementById('talent-display');   // 天賦樹（talent.js，第 68 節）
+    if (talentEl) talentEl.innerText = formatTalentLine();
     let aptEl = document.getElementById('aptitude-display');   // 先天靈根・體質（aptitude.js），點擊查看／重測
     if (aptEl) aptEl.innerText = formatAptitudeShort();
     let coreEl = document.getElementById('core-display');   // 丹田／金丹／元嬰（golden-core.js）
