@@ -120,7 +120,7 @@ function openWuxingInfo() {
         ・<strong>${ROOT_PURE_SETS} 套五行 + 同屬性再 ${ROOT_PURE_REST} 件</strong> → 純化五行共鳴<br>
         ・<strong>${ROOT_DUAL_SETS} 套五行 + 兩個屬性各再 ${ROOT_DUAL_REST} 件</strong> → 雙屬性五行共鳴</p>
         <table class="wuxing-info-table">${pureRows}${dualRows}</table>
-        <p style="color:#9ca3af;">※ 五行共鳴提供的屬性傷害與減傷會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%、減傷 ${DEF_CAP}%）。</p>
+        <p style="color:#9ca3af;">※ 五行共鳴提供的屬性傷害會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%）；防禦直接相加、沒有上限（受到傷害 × ${DEF_K} ÷ (${DEF_K} + 防禦)）。</p>
 
         <h4 class="wuxing-info-h">變異屬性與光暗</h4>
         <p>五行相剋只在金木水火土之間作用。先天資質（人物面板「資質」）可能帶來變異屬性：<br>

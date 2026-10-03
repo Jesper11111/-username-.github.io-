@@ -133,7 +133,7 @@ function describeSpell(s) {
         parts.push("被動：" + Object.keys(s.aura).map(k => {
             let v = s.aura[k];
             let isPct = /Pct$/.test(k);
-            return `${SPELL_AURA_LABELS[k]} ${v >= 0 ? '+' : ''}${isPct ? pct(v) : v + '%'}`;
+            return `${SPELL_AURA_LABELS[k]} ${v >= 0 ? '+' : ''}${isPct ? pct(v) : v + (k === 'def' ? '' : '%')}`;   // 防禦是點數（第 66 節）
         }).join("、"));
     }
     if (s.active) parts.push(`耗魔 ${fmtCombat(skillMpCost(s.mpCost))}${s.hpCost ? `、反噬氣血 ${pct(s.hpCost)}` : ''}`);

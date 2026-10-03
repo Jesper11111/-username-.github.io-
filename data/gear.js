@@ -98,7 +98,7 @@ function formatGearSubs(eq) {
     let parts = eq.subs.map(([key, v]) => {
         let info = gearSubAffixes.find(s => s.key === key);
         if (!info) return '';
-        return `${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}%`;
+        return `${info.label} +${info.fmt === 'pct' ? +(v * 100).toFixed(1) : +v.toFixed(1)}${key === 'def' ? '' : '%'}`;   // 防禦是點數（第 66 節）
     }).filter(Boolean);
     return `<p class="gear-subs">◆ ${parts.join('、')}</p>`;
 }
@@ -260,7 +260,7 @@ function describeGearEffect(name, quality) {
     let info = gearEffects[name];
     if (!info) return '';
     let v = info.value * (GEAR_EFFECT_TIER_MULT[quality] || 1);
-    let text = info.fmt === 'pct' ? `${+(v * 100).toFixed(1)}%` : info.fmt === 'pt' ? `${+v.toFixed(1)}%` : `×${+v.toFixed(2)}`;
+    let text = info.fmt === 'pct' ? `${+(v * 100).toFixed(1)}%` : info.fmt === 'pt' ? `${+v.toFixed(1)}%` : info.fmt === 'num' ? `${+v.toFixed(1)}` : `×${+v.toFixed(2)}`;
     return info.desc.replace('{v}', text);
 }
 

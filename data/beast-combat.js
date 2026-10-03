@@ -154,22 +154,22 @@ function killAllBeasts() {
 
 // ==================== 施加在主人身上的效果 ====================
 // 受到的傷害套用「受傷減少」護盾（靈寵 petShield*、夥伴 partnerShield*、玩家本身 selfShield*，state.js），
-// 再保底（2026-09-29 使用者指定）：傷害 ≥ 減傷前傷害 ×（1 − 玩家本身 20% − 靈寵實際貢獻（最多 10%）− 夥伴實際貢獻（最多 10%））
-// r＝resolveHit 的結果（有 preDef 才保底；被閃避的沒有 preDef）。金身／化勁等裝備特效也在保底範圍內
+// 再保底：傷害 ≥ 防禦後的傷害 ×（1 − 本身護盾最多 20% − 靈寵護盾最多 10% − 夥伴護盾最多 10%）
+//   2026-10-03 起（第 66 節）防禦改《天堂2》式、沒有上限，保底只管護盾類，不再把防禦夾回 20%
+// r＝resolveHit 的結果（有 postDef 才保底；被閃避的沒有）。金身／化勁等裝備特效也在保底範圍內
 function applyPetDamageReduction(dmg, r) {
     let d = dmg;
     if (petShieldTimer > 0) d *= 1 - petShieldRate;
     if (partnerShieldTimer > 0) d *= 1 - partnerShieldRate;
     if (selfShieldTimer > 0) d *= 1 - selfShieldRate;
-    if (r && typeof r.preDef === 'number' && r.preDef > 0 && d > 0) d = Math.max(d, r.preDef * playerDamageFloor());
+    if (r && typeof r.postDef === 'number' && r.postDef > 0 && d > 0) d = Math.max(d, r.postDef * playerDamageFloor());
     return d === dmg ? d : roundDmg(d);   // 護盾／保底改過才重新取整（新制 2 位小數），避免 7.6000000000000005 這類尾數
 }
-// 敵人打玩家的最低傷害比例（見 config-elements.js）
+// 敵人打玩家的最低傷害比例（相對防禦後的傷害，見 config-elements.js）
 function playerDamageFloor() {
-    const petPart = Math.min(PLAYER_PET_BONUS_MAX, petFxVal('def') + (petShieldTimer > 0 ? petShieldRate * 100 : 0));
-    const pb = typeof getPartnerBonusTotals === 'function' ? getPartnerBonusTotals() : {};
-    const parPart = Math.min(PLAYER_PARTNER_BONUS_MAX, (pb.def || 0) + (partnerShieldTimer > 0 ? partnerShieldRate * 100 : 0));
-    return 1 - (PLAYER_EFFECTIVE_DEF_MAX + petPart + parPart) / 100;
+    const petPart = Math.min(PLAYER_PET_BONUS_MAX, petShieldTimer > 0 ? petShieldRate * 100 : 0);
+    const parPart = Math.min(PLAYER_PARTNER_BONUS_MAX, partnerShieldTimer > 0 ? partnerShieldRate * 100 : 0);
+    return 1 - (PLAYER_SELF_SHIELD_MAX + petPart + parPart) / 100;
 }
 // 其他增益的目前數值（沒有或已結束 = 0）：elements.js 的 getPlayerCombatAttrs（def／eva／crit／hit／armorPen）、
 // combat.js 的 playerAttackTurn（combo、lifesteal）

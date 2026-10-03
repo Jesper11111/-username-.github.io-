@@ -186,7 +186,7 @@ function renderBountyBoard() {
                 <p style="font-size: 0.8em; color: #9ca3af; margin: 0;">「${npc.title}」・${npc.gender === 'female' ? '女' : '男'}・${getFactionLabel(entry.faction)}</p>
                 <p style="font-size: 0.85em; color: var(--accent); margin: 6px 0 2px;">${realms[entry.realmIndex]} ${entry.stage}階${NUMERIC_V2 ? `・<span style="color: ${rank.color};">強度 ×${getBountyStrMult(entry).toFixed(1)}</span>` : ''}</p>
                 <p style="font-size: 0.78em; margin: 2px 0;">攻擊 ${formatShortCombat(st.attack)}（<span style="color: ${ratioColor};">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）｜氣血 ${formatShortCombat(st.hp)}（你的 ${(st.hp / myHp).toFixed(1)} 倍）</p>
-                <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️減傷 ${rank.def}% 💨閃避 ${rank.eva}% ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
+                <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️防禦 ${formatEnemyDef(rank.def)} 💨閃避 ${rank.eva}% ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
                 <p style="font-size: 0.75em; color: #fca5a5; margin: 2px 0 6px;">武學：${skillNames}</p>
                 ${btn}
             </div>`;

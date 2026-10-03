@@ -300,11 +300,10 @@ function nv2EstimateIdleCombat() {
     const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
     const rateMult = Math.min(1, (gap + n * nv2TypRoundsPerKill(map)) / (gap + n * hits));
     const pAttrs = getPlayerCombatAttrs();
-    // 妖獸帶命中（rollMonsterAttrs）抵銷部分閃避；實際閃避、減傷＝玩家本身最多 20＋靈寵最多 10＋夥伴最多 10（同 resolveHit，config-elements.js）
+    // 妖獸帶命中（rollMonsterAttrs）抵銷部分閃避；實際閃避＝玩家本身最多 20＋靈寵最多 10＋夥伴最多 10（同 resolveHit，config-elements.js）
     const split = (tot, pet, par, pen, max) => Math.min(Math.max(0, tot - pet - par - pen), max) + Math.min(pet, PLAYER_PET_BONUS_MAX) + Math.min(par, PLAYER_PARTNER_BONUS_MAX);
     const pEva = split(pAttrs.eva, pAttrs.petEva || 0, pAttrs.partnerEva || 0, nv2TypHit(ms.L), PLAYER_EFFECTIVE_EVA_MAX);
-    const pDef = split(pAttrs.def, pAttrs.petDef || 0, pAttrs.partnerDef || 0, 0, PLAYER_EFFECTIVE_DEF_MAX);
-    const hitTaken = ms.atk * (1 - pEva / 100) * (1 - pDef / 100);
+    const hitTaken = ms.atk * (1 - pEva / 100) * defMult(pAttrs.def);   // 防禦《天堂2》式（第 66 節）
     let monsterTurns = 0;
     for (let k = 1; k <= n; k++) monsterTurns += Math.max(0, k * hits - 1);
     const waveDamage = hitTaken * monsterTurns;

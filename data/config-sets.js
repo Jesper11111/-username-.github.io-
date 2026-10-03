@@ -35,7 +35,7 @@ const gearSetThemes = {
     ],
     "防禦": [
         { pieces: 2, desc: "體質 +5%", bonus: { conPct: 0.05 } },
-        { pieces: 4, desc: "減傷 +5%", bonus: { def: 5 } },
+        { pieces: 4, desc: "防禦 +5", bonus: { def: 5 } },
         { pieces: 6, desc: "受到致命傷時保留 1 點氣血（每波一次）", bonus: { "special:undying": 1 } }
     ],
     "閃避": [
