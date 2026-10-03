@@ -163,6 +163,7 @@ function nv2MaxMp() {
 // ---- 敏捷 ----
 function nv2Crit() { return Math.min(NV2.critCap, nv2Stat('agi') * NV2.critPer) / 100; }
 function nv2Combo() { return Math.min(NV2.comboCap, nv2Stat('agi') * NV2.comboPer) / 100; }
+function nv2MagCrit() { return Math.min(NV2.critCap, nv2Stat('int') * NV2.critPer) / 100; }   // 魔法暴擊：悟性（第 66 節第 4 期 A），術法技能用
 function nv2Hit() { return nv2Stat('agi') * NV2.hitPer; }        // 命中值，抵銷對方迴避值
 function nv2AgiEva() { return nv2Stat('agi') * NV2.evaPer; }     // 迴避值，加進閃避（沒有上限）
 // 閃避機率（第 66 節第 4 期）：D＝迴避值 − 命中值，被閃掉的機率 D ÷ (D + evaK)；elements.js 的 resolveHit 與所有估算共用
@@ -170,8 +171,8 @@ function evaDodge(d) { d = Math.max(0, d || 0); return d / (d + (typeof NV2 !== 
 
 // ---- 戰力（畫面、戰力榜）：每回合期望輸出 ----
 function nv2CombatPower() {
-    const atk = Math.max(nv2PhysAttack(), nv2MagAttack());
-    const v = atk * (1 + nv2Crit() * (NV2.critDmg - 1)) * (1 + nv2Combo()) * (1 + NV2.powerSkillRate * (NV2.powerSkillMult - 1));
+    const phys = nv2PhysAttack(), magA = nv2MagAttack(), atk = Math.max(phys, magA);
+    const v = atk * (1 + (magA > phys ? nv2MagCrit() : nv2Crit()) * (NV2.critDmg - 1)) * (1 + nv2Combo()) * (1 + NV2.powerSkillRate * (NV2.powerSkillMult - 1));
     return Math.round(v);
 }
 

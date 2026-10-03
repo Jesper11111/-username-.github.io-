@@ -352,7 +352,7 @@ function bountyDuelTick() {
         addLog(`${opp.icon} ${opp.name}${sk.msg}`, "combat");
     }
 
-    let r = resolveHit(opp.attack * dmgMult, { attrs: opp.attrs, power: opp.attack }, { attrs: getPlayerCombatAttrs(), status: playerStatus });
+    let r = resolveHit(opp.attack * dmgMult, { attrs: opp.attrs, power: opp.attack, dmgType: sk ? 'mag' : undefined }, { attrs: getPlayerCombatAttrs(), status: playerStatus });   // 施展武學＝術法（走魔防），一般攻擊＝物理（第 66 節第 4 期 A）
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
     let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags), r);   // 護盾＋最低傷害保底（beast-combat.js）
     player.hp -= dealt;

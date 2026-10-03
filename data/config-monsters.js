@@ -6,12 +6,13 @@
 //   攻擊倍率不在這裡填：monster.js 依「一般玩家殺一隻要幾回合 × 暴擊期望」自動反推，讓每個型態對一般玩家造成的「每隻總傷害」相同
 //   （皮厚型打得久但打得輕、猛攻型死得快但會爆擊），所以生存與收益不因型態改變；擊殺時間的差異由收益補償吸收（nv2TypRoundsPerKill）。
 const MONSTER_TYPES = {
-    balanced: { name: "均衡", icon: "⚖️", hp: 1.0,  def: 0,  eva: 0,  crit: 0.05, desc: "各項平均" },
-    tank:     { name: "皮厚", icon: "🛡️", hp: 1.1,  def: 15, eva: 0,  crit: 0.03, desc: "減傷高、打得慢；破甲、雷擊剋制" },
-    agile:    { name: "敏捷", icon: "💨", hp: 0.8,  def: -5, eva: 15, crit: 0.08, desc: "很會閃避；命中（敏捷、洞察）剋制" },
-    brute:    { name: "猛攻", icon: "⚔️", hp: 0.85, def: 0,  eva: 0,  crit: 0.12, desc: "攻擊猛、常暴擊；防禦剋制" },
-    caster:   { name: "術法", icon: "🔮", hp: 0.9,  def: -5, eva: 5,  crit: 0.05, desc: "皮薄、會閃避，屬性異狀較多" }
+    balanced: { name: "均衡", icon: "⚖️", hp: 1.0,  def: 0,  mres: 0,   eva: 0,  crit: 0.05, desc: "各項平均" },
+    tank:     { name: "皮厚", icon: "🛡️", hp: 1.1,  def: 15, mres: -10, eva: 0,  crit: 0.03, desc: "減傷高但魔抗低；術法、破甲、雷擊剋制" },
+    agile:    { name: "敏捷", icon: "💨", hp: 0.8,  def: -5, mres: 0,   eva: 15, crit: 0.08, desc: "很會閃避；命中（敏捷、洞察）剋制" },
+    brute:    { name: "猛攻", icon: "⚔️", hp: 0.85, def: 0,  mres: 0,   eva: 0,  crit: 0.12, desc: "攻擊猛、常暴擊；防禦剋制" },
+    caster:   { name: "術法", icon: "🔮", hp: 0.9,  def: -5, mres: 15,  eva: 5,  crit: 0.05, atkType: "mag", desc: "術法攻擊（魔防擋）、魔抗高但減傷低；物理剋制" }
 };
+// mres：魔抗 %（加在地圖分類的減傷上，最低 0；擋玩家的術法技能，第 66 節第 4 期 A）；atkType "mag"＝術法攻擊（打玩家走魔防），魔修一律術法攻擊
 // 術法型帶異屬性（冰／毒／雷）的機率加成（乘在地圖分類的 affixProb 上，最多 1）
 const MONSTER_CASTER_AFFIX_MULT = 1.5;
 

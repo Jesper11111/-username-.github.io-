@@ -69,7 +69,7 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
         element: def.element,
         gearId: def.id,
         stats: buildGearStats(def, qualityObj, base),
-        subs: rollGearSubs(qualityObj.name, !!GEAR_CHANNELS[def.channel].external, GEAR_SUB_COUNT[qualityObj.name] || 0),
+        subs: rollGearSubs(qualityObj.name, !!GEAR_CHANNELS[def.channel].external, GEAR_SUB_COUNT[qualityObj.name] || 0, null, def.category),
         enhance: 0
     };
     if (level) eq.level = level;   // 裝備等級：穿戴需人物等級 ≥ level
@@ -79,10 +79,10 @@ function createGearEquip(def, qualityObj, base, level, noRecord) {
 }
 
 // ---- 隨機詞條（config-enhance.js 的 gearSubAffixes）----
-// 抽 count 條不重複的詞條，回傳 [[key, value], ...]；exclude = 已有的 key（進化時多抽 1 條用）
-function rollGearSubs(quality, external, count, exclude) {
+// 抽 count 條不重複的詞條，回傳 [[key, value], ...]；exclude = 已有的 key（進化時多抽 1 條用）；category＝裝備分類（詞條的 only 限定分類，例：魔防只出在飾品）
+function rollGearSubs(quality, external, count, exclude, category) {
     let scale = GEAR_SUB_QUALITY_SCALE[quality] || 0;
-    let pool = gearSubAffixes.filter(s => !(exclude || []).includes(s.key));
+    let pool = gearSubAffixes.filter(s => !(exclude || []).includes(s.key) && (!s.only || s.only === category));
     let subs = [];
     for (let i = 0; i < count && pool.length; i++) {
         let s = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];

@@ -190,7 +190,7 @@ function tribulationTick() {
     }
 
     // 心魔是你的鏡像，帶有與你相同的減傷/閃避/屬性傷害
-    let r = resolveHit(demonDmg, { attrs: heartDemon.attrs, power: heartDemon.attack }, { attrs: getPlayerCombatAttrs(), status: playerStatus });
+    let r = resolveHit(demonDmg, { attrs: heartDemon.attrs, power: heartDemon.attack, dmgType: 'mag' }, { attrs: getPlayerCombatAttrs(), status: playerStatus });   // 心魔＝術法攻擊（走魔防，第 66 節第 4 期 A）
     let taken = applyGearDefense(r, heartDemon, true, r.tags);   // 心魔的魔功算術法（化勁）；反震、閃擊反擊（gear.js）
     if (r.tags.length > 0) addLog(`🧍 心魔攻勢：${summarizeTags(r.tags, "💨你閃避了")}`, "combat");
     let tribTaken = applyPetDamageReduction(taken, r);   // 護盾＋最低傷害保底（beast-combat.js）

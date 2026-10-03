@@ -58,13 +58,22 @@ function fieldMonsterRoundsFactor(map) {
 function applyMonsterType(attrs, m, L, map) {
     const t = monsterTypeOf(m), prof = fieldCategoryProfile(map), d0 = attrs.def || 0;
     attrs.def = Math.max(0, d0 + t.def);
+    attrs.mres = Math.max(0, d0 + (t.mres || 0));   // 魔抗（第 4 期 A）
     if (t.eva > 0) attrs.eva = Math.max(attrs.eva || 0, NUMERIC_V2 && typeof L === 'number' ? nv2TypHit(L) : 0) + t.eva;
     attrs.crit = t.crit;
     if (m && m.type === 'caster' && !MONSTER_AFFIX_TYPES.some(k => attrs[k] > 0)
         && Math.random() < Math.min(1, prof.affixProb * (MONSTER_CASTER_AFFIX_MULT - 1) / Math.max(0.01, 1 - prof.affixProb))) {
         attrs[MONSTER_AFFIX_TYPES[Math.floor(Math.random() * MONSTER_AFFIX_TYPES.length)]] = prof.affixChance;
     }
-    return { hp: t.hp, atk: monsterTypeAtkMult(t, prof.def, m) };
+    // 術法攻擊（術法型、魔修）：打玩家走魔防；一般玩家（無防禦）也有靈力換來的魔防，攻擊補回這一截，讓總傷害不變
+    const atkType = t.atkType === 'mag' || (m && m.race === 'demon') ? 'mag' : 'phys';
+    return { hp: t.hp, atk: monsterTypeAtkMult(t, prof.def, m) * (atkType === 'mag' ? fieldMagicAtkComp(L) : 1), atkType };
+}
+
+// 術法攻擊的補償：一般玩家沒有防禦，但有「靈力 × MDEF_PER_SPR」的魔防 → 攻擊 ÷ 該魔防的減傷倍率（第 66 節第 4 期 A）
+function fieldMagicAtkComp(L) {
+    if (!NUMERIC_V2 || typeof L !== 'number') return 1;
+    return 1 / defMult(nv2TypStat(L) * MDEF_PER_SPR);
 }
 
 // 地圖卡片：「出沒：🐅雪紋白虎⚔️、🦊九尾天狐💨…」

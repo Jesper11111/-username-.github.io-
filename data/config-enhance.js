@@ -18,6 +18,7 @@ const gearSubAffixes = [
     { key: "hpPct",  label: "氣血上限",   fmt: "pct", min: 0.02,  max: 0.05 },
     { key: "def",     label: "防禦",      fmt: "pt",  min: 1,     max: 3 },
     { key: "eva",     label: "閃避",      fmt: "pt",  min: 1,     max: 2 },
+    { key: "mdef",    label: "魔防",      fmt: "pt",  min: 2,     max: 5, only: "accessory" },   // 2026-10-03（第 66 節第 4 期 A）：只出在飾品，像《天堂2》首飾給魔防
     { key: "ice",     label: "冰傷",      fmt: "pt",  min: 2,     max: 5 },
     { key: "fire",    label: "火傷",      fmt: "pt",  min: 2,     max: 5 },
     { key: "poison",  label: "毒傷",      fmt: "pt",  min: 2,     max: 5 },

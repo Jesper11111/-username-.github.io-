@@ -257,10 +257,10 @@ function updateUI() {
     // 變異屬性（風／光／暗）有數值才顯示；光暗本質附在最後
     let variantKeys = VARIANT_AFFIX_TYPES.filter(k => attrs[k] > 0);
     let natureHtml = attrs.nature ? `<span title="與相反本質互剋 +30%">${attrs.nature === 'light' ? '☀️本質：光' : '🌑本質：暗'}</span>` : '';
-    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
+    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "mdef", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
-        if (k === 'def') return `<span${tip}>${info.icon}${info.label} <b>${formatDefPoints(attrs.def)}</b></span>`;   // 防禦點數（第 66 節）
+        if (k === 'def' || k === 'mdef') return `<span${tip}>${info.icon}${info.label} <b>${formatDefPoints(attrs[k])}</b></span>`;   // 防禦／魔防點數（第 66 節）
         if (k === 'eva') return `<span${tip}>${info.icon}${info.label} <b>${formatEvaPoints(attrs.eva)}</b></span>`   // 迴避值（第 66 節第 4 期）
             + `<span title="命中值：抵銷對方的迴避值（敏捷、洞察、靈寵）">🎯命中 <b>${+(attrs.evaPen || 0).toFixed(1)}</b></span>`;
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
