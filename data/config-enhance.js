@@ -101,6 +101,34 @@ const GEAR_ANCIENT = {
 };
 const GEAR_ANCIENT_QUALITY = "橙色";
 
+// ---- 傳奇威能（只出在白金，第 67 節 D4）：橙色 +20 進化成白金時隨機帶一個；舊白金讀檔時補一個（save.js 的 migrateGearLegends）----
+//   bonus 併入 gear.js 的 getBonusTotals（fx:特效名 不受特效上限、special:套裝特殊效果、def／eva／屬性傷害／mdef／hpPct 等），所以效果都走既有的實作
+//   重抽：強化視窗「🌟 重塑威能」花 LEGEND_REROLL_STONES 洗煉石 ＋ 靈石 H × LEGEND_REROLL_COINS_HOURS
+const LEGEND_REROLL_STONES = 20;
+const LEGEND_REROLL_COINS_HOURS = 2;
+const GEAR_LEGENDS = [
+    { id: "wanjian",  name: "萬劍歸宗", icon: "🗡️", desc: "施展技能時 15% 機率再連發一次；技能傷害 +10%", bonus: { "special:echo": 1, "fx:法爆": 0.10 } },
+    { id: "bumie",    name: "不滅金身", icon: "🛡️", desc: "受到致命傷時保留 1 點氣血（每波一次）；氣血上限 +8%", bonus: { "special:undying": 1, hpPct: 0.08 } },
+    { id: "jinghua",  name: "鏡花水月", icon: "🌙", desc: "閃避後下一擊傷害 +30%；閃避 +6", bonus: { "special:dodgeStrike": 1, eva: 6 } },
+    { id: "tiangang", name: "天罡之怒", icon: "💥", desc: "普攻 15% 機率對全體造成物理攻擊 ×1.5；攻擊 +5%", bonus: { "special:rage": 1, atkPct: 0.05 } },
+    { id: "xuanlei",  name: "九天玄雷", icon: "⚡", desc: "雷傷 +10%；雷擊時再劈另一名敵人 ×1.0", bonus: { thunder: 10, "fx:連雷": 1.0 } },
+    { id: "hanyu",    name: "九幽寒獄", icon: "❄️", desc: "冰傷 +10%；對凍結中的敵人傷害 +30%", bonus: { ice: 10, "fx:寒徹": 0.30 } },
+    { id: "yehuo",    name: "焚天業火", icon: "🔥", desc: "火傷 +10%；燒傷傷害 +60%", bonus: { fire: 10, "fx:焚燼": 0.60 } },
+    { id: "wandu",    name: "萬毒歸宗", icon: "☠️", desc: "毒傷 +10%；中毒傷害 +60%；中毒疊滿時引爆 ×1.0", bonus: { poison: 10, "fx:蝕骨": 0.60, "fx:毒爆": 1.0 } },
+    { id: "pojun",    name: "破軍殺伐", icon: "⚔️", desc: "攻擊時無視目標 20 減傷；對氣血低於 20% 的敵人傷害 +40%", bonus: { "fx:破甲": 20, "fx:斬殺": 0.40 } },
+    { id: "tianyan",  name: "天眼通",   icon: "👁️", desc: "命中 +12（無視閃避）；10% 機率追加一次攻擊", bonus: { "fx:洞察": 12, "fx:追擊": 0.10 } },
+    { id: "xuehai",   name: "血海魔功", icon: "🩸", desc: "造成傷害的 6% 轉為氣血；擊殺回復 6% 氣血", bonus: { "fx:吸血": 0.06, "fx:噬魂": 0.06 } },
+    { id: "taiyi",    name: "太乙回春", icon: "🌿", desc: "每回合回復 2% 氣血與 2% 靈力", bonus: { "fx:回春": 0.02, "fx:回靈": 0.02 } },
+    { id: "jingang",  name: "金剛不壞", icon: "🏯", desc: "防禦 +15；受到物理傷害 −10%", bonus: { def: 15, "fx:金身": 0.10 } },
+    { id: "huhun",    name: "化神護魂", icon: "🔮", desc: "魔防 +20；受到術法傷害 −10%", bonus: { mdef: 20, "fx:化勁": 0.10 } },
+    { id: "xianfa",   name: "先發制人", icon: "🏹", desc: "每波第一擊傷害 +60%；氣血高於 80% 時傷害 +15%", bonus: { "fx:首擊": 0.60, "fx:燃魂": 0.15 } },
+    { id: "jifeng",   name: "疾風迅雷", icon: "🌪️", desc: "8% 機率本回合再出手；8% 機率追加一次攻擊", bonus: { "fx:疾風": 0.08, "fx:追擊": 0.08 } },
+    { id: "wuxing",   name: "五行輪轉", icon: "☯️", desc: "五行剋制時傷害再 +30%", bonus: { "fx:剋敵": 0.30 } },
+    { id: "wanshou",  name: "萬獸朝宗", icon: "🐉", desc: "靈寵傷害 +40%", bonus: { "fx:獸魂": 0.40 } },
+    { id: "zhaocai",  name: "招財進寶", icon: "💰", desc: "野外靈石 +20%；裝備掉落率 +30%", bonus: { "fx:聚財": 0.20, "fx:奪寶": 0.30 } },
+    { id: "wudao",    name: "悟道通天", icon: "📿", desc: "修為獲得 +10%；藏書閣屬性秘典效果 +30%", bonus: { "fx:悟道": 0.10, "fx:通玄": 0.30 } }
+];
+
 // ---- 暫存區：背包滿時新掉落的橙色以上放這裡；滿了不能外出練功 ----
 const GEAR_STASH_MAX = 50;
 

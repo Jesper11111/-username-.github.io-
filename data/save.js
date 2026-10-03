@@ -474,6 +474,7 @@ function applySaveData(data) {
     migrateEquipSockets();
     migrateArtifactIds();   // 更新前兌換的神器補上 lingbaoId（artifact.js）
     migrateGearIds();       // 舊裝備依「部位＋五行」對應到圖鑑，數值不變（gear.js）
+    migrateGearLegends();   // 白金裝備補一個傳奇威能（第 67 節 D4；只新增欄位）
     migrateGearCodex();     // 持有的圖鑑裝備補記進天磯錄、補齊新欄位（codex.js）
     migrateStrangeFires();  // 未命名的異火補抽成天下異火（strange-fire.js）
     migratePartners();      // 夥伴：舊版單人出戰轉為隊伍、補齊好感欄位（partner.js）
@@ -816,3 +817,10 @@ async function confirmImportSave() {
         setSaveCodeStatus("匯入存檔失敗：存檔內容有誤。目前進度未受影響。", "error");
     }
 }
+
+// 白金傳奇威能（第 67 節 D4）：改版前就有的白金裝備（穿戴中、背包、暫存區）補擲一個威能；已有的不動
+function migrateGearLegends() {
+    const all = Object.values(player.equipment || {}).concat(player.equipInventory || [], player.gearStash || []);
+    all.forEach(eq => { if (eq) ensureGearLegend(eq); });
+}
+
