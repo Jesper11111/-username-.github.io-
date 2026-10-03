@@ -31,7 +31,8 @@ function nv2GearStatsOf(eq) {
     if (!def) return eq && eq.lingbaoId ? nv2LingbaoStats(eq) : out;   // 靈寶閣寶物（含神器）另有規則
     const tpl = NV2_TEMPLATE_OVERRIDE[def.template] || GEAR_TEMPLATES[def.template] || GEAR_TEMPLATES["均衡"];
     const m = NV2.gearStatPerPiece * nv2QualityMult(eq.quality) * (1 + (eq.enhance || 0) * NV2.enhancePerLevel)
-            * (def.category === 'accessory' ? GEAR_ACCESSORY_BUDGET : 1);
+            * (def.category === 'accessory' ? GEAR_ACCESSORY_BUDGET : 1)
+            * ((typeof GEAR_ANCIENT !== "undefined" && GEAR_ANCIENT[eq.ancient] || {}).statMult || 1);   // 遠古 ×1.1／太古 ×1.2（第 67 節 D3；2026-10-03 修正：原本只乘在舊制 eq.stats，新制不讀，實際只影響魅力）
     for (const k in tpl) out[k] = tpl[k] * m;
     return out;
 }
