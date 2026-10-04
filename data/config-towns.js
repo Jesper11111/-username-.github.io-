@@ -160,7 +160,20 @@ const LINGJIE_TEA_RUMORS = [
     "天元城外常有被妖獸打回來的修士躺著，守衛都見怪不怪了。",
     "有人在海王族的島上看過上蒼的入口，誰知道是真是假。"
 ];
-const LINGJIE_MAP_CATEGORIES = [4, 5, 7];   // 只有身在靈界才能進的地圖分類（第四、五區、靈界城鎮＝天元城）
+const LINGJIE_MAP_CATEGORIES = [4, 5, 7];
+// 大道商行（天元城，2026-10-04 使用者指定）：傳送陣靈石每顆 1 億靈石（貨幣）
+const LINGJIE_SHOP_PRICE = 100000000;
+// 靈界任務榜（天元城，2026-10-04 使用者指定「任務榜跟人界的分開」）：每天 count 個，只在靈界的野外（第四、五區）擊殺才算；完成到任務榜領獎
+//   kind：any＝任一靈界野外、map＝指定地圖（從玩家進得去的靈界野外隨機挑）、race＝指定種族；need＝擊殺數；reward：coinsH＝每小時收入倍數、craft／ling＝做裝通貨／傳送陣靈石（隨機一種）
+const LINGJIE_QUEST = {
+    count: 3,
+    templates: [
+        { kind: "any",  need: 200, title: "清剿靈界妖患", reward: { coinsH: 2, craft: { tianji: 2 } } },
+        { kind: "map",  need: 150, title: "鎮守要地",     reward: { coinsH: 3, craft: { hunyuan: 1 } } },
+        { kind: "race", need: 120, title: "專項懸賞",     reward: { coinsH: 2, ling: 1 } },
+        { kind: "any",  need: 400, title: "靈界巡守",     reward: { coinsH: 4, ling: 1, craft: { poxu: 1 } } }
+    ]
+};   // 只有身在靈界才能進的地圖分類（第四、五區、靈界城鎮＝天元城）
 // 掉落：nv2L ≥ minMapL 的野外（無邊海、第四、五區…），每種每次掉寶 field 機率（每小時 1200 次掉寶 → 每種約 0.5 顆、約 2 小時一套）；鎮魔塔 fromFloor 層起 BOSS chance × 問答倍率掉 1 顆（隨機一種）
 const LINGJIE_STONE_DROP = { minMapL: 9, field: 1 / 2400, zhenmo: { fromFloor: 60, chance: 0.25 } };
 
@@ -282,8 +295,9 @@ const townScenes = {
         img: "images/towns/tianyuan-inner.jpg",
         imgW: 848, imgH: 1264,
         hotspots: [
-            { id: "ty-quest", label: "任務榜", rect: [350, 280, 150, 150], action: "openDailyQuestModal()" },
-            { id: "ty-tea", label: "茶樓", rect: [150, 480, 200, 260], action: "openTeaHouse()" }
+            { id: "ty-quest", label: "任務榜", rect: [350, 280, 150, 150], action: "openLingjieQuestModal()" },   // 2026-10-04 改成靈界專屬任務榜（和人界每日任務分開）
+            { id: "ty-tea", label: "茶樓", rect: [150, 480, 200, 260], action: "openTeaHouse()" },
+            { id: "ty-shop", label: "大道商行", rect: [540, 560, 140, 200], action: "openLingjieShop()" }   // 右側「大道商行」招牌：販賣傳送陣靈石
         ],
         figures: [],
         extraButton: { label: "↩ 靈界地圖", action: "openTownScene(LINGJIE_SCENE_KEY)" }

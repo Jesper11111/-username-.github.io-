@@ -1610,7 +1610,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005U`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005V`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3881,6 +3881,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **天元城內城與靈界復活點**（2026-10-04，版本 `20261005U`，使用者提供 848×1264 內城插畫 `images/towns/tianyuan-inner.jpg`：「設定成天元城內城；玩家復活會回到城外；內城設定少數建築物，如任務榜、茶樓」）：
   - config-maps.js 新增分類 **索引 7「靈界城鎮 (安全區)」**：`天元城外`（復活點）、`天元城`（內城），都 `hidden`、屬於 `LINGJIE_MAP_CATEGORIES`（[4, 5, 7]）——不在靈界進不去，在靈界待在這裡不會被清掉靈界狀態。
   - 靈界地圖天元城紅點 → 城門圖（CITY_GATES）→ 點圖 `enterLingjieTown('天元城')`（傳送＋開城內場景）。`townScenes["天元城"]`：任務榜（內城門前，`openDailyQuestModal()` 每日任務）、茶樓（左側天元茶館，`openTeaHouse()`：回滿氣血靈力＋隨機一則 `LINGJIE_TEA_RUMORS` 傳聞）；右上「↩ 靈界地圖」。
+  - **2026-10-04 版本 `20261005V`**（使用者：「任務榜跟人界的分開；新增大道商行，販賣傳送石，一顆一億靈石」）：
+    - **靈界任務榜**（`openLingjieQuestModal`／`renderLingjieQuests`／`claimLingjieQuest`，`#lingjie-quest-modal`）：`player.lingQuests = { date, list }`，每天 `LINGJIE_QUEST.count` 3 個（從 4 種模板隨機），和人界每日任務完全分開。
+      種類 any（任一靈界野外）／map（從玩家階數夠的靈界野外挑一張）／race（從那些地圖會出現的種族挑一個）；進度只在**身在靈界、靈界分類的野外**線上擊殺時累計（combat.js 呼叫 `onLingjieKills(killedCount, raceKilled)`）；
+      獎勵 每小時收入 ×2～4 的靈石＋做裝通貨，部分任務給 1 顆隨機屬性傳送陣靈石。
+    - **大道商行**（`openLingjieShop`／`buyLingStones(k, n)`／`buyLingStoneSet`，`#lingjie-shop-modal`）：天元城右側「大道商行」招牌；傳送陣靈石每顆 `LINGJIE_SHOP_PRICE` 1 億靈石，可買 1 顆、5 顆或一套（五種各 1、5 億）。
   - **復活點** `getRespawnPoint()`／`sendToRespawn()`／`respawnPlaceName()`（lingjie.js）：身在靈界＝天元城外（`LINGJIE_RESPAWN_MAP`），否則宗門。戰死（combat.js）、渡劫失敗（tribulation.js）、暫存區滿（enhance.js）、離線／背景撐不住、挑戰模式離線、暫存區滿離線（save.js）都改用它——**在靈界戰死不再免費回人界**。
 - 驗證（本機）：沒靈石點飛升台 → 提示、不進；有一套 → 確認後扣除、進靈界地圖；在靈界快捷清單去天南城被擋、洞府回宗門靈石不足被擋、付款後回宗門且第四區再被擋；戰死回宗門清掉靈界狀態；
   世界導覽依狀態開靈界／人界；掉落 2400 次掉寶約各 1 顆；天元城手機／PC 顯示正常、返回靈界；Console 無錯誤。
