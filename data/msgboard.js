@@ -5,10 +5,19 @@
 let mbBoardRows = null;      // 最近一次讀到的留言
 let mbBoardMuted = null;     // 自己是否被 GM 禁言（null = 還沒查）
 let mbBoardLastPost = 0;     // 本機記錄的上次留言時間（按鈕倒數用；真正限制在雲端規則）
+let mbBoardCleanAt = 0;      // 上次清過期留言的時間
 
 async function fetchMsgBoard() {
     const { db, uid } = await initLeaderboardBackend();
-    const snap = await db.collection(MSGBOARD_COLLECTION).orderBy('createdAt', 'desc').limit(MSGBOARD_SHOW_N).get();
+    // 只讀 8 小時內的留言（過期的不會被讀到，也省讀取額度）；同一欄位的範圍＋排序不需要另建索引
+    const cutoff = firebase.firestore.Timestamp.fromMillis(Date.now() - MSGBOARD_LIFETIME_HOURS * 3600000);
+    const snap = await db.collection(MSGBOARD_COLLECTION).where('createdAt', '>', cutoff).orderBy('createdAt', 'desc').limit(MSGBOARD_SHOW_N).get();
+    // 偶爾順手刪除過期留言（規則允許任何人刪除超過 8 小時的留言；規則未發布前會被拒絕，忽略）
+    if (Date.now() - mbBoardCleanAt > MSGBOARD_CLEANUP_GAP_MS) {
+        mbBoardCleanAt = Date.now();
+        db.collection(MSGBOARD_COLLECTION).where('createdAt', '<=', cutoff).limit(10).get()
+            .then(old => Promise.all(old.docs.map(d => d.ref.delete().catch(() => {})))).catch(() => {});
+    }
     if (mbBoardMuted === null) {
         try { mbBoardMuted = (await db.collection(MSGBOARD_MUTED_COLLECTION).doc(uid).get()).exists; } catch (e) { /* 查不到先當作沒被禁言 */ }
     }
@@ -98,5 +107,5 @@ function msgBoardHtml(loading) {
             <div class="board-text">${lbEscape(r.text)}</div>
         </div>`).join('');
     return form + `<div class="board-list">${list}</div>
-        <p class="lb-note">顯示最新 ${MSGBOARD_SHOW_N} 則；請友善發言，不當留言會被管理者刪除或禁言。</p>`;
+        <p class="lb-note">顯示 ${MSGBOARD_LIFETIME_HOURS} 小時內最新 ${MSGBOARD_SHOW_N} 則（留言 ${MSGBOARD_LIFETIME_HOURS} 小時後自動刪除）；請友善發言，不當留言會被管理者刪除或禁言。</p>`;
 }

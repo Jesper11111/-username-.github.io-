@@ -125,7 +125,8 @@ service cloud.firestore {
       allow get: if true;
       allow list: if request.query.limit <= 50 || isAdmin();
       allow update: if false;
-      allow delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      // 自己的留言隨時可刪；超過 8 小時的留言任何登入者都能刪（自動清除，config-leaderboard.js 的 MSGBOARD_LIFETIME_HOURS）
+      allow delete: if (request.auth != null && (resource.data.uid == request.auth.uid || resource.data.createdAt < request.time - duration.value(28800, 's'))) || isAdmin();
       allow create: if request.auth != null && !isBanned(request.auth.uid)
         && !exists(/databases/$(database)/documents/muted/$(request.auth.uid))
         && request.resource.data.keys().hasOnly(['uid', 'name', 'realm', 'stage', 'text', 'createdAt'])
