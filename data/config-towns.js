@@ -314,10 +314,12 @@ const townScenes = {
         // 隱藏仙翁（2026-10-04 使用者：「涼亭改成場景，圖內場景有機會出現仙翁；解鎖條件魅力 10000」）：涼亭只是背景（沒有按鈕），
         //   魅力（本身＋裝備）≥ minCha 時，每次登島 chance 機率出現在涼亭裡；點他開對話（town-npc.js 的 talkToXianweng），當天見過就不再出現
         //   人物圖：從青瀾島島景圖的垂釣老者沿輪廓去背（2026-10-04 使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
-        //     場景用 npc-xianweng.png（約 117px 身高、略降亮度；站在涼亭正面兩根前柱之後，柱子與欄杆擋住的部分直接透明）；對話視窗用全身 npc-xianweng-portrait.png
+        //     場景用 npc-xianweng.png（全身約 117px、略降亮度、左右鏡像讓釣竿朝左邊河面；使用者要背影但沒有背影圖，選擇沿用這張）；對話視窗用全身 npc-xianweng-portrait.png
         hiddenNpcs: [{
             id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 0.2, minCha: 10000,
-            spots: [{ img: "images/towns/npc-xianweng.png", rect: [503, 363, 55, 94] }],   // 身高約 117px；只露出兩根前柱之間（x 515～540）、欄杆以上，像躲在涼亭裡
+            spots: [{ img: "images/towns/npc-xianweng.png", rect: [345, 369, 55, 117] }],   // 涼亭左前角的台基上（使用者確認的位置），面向左邊河面垂釣
+            // 釣魚演出（town-npc.js 的 getTownNpcEffects）：竿＝手 → 竿尖、釣線＝竿尖 → 水面、水面漣漪（圖上座標）
+            fishing: { hand: [349, 408], tip: [262, 350], hook: [256, 512] },
             portrait: "images/towns/npc-xianweng-portrait.png",
             lines: {
                 greet: "呵呵……老夫在此垂釣三百年，釣的不是魚，是有緣人。\n小友魅力過人，與老夫甚是投緣——這一竿，送你一場造化。",
