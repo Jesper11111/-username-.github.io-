@@ -1619,7 +1619,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AI`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AJ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3945,6 +3945,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 第三段宗門（至高聖地，tier 3）**只能在靈界拜入或回歸**：sect.js 的 `isSectTierHere(tier)`——身在靈界只列 tier 3，人界只列 tier 1、2（`renderSects` 篩選、頂端加說明；`joinSect` 也擋）。已拜入的宗門技能與目前所屬不受影響。
   - `townScenes["天元城"]` 新增熱點：「至高聖地」（上方宮殿 [330, 130, 240, 130]，`openSectModal()`）、「宗門設施」（右上樓房 [555, 300, 130, 110]，lingjie.js 的 `openLingjieFacility()` → `#lingjie-facility-modal`）。
   - 宗門設施只放人界「不在宗門也能用」的五項：尋訪仙門（至高聖地）、丹藥堂、修仙背包、僕從小屋、洞府產業；門派任務、靈田、靈獸園、靈寶閣、藏書閣、鍛造閣、煉丹房、符寶坊在人界本來就要身在宗門（ui.js），靈界不提供。
+
+- **青瀾島島景**（2026-10-04，版本 `20261005AJ`，使用者提供 1408×768 插畫 `images/maps/qinglan-island.jpg`：仙人亭、瀑布、雲海、垂釣老者）：人界地圖右下「青瀾島」分區浮起後
+  改開 `openCityGate('青瀾島')`（`CITY_GATES["青瀾島"]`），顯示島景圖與「青瀾島・仙人亭（點擊圖片登島）」；點圖目前只提示「青瀾島尚未開放」，島上玩法決定後把 action 換掉即可。
 
 ## 75. 世界 Boss（`config-world-boss.js`、`world-boss.js`、`tools/firestore.rules`、gm.html「⚔️ 世界 Boss」；2026-10-04，版本 `20261005AD`）
 
