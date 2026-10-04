@@ -254,6 +254,7 @@ function openLeaderboardModal(tab) {
 
 async function refreshLeaderboard(manual) {
     if (!isLeaderboardConfigured()) { renderLeaderboard(); return; }
+    if (lbTab === 'market' && isMarketClosed()) { lbError = ''; renderLeaderboard(false); return; }   // 週末休市：不讀雲端（market.js）
     if (manual && Date.now() - lbLastRefreshAt < LEADERBOARD_REFRESH_COOLDOWN_MS) return;
     lbLastRefreshAt = Date.now();
     lbError = "";
@@ -344,7 +345,7 @@ function renderLeaderboard(loading) {
         return;
     }
     if (lbTab === 'defense') { box.innerHTML = defenseBoardHtml(loading); return; }
-    if (lbTab === 'market') { box.innerHTML = marketHtml(loading); return; }
+    if (lbTab === 'market') { box.innerHTML = isMarketClosed() ? marketClosedHtml() : marketHtml(loading); return; }
     if (lbTab === 'board') {
         // 重繪時保留正在輸入的留言
         const draft = document.getElementById('board-input') ? document.getElementById('board-input').value : '';

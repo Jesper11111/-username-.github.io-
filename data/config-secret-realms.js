@@ -3,7 +3,7 @@
 // 新增秘境：在 secretRealmList 加一筆即可出現在列表（img 建議 9:16 直式海報，重要內容放中間）。
 // 選填欄位：size [寬, 高]（海報像素，決定場景比例；沒填 = 768×1365）、imgPc＋sizePc（橫向螢幕改用的海報）、
 //           sceneTitle／sceneSub（海報上沒有字時疊上標題）、enterLabel（按鈕文字）、enterPos: 'bottom'（按鈕在海報下方置中）、
-//           mode: 'defense'（按鈕直接開啟守城玩法 openDefenseBattle，defense.js）／'tower'（鎮魔塔塔廳 openZhenmoTower，zhenmo.js）／'worldboss'（點卡片直接開世界 Boss 視窗，world-boss.js）
+//           mode: 'defense'（按鈕直接開啟守城玩法 openDefenseBattle，defense.js）／'tower'（鎮魔塔塔廳 openZhenmoTower，zhenmo.js）
 
 const SECRET_REALM_DAILY_ATTEMPTS = 3;   // 每個秘境各自每日可挑戰次數（開始挑戰即扣，失敗或中途離開也算；2026-09-27 由 5 改 3）
 
@@ -51,16 +51,5 @@ const secretRealmList = [
             { icon: "🏅", text: "守城稱號（10／30／50／80／100 波）" },
             { icon: "💞", text: "第 51 波起有緣遇見天驕級夥伴" }
         ]
-    },
-    {
-        id: "worldboss",
-        name: "世界 Boss",
-        img: "images/zhenmo/boss-yamata.jpg",   // 卡片縮圖（沿用鎮魔塔 BOSS 圖；世界 Boss 不走海報場景，點卡片直接開視窗）
-        minRealmIndex: 6,
-        implemented: true,
-        mode: "worldboss",                       // 點卡片直接 openWorldBossModal()（world-boss.js，第 75 節）；次數由雲端記錄，不用 SECRET_REALM_DAILY_ATTEMPTS
-        tagline: "諸天共伐，一戰定名",
-        desc: "每週六 20:00～週日 20:00，全服修士共同討伐一隻世界 Boss。",
-        rewards: []
     }
 ];

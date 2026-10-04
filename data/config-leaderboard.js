@@ -56,6 +56,8 @@ const MARKET_LIST_FEE = { pct: 0.02, minHours: 0.25 };
 const MARKET_EXTEND_SEC = 300;                    // 最後 5 分鐘有人出價，結束時間延到出價後 5 分鐘（避免最後一秒搶標）
 const MARKET_MAX_ACTIVE = 1;                      // 每人同時最多掛幾件（玩家端檢查；2026-10-04 使用者要求由 5 改 1，節省讀取額度）
 const MARKET_SHOW_N = 30;                         // 拍賣中的清單最多讀幾件（規則限制單次最多 50；2026-10-04 使用者要求 30）
+// 寄售只在週一～週五開放（台灣時間；2026-10-04 使用者：「六日的網路流量要留給世界 Boss」）：週六、週日寄售分頁只顯示休市、不讀雲端，上架／出價／領取都暫停
+const MARKET_OPEN_DAYS = [1, 2, 3, 4, 5];   // getUTCDay（0＝週日）of 台灣時間
 const MARKET_MAX_PRICE = 1e12;
 // 可寄售的數量型物品（使用者選：材料＋珍貴道具；另有鍛造圖紙、背包裝備）
 const MARKET_STACKS = [

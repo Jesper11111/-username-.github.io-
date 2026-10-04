@@ -48,7 +48,7 @@ function renderSecretRealmList() {
                 <img src="${r.img}" alt="">
                 <span class="secret-card-info">
                     <b>${r.name}</b>
-                    <small>${locked ? `🔒 需【${realms[r.minRealmIndex]}】以上` : r.mode === 'worldboss' ? '每週六 20:00～週日 20:00・全服共伐' : r.implemented ? `可挑戰・今日 ${getSecretRealmAttemptsLeft(r.id)}/${SECRET_REALM_DAILY_ATTEMPTS}` : '🚧 即將開放'}</small>
+                    <small>${locked ? `🔒 需【${realms[r.minRealmIndex]}】以上` : r.implemented ? `可挑戰・今日 ${getSecretRealmAttemptsLeft(r.id)}/${SECRET_REALM_DAILY_ATTEMPTS}` : '🚧 即將開放'}</small>
                 </span>
             </button>`;
     }).join("");
@@ -59,11 +59,6 @@ function openSecretRealmScene(id) {
     if (!r) return;
     if (player.realmIndex < r.minRealmIndex) {
         gameAlert(`【${r.name}】需境界【${realms[r.minRealmIndex]}】以上才能進入。`);
-        return;
-    }
-    if (r.mode === 'worldboss') {   // 世界 Boss：不走海報場景，直接開視窗（world-boss.js，第 75 節）
-        closeModal('secret-realm-modal');
-        openWorldBossModal();
         return;
     }
     currentSecretRealm = r;

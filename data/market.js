@@ -10,6 +10,17 @@
 let mkActive = null, mkMine = [], mkWins = [], mkRefunds = [];
 let mkForm = { kind: 'blueprint' };
 
+// 週末休市（MARKET_OPEN_DAYS，台灣時間）
+function isMarketClosed() { return !MARKET_OPEN_DAYS.includes(new Date(Date.now() + 8 * 3600 * 1000).getUTCDay()); }
+function marketClosedAlert() {
+    if (!isMarketClosed()) return false;
+    gameAlert('寄售週末休市（週六、週日），週一 00:00 恢復。\n休市期間結束的拍賣，週一再領取即可。');
+    return true;
+}
+function marketClosedHtml() {
+    return `<p class="lb-note" style="font-size:1em; color:#fde68a;">🏮 寄售週末休市</p>
+        <p class="lb-note">寄售只在週一～週五開放（台灣時間），週末的連線額度留給世界 Boss。<br>休市期間結束的拍賣不會消失，週一 00:00 恢復後到「待處理」領取即可。</p>`;
+}
 function mkTs(ms) { return firebase.firestore.Timestamp.fromMillis(ms); }
 function mkMs(ts) { return ts && ts.toMillis ? ts.toMillis() : 0; }
 function mkLeft(ts) {
@@ -136,6 +147,7 @@ function marketListFee(price) {
     return Math.max(Math.ceil(price * MARKET_LIST_FEE.pct), Math.floor(H * MARKET_LIST_FEE.minHours));
 }
 async function marketCreate() {
+    if (marketClosedAlert()) return;
     const f = mkForm;
     const price = Math.floor(Number(document.getElementById('mk-price').value) || 0);
     const hours = Number(document.getElementById('mk-hours').value) || 24;
@@ -181,6 +193,7 @@ async function marketCreate() {
 
 // ---- 出價 ----
 async function marketBid(id) {
+    if (marketClosedAlert()) return;
     const d = (mkActive || []).find(x => x.id === id);
     if (!d) return;
     const input = document.getElementById('mk-bid-' + id);
@@ -228,6 +241,7 @@ async function marketBid(id) {
 
 // ---- 待處理：退款、得標領取、賣出領錢、下架領回 ----
 async function marketClaimRefund(rid) {
+    if (marketClosedAlert()) return;
     const r = mkRefunds.find(x => x.id === rid);
     if (!r) return;
     try {
@@ -240,6 +254,7 @@ async function marketClaimRefund(rid) {
     renderLeaderboard(false);
 }
 async function marketClaim(id, type) {
+    if (marketClosedAlert()) return;
     const d = mkMine.concat(mkWins).find(x => x.id === id);
     if (!d) return;
     if (type === 'item') { const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; } }
@@ -265,6 +280,7 @@ async function marketClaim(id, type) {
 }
 // 下架（沒人出價時，結標前後都可以）：刪除拍賣品成功才把物品放回
 async function marketCancel(id) {
+    if (marketClosedAlert()) return;
     const d = mkMine.find(x => x.id === id);
     if (!d || d.bidder) return;
     const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; }
