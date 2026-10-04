@@ -3,7 +3,7 @@
 
 function checkSectJoined() {
     if (!player.sect) {
-        alert("【提示】閣下目前乃是一介散修，尚未加入任何仙門！請先至「尋訪仙門」拜入宗門後，方可使用此宗門設施。");
+        gameAlert("【提示】閣下目前乃是一介散修，尚未加入任何仙門！請先至「尋訪仙門」拜入宗門後，方可使用此宗門設施。");
         openSectModal();
         return false;
     }
@@ -11,6 +11,9 @@ function checkSectJoined() {
 }
 
 function openSectModal() { document.getElementById('sect-modal').style.display = 'flex'; renderSects(); }
+
+// 2026-10-04 使用者指定：第三段宗門（至高聖地，tier 3）只能在靈界拜入／回歸；靈界的尋訪仙門只列至高聖地，人界的只列第一、二段
+function isSectTierHere(tier) { return isInLingjie() ? tier === 3 : tier !== 3; }
 
 function renderSects() {
     const container = document.getElementById('sect-list-container');
@@ -23,7 +26,11 @@ function renderSects() {
         <p style="text-align:center; font-size:0.85em; margin-top:0;">
         已選定：${joined.length ? joined.join('／') : '尚無'}　｜　目前所屬：<span style="color:var(--sect-color);">${player.sect ? player.sect.name : '散修'}</span></p>`;
 
+    container.innerHTML += isInLingjie()
+        ? `<p style="text-align:center; color:#c084fc; font-size:0.85em; margin-top:0;">🌌 身在靈界：此處只能拜入或回歸【至高聖地】（第一、二段宗門請回人界）。</p>`
+        : `<p style="text-align:center; color:#c084fc; font-size:0.85em; margin-top:0;">🌌 第三段【至高聖地】只能在靈界天元城拜入或回歸。</p>`;
     sectData.forEach(cat => {
+        if (!isSectTierHere(cat.tier)) return;
         let lockedName = player.sectSkills[cat.tier];
         let tierNote = lockedName
             ? `<span style="color:#4ade80; font-size:0.85em;">（已選定：${lockedName}）</span>`
@@ -71,10 +78,14 @@ function formatSectLegacyLine(sect, tier) {
         主修${sp.name}時：${sp.slot}的${NUMERIC_V2 ? '武器攻擊' : '四維'} +${Math.round((b.weaponPct || 0) * 100)}%、熟練度 ×${b.profMult || 1}</p>`;
 }
 
-function joinSect(sectName) {
+async function joinSect(sectName) {
     for (let cat of sectData) {
         let s = cat.items.find(item => item.name === sectName);
         if (!s) continue;
+        if (!isSectTierHere(cat.tier)) {
+            gameAlert(cat.tier === 3 ? `【${s.name}】是至高聖地，只能在靈界天元城拜入或回歸。` : `身在靈界，無法拜入或回歸人界宗門【${s.name}】。`);
+            return;
+        }
 
         let lockedName = player.sectSkills[cat.tier];
         let isOwnSect = lockedName === s.name;
@@ -83,16 +94,16 @@ function joinSect(sectName) {
         //    境界成長超過該階段的 maxRealm 後仍保有原本的宗門身分，否則升上去就再也回不了舊宗門。
         if (!isOwnSect) {
             if (lockedName) {
-                alert(`此階段您已拜入【${lockedName}】，每個階段只能選擇一個宗門，無法改投【${s.name}】。\n（可按【${lockedName}】的「回歸宗門」切回該宗門）`);
+                gameAlert(`此階段您已拜入【${lockedName}】，每個階段只能選擇一個宗門，無法改投【${s.name}】。\n（可按【${lockedName}】的「回歸宗門」切回該宗門）`);
                 return;
             }
             // 只擋「境界不足」：境界超過該階段上限仍可補拜入（例如金丹後才想挑一個初級宗門），
             // 否則前期沒拜入宗門的玩家會永遠失去該階段的技能。`maxRealm` 僅供顯示，不再用於封鎖。
             if (player.realmIndex < cat.minRealm) {
-                alert(`您的境界不符合【${s.name}】的加入要求！\n（需達【${realms[cat.minRealm]}】以上）`);
+                gameAlert(`您的境界不符合【${s.name}】的加入要求！\n（需達【${realms[cat.minRealm]}】以上）`);
                 return;
             }
-            if (!confirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`)) return;
+            if (!(await gameConfirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`))) return;
             player.sectSkills[cat.tier] = s.name;
             addLog(`📜 習得【${s.name}】${SECT_TIER_NAMES[cat.tier]}技能：${s.skills.map(sk => `【${sk.name}】`).join('')}！`, "skill");
             setTimeout(checkAptitudeTest, 300);   // 第一次拜入宗門：資質測試（aptitude.js）

@@ -32,7 +32,7 @@ function eqSnapshot() {
         power: NUMERIC_V2 ? nv2CombatPower() : getPhysAttack(),
         hp: getMaxHp(), mp: getMaxMp(),
         phys: getPhysAttack(), mag: getMagAttack(),
-        def: a.def, eva: a.eva,
+        def: a.def, mdef: a.mdef, eva: a.eva,
         crit: NUMERIC_V2 ? nv2Crit() * 100 : 0, combo: NUMERIC_V2 ? nv2Combo() * 100 : 0,
         affix: Object.fromEntries(AFFIX_TYPES.map(k => [k, a[k] || 0])),
         element: getPlayerElement(),
@@ -71,7 +71,7 @@ function eqStatMap(eq) {
     }
     const old = getEquipEffectiveStats(eq);
     if (!NUMERIC_V2) [["str", "力量"], ["con", "體質"], ["int", "悟性"], ["spr", "靈力"]].forEach(([k, l]) => { if (old[k]) m[k] = [l, old[k], '']; });
-    ["def", "eva"].concat(AFFIX_TYPES).forEach(k => { if (old[k]) m[k] = [combatAttrInfo[k].label, old[k], '%']; });
+    ["def", "eva"].concat(AFFIX_TYPES).forEach(k => { if (old[k]) m[k] = [combatAttrInfo[k].label, old[k], POINT_STAT_KEYS.includes(k) ? '' : '%']; });   // 防禦是點數（第 66 節）
     return m;
 }
 
@@ -174,7 +174,7 @@ function openEquipCompare(equipId) {
     let delta = diffRow('戰力', before.power, after.power, '', true, true)
         + diffRow('氣血', before.hp, after.hp, '', false, true) + diffRow('法力', before.mp, after.mp, '', false, true)
         + diffRow('物理攻擊', before.phys, after.phys, '', false, true) + diffRow('術法攻擊', before.mag, after.mag, '', false, true)
-        + diffRow('減傷', before.def, after.def, '%') + diffRow('閃避', before.eva, after.eva, '%')
+        + diffRow('防禦', before.def, after.def, '') + diffRow('魔防', before.mdef, after.mdef, '') + diffRow('閃避', before.eva, after.eva, '')
         + (NUMERIC_V2 ? diffRow('暴擊', before.crit, after.crit, '%') + diffRow('連擊', before.combo, after.combo, '%') : '')
         + AFFIX_TYPES.map(k => diffRow(combatAttrInfo[k].label, before.affix[k], after.affix[k], '%')).join('');
     if (!delta) delta = '<div class="eqc-drow"><span>整體數值沒有變化</span></div>';

@@ -86,16 +86,16 @@ function formatProfessionTag() {
     return p ? `${p.icon}${getProfRankName(p.id)}` : '';
 }
 
-function chooseProfession(id) {
+async function chooseProfession(id) {
     let p = getProfession(id);
     if (!p || player.profession === id) return;
-    if (player.level < PROFESSION_MIN_LEVEL) { alert(`人物等級達到 Lv.${PROFESSION_MIN_LEVEL} 才能選擇主修職業（目前 Lv.${player.level}）。`); return; }
+    if (player.level < PROFESSION_MIN_LEVEL) { gameAlert(`人物等級達到 Lv.${PROFESSION_MIN_LEVEL} 才能選擇主修職業（目前 Lv.${player.level}）。`); return; }
     let paid = !!player.profSwitched;
     if (paid) {
-        if (player.coins < PROFESSION_SWITCH_COST) { alert(`改修職業需要 ${PROFESSION_SWITCH_COST.toWan()} 靈石！`); return; }
-        if (!confirm(`花費 ${PROFESSION_SWITCH_COST.toWan()} 靈石改修【${p.name}】？\n原職業的熟練度會保留，換回來不會歸零。`)) return;
+        if (player.coins < PROFESSION_SWITCH_COST) { gameAlert(`改修職業需要 ${PROFESSION_SWITCH_COST.toWan()} 靈石！`); return; }
+        if (!(await gameConfirm(`花費 ${PROFESSION_SWITCH_COST.toWan()} 靈石改修【${p.name}】？\n原職業的熟練度會保留，換回來不會歸零。`))) return;
         player.coins -= PROFESSION_SWITCH_COST;
-    } else if (!confirm(`選擇【${p.name}】作為主修職業？（第一次免費，之後改修每次 ${PROFESSION_SWITCH_COST.toWan()} 靈石）`)) return;
+    } else if (!(await gameConfirm(`選擇【${p.name}】作為主修職業？（第一次免費，之後改修每次 ${PROFESSION_SWITCH_COST.toWan()} 靈石）`))) return;
     player.profession = id;
     player.profSwitched = true;
     addLog(`${p.icon} 你開始主修【${p.name}】，目前階級「${getProfRankName(id)}」。`, "level-up");

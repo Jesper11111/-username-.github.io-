@@ -89,6 +89,7 @@ function isTitleConditionMet(c) {
         case 'casinoTriple': return ((player.casino || {}).triples || 0) >= c.value;
         case 'casinoBigWin': return ((player.casino || {}).maxDiceWin || 0) >= c.value;
         case 'defenseWave': return (player.defenseBest || 0) >= c.value;   // 魔屠天南最高守住波數（defense.js）
+        case 'wboss': return ((player.wboss && player.wboss.titles) || []).includes(c.value);   // 世界 Boss 名次（world-boss.js 領獎時寫入）
         case 'bpCount': return countBlueprintCodexAll() >= c.value;   // 圖紙器錄點亮格數
         case 'bpTier': return countBlueprintCodex(c.value) >= getBlueprintSlots().length;   // 某一檔 17 部位全收
         case 'bpPlatinum': return countBlueprintCodexAll(PLATINUM_QUALITY.name) >= c.value;   // 圖紙器錄白金格數
@@ -119,6 +120,7 @@ function describeTitleCondition(c) {
         case 'casinoTriple': return `天星賭坊押中指定豹子`;
         case 'casinoBigWin': return `天星賭坊擲骰單把淨贏 ${c.value.toWan()} 靈石`;
         case 'defenseWave': return `秘境「魔屠天南」守住第 ${c.value} 波（最高 ${player.defenseBest || 0}）`;
+        case 'wboss': return ({ wbTop1: '世界 Boss 傷害第 1 名', wbTop10: '世界 Boss 傷害前 10 名', wbLastHit: '給世界 Boss 最後一擊' })[c.value] || '世界 Boss';
         case 'bpCount': return `圖紙器錄點亮 ${c.value} 格（目前 ${countBlueprintCodexAll()} / ${BLUEPRINT_LEVELS.length * getBlueprintSlots().length}）`;
         case 'bpTier': return `圖紙器錄 ${c.value} 等 ${getBlueprintSlots().length} 部位全收（目前 ${countBlueprintCodex(c.value)}）`;
         case 'bpPlatinum': return `圖紙器錄白金 ${c.value} 格（目前 ${countBlueprintCodexAll(PLATINUM_QUALITY.name)}）`;
@@ -128,7 +130,8 @@ function describeTitleCondition(c) {
 
 function describeTitleBonus(bonus) {
     // 稱號、天下異火（strange-fire.js）、夥伴（partner.js）共用
-    let labels = { statPct: '四維', atkPct: '攻擊', hpPct: '氣血', sprPct: '靈力', def: '減傷', eva: '閃避', enhanceChance: '強化成功率',
+    if (!bonus || !Object.keys(bonus).length) return '外觀稱號（無數值加成）';   // 世界 Boss 名次稱號
+    let labels = { statPct: '四維', atkPct: '攻擊', hpPct: '氣血', sprPct: '靈力', def: '防禦', eva: '閃避', enhanceChance: '強化成功率',
                    physPct: '物理攻擊', magPct: '術法攻擊', strPct: '力量', conPct: '體質', intPct: '悟性', chaPct: '魅力',
                    ice: '冰傷', fire: '火傷', poison: '毒傷', metal: '金傷', thunder: '雷傷',
                    'fx:聚財': '野外靈石', 'fx:悟道': '修為', 'fx:積德': '功德', 'fx:法爆': '技能傷害',
@@ -139,7 +142,7 @@ function describeTitleBonus(bonus) {
         let v = bonus[k];
         let label = labels[k] || (k.startsWith('elemDmg:') ? `本命五行為${k.slice(8)}時傷害` : k);
         let isPoint = ['def', 'eva', 'ice', 'fire', 'poison', 'metal', 'thunder'].includes(k);
-        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}%`;
+        return `${label} +${isPoint ? v : +(v * 100).toFixed(1)}${POINT_STAT_KEYS.includes(k) ? '' : '%'}`;   // 防禦、閃避是點數（第 66 節）
     }).join('、');
 }
 

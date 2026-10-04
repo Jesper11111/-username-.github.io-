@@ -27,13 +27,13 @@ const maps = [
           thumb: "images/maps/tiannan-city-male.jpg", thumbFemale: "images/maps/tiannan-city-female.jpg" },
         { name: "天星城", expRate: 3, diff: 1, coins: 0, thumb: "images/maps/tianxing-city.jpg" }   // 亂星海的主城；第二區已有戰鬥地圖「亂星海」，名稱不可重複
     ]},
-    { category: "一、野外歷練 (戰鬥區)", isSafe: false, items: [
+    { category: "落雲宗周邊 (野外歷練)", isSafe: false, items: [
         //                                                      coins   ≈ 每小時上限
         { name: "靈山大川", expRate: 8, diff: 2, coins: 20, nv2L: 0, nv2AtkMult: 0.7, suit: [0, 1] },   // 新手圖：新制妖獸攻擊 ×0.7（剛入門沒有宗門技能也不會戰死）        //   2.3 萬
         { name: "深淵險地", expRate: 20, diff: 50, coins: 80, nv2L: 2, suit: [2, 2] },       //   9.3 萬
         { name: "上古遺跡", expRate: 50, diff: 350, coins: 250, nv2L: 3, suit: [3, 3] }      //  29 萬
     ]},
-    { category: "二、開放世界大區域 (高難度戰鬥)", isSafe: false, items: [
+    { category: "慕蘭草原 (高難度戰鬥)", isSafe: false, items: [
         { name: "天南", expRate: 100, diff: 40000, coins: 1000, nv2L: 4, suit: [4, 4] },      // 116 萬
         { name: "亂星海", expRate: 300, diff: 100000, coins: 1650, nv2L: 5, suit: [5, 5] },    // 191 萬（上限 200 萬）
         { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] }, // 284 萬（上限 300 萬）
@@ -41,7 +41,7 @@ const maps = [
         //   nv2L 6 ＝ 境界壓制以煉虛 1 階起算（煉虛玩家不吃壓制）；靈石介於鬼谷八荒與崑吾山之間
         { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] } // 296 萬
     ]},
-    { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
+    { category: "大晉王朝區域 (煉虛解鎖·高難)", isSafe: false, items: [
         // 2026-09-30 使用者要求「地圖依經驗排序」：本區由經驗低到高排列（同經驗時境界低的在前）；各區都照此規則，新增地圖時插在對應位置
         // 普通圖（2026-09-30 使用者要求「每個境界補一張普通圖」）：黑風海域／蠻荒古地／血天大陸／星空古路／九天仙域，妖獸照一般規則（隨玩家階數、強度 1.5～3 倍），
         //   經驗、靈石沿用挑戰圖改版前的數值，並當作修煉節奏表（config-realms.js）的主要練功圖 → 升階所需經驗不變
@@ -49,28 +49,42 @@ const maps = [
         { name: "黑風海域", expRate: 1400, diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },        // 合體・普通
         { name: "崑吾山", expRate: 1600, nv2FixedL: 7.9, nv2Str: [5, 10], diff: 1000000, coins: 2700, minRealm: 7, minStat: 2000, nv2L: 7, nv2MinStat: 100, suit: [7, 7] },         // 合體・挑戰
         { name: "蠻荒古地", expRate: 1900, diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },        // 大乘・普通
-        { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] },       // 大乘・挑戰
-        { name: "血天大陸", expRate: 2500, diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通
-        { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [8, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰
-        { name: "星空古路", expRate: 3000, diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通
-        { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },      // 仙人初境・挑戰
-        { name: "九天仙域", expRate: 5000, diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] },   // 天仙・普通
-        { name: "太初古礦", expRate: 6500, nv2FixedL: 10.9, nv2Str: [15, 30], diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, suit: [10, 11] },      // 仙人初境・挑戰
-        { name: "上蒼（葬天島）", expRate: 8000, nv2FixedL: 11.9, nv2Str: [15, 40], diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, suit: [11, 11] } // 天仙・挑戰
+        { name: "雷鳴大陸", expRate: 2100, nv2FixedL: 8.9, nv2Str: [8, 15], diff: 3000000, coins: 2950, minRealm: 8, minStat: 2000, nv2L: 8, nv2MinStat: 100, suit: [8, 8] }        // 大乘・挑戰
     ]},
     // 第四區由原禁區後半拆出（2026-09-27），數值與第三區共用同一組分類倍率
+    // 2026-10-03 使用者指定：第四區強度 40～80 倍、依地圖排列分段（nv2Str）；進入條件依排列設等級 minL（成長位置＝境界＋(階−1)/10：真仙 1／4／7／10 階，map.js 的 getMapMinLevel）
     { category: "四、幽冥禁域 (仙人解鎖·高難)", isSafe: false, items: [
-        { name: "不死山", expRate: 6000, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
-        { name: "神墟", expRate: 7000, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 12.3, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
-        { name: "仙陵", expRate: 8000, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12.6, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
-        { name: "冥界", expRate: 9000, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 12.9, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
+        // 2026-10-04 使用者指定：九天仙域、太初古礦、上蒼由無邊海移到第四區（放在最前面）；dark: false＝維持原本的妖獸本質（不吃幽冥禁域的「暗」，elements.js 的 rollMonsterAttrs），數值不變
+        { name: "九天仙域", expRate: 5000, nv2Str: [10, 15], diff: 60000000, coins: 6900, minRealm: 11, minStat: 2000, nv2L: 11, nv2MinStat: 100, dark: false, suit: [11, 11] },   // 天仙・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
+        { name: "太初古礦", expRate: 6500, nv2FixedL: 10.9, nv2Str: [15, 30], diff: 20000000, coins: 4200, minRealm: 6, minStat: 2000, nv2L: 10.5, nv2MinStat: 100, dark: false, suit: [10, 11] },      // 仙人初境・挑戰
+        { name: "上蒼（葬天島）", expRate: 8000, nv2FixedL: 11.9, nv2Str: [15, 40], diff: 60000000, coins: 6900, minRealm: 6, minStat: 2000, nv2L: 11, nv2MinStat: 100, dark: false, suit: [11, 11] },// 天仙・挑戰
+        { name: "不死山", expRate: 6000, nv2Str: [40, 50], minL: 12, diff: 5000000000, coins: 7300, minRealm: 10, minStat: 5000, nv2L: 12, nv2MinStat: 160, suit: [12, 12] },       // 847 萬
+        { name: "神墟", expRate: 7000, nv2Str: [50, 60], minL: 12.3, diff: 10000000000, coins: 7750, minRealm: 10, minStat: 5000, nv2L: 12.3, nv2MinStat: 160, suit: [12, 12] },         // 899 萬
+        { name: "仙陵", expRate: 8000, nv2Str: [60, 70], minL: 12.6, diff: 50000000000, coins: 8200, minRealm: 10, minStat: 5000, nv2L: 12.6, nv2MinStat: 160, suit: [12, 12] },         // 951 萬
+        { name: "冥界", expRate: 9000, nv2Str: [70, 80], minL: 12.9, diff: 150000000000, coins: 8400, minRealm: 10, minStat: 5000, nv2L: 12.9, nv2MinStat: 160, suit: [12, 12] }         // 974 萬（上限 1000 萬）
     ]},
     // 上蒼之後（含諸天戰場）一律維持在每小時 800～1000 萬，不再隨難度放大；
     // 這幾張圖的差異改由經驗與聲望體現，靈石封頂。
+    // 2026-10-03 使用者指定：第五區強度 80～200 倍、依地圖排列分段；進入條件 minL＝該圖境界 1 階（大羅金仙／混元大羅金仙／混沌道祖，不再能越級，越級走挑戰模式）
     { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
-        { name: "仙界戰場", expRate: 15000, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
-        { name: "萬界戰場", expRate: 25000, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
-        { name: "混沌初界", expRate: 50000, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
+        { name: "仙界戰場", expRate: 15000, nv2Str: [80, 120], minL: 13, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
+        { name: "萬界戰場", expRate: 25000, nv2Str: [120, 160], minL: 14, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
+        { name: "混沌初界", expRate: 50000, nv2Str: [160, 200], minL: 15, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
+    ]},
+    // 無邊海（2026-10-03 使用者要求：第三區雷鳴大陸之後 7 張圖搬來這裡；世界地圖「無邊海」區塊開這一區）
+    // ⚠️ 加在最後（索引 6），不插在第三區後面：分類索引被 monsterAttrsByMapCategory／REPUTATION_MAX_BY_MAP_CATEGORY／PROF_MAP_MULT／LIFESPAN_DANGER_MULT／DARK_MAP_CATEGORIES 等使用，
+    //    插在中間會讓幽冥禁域、諸天戰場的索引全部位移。各表的索引 6 一律同第三區
+    { category: "無邊海 (渡劫解鎖·高難)", isSafe: false, items: [
+        { name: "血天大陸", expRate: 2500, nv2Str: [8, 15], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通（2026-10-04 使用者指定強度 8～15 倍；2026-10-03 為 3～8、原一般規則 1.5～3；妖獸仍隨玩家階數）
+        { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
+        { name: "星空古路", expRate: 3000, nv2Str: [10, 15], diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
+        { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] }       // 仙人初境・挑戰
+    ]},
+    // 靈界城鎮（2026-10-04 使用者指定：天元城內城＋城外；身在靈界戰死、渡劫失敗、暫存區滿、離線撐不住都回「天元城外」；lingjie.js 的 getRespawnPoint，第 74 節）
+    //   加在最後（索引 7），屬於靈界（config-towns.js 的 LINGJIE_MAP_CATEGORIES）；hidden＝不列在任何地圖清單，只能從靈界地圖的天元城紅點進入
+    { category: "靈界城鎮 (安全區)", isSafe: true, items: [
+        { name: "天元城外", expRate: 3, diff: 1, coins: 0, hidden: true },
+        { name: "天元城", expRate: 3, diff: 1, coins: 0, hidden: true }
     ]}
 ];
 
@@ -85,7 +99,8 @@ const REPUTATION_MAX_BY_MAP_CATEGORY = {
     2: 10,    // 二、開放世界
     3: 30,    // 三、上古禁區
     4: 30,    // 四、幽冥禁域（同上古禁區）
-    5: 100    // 五、諸天至高戰場
+    5: 100,   // 五、諸天至高戰場
+    6: 30     // 無邊海（同上古禁區）
 };
 
 // 離線掛機的「每秒戰鬥次數」：離線收益 = 離線秒數 × 此係數 × 每次的經驗/靈石。
@@ -123,17 +138,7 @@ const OFFLINE_REPUTATION_RATE_OFFLINE = 1.1;
 // 離線最多結算幾秒（2026-09-28 使用者決定由 24 小時改為 12 小時）；背景補發同一個上限
 const OFFLINE_MAX_SECONDS = 12 * 3600;
 
-// 野外小怪（2026-09-28 玩家提供的 7 張圖，裁成 480×480 放 images/monsters/；戰場實況右半邊顯示，battle-fx.js 第 59 節）
-// 每隻妖獸隨機抽一種；幽冥禁域（DARK_MAP_CATEGORIES）只出 dark 的鬼怪，其餘地圖全部都會出
-// pos：圖片在右半邊的對焦位置（CSS object-position），讓頭部不被左邊斜切線切掉
-// 之後要加怪物：放圖、加一行即可（只影響外觀與名稱，不影響數值）
-const FIELD_MONSTERS = [
-// race：種族（config-race.js，2026-09-30）：妖獸 beast／鬼物 ghost
-    { name: "青鱗蒼龍", icon: "🐉", img: "images/monsters/dragon.jpg",        pos: "62% 30%", race: "beast" },
-    { name: "雪紋白虎", icon: "🐅", img: "images/monsters/white-tiger.jpg",   pos: "78% 35%", race: "beast" },
-    { name: "焰蹄麒麟", icon: "🦌", img: "images/monsters/qilin.jpg",         pos: "40% 35%", race: "beast" },
-    { name: "九尾天狐", icon: "🦊", img: "images/monsters/nine-tail-fox.jpg", pos: "70% 40%", race: "beast" },
-    { name: "赤羽火鳳", icon: "🦅", img: "images/monsters/phoenix.jpg",       pos: "58% 35%", race: "beast" },
-    { name: "幽冥鬼將", icon: "👻", img: "images/monsters/ghost-general.jpg", pos: "55% 30%", dark: true, race: "ghost" },
-    { name: "青面夜叉", icon: "👹", img: "images/monsters/ghoul.jpg",         pos: "55% 25%", dark: true, race: "ghost" }
-];
+// 野外小怪的圖鑑、型態與各地圖的出沒組合：見 config-monsters.js（2026-10-03 起，ARCHITECTURE.md 第 66 節第 2 期）
+
+// 挑戰模式（越級進入境界不足的地圖，map.js，第 70 節）：做裝通貨掉率倍數，索引＝越過門檻幾個境界（1 → ×1.5、2 → ×2、3 以上 → ×3）
+const CHALLENGE_CRAFT_MULT = [1, 1.5, 2, 3];

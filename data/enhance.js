@@ -70,7 +70,7 @@ let enhanceEquipId = null;
 function openEnhanceModal(equipId) {
     let loc = locateEquip(equipId);
     if (!loc) return;
-    if (!ENHANCE_CAP[loc.eq.quality]) { alert('此裝備無法強化（神器與舊版寶物不適用）。'); return; }
+    if (!ENHANCE_CAP[loc.eq.quality]) { gameAlert('此裝備無法強化（神器與舊版寶物不適用）。'); return; }
     enhanceEquipId = equipId;
     document.getElementById('enhance-modal').style.display = 'flex';
     renderEnhanceModal();
@@ -108,9 +108,12 @@ function renderEnhanceModal() {
             <p style="font-size: 0.85em; color: #9ca3af;">${formatGearSubline(eq)} | <span class="quality-${eq.quality}">${formatQualityLabel(eq.quality)}</span> | 強化 ${info.cur} / ${info.cap}</p>
             ${formatEquipDetails(eq)}
         </div>
-        <p style="color: #9ca3af; font-size: 0.85em;">持有：🌠 星允鐵 <b style="color: var(--accent);">${iron.toWan()}</b>｜🔩 碎鐵 ${(player.ironShards || 0).toWan()} / ${SHARDS_PER_IRON}｜靈石 ${player.coins.toWan()}</p>
+        <p style="color: #9ca3af; font-size: 0.85em;">持有：🌠 星允鐵 <b style="color: var(--accent);">${iron.toWan()}</b>｜🔩 碎鐵 ${(player.ironShards || 0).toWan()} / ${SHARDS_PER_IRON}｜🌀 洗煉石 ${(player.refineStones || 0).toWan()}｜靈石 ${player.coins.toWan()}</p>
         ${action}
         ${renderRaceReforgeSection(eq)}
+        ${renderRefineSection(eq)}
+        ${renderCraftSection(eq)}
+        ${renderLegendRerollSection(eq)}
         <p style="color: #6b7280; font-size: 0.75em;">每 +1 四維 +${Math.round(ENHANCE_STAT_PER_LEVEL * 100)}%；上限 白綠 +10、藍 +12、紫 +15、橙 +20。+11 起有成功率，每失敗一次同一級成功率 +${Math.round(ENHANCE_PITY_STEP * 100)}%。</p>`;
 }
 
@@ -142,7 +145,7 @@ function enhanceEquip(untilSuccess) {
         eq.enhancePity = (eq.enhancePity || 0) + 1;
         if (!untilSuccess) break;
     }
-    if (tries === 0) { alert('星允鐵或靈石不足！'); return; }
+    if (tries === 0) { gameAlert('星允鐵或靈石不足！'); return; }
     let name = getEquipDisplayName(eq);
     addLog(success
         ? `🔨 強化成功！【${name}】提升至 +${eq.enhance}（${tries} 次，消耗 ${spentIron} 星允鐵、${spentCoins.toWan()} 靈石）`
@@ -156,7 +159,7 @@ function enhanceEquip(untilSuccess) {
 }
 
 // 強化剛達 +EVOLVE_LEVEL（橙色）時的系統通知：詢問是否進化為先天道器；資源不足則提示還缺多少
-function promptEvolveEquip(eq) {
+async function promptEvolveEquip(eq) {
     let name = getEquipDisplayName(eq);
     addLog(`✨ 【${name}】已強化至 +${EVOLVE_LEVEL}，可進化為${PLATINUM_QUALITY.label}！`, "level-up");
     let cost = `🌠 ${EVOLVE_IRON} 星允鐵＋${EVOLVE_COINS.toWan()} 靈石`;
@@ -164,22 +167,22 @@ function promptEvolveEquip(eq) {
     if ((player.starIron || 0) < EVOLVE_IRON) lacks.push(`星允鐵 ${(player.starIron || 0).toWan()} / ${EVOLVE_IRON}`);
     if (player.coins < EVOLVE_COINS) lacks.push(`靈石 ${player.coins.toWan()} / ${EVOLVE_COINS.toWan()}`);
     if (lacks.length > 0) {
-        alert(`✨ 系統通知：【${name}】已強化至 +${EVOLVE_LEVEL}，可進化為${PLATINUM_QUALITY.label}！\n進化需要 ${cost}，目前不足：\n${lacks.join('\n')}\n\n資源備齊後，可在強化視窗按「進化為先天道器」。`);
+        gameAlert(`✨ 系統通知：【${name}】已強化至 +${EVOLVE_LEVEL}，可進化為${PLATINUM_QUALITY.label}！\n進化需要 ${cost}，目前不足：\n${lacks.join('\n')}\n\n資源備齊後，可在強化視窗按「進化為先天道器」。`);
         return;
     }
-    if (confirm(`✨ 系統通知：【${name}】已強化至 +${EVOLVE_LEVEL}！\n是否花費 ${cost}，進階為${PLATINUM_QUALITY.label}？\n（四維 ×${getEvolveStatRatio()}、特效 ×2、多一條隨機詞條）\n\n選「取消」可稍後在強化視窗進化。`)) {
+    if ((await gameConfirm(`✨ 系統通知：【${name}】已強化至 +${EVOLVE_LEVEL}！\n是否花費 ${cost}，進階為${PLATINUM_QUALITY.label}？\n（四維 ×${getEvolveStatRatio()}、特效 ×2、多一條隨機詞條）\n\n選「取消」可稍後在強化視窗進化。`))) {
         evolveEquip(true);
     }
 }
 
 // 橙色 +20 → 白金：四維依倍率放大、主詞條改白金數值、多抽 1 條隨機詞條
 // skipConfirm：由 promptEvolveEquip 的系統通知確認過，不再重複詢問
-function evolveEquip(skipConfirm) {
+async function evolveEquip(skipConfirm) {
     let loc = locateEquip(enhanceEquipId);
     if (!loc || !canEvolve(loc.eq)) return;
     let eq = loc.eq;
-    if (player.starIron < EVOLVE_IRON || player.coins < EVOLVE_COINS) { alert('星允鐵或靈石不足！'); return; }
-    if (!skipConfirm && !confirm(`確定花費 ${EVOLVE_IRON} 星允鐵＋${EVOLVE_COINS.toWan()} 靈石，將【${getEquipDisplayName(eq)}】進化為先天道器？`)) return;
+    if (player.starIron < EVOLVE_IRON || player.coins < EVOLVE_COINS) { gameAlert('星允鐵或靈石不足！'); return; }
+    if (!skipConfirm && !(await gameConfirm(`確定花費 ${EVOLVE_IRON} 星允鐵＋${EVOLVE_COINS.toWan()} 靈石，將【${getEquipDisplayName(eq)}】進化為先天道器？`))) return;
     player.starIron -= EVOLVE_IRON;
     player.coins -= EVOLVE_COINS;
     player.ironUsed = (player.ironUsed || 0) + EVOLVE_IRON;
@@ -191,8 +194,9 @@ function evolveEquip(skipConfirm) {
     else if (def.category === 'armor') eq.stats.def = PLATINUM_QUALITY.def * (def.slot === '盔甲' ? GEAR_ARMOR_DEF_MULT : 1);
     else eq.stats.eva = PLATINUM_QUALITY.eva;
     eq.quality = PLATINUM_QUALITY.name;
-    eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0])));
+    eq.subs = (eq.subs || []).concat(rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, 1, (eq.subs || []).map(s => s[0]), eq.category, eq.level, gearRollOpts(eq)));   // 遠古／太古保留擲骰下限（第 67 節 D3）
     applyEvolveRaceGearFx(eq);   // 白金必帶種族特效（race.js，第 62 節第 5 期）
+    ensureGearLegend(eq);        // 白金傳奇威能（第 67 節 D4）
     recordGearCollected(eq);
     addLog(`✨ 天地共鳴！【${getEquipDisplayName(eq)}】進化為${PLATINUM_QUALITY.label}！`, "reincarnate");
     checkTitleUnlocks();
@@ -203,55 +207,62 @@ function evolveEquip(skipConfirm) {
 
 // ---- 分解 ----
 function getDecomposeYield(eq) {
-    if (DECOMPOSE_IRON[eq.quality]) return { iron: DECOMPOSE_IRON[eq.quality], shards: 0 };
-    return { iron: 0, shards: DECOMPOSE_SHARDS[eq.quality] || DECOMPOSE_SHARDS["白色"] };
+    const refine = Math.round((DECOMPOSE_REFINE[eq.quality] || 0) * (1 + ((typeof getTalentBonusTotals === 'function' && getTalentBonusTotals().decomposeRefine) || 0)));   // 洗煉石（第 67 節 D2）；天賦「點石成金」+50%
+    if (DECOMPOSE_IRON[eq.quality]) return { iron: DECOMPOSE_IRON[eq.quality], shards: 0, refine };
+    return { iron: 0, shards: DECOMPOSE_SHARDS[eq.quality] || DECOMPOSE_SHARDS["白色"], refine };
 }
 
 function formatDecomposeYield(y) {
-    return y.iron ? `🌠 星允鐵 ×${y.iron}` : `🔩 碎鐵 ×${y.shards}`;
+    return (y.iron ? `🌠 星允鐵 ×${y.iron}` : `🔩 碎鐵 ×${y.shards}`) + (y.refine ? `、🌀 洗煉石 ×${y.refine}` : '');
 }
+function addRefineStones(n) { if (n > 0) player.refineStones = (player.refineStones || 0) + n; return n || 0; }
 
 // 手動分解一件（背包或暫存區；穿戴中的要先卸下、鎖定中的要先解鎖）。白金要按兩次確認
-function decomposeEquip(equipId) {
+async function decomposeEquip(equipId) {
     let loc = locateEquip(equipId);
     if (!canRemoveEquip(loc)) return;
     let eq = loc.eq;
-    if (eq.category === 'artifact') { alert('神器無法分解。'); return; }
+    if (eq.category === 'artifact') { gameAlert('神器無法分解。'); return; }
     let y = getDecomposeYield(eq);
     let name = getEquipDisplayName(eq);
     let msg = `確定分解【${eq.quality}·${name}${eq.enhance ? ' +' + eq.enhance : ''}】？\n可得 ${formatDecomposeYield(y).replace(/<[^>]+>/g, '')}，鑲嵌的符寶會一起消失。`;
-    if (!confirm(msg)) return;
-    if (eq.quality === PLATINUM_QUALITY.name && !confirm(`⚠️ 這是先天道器（白金），分解後無法復原。\n真的要分解【${name}】嗎？`)) return;
+    if (!(await gameConfirm(msg))) return;
+    if (eq.quality === PLATINUM_QUALITY.name && !(await gameConfirm(`⚠️ 這是先天道器（白金），分解後無法復原。\n真的要分解【${name}】嗎？`))) return;
     removeLocatedEquip(loc);
     if (y.iron) player.starIron = (player.starIron || 0) + y.iron;
     else addIronShards(y.shards);
-    addLog(`🔨 分解【${name}】，獲得 ${formatDecomposeYield(y)}。`, "equip");
+    addRefineStones(y.refine);
+    const cg = rollCraftDecompose(eq);   // 做裝通貨（craft.js，第 69 節）
+    addLog(`🔨 分解【${name}】，獲得 ${formatDecomposeYield(y)}${craftGainSuffix(cg)}。`, "equip");
     refreshEquipViews();
     updateUI();
 }
 
 // 一批裝備分解的總產出文字（碎鐵＋星允鐵）
-function formatBulkYield(shards, iron) {
+function formatBulkYield(shards, iron, refine) {
     let out = [];
     if (shards) out.push(`🔩 碎鐵 ×${shards}`);
     if (iron) out.push(`🌠 星允鐵 ×${iron}`);
+    if (refine) out.push(`🌀 洗煉石 ×${refine}`);
     return out.join('、');
 }
 
 // 依勾選品級一鍵分解（只作用於背包、略過鎖定與「保留屬性」；白～紫得碎鐵、橙色得星允鐵；白金不在選項中，請逐件分解）
-function bulkDecomposeEquipment() {
+async function bulkDecomposeEquipment() {
     let selected = getCheckedBulkQualities('bulk-equip-quality').filter(q => DECOMPOSE_SHARDS[q] || q === "橙色");
-    if (selected.length === 0) { alert("請先勾選要分解的品級！"); return; }
+    if (selected.length === 0) { gameAlert("請先勾選要分解的品級！"); return; }
     let keep = getCheckedBulkQualities('bulk-keep-element');
     let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && eq.category !== 'artifact' && !isEquipLocked(eq) && !keep.includes(eq.element));
-    if (targets.length === 0) { alert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
-    let shards = 0, iron = 0;
-    targets.forEach(eq => { let y = getDecomposeYield(eq); shards += y.shards; iron += y.iron; });
-    if (!confirm(`確定分解背包內 ${targets.length} 件【${selected.join('、')}】裝備？${keep.length ? '（保留屬性：' + keep.join('') + '）' : ''}\n可得 ${formatBulkYield(shards, iron)}，鑲嵌的符寶會一起消失。`)) return;
+    if (targets.length === 0) { gameAlert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
+    let shards = 0, iron = 0, refine = 0;
+    targets.forEach(eq => { let y = getDecomposeYield(eq); shards += y.shards; iron += y.iron; refine += y.refine; });
+    if (!(await gameConfirm(`確定分解背包內 ${targets.length} 件【${selected.join('、')}】裝備？${keep.length ? '（保留屬性：' + keep.join('') + '）' : ''}\n可得 ${formatBulkYield(shards, iron, refine)}，鑲嵌的符寶會一起消失。`))) return;
     player.equipInventory = player.equipInventory.filter(eq => !targets.includes(eq));
     if (shards) addIronShards(shards);
     if (iron) player.starIron = (player.starIron || 0) + iron;
-    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 ${formatBulkYield(shards, iron)}。`, "equip");
+    addRefineStones(refine);
+    const cg = rollCraftDecomposeMany(targets);   // 做裝通貨（craft.js，第 69 節）
+    addLog(`🔨 一鍵分解 ${targets.length} 件裝備，獲得 ${formatBulkYield(shards, iron, refine)}${craftGainSuffix(cg)}。`, "equip");
     renderBag();
     updateUI();
 }
@@ -262,19 +273,22 @@ function getStashBulkTargets() {
     return { keep, targets: (player.gearStash || []).filter(eq => eq.quality === "橙色" && eq.category !== 'artifact' && !isEquipLocked(eq) && !keep.includes(eq.element)) };
 }
 
-function bulkStashEquip(mode) {
+async function bulkStashEquip(mode) {
     let { keep, targets } = getStashBulkTargets();
-    if (targets.length === 0) { alert("暫存區沒有未鎖定、且不在保留屬性內的橙色裝備。"); return; }
+    if (targets.length === 0) { gameAlert("暫存區沒有未鎖定、且不在保留屬性內的橙色裝備。"); return; }
     let keepTxt = keep.length ? '（保留屬性：' + keep.join('') + '）' : '';
     let iron = mode === 'decompose' ? targets.reduce((s, eq) => s + getDecomposeYield(eq).iron, 0) : 0;
+    let refine = mode === 'decompose' ? targets.reduce((s, eq) => s + getDecomposeYield(eq).refine, 0) : 0;
     let msg = mode === 'decompose'
-        ? `確定分解暫存區 ${targets.length} 件橙色裝備？${keepTxt}\n可得 🌠 星允鐵 ×${iron}，鑲嵌的符寶會一起消失。`
+        ? `確定分解暫存區 ${targets.length} 件橙色裝備？${keepTxt}\n可得 ${formatBulkYield(0, iron, refine)}，鑲嵌的符寶會一起消失。`
         : `確定毀棄暫存區 ${targets.length} 件橙色裝備？${keepTxt}\n毀棄不會得到星允鐵（建議改用分解），此操作無法復原。`;
-    if (!confirm(msg)) return;
+    if (!(await gameConfirm(msg))) return;
     player.gearStash = player.gearStash.filter(eq => !targets.includes(eq));
     if (iron) player.starIron = (player.starIron || 0) + iron;
+    addRefineStones(refine);
+    const cg = mode === 'decompose' ? rollCraftDecomposeMany(targets) : {};   // 做裝通貨（craft.js，第 69 節）
     addLog(mode === 'decompose'
-        ? `🔨 一鍵分解暫存區 ${targets.length} 件橙色裝備，獲得 🌠 星允鐵 ×${iron}。`
+        ? `🔨 一鍵分解暫存區 ${targets.length} 件橙色裝備，獲得 ${formatBulkYield(0, iron, refine)}${craftGainSuffix(cg)}。`
         : `🗑️ 一鍵毀棄了暫存區 ${targets.length} 件橙色裝備。`, "equip");
     renderBag();
     updateUI();
@@ -297,7 +311,8 @@ function receiveLootEquip(eq) {
         if (sold) return `背包已滿，自動賣給坊市得 ${sold.toWan()} 靈石`;
         let y = getDecomposeYield(eq);
         addIronShards(y.shards);
-        return `背包已滿，自動分解為 🔩 碎鐵 ×${y.shards}`;
+        addRefineStones(y.refine);
+        return `背包已滿，自動分解為 ${formatDecomposeYield(y)}`;
     }
     if (!player.gearStash) player.gearStash = [];
     if (player.gearStash.length < GEAR_STASH_MAX) {
@@ -309,14 +324,16 @@ function receiveLootEquip(eq) {
     // 理論上不會發生（暫存區滿時無法外出），保險起見直接換成星允鐵
     let y = getDecomposeYield(eq);
     player.starIron = (player.starIron || 0) + y.iron;
-    return `暫存區已滿，自動分解為 ${formatDecomposeYield(y)}`;
+    addRefineStones(y.refine);
+    const cg = rollCraftDecompose(eq);
+    return `暫存區已滿，自動分解為 ${formatDecomposeYield(y)}${craftGainSuffix(cg)}`;
 }
 
 // 暫存區滿時：不能待在野外（combat.js 每回合、map.js 換地圖時檢查）；回傳 true 代表已被擋下
 function enforceGearStashLimit() {
     if (!isGearStashFull() || player.currentMapIsSafe) return false;
-    addLog(`📦 暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}），請先處理暫存區的橙色裝備才能外出練功！已返回宗門。`, "system");
-    changeMap(0, 0);
+    addLog(`📦 暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}），請先處理暫存區的橙色裝備才能外出練功！已返回${respawnPlaceName()}。`, "system");
+    sendToRespawn();   // 身在靈界＝天元城外（lingjie.js，第 74 節）
     return true;
 }
 
@@ -329,12 +346,12 @@ function moveStashToBag(equipId) {
     updateUI();
 }
 
-function deleteStashEquip(equipId) {
+async function deleteStashEquip(equipId) {
     let j = (player.gearStash || []).findIndex(e => e.id === equipId);
     if (j === -1) return;
     let eq = player.gearStash[j];
     if (!canRemoveEquip({ eq, where: 'stash', index: j })) return;
-    if (!confirm(`確定毀棄暫存區的【${eq.quality}·${getEquipDisplayName(eq)}】嗎？（毀棄不會得到星允鐵，建議改用分解）`)) return;
+    if (!(await gameConfirm(`確定毀棄暫存區的【${eq.quality}·${getEquipDisplayName(eq)}】嗎？（毀棄不會得到星允鐵，建議改用分解）`))) return;
     player.gearStash.splice(j, 1);
     addLog(`🗑️ 毀棄了暫存區的【${getEquipDisplayName(eq)}】。`, "equip");
     renderBag();
@@ -412,7 +429,7 @@ function renderIronShopSection() {
 function buyStarIron(qty) {
     let st = getIronShopState();
     let affordable = Math.min(IRON_AUCTION_DAILY_LIMIT - st.bought, Math.floor(player.coins / IRON_AUCTION_PRICE));
-    if (affordable <= 0) { alert(st.bought >= IRON_AUCTION_DAILY_LIMIT ? '今日限購已滿，明天再來！' : '靈石不足！'); return; }
+    if (affordable <= 0) { gameAlert(st.bought >= IRON_AUCTION_DAILY_LIMIT ? '今日限購已滿，明天再來！' : '靈石不足！'); return; }
     let n = qty === 'max' ? affordable : Math.min(qty, affordable);
     player.coins -= n * IRON_AUCTION_PRICE;
     st.bought += n;
@@ -433,3 +450,94 @@ function rollIronBagItem() {
         sold: false
     };
 }
+
+// ==================== 洗煉（暗黑式附魔重鑄，第 67 節 D2；設定 config-enhance.js 的 REFINE_*）====================
+//   eq.refineIdx：第一次洗煉後鎖定的詞條位置；eq.refineCount：已洗次數；eq.refinePending：已付費、尚未選擇的結果 { idx, cands: [[key, 值, 分級], …] }
+//   （先存進裝備再讓玩家選，重新整理也不會白花材料）
+let refineSelIdx = 0;
+function refineCost(eq) {
+    return { stones: Math.min(REFINE_STONE_MAX, REFINE_STONE_BASE + (eq.refineCount || 0)), coins: Math.floor(getHourlyIncome() * REFINE_COINS_HOURS) };
+}
+function canRefine(eq) { return !!(eq && eq.gearId && Array.isArray(eq.subs) && eq.subs.length && getGearDef(eq) && eq.corrupt !== 2); }   // 走火入魔封印的不能洗（craft.js）
+function formatOneSub(sub) {
+    return formatGearSubs({ subs: [sub] }).replace(/^<p class="gear-subs">◆ /, '').replace(/<\/p>$/, '');
+}
+function renderRefineSection(eq) {
+    if (!canRefine(eq)) return '';
+    const stones = player.refineStones || 0;
+    const head = `<div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 10px; padding-top: 8px;">
+        <p style="color: #67e8f9;">🌀 洗煉：選一條詞條重擲，從「保留原本」與 ${REFINE_CANDIDATES} 條新詞條中三選一（持有 🌀 洗煉石 <b>${stones}</b>）</p>`;
+    const P = eq.refinePending;
+    if (P && eq.subs[P.idx]) {
+        return head + `<p>原本：${formatOneSub(eq.subs[P.idx])}</p>
+            <div class="batch-btns" style="flex-wrap: wrap;">
+                <button class="sys-btn" onclick="chooseRefine(-1)">保留原本</button>
+                ${P.cands.map((c, i) => `<button class="sys-btn" onclick="chooseRefine(${i})">${formatOneSub(c)}</button>`).join('')}
+            </div></div>`;
+    }
+    const locked = typeof eq.refineIdx === 'number';
+    if (locked) refineSelIdx = eq.refineIdx;
+    else if (refineSelIdx >= eq.subs.length) refineSelIdx = 0;
+    const c = refineCost(eq), ok = stones >= c.stones && player.coins >= c.coins;
+    return head + `<div style="text-align: left; margin: 4px 0;">${eq.subs.map((s, i) => `<label style="display:block; ${locked && i !== eq.refineIdx ? 'opacity:0.4;' : ''}">
+            <input type="radio" name="refine-pick" ${i === refineSelIdx ? 'checked' : ''} ${locked && i !== eq.refineIdx ? 'disabled' : ''} onchange="refineSelIdx=${i}"> ${formatOneSub(s)}</label>`).join('')}</div>
+        ${locked ? '<p style="color:#9ca3af; font-size:0.8em;">這件已洗煉過，只能繼續洗同一條。</p>' : '<p style="color:#9ca3af; font-size:0.8em;">⚠️ 第一次洗煉後就鎖定這一條，之後只能洗這一條。</p>'}
+        <p>本次花費：🌀 ${c.stones} 洗煉石 ＋ ${c.coins.toWan()} 靈石（每洗一次多 1 顆，最多 ${REFINE_STONE_MAX}）</p>
+        <button class="sys-btn" ${ok ? '' : 'disabled'} onclick="refineEquip()">🌀 洗煉</button></div>`;
+}
+async function refineEquip() {
+    const loc = enhanceEquipId && locateEquip(enhanceEquipId);
+    if (!loc || !canRefine(loc.eq) || loc.eq.refinePending) return;
+    const eq = loc.eq, def = getGearDef(eq), c = refineCost(eq);
+    const idx = typeof eq.refineIdx === 'number' ? eq.refineIdx : refineSelIdx;
+    if (!eq.subs[idx]) return;
+    if ((player.refineStones || 0) < c.stones || player.coins < c.coins) { gameAlert('洗煉石或靈石不足！'); return; }
+    if (typeof eq.refineIdx !== 'number' && !(await gameConfirm(`第一次洗煉會鎖定「${formatOneSub(eq.subs[idx]).replace(/<[^>]+>/g, '')}」這一條，之後只能洗這一條。確定？`))) return;
+    player.refineStones -= c.stones;
+    player.coins -= c.coins;
+    eq.refineIdx = idx;
+    eq.refineCount = (eq.refineCount || 0) + 1;
+    const others = eq.subs.filter((s, i) => i !== idx).map(s => s[0]);   // 不能洗出其他條已有的詞綴（可以洗回同一種、數值重擲）
+    eq.refinePending = { idx, cands: rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, REFINE_CANDIDATES, others, eq.category, eq.level, gearRollOpts(eq)) };
+    renderEnhanceModal();
+    updateUI();
+}
+function chooseRefine(k) {
+    const loc = enhanceEquipId && locateEquip(enhanceEquipId);
+    if (!loc || !loc.eq.refinePending) return;
+    const eq = loc.eq, P = eq.refinePending;
+    const before = formatOneSub(eq.subs[P.idx]).replace(/<[^>]+>/g, '');
+    if (k >= 0 && P.cands[k]) eq.subs[P.idx] = P.cands[k];
+    delete eq.refinePending;
+    addLog(k >= 0 ? `🌀 【${getEquipDisplayName(eq)}】洗煉：${before} → ${formatOneSub(eq.subs[P.idx]).replace(/<[^>]+>/g, '')}。` : `🌀 【${getEquipDisplayName(eq)}】洗煉後保留原本的 ${before}。`, "equip");
+    renderEnhanceModal();
+    refreshEquipViews();
+    updateUI();
+}
+
+// ==================== 重塑傳奇威能（第 67 節 D4）====================
+function legendRerollCost() { return { stones: LEGEND_REROLL_STONES, coins: Math.floor(getHourlyIncome() * LEGEND_REROLL_COINS_HOURS) }; }
+function renderLegendRerollSection(eq) {
+    if (!canHaveLegend(eq)) return '';
+    const L = getGearLegend(eq), c = legendRerollCost(), ok = (player.refineStones || 0) >= c.stones && player.coins >= c.coins;
+    return `<div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 10px; padding-top: 8px;">
+        <p style="color: #fde68a;">🌟 重塑傳奇威能：隨機換成另一種（共 ${GEAR_LEGENDS.length} 種）${L ? `，目前【${L.icon}${L.name}】` : ''}</p>
+        <p>每次花費：🌀 ${c.stones} 洗煉石 ＋ ${c.coins.toWan()} 靈石</p>
+        <button class="sys-btn" ${ok ? '' : 'disabled'} onclick="rerollGearLegend()">🌟 重塑威能</button></div>`;
+}
+async function rerollGearLegend() {
+    const loc = enhanceEquipId && locateEquip(enhanceEquipId);
+    if (!loc || !canHaveLegend(loc.eq)) return;
+    const eq = loc.eq, c = legendRerollCost(), old = getGearLegend(eq);
+    if ((player.refineStones || 0) < c.stones || player.coins < c.coins) { gameAlert('洗煉石或靈石不足！'); return; }
+    if (old && !(await gameConfirm(`重塑會取代目前的【${old.name}】，確定？`))) return;
+    player.refineStones -= c.stones;
+    player.coins -= c.coins;
+    eq.legend = rollGearLegendId(eq.legend);
+    const L = getGearLegend(eq);
+    addLog(`🌟 【${getEquipDisplayName(eq)}】重塑傳奇威能：${old ? old.name + ' → ' : ''}【${L.icon}${L.name}】${L.desc}。`, "reincarnate");
+    renderEnhanceModal();
+    refreshEquipViews();
+    updateUI();
+}
+

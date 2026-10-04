@@ -119,7 +119,7 @@ function updateCombatVisualPanel() {
             totalMaxEnemyHp += e.maxHp;
         });
         let cultN = enemies.filter(e => e.cultivator).length;
-        // 標題與圖示跟著「目前在打的那隻」（第一隻還活著的）；妖獸名稱來自 FIELD_MONSTERS（config-maps.js）
+        // 標題與圖示跟著「目前在打的那隻」（第一隻還活著的）；妖獸名稱來自 FIELD_MONSTERS（config-monsters.js）
         let front = enemies.find(e => e.hp > 0) || enemies[0];
         let frontName = front.name || (front.ambush ? "暗殺者" : front.cultivator ? `${front.cultivator}道修士` : "妖獸");
         document.getElementById('battle-enemy-title').innerText = `${frontName}${enemies.length > 1 ? `（共 ${enemies.length} 隻${cultN ? `｜修士×${cultN}` : ''}）` : ''}`;
@@ -137,8 +137,9 @@ function updateCombatVisualPanel() {
         showEnemyBar(totalEnemyHp, totalMaxEnemyHp);   // 多隻時為總血量
         // 種族（race.js），例：「🐉妖獸×2 😈魔修×1」；人修（正道修士）不列
         let raceText = RACE_KEYS.map(k => [k, enemies.filter(e => e.attrs && e.attrs.race === k).length]).filter(([, c]) => c > 0).map(([k, c]) => `${raceTag(k)}×${c}`).join(' ');
-        document.getElementById('battle-enemy-info').innerText = [raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
-        document.getElementById('battle-action-desc').innerText = `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;
+        let typeText = front.mtype ? monsterTypeTag({ type: front.mtype }) : '';   // 目前在打的那隻的型態（monster.js，第 66 節）
+        document.getElementById('battle-enemy-info').innerText = [typeText, raceText, enemySt, enemyAttrText].filter(Boolean).join('｜');
+        document.getElementById('battle-action-desc').innerText = lastMonsterSkillText || `⚔️ 劍氣縱橫！正在 ${player.currentMap.name} 與巨獸殊死搏鬥！`;   // 怪物放技能時顯示（monster.js）
     } else {
         document.getElementById('battle-enemy-title').innerText = "索敵中";
         document.getElementById('battle-enemy-icon').innerText = "🔍";
@@ -221,6 +222,8 @@ function updateUI() {
     rateEl.innerText = atFloor ? '（歲月已止）' : `⌛-${rateText}`;
     rateEl.style.color = atFloor ? '#ef4444' : (getAgingMultiplier() > 1 ? '#fb923c' : '#9ca3af');
     document.getElementById('power-display').innerText = fmtCombat(NUMERIC_V2 ? nv2CombatPower() : getPhysAttack());   // 畫面 ×100（format.js）
+    let talentEl = document.getElementById('talent-display');   // 天賦樹（talent.js，第 68 節）
+    if (talentEl) talentEl.innerText = formatTalentLine();
     let aptEl = document.getElementById('aptitude-display');   // 先天靈根・體質（aptitude.js），點擊查看／重測
     if (aptEl) aptEl.innerText = formatAptitudeShort();
     let coreEl = document.getElementById('core-display');   // 丹田／金丹／元嬰（golden-core.js）
@@ -256,9 +259,12 @@ function updateUI() {
     // 變異屬性（風／光／暗）有數值才顯示；光暗本質附在最後
     let variantKeys = VARIANT_AFFIX_TYPES.filter(k => attrs[k] > 0);
     let natureHtml = attrs.nature ? `<span title="與相反本質互剋 +30%">${attrs.nature === 'light' ? '☀️本質：光' : '🌑本質：暗'}</span>` : '';
-    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
+    document.getElementById('combat-attr-display').innerHTML = elemHtml + ["def", "mdef", "eva"].concat(AFFIX_TYPES, variantKeys).map(k => {
         let info = combatAttrInfo[k];
         let tip = info.desc ? ` title="${info.desc}"` : '';
+        if (k === 'def' || k === 'mdef') return `<span${tip}>${info.icon}${info.label} <b>${formatDefPoints(attrs[k])}</b></span>`;   // 防禦／魔防點數（第 66 節）
+        if (k === 'eva') return `<span${tip}>${info.icon}${info.label} <b>${formatEvaPoints(attrs.eva)}</b></span>`   // 迴避值（第 66 節第 4 期）
+            + `<span title="命中值：抵銷對方的迴避值（敏捷、洞察、靈寵）">🎯命中 <b>${+(attrs.evaPen || 0).toFixed(1)}</b></span>`;
         return `<span${tip}>${info.icon}${info.label} <b>${+attrs[k].toFixed(1)}%</b></span>`;
     }).join('') + natureHtml
         + (formatRaceDmgLine() ? `<span title="種族剋制：對該族的傷害加成（天磯錄・斬妖錄等，合計上限 +${Math.round(RACE_DMG_CAP * 100)}%）">⚔️剋制 <b>${formatRaceDmgLine()}</b></span>` : '');
@@ -494,7 +500,7 @@ function resolveBatchCount(qty, affordable, actionName) {
     if (qty === 'max') return affordable;
     let n = parseInt(qty) || 1;
     if (affordable < n) {
-        alert(`目前最多只能${actionName} ${affordable} 次（受資源或次數上限限制），無法一次${actionName} ${n} 次。\n可改按「最高」一次完成 ${affordable} 次。`);
+        gameAlert(`目前最多只能${actionName} ${affordable} 次（受資源或次數上限限制），無法一次${actionName} ${n} 次。\n可改按「最高」一次完成 ${affordable} 次。`);
         return 0;
     }
     return n;

@@ -19,7 +19,7 @@ function plantHerb(type, qty = 1) {
 
     let affordable = Math.min(Math.floor(player.spiritGrass / r.grass), Math.floor(player.coins / r.coins));
     if (affordable <= 0) {
-        alert(`資源不足！培育 1 株${r.name}靈草需要 ${r.grass} 株靈草 + ${r.coins} 靈石。`);
+        gameAlert(`資源不足！培育 1 株${r.name}靈草需要 ${r.grass} 株靈草 + ${r.coins} 靈石。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "培育");

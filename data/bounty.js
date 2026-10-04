@@ -67,11 +67,11 @@ function refreshBountyIfDue(force) {
 }
 
 // 付費立即刷新：重抽 6 名（追蹤中的懸賞會取消），定時刷新的時間軸不變
-function paidRefreshBounty() {
-    if (inBountyDuel) { alert("對決進行中，無法刷新懸賞榜！"); return; }
+async function paidRefreshBounty() {
+    if (inBountyDuel) { gameAlert("對決進行中，無法刷新懸賞榜！"); return; }
     // 次數或靈石不足就不必先問要不要取消追蹤（payForRefresh 會跳對應提示）
     let canPay = getPaidRefreshLeft('bounty', BOUNTY_PAID_REFRESH_DAILY) > 0 && (player.coins || 0) >= BOUNTY_PAID_REFRESH_COST;
-    if (canPay && getActiveBounties().length && !confirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？")) return;
+    if (canPay && getActiveBounties().length && !(await gameConfirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？"))) return;
     if (!payForRefresh('bounty', BOUNTY_PAID_REFRESH_COST, BOUNTY_PAID_REFRESH_DAILY, '懸賞榜')) return;
     let keepAt = player.bountyRefreshAt;
     refreshBountyIfDue(true);
@@ -151,7 +151,7 @@ function acceptAllBounties() {
 
 // id 不給 = 放棄全部追蹤
 function abandonBounty(id) {
-    if (inBountyDuel) { alert("對決進行中，無法放棄懸賞！"); return; }
+    if (inBountyDuel) { gameAlert("對決進行中，無法放棄懸賞！"); return; }
     let ids = getTrackedBountyIds();
     player.activeBountyIds = id ? ids.filter(x => x !== id) : [];
     addLog(id ? `📜 你放棄了一份追蹤中的懸賞。` : `📜 你放棄了所有追蹤中的懸賞。`, "system");
@@ -186,7 +186,7 @@ function renderBountyBoard() {
                 <p style="font-size: 0.8em; color: #9ca3af; margin: 0;">「${npc.title}」・${npc.gender === 'female' ? '女' : '男'}・${getFactionLabel(entry.faction)}</p>
                 <p style="font-size: 0.85em; color: var(--accent); margin: 6px 0 2px;">${realms[entry.realmIndex]} ${entry.stage}階${NUMERIC_V2 ? `・<span style="color: ${rank.color};">強度 ×${getBountyStrMult(entry).toFixed(1)}</span>` : ''}</p>
                 <p style="font-size: 0.78em; margin: 2px 0;">攻擊 ${formatShortCombat(st.attack)}（<span style="color: ${ratioColor};">你的 ${ratio >= 100 ? '100+' : ratio.toFixed(1)} 倍</span>）｜氣血 ${formatShortCombat(st.hp)}（你的 ${(st.hp / myHp).toFixed(1)} 倍）</p>
-                <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️減傷 ${rank.def}% 💨閃避 ${rank.eva}% ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
+                <p style="font-size: 0.75em; color: #9ca3af; margin: 2px 0;">🛡️防禦 ${formatEnemyDef(rank.def)} 💨閃避 ${rank.eva} ${affix ? affix.icon + affix.label + ' ' + rank.affix + '%' : ''} 五行 ${entry.element}</p>
                 <p style="font-size: 0.75em; color: #fca5a5; margin: 2px 0 6px;">武學：${skillNames}</p>
                 ${btn}
             </div>`;
@@ -352,7 +352,7 @@ function bountyDuelTick() {
         addLog(`${opp.icon} ${opp.name}${sk.msg}`, "combat");
     }
 
-    let r = resolveHit(opp.attack * dmgMult, { attrs: opp.attrs, power: opp.attack }, { attrs: getPlayerCombatAttrs(), status: playerStatus });
+    let r = resolveHit(opp.attack * dmgMult, { attrs: opp.attrs, power: opp.attack, dmgType: sk ? 'mag' : undefined }, { attrs: getPlayerCombatAttrs(), status: playerStatus });   // 施展武學＝術法（走魔防），一般攻擊＝物理（第 66 節第 4 期 A）
     // 施展武學時算術法、一般攻擊算物理（金身／化勁）；反震、閃擊反擊（gear.js）
     let dealt = applyPetDamageReduction(applyGearDefense(r, opp, !!sk, r.tags), r);   // 護盾＋最低傷害保底（beast-combat.js）
     player.hp -= dealt;

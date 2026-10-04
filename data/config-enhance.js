@@ -8,32 +8,55 @@ const GEAR_SUB_QUALITY_SCALE = { "綠色": 0.3, "藍色": 0.5, "紫色": 0.7, "�
 //      def/eva/ice/fire/poison/metal/thunder = 戰鬥屬性百分點（與裝備加總後套上限）；
 //      "fx:特效名" = 併入同名特效（不受特效上限限制），見 gear.js 的 getGearEffects
 //   fmt：pct = 比例（0.03 → 3%）、pt = 百分點（2 → 2%）
+// 2026-10-03 起（暗黑式詞綴，ARCHITECTURE.md 第 67 節 D1）每條多兩組欄位：
+//   w＝各分類抽到的權重 { weapon, armor, accessory }（沒寫的分類＝1；only 限定分類的其餘為 0）
+//   pre／suf＝命名用的前綴／後綴（修仙風，裝備名依最強的兩條詞綴自動加上，gear.js 的 getGearAffixName）
 const gearSubAffixes = [
-    { key: "strPct", label: "力量",       fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "conPct", label: "體質",       fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "intPct", label: "悟性",       fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "sprPct", label: "靈力",       fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "chaPct", label: "魅力",       fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "atkPct", label: "攻擊",       fmt: "pct", min: 0.02,  max: 0.04 },
-    { key: "hpPct",  label: "氣血上限",   fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "def",     label: "減傷",      fmt: "pt",  min: 1,     max: 3 },
-    { key: "eva",     label: "閃避",      fmt: "pt",  min: 1,     max: 2 },
-    { key: "ice",     label: "冰傷",      fmt: "pt",  min: 2,     max: 5 },
-    { key: "fire",    label: "火傷",      fmt: "pt",  min: 2,     max: 5 },
-    { key: "poison",  label: "毒傷",      fmt: "pt",  min: 2,     max: 5 },
-    { key: "metal",   label: "金傷",      fmt: "pt",  min: 2,     max: 5 },
-    { key: "thunder", label: "雷傷",      fmt: "pt",  min: 2,     max: 5 },
-    { key: "fx:法爆", label: "技能傷害",   fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "fx:剋敵", label: "剋制傷害",   fmt: "pct", min: 0.02,  max: 0.05 },
-    { key: "fx:回春", label: "每回合回血", fmt: "pct", min: 0.003, max: 0.008 },
-    { key: "fx:回靈", label: "每回合回靈", fmt: "pct", min: 0.005, max: 0.01 },
-    { key: "fx:噬魂", label: "擊殺回血",   fmt: "pct", min: 0.01,  max: 0.02 },
-    { key: "fx:聚財", label: "靈石",       fmt: "pct", min: 0.02,  max: 0.06 },
-    { key: "fx:悟道", label: "修為",       fmt: "pct", min: 0.01,  max: 0.03 },
-    { key: "fx:積德", label: "功德",       fmt: "pct", min: 0.03,  max: 0.08 },
-    { key: "fx:尋鐵", label: "星允鐵",     fmt: "pct", min: 0.03,  max: 0.08 },
-    { key: "fx:獸魂", label: "靈寵傷害",   fmt: "pct", min: 0.03,  max: 0.08 }
+    { key: "strPct", label: "力量",       fmt: "pct", min: 0.02,  max: 0.05, w: { weapon: 2 },                          pre: "蠻力", suf: "拔山" },
+    { key: "conPct", label: "體質",       fmt: "pct", min: 0.02,  max: 0.05, w: { armor: 2 },                           pre: "磐石", suf: "金身" },
+    { key: "intPct", label: "悟性",       fmt: "pct", min: 0.02,  max: 0.05, w: { weapon: 1.5, accessory: 1.5 },        pre: "慧心", suf: "通玄" },
+    { key: "sprPct", label: "靈力",       fmt: "pct", min: 0.02,  max: 0.05, w: { accessory: 2 },                       pre: "蘊靈", suf: "聚元" },
+    { key: "chaPct", label: "魅力",       fmt: "pct", min: 0.02,  max: 0.05, w: { accessory: 2, weapon: 0.5 },          pre: "傾城", suf: "驚鴻" },
+    { key: "atkPct", label: "攻擊",       fmt: "pct", min: 0.02,  max: 0.04, w: { weapon: 3, armor: 0.5 },              pre: "破軍", suf: "斬天" },
+    { key: "hpPct",  label: "氣血上限",   fmt: "pct", min: 0.02,  max: 0.05, w: { armor: 3, weapon: 0.5 },              pre: "長生", suf: "不滅" },
+    { key: "def",     label: "防禦",      fmt: "pt",  min: 1,     max: 3,    w: { armor: 3, weapon: 0, accessory: 0.5 }, pre: "玄甲", suf: "鎮岳" },
+    { key: "eva",     label: "閃避",      fmt: "pt",  min: 1,     max: 2,    w: { accessory: 3, weapon: 0.5 },          pre: "流雲", suf: "無影" },
+    { key: "mdef",    label: "魔防",      fmt: "pt",  min: 2,     max: 5, only: "accessory", w: { accessory: 2 },      pre: "護魂", suf: "辟邪" },   // 2026-10-03（第 66 節第 4 期 A）：只出在飾品，像《天堂2》首飾給魔防
+    { key: "ice",     label: "冰傷",      fmt: "pt",  min: 2,     max: 5,    w: { weapon: 2, armor: 0.3 },              pre: "寒霜", suf: "冰魄" },
+    { key: "fire",    label: "火傷",      fmt: "pt",  min: 2,     max: 5,    w: { weapon: 2, armor: 0.3 },              pre: "赤焰", suf: "焚天" },
+    { key: "poison",  label: "毒傷",      fmt: "pt",  min: 2,     max: 5,    w: { weapon: 2, armor: 0.3 },              pre: "幽毒", suf: "萬蠱" },
+    { key: "metal",   label: "金傷",      fmt: "pt",  min: 2,     max: 5,    w: { weapon: 2, armor: 0.3 },              pre: "鋒銳", suf: "裂金" },
+    { key: "thunder", label: "雷傷",      fmt: "pt",  min: 2,     max: 5,    w: { weapon: 2, armor: 0.3 },              pre: "雷霆", suf: "九霄" },
+    { key: "fx:法爆", label: "技能傷害",   fmt: "pct", min: 0.02,  max: 0.05, w: { weapon: 2, armor: 0.3 },              pre: "玄法", suf: "天罡" },
+    { key: "fx:剋敵", label: "剋制傷害",   fmt: "pct", min: 0.02,  max: 0.05, w: { weapon: 2, armor: 0.3 },              pre: "伏魔", suf: "誅邪" },
+    { key: "fx:回春", label: "每回合回血", fmt: "pct", min: 0.003, max: 0.008, w: { armor: 2, weapon: 0.3 },            pre: "回春", suf: "生生" },
+    { key: "fx:回靈", label: "每回合回靈", fmt: "pct", min: 0.005, max: 0.01, w: { accessory: 2, weapon: 0.5 },          pre: "凝神", suf: "歸元" },
+    { key: "fx:噬魂", label: "擊殺回血",   fmt: "pct", min: 0.01,  max: 0.02, w: { weapon: 1.5, armor: 0.5 },            pre: "嗜血", suf: "噬魂" },
+    { key: "fx:聚財", label: "靈石",       fmt: "pct", min: 0.02,  max: 0.06, w: { accessory: 2, weapon: 0.5, armor: 0.5 }, pre: "招財", suf: "聚寶" },
+    { key: "fx:悟道", label: "修為",       fmt: "pct", min: 0.01,  max: 0.03, w: { accessory: 2, weapon: 0.5, armor: 0.5 }, pre: "悟道", suf: "明心" },
+    { key: "fx:積德", label: "功德",       fmt: "pct", min: 0.03,  max: 0.08, w: { accessory: 2, weapon: 0.5, armor: 0.5 }, pre: "積善", suf: "功德" },
+    { key: "fx:尋鐵", label: "星允鐵",     fmt: "pct", min: 0.03,  max: 0.08, w: { accessory: 1.5, weapon: 0.5 },        pre: "尋寶", suf: "天工" },
+    { key: "fx:獸魂", label: "靈寵傷害",   fmt: "pct", min: 0.03,  max: 0.08, w: { accessory: 1.5, armor: 0.5 },          pre: "御獸", suf: "百獸" }
 ];
+
+// ---- 詞綴分級（天地玄黃凡，2026-10-03 第 67 節 D1）：數值 = 原本的隨機值 × 品級係數 × 分級倍率 ----
+//   能抽到哪幾級由裝備等級決定（GEAR_SUB_TIER_WEIGHTS，[天, 地, 玄, 黃, 凡] 的權重）；平均倍率 Lv.<100 約 0.80、100～ 0.89、500～ 0.96、1000～ 1.01、2500～ 1.07，
+//   整體平均與改版前（固定 1）相近，高等裝備才有機會出「天」級。沒有裝備等級的（舊千寶閣商品）視同 GEAR_SUB_TIER_NOLEVEL。
+const GEAR_SUB_TIERS = [
+    { id: 1, name: "天", mult: 1.3,  color: "#fbbf24" },
+    { id: 2, name: "地", mult: 1.15, color: "#c084fc" },
+    { id: 3, name: "玄", mult: 1.0,  color: "#38bdf8" },
+    { id: 4, name: "黃", mult: 0.85, color: "#4ade80" },
+    { id: 5, name: "凡", mult: 0.7,  color: "#9ca3af" }
+];
+const GEAR_SUB_TIER_WEIGHTS = [
+    { minLv: 0,    w: [0, 0, 15, 35, 50] },
+    { minLv: 100,  w: [0, 10, 30, 35, 25] },
+    { minLv: 500,  w: [5, 20, 35, 25, 15] },
+    { minLv: 1000, w: [10, 25, 35, 20, 10] },
+    { minLv: 2500, w: [20, 30, 30, 15, 5] }
+];
+const GEAR_SUB_TIER_NOLEVEL = 500;
 
 // ---- 強化 ----
 // 每 +1：該裝備四維 +ENHANCE_STAT_PER_LEVEL（+20 = 兩倍）；減傷／閃避／屬性傷害、隨機詞條不變
@@ -58,6 +81,53 @@ const EVOLVE_NAME_PREFIX = "先天・";
 const DECOMPOSE_SHARDS = { "白色": 10, "綠色": 20, "藍色": 40, "紫色": 80 };
 const SHARDS_PER_IRON = 500;
 const DECOMPOSE_IRON = { "橙色": 3, "白金": 15 };
+// 分解另得洗煉石（第 67 節 D2）
+const DECOMPOSE_REFINE = { "紫色": 1, "橙色": 2, "白金": 10 };
+
+// ---- 洗煉（暗黑式附魔重鑄，第 67 節 D2）：選一條詞條重擲，從「保留原本＋REFINE_CANDIDATES 條新的」三選一 ----
+//   同一件裝備第一次洗煉後就鎖定那一條（之後只能洗那一條）；費用：洗煉石 REFINE_STONE_BASE ＋ 已洗次數（最多 REFINE_STONE_MAX）＋ 靈石 H × REFINE_COINS_HOURS
+//   洗煉石來源：分解（DECOMPOSE_REFINE）、鎮魔塔每層 BOSS（REFINE_ZHENMO：1 ＋ 樓層 ÷ 20，× 問答倍率）
+const REFINE_CANDIDATES = 2;
+const REFINE_STONE_BASE = 1;
+const REFINE_STONE_MAX = 10;
+const REFINE_COINS_HOURS = 0.5;
+const REFINE_ZHENMO = { base: 1, perFloors: 20 };
+
+// ---- 遠古／太古（第 67 節 D3）：橙色裝備產生時擲一次；進化成白金、洗煉都保留 ----
+//   遠古：詞條至少「地」級（minTier 2）、四維 ×1.1；太古：詞條全部「天」級且取上限（maxRoll）、多 1 條詞條、四維 ×1.2
+const GEAR_ANCIENT = {
+    1: { name: "遠古", chance: 0.02,  minTier: 2, statMult: 1.1, extraSubs: 0, cls: "eq-ancient" },
+    2: { name: "太古", chance: 0.002, minTier: 1, maxRoll: true, statMult: 1.2, extraSubs: 1, cls: "eq-primal" }
+};
+const GEAR_ANCIENT_QUALITY = "橙色";
+
+// ---- 傳奇威能（只出在白金，第 67 節 D4）：橙色 +20 進化成白金時隨機帶一個；舊白金讀檔時補一個（save.js 的 migrateGearLegends）----
+//   bonus 併入 gear.js 的 getBonusTotals（fx:特效名 不受特效上限、special:套裝特殊效果、def／eva／屬性傷害／mdef／hpPct 等），所以效果都走既有的實作
+//   重抽：強化視窗「🌟 重塑威能」花 LEGEND_REROLL_STONES 洗煉石 ＋ 靈石 H × LEGEND_REROLL_COINS_HOURS
+const LEGEND_REROLL_STONES = 20;
+const LEGEND_REROLL_COINS_HOURS = 2;
+const GEAR_LEGENDS = [
+    { id: "wanjian",  name: "萬劍歸宗", icon: "🗡️", desc: "施展技能時 15% 機率再連發一次；技能傷害 +10%", bonus: { "special:echo": 1, "fx:法爆": 0.10 } },
+    { id: "bumie",    name: "不滅金身", icon: "🛡️", desc: "受到致命傷時保留 1 點氣血（每波一次）；氣血上限 +8%", bonus: { "special:undying": 1, hpPct: 0.08 } },
+    { id: "jinghua",  name: "鏡花水月", icon: "🌙", desc: "閃避後下一擊傷害 +30%；閃避 +6", bonus: { "special:dodgeStrike": 1, eva: 6 } },
+    { id: "tiangang", name: "天罡之怒", icon: "💥", desc: "普攻 15% 機率對全體造成物理攻擊 ×1.5；攻擊 +5%", bonus: { "special:rage": 1, atkPct: 0.05 } },
+    { id: "xuanlei",  name: "九天玄雷", icon: "⚡", desc: "雷傷 +10%；雷擊時再劈另一名敵人 ×1.0", bonus: { thunder: 10, "fx:連雷": 1.0 } },
+    { id: "hanyu",    name: "九幽寒獄", icon: "❄️", desc: "冰傷 +10%；對凍結中的敵人傷害 +30%", bonus: { ice: 10, "fx:寒徹": 0.30 } },
+    { id: "yehuo",    name: "焚天業火", icon: "🔥", desc: "火傷 +10%；燒傷傷害 +60%", bonus: { fire: 10, "fx:焚燼": 0.60 } },
+    { id: "wandu",    name: "萬毒歸宗", icon: "☠️", desc: "毒傷 +10%；中毒傷害 +60%；中毒疊滿時引爆 ×1.0", bonus: { poison: 10, "fx:蝕骨": 0.60, "fx:毒爆": 1.0 } },
+    { id: "pojun",    name: "破軍殺伐", icon: "⚔️", desc: "攻擊時無視目標 20 減傷；對氣血低於 20% 的敵人傷害 +40%", bonus: { "fx:破甲": 20, "fx:斬殺": 0.40 } },
+    { id: "tianyan",  name: "天眼通",   icon: "👁️", desc: "命中 +12（無視閃避）；10% 機率追加一次攻擊", bonus: { "fx:洞察": 12, "fx:追擊": 0.10 } },
+    { id: "xuehai",   name: "血海魔功", icon: "🩸", desc: "造成傷害的 6% 轉為氣血；擊殺回復 6% 氣血", bonus: { "fx:吸血": 0.06, "fx:噬魂": 0.06 } },
+    { id: "taiyi",    name: "太乙回春", icon: "🌿", desc: "每回合回復 2% 氣血與 2% 靈力", bonus: { "fx:回春": 0.02, "fx:回靈": 0.02 } },
+    { id: "jingang",  name: "金剛不壞", icon: "🏯", desc: "防禦 +15；受到物理傷害 −10%", bonus: { def: 15, "fx:金身": 0.10 } },
+    { id: "huhun",    name: "化神護魂", icon: "🔮", desc: "魔防 +20；受到術法傷害 −10%", bonus: { mdef: 20, "fx:化勁": 0.10 } },
+    { id: "xianfa",   name: "先發制人", icon: "🏹", desc: "每波第一擊傷害 +60%；氣血高於 80% 時傷害 +15%", bonus: { "fx:首擊": 0.60, "fx:燃魂": 0.15 } },
+    { id: "jifeng",   name: "疾風迅雷", icon: "🌪️", desc: "8% 機率本回合再出手；8% 機率追加一次攻擊", bonus: { "fx:疾風": 0.08, "fx:追擊": 0.08 } },
+    { id: "wuxing",   name: "五行輪轉", icon: "☯️", desc: "五行剋制時傷害再 +30%", bonus: { "fx:剋敵": 0.30 } },
+    { id: "wanshou",  name: "萬獸朝宗", icon: "🐉", desc: "靈寵傷害 +40%", bonus: { "fx:獸魂": 0.40 } },
+    { id: "zhaocai",  name: "招財進寶", icon: "💰", desc: "野外靈石 +20%；裝備掉落率 +30%", bonus: { "fx:聚財": 0.20, "fx:奪寶": 0.30 } },
+    { id: "wudao",    name: "悟道通天", icon: "📿", desc: "修為獲得 +10%；藏書閣屬性秘典效果 +30%", bonus: { "fx:悟道": 0.10, "fx:通玄": 0.30 } }
+];
 
 // ---- 暫存區：背包滿時新掉落的橙色以上放這裡；滿了不能外出練功 ----
 const GEAR_STASH_MAX = 50;
@@ -73,3 +143,27 @@ const IRON_AUCTION_PRICE = 300000;               // 每顆靈石
 const IRON_BAG_CHANCE = 0.05;                    // 千寶閣每格上架「星允鐵袋」的機率
 const IRON_BAG_AMOUNT = [10, 30];
 const IRON_BAG_PRICE = { coins: 400000, rep: 20 };   // 每顆
+
+// ---- 做裝通貨（精簡版 POE，第 69 節；使用者 2026-10-03 定案難度「C 偏難」＝原提案掉率 ×0.5）----
+//   存檔 player.craftCur = { tianji, hunyuan, poxu, zaohua }；field＝野外每隻（實際擊殺數）掉 1 顆的機率，離線／背景同規則
+//   每次使用另扣 靈石 H × CRAFT_COINS_HOURS；入魔封印的裝備不能再做裝（含洗煉）
+const CRAFT_CURRENCIES = {
+    tianji:  { name: "天機石", icon: "🔷", desc: "整件詞綴重擲品級與數值（詞綴種類不變）", field: 1 / 4000 },
+    hunyuan: { name: "混元晶", icon: "💠", desc: "整件詞綴全部重洗（種類、品級、數值，條數不變）", field: 1 / 8000 },
+    poxu:    { name: "破虛石", icon: "⚫", desc: "隨機刪掉一條詞綴（之後 24 小時這件不能加詞綴）", field: 1 / 20000 },
+    zaohua:  { name: "造化玉", icon: "🔮", desc: "新增一條隨機詞綴（不超過品質上限）", field: 1 / 80000 }
+};
+const CRAFT_CUR_KEYS = ["tianji", "hunyuan", "poxu", "zaohua"];
+const CRAFT_COINS_HOURS = 0.5;
+const CRAFT_POXU_LOCK_MS = 24 * 3600 * 1000;      // 破虛石後多久不能用造化玉／鍛紋台
+const CRAFT_FORGE = { stones: 50, zaohua: 2 };     // 鍛紋台：指定加一條詞綴（品級隨機），每件限一次
+// 入魔淬煉：每件限一次；15% 走火入魔（一條詞綴降一級＋封印，之後不能再做裝；裝備不會消失）
+const CRAFT_CORRUPT = { stones: 20, hunyuan: 1, big: 0.30, small: 0.30, none: 0.25 };   // 剩下 0.15 為走火入魔
+// 其他來源（已含 ×0.5）：鎮魔塔每層 BOSS 天機石 10%、30 層起混元晶 15%、樓主層（每 10 層）破虛石 50%、50 層起樓主層造化玉 12.5%（皆 × 問答倍率，最高 100%）
+//   守城每 20 波 1 顆混元晶；分解橙裝 5% 天機石、分解太古裝 1 顆造化玉
+const CRAFT_DROPS = {
+    zhenmo: { tianji: 0.10, hunyuanFrom: 30, hunyuan: 0.15, poxuGate: 0.5, zaohuaFrom: 50, zaohuaGate: 0.125 },
+    defenseHunyuanEvery: 20,
+    decomposeTianji: { "橙色": 0.05 },
+    decomposePrimalZaohua: 1
+};

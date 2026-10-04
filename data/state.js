@@ -37,6 +37,13 @@ let player = {
     fieldKills: 0,               // 累計野外擊殺（情緣任務用）
     // 裝備系統（第 37 節）
     starIron: 0,                 // 星允鐵：強化／進化用（enhance.js）
+    refineStones: 0,             // 洗煉石：洗煉裝備詞條用（enhance.js，第 67 節 D2）
+    craftCur: { tianji: 0, hunyuan: 0, poxu: 0, zaohua: 0 },
+    lingStones: { "金": 0, "木": 0, "水": 0, "火": 0, "土": 0 },   // 五行傳送陣靈石：進出靈界各要一套（lingjie.js，第 74 節）
+    inLingjie: false,
+    lingQuests: null,            // 靈界任務榜（天元城）：{ date, list }（lingjie.js）            // 身在靈界（飛升後；回人界要再付一套）   // 做裝通貨：天機石／混元晶／破虛石／造化玉（craft.js，第 69 節）
+    talents: {},                 // 天賦樹：{ 節點 id: 點數 }（talent.js，第 68 節）
+    talentRespecs: 0,            // 天賦已重置次數
     ironShards: 0,               // 碎鐵：分解白～紫取得，每 SHARDS_PER_IRON 個自動合成 1 顆星允鐵
     gearStash: [],               // 暫存區：背包滿時新掉落的橙色以上裝備（上限 GEAR_STASH_MAX，滿了不能外出練功）
     ironShop: null,              // 千寶閣星允鐵每日限購 { date, bought }
@@ -85,6 +92,7 @@ let player = {
     auctionItems: [],            // 千寶閣當期 5 件商品
     auctionRefreshAt: 0,         // 千寶閣下次上架的時間戳
     idleProvenMap: null,         // 線上實際撐過 IDLE_PROVEN_SECONDS 秒的野外地圖名稱；背景／離線結算信任此圖打得過（被妖獸打死時清除）
+    wboss: { claimed: [], titles: [] },   // 世界 Boss（world-boss.js，第 75 節）：已領獎的 bid（最近 20 隻）、名次稱號 id
     paidRefresh: {},             // 今日付費刷新次數 { date: 當地日期字串, auction, bounty }（activity.js 的 getPaidRefreshState）
     autoHp: { enabled: false, threshold: 50 },
     autoMp: { enabled: false, threshold: 30 },

@@ -70,8 +70,14 @@ const Encounter = (() => {
         if (!tail.every((r, i) => r.n === want[i])) return false;
         return tail[tail.length - 1].t - tail[0].t <= ENCOUNTER_ROUTE.routeMinutes * 60000;
     }
+    // 目前的奇遇＝人界機緣（2026-10-04 使用者：「目前機緣設定人界機緣，靈界的另外設定」）：靈界分類（LINGJIE_MAP_CATEGORIES）的地圖不觸發
+    function isLingjieMap(map) {
+        if (typeof LINGJIE_MAP_CATEGORIES === 'undefined' || !map) return false;
+        return LINGJIE_MAP_CATEGORIES.some(c => maps[c] && maps[c].items.some(m => m.name === map.name));
+    }
     function onMapChange(map, isSafe) {
         if (typeof player === 'undefined' || !player || !map) return;
+        if (isLingjieMap(map)) return;
         const s = st();
         expire();
         const now = Date.now();
@@ -105,6 +111,7 @@ const Encounter = (() => {
         const out = [];
         maps.forEach((cat, c) => cat.items.forEach((m, i) => {
             if (m.hidden || !!cat.isSafe !== safe) return;
+            if (typeof LINGJIE_MAP_CATEGORIES !== 'undefined' && LINGJIE_MAP_CATEGORIES.includes(c)) return;   // 機緣任務只指定人界地圖
             if (safe && !ENCOUNTER_TOWN.maps.includes(m.name)) return;
             if (!safe && typeof getMapEntryBlock === 'function' && getMapEntryBlock(c, i)) return;
             out.push(m.name);

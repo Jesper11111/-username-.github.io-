@@ -7,6 +7,8 @@ let mbMails = [];            // 目前可領的信（未過期、未領）
 let mbLoading = false;
 let mbError = "";
 let mbLastRefresh = 0;
+let mbDeletedIds = new Set();   // 這次開遊戲已嘗試刪除的過期信（每封只試一次）
+let mbCheckedIds = new Set();   // 這次開遊戲已到雲端確認過「還沒領」的信（2026-10-04 節省 Firebase 讀取額度：不再每 30 分鐘重讀一次領取紀錄）
 
 function isMailboxAvailable() {
     return isLeaderboardConfigured();
@@ -21,10 +23,17 @@ async function refreshMailbox(force) {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         const snap = await lbWithTimeout(db.collection(MAIL_COLLECTION).where('to', 'in', ['all', uid]).get());
         const now = Date.now(), claimed = new Set(player.mailClaimed || []);
-        const list = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
-            .filter(m => !claimed.has(m.id) && !(m.expiresAt && m.expiresAt.toMillis && m.expiresAt.toMillis() < now));
+        const all = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 過期（隔日）的信順手刪除，之後所有玩家都不必再讀到它；規則還沒發布新版時會被拒絕，忽略即可
+        all.filter(m => isMailExpired(m, now) && !mbDeletedIds.has(m.id)).forEach(m => {
+            mbDeletedIds.add(m.id);
+            db.collection(MAIL_COLLECTION).doc(m.id).delete().catch(() => {});
+        });
+        const list = all.filter(m => !claimed.has(m.id) && !isMailExpired(m, now));
         // 本機沒有領取紀錄的（換過瀏覽器、清過資料），再到雲端確認一次
-        const checks = await Promise.all(list.map(m => db.collection(MAIL_CLAIMS_COLLECTION).doc(`${uid}_${m.id}`).get().then(s => s.exists).catch(() => false)));
+        //   （同一次開遊戲只查一次；在這台裝置領取會寫進 mailClaimed，不必重查）
+        const checks = await Promise.all(list.map(m => mbCheckedIds.has(m.id) ? false
+            : db.collection(MAIL_CLAIMS_COLLECTION).doc(`${uid}_${m.id}`).get().then(s => { if (!s.exists) mbCheckedIds.add(m.id); return s.exists; }).catch(() => false)));
         list.forEach((m, i) => { if (checks[i]) markMailClaimed(m.id); });
         const before = new Set(mbMails.map(m => m.id));
         mbMails = list.filter((m, i) => !checks[i]).sort((a, b) => mbTime(b.createdAt) - mbTime(a.createdAt));
@@ -33,7 +42,7 @@ async function refreshMailbox(force) {
         else if (fresh.length) addLog(`📮 仙府信箱有 ${mbMails.length} 封信待領取（右上 ⚙️ 設定 →「📮 仙府信箱」）`, "system");
         mbLastRefresh = Date.now();
     } catch (e) {
-        mbError = e && e.code === 'permission-denied' ? '信箱尚未開放（伺服器設定更新中）' : '連線失敗，請稍後再試';
+        mbError = e && e.code === 'permission-denied' ? '信箱尚未開放（伺服器設定更新中）' : (lbIsQuota(e) || await lbProbeQuota()) ? LB_QUOTA_MSG : '連線失敗，請稍後再試';
         console.warn("仙府信箱讀取失敗：", e);
     } finally {
         mbLoading = false;
@@ -41,6 +50,13 @@ async function refreshMailbox(force) {
         if (document.getElementById('mailbox-modal').style.display === 'flex') renderMailbox();
     }
 }
+// 信件過期：expiresAt 已過，或寄出超過 MAIL_LIFETIME_HOURS（舊的永久信也一樣隔日過期）
+function mailExpireAt(m) {
+    const exp = m.expiresAt && m.expiresAt.toMillis ? m.expiresAt.toMillis() : Infinity;
+    const born = m.createdAt && m.createdAt.toMillis ? m.createdAt.toMillis() + MAIL_LIFETIME_HOURS * 3600000 : Infinity;
+    return Math.min(exp, born);
+}
+function isMailExpired(m, now) { return mailExpireAt(m) < (now || Date.now()); }
 // 信件／兌換碼的獎勵格式比這版遊戲新（GM 寄出時寫入 v，config-mailbox.js 的 MAIL_SCHEMA_VERSION）
 function isMailTooNew(m) {
     return Number(m && m.v || 1) > MAIL_SCHEMA_VERSION;
@@ -53,7 +69,9 @@ function markMailClaimed(id) {
 function startMailboxSync() {
     if (!isMailboxAvailable()) return;
     setTimeout(() => refreshMailbox(true), LEADERBOARD_FIRST_UPLOAD_DELAY_MS + 5000);
-    setInterval(() => refreshMailbox(true), MAIL_REFRESH_MS);
+    // 分頁在背景（切到其他分頁、App 縮小）時不定時讀信，回到前景再補讀（節省 Firebase 讀取額度）
+    setInterval(() => { if (!document.hidden) refreshMailbox(true); }, MAIL_REFRESH_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - mbLastRefresh >= MAIL_REFRESH_MS) refreshMailbox(true); });
 }
 
 // ---- 獎勵 ----
@@ -72,6 +90,8 @@ function formatMailRewards(r) {
     const rd = apt.root && describeRoot(apt.root), pd = apt.physique && describePhysique(apt.physique);
     if (rd) parts.push(`⛩️ 先天靈根【${rd.name}】`);
     if (pd) parts.push(`⛩️ 先天體質【${pd.name}】`);
+    if (r.gm === true) parts.push('🛡️ GM 權限（任意進出地圖）');
+    if (r.gm === false) parts.push('🛡️ 撤銷 GM 權限');
     return parts.join('、') || '（無獎勵）';
 }
 function countMailServants(r) {
@@ -83,8 +103,11 @@ function checkMailRewardSpace(r) {
     if (n && (player.servants || []).length + n > MAX_SERVANTS) return `僕從小屋空位不足（需要 ${n} 個，上限 ${MAX_SERVANTS} 名），請先解僱一些僕從再領取。`;
     return '';
 }
-function grantMailRewards(r) {
+// personal＝寄給個人的信（GM 權限只認個人信；全服信、兌換碼、奇遇都不會改 GM）
+function grantMailRewards(r, personal) {
     r = r || {};
+    // GM 權限（map.js 的 isGM，第 74 節）：GM 後台寄個人信 rewards.gm = true 授予、false 撤銷
+    if (personal && typeof r.gm === 'boolean') player.gm = r.gm;
     MAIL_REWARD_FIELDS.forEach(f => { const n = mbAmount(r[f.key]); if (n) player[f.field] = (player[f.field] || 0) + n; });
     if (mbAmount(r.merit)) settleMeritStones();   // 功德滿額自動凝結七彩補天石
     Object.entries(r.blueprints || {}).forEach(([k, n]) => {
@@ -114,9 +137,9 @@ function createMailServant(quality) {
 async function claimMail(id) {
     const m = mbMails.find(x => x.id === id);
     if (!m) return;
-    if (isMailTooNew(m)) { alert('這封信的獎勵需要新版遊戲才能領取。\n請重新整理頁面（電腦按 Ctrl＋F5）後再領，信件會保留。'); return; }
+    if (isMailTooNew(m)) { gameAlert('這封信的獎勵需要新版遊戲才能領取。\n請重新整理頁面（電腦按 Ctrl＋F5）後再領，信件會保留。'); return; }
     const space = checkMailRewardSpace(m.rewards);
-    if (space) { alert(space); return; }
+    if (space) { gameAlert(space); return; }
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         // 規則：只能建立一次（已存在會變成「更新」而被拒絕）
@@ -128,12 +151,12 @@ async function claimMail(id) {
         if (e && e.code === 'permission-denied') {   // 已領過（或信件已過期、被刪除）
             markMailClaimed(id);
             mbMails = mbMails.filter(x => x.id !== id);
-            alert('這封信已經領取過，或已過期失效。');
-        } else alert('連線失敗，請稍後再試。');
+            gameAlert('這封信已經領取過，或已過期失效。');
+        } else gameAlert('連線失敗，請稍後再試。');
         renderMailbox(); updateMailboxBadge();
         return;
     }
-    grantMailRewards(m.rewards);
+    grantMailRewards(m.rewards, m.to !== 'all');
     markMailClaimed(id);
     mbMails = mbMails.filter(x => x.id !== id);
     addLog(`📮 領取信件【${m.title || '仙府來信'}】：${formatMailRewards(m.rewards)}`, "level-up", false, "item");
@@ -150,25 +173,25 @@ async function redeemCode() {
     const input = document.getElementById('redeem-code-input');
     const code = normalizeRedeemCode(input && input.value);
     if (!code) return;
-    if (!/^[A-Z0-9_-]{3,40}$/.test(code)) { alert('兌換碼格式不正確（英文、數字、- 或 _，3～40 字）。'); return; }
+    if (!/^[A-Z0-9_-]{3,40}$/.test(code)) { gameAlert('兌換碼格式不正確（英文、數字、- 或 _，3～40 字）。'); return; }
     let db, uid, info;
     try {
         ({ db, uid } = await lbWithTimeout(initLeaderboardBackend()));
         const snap = await lbWithTimeout(db.collection(CODE_COLLECTION).doc(code).get());
-        if (!snap.exists) { alert('兌換碼無效。'); return; }
+        if (!snap.exists) { gameAlert('兌換碼無效。'); return; }
         info = snap.data();
-    } catch (e) { console.warn(e); alert(e && e.code === 'permission-denied' ? '兌換碼功能尚未開放。' : '連線失敗，請稍後再試。'); return; }
-    if (info.expiresAt && info.expiresAt.toMillis && info.expiresAt.toMillis() < Date.now()) { alert('此兌換碼已過期。'); return; }
-    if (isMailTooNew(info)) { alert('這組兌換碼的獎勵需要新版遊戲才能兌換。\n請重新整理頁面（電腦按 Ctrl＋F5）後再輸入。'); return; }
+    } catch (e) { console.warn(e); gameAlert(e && e.code === 'permission-denied' ? '兌換碼功能尚未開放。' : '連線失敗，請稍後再試。'); return; }
+    if (info.expiresAt && info.expiresAt.toMillis && info.expiresAt.toMillis() < Date.now()) { gameAlert('此兌換碼已過期。'); return; }
+    if (isMailTooNew(info)) { gameAlert('這組兌換碼的獎勵需要新版遊戲才能兌換。\n請重新整理頁面（電腦按 Ctrl＋F5）後再輸入。'); return; }
     const space = checkMailRewardSpace(info.rewards);
-    if (space) { alert(space); return; }
+    if (space) { gameAlert(space); return; }
     try {
         await lbWithTimeout(db.collection(CODE_CLAIMS_COLLECTION).doc(`${uid}_${code}`).set({
             uid, code, at: firebase.firestore.FieldValue.serverTimestamp()
         }));
     } catch (e) {
         console.warn(e);
-        alert(e && e.code === 'permission-denied' ? '此兌換碼你已經兌換過了。' : '連線失敗，請稍後再試。');
+        gameAlert(e && e.code === 'permission-denied' ? '此兌換碼你已經兌換過了。' : '連線失敗，請稍後再試。');
         return;
     }
     grantMailRewards(info.rewards);
@@ -176,7 +199,7 @@ async function redeemCode() {
     if (input) input.value = '';
     saveLocal();
     updateUI();
-    alert(`兌換成功！\n${formatMailRewards(info.rewards)}`);
+    gameAlert(`兌換成功！\n${formatMailRewards(info.rewards)}`);
 }
 
 // ---- 畫面 ----
@@ -195,7 +218,7 @@ function renderMailbox() {
             <h3 style="margin:0 0 4px; color: var(--accent);">📜 ${lbEscape(m.title || '仙府來信')}</h3>
             ${m.body ? `<p style="font-size:0.85em; color:#e5e7eb; white-space:pre-wrap; margin:4px 0;">${lbEscape(m.body)}</p>` : ''}
             <p style="font-size:0.85em; color:#facc15; margin:4px 0;">${lbEscape(formatMailRewards(m.rewards))}</p>
-            <p style="font-size:0.75em; color:#6b7280; margin:2px 0;">${m.to === 'all' ? '全服信件' : '個人信件'}${m.expiresAt && m.expiresAt.toMillis ? `｜${new Date(m.expiresAt.toMillis()).toLocaleDateString('zh-TW')} 前領取` : ''}</p>
+            <p style="font-size:0.75em; color:#6b7280; margin:2px 0;">${m.to === 'all' ? '全服信件' : '個人信件'}${isFinite(mailExpireAt(m)) ? `｜${new Date(mailExpireAt(m)).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })} 前領取（逾時自動刪除）` : ''}</p>
             ${isMailTooNew(m) ? '<p style="font-size:0.8em; color:#f87171;">⚠️ 需要新版遊戲才能領取，請重新整理頁面（Ctrl＋F5）</p>' : ''}
             <button class="sys-btn" onclick="claimMail('${lbEscape(m.id)}')">🎁 領取</button>
         </div>`).join('');

@@ -87,7 +87,7 @@ const pureRootEffects = {
     "火": { name: "炎共鳴", icon: "🔥", effect: "火傷 +25%、燒傷可疊 4 層", bonus: { fire: 25, burnMax: 4 } },
     "金": { name: "罡共鳴", icon: "⚔️", effect: "金傷 +25%", bonus: { metal: 25 } },
     "木": { name: "生共鳴", icon: "🌿", effect: "戰鬥中每回合回復最大氣血 3%", bonus: { regen: 0.03 } },
-    "土": { name: "岩共鳴", icon: "🛡️", effect: "減傷 +10%", bonus: { def: 10 } }
+    "土": { name: "岩共鳴", icon: "🛡️", effect: "防禦 +10", bonus: { def: 10 } }
 };
 
 // 雙屬性共鳴：1 套五行 + 兩個屬性各剩餘 5 件。key 為兩屬性依 wuxingElements 排序後以 "+" 相連。
@@ -99,19 +99,19 @@ const dualRootEffects = {
     }},
     "金+木": { name: "庚共鳴", icon: "⚔️", effect: "金傷 +20%、攻擊 +10%", bonus: { metal: 20, atkMult: 1.1 } },
     "金+火": { name: "煉共鳴", icon: "⚔️", effect: "金傷 +20%、技能傷害 +10%", bonus: { metal: 20, skillMult: 1.1 } },
-    "金+土": { name: "鋒岩共鳴", icon: "🛡️", effect: "減傷 +8%、金傷 +15%", bonus: { def: 8, metal: 15 } },
+    "金+土": { name: "鋒岩共鳴", icon: "🛡️", effect: "防禦 +8、金傷 +15%", bonus: { def: 8, metal: 15 } },
     "木+水": { name: "榮共鳴", icon: "🌿", effect: "每回合回復 2%、氣血上限 +10%", bonus: { regen: 0.02, hpMult: 1.1 } },
     "木+火": { name: "焚共鳴", icon: "🔥", effect: "火傷 +20%、攻擊 +10%", bonus: { fire: 20, atkMult: 1.1 } },
     "木+土": { name: "蠱共鳴", icon: "☠️", effect: "毒傷 +20%、中毒可疊 7 層", bonus: { poison: 20, poisonMax: 7 } },
     "水+火": { name: "既濟共鳴", icon: "❄️", effect: "冰傷、火傷各 +15%", bonus: { ice: 15, fire: 15 } },
     "水+土": { name: "瘴共鳴", icon: "☠️", effect: "毒傷 +20%、氣血上限 +10%", bonus: { poison: 20, hpMult: 1.1 } },
-    "火+土": { name: "熔共鳴", icon: "🔥", effect: "火傷 +20%、減傷 +8%", bonus: { fire: 20, def: 8 } }
+    "火+土": { name: "熔共鳴", icon: "🔥", effect: "火傷 +20%、防禦 +8", bonus: { fire: 20, def: 8 } }
 };
 
 // 五行聖共鳴：3 套完整五行（15 件），剩下 2 件不論屬性
 const supremeRootEffect = {
     name: "五行聖共鳴", icon: "☯️",
-    effect: "全屬性傷害 +15%、減傷 +15%、攻擊 +30%，且不受五行相剋影響",
+    effect: "全屬性傷害 +15%、防禦 +15、攻擊 +30%，且不受五行相剋影響",
     bonus: { ice: 15, fire: 15, poison: 15, metal: 15, thunder: 15, def: 15, atkMult: 1.3, ignoreCounter: true }
 };
 

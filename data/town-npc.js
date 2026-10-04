@@ -92,24 +92,156 @@ function talkToScheduledFigure(id) {
 // 進城時擲骰（town.js 的 openTownScene 呼叫）
 function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];
+    stopTownNpcClock();
     const scene = townScenes[sceneName];
-    for (const npc of (scene && scene.hiddenNpcs) || []) {
-        if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
-        townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
-        return;
+    const list = ((scene && scene.hiddenNpcs) || []).filter(npc => npc.enabled !== false);   // 暫時隱藏（config-towns.js 的 enabled: false）
+    for (const npc of list) if (trySpawnTownNpc(sceneName, npc)) return;
+    // 有定時出現的 NPC（window）：待在城裡時每 30 秒檢查一次，時段一到就現身
+    if (list.some(npc => npc.window)) townNpcClock = setInterval(() => {
+        if (typeof currentTownScene === 'undefined' || currentTownScene !== sceneName) { stopTownNpcClock(); return; }
+        if (townNpcSpots[sceneName]) return;
+        for (const npc of list) if (npc.window && trySpawnTownNpc(sceneName, npc)) {
+            if (currentTownView) renderTownHotspots(currentTownView);
+            setTimeout(() => startNpcWhispers(sceneName), 0);
+            return;
+        }
+    }, 30000);
+}
+let townNpcClock = null, townNpcHideTimer = null;
+function stopTownNpcClock() { clearInterval(townNpcClock); townNpcClock = null; clearTimeout(townNpcHideTimer); townNpcHideTimer = null; }
+// 當日（日曆日）線上野外擊殺數：combat.js 每波擊殺後呼叫 addTodayFieldKills；存 player.dayKills = { date, n }（用到才建立）
+function getTodayFieldKills() { const d = player.dayKills; return d && d.date === todayKey() ? (d.n || 0) : 0; }
+function addTodayFieldKills(n) {
+    if (!(n > 0)) return;
+    const t = todayKey();
+    if (!player.dayKills || player.dayKills.date !== t) player.dayKills = { date: t, n: 0 };
+    player.dayKills.n += n;
+}
+// 定時出現（npc.window = { everyMin, showMin }）：目前在不在出現時段；在＝回傳 { key: 這個時段的代號, leftMs: 還剩多久 }
+function getTownNpcWindow(w, now) {
+    const d = new Date(now || Date.now());
+    const m = d.getHours() * 60 + d.getMinutes(), pos = m % w.everyMin;
+    if (pos >= w.showMin) return null;
+    return { key: todayKey() + '#' + Math.floor(m / w.everyMin), leftMs: (w.showMin - pos) * 60000 - d.getSeconds() * 1000 - d.getMilliseconds() };
+}
+// 判斷一位隱藏 NPC 這次會不會出現；出現就放進 townNpcSpots 並回傳 true
+function trySpawnTownNpc(sceneName, npc) {
+    if (npc.minCha && getTotalCharm() < npc.minCha) return false;   // 魅力門檻（本身含丹藥＋裝備）
+    if (npc.minKillsToday && getTodayFieldKills() < npc.minKillsToday) return false;   // 當日線上擊殺門檻
+    if (isTownNpcDoneToday(npc.id)) return false;
+    let win = null;
+    if (npc.window) {
+        win = getTownNpcWindow(npc.window);
+        if (!win) return false;
+        // 一天只出現一次：今天已經在別的時段出現過就不再出現（同一個時段內離開再回來還在）
+        const seen = player.townNpcSeen && player.townNpcSeen[npc.id];
+        if (seen && seen.split('#')[0] === todayKey() && seen !== win.key) return false;
     }
+    if (Math.random() >= npc.chance) return false;
+    townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
+    if (win) {
+        if (!player.townNpcSeen || typeof player.townNpcSeen !== 'object') player.townNpcSeen = {};
+        player.townNpcSeen[npc.id] = win.key;
+        clearTimeout(townNpcHideTimer);
+        townNpcHideTimer = setTimeout(() => hideWindowTownNpc(sceneName, npc), win.leftMs);   // 時段結束就隱藏
+    }
+    if (npc.whispers) setTimeout(() => startNpcWhispers(sceneName), 0);   // 仙翁低語（openTownScene 之後才啟動）
+    return true;
+}
+// 定時 NPC 的時段結束：從畫面上消失（正在對話就關掉對話框；小遊戲玩到一半可以玩完，只是不會再回到對話）
+function hideWindowTownNpc(sceneName, npc) {
+    const hit = townNpcSpots[sceneName];
+    if (!hit || hit.npc !== npc) return;
+    const modal = document.getElementById('xianweng-modal');
+    if (modal && modal.style.display === 'flex' && modal.dataset.scene === sceneName) modal.style.display = 'none';
+    removeTownNpc(sceneName);
+    if (currentTownScene === sceneName) showToast(`🍃 ${(npc.lines && npc.lines.bye) || '仙翁飄然而去'}`);
 }
 
-// 目前要多畫的人偶（town.js 的 renderTownHotspots 併進 figures）；只畫在主圖上（hiddenNpcs 的座標是主圖像素）
+// 隱藏 NPC 在這張圖上的位置：主圖用擲到的 spot；手機直式圖（scene.portrait）用 npc.portraitSpot（沒有就不畫）
+function getTownNpcSpot(hit, sceneName, view) {
+    const scene = townScenes[sceneName];
+    if (view === scene) return hit.spot;
+    if (scene && view === scene.portrait) return hit.npc.portraitSpot || null;
+    return null;
+}
+function isTownPortraitView(sceneName, view) { const s = townScenes[sceneName]; return !!(s && s.portrait && view === s.portrait); }
+// 目前要多畫的人偶（town.js 的 renderTownHotspots 併進 figures）；主圖用 spots、直式圖用 portraitSpot
 function getTownNpcFigures(sceneName, view) {
+    const hit = townNpcSpots[sceneName], spot = hit && getTownNpcSpot(hit, sceneName, view);
+    if (!spot) return [];
+    // 函式名寫成字串字面值：建置（tools/build.js）才會把它們掛回 window（點人偶的 onclick 要用）
+    const fn = hit.npc.kind === 'xianweng' ? 'talkToXianweng' : 'talkToTownNpc';
+    // 仙翁：低語還沒聽完（whispers.unlockAfterAll）不能點；聽完加 awake（淡淡光暈提示可以點了）
+    const locked = hit.npc.whispers && hit.npc.whispers.unlockAfterAll && !hit.heardAll;
+    return [{ id: 'npc-' + hit.npc.id, name: locked ? '' : hit.npc.name, img: spot.img, rect: spot.rect, cls: 'town-npc' + (locked ? '' : hit.npc.whispers ? ' awake' : ''),
+        action: locked ? '' : `${fn}('${sceneName}')` }];
+}
+
+// NPC 的場景演出（例：隱藏仙翁垂釣＝竿、釣線、水面漣漪）：畫在人偶底下、不擋點擊；npc 沒有 fishing 就不畫
+// 低語（config-towns.js 的 whispers）：仙翁在場時頭頂偶爾浮出淡色小字、慢慢上飄消散；畫在 #town-chatter 層（與路人閒聊共用，不擋點擊）
+let npcWhisperTimer = null, npcWhisperLast = -1;
+function stopNpcWhispers() { clearTimeout(npcWhisperTimer); npcWhisperTimer = null; }
+function startNpcWhispers(sceneName) {
+    stopNpcWhispers();
+    const hit = townNpcSpots[sceneName], W = hit && hit.npc.whispers;
+    if (!W || !W.lines || !W.lines.length) return;
+    hit.whisperIdx = 0;
+    const tick = () => {
+        if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;   // 離開或仙翁已消失
+        showNpcWhisper(W, W.inOrder ? hit.whisperIdx % W.lines.length : null);
+        hit.whisperIdx++;
+        // 依序說完最後一句：解鎖對話（等最後一句飄完再亮起，重畫人偶讓它可以點）
+        if (W.unlockAfterAll && !hit.heardAll && hit.whisperIdx >= W.lines.length) {
+            setTimeout(() => {
+                if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;
+                hit.heardAll = true;
+                if (currentTownView) renderTownHotspots(currentTownView);
+            }, W.showMs || 6000);
+        }
+        npcWhisperTimer = setTimeout(tick, W.everyMs || 15000);
+    };
+    npcWhisperTimer = setTimeout(tick, W.firstMs != null ? W.firstMs : (W.everyMs || 15000));
+}
+function showNpcWhisper(W, idx) {
+    const stage = document.getElementById('town-scene-stage');
+    if (!stage || !currentTownView) return;
+    let box = document.getElementById('town-chatter');
+    if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
+    let i = idx != null ? idx : Math.floor(Math.random() * W.lines.length);   // inOrder：依序；否則隨機不連續重複
+    if (idx == null && W.lines.length > 1 && i === npcWhisperLast) i = (i + 1) % W.lines.length;
+    npcWhisperLast = i;
+    const el = document.createElement('div');
+    el.className = 'npc-whisper';
+    const at = isTownPortraitView(currentTownScene, currentTownView) ? W.portraitAt : W.at;   // 手機直式圖用 portraitAt
+    if (!at) return;
+    el.style.left = (at[0] / currentTownView.imgW * 100).toFixed(3) + '%';
+    el.style.top = (at[1] / currentTownView.imgH * 100).toFixed(3) + '%';
+    el.style.animationDuration = ((W.showMs || 6000) / 1000) + 's';
+    el.textContent = W.lines[i];
+    box.querySelectorAll('.npc-whisper').forEach(e => e.remove());
+    box.appendChild(el);
+    setTimeout(() => el.remove(), W.showMs || 6000);
+}
+
+function getTownNpcEffects(sceneName, view) {
     const hit = townNpcSpots[sceneName];
-    if (!hit || view !== townScenes[sceneName]) return [];
-    return [{ id: 'npc-' + hit.npc.id, name: hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc', action: `talkToTownNpc('${sceneName}')` }];
+    if (!hit || !getTownNpcSpot(hit, sceneName, view)) return '';
+    const F = isTownPortraitView(sceneName, view) ? hit.npc.portraitFishing : hit.npc.fishing;
+    if (!F) return '';
+    const W = view.imgW, H = view.imgH, [hx, hy] = F.hand, [tx, ty] = F.tip, [kx, ky] = F.hook;
+    const pos = (x, y) => `left: ${(x / W * 100).toFixed(3)}%; top: ${(y / H * 100).toFixed(3)}%;`;
+    return `<svg class="tnpc-fishing" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="${hx}" y1="${hy}" x2="${tx}" y2="${ty}" class="rod"/>
+            <path d="M${tx} ${ty} Q ${tx - 4} ${(ty + ky) / 2} ${kx} ${ky}" class="line"/></svg>
+        <div class="tnpc-ripple" style="${pos(kx, ky)}" aria-hidden="true"><i></i><i></i><i></i></div>`;
 }
 
 // 從畫面上拿掉（處理完畢）
 function removeTownNpc(sceneName) {
     delete townNpcSpots[sceneName];
+    stopNpcWhispers();
+    document.querySelectorAll('#town-chatter .npc-whisper').forEach(e => e.remove());
     if (currentTownScene === sceneName && currentTownView) renderTownHotspots(currentTownView);
 }
 
@@ -247,4 +379,46 @@ function closeTownNpcDuel() {
     if (townNpcDuelPlace && currentTownScene === townNpcDuelPlace) closeTownScene();
     townNpcDuelPlace = null;
     updateUI();
+}
+
+// ---- 青瀾島（config-towns.js 的 townScenes["青瀾島"]，2026-10-04）----
+function getTotalCharm() { return (player.stats.cha || 0) + (getEquipBonus().cha || 0); }   // 本身＋裝備（同 numeric.js 的 cha）
+// 碼頭小船：唯一出口，先問是否離開
+async function leaveQinglanIsland() {
+    if (!(await gameConfirm('⛵ 是否搭船離開青瀾島？'))) return;
+    openTownScene(WORLD_SCENE_KEY);
+}
+// 隱藏仙翁：出現條件見 config-towns.js（魅力 5000、當日線上擊殺 2000、每小時前 10 分鐘、一天一次）；對話三選一（兩個小遊戲在 xianweng-games.js、告辭＝當天不再出現）
+function talkToXianweng(sceneName) {
+    const hit = townNpcSpots[sceneName];
+    if (!hit) return;
+    const L = hit.npc.lines || {};
+    document.getElementById('xianweng-img').src = hit.npc.portrait || hit.spot.img;
+    document.getElementById('xianweng-text').innerText = `「${L.greet || ''}」`;
+    document.getElementById('xianweng-fish-n').innerText = `今日剩 ${xianwengFishLeft()} 竿`;
+    document.getElementById('xianweng-chess-n').innerText = `今日剩 ${xianwengChessLeft()} 盤`;
+    document.getElementById('xianweng-modal').dataset.scene = sceneName;
+    document.getElementById('xianweng-modal').style.display = 'flex';
+}
+function xianwengChoose(kind) {
+    const modal = document.getElementById('xianweng-modal');
+    const sceneName = modal.dataset.scene, hit = townNpcSpots[sceneName];
+    modal.style.display = 'none';
+    if (!hit) return;
+    const L = hit.npc.lines || {};
+    // 兩個小遊戲（xianweng-games.js）：仙翁留在原地（不算見過），玩完回到這個對話；每天各 3 次
+    if (kind === 'fishing') {
+        if (xianwengFishLeft() <= 0) { gameDialog('🎣 仙翁釣魚\n\n仙翁收著釣竿：「今日的魚已經釣夠了，明日再來吧。」', false).then(() => talkToXianweng(sceneName)); return; }
+        playXianwengIntro(() => openXianwengFishing(sceneName));   // 先播開場動畫（可略過）
+        return;
+    }
+    if (kind === 'gomoku') {
+        if (xianwengChessLeft() <= 0) { gameDialog('♟️ 玲瓏棋局\n\n仙翁搖頭：「今日已對弈三盤，明日再來吧。」', false).then(() => talkToXianweng(sceneName)); return; }
+        openXianwengGomoku(sceneName);
+        return;
+    }
+    // 告辭：仙翁飄然而去，當天不再出現
+    markTownNpcDone(hit.npc.id);
+    removeTownNpc(sceneName);
+    showToast(`🍃 ${L.bye || '仙翁飄然而去'}`);
 }

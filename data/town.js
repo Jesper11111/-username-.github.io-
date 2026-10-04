@@ -29,7 +29,11 @@ function openTownScene(name) {
         extra.style.display = scene.extraButton ? '' : 'none';
         if (scene.extraButton) { extra.innerText = scene.extraButton.label; extra.setAttribute('onclick', scene.extraButton.action); }
     }
+    // noLeave（config-towns.js，例：青瀾島只能搭船離島）：隱藏左上「↩ 離開」
+    const leave = document.getElementById('town-scene-leave');
+    if (leave) leave.style.display = scene.noLeave ? 'none' : '';
     document.getElementById('town-scene').style.display = 'block';
+    startTownChatter(scene);
     rollTownNpcs(name);   // 隱藏 NPC：這次進城有沒有躲在角落（town-npc.js）
     rollTownFigures(scene);
     applyTownView(true);
@@ -37,11 +41,56 @@ function openTownScene(name) {
 
 function closeTownScene() {
     clearTimeout(townFigureTimer);
+    stopTownChatter();
+    if (typeof stopNpcWhispers === 'function') stopNpcWhispers();
+    if (typeof stopTownNpcClock === 'function') stopTownNpcClock();
     hideWorldRegionNow();
     closeCityGate();
     currentTownScene = null;
     currentTownView = null;
     document.getElementById('town-scene').style.display = 'none';
+}
+
+// ---- 路人閒聊（config-towns.js 的 chatter，例：青瀾島）：每 everyMs 挑一位畫面上看得到的路人，頭頂冒出對話框 showMs 後淡出 ----
+let townChatterTimer = null, townChatterLast = -1;
+function stopTownChatter() {
+    clearTimeout(townChatterTimer); townChatterTimer = null;
+    const box = document.getElementById('town-chatter');
+    if (box) box.innerHTML = '';
+}
+function startTownChatter(scene) {
+    stopTownChatter();
+    const C = scene && scene.chatter;
+    if (!C || !C.lines || !C.lines.length) return;
+    const sceneName = currentTownScene;
+    const tick = () => {
+        if (currentTownScene !== sceneName) return;
+        showTownChatter(scene, C);
+        townChatterTimer = setTimeout(tick, C.everyMs || 30000);
+    };
+    townChatterTimer = setTimeout(tick, C.firstMs != null ? C.firstMs : (C.everyMs || 30000));
+}
+function showTownChatter(scene, C) {
+    const stage = document.getElementById('town-scene-stage'), view = document.getElementById('town-scene-view');
+    if (!stage || !view || !currentTownView) return;
+    let box = document.getElementById('town-chatter');
+    if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
+    // 只挑目前畫面看得到的路人（手機要左右滑動，畫面外的人說話玩家看不到）
+    const sx = stage.clientWidth / currentTownView.imgW, left = view.scrollLeft, right = left + view.clientWidth;
+    const heads = ((currentTownView !== scene ? currentTownView.chatterHeads : C.heads) || []).filter(([x]) => x * sx > left + 40 && x * sx < right - 40);
+    if (!heads.length) return;
+    const [x, y] = heads[Math.floor(Math.random() * heads.length)];
+    let i = Math.floor(Math.random() * C.lines.length);
+    if (C.lines.length > 1 && i === townChatterLast) i = (i + 1) % C.lines.length;
+    townChatterLast = i;
+    const b = document.createElement('div');
+    b.className = 'town-chatter-bubble';
+    b.style.left = (x / currentTownView.imgW * 100).toFixed(3) + '%';
+    b.style.top = (y / currentTownView.imgH * 100).toFixed(3) + '%';
+    b.textContent = C.lines[i];
+    box.querySelectorAll('.town-chatter-bubble').forEach(e => e.remove());   // 只清路人的對話框（仙翁低語共用這一層）
+    box.appendChild(b);
+    setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 600); }, C.showMs || 7000);
 }
 
 // 換圖（第一次開啟或轉向時）＋重排；recenter = 視角置中
@@ -97,7 +146,8 @@ function renderTownHotspots(view) {
                     style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};">`;
     }).join('');
     // 場景異象（effects，例：人界地圖飛升點上方雷電交加）：畫在最底層、不擋點擊
-    const effects = (view.effects || []).map(e => TOWN_SCENE_FX[e.fx] ? TOWN_SCENE_FX[e.fx](view, e.at, e) : '').join('');
+    const effects = (view.effects || []).map(e => TOWN_SCENE_FX[e.fx] ? TOWN_SCENE_FX[e.fx](view, e.at, e) : '').join('')
+        + (typeof getTownNpcEffects === 'function' ? getTownNpcEffects(currentTownScene, view) : '');   // NPC 演出（例：隱藏仙翁垂釣，town-npc.js）
     layer.innerHTML = effects + figures + (view.hotspots || []).filter(h => h.enabled !== false).map(h => {
         const [x, y, w, hh] = h.rect;
         // pin：小紅點樣式（人界地圖用）＝ rect 正中央一顆會呼吸發光的紅點，不顯示名稱（label 只當 title／aria-label）
@@ -179,7 +229,9 @@ function layoutTownScene(recenter) {
     stage.style.width = w + 'px';
     stage.style.height = h + 'px';
     if (recenter) {
-        box.scrollLeft = (w - vw) / 2;
+        // focusX（config-towns.js，圖寬的 0～1）：窄螢幕一開始看哪裡；沒設＝置中（例：青瀾島從碼頭小船那側開始，玩家才找得到出口）
+        const fx = townScenes[currentTownScene] && townScenes[currentTownScene].focusX;
+        box.scrollLeft = typeof fx === 'number' ? Math.max(0, Math.min(w - vw, w * fx - vw / 2)) : (w - vw) / 2;
         box.scrollTop = (h - vh) / 2;
     }
     const hint = document.getElementById('town-scene-hint');
@@ -236,7 +288,9 @@ function openCityGate(name) {
     document.getElementById('city-gate-img').alt = name;
     document.getElementById('city-gate-bg').style.backgroundImage = img ? `url('${img}')` : '';
     document.getElementById('city-gate-name').innerText = name;
-    document.getElementById('city-gate-hint').innerText = (gate && gate.hint) || '✨ 點擊圖片進城';
+    document.getElementById('city-gate-hint').innerText = (gate && (typeof gate.hint === 'function' ? gate.hint() : gate.hint)) || '✨ 點擊圖片進城';
+    const back = document.querySelector('#city-gate .town-scene-back');
+    if (back) back.innerText = (gate && gate.backLabel) || '↩ 返回人界';   // 天元城在靈界：返回靈界
     document.getElementById('city-gate-fx').innerHTML = gate && CITY_GATE_FX[gate.fx] ? CITY_GATE_FX[gate.fx]() : '';
     const box = document.getElementById('city-gate');
     box.classList.remove('on', 'ascend');
@@ -245,10 +299,11 @@ function openCityGate(name) {
     void box.offsetWidth;
     box.classList.add('on');
 }
-function enterCityGate() {
+async function enterCityGate() {
     if (!cityGateName || cityGateBusy) return;
     const gate = CITY_GATES[cityGateName];
     if (!gate) { goToTownByName(cityGateName); return; }
+    if (gate.lingjie) { cityGateBusy = true; const ok = await prepareLingjieEntry(); cityGateBusy = false; if (!ok) return; }   // 飛升點：五行傳送陣靈石（lingjie.js，第 74 節）
     if (!gate.fx) { new Function(gate.action)(); return; }
     // 有特效的入口：光柱爆亮、畫面轉白，再執行 action
     cityGateBusy = true;

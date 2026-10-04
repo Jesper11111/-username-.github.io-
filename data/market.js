@@ -10,6 +10,17 @@
 let mkActive = null, mkMine = [], mkWins = [], mkRefunds = [];
 let mkForm = { kind: 'blueprint' };
 
+// 週末休市（MARKET_OPEN_DAYS，台灣時間）
+function isMarketClosed() { return !MARKET_OPEN_DAYS.includes(new Date(Date.now() + 8 * 3600 * 1000).getUTCDay()); }
+function marketClosedAlert() {
+    if (!isMarketClosed()) return false;
+    gameAlert('寄售週末休市（週六、週日），週一 00:00 恢復。\n休市期間結束的拍賣，週一再領取即可。');
+    return true;
+}
+function marketClosedHtml() {
+    return `<p class="lb-note" style="font-size:1em; color:#fde68a;">🏮 寄售週末休市</p>
+        <p class="lb-note">寄售只在週一～週五開放（台灣時間），週末的連線額度留給世界 Boss。<br>休市期間結束的拍賣不會消失，週一 00:00 恢復後到「待處理」領取即可。</p>`;
+}
 function mkTs(ms) { return firebase.firestore.Timestamp.fromMillis(ms); }
 function mkMs(ts) { return ts && ts.toMillis ? ts.toMillis() : 0; }
 function mkLeft(ts) {
@@ -59,6 +70,12 @@ function notifyMarketResults() {
 
 // ---- 物品：說明、從存檔取出、放回存檔 ----
 function mkStack(key) { return MARKET_STACKS.find(s => s.key === key); }
+// 數量型物品的持有數／增減（做裝通貨存在 player.craftCur，其餘是 player 的欄位）
+function mkStackHave(s) { return s.cur ? getCraftCur(s.cur) : (player[s.key] || 0); }
+function mkStackAdd(s, n) {
+    if (s.cur) { if (n > 0) addCraftCur(s.cur, n); else spendCraftCur(s.cur, -n); }
+    else player[s.key] = (player[s.key] || 0) + n;
+}
 // 寄售品裡的裝備：雲端存成 JSON 字串 eqJson（2026-09-28 修正：裝備詞條 subs 是 [[屬性, 數值], …] 巢狀陣列，
 // Firestore 不支援巢狀陣列，直接存物件會被拒絕、上架失敗）；舊格式 item.eq 仍可讀
 function mkItemEq(item) {
@@ -90,12 +107,13 @@ function mkTakeItem(f, dryRun) {
         const i = player.equipInventory.findIndex(e => e.id === f.key);
         if (i < 0) return { error: '背包裡找不到這件裝備（穿在身上的要先卸下）。' };
         if (isEquipLocked(player.equipInventory[i])) return { error: '鎖定中的裝備不能上架，請先解除鎖定。' };
+        if (player.equipInventory[i].corrupt) return { error: '入魔淬煉過的裝備不能交易。' };   // 腐化裝備不可交易（第 69 節）
         const eq = dryRun ? player.equipInventory[i] : player.equipInventory.splice(i, 1)[0];
         return { item: { kind: 'equip', eqJson: JSON.stringify(eq) } };
     }
     const s = mkStack(f.key);
-    if (!s || n < 1 || (player[s.key] || 0) < n) return { error: '數量不足。' };
-    if (!dryRun) player[s.key] -= n;
+    if (!s || n < 1 || mkStackHave(s) < n) return { error: '數量不足。' };
+    if (!dryRun) mkStackAdd(s, -n);
     return { item: { kind: s.kind, key: s.key, n } };
 }
 // 放回／交給玩家；背包裝備滿時回傳錯誤（不放）
@@ -113,7 +131,7 @@ function mkGiveItem(item) {
         recordGearCollected(eq);   // 天磯錄（含圖紙器錄）
     } else {
         const s = mkStack(item.key);
-        if (s) player[s.key] = (player[s.key] || 0) + item.n;
+        if (s) mkStackAdd(s, item.n);
     }
 }
 function mkDone(msg) {
@@ -123,7 +141,13 @@ function mkDone(msg) {
 }
 
 // ---- 上架 ----
+// 上架登錄費（不退）
+function marketListFee(price) {
+    const H = typeof getHourlyIncome === 'function' ? getHourlyIncome() : 0;
+    return Math.max(Math.ceil(price * MARKET_LIST_FEE.pct), Math.floor(H * MARKET_LIST_FEE.minHours));
+}
 async function marketCreate() {
+    if (marketClosedAlert()) return;
     const f = mkForm;
     const price = Math.floor(Number(document.getElementById('mk-price').value) || 0);
     const hours = Number(document.getElementById('mk-hours').value) || 24;
@@ -133,14 +157,19 @@ async function marketCreate() {
     if (price < 1 || price > MARKET_MAX_PRICE) { gameAlert('起標價要是 1 以上的整數靈石。'); return; }
     if (!MARKET_HOURS.includes(hours)) return;
     if (lbBanned) { gameAlert('你已被禁止交易。'); return; }
+    if (isSaveFlagged()) { gameAlert('存檔驗證異常，無法寄售。'); return; }   // integrity.js（第 72 節）
     const active = mkMine.filter(d => mkMs(d.endsAt) > Date.now()).length;
     if (active >= MARKET_MAX_ACTIVE) { gameAlert(`同時最多寄售 ${MARKET_MAX_ACTIVE} 件。`); return; }
     const preview = mkTakeItem(f, true);   // 先只檢查，確認後才扣
     if (preview.error) { gameAlert(preview.error); return; }
     const label = mkLabel(preview.item);
-    if (!(await gameConfirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n成交抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回。\n確定上架？`))) return;
+    const fee = marketListFee(price);
+    if (player.coins < fee) { gameAlert(`上架登錄費 ${fee.toWan()} 靈石，靈石不足。`); return; }
+    if (!(await gameConfirm(`寄售【${label}】\n起標價 ${price.toWan()} 靈石、${hours} 小時\n上架登錄費 ${fee.toWan()} 靈石（現在扣，不論成交與否都不退）\n成交另抽 ${Math.round(MARKET_FEE * 100)}% 手續費；沒人出價可下架領回物品。\n確定上架？`))) return;
+    if (player.coins < fee) { gameAlert('靈石不足。'); return; }
     const taken = mkTakeItem(f);           // 等待確認期間背包可能變了，重新檢查一次
     if (taken.error) { gameAlert(taken.error); return; }
+    player.coins -= fee;
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MARKET_COLLECTION).add({
@@ -152,22 +181,25 @@ async function marketCreate() {
     } catch (e) {
         console.warn('上架失敗：', e);
         mkGiveItem(taken.item);   // 失敗就放回
+        player.coins += fee;      // 登錄費也退回
         // 附上錯誤代碼，方便玩家截圖回報（例：invalid-argument＝資料格式被雲端拒絕，不是網路問題）
         gameAlert(lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied' ? '上架失敗（寄售尚未開放，或你已被禁止交易）。' : `上架失敗，請稍後再試。（${(e && (e.code || e.message)) || '未知錯誤'}）`);
         saveLocal(); renderLeaderboard(false);
         return;
     }
-    mkDone(`🏪 寄售上架【${label}】，起標 ${price.toWan()} 靈石、${hours} 小時。`);
+    mkDone(`🏪 寄售上架【${label}】，起標 ${price.toWan()} 靈石、${hours} 小時（登錄費 ${fee.toWan()} 靈石）。`);
     refreshLeaderboard(false);
 }
 
 // ---- 出價 ----
 async function marketBid(id) {
+    if (marketClosedAlert()) return;
     const d = (mkActive || []).find(x => x.id === id);
     if (!d) return;
     const input = document.getElementById('mk-bid-' + id);
     const amount = Math.floor(Number(input && input.value) || 0);
     const min = mkMinBid(d);
+    if (isSaveFlagged()) { gameAlert('存檔驗證異常，無法出價。'); return; }   // integrity.js（第 72 節）
     if (amount < min) { gameAlert(`出價至少 ${min.toWan()} 靈石。`); return; }
     if (amount > player.coins) { gameAlert(`靈石不足（持有 ${player.coins.toWan()}）。出價會先扣除，被超過時退回。`); return; }
     // 2026-10-01：原本用 confirm()，在預覽面板／App 內建瀏覽器會直接回傳「取消」，玩家按出價沒反應（使用者回報）→ 改遊戲內確認框
@@ -209,6 +241,7 @@ async function marketBid(id) {
 
 // ---- 待處理：退款、得標領取、賣出領錢、下架領回 ----
 async function marketClaimRefund(rid) {
+    if (marketClosedAlert()) return;
     const r = mkRefunds.find(x => x.id === rid);
     if (!r) return;
     try {
@@ -221,6 +254,7 @@ async function marketClaimRefund(rid) {
     renderLeaderboard(false);
 }
 async function marketClaim(id, type) {
+    if (marketClosedAlert()) return;
     const d = mkMine.concat(mkWins).find(x => x.id === id);
     if (!d) return;
     if (type === 'item') { const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; } }
@@ -246,6 +280,7 @@ async function marketClaim(id, type) {
 }
 // 下架（沒人出價時，結標前後都可以）：刪除拍賣品成功才把物品放回
 async function marketCancel(id) {
+    if (marketClosedAlert()) return;
     const d = mkMine.find(x => x.id === id);
     if (!d || d.bidder) return;
     const sp = mkCheckSpace(d.item); if (sp) { gameAlert(sp); return; }
@@ -271,9 +306,9 @@ function isMarketClaimed(id, type) { return (player.marketClaimed || []).include
 function marketSetKind(kind) { mkForm = { kind, open: true }; renderLeaderboard(false); }
 function marketItemOptions(kind) {
     if (kind === 'blueprint') return listBlueprints().map(b => [`${b.slot}_${b.level}`, `${b.slot}・${b.level} 等（持有 ${b.count}）`]);
-    if (kind === 'equip') return player.equipInventory.filter(e => !isEquipLocked(e))
+    if (kind === 'equip') return player.equipInventory.filter(e => !isEquipLocked(e) && !e.corrupt)   // 入魔過的不能交易
         .map(e => [e.id, `${e.level ? `Lv.${e.level} ` : ''}${e.quality}・${getEquipDisplayName(e)}${e.enhance ? ` +${e.enhance}` : ''}`]);
-    return MARKET_STACKS.filter(s => s.kind === kind && (player[s.key] || 0) > 0).map(s => [s.key, `${s.icon} ${s.label}（持有 ${(player[s.key] || 0).toWan()}）`]);
+    return MARKET_STACKS.filter(s => s.kind === kind && mkStackHave(s) > 0).map(s => [s.key, `${s.icon} ${s.label}（持有 ${mkStackHave(s).toWan()}）`]);
 }
 function marketHtml(loading) {
     let myUid = null;
@@ -289,7 +324,7 @@ function marketHtml(loading) {
         <label>起標價 <input id="mk-price" type="number" min="1" placeholder="靈石"></label>
         <label>時間 <select id="mk-hours">${MARKET_HOURS.map(h => `<option value="${h}"${h === 24 ? ' selected' : ''}>${h} 小時</option>`).join('')}</select></label>
         <button class="sys-btn" onclick="marketCreate()">🏪 上架</button>` : `<p class="lb-note">沒有可寄售的${kinds.find(k => k[0] === mkForm.kind)[1].slice(3)}。</p>`}
-        <p class="lb-note">同時最多 ${MARKET_MAX_ACTIVE} 件；成交抽 ${Math.round(MARKET_FEE * 100)}%；沒人出價可隨時下架領回。</p></details>`;
+        <p class="lb-note">同時最多 ${MARKET_MAX_ACTIVE} 件；上架登錄費＝起標價 ${Math.round(MARKET_LIST_FEE.pct * 100)}%（至少 ${Math.round(MARKET_LIST_FEE.minHours * 60)} 分鐘收入，不退）；成交抽 ${Math.round(MARKET_FEE * 100)}%；沒人出價可隨時下架領回物品；入魔淬煉過的裝備不能交易。</p></details>`;
     // 待處理
     const todo = [];
     mkRefunds.forEach(r => todo.push(`<div class="mk-todo">↩️ 出價被超過：${lbEscape(r.label)}｜退回 ${Number(r.amount).toWan()} 靈石 <button onclick="marketClaimRefund('${lbEscape(r.id)}')">領回</button></div>`));

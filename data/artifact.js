@@ -26,7 +26,9 @@ function formatQualityLabel(quality) {
 
 // 裝備卡片的外框：造化神器用七彩發光框（index.html 的 .rainbow-glow）
 function getEquipCardClass(eq) {
-    return eq && eq.quality === ARTIFACT_QUALITY ? 'card rainbow-glow' : 'card';
+    if (eq && eq.quality === ARTIFACT_QUALITY) return 'card rainbow-glow';
+    const A = eq && typeof GEAR_ANCIENT !== 'undefined' && GEAR_ANCIENT[eq.ancient];   // 遠古／太古的發光邊框（第 67 節 D3）
+    return A ? 'card ' + A.cls : 'card';
 }
 
 // 裝備卡片用：神器全名與專屬技能（背包、角色裝備欄）
@@ -59,7 +61,7 @@ function castProcSkill(sk, targets, tags, source) {
         for (let k in (sk.attrs || {})) attrs[k] = Math.max(attrs[k] || 0, sk.attrs[k]);
         let dmg = (sk.dmgType === 'mag' ? getMagAttack() : getPhysAttack()) * sk.mult;
         (sk.target === 'aoe' ? alive : [alive[0]]).forEach(t => {
-            let r = resolveHit(dmg, { attrs, power: getPhysAttack() }, { attrs: t.attrs || {}, status: t.status || newStatus() });
+            let r = resolveHit(dmg, { attrs, power: sk.dmgType === 'mag' ? getMagAttack() : getPhysAttack(), dmgType: sk.dmgType }, { attrs: t.attrs || {}, status: t.status || newStatus() });   // 術法絕學走魔抗、魔法暴擊（第 66 節第 4 期 A）
             t.hp -= r.dmg;
             dealt += r.dmg;
             r.tags.forEach(tag => tags.push(tag));

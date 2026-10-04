@@ -120,7 +120,7 @@ function openWuxingInfo() {
         ・<strong>${ROOT_PURE_SETS} 套五行 + 同屬性再 ${ROOT_PURE_REST} 件</strong> → 純化五行共鳴<br>
         ・<strong>${ROOT_DUAL_SETS} 套五行 + 兩個屬性各再 ${ROOT_DUAL_REST} 件</strong> → 雙屬性五行共鳴</p>
         <table class="wuxing-info-table">${pureRows}${dualRows}</table>
-        <p style="color:#9ca3af;">※ 五行共鳴提供的屬性傷害與減傷會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%、減傷 ${DEF_CAP}%）。</p>
+        <p style="color:#9ca3af;">※ 五行共鳴提供的屬性傷害會和裝備加總後一起套上限（屬性傷害 ${AFFIX_CAP}%）；防禦直接相加、沒有上限（受到傷害 × ${DEF_K} ÷ (${DEF_K} + 防禦)）。</p>
 
         <h4 class="wuxing-info-h">變異屬性與光暗</h4>
         <p>五行相剋只在金木水火土之間作用。先天資質（人物面板「資質」）可能帶來變異屬性：<br>
@@ -145,12 +145,12 @@ function equipItem(equipId) {
     let slotName = item.name;
     // 裝備等級：人物等級不足無法穿戴（舊裝備、千寶閣、靈寶閣沒有 level，不受限）
     if (item.level && player.level < item.level) {
-        alert(`人物等級不足！【Lv.${item.level} ${getEquipDisplayName(item)}】需要人物等級 ${item.level}（目前 Lv.${player.level}）。`);
+        gameAlert(`人物等級不足！【Lv.${item.level} ${getEquipDisplayName(item)}】需要人物等級 ${item.level}（目前 Lv.${player.level}）。`);
         return;
     }
     // 舊版靈寶閣「降魔伏虎杖」的部位「杖」不在 equipTypes 內，穿上會破壞五行共鳴判定
     if (!(slotName in equipTypes)) {
-        alert(`【${item.name}】的部位已停用，無法穿戴。可在背包中毀棄。`);
+        gameAlert(`【${item.name}】的部位已停用，無法穿戴。可在背包中毀棄。`);
         return;
     }
 
@@ -224,10 +224,10 @@ function renderForgeAutoDecompose() {
         + equipQualities.map(q => `<label style="margin: 0 4px; white-space: nowrap;"><input type="checkbox" ${auto.includes(q.name) ? 'checked' : ''} onchange="toggleForgeAutoDecompose('${q.name}', this)"> <span class="quality-${q.name}">${q.name.replace('色', '')}</span></label>`).join('')
         + `<div style="color: #6b7280; font-size: 0.85em; margin-top: 2px;">勾選的品級不進背包，直接換成碎鐵／星允鐵（橙色 ${DECOMPOSE_IRON["橙色"]} 顆星允鐵）；有勾選時「最高」不受背包空位限制</div>`;
 }
-function toggleForgeAutoDecompose(quality, box) {
+async function toggleForgeAutoDecompose(quality, box) {
     let auto = getForgeAutoDecompose().slice();
     if (box.checked && (quality === '紫色' || quality === '橙色')
-        && !confirm(`確定要自動分解鍛造出的【${quality}】裝備？\n（${quality}有特效${quality === '橙色' ? '、鑲嵌孔' : ''}，也可能帶種族特效，分解後無法復原）`)) { box.checked = false; return; }
+        && !(await gameConfirm(`確定要自動分解鍛造出的【${quality}】裝備？\n（${quality}有特效${quality === '橙色' ? '、鑲嵌孔' : ''}，也可能帶種族特效，分解後無法復原）`))) { box.checked = false; return; }
     auto = box.checked ? auto.concat(auto.includes(quality) ? [] : [quality]) : auto.filter(q => q !== quality);
     player.forgeAutoDecompose = auto;
 }
@@ -238,7 +238,7 @@ function forgeEquipment(qty = 1) {
     let isBlueprint = BLUEPRINT_LEVELS.includes(level);
     let cost = isBlueprint ? BLUEPRINT_FORGE_COST : FORGE_COST;
     if (player.coins < cost) {
-        alert(`靈石不足 ${cost.toWan()}！無法打造裝備。`);
+        gameAlert(`靈石不足 ${cost.toWan()}！無法打造裝備。`);
         return;
     }
     const auto = getForgeAutoDecompose();
@@ -247,9 +247,9 @@ function forgeEquipment(qty = 1) {
 
     let name = document.getElementById('forge-type-select').value;
     if (isBlueprint) {
-        if (getBlueprintCount(name, level) <= 0) { alert(`沒有 ${level} 等的【${name}】鍛造圖紙！`); renderForgeLevelSelect(); return; }
+        if (getBlueprintCount(name, level) <= 0) { gameAlert(`沒有 ${level} 等的【${name}】鍛造圖紙！`); renderForgeLevelSelect(); return; }
     } else if (!EQUIP_LEVELS.includes(level) || level > getForgeLevelCap()) {
-        alert(`目前宗門最高只能鍛造 ${getForgeLevelCap()} 等裝備！`);
+        gameAlert(`目前宗門最高只能鍛造 ${getForgeLevelCap()} 等裝備！`);
         renderForgeLevelSelect();
         return;
     }
@@ -269,7 +269,9 @@ function forgeEquipment(qty = 1) {
         if (auto.includes(eq.quality)) {
             player.equipInventory.pop();   // forgeOneEquipment 剛放進背包的那件
             let y = getDecomposeYield(eq);
-            dShards += y.shards; dIron += y.iron;
+            dShards += y.shards; dIron += y.iron; addRefineStones(y.refine);   // 洗煉石（第 67 節 D2）
+            const cg = formatCraftGain(rollCraftDecompose(eq));   // 做裝通貨（craft.js，第 69 節）
+            if (cg) addLog(`🔨 自動分解【${getEquipDisplayName(eq)}】額外得到 ${cg}。`, "equip");
             decomposed.push(eq);
         }
     }

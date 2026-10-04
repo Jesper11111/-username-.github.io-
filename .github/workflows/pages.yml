@@ -1,0 +1,38 @@
+# 建置並發佈 GitHub Pages（ARCHITECTURE.md 第 72 節）：main 有新提交 → npm ci → node tools/build.js → 發佈 dist/
+# ⚠️ 需要在 GitHub 倉庫 Settings → Pages → Build and deployment → Source 選「GitHub Actions」才會用這份；
+#    還是「Deploy from a branch」時網站照舊直接提供原始檔（不混淆），這個流程的 deploy 步驟會失敗但不影響網站。
+name: Build & Deploy Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node tools/build.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

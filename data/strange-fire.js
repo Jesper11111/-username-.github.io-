@@ -37,7 +37,7 @@ function gainStrangeFire(fire) {
 function craftStrangeFire(qty) {
     let possible = Math.floor((player.fireShards || 0) / STRANGE_FIRE_SHARDS_PER_FIRE);
     if (possible <= 0) {
-        alert(`異火碎片不足！合成 1 朵異火需要 ${STRANGE_FIRE_SHARDS_PER_FIRE} 片（目前 ${(player.fireShards || 0).toWan()} 片）。`);
+        gameAlert(`異火碎片不足！合成 1 朵異火需要 ${STRANGE_FIRE_SHARDS_PER_FIRE} 片（目前 ${(player.fireShards || 0).toWan()} 片）。`);
         return;
     }
     let n = qty === 'max' ? possible : Math.min(qty, possible);

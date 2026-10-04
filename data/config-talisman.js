@@ -37,5 +37,10 @@ const TALISMAN_CRAFT_COST = { ore: 500, coins: 1000000 };   // 500 礦石＋100 
 const talismanGrades = [
     { grade: 1, name: "下品", flat: 100,  pct: 1, race: 3,  chance: 0.70 },
     { grade: 2, name: "中品", flat: 400,  pct: 2, race: 6,  chance: 0.25 },
-    { grade: 3, name: "上品", flat: 1500, pct: 3, race: 10, chance: 0.05 }
+    { grade: 3, name: "上品", flat: 1500, pct: 3, race: 10, chance: 0.05 },
+    // 極品（2026-10-03 使用者定案）：煉製不會出（chance 0），只能由 5 枚同種上品合成
+    { grade: 4, name: "極品", flat: 5000, pct: 5, race: 15, chance: 0, color: "#fbbf24", icon: "🌟" }
 ];
+// 合成（talisman.js 的 mergeTalisman）：同種類 need 枚 from 品階 → 1 枚下一品階，另付 coins 靈石；一定成功
+//   下→中 3:1（≈ 直接煉製的成本）、中→上 4:1（便宜約 20%）、上→極 5:1；一枚極品＝60 枚下品
+const TALISMAN_MERGE = { 1: { need: 3, coins: 500000 }, 2: { need: 4, coins: 2000000 }, 3: { need: 5, coins: 10000000 } };

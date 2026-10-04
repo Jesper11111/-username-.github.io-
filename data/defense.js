@@ -74,7 +74,9 @@ const DefenseBattle = (() => {
     function simulateWave(w) {
         const e = waveEnemy(w), ag = combineAuras(e.auras);   // 首領多重光環（elements.js）
         const pa = auraPlayerAttrs(getPlayerCombatAttrs(), ag), eAttrs = auraSelfAttrs(e.attrs, ag);
-        const pAtk = Math.max(getPhysAttack(), getMagAttack()) * DEFENSE_PLAYER_SKILL_MULT * auraPlayerAtkMult(ag);
+        const pPhys = getPhysAttack(), pMag = getMagAttack(), pType = pMag > pPhys ? 'mag' : undefined;   // 術攻較高時算術法（第 66 節第 4 期 A）
+        const pAtk = Math.max(pPhys, pMag) * DEFENSE_PLAYER_SKILL_MULT * auraPlayerAtkMult(ag);
+        const eType = eAttrs.race === 'demon' ? 'mag' : undefined;   // 首領（魔修）＝術法攻擊
         const eAtk = e.atk * auraSelfAtkMult(ag), curse = auraCurseMult(ag);
         const pMax = getMaxHp() * (NUMERIC_V2 ? NV2.defenseHpScale : 1);   // 新制雙方氣血一起放大，約 20 下分勝負
         let pHp = pMax, eHp = e.hp;
@@ -85,13 +87,13 @@ const DefenseBattle = (() => {
             const st = tickStatus(ps); pHp -= st.dot + at.dot;
             if (pHp <= 0) return { win: false, rounds: r };
             if (!st.frozen) {
-                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;
-                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk }, { attrs: eAttrs, status: es }).dmg;   // 新制敏捷連擊
+                eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk, dmgType: pType }, { attrs: eAttrs, status: es }).dmg;
+                if (NUMERIC_V2 && Math.random() < nv2Combo()) eHp -= resolveHit(pAtk, { attrs: pa, power: pAtk, dmgType: pType }, { attrs: eAttrs, status: es }).dmg;   // 新制敏捷連擊
             }
             const et = tickStatus(es); eHp -= et.dot;
             if (eHp <= 0) return { win: true, rounds: r, hpLeft: pHp / pMax };
             if (!et.frozen) {
-                const d = resolveHit(eAtk, { attrs: eAttrs, power: eAtk }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
+                const d = resolveHit(eAtk, { attrs: eAttrs, power: eAtk, dmgType: eType }, { attrs: pa, status: ps }).dmg * curse;   // 詛咒：受到傷害提高
                 pHp -= d;
                 eHp = Math.min(e.hp, eHp + raceLifestealHeal(eAttrs, d));   // 種族特性：魔修吸血（race.js）
             }
@@ -302,6 +304,10 @@ const DefenseBattle = (() => {
         const merit = randInt(boss ? R.bossMerit : R.merit); player.merit = (player.merit || 0) + merit; g.merit += merit;
         if (boss || Math.random() < R.shardChance) g.shards += addFireShards(randInt(boss ? R.bossShard : R.shard));
         if (boss || Math.random() < R.ironChance) g.iron += addStarIron(randInt(boss ? R.bossIron : R.iron));
+        if (w % CRAFT_DROPS.defenseHunyuanEvery === 0) {   // 做裝通貨：每 20 波 1 顆混元晶（craft.js，第 69 節）
+            g.hunyuan = (g.hunyuan || 0) + addCraftCur('hunyuan', 1);
+            feed(`💠 拾得混元晶 ×1`, 'kill');
+        }
         if (Math.random() < R.gearChance) dropGear(w, false);
         if (boss || (w >= 20 && Math.random() < R.setChance)) dropGear(w, true);
         // 夥伴碎片：第 partnerFromWave 波起天驕、第 partnerZunzheFromWave 波起尊者（partner.js 的 grantPartnerShards；集滿 100 片到情緣視窗激活）
@@ -629,8 +635,8 @@ const DefenseBattle = (() => {
         rafId = requestAnimationFrame(tick);
     }
 
-    function close() {
-        if (D.active && !confirm(`確定要離開嗎？\n已守住的 ${D.cleared || 0} 波獎勵會保留，但今日這次挑戰次數已使用。`)) return;
+    async function close() {
+        if (D.active && !(await gameConfirm(`確定要離開嗎？\n已守住的 ${D.cleared || 0} 波獎勵會保留，但今日這次挑戰次數已使用。`))) return;
         if (D.active) logRun(false);
         opened = false; D.active = false;
         $('defense-skip').style.display = 'none';
@@ -687,6 +693,7 @@ const DefenseBattle = (() => {
 
 // ---- onclick 用（index.html #defense-scene、secret-realm.js）----
 function openDefenseBattle(realmId) { DefenseBattle.open(realmId); }
+function retryDefenseBattle() { DefenseBattle.retry(); }   // 載入失敗的「重新載入」按鈕（建置後 DefenseBattle 不是全域，第 72 節）
 function closeDefenseBattle() { DefenseBattle.close(); }
 function setDefenseSpeed(r) { DefenseBattle.setSpeed(r); }
 function finishDefenseNow() { DefenseBattle.finishNow(); }

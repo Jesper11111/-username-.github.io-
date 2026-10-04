@@ -44,7 +44,7 @@ const worldRegions = {
     // 第一區・野外歷練（落雲宗、溪國、壁魔谷；使用者畫的範圍 282×222，比對求得縮放 0.89、左上 (163, 397)）：
     //   浮起後開修仙地圖的第一區清單（map.js 的 openMapCategoryModal(1)：靈山大川、深淵險地、上古遺跡），選好地圖時 selectMap 會一併關掉人界地圖
     zone1: {
-        name: "一、野外歷練",
+        name: "落雲宗周邊",
         action: "openMapCategoryModal(1)",
         shape: [[163,417],[168,412],[174,410],[190,409],[200,408],[206,404],[222,404],[227,407],[232,407],[238,409],[243,410],[248,409],[254,407],[259,404],
                 [264,402],[275,402],[280,404],[286,405],[291,409],[313,408],[318,404],[323,401],[329,400],[334,398],[350,398],[355,400],[361,444],[366,453],
@@ -55,7 +55,7 @@ const worldRegions = {
     },
     // 第二區・開放世界大區域（慕蘭草原、交兀枝領地、慕蘭人領地；使用者畫的範圍 387×177，比對求得縮放 0.895、左上 (92, 122)）：浮起後開第二區清單
     zone2: {
-        name: "二、開放世界大區域",
+        name: "慕蘭草原",
         action: "openMapCategoryModal(2)",
         shape: [[92,212],[98,189],[105,162],[111,141],[117,135],[123,131],[130,126],[136,124],[142,123],[199,123],[205,127],[211,132],[217,135],[224,137],
                 [230,141],[236,143],[242,149],[249,152],[255,150],[261,147],[267,146],[274,145],[286,144],[292,143],[299,141],[305,137],[311,134],[318,132],
@@ -66,7 +66,7 @@ const worldRegions = {
     },
     // 第三區・上古禁區（大晉王朝、昆崙山、昆吾、佛山、各大宗門；使用者畫的範圍 507×425，比對求得縮放 0.895、左上 (552, 75)）：浮起後開第三區清單
     zone3: {
-        name: "三、上古禁區",
+        name: "大晉王朝區域",
         action: "openMapCategoryModal(3)",
         shape: [[552,129],[560,117],[568,114],[576,113],[608,113],[616,107],[624,95],[633,94],[673,94],[689,95],[697,91],[705,88],[721,87],[729,85],
                 [737,83],[745,81],[753,80],[769,79],[778,78],[810,78],[818,76],[842,75],[858,75],[866,76],[923,78],[939,80],[947,85],[955,88],[963,88],
@@ -79,7 +79,7 @@ const worldRegions = {
     // 無邊海（使用者畫的範圍 311×388，程式比對求得縮放 0.895、左上 (385, 240)）
     wubian: {
         name: "無邊海",
-        action: "showToast('🌊 無邊海尚未開放，敬請期待')",
+        action: "openMapCategoryModal(6)",   // 2026-10-03 開放：第三區雷鳴大陸之後 7 張圖搬到「無邊海」分類（config-maps.js 索引 6）
         shape: [[385,400],[392,387],[399,379],[406,372],[414,360],[421,268],[428,264],[442,267],[457,267],[464,266],[471,262],[478,257],[485,253],
                 [492,250],[500,246],[507,244],[514,241],[521,240],[535,240],[543,242],[550,262],[557,270],[564,276],[571,281],[578,286],[585,293],[593,338],
                 [600,361],[607,381],[614,396],[621,408],[628,415],[636,422],[643,455],[650,470],[657,480],[662,500],[662,515],[657,521],[650,545],[643,555],
@@ -103,7 +103,7 @@ const worldRegions = {
     // 青瀾島（右下的島；圖沒存成檔案，直接依人界地圖上島的輪廓手描，外擴一點海岸）
     qinglan: {
         name: "青瀾島",
-        action: "showToast('🏝️ 青瀾島尚未開放，敬請期待')",
+        action: "openCityGate('青瀾島')",   // 2026-10-04 使用者提供島景圖（CITY_GATES["青瀾島"]）
         shape: [[1252,617],[1260,608],[1277,602],[1297,600],[1310,595],[1321,587],[1334,589],[1344,598],[1351,613],[1351,634],[1345,648],[1336,659],
                 [1325,669],[1312,679],[1297,688],[1280,694],[1262,699],[1246,700],[1235,693],[1237,677],[1243,661],[1245,645],[1247,629]]
     },
@@ -132,11 +132,75 @@ const worldRegions = {
 const CITY_GATES = {
     "飛升點": {
         img: "images/maps/feisheng-gate.jpg", imgW: 600, imgH: 894,
-        hint: "✨ 點擊圖片飛升靈界",
+        hint: () => isInLingjie() ? "✨ 點擊圖片前往靈界" : `✨ 點擊圖片飛升靈界（需${lingStoneShortText()}）`,
+        lingjie: true,   // 2026-10-04：進入前要五行傳送陣靈石各 1（lingjie.js 的 prepareLingjieEntry，第 74 節）
         action: "openTownScene(LINGJIE_SCENE_KEY)",
         fx: "feisheng"
+    },
+    // 天元城（2026-10-04 使用者提供 1408×768 城門插畫）：靈界地圖「人族聚居區」的紅點 → 顯示城池圖；城內尚未開放
+    "天元城": {
+        img: "images/maps/tianyuan-city.jpg", imgW: 1408, imgH: 768,
+        hint: "✨ 點擊城門進入天元城",
+        backLabel: "↩ 返回靈界",
+        action: "enterLingjieTown('天元城')"   // 2026-10-04 內城開放（townScenes["天元城"]，lingjie.js）
+    },
+    // 青瀾島（2026-10-04 使用者提供 1408×768 島景插畫：仙人亭、瀑布、雲海、垂釣老者）：人界地圖右下的島 → 顯示島景圖；島上玩法尚未開放
+    "青瀾島": {
+        img: "images/maps/qinglan-island.jpg", imgW: 1408, imgH: 768,
+        hint: "✨ 青瀾島・仙人亭（點擊圖片登島）",
+        action: "openTownScene('青瀾島')"   // 2026-10-04 島內開放（townScenes["青瀾島"]）
     }
 };
+
+// ---- 靈界進出（lingjie.js，第 74 節；2026-10-04 使用者指定）----
+// 五行傳送陣靈石：player.lingStones；進、出靈界各要一套（每種 1 顆）
+const LINGJIE_STONE_KEYS = ["金", "木", "水", "火", "土"];
+// 背包圖示（2026-10-04 使用者提供五行靈石合成圖 848×1264，以瀏覽器 canvas 各裁一塊縮成 192×192）
+const LINGJIE_STONE_IMG = { "金": "images/items/lingstone-metal.jpg", "木": "images/items/lingstone-wood.jpg", "水": "images/items/lingstone-water.jpg", "火": "images/items/lingstone-fire.jpg", "土": "images/items/lingstone-earth.jpg" };
+// ---- 隱藏仙翁的兩個小遊戲（xianweng-games.js，第 74 節「青瀾島」；2026-10-04 使用者指定）----
+// 仙翁釣魚：每天 3 竿（選「仙翁釣魚」先播開場動畫，可略過）；釣到各種材料；最高等的魚 20% 再掉金木水火土傳送陣靈石其中一種 1 顆
+// 玲瓏棋局：五子棋（15 路、玩家執黑先手、仙翁困難 AI），每天 3 盤；贏 40% 得傳送陣靈石其中一種 1 顆；輸沒有懲罰（機緣未到）
+//   每天次數存 player.xianweng = { date, fish, chess }（用到才建立）
+const XIANWENG_GAMES = {
+    introVideo: "videos/xianweng-fishing.mp4",
+    fishCasts: 3,
+    chessGames: 3,
+    chessWinStoneChance: 0.4,
+    chessBg: "images/towns/xianweng-gomoku.jpg",
+    // 魚的等級：w＝上鉤機率權重；speed＝魚在收線條上亂竄的速度；box＝綠框高度（佔條長）；loot＝漁獲（herbs 靈草、refine 洗煉石、iron 星允鐵、craft 做裝通貨）
+    fish: [
+        { id: "fan",  name: "青鱗凡魚", icon: "🐟", w: 50, speed: 0.55, box: 0.30, loot: { herbs: { mortal: 6, high: 2 } } },
+        { id: "ling", name: "碧波靈鯉", icon: "🐠", w: 30, speed: 0.85, box: 0.26, loot: { herbs: { high: 4, epic: 1 }, refine: 5 } },
+        { id: "bao",  name: "赤霞寶鯛", icon: "🐡", w: 15, speed: 1.15, box: 0.22, loot: { herbs: { epic: 2 }, refine: 10, iron: 5, craft: { tianji: 1 } } },
+        { id: "xian", name: "金鱗仙鯉", icon: "🐉", w: 5,  speed: 1.5,  box: 0.19, loot: { herbs: { immortal: 1 }, refine: 15, iron: 10, craft: { tianji: 2, hunyuan: 1 } }, stoneChance: 0.2 }
+    ],
+    biteWindowMs: 1500   // 浮標下沉後要在這段時間內按「收竿」，太慢魚就跑了
+};
+const LINGJIE_RESPAWN_MAP = "天元城外";   // 身在靈界的復活點（lingjie.js 的 getRespawnPoint）
+const LINGJIE_TEA_RUMORS = [
+    "聽說血天大陸的魔修最近又不安分了，渡劫的道友小心點。",
+    "靈界的傳送陣要五行靈石各一顆，少一顆都催動不了，回人界的路可不便宜。",
+    "鎮魔塔六十層以上的守關者，身上常帶著傳送陣靈石。",
+    "混沌初界那邊的妖獸，強得連大羅金仙都要繞道走。",
+    "天元城外常有被妖獸打回來的修士躺著，守衛都見怪不怪了。",
+    "有人在海王族的島上看過上蒼的入口，誰知道是真是假。"
+];
+const LINGJIE_MAP_CATEGORIES = [4, 5, 7];
+// 大道商行（天元城，2026-10-04 使用者指定）：傳送陣靈石每顆 1 億靈石（貨幣）
+const LINGJIE_SHOP_PRICE = 100000000;
+// 靈界任務榜（天元城，2026-10-04 使用者指定「任務榜跟人界的分開」）：每天 count 個，只在靈界的野外（第四、五區）擊殺才算；完成到任務榜領獎
+//   kind：any＝任一靈界野外、map＝指定地圖（從玩家進得去的靈界野外隨機挑）、race＝指定種族；need＝擊殺數；reward：coinsH＝每小時收入倍數、craft／ling＝做裝通貨／傳送陣靈石（隨機一種）
+const LINGJIE_QUEST = {
+    count: 3,
+    templates: [
+        { kind: "any",  need: 200, title: "清剿靈界妖患", reward: { coinsH: 2, craft: { tianji: 2 } } },
+        { kind: "map",  need: 150, title: "鎮守要地",     reward: { coinsH: 3, craft: { hunyuan: 1 } } },
+        { kind: "race", need: 120, title: "專項懸賞",     reward: { coinsH: 2, ling: 1 } },
+        { kind: "any",  need: 400, title: "靈界巡守",     reward: { coinsH: 4, ling: 1, craft: { poxu: 1 } } }
+    ]
+};   // 只有身在靈界才能進的地圖分類（第四、五區、靈界城鎮＝天元城）
+// 掉落：nv2L ≥ minMapL 的野外（無邊海、第四、五區…），每種每次掉寶 field 機率（每小時 1200 次掉寶 → 每種約 0.5 顆、約 2 小時一套）；鎮魔塔 fromFloor 層起 BOSS chance × 問答倍率掉 1 顆（隨機一種）
+const LINGJIE_STONE_DROP = { minMapL: 9, field: 1 / 2400, zhenmo: { fromFloor: 60, chance: 0.25 } };
 
 // 天星城賭坊前的大主宰・牧塵（夥伴 muchen，帝境）：定時出現的場景人偶（town.js 的 rollTownFigures、town-npc.js 的 talkToScheduledFigure）
 //   2026-10-01 使用者指定：「相逢即是有緣，贈 20 碎片；2 天出現一次在賭坊前，出現後停留 30 分鐘」
@@ -162,6 +226,12 @@ const townScenes = {
         //   第五區・諸天至高戰場（仙界戰場＝玄武境東岸、萬界戰場＝血天大陸、混沌初界＝天雲大陸山區）
         //   mapName：還進不去（境界／四維不足）時紅點變灰、小字加「🔒天仙」，點了用提示條說明原因（town.js、map.js 的 goToMapByName）
         hotspots: [
+            // 2026-10-04 九天仙域／太初古礦／上蒼移到第四區、人界快捷清單拿掉第四、五區 → 這三張也放上靈界地圖：九天仙域＝玄武境東邊的天空海、太初古礦＝角蚩族北側山脈、上蒼（葬天島）＝海王族島南岸
+            { id: "lj-jiutian",  label: "九天仙域", mapName: "九天仙域", pin: true, showLabel: true, rect: [595, 190, 70, 70], action: "goToMapByName('九天仙域')" },   // (630, 225)
+            { id: "lj-taichu",   label: "太初古礦", mapName: "太初古礦", pin: true, showLabel: true, rect: [685, 210, 70, 70], action: "goToMapByName('太初古礦')" },   // (720, 245)
+            { id: "lj-shangcang", label: "上蒼", mapName: "上蒼（葬天島）", pin: true, showLabel: true, rect: [605, 360, 70, 70], action: "goToMapByName('上蒼（葬天島）')" },   // (640, 395)
+            // 天元城（2026-10-04）：人族聚居區的城堡圖示上 (415, 282) → 天元城城池圖（CITY_GATES）
+            { id: "lj-tianyuan", label: "天元城", pin: true, showLabel: true, rect: [380, 247, 70, 70], action: "openCityGate('天元城')" },
             { id: "lj-busi",     label: "不死山", mapName: "不死山",   pin: true, showLabel: true, rect: [135, 155, 70, 70], action: "goToMapByName('不死山')" },     // (170, 190)
             { id: "lj-shenxu",   label: "神墟", mapName: "神墟",     pin: true, showLabel: true, rect: [315, 197, 70, 70], action: "goToMapByName('神墟')" },       // (350, 232)
             { id: "lj-xianling", label: "仙陵", mapName: "仙陵",     pin: true, showLabel: true, rect: [310, 310, 70, 70], action: "goToMapByName('仙陵')" },       // (345, 345)
@@ -171,7 +241,7 @@ const townScenes = {
             { id: "lj-hundun",   label: "混沌初界", mapName: "混沌初界", pin: true, showLabel: true, rect: [795, 200, 70, 70], action: "goToMapByName('混沌初界')" }    // (830, 235)
         ],
         figures: [],
-        extraButton: { label: "↩ 返回人界", action: `openTownScene(WORLD_SCENE_KEY)` }
+        extraButton: { label: "↩ 返回人界（需五行傳送陣靈石）", action: "leaveLingjieToWorldMap()" }   // 2026-10-04：身在靈界要付一套靈石才能回人界（lingjie.js）
     },
     [WORLD_SCENE_KEY]: {
         title: "人界",
@@ -185,11 +255,11 @@ const townScenes = {
             // 天星城（2026-09-30，使用者畫範圍、要「如同天南城做法」）：紅點放在「星」「城」之間，約圖上 (1175, 452)
             { id: "tianxing-region", label: "天星城", pin: true, rect: [1140, 417, 70, 70], action: "openWorldRegion('tianxing')" },
             // 第一區・野外歷練（2026-09-30，使用者畫落雲宗／溪國／壁魔谷那塊、指定「傳送點對應第一區」）：紅點放在落雲宗右邊、溪國下方的平原空地，約 (300, 470)
-            { id: "zone1-region", label: "一、野外歷練", pin: true, rect: [265, 435, 70, 70], action: "openWorldRegion('zone1')" },
+            { id: "zone1-region", label: "落雲宗周邊", pin: true, rect: [265, 435, 70, 70], action: "openWorldRegion('zone1')" },
             // 第二區・開放世界大區域（2026-09-30，使用者畫慕蘭草原那塊、指定「歸類為第二區」）：紅點放在「慕蘭草原」左下、交兀枝與慕蘭人領地之間的空地，約 (215, 232)
-            { id: "zone2-region", label: "二、開放世界大區域", pin: true, rect: [180, 197, 70, 70], action: "openWorldRegion('zone2')" },
+            { id: "zone2-region", label: "慕蘭草原", pin: true, rect: [180, 197, 70, 70], action: "openWorldRegion('zone2')" },
             // 第三區・上古禁區（2026-09-30，使用者畫大晉王朝那塊、指定「歸類為第三區」）：紅點放在「大晉」與「大晉王朝」兩行字之間的空隙，約 (820, 232)
-            { id: "zone3-region", label: "三、上古禁區", pin: true, rect: [785, 197, 70, 70], action: "openWorldRegion('zone3')" },
+            { id: "zone3-region", label: "大晉王朝區域", pin: true, rect: [785, 197, 70, 70], action: "openWorldRegion('zone3')" },
             // 目的地未定（2026-09-30 使用者：「製作一個傳送區塊」，選「先做範圍，目的地之後再定」）：浮起後只提示尚未開放（worldRegions 的 action）
             //   紅點一律放在地名字與字之間：無邊海「邊」「海」、西沙大沙漠「大」「沙」、亂星海「星」「海」、青瀾島「瀾」「島」
             { id: "wubian-region",  label: "無邊海",     pin: true, rect: [505, 389, 70, 70],  action: "openWorldRegion('wubian')" },
@@ -242,6 +312,124 @@ const townScenes = {
                 shout: "我有一根大香腸——噴！"
             }
         }]
+    },
+    // 天元城內城（2026-10-04 使用者提供 848×1264 直式插畫）：靈界的安全區城鎮；建築物先放 任務榜、茶樓（使用者指定「少數建築物」）
+    //   任務榜＝內城門前（牌坊與城門）→ 每日任務；茶樓＝左側「天元茶館」→ lingjie.js 的 openTeaHouse（歇息回滿氣血靈力＋聽傳聞）
+    // 青瀾島島內（2026-10-04 使用者提供 1408×768 插畫：桃花渡口、涼亭、小攤、「春和堂」商號、碼頭小船）：從人界地圖青瀾島登島（不換所在地圖，純場景）
+    //   建築物玩法未定：春和堂、涼亭、小攤先提示「敬請期待」；決定後把 action 換掉
+    //   2026-10-04 使用者：島內不顯示右上「返回人界」與左上「離開」，只能點碼頭的小船離島（noLeave、不設 extraButton）
+    "青瀾島": {
+        title: "青瀾島・桃花渡",
+        img: "images/towns/qinglan-inner.jpg",
+        imgW: 1408, imgH: 768,
+        noLeave: true,
+        focusX: 0.3,   // 手機一開始看左側（碼頭小船＝唯一出口）
+        // 路人閒聊（2026-10-04 使用者：「周圍路人每 30 秒頭頂出現對話框，內容：傳聞 300 年前就有仙翁在此地垂釣……」；town.js 的 startTownChatter）
+        //   everyMs 每隔多久一句（第一句在進島 firstMs 後）、showMs 對話框停留多久；heads＝路人頭頂（圖上座標），只挑目前畫面看得到的人；lines 不連續重複
+        chatter: {
+            everyMs: 10000, firstMs: 2000, showMs: 6000,   // 2026-10-04 使用者：「講謠言的速度過慢」→ 由每 30 秒改每 10 秒（第一句 2 秒、停留 6 秒）
+            heads: [[676, 418], [760, 420], [838, 462], [942, 440], [1088, 430], [1182, 423], [1292, 416], [1005, 393]],
+            lines: [
+                "傳聞三百年前，就有仙翁在此地垂釣……",
+                "聽說涼亭那邊，偶爾會看見一位戴斗笠的老人家。",
+                "我爺爺說，那位仙翁只見有緣人，凡夫俗子看不見他。",
+                "有人說仙翁釣的不是魚，是人……",
+                "三百年了，那根釣竿從沒見他收過線。",
+                "桃花開的時候，湖裡的靈魚特別多。",
+                "春和堂的掌櫃說，仙翁年輕時也是個俊俏書生呢。",
+                // 2026-10-04 使用者：「新增更多路人講仙翁的故事跟傳聞」
+                "聽說仙翁年輕時為了一位女子，在這湖邊等了一輩子。",
+                "那位女子後來成了仙，仙翁卻不肯飛升，說要等她回來。",
+                "有個漁夫說，他看過仙翁一竿子釣起一條金色的龍。",
+                "仙翁的釣竿是天外隕鐵所鑄，凡人連提都提不動。",
+                "據說仙翁的魚鉤是直的，願者上鉤啊。",
+                "我娘說，小時候在涼亭邊迷路，是位戴斗笠的老爺爺送她回家的。",
+                "仙翁最愛下棋，可惜三百年來沒人贏過他一局。",
+                "聽說能讓仙翁開口說話的人，都成了一方大能。",
+                "有人在月圓之夜，看見湖面浮著一盞燈，燈旁就是仙翁。",
+                "仙翁從不吃東西，只喝桃花瓣泡的露水。",
+                "三十年前有個魔修想搶仙翁的釣竿，第二天就成了湖裡的魚。",
+                "說也奇怪，桃花渡的桃花，三百年來從沒謝過。",
+                "仙翁好像在等什麼人……也許是在等你？",
+                "別看那老人家不起眼，他咳一聲，整座島都會晃。",
+                "聽說魅力過人、心性純善的人，才有機會見到他。"
+            ]
+        },
+        hotspots: [
+            { id: "ql-shop", label: "春和堂", rect: [900, 255, 220, 235], action: "showToast('🏮 春和堂尚未開業，敬請期待')" },
+            { id: "ql-stall", label: "小攤", rect: [555, 380, 200, 180], action: "showToast('🧺 小攤尚未開張，敬請期待')" },
+            { id: "ql-dock", label: "⛵ 搭船離島", rect: [70, 520, 500, 220], action: "leaveQinglanIsland()" }   // 唯一出口：問「是否離開」後回人界地圖（town-npc.js）
+        ],
+        figures: [],
+        // 手機直式圖（2026-10-04 使用者提供 848×1264「青瀾島手機版換此圖」：桃花、涼亭、春和堂、碼頭小船、攤販）：座標都是這張圖的像素
+        //   chatterHeads＝路人閒聊的頭頂位置（town.js 的 showTownChatter）；仙翁在直式圖的位置見下方 hiddenNpcs 的 portraitSpot／portraitFishing／whispers.portraitAt
+        portrait: {
+            img: "images/towns/qinglan-inner-portrait.jpg",
+            imgW: 848, imgH: 1264,
+            hotspots: [
+                { id: "ql-shop", label: "春和堂", rect: [530, 520, 240, 180], action: "showToast('🏮 春和堂尚未開業，敬請期待')" },
+                { id: "ql-stall", label: "小攤", rect: [560, 850, 288, 400], action: "showToast('🧺 小攤尚未開張，敬請期待')" },
+                { id: "ql-dock", label: "⛵ 搭船離島", rect: [0, 790, 440, 420], action: "leaveQinglanIsland()" }
+            ],
+            figures: [],
+            chatterHeads: [[403, 672], [460, 685], [515, 728], [580, 735], [685, 728], [745, 680], [808, 672], [505, 958], [750, 1050]]
+        },
+        // 隱藏仙翁（2026-10-04 使用者：「涼亭改成場景，圖內場景有機會出現仙翁；解鎖條件魅力 10000」）：涼亭只是背景（沒有按鈕），
+        //   魅力（本身＋裝備）≥ minCha 時，每次登島 chance 機率出現在涼亭裡；點他開對話（town-npc.js 的 talkToXianweng），當天見過就不再出現
+        //   人物圖：從青瀾島島景圖的垂釣老者沿輪廓去背（2026-10-04 使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
+        //     場景用 npc-xianweng.png（全身約 117px、略降亮度、左右鏡像讓釣竿朝左邊河面；使用者要背影但沒有背影圖，選擇沿用這張）；對話視窗用全身 npc-xianweng-portrait.png
+        hiddenNpcs: [{
+            id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 1,
+            // 出現條件（2026-10-04 使用者定案）：魅力（本身含駐顏駐魅力丹＋裝備）5000、當日線上擊殺 2000、一天只出現一次、每小時出現 10 分鐘後隱藏
+            //   minKillsToday＝當天（日曆日）線上野外擊殺數（town-npc.js 的 getTodayFieldKills）；window＝每 everyMin 分鐘的前 showMin 分鐘（裝置時間，例 每小時 :00～:09）
+            minCha: 5000, minKillsToday: 2000, window: { everyMin: 60, showMin: 10 },
+            spots: [{ img: "images/towns/npc-xianweng.png", rect: [345, 369, 55, 117] }],   // 涼亭左前角的台基上（使用者確認的位置），面向左邊河面垂釣
+            // 釣魚演出（town-npc.js 的 getTownNpcEffects）：竿＝手 → 竿尖、釣線＝竿尖 → 水面、水面漣漪（圖上座標）
+            fishing: { hand: [349, 408], tip: [262, 350], hook: [256, 512] },
+            // 手機直式圖（qinglan-inner-portrait.jpg 848×1264）：涼亭石台左前角、面向左邊河面；身高約 90px（與同深度的攤販相當）
+            portraitSpot: { img: "images/towns/npc-xianweng.png", rect: [164, 632, 42, 90] },
+            portraitFishing: { hand: [167, 662], tip: [100, 617], hook: [104, 738] },
+            // 低語（2026-10-04 使用者：「仙翁出現有沒有一些低語」）：仙翁在場時，頭頂偶爾浮出淡淡的小字慢慢飄散（town-npc.js 的 startNpcWhispers）；
+            //   firstMs 出現後多久第一句、everyMs 間隔、showMs 停留；at＝字的位置（圖上座標，仙翁頭頂）
+            whispers: {
+                firstMs: 4000, everyMs: 15000, showMs: 6000, at: [372, 360], portraitAt: [185, 625],
+                // 2026-10-04 使用者：「聽完仙翁全部低語，仙翁才會出現可點擊對話選項」→ 依序說完全部 lines 後才能點（約 2 分半）
+                inOrder: true, unlockAfterAll: true,
+                lines: [
+                    "……三百年了，還是沒等到。",
+                    "魚兒啊，你也在等人嗎？",
+                    "桃花開了又謝，謝了又開……",
+                    "釣竿不動，心卻動了。",
+                    "小友，看得見老夫？",
+                    "今日的風，有些像當年。",
+                    "願者上鉤，不願者……也罷。",
+                    "她說過，桃花渡見。",
+                    "這一局棋，下了三百年。",
+                    "呵……有緣人，近了。"
+                ]
+            },
+            portrait: "images/towns/npc-xianweng-portrait.png",
+            lines: {
+                greet: "呵呵……老夫在此垂釣三百年，釣的不是魚，是有緣人。\n小友魅力過人，與老夫甚是投緣——這一竿，送你一場造化。",
+                reward: "仙翁撫鬚一笑：「造化未到，緣分已結。改日再來，老夫自有安排。」",
+                bye: "仙翁化作一縷清風，消失在涼亭之中……"
+            }
+        }]
+    },
+    "天元城": {
+        title: "天元城・內城",
+        img: "images/towns/tianyuan-inner.jpg",
+        imgW: 848, imgH: 1264,
+        hotspots: [
+            { id: "ty-quest", label: "任務榜", rect: [350, 280, 150, 150], action: "openLingjieQuestModal()" },   // 2026-10-04 改成靈界專屬任務榜（和人界每日任務分開）
+            { id: "ty-tea", label: "茶樓", rect: [150, 480, 200, 260], action: "openTeaHouse()" },
+            { id: "ty-shop", label: "大道商行", rect: [540, 560, 140, 200], action: "openLingjieShop()" },   // 右側「大道商行」招牌：販賣傳送陣靈石
+            // 2026-10-04 使用者指定：第三段宗門（至高聖地）只能在靈界拜入；天元城也有一般宗門設施（尋訪仙門、背包、僕從…），不用回人界
+            { id: "ty-sect", label: "至高聖地", rect: [330, 130, 240, 130], action: "openSectModal()" },          // 上方宮殿：拜入／回歸第三段宗門（sect.js 在靈界只列至高聖地）
+            { id: "ty-facility", label: "宗門設施", rect: [555, 300, 130, 110], action: "openLingjieFacility()" }   // 右上樓房（手機畫面置中時左側會被切掉，所以放右邊）：一般宗門設施（lingjie.js）
+        ],
+        figures: [],
+        extraButton: { label: "↩ 靈界地圖", action: "openTownScene(LINGJIE_SCENE_KEY)" }
     },
     "天星城": {
         title: "天星城・坊市",

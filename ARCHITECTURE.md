@@ -8,6 +8,10 @@
 ## 1. 專案結構
 
 ```
+package.json          建置工具相依（terser、acorn；node_modules/ 與 dist/ 在 .gitignore）。第 72 節
+.github/workflows/pages.yml  GitHub Actions：main 有新提交 → node tools/build.js → 發佈 dist/ 到 GitHub Pages（Pages 來源需設為 GitHub Actions，第 72 節）
+tools/build.js        建置：data/*.js 打包進同一個函式範圍＋terser 混淆 → dist/（遊戲資料不再是全域變數；只公開事件用到的函式，第 72 節）
+CLAUDE.md             給 Claude 的工作規則（2026-10-03）：修改前先讀本檔、修改後同步更新本檔、回覆用繁體中文、驗證後自動開 PR 並合併進 main 發佈
 gm.html               戰力榜 GM 後台（第 50 節）：只有 Firestore admins 名單內的 Google 帳號能刪除／封鎖／審核守城榜；不是遊戲頁面，遊戲內沒有連結
                       （載入 data/config-realms、config-leaderboard、config-bounty、bounty、config-defense.js）
 manifest.json         PWA 設定（名稱、圖示、standalone、底色 #05070c；第 64 節）
@@ -24,7 +28,7 @@ images/               圖片素材
   evil-hall.jpg       殺手殿堂場景背景（937×625，玩家提供；獵殺邪修入口，見第 27 節）
   secret/             秘境海報（config-secret-realms.js 的 img，第 43 節）：zhenmo-tower.jpg 鎮魔塔（768×1365，9:16，玩家提供的水墨海報，圖上已有標題與標語）、
                       motu-tiannan.jpg 魔屠天南手機版（852×1846）／motu-tiannan-pc.jpg PC 版（1024×1536），玩家提供的 webp 以瀏覽器轉 JPG（圖上無字，標題由程式疊上，第 49 節）
-  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄 848×1264 直式插畫、boss-tiangou.jpg 第 10 層樓主天狗 848×1264 水墨插畫、boss-shiyue.jpg 第 15 層鎮關者噬月魔子 848×1264、boss-yamata.jpg 第 20 層樓主八岐大蛇 848×1264 浮世繪、boss-amaterasu.jpg 第 30 層樓主天照大神 848×1264 浮世繪、boss-susanoo.jpg 第 40 層樓主需佐能呼 848×1264 浮世繪、boss-liudao.jpg 第 50 層樓主六道極聖 848×1264）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
+  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄 848×1264 直式插畫、boss-tiangou.jpg 第 10 層樓主天狗 848×1264 水墨插畫、boss-shiyue.jpg 第 15 層鎮關者噬月魔子 848×1264、boss-yamata.jpg 第 20 層樓主八岐大蛇 848×1264 浮世繪、boss-amaterasu.jpg 第 30 層樓主天照大神 848×1264 浮世繪、boss-susanoo.jpg 第 40 層樓主需佐能呼 848×1264 浮世繪、boss-liudao.jpg 第 50 層樓主六道極聖 848×1264、boss-tiancai.jpg 第 60 層樓主天裁真君 848×1264）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
                       黑底依亮度轉透明並還原邊緣顏色，tools 外的一次性腳本；460×843／459×843），boss-qitianshen.jpg 第 1 層 BOSS 棄天神（2026-09-27 換成玩家提供的直式版 848×1264，2:3，左上有字）、boss-bumiegu.jpg 第 2 層 BOSS 不滅骨（2026-09-27 換成玩家提供的直式版 848×1264，2:3）、boss-zhuzhou.jpg 第 3 層 BOSS 主咒之王、boss-guihu.jpg 第 4 層 BOSS 幽冥鬼虎、boss-qingming.jpg 第 5 層 BOSS 青瞑爪龍（皆 848×1264）、boss-pharaoh.jpg 第 6 層 BOSS 黑暗法老王（玩家提供 687×1024，2:3，右下角有極小的「1024x1536」字樣）
   icons/              PWA 圖示（第 64 節）：icon-192／icon-512（any）、icon-maskable-512（Android 自適應，取景較寬讓標題落在中間 80% 安全區）、
                       apple-touch-icon（180）、favicon-32；皆由玩家提供的 1024×1024 海報 icon-source-1024.jpg 裁出（2026-10-01 第二版：韓立、南宮婉對望＋中間金色直式書法標題，取標題特寫、左右各露半張臉；第一版海報留在 icon-source-1024-v1.jpg）
@@ -41,7 +45,8 @@ images/               圖片素材
                       feisheng-gate.jpg 飛升台（玩家提供 848×1264 縮成 600×894、145KB；人界飛升點浮起後的入口畫面，圖上疊五行法陣與光柱，第 20 節）；safe-zone.jpg 安全區（宗門、天南城、天星城）的戰場實況圖（config-maps.js 的 SAFE_ZONE_IMG，第 59 節；玩家提供 848×1264 縮成 480×715、88KB）；
                       修仙地圖卡片縮圖（config-maps.js 的 thumb）：tianxing-city.jpg 天星城（720×381，玩家提供，第 20 節）、
                       tiannan-city-male.jpg／tiannan-city-female.jpg 天南城（720×405，玩家提供，依玩家性別顯示，第 20 節）
-  monsters/           野外小怪（第 59 節 FIELD_MONSTERS）：dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
+  monsters/           野外小怪（第 59 節 FIELD_MONSTERS，2026-10-03 起在 config-monsters.js）：spider／turtle／wraith／zombie／sorcerer／puppet.jpg＝碧眼毒蛛、玄甲靈龜、怨魂、百年殭屍、魔道術士、傀儡魔偶
+                      （2026-10-03 玩家提供 1408×768 合成圖，圖上中文標籤先用旁邊背景羽化覆蓋，再依主體裁出 200×195～475×423，13～60KB；第 66 節）；dragon／white-tiger／qilin／nine-tail-fox／phoenix／ghost-general／ghoul.jpg，玩家提供的 1408×768 橫圖以主體為中心裁成 480×480（各約 25～50KB）；
                       righteous-cultivator.jpg 野外正道修士（config-merit.js 的 CULTIVATOR_IMGS，第 27、59 節；玩家提供 848×1264 直式縮成 480×715、77KB）、
                       assassin.jpg 暗殺者（AMBUSH_IMG；玩家提供 687×1024 縮成 480×715、72KB）、demonic-cultivator.jpg 野外魔道修士（CULTIVATOR_IMGS；848×1264 縮成 480×715、73KB）、
                       heart-demon-male.jpg／heart-demon-female.jpg 男／女角渡劫心魔（config-tribulation.js 的 HEART_DEMON_IMGS，第 7 節；皆 480×715，80／75KB）
@@ -78,7 +83,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   config-*.js         純資料表（原則上不含函式、無副作用），可視為遊戲的「設計數值表」：
                       realms / level / lifespan / maps / sects / lingbao / shop / beasts /
                       servants / equipment / tribulation / quests / activities / daily-quests / elements / merit / bounty / talisman / avatars / home-pc / spells /
-                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）
+                      gear-catalog / gear / enhance / sets / profession / titles（裝備系統，第 37 節）/ strange-fire（天下異火 50 種，第 38 節）/ partners（情緣夥伴，第 39 節）/ towns（城內場景，第 20 節）/ leaderboard（天下戰力榜 Firebase 設定，第 42 節）/ secret-realms（秘境列表，第 43 節）/ defense（死守天南城 100 波，第 49 節）/ zhenmo、zhenmo-questions（鎮魔塔設定與 300 題題庫，第 51 節）/ numeric（數值重做開關 NUMERIC_V2 與參數，第 52 節）/ aptitude（先天靈根與體質，第 53 節）/ golden-core（丹田、金丹、元嬰，第 54 節）/ mailbox（仙府信箱與兌換碼，第 56 節，gm.html 也載入）/ economy（賺錢管道，第 61 節）/ encounter（奇遇觸發與獎勵，第 63 節）/ yuanshen（元神與化神訣殘本，第 65 節）/ talents（天賦樹 6 路線 48 節點，第 68 節）/ monsters（野外妖獸型態、圖鑑、各地圖出沒組合，第 66 節；`FIELD_MONSTERS` 由 config-maps.js 搬來，載入在 config-maps.js 之後）
                       （config-gear-catalog.js 由 tools/csv-to-js.ps1 自動產生，請改 CSV）
                       （config-realms.js 另含修煉節奏表 realmPacing，經驗門檻與壽元流逝都由它換算，見第 26 節）
                       （config-sects.js 例外：尾端有一段迴圈補上技能倍率，並提供 findSectByName()）
@@ -87,6 +92,11 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   state.js            執行期間的可變全域狀態（player、enemies、靈寵輔助效果計時…）
   stats.js            屬性/戰力/等級經驗門檻計算的純函式，以及 getAllSkills()
   elements.js         戰鬥屬性引擎：減傷、閃避、屬性傷害（冰凍/燒傷/中毒/金重擊/雷擊）、五行相剋與持續傷害
+  talent.js           天賦樹（第 68 節）：點數（等級＋轉世）、加點、重置、加成彙總 getTalentBonusTotals（併入 getBonusTotals）、獨立倍率 talentMult、天賦視窗 #talent-modal
+                      （設定在 config-talents.js；載入在 monster.js 之後）
+  monster.js          野外妖獸的型態、出沒組合與技能（第 66 節第 2、3 期）：pickFieldMonster、applyMonsterType（減傷／閃避／暴擊、氣血與攻擊倍率）、fieldMonsterRoundsFactor（收益補償）、地圖卡片出沒列；
+                      技能 monsterPreAttack／monsterPostHit／playerAttrsUnderSunder（破甲計時 fieldSunderTurns、戰場說明 lastMonsterSkillText）
+                      （設定在 config-monsters.js：MONSTER_TYPES 五型態、FIELD_MONSTERS 圖鑑、FIELD_MONSTER_POOLS 各地圖組合；載入在 race.js 之後）
   race.js             種族剋制（第 62 節）：種族標籤文字、剋制加成 getRaceDmgBonus、斬妖錄擊殺數與天磯錄分頁、剋制法寶（法寶欄、掉落、合煉、千寶閣）（設定在 config-race.js，載入在 elements.js 之後）
   equip-compare.js    角色裝備視窗：人形裝備欄、部位換裝、裝備對比與穿上後試算（第 60 節）
   battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏（第 59 節）
@@ -109,6 +119,9 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   talisman.js         符寶坊：礦石煉製符寶、橙裝孔位鑲嵌／打掉（第 28 節）
   gear.js             裝備圖鑑 850 種：產生裝備、隨機詞條、特效、套裝、加成彙總、奪寶掉落、舊裝備轉換（第 37 節）
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
+  lingjie.js          靈界進出（第 74 節）：五行極品靈石 player.lingStones、身在靈界 player.inLingjie、飛升／返回人界扣靈石、極品靈石掉落（載入在 map.js 之後）
+  integrity.js        存檔簽章與合理性檢查（第 72 節）：存檔／存檔代碼帶 _sig、修煉進度對遊玩時數、異常時停用戰力榜與寄售（載入在 save.js 之後）
+  craft.js            做裝系統（第 69 節）：四種通貨（天機石／混元晶／破虛石／造化玉）的掉落與使用、鍛紋台、入魔淬煉；介面嵌在強化視窗
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
   golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）；凝聚元神後加成消失
@@ -121,6 +134,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   town-npc.js         城內隱藏 NPC（第 20 節「天南市集・香腸大師奧斯卡」）：進城擲骰躲在角落、被發現後吃／不吃、必敗決鬥演出（設定在 config-towns.js 的 hiddenNpcs）
+  xianweng-games.js   青瀾島隱藏仙翁的兩個小遊戲：開場動畫、仙翁釣魚、玲瓏棋局（五子棋困難 AI）（第 74 節「青瀾島」；設定在 config-towns.js 的 XIANWENG_GAMES）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
   codex.js            天磯錄：收藏紀錄、60 個稱號、器錄／套裝／異火／稱號／職業視窗（第 37 節）
@@ -132,6 +146,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   secret-realm.js     秘境入口：秘境列表、全螢幕秘境場景（海報）、挑戰說明視窗（第 43 節；鎮魔塔玩法尚未實作）
   defense.js          魔屠天南・死守天南城：影片預載＋預計秒數、三支影片輪流、100 波特效演出、通關紀錄（第 49 節）
   zhenmo.js           秘境「鎮魔塔」100 層：塔廳、10 題知識問答（限時、選項打亂）、結算倍率、BOSS 房入口（第 51 節；BOSS 待新增）
+  world-boss.js       世界 Boss（第 75 節）：全服共用一條血（Firebase wboss/state）、每天 3 次 30 回合挑戰、傷害排行、延後領獎（設定 config-world-boss.js，雲端規則 tools/firestore.rules）
   home-ui.js          洞府主畫面：舞台縮放（手機／PC 版面）、HUD 數值、底部導覽分頁、建築熱點、興建中提示（第 31 節）
   settings.js         設定視窗（洞府右上 ⚙️）：顯示尺寸 手機 9:16／PC 16:9／自動、全螢幕（第 34 節）、字級 小／中／大（第 45 節）
   title-screen.js     遊戲主頁（標題畫面）與進入世界
@@ -161,6 +176,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 - `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
 - `config-yuanshen.js` 接在 `config-golden-core.js` 後、`yuanshen.js` 接在 `golden-core.js` 後（第 65 節）：只宣告常數與函式，執行期才互相呼叫。
 - `town-npc.js` 緊接在 `partner.js` 後（第 20 節）：只宣告函式，執行期才讀 `townScenes`／`partnerById`，位置其實不受限。
+- `xianweng-games.js` 緊接在 `town-npc.js` 後（第 74 節）：只宣告常數與函式（`GOMOKU_N`、`GOMOKU_PATTERNS`），執行期才讀 `XIANWENG_GAMES`／`townNpcSpots`，位置其實不受限。
 - `config-encounter.js` 緊接在 `config-economy.js` 後、`encounter.js` 緊接在 `economy.js` 後（第 63 節）；兩者載入時只宣告常數與建立 IIFE，不讀其他檔，位置其實不受限。
 
 | # | 檔案 | 責任 | 依賴（讀取哪些全域） | 被誰依賴 / 誰會呼叫它 |
@@ -169,7 +185,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 1 | `config-realms.js` | `realms` 境界名稱陣列、修煉節奏表 `realmPacing`（每境界目標時數/主要地圖/估算加成）、`REALM_PACING_KILLS_PER_SEC` | 無（`realmPacing.map` 是地圖名稱字串，執行期才查 `maps`） | `stats.js`(getRealmStageExp/getNextExp)、`lifespan.js`(getAgingHours)、`ui.js`、`leveling.js` |
 | 2 | `config-level.js` | `MAX_PLAYER_LEVEL`、`LEVEL_UP_*` 成長值、`LEVEL_EXP_SEGMENTS` 經驗曲線 | 無 | `stats.js`(getLevelExpNeeded、getMaxHp/getMaxMp)、`leveling.js`(gainLevelExp)、`ui.js` |
 | 3 | `config-lifespan.js` | `lifespanByRealm` 各境界壽元增加量與死亡折壽、歲月流逝常數 `LIFESPAN_MIN_AGING_HOURS`/`LIFESPAN_PACE_MULT`/`LIFESPAN_DANGER_MULT`/`LIFESPAN_TRIBULATION_MULT`/`LIFESPAN_OFFLINE_RATE`/`LIFESPAN_FLOOR_DEATHS`、起始年齡 `LIFESPAN_START_AGE` | 無 | `lifespan.js`、`leveling.js`(轉世重設壽元與年齡)、`ui.js`(年齡顯示) |
-| 4 | `config-maps.js` | `SECT_MAP_NAME`（"宗門"，唯一安全區的名稱）、`maps` 地圖資料（含各圖 `coins` 每隻靈石）、`KILLS_PER_HOUR_ESTIMATE`、`REPUTATION_MAX_BY_MAP_CATEGORY`（各區擊殺聲望上限）、`OFFLINE_COMBAT_RATE`/`OFFLINE_REPUTATION_RATE`、離線實力估算 `IDLE_WAVE_AVG_MONSTERS`/`IDLE_WAVE_GAP_TICKS`/線上實戰證明門檻 `IDLE_PROVEN_SECONDS`、怪物刷新 `MONSTER_RESPAWN_SECONDS`(10)／收益補償 `KILL_REWARD_MULT`／打坐日誌間隔 `MEDITATE_LOG_SECONDS`（第 33 節末）、`monsterIcons` | 無 | `state.js`、`map.js`(isInSect)、`combat.js`、`ui.js`、`save.js`(migrateCurrentMap) |
+| 4 | `config-maps.js` | `SECT_MAP_NAME`（"宗門"，唯一安全區的名稱）、`maps` 地圖資料（含各圖 `coins` 每隻靈石）、`KILLS_PER_HOUR_ESTIMATE`、`REPUTATION_MAX_BY_MAP_CATEGORY`（各區擊殺聲望上限）、`OFFLINE_COMBAT_RATE`/`OFFLINE_REPUTATION_RATE`、離線實力估算 `IDLE_WAVE_AVG_MONSTERS`/`IDLE_WAVE_GAP_TICKS`/線上實戰證明門檻 `IDLE_PROVEN_SECONDS`、怪物刷新 `MONSTER_RESPAWN_SECONDS`(10)／收益補償 `KILL_REWARD_MULT`／打坐日誌間隔 `MEDITATE_LOG_SECONDS`（第 33 節末）、`monsterIcons`；野外妖獸圖鑑 `FIELD_MONSTERS` 已搬到緊接在後的 `config-monsters.js`（型態、各地圖出沒組合，邏輯 `monster.js` 排在 race.js 之後，第 66 節） | 無 | `state.js`、`map.js`(isInSect)、`combat.js`、`ui.js`、`save.js`(migrateCurrentMap) |
 | 5 | `config-sects.js` | `sectData` 宗門與技能表（宗門可選填 `faction: "邪"`，目前為皇朝、天魔教、九幽黃泉；沒寫 = 正）、`SECT_SKILL_BONUS`、`SECT_TIER_NAMES`、`findSectByName()`；尾端迴圈替每招補上 `tier`/`mult` | 無 | `sect.js`、`stats.js`(getSectTier/getAllSkills)、`ui.js`、`save.js`(重新綁定宗門)、`merit.js`(getPlayerFaction) |
 | 6 | `config-lingbao.js` | `legacySkillAdjustments` 舊版禁術下修數值、`artifactSkills` 神器專屬技能（key = 商品 id）、`lingbaoTierCosts` 各階段兌換價格、`ARTIFACT_COST_COINS` 神器靈石價（1 億）、`lingbaoShopItems` 三階段戰略級寶物與武學 | 無 | `lingbao-shop.js`、`equipment.js`(五行說明列固定屬性裝備)、`artifact.js` |
 | 7 | `config-shop.js` | `shopItems` 丹藥堂商品、`shopSections` 分區、`POTION_COOLDOWN_SECONDS` 丹藥冷卻、`SHOP_MAX_BUY_QTY` 單次購買上限(9999) | 無 | `shop.js`、`bag.js`、`combat.js`(自動補血補魔) |
@@ -200,6 +216,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 15p | `config-casino.js` | 天星賭坊（第 40 節）：`CASINO_TOWN`、每日上限 `CASINO_DAILY_LIMIT_BY_REALM`、`CASINO_DICE_MAX_RATIO`/`CASINO_DICE_MIN_BET`/`CASINO_CONFIRM_RATIO`、`casinoStones`(三種隕石：價格、結果權重表)、`CASINO_VALUE`(估值)、`CASINO_CUT_LINES`、擲骰 `CASINO_DICE_BETS`/`CASINO_TOTAL_PAYOUT`/`CASINO_DICE_FACES` | 無 | `casino.js` |
 | 15q | `config-leaderboard.js` | 天下戰力榜（第 42 節）：`LEADERBOARD_FIREBASE_CONFIG`（null = 不啟用、不連網）、`LEADERBOARD_SDK_BASE`、`LEADERBOARD_COLLECTION`、`LEADERBOARD_BANNED_COLLECTION`(banned)/`LEADERBOARD_ADMINS_COLLECTION`(admins，第 50 節)/守城榜 `LEADERBOARD_DEFENSE_SUBMIT_COLLECTION`(defenseSubmit，玩家送審)/`LEADERBOARD_DEFENSE_BOARD_COLLECTION`(defenseBoard，GM 審核通過才寫入)、`LEADERBOARD_UPLOAD_INTERVAL_MS`(5 分)/`LEADERBOARD_FIRST_UPLOAD_DELAY_MS`(15 秒)/`LEADERBOARD_MIN_GAP_MS`(60 秒，須與 tools/firestore.rules 一致)/`LEADERBOARD_HISTORY_SIZE`(24，上傳歷史 hist 筆數，須與規則一致，第 50 節)/兩日紀錄 `LEADERBOARD_HISTORY2_SIZE`(96)/`LEADERBOARD_HISTORY2_GAP_SEC`(1800，皆須與規則一致)/`LEADERBOARD_TOP_N`(100)/`LEADERBOARD_REFRESH_COOLDOWN_MS` | 無 | `leaderboard.js` |
 | 15r | `config-secret-realms.js` | 秘境（第 43 節）：`SECRET_REALM_DAILY_ATTEMPTS`(預定每日 5 次)、`secretRealmList`（id／name／img／minRealmIndex／implemented／tagline／desc／rewards 預定獎勵；選填 size／imgPc／sizePc／sceneTitle／sceneSub／enterLabel／enterPos／mode） | 無 | `secret-realm.js` |
+| 15r2 | `config-world-boss.js` | 世界 Boss（第 75 節）：集合名 `WB_STATE_COLLECTION`/`WB_RUNS_COLLECTION`/`WB_CLAIM_COLLECTION`、`WB`（dailyMax 3、gapSec 60、capPct、rounds 30、hitsToKill 24、weekOffsetMs、durationMs、claimDelayMs、firstHp／minHp／maxHp、topN 20、cacheMs、rewards、killMult、titles）、`WB_BOSSES`（4 隻輪替，圖沿用鎮魔塔）；gm.html 也載入 | 無 | `world-boss.js`、gm.html |
 | 15s | `config-defense.js` | 死守天南城（第 49 節）：`DEFENSE_TOTAL_WAVES`(100)／`DEFENSE_BOSS_EVERY`(10)／`DEFENSE_CLIP_FADE`、`DEFENSE_CLIPS`（id／name／src／zoom／trim／sizeHint）、`DEFENSE_THEMES`(10 主題)、`DEFENSE_BOSSES`、`DEFENSE_OPENERS`、`DEFENSE_CAMERAS`、強度 `DEFENSE_MILESTONES`/`DEFENSE_MILESTONE_STAGE`/`DEFENSE_ENEMY`、勝負 `DEFENSE_PLAYER_SKILL_MULT`/`DEFENSE_MAX_ROUNDS`/`DEFENSE_LOSE_AT`、獎勵 `DEFENSE_REWARDS`、通關紀錄 `DEFENSE_RUN_LOG_MAX`(20)；**尾端有函式**（例外）：強度曲線 `defenseRealmAtk(r,s)`/`defenseWaveAtk(w)`（defense.js 與 gm.html 共用） | 呼叫時才用 `bounty.js` 的 getBountyRefSectMult | `defense.js`、`gm.html`(守城審核) |
 | 15t | `config-zhenmo.js` | 鎮魔塔（第 51 節）：`ZHENMO_TOTAL_FLOORS`(100)/`ZHENMO_QUIZ_COUNT`(10)/`ZHENMO_QUIZ_SECONDS`(30)/`ZHENMO_REVEAL_ANSWER`(false)/`ZHENMO_RECENT_AVOID`(100)/`ZHENMO_QUIZ_REWARD_MULT`(答對數→BOSS 獎勵倍率)/`ZHENMO_SOURCES`、BOSS 戰 `ZHENMO_HERO_IMG`/`ZHENMO_PLAYER_SKILL_MULT`/`ZHENMO_MAX_ROUNDS`/`ZHENMO_ROUND_MS`/`ZHENMO_BOSSES`(第 1 層棄天神) | 無 | `zhenmo.js` |
 | 15v | `config-numeric.js` | 數值重做（第 52 節）：開關 `NUMERIC_V2`（讀 localStorage `xiuxian_numeric_v2`，預設關閉）、參數 `NV2`（成長、屬性、丹藥／藏書閣上限、增益上限、敏捷、氣血靈力、戰力）、`NV2_STAT_KEYS`/`NV2_STAT_LABELS`、`NV2_TEMPLATE_OVERRIDE`（靈動→敏捷範本） | 無 | `numeric.js`、`stats.js`、`elements.js`、`combat.js`、`ui.js`、`home-ui.js`、`alchemy.js` |
@@ -209,7 +226,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 17 | `stats.js` | `EQUIP_STAT_KEYS`/`BASE_STAT_KEYS`、`getEquipBonus`(四維＋減傷/閃避/屬性傷害；四維 × 強化倍率與主修武器加成，再加 gear.js `getBonusTotals` 的詞條／套裝／稱號／職業)/`getElementCounts`/`getSpiritRoots`(靈根判定)/`getRootBonus`(靈根加成總和)/`getPlayerElement`(本命五行，五行相剋用)/`getRealmStageExp`(依 realmPacing 換算每階經驗基數，有快取)/`getNextExp`/`getLevelExpNeeded`/`hasLiveBeast`(出戰中才算，呼叫 beast-combat.js 的 isBeastActive)/`getBasePower`/`getPhysAttack`/`getMagAttack`(兩者皆乘上懸賞對決的化功 `getDuelWeakenMult()` 與 `getGearPctBonus`)/`getMaxHp`(乘 `getGearPctBonus('hp')`)/`getMaxMp`(兩者皆加上轉世保留值)/`getReincarnateBonus`/`getSectTier`/`getAllSkills` | `player`、`realms`、`sectData`、`LEVEL_*`、`equipTypes`/`WUXING_COUNTERS`、靈寵輔助計時、`bounty.js`(getDuelWeakenMult) | `ui.js`、`combat.js`、`leveling.js`、`tribulation.js`、`beast-combat.js` 等幾乎全部功能檔 |
 | 18 | `elements.js` | `newStatus`/`getPlayerCombatAttrs`(含 `element`；懸賞對決被破甲時減傷／閃避 × `getDuelArmorMult()`；裝備特效的護體／先手盾／定神／破甲／洞察／剋敵／寒徹／焚燼／蝕骨欄位與套裝提高的上限)/`getWuxingCounterMult`/`withSkillEffect`/`getMapCategoryIndex`/`rollMonsterAttrs`/`resolveHit`/`addDotStack`/`tickStatus`/`formatStatus`/`summarizeTags`/`formatEquipStats` | `config-elements.js`、`stats.js`(getEquipBonus/getPlayerElement)、`library.js`(getElementBookBonus)、`wuxingElements`、`maps`、`playerStatus` | `combat.js`、`tribulation.js`、`ui.js`、`bag.js`/`equipment.js`/`auction.js`/`lingbao-shop.js`(裝備屬性文字) |
 | 19 | `ui.js` | 「製作成功」提示 `showCraftSuccess(title, detail)`（`#craft-toast` 動態建立、z-index 5000、2.2 秒淡出；煉丹／鍛造／符寶共用，2026-09-27）、常數 `PLAYER_AVATARS`（頭像 `img`（本地 images/avatar-*.jpg）/裁切位置 `pos`/預設道號，洞府頭像框、戰鬥實況、性別選擇共用；性別選擇視窗的兩張 `<img>` 寫在 index.html，換圖時要一起改）、`updateUI`/`updateCombatVisualPanel`/`formatWuxingCounterTip`/`updateTribulationUI`/`updatePotionCooldownUI`/`updateStudyCountsUI`/`openSkillModal`/`renderSkillList`/`addLog(msg, type, force, channel)`(野外回合中依 `fieldLogMuted`／`FIELD_MUTED_LOG_TYPES` 略過逐回合訊息；依 `channel`／`LOG_CHANNEL_BY_TYPE` 寫入戰鬥／道具／僕從分頁，第 44 節)/`switchLogTab`/`restoreLogTab`/`renderLogBadge`/`initModalTopClose`(彈窗右上角 ✕，第 46 節)/`refreshCombatStatusText`/`updateAutoSettings`/`syncAutoSettingsUI`/`updateSectFacilitiesUI`/`closeModal`/`toggleDrawer`/`formatCountdown`/`clampRefreshAt`(刷新時間軸保護，第 10 節)/`resolveBatchCount`(×1/×10/最高 共用)/批次刪除工具 `renderBulkDeleteBar`/`getCheckedBulkQualities`/`toggleAllBulkQualities` | `player`、`realms`、`stats.js` 的計算函式、`lifespan.js`(getDeathLifespanCost) | 幾乎所有功能檔在資料變動後都會呼叫 `updateUI()`/`addLog()` |
-| 20 | `map.js` | `isInSect`(是否身在宗門)/`returnToSect`(洞府「宗門」：傳送回宗門並開宗門分頁，第 20 節)/`openWorldMapModal`(修仙地圖彈窗，顯示目前所在)/`getMapThumb`(縮圖依性別選 `thumb`／`thumbFemale`)/`renderTownTeleports`(城鎮傳送點卡片)/`goToTown(i)`(傳送並進入城內場景)/`openMapCategoryModal`(略過 `hidden` 的宗門)/`selectMap`(選定後關閉兩層地圖彈窗；傳送到戰鬥地圖成功時切到戰鬥分頁 `switchTab('battle')`)/`changeMap`(懸賞對決中換地圖 = `endBountyDuel("flee")` 逃離；暫存區滿時不能進野外，enhance.js)；`goToTown` 先查 `getTownBanLeftMin`（town-npc.js 禁入） | `maps`、`SECT_MAP_NAME`、`player`、`ui.js`、`bounty.js`、`home-ui.js`(switchTab)、`town-npc.js`(getTownBanLeftMin) | `ui.js`(updateSectFacilitiesUI)、`combat.js`/`quest.js`(門派任務須在宗門)、HTML 按鈕；changeMap 離開宗門時呼叫 `quest.js` 的 stopQuest |
+| 20 | `map.js` | `isInSect`(是否身在宗門)/`returnToSect`(洞府「宗門」：傳送回宗門並開宗門分頁，第 20 節)/`openWorldMapModal`(修仙地圖彈窗，顯示目前所在)/`getMapThumb`(縮圖依性別選 `thumb`／`thumbFemale`)/`renderTownTeleports`(城鎮傳送點卡片)/`goToTown(i)`(傳送並進入城內場景)/`openMapCategoryModal`(略過 `hidden` 的宗門)/`selectMap`(選定後關閉兩層地圖彈窗；傳送到戰鬥地圖成功時切到戰鬥分頁 `switchTab('battle')`)/`changeMap(c, i, challengeOk)`(境界不足時改跳挑戰模式警告 `confirmChallengeMap`，第 70 節；懸賞對決中換地圖 = `endBountyDuel("flee")` 逃離；暫存區滿時不能進野外，enhance.js)；`goToTown` 先查 `getTownBanLeftMin`（town-npc.js 禁入） | `maps`、`SECT_MAP_NAME`、`player`、`ui.js`、`bounty.js`、`home-ui.js`(switchTab)、`town-npc.js`(getTownBanLeftMin) | `ui.js`(updateSectFacilitiesUI)、`combat.js`/`quest.js`(門派任務須在宗門)、HTML 按鈕；changeMap 離開宗門時呼叫 `quest.js` 的 stopQuest |
 | 21 | `combat.js` | `combatTick`/`fieldCombatRound`(野外一回合，日誌靜音、波末彙總、收益 × KILL_REWARD_MULT，第 33 節末)/`playerAttackTurn`(普攻/技能出手，渡劫共用；技能類型 single/aoe/heal/buff＋仙法的 shield 守護／control 牽制，並處理魔功 hpCost 反噬與 lifesteal 吸血)/`onPlayerKilledInField`/`checkAutoHealAndMana`/`tryRescueServant`/`getMapMonsterStats(map)`(妖獸攻擊／氣血，地圖可自訂 monsterAtk／monsterHp，save.js 離線估算也用) | `player`、`enemies`、`shopItems`、`servantQualities`、`servantNames`、`stats.js`、`elements.js`(resolveHit/tickStatus)、`leveling.js`(gainExp)、`beast-combat.js`(petAssistTick/applyPetDamageReduction/tickBeastUpkeep 每秒維持費計時)、`lifespan.js`(handlePlayerDeath)、`map.js`(changeMap 死亡回城)、`merit.js`(isEvilHuntUnlocked/getKarmaState/onCultivatorKilled/settleMeritStones，野外修士與暗殺者)、`config-merit.js`、`bounty.js`(對決中由 bountyDuelTick 接管；刷新新一波前呼叫 tryStartBountyDuel)、裝備系統（gear.js 特效／套裝／奪寶、enhance.js 星允鐵與暫存區、profession.js 職業技能與熟練度，第 37 節） | `main.js`(setInterval 每秒呼叫)、`bounty.js`(對決落敗呼叫 onPlayerKilledInField、playerAttackTurn) |
 | 22 | `leveling.js` | `REINCARNATE_KEEP_RATE`(轉世保留比例 5%)、`gainExp`/`gainLevelExp`/`advanceRealm`/`triggerReincarnate`（規則見第 25 節） | `realms`、`player`、`stats.js`、`ui.js`(updateSectFacilitiesUI)、`beast-combat.js`(gainBeastExp)、`lifespan.js`(gainRealmLifespan) | `combat.js`、`tribulation.js`、`save.js`、HTML 輪迴按鈕 |
 | 23 | `lifespan.js` | `getDeathLifespanCost`/`formatLifespan`/`getLifespanFloor`/`getAgingHours`(依 realmPacing 算出一境界壽元可撐時數)/`getAgingMultiplier`/`getAgingPerMinute`/`ageLifespan`(同時增加年齡 `player.age`)/`checkLifespanWarnings`(提示旗標 `lifespanWarned`，不存檔)/`getInitialLifespanForRealm`/`gainRealmLifespan`/`handlePlayerDeath`/`triggerLifespanGameOver` | `lifespanByRealm`、`LIFESPAN_*`、`player`、`inTribulation`、`elements.js`(getMapCategoryIndex)、`beast-combat.js`(killAllBeasts) | `combat.js`(每秒 ageLifespan、死亡)、`tribulation.js`(死亡)、`leveling.js`(突破)、`save.js`(離線流逝、舊存檔)、`ui.js`、`auction.js` |
@@ -229,6 +246,9 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34c | `bounty.js` | `getBountyRefSectMult`/`getBountyStats`/`getBountyNpc`/`getBountyIcon`/`refreshBountyIfDue`/`rollBountyBoard`/`getTrackedBountyIds`(舊存檔 activeBountyId 轉陣列)/`getActiveBounties`/`acceptBounty`/`acceptAllBounties`/`abandonBounty(id?)`/`renderBountyBoard`/`renderBountyBulkButtons`、對決 `tryStartBountyDuel`/`startBountyDuel`/`clearDuelDebuffs`/`getDuelWeakenMult`/`getDuelArmorMult`/`bountyDuelTick`/`endBountyDuel` | `config-bounty.js`、`realms`、`wuxingElements`/`MONSTER_AFFIX_TYPES`、`elements.js`、`combat.js`(playerAttackTurn/checkAutoHealAndMana/applyRootRegen/onPlayerKilledInField)、`beast-combat.js`、`merit.js`(陣營、善惡、settleMeritStones) | `combat.js`、`merit.js`(renderEvilHunt)、`stats.js`/`elements.js`(負面狀態)、`map.js`、`save.js`、`ui.js`(戰鬥實況)、`tribulation.js`(對決中不能渡劫) |
 | 34b | `talisman.js` | `talismanKey`/`getTalismanType`/`getTalismanGrade`/`getTalismanValue`/`formatTalisman`/`ensureSockets`(橙裝開孔，可重複呼叫)/`getSocketStats`/`formatSockets`/`findEquipById`/`openTalismanModal`/`renderTalismanWorkshop`/`renderSocketCard`/`craftTalisman`/`inlayTalisman`/`removeTalisman` | `config-talisman.js`、`equipTypes`、`player.talismans`/`ore`/`coins`/`equipment`/`equipInventory`、`ui.js`(resolveBatchCount)、`sect.js`(checkSectJoined) | `stats.js`(getEquipBonus 加總符寶)、`equipment.js`/`auction.js`/`lingbao-shop.js`(取得橙裝時 ensureSockets)、`bag.js`/`equipment.js`/`auction.js`(formatSockets 顯示)、`save.js`(migrateEquipSockets)、HTML 符寶坊按鈕 |
 | 34d | `gear.js` | **載入時執行** 展開 `gearList`/`gearById`/`gearBySlot`；`getGearDef`/`getQualityObj`/`getCraftChannel`/`pickGearDef`/`buildGearStats`/`createGearEquip`（鍛造、千寶閣、奪寶共用）、隨機詞條 `rollGearSubs`/`formatGearSubs`/`getGearSubTotals`、加成彙總 `getBonusTotals`（詞條＋套裝＋稱號＋職業）/`getGearPctBonus`、套裝 `getEquippedSetCounts`/`resolveSetTier`/`getSetBonusTotals`/`formatSetInfo`/`hasSetSpecial`、強化倍率 `getEnhanceMult`/`getEquipEffectiveStats`、奪寶 `tryLootDrop`、顯示 `getEquipDisplayName`/`formatEquipTitle`/`formatEquipDetails`/`formatGearSubline`/`describeGearEffect`/`formatGearEffect`、特效 `getGearEffects`/`gearFx`、每波狀態 `gearWaveRound`/`gearFirstStrikeUsed`/`gearUndyingUsed`/`gearDodgeStrikeReady`/`resetGearWave`、戰鬥 `getGearHitMult`/`applyGearHitChain`/`applyGearDefense`/`applyGearRegen`/`tryGearUndying`、舊存檔 `migrateGearIds` | `config-gear*.js`、`config-enhance.js`、`config-sets.js`、`equipTypes`/`equipQualities`/`EQUIP_LEVELS`、`lingbaoShopItems`、`talisman.js`(ensureSockets)、`codex.js`、`profession.js`、`enhance.js`(receiveLootEquip) | `equipment.js`/`auction.js`(產生裝備)、`stats.js`/`elements.js`/`combat.js`/`tribulation.js`/`bounty.js`(加成與特效)、`bag.js`/`equipment.js`/`auction.js`/`talisman.js`(卡片)、`save.js` |
+| 20b | `lingjie.js` | 靈界（第 74 節）：`getLingStone`/`addLingStone`/`hasLingStoneSet`/`payLingStoneSet`/`formatLingStones`/`lingStoneShortText`、`isInLingjie`/`isLingjieMapCategory`、`prepareLingjieEntry`(飛升點，town.js 的 enterCityGate)/`tryLeaveLingjie(then)`/`leaveLingjieToWorldMap`(靈界地圖右上鈕)/`openCurrentWorldScene`(世界導覽)、掉落 `rollLingStoneDrops(rolls, silent)`/`rollLingStoneZhenmo`、`migrateLingjie(data)` | `config-towns.js`(LINGJIE_*)、`map.js`(changeMap/getMapCategoryIndex)、`town.js`(openTownScene/closeCityGate)、`ui.js`(gameAlert/gameConfirm) | `map.js`(getMapEntryBlock、changeMap、returnToSect)、`town.js`、`home-ui.js`(openWorldTab)、`combat.js`、`save.js`、`zhenmo.js`、`bag.js` |
+| 33b | `integrity.js` | 存檔驗證（第 72 節）：`igSign`/`igHash`、`igPrepareSave`(saveLocal 寫入字串，嵌 _sig)/`igVerifyLocal`(loadLocal)/`igSignedCopy`(匯出)/`igVerifyImport`(匯入)、`isSaveFlagged`/`flagSave`、合理性 `igProgressHours`/`igAuditCheck`/`igAddPlaySeconds`（頂層 setInterval 每秒累計遊玩時數） | `player`、`realmPacing`、`stats.js`(getNextExp)、`main.js`(gameStarted)、`ui.js`(addLog) | `save.js`(存讀檔、匯入匯出、離線秒數)、`leaderboard.js`(不上傳)、`market.js`(不能寄售／出價) |
+| 34e2 | `craft.js` | 做裝（第 69 節）：通貨 `getCraftCur`/`addCraftCur`/`formatCraftGain`/`craftGainSuffix`、掉落 `rollCraftFieldDrops`/`onCraftFieldKills`/`rollCraftZhenmo`/`rollCraftDecompose`/`rollCraftDecomposeMany`、`canCraft`/`craftSubCap`/`craftPoxuLockLeft`/`isCraftSealed`/`setSubTier`、操作 `useCraftCur(k)`/`forgeCraftSub`(鍛紋台，`craftForgeKey`)/`corruptEquip`(入魔淬煉)、顯示 `renderCraftSection`/`formatGearCraftTag` | `config-enhance.js`(CRAFT_*)、`gear.js`(rollGearSubs/rollGearSubTier/rollGearSubValue/gearRollOpts)、`enhance.js`(enhanceEquipId/locateEquip/renderEnhanceModal/formatOneSub)、`save.js`(saveLocal) | `enhance.js`(強化視窗、分解)、`equipment.js`(鍛造自動分解)、`gear.js`(卡片標籤)、`combat.js`(野外擊殺)、`save.js`(離線)、`zhenmo.js`、`defense.js` |
 | 34e | `enhance.js` | `randInt`、星允鐵 `addStarIron`/`addIronShards`、`locateEquip`/`removeLocatedEquip`、強化 `getEnhanceInfo`/`canEvolve`/`enhanceEquipId`/`openEnhanceModal`/`renderEnhanceModal`/`getEvolveStatRatio`/`enhanceEquip`/`promptEvolveEquip`(+20 系統通知)/`evolveEquip(skipConfirm)`、分解 `getDecomposeYield`/`formatDecomposeYield`/`decomposeEquip`/`bulkDecomposeEquipment`、暫存區 `isGearStashFull`/`receiveLootEquip`/`enforceGearStashLimit`/`moveStashToBag`/`deleteStashEquip`/`renderStashSection`、`refreshEquipViews`、千寶閣 `getIronShopState`/`renderIronShopSection`/`buyStarIron`/`rollIronBagItem` | `config-enhance.js`、`gear.js`、`codex.js`(checkTitleUnlocks、稱號強化成功率)、`map.js`(changeMap)、`ui.js` | `bag.js`/`equipment.js`(按鈕與暫存區)、`auction.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵)、`map.js`/`save.js`(暫存區滿) |
 | 34h | `strange-fire.js` | 異火（第 38 節）：**載入時**建 `strangeFireById`；`addFireShards(n, source)`(取得碎片，供未來秘境掉落呼叫)/`rollStrangeFire`/`gainStrangeFire`/`craftStrangeFire(qty)`(合成，數字或 'max')/`getStrangeFireRealmReduction`(秘境受傷減免比例)/`getStrangeFireBonusTotals`(收錄加成)/`countCollectedFires`/`migrateStrangeFires`(舊存檔)/`renderStrangeFireCards`(背包卡片)/`renderCodexFires`(天磯錄分頁) | `config-strange-fire.js`、`player.fireShards`/`strangeFires`/`fireCollection`、`codex.js`(describeTitleBonus、openCodexModal)、`ui.js` | `bag.js`(renderBag)、`gear.js`(getBonusTotals)、`codex.js`(異火分頁、頂端統計)、`save.js`(applySaveData)；未來秘境（掉落、受擊減傷） |
 | 34k | `casino.js` | 天星賭坊（第 40 節）：狀態 `casinoTab`/`casinoBusy`/`casinoResultHtml`/`casinoDice`；`getCasinoState`(跨日重置)/`getCasinoDailyLimit`/`getCasinoRemaining`/`getDiceMaxBet`/`isInCasinoTown`/`checkCasinoSpend`(城鎮、靈石、上限、大額確認)/`recordCasino`；隕石 `randCasino`/`rollStoneOutcome`/`grantStoneOutcome`/`cutStone(id, count)`；擲骰 `setDiceType`/`setDicePick`/`setDiceTotal`/`setDiceAmount`/`addDiceAmount`/`setDiceMax`/`getDicePayout`/`describeDiceBet`/`judgeDice`/`rollDice`；視窗 `openCasinoModal`/`setCasinoTab`/`renderCasino`/`renderCasinoStones`/`renderCasinoDice`/`renderCasinoRecord` | `config-casino.js`、`player.casino`/`coins`/`ore`/`realmIndex`/`currentMap`、`enhance.js`(addStarIron/addIronShards)、`strange-fire.js`(addFireShards/rollStrangeFire/gainStrangeFire)、`gear.js`(tryLootDrop 的 casinoPurple/casinoOrange)、`codex.js`(checkTitleUnlocks/describeTitle*)、`ui.js` | `config-towns.js`(天星城石拱門傳送點)、`codex.js`(賭運稱號條件讀 player.casino) |
@@ -236,6 +256,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34i | `partner.js` | 夥伴（第 39 節）：**載入時**建 `partnerById`；`getPartnerPowerAvg`/`getPartnerTier`/`isPartnerMet`；好感 `getBond`/`getBondLevel`/`getBondLevelName`(LV5 道侶／結拜)/`addBond`/`reduceBond`/`nextBondMin`/`todayKey`/`greetPartner`/`pickGreetLine`/`getGiftCost`/`getGiftsLeft`/`giftPartner`；情緣任務 `getQuestStat`/`describeBondQuest`/`acceptBondQuest`/`getBondQuestProgress`/`claimBondQuest`/`abandonBondQuest`/`onPartnerFieldKills`；結識 `meetPartner`/`talkToPartner`(場景人偶)；彩蛋 `askPartnerEaster`/`answerPartnerEaster`/`playPartnerVideo`/`getPlayedSeconds`/`onPartnerVideoEnded`/`closePartnerVideo`、狀態 `partnerVideoCtx`；隊伍 `getPartnerTeam`/`isInTeam`/`togglePartnerTeam`/`getPartnerBonusTotals`/`partnerSkillTurn`/`migratePartners`；對話 `showPartnerDialog(p, lines, note, afterId, choices)`/`closePartnerDialog`；視窗 `partnerFilter`/`openPartnerModal(focusId)`/`setPartnerFilter`/`formatPartnerOrigin`/`renderBondSection`/`renderPartnerCard`/`renderPartnerModal` | `config-partners.js`、`player.partners`/`partnerTeam`/`partnerBond`/`fieldKills`/`evilKills`/`bountyKills`/`gender`/`coins`、`artifact.js`(castProcSkill)、`codex.js`(describeTitleBonus)、`ui.js` | `gear.js`(getBonusTotals)、`combat.js`(partnerSkillTurn、擊殺後 onPartnerFieldKills)/`tribulation.js`/`bounty.js`、`save.js`(migratePartners)、`config-towns.js`(風希人偶 talkToPartner)、`town-npc.js`(showPartnerDialog／addPartnerShards／addBond)、HTML 情緣導覽與對話框；`closePartnerDialog` 會呼叫 town-npc.js 的 `onTownNpcDialogClosed`（有定義才呼叫） |
 | 34m | `yuanshen.js` | 元神（第 65 節）：`hasYuanshen`/`getYuanshenInfo`/`getYuanshenCandidate`（資質判斷）、`getYuanshenBonusTotals`（修為）、`getYuanshenElement`（本命五行鎖定）、`getYuanshenDmg`（偏好屬性傷害）、`addHuashenScroll`/`rollHuashenScroll`/`rollFieldHuashenScroll`/`checkDailyHuashenBonus`（化神訣殘本）、`formatYuanshenShort`、`openYuanshenModal`/`condenseYuanshen`；只有函式、無載入時副作用 | `config-yuanshen.js`、`aptitude.js`(describePhysique、formatAptitudeShort)、`map.js`(getMapSuitRange)、`ui.js`(gameConfirm、addLog)、`#yuanshen-modal` DOM | `gear.js`(getBonusTotals)、`stats.js`(getPlayerElement)、`elements.js`(getPlayerCombatAttrs → resolveHit)、`combat.js`(風擊、野外掉落)、`golden-core.js`(凝聚後加成歸零)、`aptitude.js`(鎖定)、`leveling.js`(轉世清空)、`zhenmo.js`／`defense.js`／`encounter.js`／`bounty.js`／`daily-quest.js`(殘本)、`bag.js`、`ui.js`(updateUI) |
 | 34l | `town-npc.js` | 城內隱藏 NPC（第 20 節）：狀態 `townNpcSpots`（{ 城名: { npc, spot } }，本次進城擲出的結果）/`townNpcDuelTimers`/`townNpcDuelPlace`/`townNpcAskAt`（防連點，`TOWN_NPC_CHOICE_GUARD_MS`）/`townNpcAutoTimer`（「吃」消失後自動開打）/`townNpcAsking`（還沒選的城名）；`onTownNpcDialogClosed`（partner.js 的 closePartnerDialog 呼叫：問句被關掉＝開打）；`closeTownNpcDuel`（離開決鬥畫面＝關掉城內場景）；`isTownNpcDoneToday`/`markTownNpcDone`（`player.townNpc = { id: 日期 }`，用到才建立）、`getTownBanLeftMin(城名)`（`player.townBan`，被打爆後的禁入；map.js 的 goToTown 呼叫）、定時人偶 `getFigureSched`/`getScheduledFigureLeftMs`/`isScheduledFigureHere`（town.js 的 rollTownFigures 呼叫）/`talkToScheduledFigure(id)`（`player.townFigureSched`）、`rollTownNpcs(城名)`、`getTownNpcFigures(城名, view)`（只畫在主圖）、`removeTownNpc`、`talkToTownNpc`/`answerTownNpc(城名, 吃?)`、`startTownNpcDuel`；只有函式定義、無載入時副作用 | `config-towns.js`(hiddenNpcs)、`partner.js`(partnerById、showPartnerDialog、addPartnerShards、addBond、todayKey…)、`town.js`(currentTownScene、renderTownHotspots、closeTownScene)、`numeric.js`/`stats.js`(戰力、getMaxHp)、`format.js`(fmtCombat)、`#partner-dialog-modal`／`#town-duel` DOM | `town.js`(openTownScene 擲骰、renderTownHotspots 併入人偶)、`map.js`(goToTown 檢查禁入)、人偶 onclick |
+| 34m | `xianweng-games.js` | 隱藏仙翁小遊戲（第 74 節）：每日次數 `getXianwengDaily`（`player.xianweng = { date, fish, chess }`）/`xianwengFishLeft`/`xianwengChessLeft`/`grantXianwengStone`/`backToXianweng`；開場動畫 `playXianwengIntro(then)`/`finishXianwengIntro`；釣魚 `openXianwengFishing`/`xianwengFishAction`/`xianwengCast`/`xianwengHook`/`xianwengReelFrame`/`endXianwengCast`/`grantXianwengFishLoot`/`closeXianwengFishing`/`initXianwengFishControls`（狀態 `xwFish`）；五子棋 `openXianwengGomoku`/`gomokuPlay(i)`/`endXianwengGomoku`/`restartXianwengGomoku`/`closeXianwengGomoku`（狀態 `xwChess`）、AI `gomokuFive`/`gomokuCellScore`/`gomokuCandidates`/`gomokuOrdered`/`gomokuNegamax`/`gomokuWinCells`/`gomokuVCF`/`gomokuAiMove` | `config-towns.js`(XIANWENG_GAMES、LINGJIE_STONE_KEYS)、`town-npc.js`(townNpcSpots、talkToXianweng)、`lingjie.js`(addLingStone)、`enhance.js`(addRefineStones/addStarIron)、`craft.js`(addCraftCur/formatCraftGain)、`partner.js`(todayKey)、`save.js`(saveLocal)、`ui.js` | `town-npc.js`(xianwengChoose)、HTML 按鈕 |
 | 34f | `profession.js` | `getProfession`/`getProfRank`/`getProfRankName`/`getProfessionPassive`/`getProfWeaponMult`/`gainProficiency`/`gainKillProficiency`/`professionSkillTurn`/`formatProfessionTag`/`chooseProfession`/`renderProfessionTab` | `config-profession.js`、`artifact.js`(castProcSkill)、`elements.js`(getMapCategoryIndex)、`codex.js` | `stats.js`(主修武器加成)、`gear.js`(被動)、`combat.js`/`tribulation.js`/`bounty.js`(職業技能、熟練度)、`save.js`(離線熟練度)、`codex.js` |
 | 34g | `codex.js` | 收藏 `recordGearCollected`/`migrateGearCodex`/`hasCollected`/`getOpenGear`/`getTitleGear`(收藏類稱號範圍，固定不含秘境)/`countCollected`/`countCollectedQuality`、稱號 `getTitleName`/`isTitleConditionMet`/`describeTitleCondition`/`describeTitleBonus`/`getTitleBonusTotals`/`checkTitleUnlocks`/`getNameTag`/`setActiveTitle`、視窗 `codexTab`/`codexSlot`/`openCodexModal`/`setCodexTab`/`setCodexSlot`/`renderCodexModal`/`formatCodexStars`/`formatCodexStarLegend`(星星六色，第 48 節)/`CODEX_QUALITIES`/`renderCodexGear`/`renderCodexSets`/`renderCodexTitles`（異火分頁在 strange-fire.js） | `config-titles.js`、`gear.js`、`profession.js`、`strange-fire.js`(renderCodexFires/countCollectedFires)、`merit.js`(getKarmaState)、`stats.js`(getSectTier) | `gear.js`(收藏、稱號加成)、`enhance.js`、`profession.js`、`ui.js`(updateUI 每秒 checkTitleUnlocks)、`home-ui.js`(道號旁標籤)、`save.js`、HTML 天磯錄熱點 |
 | 35 | `field.js` | `herbRecipes`、`openFieldModal`/`plantHerb` | `player.spiritGrass`/`player.herbs`/`player.coins`、`ui.js`(resolveBatchCount) | HTML 按鈕（僅在「宗門」顯示） |
@@ -247,9 +268,10 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 40 | `player-profile.js` | `PLAYER_NAME_MAX_LENGTH`、`sanitizePlayerName`(移除 HTML 特殊字元，讀檔/匯入也套用)/`changePlayerName`(開啟 #name-modal)/`confirmPlayerName` | `player.name` | HTML 按鈕、`save.js`(applySaveData) |
 | 41 | `save.js` | `calcOfflineProgress`(讀檔時的離線結算，呼叫 settleIdleSeconds)/`settleIdleSeconds`(離線與背景共用的收益結算，含 settleOfflineBeastUpkeep 靈寵維持費)/`estimateIdleCombat`(依實力估算離線戰鬥效率與能否存活)/`formatIdleDuration`/背景補發 `checkBackgroundCatchUp`＋常數 `BACKGROUND_TICK_SLACK_MS`/`BACKGROUND_SETTLE_MIN_SECONDS`（第 33 節）/`saveLocal`/`loadLocal`/`applySaveData`(讀檔與匯入共用)/`resetGameCompletely` + 舊存檔相容 `migrateServantAssignments`/`migrateEquipmentSlots`/`migrateActivityFields`/`migrateCurrentMap`/`migrateProgressionFields`/`migrateLegacySkills`(舊禁術下修＋已兌換武學耗魔同步)/`migrateRealmExp`(經驗曲線改版：待渡劫者修為壓回滿格)/`migrateEquipSockets`(只補 talismans 欄位)/`migrateArtifactIds`(在 artifact.js，舊神器補 lingbaoId) + 讀檔失敗保護 `saveLoadFailed`/`reportLoadFailure`/`retryLoadAfterFailure`/`showRawSaveForCopy`/`abandonSaveAndStartNew`（第 30 節） + 離線斬殺野外修士的功德（讀檔時也呼叫 `settleMeritStones()`）+ 讀檔時清除懸賞對決狀態 + `reloadLocalSave`(選單按鈕，無存檔時給提示) + 存檔代碼（常數 `SAVE_CODE_PREFIX`="FS2:"、兩段式確認暫存 `pendingImportData`；編解碼皆為 async）`encodeSaveCode`/`decodeSaveCode`/`bytesToBase64`/`base64ToBytes`/`pipeBytes`/`openSaveCodeModal`/`setSaveCodeStatus`/`exportSave`/`selectSaveCodeText`/`copySaveCode`/`downloadSaveCode`/`importSave`/`pasteSaveCodeFromClipboard`/`importSaveFromFile`/`confirmImportSave`/`resetImportConfirm` | `player`（整包序列化進 `localStorage`）、`maps`(migrateCurrentMap)、`legacySkillAdjustments`/`lingbaoShopItems`(migrateLegacySkills)、`leveling.js`(gainExp)、`combat.js`(tryRescueServant)、`lifespan.js`、`beast-combat.js`(createBeast)、`ui.js` | `main.js`(啟動時 loadLocal)、`main.js`(initGame 內每 30 秒 saveLocal) |
 | 41b | `avatar.js` | `getPlayerAvatar`/`isAvatarUnlocked`/`checkAvatarCondition`/`checkAvatarUnlocks`/`openAvatarModal`/`renderAvatarModal`/`buyAvatar`/`selectAvatar`；頭像光環 `isFrameUnlocked`/`getPlayerFrame`/`checkFrameUnlocks`/`getFrameOverlayBox`/`renderFramedAvatar`/`renderFrameList`/`selectFrame`/`buyFrame` | `avatarList`、`avatarFrameList`/`AVATAR_FRAME_HOLE_FIT`、`player.avatarId`/`unlockedAvatars`/`avatarFrameId`/`unlockedFrames`/`gender`/`realmIndex`/`level`/`reputation`/`tribulationCount`、`realms` | `ui.js`(updateUI 呼叫 checkAvatarUnlocks；戰鬥實況頭像 renderFramedAvatar)、`home-ui.js`(頭像框、`updateHudAvatarFrames`)、HTML 頭像點擊與選擇視窗 |
-| 41d | `leaderboard.js` | 天下戰力榜（第 42 節）：狀態 `lbBackend`/`lbLastUploadAt`/`lbLastRefreshAt`/`lbRows`/`lbError`/`lbBanned`(被 GM 封鎖)；`checkLeaderboardBan`(上傳前查 banned/{uid}，第 50 節)；`lbTsDiffNanos`(兩個 Timestamp 相差奈秒，hist2 用)；`isLeaderboardConfigured`/`getRankPower`(= getPhysAttack 扣掉禁術、靈寵增益、對決化功等暫時倍率)/`getRankAttack`(max(物攻, 術攻) 同樣扣暫時倍率，守城送審用)/`lbStripTempBuffs`/守城榜 `lbDefenseRows`/`lbDefenseMine`/`lbTab`、`submitDefenseRecord(run)`/`flushDefenseSubmit`/`getDefenseRankStatusText`/`fetchDefenseBoard`/`switchLeaderboardTab`/`applyLeaderboardTab`/`defenseBoardHtml`（第 49 節）/`lbLoadScript`/`initLeaderboardBackend`(動態載入 Firebase compat SDK＋匿名登入，回傳 `{db, uid}`)/`uploadLeaderboard`/`startLeaderboardSync`/`fetchLeaderboard`/`openLeaderboardModal`/`refreshLeaderboard(manual)`/`lbEscape`/`lbTimeAgo`/`renderLeaderboard(loading)` | `config-leaderboard.js`、`stats.js`(getPhysAttack)、`bounty.js`(getDuelWeakenMult)、`player`/`petBuffTimer`/`petBuffMult`/`gameOver`、`save.js`(saveLoadFailed)、`main.js`(gameStarted)、`player-profile.js`(sanitizePlayerName)、`realms`、全域 `firebase`（CDN 動態載入） | `main.js`(initGame 呼叫 startLeaderboardSync)、HTML 洞府 HUD「戰力 🏆」與大道石碑、`defense.js`(submitDefenseRecord／getRankPower／getRankAttack／getDefenseRankStatusText) |
+| 41d | `leaderboard.js` | 天下戰力榜（第 42 節）：狀態 `lbBackend`/`lbLastUploadAt`/`lbLastRefreshAt`/`lbRows`/`lbError`/`lbBanned`(被 GM 封鎖)；`lbProbeQuota`(連線失敗時用 REST 確認是否 429 額度已滿)；`checkLeaderboardBan`(上傳前查 banned/{uid}，第 50 節)；`lbTsDiffNanos`(兩個 Timestamp 相差奈秒，hist2 用)；`isLeaderboardConfigured`/`getRankPower`(= getPhysAttack 扣掉禁術、靈寵增益、對決化功等暫時倍率)/`getRankAttack`(max(物攻, 術攻) 同樣扣暫時倍率，守城送審用)/`lbStripTempBuffs`/守城榜 `lbDefenseRows`/`lbDefenseMine`/`lbTab`、`submitDefenseRecord(run)`/`flushDefenseSubmit`/`getDefenseRankStatusText`/`fetchDefenseBoard`/`switchLeaderboardTab`/`applyLeaderboardTab`/`defenseBoardHtml`（第 49 節）/`lbLoadScript`/`initLeaderboardBackend`(動態載入 Firebase compat SDK＋匿名登入，回傳 `{db, uid}`)/`uploadLeaderboard`/`startLeaderboardSync`/`fetchLeaderboard`/`openLeaderboardModal`/`refreshLeaderboard(manual)`/`lbEscape`/`lbTimeAgo`/`renderLeaderboard(loading)` | `config-leaderboard.js`、`stats.js`(getPhysAttack)、`bounty.js`(getDuelWeakenMult)、`player`/`petBuffTimer`/`petBuffMult`/`gameOver`、`save.js`(saveLoadFailed)、`main.js`(gameStarted)、`player-profile.js`(sanitizePlayerName)、`realms`、全域 `firebase`（CDN 動態載入） | `main.js`(initGame 呼叫 startLeaderboardSync)、HTML 洞府 HUD「戰力 🏆」與大道石碑、`defense.js`(submitDefenseRecord／getRankPower／getRankAttack／getDefenseRankStatusText) |
 | 41e | `secret-realm.js` | 秘境入口（第 43 節）：`currentSecretRealm`、`getSecretRealm`/`openSecretRealmModal`/`renderSecretRealmList`/`openSecretRealmScene(id)`/`closeSecretRealmScene`(回到列表)/`challengeSecretRealm`(顯示預定玩法與獎勵；`mode: 'defense'` 改呼叫 `openDefenseBattle`)、每日次數 `getSecretRealmDaily`/`getSecretRealmAttemptsLeft`/`useSecretRealmAttempt`/`refreshSecretRealmEnterLabel` | `config-secret-realms.js`、`realms`、`player.realmIndex`、`ui.js`(closeModal)、`defense.js` | `activity.js`(活動「秘境」的 openFn)、HTML 秘境卡片與場景按鈕 |
 | 41g | `zhenmo.js` | 鎮魔塔（第 51 節）：`ZhenmoTower`（閉包；對外 open／close／startQuiz／answer／enterBoss／renderHall／state 與測試用 `_quiz`）、全域 `openZhenmoTower`/`closeZhenmoTower`/`startZhenmoQuiz`/`answerZhenmo(i)`/`enterZhenmoBoss`/`backToZhenmoHall`/`startZhenmoFight`/`skipZhenmoFight`/`setZhenmoFightSpeed` | `config-zhenmo.js`、`config-zhenmo-questions.js`、`#zhenmo-scene` DOM、`secret-realm.js`(次數)、`ui.js`(addLog)、`config-defense.js`(defenseRealmAtk)、`elements.js`(resolveHit／tickStatus／newStatus)、`stats.js`、獎勵的 strange-fire.js／enhance.js／merit.js | `secret-realm.js`(challengeSecretRealm 的 `mode: 'tower'`)、HTML 鎮魔塔畫面按鈕 |
+| 41g2 | `world-boss.js` | 世界 Boss（第 75 節）：狀態 `wbState`/`wbMine`/`wbTop`/`wbClaimable`/`wbFight`/`wbUid`；時段 `wbWindowStart`/`wbDayIdx`/`wbIsActive`/`wbNextOpen`；雲端 `wbRollover`(換隻交易)/`wbLoad`/`wbFetchTop`/`wbSubmit`(戰果交易)；視窗 `openWorldBossModal`/`refreshWorldBoss`/`renderWorldBoss`/`wbRankOf`；戰鬥 `startWorldBossFight`/`wbRound`/`wbStep`/`skipWorldBossFight`/`setWorldBossSpeed`/`wbEndFight`/`closeWorldBossFight`；領獎 `claimWorldBossReward` | `config-world-boss.js`、`leaderboard.js`(initLeaderboardBackend/lbWithTimeout/lbIsQuota/lbProbeQuota/lbEscape/lbBanned)、`elements.js`(resolveHit/tickStatus/光環)、`numeric.js`、`race.js`、`config-zhenmo.js`(ZHENMO_PLAYER_SKILL_MULT/ZHENMO_ROUND_MS/ZHENMO_HERO_IMG)、`integrity.js`(isSaveFlagged)、`enhance.js`/`craft.js`(獎勵)、`codex.js`(checkTitleUnlocks) | `secret-realm.js`(秘境卡片 mode 'worldboss') |
 | 41f | `defense.js` | 死守天南城（第 49 節）：`DefenseBattle`（內部函式全包在裡面，對外 open／close／setSpeed／retry／openRecords／closeRecords／waveSpec／waveAtk／waveRealmLabel／waveEnemy／simulateWave 與測試用 `_sim`／`_grantWave`／`_settle`／`_setWave`／`_state`；內部 `recordRun` 寫通關紀錄並送審）、全域 `openDefenseBattle(realmId)`/`closeDefenseBattle`/`setDefenseSpeed`/`finishDefenseNow`（一鍵結束 → `DefenseBattle.finishNow`）/`openDefenseRecords`/`closeDefenseRecords` | `config-defense.js`（含強度曲線 defenseRealmAtk／defenseWaveAtk）、`leaderboard.js`(送審、getRankPower／getRankAttack)、`format.js`(toWan)、`#defense-scene` DOM、`bounty.js`(getBountyRefSectMult)、`elements.js`(resolveHit/tickStatus/newStatus)、`stats.js`、獎勵用的 gear.js／enhance.js(receiveLootEquip／addStarIron)／strange-fire.js／merit.js／partner.js／codex.js(checkTitleUnlocks)、`secret-realm.js`(次數) | `secret-realm.js`(challengeSecretRealm)、HTML 守城畫面按鈕 |
 | 41c | `settings.js` | `DISPLAY_MODE_KEY`(localStorage 鍵)/`DISPLAY_MODES`/`AUTO_PC_MIN_WIDTH`/`AUTO_PC_MIN_RATIO`、`getDisplayMode`/`resolveDisplayLayout`(回傳 'phone'／'pc')/`setDisplayMode`/字級 `FONT_SCALE_KEY`/`FONT_SCALES`/`getFontScaleId`/`applyFontScale`/`setFontScale`（第 45 節）/`openSettingsModal`/`renderSettingsModal`/`isFullscreen`/`toggleFullscreen`；頂層註冊 `fullscreenchange` 監聽（只綁函式，載入順序不影響） | `home-ui.js`(layoutStage)、`#settings-modal` DOM、`localStorage` | `home-ui.js`(layoutStage 呼叫 resolveDisplayLayout)、HTML ⚙️ 設定按鈕 |
 | 41a | `home-ui.js` | `STAGE_IMG_W`/`STAGE_IMG_H`、`TAB_TITLES`(修仙／戰鬥／宗門／任務／世界)、`layoutStage`(手機／PC 版面切換，並控制寬螢幕用手機版時的「切換回 PC 版」按鈕，第 34 節)/`renderPcStage`(依 config-home-pc.js 產生 PC 版按鈕與熱點)/`initHomeUi`/`switchTab`/`openWorldTab`/`showStageToast`/`showHudResourceInfo`(資源框點擊說明，第 47 節)/`showUnderConstruction`/`openAscensionPlatform`/`openSystemModal`(命運與系統彈窗)/`formatShortNumber`/`getCultivationRate`/`updateHomeHud`(同時寫入手機版 hud-xxx 與 PC 版 pc-hud-xxx) | `player`、`realms`、`PLAYER_AVATARS`、`stats.js`、`tribulation.js`(triggerTribulation)、`activity.js`(openActivity)、`config-home-pc.js`、`settings.js`(resolveDisplayLayout) | `ui.js`(updateUI 結尾呼叫 updateHomeHud)、`main.js`(onload 呼叫 initHomeUi)、HTML 熱點與底部導覽 |
@@ -352,6 +374,7 @@ combatTick() 每秒執行 [combat.js]
 | `activatePartner(id)`（情緣卡片「✨ 激活」，碎片集滿 100 片） | `data/partner.js` |
 | `openPartnerModal`（手機與 PC 的「情緣」）、`setPartnerFilter(f)`、`greetPartner(id)`／`giftPartner(id)`／`acceptBondQuest(id)`／`claimBondQuest(id)`／`abandonBondQuest(id)`／`togglePartnerTeam(id)`（情緣視窗內）、`closePartnerDialog`／`answerPartnerEaster(id, yes)`（對話框）、`closePartnerVideo`（彩蛋影片）、`talkToPartner(id)`（坊市人偶） | `data/partner.js` |
 | `talkToTownNpc(城名)`（城內隱藏 NPC 人偶，town.js 動態產生）、`answerTownNpc(城名, 吃?)`（對話框「🌭 吃／不吃」）、`closeTownNpcDuel`（決鬥畫面「↩ 被轟出天南市集」）、`talkToScheduledFigure(id)`（天星城賭坊前的牧塵人偶） | `data/town-npc.js` |
+| `xianwengChoose('fishing'|'gomoku'|'leave')`（仙翁對話）、`finishXianwengIntro`（開場動畫「略過」）、`xianwengFishAction`／`closeXianwengFishing`（釣魚：拋竿／收竿、還竿；收線是按住，事件由 `initXianwengFishControls` 綁定）、`gomokuPlay(i)`／`restartXianwengGomoku`／`closeXianwengGomoku`（玲瓏棋局） | `data/town-npc.js`、`data/xianweng-games.js` |
 | `craftStrangeFire(qty)`（背包異火碎片卡片）、`openCodexModal('fires')`（背包異火卡片「查看異火榜」） | `data/strange-fire.js`／`data/codex.js` |
 | PC 版洞府的所有按鈕與建築熱點（onclick 字串寫在 `config-home-pc.js` 的 `pcStageButtons[].action`，改名函式時要一起改） | 各功能檔 |
 | `openSettingsModal`（洞府右上 ⚙️、PC 版「設置」）、`setDisplayMode(mode)`、`toggleFullscreen`、`setFontScale('s'/'m'/'l')`（後三者由 `renderSettingsModal()` 動態產生） | `data/settings.js` |
@@ -516,6 +539,7 @@ combatTick() 每秒執行 [combat.js]
 - **僕從鎖定**（2026-09-28）：僕從物件的 `s.locked`（true = 鎖定，隨存檔保存，舊存檔沒有此欄位 = 未鎖定，不需 migrate）。
   僕從卡片有「🔓 鎖定／🔒 已鎖定」按鈕 → `toggleServantLock(id)`，名稱後加 🔒。鎖定中「解僱僕從」按鈕為 disabled，
   `dismissServant()` 開頭也會擋下（跳提示）；`bulkDismissServants()` 只解僱未鎖定的，確認視窗與日誌會註明略過幾名。
+  確認與提示改用遊戲內對話框（`gameConfirm`／`gameAlert`，函式改為 async；背包的 `bulkDeleteEquipment` 同，2026-10-04 版本 `20261005W`）。
   鎖定不影響指派任務。**日後新增任何會移除僕從的功能，都要略過 `s.locked` 的僕從。**
 - **裝備鎖定**（2026-09-26）：裝備物件的 `eq.locked`（true = 鎖定，隨裝備存檔，舊裝備沒有此欄位 = 未鎖定）。
   背包、暫存區、角色裝備視窗的每張卡片都有 `formatLockButton(eq)` 產生的「🔓 鎖定／🔒 已鎖定」按鈕 → `toggleEquipLock(id)`（用 `locateEquip` 找三處）；
@@ -554,7 +578,7 @@ combatTick() 每秒執行 [combat.js]
 | 千寶閣（拍賣場） | 5,000 | 無 | ✅ 已實作（每 3 小時刷新 5 件） |
 | 秘境 | 5,000 | 煉虛 | ✅ 入口已開放（秘境列表＋鎮魔塔場景，第 43 節）；塔內玩法 ⏳ 敬請期待 |
 | 獵殺邪修 | 8,000 | 金丹 | ✅ 已開放（2026-09-25）：懸賞榜每 4 小時刷新 6 名＋野外修士＋善惡值（第 27、36 節） |
-| 域外天魔（世界BOSS） | 10,000 | 大乘 | ⏳ 敬請期待 |
+| 域外天魔（世界BOSS） | 10,000 | 大乘 | ⏳ 已完成、暫不開放（`implemented: false`，開放改 true；第 75 節） |
 
 - **解鎖判定**一律走 `getActivityLockReason()`，未達標會說明缺什麼；
   `implemented: false` 的活動即使達標也只顯示「敬請期待」。
@@ -569,6 +593,8 @@ combatTick() 每秒執行 [combat.js]
   每次 10 萬靈石（`AUCTION_PAID_REFRESH_COST`／`BOUNTY_PAID_REFRESH_COST`）、每日各 5 次（`*_PAID_REFRESH_DAILY`，兩邊分開計）。
   - 共用函式在 `activity.js`：`getPaidRefreshState`/`getPaidRefreshLeft`/`payForRefresh`/`renderPaidRefreshButton`；
     次數存 `player.paidRefresh = { date, auction, bounty }`，以**當地日期字串**（`toDateString`）換日，不用時間戳，存檔轉移不會錯亂。
+  - 2026-10-04 版本 `20261005X`（使用者回報「千寶閣跟獵殺邪修榜無法刷新」）：混淆版上線後按鈕的 `paidRefreshAuction`／`paidRefreshBounty` 沒掛回 window（函式名以字串傳給 `renderPaidRefreshButton`，第 72 節，版本 `20261005W` 起修好）；
+    `payForRefresh`、`paidRefreshAuction`、`paidRefreshBounty` 的提示改 `gameAlert`，懸賞榜「追蹤中的懸賞會取消」改 `await gameConfirm`（`paidRefreshBounty` 改 async；LINE 等 App 內建瀏覽器的原生 confirm 直接回 false，等於永遠取消刷新）。
   - `paidRefreshAuction()`（auction.js）：搶拍視窗開著時不能刷新（看 `#auction-bid-modal` 是否顯示；
     ⚠️ 不能用 `auctionBidItemId` 判斷，它在搶拍結束後不會清空——2026-09-28 曾因此造成「搶拍過一次後永遠無法付費刷新」）。`paidRefreshBounty()`（bounty.js）：對決中不能刷新；追蹤中的懸賞會先 `confirm`，刷新後取消。
   - 付費刷新**不改變定時刷新的時間軸**：刷新前記下 `*RefreshAt`，刷新後還原（下次定時刷新照舊）。
@@ -628,7 +654,7 @@ combatTick() 每秒執行 [combat.js]
   橢圓羽化後貼上點綴，愈高處愈淡以模擬空氣遠近感；底部僅做一小段漸層收進遊戲底色。
   ※ 裁切素材時務必避開標題文字與光環所在區域，否則天空會出現文字殘影。
   產生腳本保留在對話紀錄中（使用 .NET System.Drawing），重製時可依上述規則重寫。
-- **唯一進入點**：畫面中央光環上的透明按鈕 `#title-hotspot`，除此之外沒有其他按鈕或提示文字。
+- **唯一進入點**：畫面中央光環上的透明按鈕 `#title-hotspot`，除此之外沒有其他按鈕（文字只有下方的版本名與創作者）。
 - **熱區如何對準光環**：因為 `cover` 會裁切，無法用固定百分比對齊，
   改由 `positionTitleHotspot()` 依 cover 縮放公式即時計算：
   `scale = max(容器寬/圖片寬, 容器高/圖片高)`，再加上置中裁切的位移量，
@@ -643,6 +669,8 @@ combatTick() 每秒執行 [combat.js]
   `positionTitleHotspot()` 會在圖片 `load`、`resize`、`orientationchange` 時重算
   （`<picture>` 切換來源時也會觸發 `load`，所以跨斷點縮放會自動校正）。
   ※ 若日後更換封面圖，只需重新量測光環座標並改 `TITLE_HOTSPOTS`，其餘不必動。
+- **版本名與創作者**（2026-10-04，版本 `20261005AI`，使用者指定）：標題「凡塵修仙傳」下方 `#title-version`「版本：飛昇靈界」（金色）、光環下方 `#title-credit`「創作者：銀河領主-羅峰」（白字黑影）。
+  位置與字級寫在 title-screen.js 的 `TITLE_TEXTS`（圖片原始座標＋字級圖片像素），`positionTitleHotspot()` 用同一套 cover 換算；字級最小 12px。換版本名改 index.html 的文字即可。
 - **啟動時機**：`window.onload` 只呼叫 `initTitleScreen()`，**不會**直接開始遊戲。
   讀檔、性別選擇、離線收益結算全部延後到玩家點擊後才執行（`main.js` 的 `startGame()`）。
 - **第一次進入（沒有存檔）**：顯示 `#gender-modal` 性別選擇視窗（男修／女修，含頭像與預設道號），
@@ -697,6 +725,7 @@ combatTick() 每秒執行 [combat.js]
 ## 13. 宗門技能（分階段學習、永久保留）
 
 - 宗門分三個階段，對應 `sectData` 每個分類的 `tier`：凡俗 1（初級）/ 修真 2（中級）/ 至高 3（高級）。
+- **拜入地點**（2026-10-04 起）：第一、二段在人界的「尋訪仙門」；第三段「至高聖地」只能在靈界天元城（宮殿熱點或「宗門設施」）拜入或回歸（`isSectTierHere`，第 74 節）。
 - 2026-09-27 起每個階段 6 個宗門（新增逍遙派、天音閣、天籟仙宮），每個宗門傳承一種武器（weapon），主修相同職業時有傳承加成（第 53 節）。
 - **每個階段只能拜入一個宗門**：`player.sectSkills = { 1, 2, 3 }` 記錄各階段選定的宗門名稱，
   第一次加入時會跳確認並鎖定；之後同階段的其他宗門按鈕會被停用。
@@ -752,6 +781,7 @@ combatTick() 每秒執行 [combat.js]
   以擊殺經驗估算：天南（每殺約 4,500）約可練到 Lv100 附近；禁區可推到數千級；
   Lv10000 需在最高戰場（每殺約 500 萬）長期掛機。
 - 等級與壽元、戰力無掛鉤（戰力不影響壽元）。轉世輪迴會把人物等級**重置為 Lv1**（見第 25 節）。
+- **天賦點**（2026-10-03，第 68 節）：Lv.1～100 每 10 級 1 點、100～1000 每 50 級、1000～10000 每 250 級（滿級 64 點）。
 - **境界等級上限**（2026-09-27 使用者同意，**只在新制 `NUMERIC_V2` 生效**，第 52 節；舊制每級加四維，現在上線會削弱線上玩家）：
   `config-level.js` 的 `LEVEL_CAP_BY_REALM`：凡人 50、煉氣 70、築基 100、金丹 150、元嬰 200、化神 300、煉虛 500、合體 700、大乘 1000、渡劫 1500、
   仙人初境 2500、天仙 3500、真仙 5000、大羅金仙 6500、混元大羅金仙 8000、混沌道祖 10000（依原本經驗曲線的自然進度訂，裝備等級 10～1000 在大乘以前對上境界）。
@@ -873,8 +903,9 @@ combatTick() 每秒執行 [combat.js]
 
 | 屬性 | 效果 | 玩家上限 |
 |---|---|---|
-| 🛡️ 減傷 `def` | 受到的傷害 -N% | 60% |
-| 💨 閃避 `eva` | N% 機率完全閃過一擊（物理、術法都可閃）；實際閃避＝閃避 − 攻擊方命中 `evaPen`（見下方「敵人命中」） | 40% |
+| 🛡️ 防禦 `def` | **2026-10-03 起改《天堂2》式（第 66 節）**：玩家＝防禦點數，受到傷害 × 120 ÷ (120 + 防禦)；敵人仍是減傷 N% | 無（原 60%） |
+| 🔮 魔防 `mdef` | **2026-10-03 新增（第 66 節第 4 期 A）**：擋術法傷害，公式同防禦；玩家＝防禦 × 0.6 ＋ 靈力 × 0.1 ＋ 飾品詞條；敵人用魔抗 % `mres`（沒填＝同減傷） | 無 |
+| 💨 閃避 `eva` | **2026-10-03 起改《天堂2》式曲線（第 66 節第 4 期）**：迴避值，被閃掉的機率＝D ÷ (D + 100)，D＝閃避 − 攻擊方命中 `evaPen`；玩家與敵人相同 | 無（原 40%） |
 | ❄️ 冰傷 `ice` | N% 機率凍結目標 1 回合（該回合無法行動） | 50% |
 | 🔥 火傷 `fire` | N% 機率燒傷：每層每回合扣「施放者攻擊力 × 15%」，**最多 3 層**、持續 3 回合 | 50% |
 | ☠️ 毒傷 `poison` | N% 機率中毒：每層每回合扣「施放者攻擊力 × 8%」，**最多 5 層**、持續 3 回合 | 50% |
@@ -890,6 +921,7 @@ combatTick() 每秒執行 [combat.js]
   實測（resolveHit 各 2 萬下，裝備＝防具 6 件＋飾品 5 件）：裸裝閃避全部被抵銷為 0%；紫裝 9～12%、橙 +10 17～19%、白金 +20 22～26%（原本 14～29%、23～34%、26～40%）。
   命中＝同階一般玩家的敏捷，所以只有裝備、光環、靈寵帶來的「超出一般玩家」的閃避才有效。
   ⇒ 同日（版本 `20261002o`）死守天南城也加命中（`defenseWaveL(w)` 內插該波的成長位置，`waveEnemy` 的 `attrs.evaPen`）。
+- ⚠️ **2026-10-03 起本項全部作廢**：防禦改點數（第 66 節第 1 期）、閃避改曲線（第 4 期），都沒有上限；保底只管護盾類。
 - **玩家實際閃避／減傷上限**（2026-09-29；版本 `20261002o` 先做「各最多 30%」，同日 `20261002r` 依使用者改為「最低 8 成，靈寵最多再加 1 成、夥伴最多再加 1 成」）：
   - `getPlayerCombatAttrs()` 帶 `isPlayer: true`，並把屬於靈寵（`petDef`／`petEva`＝靈寵增益）與夥伴（`partnerDef`／`partnerEva`＝夥伴被動，`getPartnerBonusTotals`）的部分另外列出（總值照舊，面板照舊累積到 40／60）。
   - `resolveHit` 防守方是玩家時：實際閃避＝min(本身閃避 − 命中, `PLAYER_EFFECTIVE_EVA_MAX` 20) ＋ min(靈寵, `PLAYER_PET_BONUS_MAX` 10) ＋ min(夥伴, `PLAYER_PARTNER_BONUS_MAX` 10)；減傷同理（扣破甲）。回傳多了 `preDef`（減傷前傷害）。
@@ -902,7 +934,7 @@ combatTick() 每秒執行 [combat.js]
   `combineAuras(陣列)` 把多個光環同種效果相加 → `auraPlayerAttrs`／`auraSelfAttrs`／`auraPlayerAtkMult`／`auraSelfAtkMult`／`auraCurseMult`，每回合 `auraRoundTick` 擲凍結／燒傷／中毒、扣持續傷害、BOSS 回血；
   `describeAura` 顯示。效果：玩家攻擊 −、減傷 −、閃避 −、詛咒（受傷 +%）、每回合扣最大氣血 %、每回合機率凍結／燒傷／中毒；自身攻擊 +、減傷 +、閃避 +、每回合回血 %。
   使用處：鎮魔塔 `ZHENMO_BOSSES[n].auras`（第 51 節）、死守天南城首領 `DEFENSE_BOSS_AURAS`（第 49 節）。
-- **單次命中結算順序**（`resolveHit()`）：閃避 → 藏書閣屬性秘典（本命五行、目標凍結中）→ 金重擊 → 雷擊 → 五行相剋 → 減傷（雷擊時略過）→ 附加冰/火/毒狀態。
+- **單次命中結算順序**（`resolveHit()`）：閃避 → 藏書閣屬性秘典（本命五行、目標凍結中）→ 金重擊 → 雷擊 → 五行相剋 → 光暗 → 暴擊 → 防禦（雷擊、暗蝕時略過；玩家為防禦點數、敵人為減傷 %，第 66 節）→ 附加冰/火/毒狀態。
   屬性秘典的加成放在攻擊方 `attrs.book`（只有 `getPlayerCombatAttrs()` 會帶，怪物沒有），詳見第 24 節。
 - **回合流程**（`combat.js`）：
   1. 玩家先結算自身燒傷/中毒（`tickStatus(playerStatus)`），被凍結則本回合不出手。
@@ -1424,7 +1456,7 @@ combatTick() 每秒執行 [combat.js]
 |---|---|
 | 保留 5% | 四維與魅力：新值 = `10 + floor(前世 player.stats × 5%)`（只看基礎屬性，不含裝備） |
 | 保留 5% | 氣血上限、靈力上限：取前世 `getMaxHp()`/`getMaxMp()`（含裝備、宗門、靈根、等級）的 5%，存入 `player.reincarnateBonus = { hp, mp }`，由 `getMaxHp()`/`getMaxMp()` 加上 |
-| 遺忘 | 境界（回凡人 1 階）、人物等級（Lv1）、`sect`（變回散修）與 `sectSkills`（可重新選宗門）、門派任務 `activeQuest`、四維古籍 `studyCounts`、屬性秘典 `elementStudy` |
+| 遺忘 | 天賦分配（`player.talents` 清空重新點；轉世天賦點依輪迴次數另給，第 68 節）、境界（回凡人 1 階）、人物等級（Lv1）、`sect`（變回散修）與 `sectSkills`（可重新選宗門）、門派任務 `activeQuest`、四維古籍 `studyCounts`、屬性秘典 `elementStudy` |
 | 重設 | 壽元回到凡人的 60 年、年齡回到 16 歲，氣血／靈力補滿新上限，輪迴次數 +1 |
 | 卸下 | 身上裝備（`player.equipment` 各部位）全部放回背包 `equipInventory`，強制卸下不受背包上限 `MAX_EQUIP_INVENTORY` 限制；日誌記「輪迴之際，身上 N 件裝備盡數卸下」（2026-10-01 使用者指定，版本 `20261004o`；人物等級回 Lv1，要重新達到裝備等級才能再穿） |
 | 不動 | 背包、靈石等資源、功德／七彩補天石／破障丹、僕從、靈寵（等級可能高於 Lv1 的人物，但之後的經驗受人物等級上限卡住）、靈寶閣武學 `learnedSkills` 與 `lingbaoSold`、每日任務／千寶閣 |
@@ -1461,7 +1493,7 @@ combatTick() 每秒執行 [combat.js]
   | 渡劫 | 天淵戰場（同上） | 30 天 | 12 億（原 5 億） |
   | 仙人初境 | 荒古禁地 | 50 天 | 60 億 |
   | 天仙 | 上蒼（葬天島） | 100 天 | 200 億 |
-  | 真仙 | 冥界 | 150 天 | 540 億 |
+  | 真仙 | 不死山（2026-10-03 前為冥界） | 150 天 | 360 億（原 540 億） |
   | 大羅金仙 | 仙界戰場 | 200 天 | 1,200 億 |
   | 混元大羅金仙 | 萬界戰場 | 200 天 | 2,000 億 |
   | 混沌道祖 | 混沌初界 | 300 天 | 6,000 億 |
@@ -1538,7 +1570,7 @@ combatTick() 每秒執行 [combat.js]
   - **舊裝備不補孔**：只有更新後新鍛造／上架／兌換的橙裝才有孔；更新前就持有的橙裝、更新前上架的千寶閣商品都維持無孔。
     `save.js` 的 `migrateEquipSockets()` 只負責補上 `player.talismans` 欄位。
   - **日後新增任何取得裝備的管道，都要對新裝備呼叫 `ensureSockets()`。**
-- **符寶種類**（`talismanTypes`，11 種）：四維符 `str/con/int/spr`（加固定點數）、戰鬥屬性符 `def/eva/ice/fire/poison/metal/thunder`（加 %）。
+- **符寶種類**（`talismanTypes`，11 種）：四維符 `str/con/int/spr`（加固定點數）、戰鬥屬性符 `def/eva/ice/fire/poison/metal/thunder`（五行加 %；**護體／身法符自第 66 節起是防禦／閃避點數**，2026-10-03 版本 `20261005D` 起 `formatTalisman` 顯示「防禦 +3」「閃避 +5」，不再寫 %）。
 - **煉製一律隨機**（`craftTalisman(qty)` → `rollTalisman()`）：無法指定種類或品階；種類 11 選 1 平均，品階依 `chance`。
   每次成本固定 `TALISMAN_CRAFT_COST` = **500 礦石＋1,000,000 靈石**（2026-09-24 由 5 萬調高），支援 ×1／×10／最高，日誌彙整煉出的種類與數量。
 
@@ -1555,6 +1587,11 @@ combatTick() 每秒執行 [combat.js]
 - **拆卸**：已鑲嵌的可按「打掉」（`removeTalisman`，會 `confirm`），**符寶碎裂消失**、孔位變回空的；毀棄裝備時上面的符寶一併消失。
 - **顯示**：`formatSockets(eq)` 在背包、角色裝備欄、千寶閣卡片列出「🔮 孔位 N：[符寶] [空]」。
 - **設施**：宗門與設施抽屜的「🔮 符寶坊」（`#btn-sect-talisman`，身在宗門才顯示，需已拜入宗門）。
+- **合成與極品**（2026-10-03，版本 `20261005C`，使用者定案）：`talismanGrades` 加 `grade 4` 🌟極品（四維 新制 +1.0（`NV2.talismanFlat[4]`）、屬性 +5、剋制 +15%；`chance 0` 煉製不會出，`color`／`icon` 金字顯示）。
+  `TALISMAN_MERGE`：同種類 下品×3→中品（50 萬靈石）、中品×4→上品（200 萬）、上品×5→極品（1000 萬），一定成功；一枚極品＝60 枚下品（指定種類約煉 940 次）。
+  `talisman.js` 的 `renderTalismanMerge`（符寶坊「⚗️ 合成」區，只列數量夠的）／`mergeTalisman(type, grade, qty)`（1 次或全部）；只用持有中的，鑲在裝備上的不算。
+  煉製機率說明只列 chance > 0 的品階；鑲嵌下拉選單用 `stripTalismanTags` 去掉極品的顏色標籤。剋制符同規則（同一族上限 +20% 不變）。
+  驗證（本機）：13 下品力量 → 4 中品剩 1；上品誅邪 ×5 → 極品（對魔修 +15%）；鑲極品力量符 +1.0；煉製 2 萬次品階 70／25／5、沒有極品；Console 無錯誤。
 - **礦石產量參考**：一名傳說僕從每小時約 60 趟 × 平均 15.5 = 930 礦石（花費 18,000 靈石），約可煉製 1.9 次。
 
 ## 29. 裝備等級（鍛造閣）
@@ -1586,9 +1623,10 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005h`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
+- **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
 
 ### 2. 讀檔失敗保護（`save.js`）
 - `loadLocal()` 分開處理兩種失敗：`JSON.parse` 失敗（存檔真的壞了）與 `applySaveData()` 拋錯（多半是版本混用）。
@@ -2059,7 +2097,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 ### 一件裝備的五層能力
 1. **四維**：基數（鍛造／奪寶／千寶閣（2026-09-27 起）= 裝備等級 × 5 × 品級倍率）× 該裝備的**四維模板**（`GEAR_TEMPLATES` 8 種，係數合計 2.0；飾品再 ×1.25）。
 2. **主詞條**：武器 = 五行對應屬性傷害、防具 = 減傷（盔甲 ×1.5）、飾品 = 閃避，數值依品級。
-3. **隨機詞條**（`eq.subs = [[key, 值], …]`）：取得時抽一次，條數 白 0／綠 1／藍 2／紫 2／橙 3／白金 4，從 24 種抽（`gearSubAffixes`）。
+3. **隨機詞條**（`eq.subs = [[key, 值, 分級], …]`）：取得時抽一次，條數 白 0／綠 1／藍 2／紫 2／橙 3／白金 4，從 25 種抽（`gearSubAffixes`）。
+   2026-10-03 起暗黑式：分級（天地玄黃凡）、部位權重、前後綴命名、洗煉、遠古／太古、白金傳奇威能，見第 67 節。
 4. **特效**：每種裝備 1 個（38 種，`gearEffects`），**紫色以上才生效**，白～藍灰色顯示；紫 ×1、橙 ×1.5、白金 ×2，同名多件相加到 `cap`。
 5. **套裝**：秘境裝備中 30 組 × 6 件（名字共用前綴），只算紫色以上件數，2／4／6 件加成（`config-sets.js`）。
 
@@ -2336,6 +2375,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 恢復：`LEADERBOARD_RANKS_REMOVED = false`、index.html 兩個 HUD 戰力加回 `onclick="openLeaderboardModal()"` 與 🏆（HTML 註解有寫）、更新版本號。
   - 驗證（本機，真實 Firebase 唯讀）：上傳被略過、守城 99 波未排入、HUD 戰力無 onclick、大道石碑只剩留言板與寄售、指定開守城榜會改開留言板；Console 無錯誤。
 
+- **戰力榜重新開放**（2026-10-04，版本 `20261005AW`，使用者：「戰力排行榜先開放，我等一下再關閉」）：開關拆成兩個——`LEADERBOARD_POWER_REMOVED = false`（戰力榜：上傳、定時同步、大道石碑分頁、HUD 戰力 🏆 可點、gm.html 自動巡檢）
+  與 `LEADERBOARD_RANKS_REMOVED = true`（現在只管死守天南城榜：送審、分頁、守城介面文字，仍關閉）。再關閉戰力榜：`LEADERBOARD_POWER_REMOVED` 改 true、index.html 兩個 HUD 戰力拿掉 onclick 與 🏆、換版本號。
+  注意：開放期間每位在線玩家每 5 分鐘上傳一次戰力（Firebase 寫入額度）。
+  **同日再次關閉**（版本 `20261005AX`，使用者：「關閉戰力榜」）：`LEADERBOARD_POWER_REMOVED = true`、HUD 戰力恢復不可點；死守天南城榜仍關閉。
+
 ### 開通步驟（管理者做一次）
 1. 到 https://console.firebase.google.com 建立專案（可關閉 Google Analytics）。
 2. 「Authentication」→ 登入方式 → 啟用 **匿名**。
@@ -2384,6 +2428,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 視窗 `#leaderboard-modal`：自己的戰力與名次（未進前 100 顯示「未進前 100 名」）、前 100 名（前三名獎牌、自己那列 `.lb-self` 高亮、境界階數／等級／宗門、多久前更新）、重新整理（冷卻 10 秒）。
 - 其他玩家的道號／宗門一律經 `lbEscape()` 才插入 innerHTML（資料來自網路，不能信任）。
 - 額度估算（Spark 免費：每日 5 萬讀、2 萬寫）：每位在線玩家每小時 12 次寫入 → 約 1,600 玩家小時／日；每次上傳另有 1 次讀取（hist，2026-09-27 起）→ 同樣 1,600 玩家小時約用掉 1.9 萬讀；每開一次榜單約 100 次讀取 → 其餘約 300 次開榜／日。玩家變多時先調長 `LEADERBOARD_UPLOAD_INTERVAL_MS` 或調小 `LEADERBOARD_TOP_N`。
+
+- **Firebase App Check**（2026-10-04，版本 `20261005AH`，保護 Firebase 額度）：`LEADERBOARD_APP_CHECK_KEY`（config-leaderboard.js，reCAPTCHA v3 網站金鑰，空字串＝不啟用）。
+  有金鑰時 `initLeaderboardBackend` 多載入 `firebase-app-check-compat.js`，`initializeApp` 後立刻 `firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(金鑰), true)`；gm.html 對 'gm' app 同樣啟用。
+  上線順序：① reCAPTCHA 管理頁建立 v3 金鑰（網域 k559610142-art.github.io）② Firebase 主控台 App Check 註冊網頁應用程式（填密鑰）③ 金鑰填進程式並發佈
+  ④ 觀察 App Check →「Cloud Firestore」已驗證請求比例接近 100%（舊版快取的玩家更新後）⑤ 按「強制執行」。強制執行前沒有任何效果，也不會擋到玩家。
 
 ## 43. 秘境入口與鎮魔塔（`config-secret-realms.js`、`secret-realm.js`；2026-09-28）
 
@@ -2736,6 +2785,21 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     樓主 60／70／80／90／100 強力 81／87／86／82／82%、中等 0%；**鎮關者 55／65／75／85 中等 59／64／69／67%、強力 100%**（使用者 9/29 指定「中等 60%」）——
     與「50 層起只有上層修仙者能過」不一致，已回報使用者待決定（若要一致，四層 tune 換成本節上方記的「強力 85%」值）；第 95 層鎮關者本來就是強力標準（83%）。
     種族依名稱後綴：51～79 魔修、80～89 心魔（「戰神」）、90～100 魔修。
+- **第 60 層樓主「天裁真君・聖羽天罰」**（2026-10-03，版本 `20261005i`，玩家提供圖 `images/zhenmo/boss-tiancai.jpg` 848×1264、245KB 原檔照用：白金長袍、銀髮編髮的六翼天人手持七色寶石金杖、豎指施法，
+  頭頂日輪符文光環，四周浮著「天、裁、人、動、龍」金字，兩側跪地天使石像，腳下金色法陣；使用者只說「鎮魔塔 60 層 Boss」，名稱取圖上的「天裁」，為我暫定）：手動蓋過自動產生的「紫霄劍魔」（魔修）。
+  **數值與效果全部照抄自動產生的第 60 層**（天仙 10 階、`atkMult` 5.183＝公式 × `tune[60]` 1.63、`hpMult` 1.689、減傷 27 閃避 20、雷擊 27、五行金、四個光環效果、樓主獎勵 靈石 80 分鐘／功德 800～1600／異火 18～26／星允鐵 20～30），
+  種族也維持 😈**魔修**（奉天庭之命下界鎮塔的天人，被塔中魔氣侵染、審判走樣；吸血 10%；樓主首勝法寶仍是中品誅魔鏡）→ 2026-09-30 的校準（強力約 82%、中等 0%）不變，沒有重跑模擬。
+  光環改名不改效果（「天裁審判」詛咒 +7.8%、「聖光禁錮」凍結 3.1%、「六翼天威」雙方攻擊 ±7.8%、「罪業焚魂」每回合扣 0.2% 氣血）、出手閃光改聖光金 `rgba(253, 224, 71, 0.38)`、圖示 ⚡、
+  開場「天道在上——汝罪，當裁。」、招式 七曜神杖／聖羽天罰／天裁神雷／萬罪歸一、`imgPos` 50% 22%（臉在約 22% 高度）。以 Node 載入 config 確認第 60 層各數值與原自動產生版本逐項相同、第 61 層仍是自動產生。
+- **天賦樹後的再校準**（2026-10-03，版本 `20261005t`，第 68 節）：一般玩家改為點「該境界等級上限可得點數的一半」（輪流 鋒芒／銅皮／破甲／護魂，最多 20 點）。無天賦時半點天賦讓勝率 76～81% → 97～100%，
+  所以同方法對齊改版前勝率，第 5、7～100 層 BOSS 攻擊 ×1.12～1.68（約 1.4，乘進 `ZHENMO_L2_ATK`）。驗證（1000 場）：半點天賦 72～81%（改版前 75～81%）；**完全沒點天賦 36～62%**。
+- **魔攻／魔防後的再校準**（2026-10-03，版本 `20261005o`，第 66 節第 4 期 A）：魔修、心魔 BOSS 改術法攻擊（走魔防），同下方方法對齊改版前勝率，倍率多在 0.97～1.05；只套用偏離 ≥ 2% 的 33 層。
+  驗證（1000 場）與改版前差 ±3 個百分點內（16 層 68→65、55 層 61→63、85 層 67→69）。BOSS 介紹多「🔮術法攻擊／⚔️物理攻擊」與魔抗（和減傷不同時才顯示）。
+- **閃避曲線後的再校準**（2026-10-03，版本 `20261005n`，第 66 節第 4 期）：`ZHENMO_L2_ATK` 改為第 1～100 層都可能有值（兩次校準相乘）。每層先在改版前程式量勝率（1500 場），再於新程式二分搜尋同勝率的倍率（×0.85～1.02，高樓層閃避效果略降所以 BOSS 攻擊調低），
+  驗證（1000 場）與改版前差 ±3 個百分點內（例：10 層 81→83、60 層 78→79、100 層 81→83）；全勝／全敗樓層不調。
+- **《天堂2》式防禦後的再校準**（2026-10-03，版本 `20261005j`，第 66 節）：config-zhenmo.js 檔尾 `ZHENMO_L2_ATK`（第 50～100 層，鎮關者 55／65／75／85 除外）乘在 atkMult 上，倍率 1.08～1.35（約 1.2）。
+  原因：強力配置防禦 60 承受的傷害 80% → 67%，第 50 層以上勝率升到 90～95%。以本節的校準模擬（玩家帶 `petEva／partnerEva` 0）二分搜尋，回到原目標；第 7～49 層以中等配置（防禦 30，改前改後同為減傷 20%）為準，不調。
+  驗證（各 600 場、第 50 層 1500 場）：樓主 50／60／70／80／90／100 強力 80／79／81／81／79／80%、第 95 層 79%、其他 51～99 層 88～91%；鎮關者中等 64～67%；第 7～49 層中等 62～83%（與改前相同，妖獸／鬼物層本來就較低）。
 - **入口**：活動「🌀 秘境」→「鎮魔塔」卡片 → 海報場景「⚔️ 入塔挑戰」→ `challengeSecretRealm()` 見 `mode: 'tower'` → `openZhenmoTower()`。開放境界同秘境（煉虛）。
 - **畫面** `#zhenmo-scene`（z-index 101，疊在秘境場景上）：9:16 舞台 `#zhenmo-stage`（寬 = min(100vw, 100dvh×9/16, 560px)），背景為鎮魔塔海報加暗色漸層、四周模糊；四個面板輪流顯示（`show()`）：
   - **塔廳** `#zm-hall`：目前樓層、「已鎮壓 N / 100 層」、10×10 樓層格（由下往上、第 1 層在左下；紫 = 已通過、金 = 目前）、動作按鈕、規則說明。
@@ -2826,11 +2890,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     L 由裝備等級換算（Lv.10～1000 → 0～10）。⚠️ 裝備等級上限 1000，Lv.1000 以後武器攻擊靠品質與強化成長（混沌道祖普攻會比設計器低約 20%，第 2 階段校準怪物時一併考慮）。
   - 增益 `nv2BuffPct(kind)` **全部相加後封頂 +200%**（2026-10-03 起仙人初境以上依境界提高，見本節最後「後期增益上限與圖紙武器」）：裝備詞條／套裝／稱號／職業／異火／夥伴（getGearPctBonus）、仙法光環、靈根（倍率 −1）、宗門（(powerMult − 1) × 20%）、狼 +15%／龍 +30%、禁術與靈寵增益。
   - 攻擊 = (武器攻擊 ＋ 力量(術法：悟性) × 0.05) × (1 + 力量 × 0.1%) × (1 + 增益) × 對決化功 × 虛弱；氣血 = 50 × 1.05^L × (1 + 體質 × 0.2%) × (1 + 氣血增益) × (1 + 等級 × 0.005%)；靈力 = (50 + 靈力 × 10) × 光環 + 等級 × 0.5。
-  - 敏捷：`getPlayerCombatAttrs` 的閃避加 `nv2AgiEva`（仍受上限）、洞察加 `nv2Hit`、新增 `crit`；`resolveHit` 在五行相剋後判定暴擊（×1.5，tag `crit`「💥暴擊」）；
+  - 敏捷：`getPlayerCombatAttrs` 的閃避加 `nv2AgiEva`（仍受上限）、洞察加 `nv2Hit`、新增 `crit`；`resolveHit` 在五行相剋後判定暴擊（×1.5，2026-10-03 起 ×2，第 66 節；tag `crit`「💥暴擊」）；
     `playerAttackTurn` 普攻後以 `nv2Combo` 機率再打一次普攻（tag `combo`「⚡連擊」）。死守天南城、鎮魔塔的模擬戰鬥第 2 階段起也有連擊。
   - 戰力 `nv2CombatPower` = max(物攻, 術攻) × 暴擊期望 × 連擊期望 × 技能期望（40% × 3 倍）；人物面板 `#power-display` 與洞府 HUD 戰力改顯示它（戰力榜上傳仍是舊值，第 3 階段改）。
   - 人物面板新增「敏捷」列 `#stat-agi-row`（新制才顯示）；四維改顯示總值，滑鼠停留看來源。
-  - 煉丹房：新制每顆 +0.1、每種上限 200（魅力丹沿用舊制），不改 `player.stats`；新增**身法丹**（敏捷，上品靈草，`#pill-card-agi` 新制才顯示）；卡片顯示「已服用 N / 200 顆（屬性 +X）」，效果行 `#pill-effect-*` 依制度改字。
+  - 煉丹房：新制每顆 +0.1、每種上限 200（魅力丹另計：**2026-10-04 起每顆 +0.5、上限 5000 顆**（pillRecipes.cha 的 gain／max，原 +20、無上限；已服用的魅力不回溯，`pillUsed.cha` 自 2026-09-27 起累計，超過 5000 的不能再服），版本 `20261005T`），不改 `player.stats`；新增**身法丹**（敏捷，上品靈草，`#pill-card-agi` 新制才顯示）；卡片顯示「已服用 N / 200 顆（屬性 +X）」，效果行 `#pill-effect-*` 依制度改字。
 - **第 1 階段驗證**（2026-09-27 本機測試頁，藍色武器、無增益）：凡人 1 階普攻 7（加 +50% 增益 ≈ 10，符合設計器）、金丹 10 階 11、煉虛 10 階 15、渡劫 10 階 20、混沌道祖 10 階 27；
   氣血 51～169、戰力 13～54；增益疊滿（宗門 ×6＋禁術 ×4）封頂在 +200%；空手 1；暴擊與連擊調高後實測觸發率 28%／10%（上限 30%／10%）；煉丹 200 顆上限、身法丹正常；開關關閉時舊制數值完全不變；Console 無錯誤。
   野外怪物仍是舊數值（例：靈山大川攻擊 100，新制玩家氣血約 100），所以新制下目前無法正常練功——這是第 2 階段的工作（已完成，見下）。
@@ -2885,7 +2949,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     量得理論最高 凡人 163／金丹 210／煉虛 286／渡劫 365／真仙 425／混沌道祖 463。快取中的舊版程式上傳億兆級戰力會被擋下（只在 Console 警告）。
   - **GM 後台**（gm.html）：載入 `config-numeric.js`／`numeric.js`；上限 `CAP_BASE`＋`CAP_PER_REALM`；「基礎值倍率」改「一般玩家倍率」（戰力 ÷ `nv2TypNormal × nv2TypRoundMult`）；🟡 門檻改 60%；
     暴增預設 1 小時／4 倍／新戰力 ≥ 60（儲存鍵改 `gm_jump_settings_v2`，舊的 30 倍／100 萬不會沿用；上線後請用「時窗內最大成長」校準）；
-    守城審核 ③ 改為「戰力 ÷ 攻擊 在 1.7～2.4」（`DEF_POWER_ATK_MIN`，設定鍵 `gm_defense_settings_v2`）；守城強度 `defenseWaveAtk` 自動用新制曲線；
+    守城審核 ③ 改為「戰力 ÷ 攻擊 在 1.7～2.4」（`DEF_POWER_ATK_MIN`，設定鍵 `gm_defense_settings_v2`；2026-10-03 暴擊 ×2 後上限預設 2.6、鍵 `v3`，第 66 節）；守城強度 `defenseWaveAtk` 自動用新制曲線；
     新增「💥 新制上線清空全部榜單」按鈕：刪除戰力榜、守城榜、守城送審全部資料（黑名單保留），需 confirm 並輸入「清空」。
   - 其他：gear.js 毒爆、beast-combat.js 靈寵技能的傷害改 `roundDmg`（新制原本會被捨成 0）。
   - ⚠️ **上線順序**：① Firebase 主控台發布新版 `tools/firestore.rules` → ② push → ③ 用 GM 後台「💥 新制上線清空全部榜單」。
@@ -3103,10 +3167,32 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   |---|---|---|---|---|
   | 崑吾山 | 1600（1400） | 合體 10 階 | 5～10 | 38 下殺一隻、被 13 下打倒 |
   | 雷鳴大陸 | 2100（1900） | 大乘 10 階 | 8～15 | 57／8.7 |
-  | 天淵戰場 | 3000（2500） | 渡劫 10 階 | 8～20 | 70／7.1 |
+  | 天淵戰場 | 3000（2500） | 渡劫 10 階 | 11～20（原 8～20） | 70／7.1（調整前數字） |
   | 荒古禁地 | 5000（3000） | 仙人初境 10 階 | 15～25 | 100／5.0 |
   | 太初古礦 | 6500（4000） | 仙人初境 10 階 | 15～30 | 113／4.4 |
   | 上蒼（葬天島） | 8000（5000） | 天仙 10 階 | 15～40 | 138／3.6 |
+  - **天淵戰場強度 8～20 → 11～20**（2026-10-03，版本 `20261005z`，使用者指出「雷鳴 8-15、天淵 8-20」）：下限沒跟著境界升，而且加入怪物型態（第 66 節）後雷鳴大陸多皮厚怪，
+    一般玩家實測（每圖 1500 隻、無防禦）天淵每隻 76.8 回合反而比雷鳴 83.2 少、耗血 789% 對 572%。改成 11～20（下限 崑吾 5 → 雷鳴 8 → 天淵 11 → 荒古 15）後天淵 85.6 回合、943%，介於雷鳴（83／568%）與荒古（149／1616%）之間；
+    每小時收益由 `nv2TypRoundsPerKill`（含強度平均）自動補償，不變。
+  - **九天仙域強度 1.5～3 → 10～15**（2026-10-03，版本 `20261005F`，使用者指定）：只加 `nv2Str: [10, 15]`，妖獸仍隨玩家階數（沒有 `nv2FixedL`）。一般玩家（無防禦）每隻 13.3 → 73.6 回合、耗血 19% → 597%
+    （上蒼 147 回合／2989% 仍較難）；每小時經驗／靈石由 `nv2TypRoundsPerKill` 自動補償不變。⚠️ 九天仙域是天仙的主要練功圖（realmPacing），一般配置離線估算撐不住會被送回宗門靜修。
+  - **星空古路強度 1.5～3 → 10～15**（2026-10-03，版本 `20261005G`，使用者指定，同九天仙域作法）：一般玩家每隻 12.4 → 65.8 回合、耗血 18% → 569%（荒古禁地 151／1622%）；仙人初境的主要練功圖，一般配置離線同樣撐不住。
+  - **血天大陸強度 1.5～3 → 3～8**（2026-10-03，版本 `20261005H`，使用者指定）：一般玩家每隻 12.1 → 29.1 回合、耗血 17% → 108%（天淵戰場 86／945%）；渡劫的主要練功圖，一般配置離線可能撐不住。
+  - **血天大陸強度 3～8 → 8～15**（2026-10-04，版本 `20261005Y`，使用者指定，同雷鳴大陸）：config-maps.js 的 `nv2Str`；每小時經驗／靈石照樣由 `nv2TypRoundsPerKill` 自動補償。
+  - **九天仙域、太初古礦、上蒼移到第四區**（2026-10-04，版本 `20261005M`，使用者指定）：由無邊海（maps[6]）移到幽冥禁域（maps[4]）最前面；無邊海剩 血天大陸／天淵戰場／星空古路／荒古禁地。
+    第四區的分類表（減傷閃避、聲望、熟練度、壽元危險）與第三區相同，數值不變；但第四區在 `DARK_MAP_CATEGORIES`（妖獸本質為暗），三張圖加 `dark: false` 維持原本的本質（elements.js 的 rollMonsterAttrs 檢查 `currentMap.dark !== false`）。
+    驗證：三張圖一般玩家每隻回合數／耗血與移動前相同（九天 73.8／594%、太初 179／2533%、上蒼 148／3069%）。
+  - **區域改名**（2026-10-04，版本 `20261005L`，使用者指定）：第一區 → **落雲宗周邊**、第二區 → **慕蘭草原**、第三區 → **大晉王朝區域**。
+    改了 修仙地圖彈窗（人界地圖右上「地圖列表」開的 #world-map-modal）的按鈕文字、config-maps.js 的 `category`（地圖清單標題，例「慕蘭草原 (高難度戰鬥)」）、config-towns.js 的 worldRegions `name` 與紅點 `label`。分類索引不變。
+  - **地圖重整**（2026-10-03，版本 `20261005J`，使用者指定）：
+    - **無邊海**：第三區雷鳴大陸之後的 7 張（血天大陸、天淵戰場、星空古路、荒古禁地、九天仙域、太初古礦、上蒼）搬到新分類「無邊海 (渡劫解鎖·高難)」＝`maps[6]`，數值不變；第三區只剩 黑風海域／崑吾山／蠻荒古地／雷鳴大陸。
+      ⚠️ 新分類**加在最後**（索引 6）：分類索引被 `monsterAttrsByMapCategory`、`REPUTATION_MAX_BY_MAP_CATEGORY`、`PROF_MAP_MULT`、`LIFESPAN_DANGER_MULT`、`DARK_MAP_CATEGORIES` 使用，各表索引 6 一律同第三區；插在中間會讓第四、五區的索引位移。
+      世界地圖的「無邊海」區塊（config-towns.js 的 `worldRegions.wubian`）從「尚未開放」改成 `openMapCategoryModal(6)`；修仙地圖彈窗多一顆「🌊 無邊海」按鈕。
+    - **第四區強度 40～80 倍**依地圖排列：不死山 40～50、神墟 50～60、仙陵 60～70、冥界 70～80（`nv2Str`）；**第五區 80～200 倍**：仙界戰場 80～120、萬界戰場 120～160、混沌初界 160～200。
+    - **進入條件依排列**：新欄位 `minL`（成長位置＝境界＋(階−1)/10）。第四區 不死山 真仙 1 階／神墟 4 階／仙陵 7 階／冥界 10 階；第五區 仙界戰場 大羅金仙 1 階／萬界戰場 混元大羅金仙 1 階／混沌初界 混沌道祖 1 階（不再能越級）。
+      map.js 新增 `getMapMinLevel(item)`、`isBelowMapLevel(item)`；`getMapMinRealm` 也納入 `minL` 的境界；進入檢查、地圖卡片「限制：真仙4階以上」、挑戰模式判定（第 70 節）、讀檔時送回宗門（save.js 的 migrateCurrentMap）都改看等級門檻。等級不夠一樣可以走挑戰模式。
+    - 真仙的修煉節奏主圖（realmPacing）原本是冥界（現在真仙 10 階才能進）→ 使用者選 A：改成**不死山**（版本 `20261005K`）。每階經驗照不死山重算 540 億 → 360 億（經驗倍率 6000／9000），升階總時數 150 天不變；
+      已在真仙、修為超過新門檻的玩家下次獲得經驗時連續升階（gainExp）。挑戰模式的收益地圖（getMainMapForRealm）也跟著變成不死山。
   靈石、nv2L（境界壓制起點）、進入條件不變。一般玩家在這六張圖掛不住（離線會被送回宗門），定位為強者的高報酬挑戰圖。
   - 使用者選「**升階門檻不變**」＋「**每個境界補一張普通圖**」：第三區最前面新增 黑風海域（合體）、蠻荒古地（大乘）、血天大陸（渡劫）、星空古路（仙人初境）、九天仙域（天仙），
     一般規則（隨玩家階數、1.5～3 倍），經驗與靈石沿用挑戰圖改版前的值（1400／1900／2500／3000／5000；2700／2950／3150／3350／6900）；
@@ -3180,7 +3266,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `blueprints: { "劍_1500": 張數 }`、`servants: { "傳說": 人數 }`（品質同 servantQualities，產生格式同野外救出的僕從）。每項上限 `MAIL_REWARD_MAX`（防手誤）。
   凝元丹是煉好直接服用、背包沒有此道具，所以不能寄。
 - **遊戲端**（mailbox.js，共用戰力榜的 Firebase 連線 `initLeaderboardBackend`，戰力榜未開通時不連網）：
-  - `startMailboxSync()`（main.js 的 `initGame`）：進遊戲約 20 秒後、之後每 `MAIL_REFRESH_MS` 30 分鐘 `refreshMailbox()`：查 `where('to', 'in', ['all', uid])`，過濾過期與已領
+  - `startMailboxSync()`（main.js 的 `initGame`）：進遊戲約 20 秒後、之後每 `MAIL_REFRESH_MS` 2 小時（2026-10-04 前為 30 分鐘）`refreshMailbox()`：查 `where('to', 'in', ['all', uid])`，過濾過期與已領
     （本機快取 `player.mailClaimed`；沒有快取的再各讀一次 `mailClaims` 確認），有新信寫日誌提示。
   - 入口：⚙️ 設定視窗「📮 仙府信箱（N 封待領）」→ `#mailbox-modal`：信件卡片（標題、內文、獎勵、全服／個人、期限、🎁 領取）、🔄 重新整理、🎟️ 兌換碼輸入框。
   - 領取 `claimMail(id)`／兌換 `redeemCode()`：先檢查僕從空位（`MAX_SERVANTS`）→ 建立雲端領取紀錄 → 成功才 `grantMailRewards` 加進存檔、寫日誌（道具分頁）並立即存檔；
@@ -3191,9 +3277,16 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   gm.html 沒有裝備與僕從設定，圖紙部位／等級與僕從品質清單寫在 config-mailbox.js（`MAIL_BLUEPRINT_SLOTS`／`MAIL_BLUEPRINT_LEVELS`／`MAIL_SERVANT_QUALITIES`），改那邊要一起改。
 - **限制**：玩家換瀏覽器、清資料、無痕視窗會變成新 uid，收不到寄給舊 uid 的個人信（全服信與兌換碼仍可領）；從沒上過戰力榜的人沒有 uid 可選。
   獎勵由玩家端加進存檔（純前端遊戲的本質），信箱是「方便發獎勵」，不是防作弊。讀取額度：每位在線玩家每 30 分鐘約「信件數」次讀取，舊信件記得刪除。
+  - **節省讀取額度**（2026-10-04 版本 `20261005X`，Firebase 額度用完後）：定時讀信只在分頁在前景時執行（`document.hidden` 時略過，切回前景且超過 `MAIL_REFRESH_MS` 再補讀）；
+    沒領的信每次開遊戲只到雲端查一次領取紀錄（`mbCheckedIds`），不再每 30 分鐘重讀。
+- **隔日自動刪除**（2026-10-04，版本 `20261005AB`，使用者要求）：信件寄出後 `MAIL_LIFETIME_HOURS` 24 小時過期（gm.html 寄信一律寫 `expiresAt`＝寄出＋24 小時，「有效天數」只用在兌換碼；舊的永久信以 `createdAt`＋24 小時計）。
+  - 遊戲 `mailExpireAt(m)`／`isMailExpired(m)`：過期的信不顯示，並**順手刪除**（每封每次開遊戲試一次，`mbDeletedIds`）；信件卡片顯示「M/D HH:MM 前領取（逾時自動刪除）」。
+  - 規則 `mail` 的 delete：管理者，或「寄給自己或全服、已過期」的信任何玩家都能刪（**要到 Firebase 主控台發布新版規則才生效**；未發布前遊戲刪除被拒、忽略）。
+  - gm.html `reloadRewards()`（開「發放獎勵」分頁、寄信後）：過期信件自動刪除並寫日誌。
 - **上線順序**：① 主控台發布新版 `tools/firestore.rules`（含第 52 節的新戰力上限與本節的信箱規則）→ ② push → ③ GM 後台寄信或建兌換碼。規則未發布時，信箱顯示「信箱尚未開放」、兌換顯示「兌換碼功能尚未開放」，不影響遊戲。
 - 驗證（本機）：預設禮包發放 → 靈石 +100 萬、多一名傳說僕從（效率 ×3）；圖紙、補天石、星允鐵入帳；僕從小屋滿時擋下並提示；信件卡片與內文跳脫正常、設定按鈕顯示「1 封待領」；
   連線雲端（規則未發布）顯示「信箱尚未開放」、兌換碼格式檢查與「尚未開放」提示正常；gm.html 分頁、預設、圖紙加入、「📮」帶入 uid 正常；Console 無錯誤。**寫入雲端與規則需發布後線上實測**。
+- **GM 權限也能寄**（2026-10-04，版本 `20261005AV`）：`rewards.gm`（true 授予／false 撤銷），只限寄給指定 uid 的信，見第 74 節「GM 測試人物」。
 - **先天資質也能寄**（2026-09-28，版本 `20260929x`，使用者要求）：`rewards.aptitude = { root: { group, id? 或 elems? }, physique: id }`。
   - GM：「⛩️ 先天靈根」選單列出全部 48 種（有 pick 的組逐一列、五行組合的組列出所有組合：天 5、雙 10、三 10、四 5、五 1），「⛩️ 先天體質」列出 24 種；gm.html 因此多載入 `config-aptitude.js`（只有常數）。
   - 玩家（aptitude.js 的 `offerAptitudeGift`）：**已測過資質** → 逐項跳出「原本 vs 仙府賜予」，按「改用賜予的／保留原本」（沿用重測的 `finishAptitudeReroll`，佇列 `aptitudeGiftQueue` 靈根、體質各問一次，日誌「📮 接受仙府賜予」）；
@@ -3226,7 +3319,17 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **GM**（gm.html「💬 留言板」，分頁 id `tab-msgboard`，因為 `tab-board` 是戰力榜）：最新 200 則（刪除、禁言；禁言時可選擇一併刪除該則）、禁言名單（解除禁言）。
 - 驗證（本機，模擬雲端）：留言送出（「白癡」換成＊＊、換行合併）、列表顯示與 HTML 跳脫、自己的留言可刪、60 秒冷卻提示；gm.html 分頁切換正常；Console 無錯誤。**雲端規則需發布後線上實測**。
 
+- **留言 8 小時後自動刪除**（2026-10-04，版本 `20261005AG`，使用者要求）：`MSGBOARD_LIFETIME_HOURS` 8。`fetchMsgBoard` 只讀 8 小時內的留言（`where createdAt > 現在−8h`＋同欄位排序，不需另建索引）；
+  每位玩家每 `MSGBOARD_CLEANUP_GAP_MS`（30 分鐘）最多順手刪 10 則過期留言；規則 `board` 的 delete 增加「超過 28800 秒的留言任何登入者都能刪」（**要發布新版規則才生效**）；
+  gm.html 開「💬 留言板」分頁時自動刪除過期留言。驗證：模擬器規則 6 項、遊戲接模擬器（9 小時前 3 則被隱藏並刪除、1 小時前的保留）。
+
 ## 58. 寄售拍賣＋主頁「留言板」入口（`market.js`；2026-09-28，版本 `20260930b`）
+- **Firebase 讀取額度用完後的節省措施**（2026-10-04，版本 `20261005Z`；使用者 Firebase 主控台：讀取 14 萬／日、免費 5 萬，寫入 1,785、刪除 575 都很低）：
+  - 使用者指定：寄售每人同時 1 件（`MARKET_MAX_ACTIVE`）、清單數量 30（`MARKET_SHOW_N`、`MSGBOARD_SHOW_N`、`LEADERBOARD_TOP_N`）。
+  - 大道石碑重開：同一分頁 `LEADERBOARD_AUTO_REFRESH_MS` 3 分鐘內讀過就直接顯示（`lbTabFetchedAt`），「重新整理」冷卻 10 → 30 秒；寄售上架／出價／領取後照樣重讀。
+  - 信箱定時讀取 30 分鐘 → 2 小時（`MAIL_REFRESH_MS`，背景分頁不讀，第 56 節）。
+  - gm.html 自動巡檢：`LEADERBOARD_RANKS_REMOVED` 時不執行（原本每次讀整個戰力榜兩次＋守城資料）。
+  - tools/firestore.rules：`mail`、`market` list、`marketRefunds` 的 `isAdmin()`（要多讀 1 次 admins）移到條件最後；**要到 Firebase 主控台貼上發布才生效**。
 
 - **主頁左下角**：背景圖上的「郵件」按鈕（原本「興建中」）改為 `openLeaderboardModal('board')`，用 `.nav-label-cover.stage-label-cover` 蓋上「留言板」字樣；
   PC 版 `config-home-pc.js` 的 `mail` 按鈕同樣改動作，新增 `cover` 欄位（home-ui.js 產生蓋字）。大道石碑分頁改成 2×2 排列（`.lb-tabs` grid）。
@@ -3241,7 +3344,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - `marketRefunds/{id}_{被超過時的 bidCount}`：`{ uid, amount, listingId, label, at }`，只能在出價交易中為前一位出價者、以他的出價金額建立；本人刪除＝領回靈石。
   - `marketClaims/{id}_item`／`{id}_coins`：結標後得標者領物品、賣家領 `floor(成交價 × 95%)`；每種只能建立一次。本機快取 `player.marketClaimed` 避免重複顯示；兩邊都領完時順手刪除拍賣品。
 - **物品進出**：上架時 `mkTakeItem` 從存檔扣除（鎖定中的裝備不能上架；穿在身上的要先卸下），上架失敗或取消就放回；領取 `mkGiveItem`（裝備換新 id、解除鎖定、記入天磯錄與圖紙器錄；背包裝備滿時先擋下）。
-  出價成功才扣靈石；每人同時最多寄售 `MARKET_MAX_ACTIVE` 5 件（玩家端檢查）。
+  出價成功才扣靈石；每人同時最多寄售 `MARKET_MAX_ACTIVE` 1 件（玩家端檢查；2026-10-04 由 5 改 1）。
 - **限制**：物品與靈石在玩家端加減（純前端遊戲），改存檔的人本來就能自己加；雲端規則保證每一步只能領一次、出價規則正確。GM 目前只能在 Firebase 主控台刪除拍賣品，
   **有人出價的拍賣品被刪時，出價者的靈石不會自動退回**（之後若要 GM 強制下架，需要加「GM 建立退款單」的規則與後台按鈕）。
 - 驗證（本機，模擬雲端）：上架圖紙 ×2（存檔扣 2）→ A 出價 1000（扣靈石）→ B 出 1020 被擋「至少 1,050」→ B 出 1100 → A 的退款單 1000、領回 → 結標後 B 領到圖紙 ×2、重複領取被擋 → 賣家領 1,045（95%）→ 兩邊領完拍賣品自動刪除；
@@ -3255,16 +3358,35 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **修正：寄售無法出價**（2026-10-01，版本 `20261004l`～`n`，使用者問「寄賣行商品無法出價原因」）。查到兩個原因：
   1. **瀏覽器內建 `confirm()`／`alert()` 不顯示**：Claude 預覽面板（console：「Page dialog suppressed… confirm() returned false」）與 LINE／FB 等 App 內建瀏覽器會擋掉，
      `confirm` 直接回傳 false＝按了取消，出價靜靜結束。→ ui.js 新增遊戲內對話框 `gameConfirm(msg)`（回傳 Promise<boolean>，要 await）／`gameAlert(msg)`（不暫停程式），`#game-dialog` 動態建立、z-index 100001（index.html CSS）；
+     - **全面改用遊戲內對話框**（2026-10-04，版本 `20261005AC`，使用者要求「檢查是否有 BUG」時發現）：data/*.js 剩下的 37 處原生 `confirm` 全部改 `await gameConfirm(…)`，所在函式改 `async`
+       （渡劫 `triggerTribulation`、拜入宗門 `joinSect`、解僱 `dismissServant`、分解／進化／洗煉／重塑、做裝通貨、頭像光環購買、靈寶閣兌換、職業、賭坊 `checkCasinoSpend`（呼叫端 `cutStone`／`rollDice` 一併 await）、
+       守城／鎮魔塔中途離開 `close` 等）；138 處原生 `alert` 改 `gameAlert`。壽元耗盡（lifespan.js）改成 `gameDialog(…, false).then(() => location.reload())`，按確定才重新載入。
+       ⚠️ 新程式一律用 `gameConfirm`／`gameAlert`；用到 `await gameConfirm` 的函式回傳 Promise，呼叫端如果要用回傳值也要 await。
      market.js 的 3 個 confirm、17 個 alert 全部改用。上架改成先 `mkTakeItem(f, true)` 只檢查＋給確認框看、確定後才真的扣（等待確認期間物品留在背包，避免自動存檔後關網頁遺失）；出價確認後再檢查一次靈石。
      **新功能一律用 gameConfirm／gameAlert**；其餘 40 個檔案約 160 處 confirm／alert 是既有寫法、這次沒改。
   2. **雲端交易回報額度已滿**：實測一般讀取（get）、寫入（被規則擋下時正常回 permission-denied）都正常，但 `runTransaction`（出價用）一直回 `resource-exhausted: Quota exceeded`（HTTP 429），SDK 重試約 7 秒後放棄，原本只顯示「連線失敗」。
      原因要在 Firebase 主控台（Firestore 用量、配額／帳單）查，遊戲端無法修；leaderboard.js 新增 `LB_QUOTA_MSG`／`lbIsQuota(e)`，寄售各失敗訊息與榜單讀取失敗遇到時改顯示「雲端伺服器回報額度已滿（Firebase：Quota exceeded）…請通知管理者」。
+     - 2026-10-04 版本 `20261005X`（使用者回報「寄售榜連線失敗」，實測 Firestore REST 對任何讀取都回 429 Quota exceeded）：開榜讀取時 SDK 還在重試、8 秒逾時先到，只顯示「連線失敗」。
+       `lbProbeQuota()`（leaderboard.js）：逾時等非 permission-denied 的失敗，直接打一次 Firestore REST（不登入、帶 apiKey，最多 3 次；額度已滿時部分 429 不帶 CORS 標頭會 Failed to fetch），回 429 就改顯示 `LB_QUOTA_MSG`；`refreshLeaderboard`、`refreshMailbox` 共用。
   - 驗證（本機）：用雲端不存在的假寄售品（不會寫入任何資料）按出價 → 遊戲內確認框；取消 → 無動作；確定 → 顯示額度已滿訊息、靈石沒扣；Console 無其他錯誤。
+
+- **手續費調整＋腐化裝備不可交易**（2026-10-03，版本 `20261005v`，使用者新增規則，目的是回收多餘靈石）：
+  - 成交手續費 `MARKET_FEE` 5% → **10%**（賣家領 90%；只在玩家端計算，雲端規則不用改；改版前上架、改版後才領的也按 10%）。
+  - **上架登錄費** `MARKET_LIST_FEE`（config-leaderboard.js）：`marketListFee(price)` ＝ max(起標價 × 2%, 每小時收入 × 0.25)，按確定後先扣、成交與否都不退；雲端寫入失敗才連物品一起退回。確認框與規則說明列出金額。
+  - **入魔淬煉過的裝備（`eq.corrupt`，第 69 節）不能交易**：`marketItemOptions` 不列出、`mkTakeItem` 擋下「入魔淬煉過的裝備不能交易」。
+  - 驗證（本機，假雲端）：入魔裝不出現在清單、直接上架被擋；起標 50 萬扣 1 萬（2%）、低價扣 15 分鐘收入；雲端失敗時登錄費與裝備都退回；Console 無錯誤。
+
+- **開放寄售洗煉石與做裝通貨**（2026-10-03，版本 `20261005x`，使用者同意）：`MARKET_STACKS` 加 🌀洗煉石（`player.refineStones`）與 🔷天機石／💠混元晶／⚫破虛石／🔮造化玉（`key: "craft:xxx"`、`cur` 指向 `player.craftCur` 的那一格），都歸「⛏️ 材料」分類（雲端規則的 kind 不用改）。
+  market.js 的數量型物品一律經 `mkStackHave(s)`／`mkStackAdd(s, n)` 讀寫（做裝通貨走 craft.js 的 getCraftCur／addCraftCur／spendCraftCur）。驗證：材料清單列出、上架扣數量、數量不足擋下、退回加回；Console 無錯誤。
+
+- **週末休市**（2026-10-04，版本 `20261005AF`，使用者：「寄賣只開放週一～週五，六日的網路流量要留給世界 Boss」）：`MARKET_OPEN_DAYS` [1～5]（台灣時間星期）；
+  market.js 的 `isMarketClosed()`：週六、週日寄售分頁顯示「🏮 寄售週末休市」（`marketClosedHtml`），`refreshLeaderboard` 遇到休市的寄售分頁直接返回、**不讀雲端**；
+  上架、出價、領退款、領物品／靈石、下架開頭都 `marketClosedAlert()`。休市期間結束的拍賣照常結束，週一再到「待處理」領取。
 
 ## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
 - 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
-  **野外小怪圖鑑 `FIELD_MONSTERS`**（config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
+  **野外小怪圖鑑 `FIELD_MONSTERS`**（2026-10-03 起搬到 config-monsters.js，加型態與各地圖組合，見第 66 節第 2 期；原 config-maps.js，2026-09-28 玩家提供 7 張圖、玩家要求「怪物要命名，不要都顯示上古巨獸」，取代舊的 `monsterIcons`）：青鱗蒼龍、雪紋白虎、焰蹄麒麟、九尾天狐、赤羽火鳳、幽冥鬼將（dark）、青面夜叉（dark），每筆 `{ name, icon, img, pos }`；
   `combat.js` 刷怪時每隻隨機抽一種，寫進妖獸物件的 `name`／`icon`／`img`／`imgPos`（只影響外觀，數值不變）；幽冥禁域（`DARK_MAP_CATEGORIES`）只抽 `dark: true` 的，其餘地圖七種都會出。面板標題顯示「目前在打的那隻」的名字（多隻時加「共 N 隻」），野外修士顯示「正道修士／邪道修士」、暗殺者顯示「暗殺者」。
   敵方圖片 `getBattleFoeImg()` 回傳 `{ src, pos }`：心魔（`HEART_DEMON_IMGS` 依性別，第 7 節）／懸賞對手物件的 `img`（依陣營取 `CULTIVATOR_IMGS`，第 27 節）、野外妖獸的 `e.img`（地圖選填 `monsterImg` 可整張地圖蓋過）、野外修士（正／魔）與暗殺者的 `e.img`（`CULTIVATOR_IMGS`／`AMBUSH_IMG`，第 27 節，2026-09-29）；
   **安全區**（2026-09-29，版本 `20261002d`）顯示 `SAFE_ZONE_IMG`（config-maps.js，宗門景色；個別安全地圖可加 `battleImg`／`battleImgPos` 蓋過），同時 `.bf-scene` 加 `.bf-safe` 隱藏「VS」（渡劫、懸賞對決除外）；換下一隻時圖片淡入（`.bf-foe-in`）；沒有圖就顯示大號 emoji（`#bf-foe-emoji`，取自 `#battle-enemy-icon`）。玩家打中時敵方閃白後退（`.bf-foe-hit`）。**之後要放怪物／BOSS 圖，只要在地圖加 `monsterImg` 或在對手物件加 `img`。**
@@ -3413,6 +3535,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - ② 重鑄：強化視窗（enhance.js `renderEnhanceModal`）下方「🔮 種族銘刻」`renderRaceReforgeSection`／`reforgeRaceGearFx`：紫色以上，每次 50 星允鐵＋H 1 小時靈石，重抽種族與數值（已有時先確認）。
   - ③ 白金進化：enhance.js `evolveEquip` → `applyEvolveRaceGearFx`：必帶一條白金數值；原本有就保留種族。進化說明多一行提示。
   - 驗證（本機）：紫／橙各 2000 件 → 215／396 件帶特效（10.8%／19.8%）、數值 1～3%、藍色 0；兩件妖獸 5%＋6% → 9% 封頂；重鑄兩次扣 100 鐵、進化後 3.79% 保留魔修；手機強化視窗正常；Console 無錯誤。
+- **野外種族比例**（2026-10-03，第 66 節第 2 期）：`fieldRaceCounts` 改依地圖出沒組合的權重（`fieldMonsterPool`），不再是全部 7 種平均；斬妖錄、離線擊殺與法寶掉落跟著變。
 - **日後新增來源**（符寶、法寶、裝備特效）一律加在 `race.js` 的 `getRaceDmgBonus()` 裡再套上限；新增敵人時記得給 `attrs.race`（沒有＝人修）。
 
 ## 63. 奇遇・異界空間（`config-encounter.js`、`encounter.js`；2026-10-01，版本 `20261004q`）
@@ -3470,6 +3593,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - `grant()` 新增 `spellShards`、`beastCore`、`breakPills`（經信箱欄位）、`partnerShards: { p, n }`（指定夥伴）。清單「奇遇紀錄」列出秘典碎片進度與七種玩法、機緣任務統計。
 - **驗證（本機，停用存檔）**：強者三種應對（段德 尊者 12／6 片、蕭炎 帝境 16/300 片、護法扣 284 萬）；競速鞭策兩次奪冠（獸丹 3000、秘典 20）；尋寶隨機挖完結算；
   丹爐精準計時 10 分極品（破障丹 +1）、隨機亂按 0 分廢丹；機緣任務「古籍殘頁」天南城 → 亂星海 → 擊殺 71 完成（靈石＋秘典 25）；秘典合成；帝境 300 片激活；Console 無錯誤。
+
+### 人界機緣與靈界（2026-10-04，版本 `20261005AA`）
+- 使用者：「目前機緣設定人界機緣，靈界的另外設定」。`onMapChange` 開頭 `isLingjieMap(map)`：地圖屬於 `LINGJIE_MAP_CATEGORIES`（[4, 5, 7]，第 74 節）就不觸發任何奇遇
+  （秘密路線、累計次數、空間裂縫、三界召令、城中機緣、機緣任務、傳聞都不算；在靈界進出也不累計野外次數）。機緣任務 `questMaps` 不再指定靈界地圖。
+- 已封存的奇遇、進行中的機緣任務在靈界照樣可以從「🌀 異界」進入／查看；機緣任務的擊殺步驟以 `player.fieldKills` 增量計，靈界擊殺也算。
+- 靈界機緣之後另外設計（新類型請加在 `onMapChange` 的 `isLingjieMap` 分支）。
 
 ## 64. PWA：安裝到主畫面、離線、自動更新（`manifest.json`、`sw.js`、`data/pwa.js`；2026-10-01，版本 `20261004v`）
 
@@ -3550,3 +3679,375 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **遊戲確認框防連點**（同日，ui.js 的 `gameDialog`）：實測點「凝聚元神」時，確認框的「確定」剛好跳在同一位置，同一次點擊就直接確認（奇遇奧斯卡問句也發生過，第 20 節）。
   `gameConfirm`（有取消鈕的）出現後 `GAME_DIALOG_GUARD_MS`（400ms）內不接受「確定」；`gameAlert` 不受影響。所有用 gameConfirm 的地方（轉世、守城離開以外的確認等）一起受惠。
   驗證：點「凝聚元神」→ 確認框停住等玩家 → 按確定 → 凝聚動畫、彩虹字「癸水天元神」；資質視窗顯示鎖定說明、沒有重測按鈕。
+
+## 66. 《天堂2》式戰鬥（防禦點數、暴擊 ×2；2026-10-03 起分期施工，版本 `20261005j`）
+
+- **規劃**（使用者 2026-10-03 定案「我要天堂二的方案」）：比較《天堂》1、2 代後選 2 代（同為乘法系統，接得上現有數值）。分期：
+  ① **傷害公式**：防禦改點數＋取消玩家減傷上限＋暴擊 ×2（✅ 本版）② 怪物型態（皮厚／敏捷／猛攻／術法／均衡）＋每張地圖 3～5 種亞種、跨種族、怪物閃避與暴擊（怪物平均攻擊約 −4% 抵銷暴擊）
+  ③ 怪物技能（重擊、撕咬、毒牙、寒息、烈焰、破甲、狂暴、自癒、幻身）④（之後）魔攻／魔防分開、命中改點數曲線。
+  不做：即時制、逐隻手寫怪物、魂之子彈、盾牌格擋。沿用四族（妖獸、鬼物、魔修、心魔），剋制系統（第 62 節）不動；境界壓制即《天堂2》的等級差懲罰。
+- **第 1 期：傷害公式**
+  - 玩家的 `def` 改為**防禦點數**：`getPlayerCombatAttrs` 把裝備、靈根、仙法、特效（護體／先手盾）、靈寵增益、夥伴被動全部相加，**拿掉 `DEF_CAP` 60 與 `PLAYER_EFFECTIVE_DEF_MAX` 20＋靈寵 10＋夥伴 10**
+    （面板、存檔、裝備數字都不用改，原本的「減傷 N」直接當「防禦 N」）。`resolveHit`：玩家受到傷害 × `defMult(防禦 − 破甲)` ＝ `DEF_K` 120 ÷ (120 + 防禦)
+    （防禦 30＝減傷 20%、60＝33%、120＝50%、150＝56%）；**敵人的 def 仍是減傷 %**（`1 − def%`），效果與改版前完全相同。雷擊、暗蝕照舊無視防禦。
+  - K＝120 的理由：中等配置（防禦 30）改前改後都是減傷 20%，第 7～49 層的校準不用動；防禦 20 以下的玩家比改前略吃虧（防禦 20：80% → 86%），30 以上越堆越有利。
+  - 保底（beast-combat.js 的 `applyPetDamageReduction`／`playerDamageFloor`）：改以 `resolveHit` 新回傳的 `postDef`（防禦後傷害）為準，只限制護盾類：
+    傷害 ≥ postDef ×（1 − `PLAYER_SELF_SHIELD_MAX` 20% − 靈寵護盾最多 10% − 夥伴護盾最多 10%）。原本把防禦也算進 20%，會把新防禦夾回去。
+  - 暴擊傷害 `NV2.critDmg` 1.5 → **2**（玩家；怪物暴擊在第 2 期）。一般玩家暴擊率只有 2～3%，影響很小；戰力期望跟著變（`nv2CombatPower`、`nv2TypRoundMult` 自動）。
+    戰力 ÷ 攻擊 上限 2.28 → 2.58（暴擊 30%、連擊 10%）→ gm.html 守城審核 ③ 預設上限 2.4 → **2.6**，設定鍵 `gm_defense_settings_v3`（舊鍵存的 2.4 不再沿用）。雲端戰力上限（400＋境界×40）仍足夠，不改。
+  - 離線估算 `nv2EstimateIdleCombat` 受到的傷害改乘 `defMult(防禦)`。
+  - 顯示：新增 `defMult`／`pctToDefPoints`／`formatDefPoints`／`formatEnemyDef`（elements.js）。人物面板「🛡️防禦 45（減傷 27.3%）」；裝備卡片、詞條、套裝、五行共鳴、仙法、靈寵增益、資質、稱號、
+    裝備對比、特效（護體／先手盾，`gearEffects` 新 fmt `num`）一律「防禦 +N」不帶 %；光環「你的防禦 −N」、BOSS 自身「減傷 +N%」；鎮魔塔 BOSS 介紹與懸賞對手「🛡️防禦 44（減傷 27%）」（敵人以 `pctToDefPoints` 換算顯示）。
+    「破甲：無視目標 N 減傷」照舊（對敵人仍是 %）。
+  - 鎮魔塔再校準見第 51 節（`ZHENMO_L2_ATK`）。死守天南城（各 15 次中位數，舊／新）：煉虛 10 中等 9／9、強力 19／19；渡劫 10 35／35、44／46；真仙 10 62／62、69／69；混沌道祖 10 79／79、99／100——幾乎不變，不調。
+  - 驗證（本機）：108 個腳本語法正確；人物面板、裝備卡片、詞條、特效、光環、BOSS 房顯示正確（手機 390×844）；新角色在靈山大川實際戰鬥 25 秒、鎮魔塔第 60 層開打與跳過、gm.html 載入皆無錯誤。
+- **第 2 期：怪物型態、各地圖出沒組合、怪物閃避與暴擊**（2026-10-03，版本 `20261005k`）
+  - 新檔 `config-monsters.js`（資料）＋ `monster.js`（邏輯）；`FIELD_MONSTERS` 由 config-maps.js 搬過來，每筆加 `id`、`type`。index.html 載入順序：config-maps → **config-monsters**、race → **monster**。
+  - **五型態** `MONSTER_TYPES`：均衡（氣血 ×1、暴擊 5%）、🛡️皮厚（×1.1、減傷 +15、暴擊 3%）、💨敏捷（×0.8、減傷 −5、閃避 +15、暴擊 8%）、⚔️猛攻（×0.85、暴擊 12%）、🔮術法（×0.9、減傷 −5、閃避 +5、暴擊 5%，帶異屬性機率 ×1.5）。
+    - 閃避是「超出一般玩家命中」的部分：`attrs.eva = max(原閃避, nv2TypHit(L)) + eva`（原本地圖分類的 2～8% 幾乎都被一般玩家的命中抵銷，妖獸等於不會閃）→ 命中（敏捷、洞察）變得有用。
+    - 暴擊 `attrs.crit`，傷害 × `NV2.critDmg`（2），`resolveHit` 本來就認；戰況「💥暴擊」，玩家受傷飄字加「暴擊」小字（battle-fx.js `battleFxHurt`）。
+    - **攻擊倍率自動反推**（`monsterTypeAtkMult`）＝ 1 ÷（一般玩家殺牠的回合倍率 × 暴擊期望），讓每個型態「每隻對一般玩家的總傷害」與改版前相同（皮厚打得久但輕、猛攻死得快但會爆擊）。
+      型態造成的擊殺時間差異由收益補償吸收：`nv2TypRoundsPerKill` 乘 `fieldMonsterRoundsFactor(map)`（出沒組合的平均回合倍率；gm.html 沒載入 monster.js 時視為 1），離線估算 `nv2EstimateIdleCombat` 同樣乘、每下傷害 ÷ 同倍率。
+  - **圖鑑 14 種**：妖獸 蒼龍（均衡）、白虎（猛攻）、麒麟（皮厚）、九尾天狐（敏捷）、火鳳（術法）、玄甲靈龜（皮厚）、碧眼毒蛛（敏捷）；鬼物 鬼將（術法）、夜叉（猛攻）、百年殭屍（皮厚）、怨魂（敏捷）；
+    魔修 血煞魔修（猛攻，借用野外邪修圖）、傀儡魔偶（皮厚）、魔道術士（術法）。靈龜、毒蛛、殭屍、怨魂、傀儡、術士**沒有圖，顯示大號 emoji**——玩家之後提供圖，在 `FIELD_MONSTERS` 補 `img／pos` 即可。
+  - **各地圖出沒組合** `FIELD_MONSTER_POOLS`（25 張戰鬥地圖，每張 3～5 種、帶權重）；沒列的地圖走舊規則（幽冥禁域只出鬼物，其餘出妖獸與鬼物）。
+    - **血天大陸調整**（2026-10-03，版本 `20261005y`，使用者反映「強度倍率異常」）：原組合 血煞魔修 4／魔道術士 3／青面夜叉 3 全是猛攻＋術法，實際刷怪的平均攻擊倍率 ×1.05、術法（魔防擋）70%，是普通圖最高（蠻荒古地 ×0.83、星空古路 ×0.97），
+      防禦高魔防低的玩家特別痛。改成 血煞 2／傀儡 2／夜叉 2／殭屍 2／白虎 2 → 攻擊 ×0.87、氣血 ×0.97、術法 41%。殺一隻被打掉的血量 17.5%（蠻荒 18.2%、星空 18.0%），防禦 60 時 9.75%（9.89%／10.01%）；收益補償自動跟著 `fieldMonsterRoundsFactor` 調整。
+      （神墟的組合同樣偏猛攻：攻擊 ×1.05，尚未調整。）
+    幽冥禁域只放鬼物（本質為暗）；**魔修只在墜魔谷、血天大陸、天淵戰場、上蒼、仙界／萬界／混沌戰場**（斬妖錄魔修門檻 2000／2 萬／3 萬依野外邪修頻率訂）；**心魔不放野外**（門檻 50／100／200 依渡劫心魔稀有度訂）。
+  - 顯示：地圖卡片「出沒 🐅雪紋白虎⚔️、🦊九尾天狐💨…」（`formatFieldMonsterMix`，滑鼠移上去看型態說明）；戰場資訊列最前面是「目前在打的那隻」的型態（例「⚔️猛攻｜🐉妖獸×3｜…」）。
+  - 驗證（本機，新舊程式各 1500 隻／地圖，一般玩家無防禦、同境界 5 階）：25 張地圖「每隻對玩家的總傷害」新／舊差 ±2% 內（魔修圖墜魔谷、血天、天淵少 5～9%），
+    「實際每隻回合 ÷ 收益補償用的回合」新／舊差 ≤ 2%（每小時收益不變）；每隻回合數依地圖組合 −16%～+23%（例：血天大陸 12 → 9.7、荒古禁地 102 → 126）。
+    實戰：靈山大川 40 秒出現麒麟（皮厚）、白虎（猛攻），怪物暴擊 6 次；天南戰場面板「⚔️猛攻｜🐉妖獸×3」；地圖卡片出沒列正常；遊戲與 gm.html 無 Console 錯誤。
+- **第 3 期：怪物技能**（2026-10-03，版本 `20261005l`）
+  - 設定 config-monsters.js 的 `MONSTER_SKILLS`、`MONSTER_SKILL_CHANCE` 0.15，每種圖鑑 `skills` 1～2 招；邏輯 monster.js。每次出手 15% 從主動技能抽一招，狂暴是被動：
+    💢重擊（這一下 ×1.8）、🩸撕咬（吸取 30% 造成傷害）、☠️毒牙／🔥烈焰（中毒／燒傷一層，以牠的攻擊計）、❄️寒息（凍結你 1 回合，抗凍結有效）、
+    🔨破甲（你的防禦 ×0.8，3 個怪物回合，每波重置）、😡狂暴（氣血 < 30% 後攻擊 +50%）、💚自癒（回 10% 最大氣血，**每隻最多 2 次**）、👥幻身（閃避 +20，3 回合）。
+    各圖鑑：蒼龍 寒息｜白虎 重擊＋狂暴｜麒麟 烈焰＋自癒｜九尾狐 幻身｜火鳳 烈焰｜靈龜 自癒＋寒息｜毒蛛 毒牙｜鬼將 寒息＋破甲｜夜叉 撕咬＋重擊｜殭屍 毒牙＋撕咬｜怨魂 幻身｜
+    血煞魔修 狂暴＋撕咬｜傀儡 破甲＋重擊｜術士 烈焰＋毒牙。
+  - 接法（combat.js 怪物回合）：`monsterPreAttack(e)`（幻身計時、狂暴、擲技能；自癒、幻身當下生效）→ 攻擊 × `atkMult` → `resolveHit`（被破甲時用 `playerAttrsUnderSunder` 打折後的防禦）→ 護盾保底 →
+    `monsterPostHit`（被閃避不生效；推標籤 `msk_技能`）；每波 `resetMonsterSkillWave()`。戰場行動說明顯示「🐅雪紋白虎施展【💢重擊】！」（ui.js 讀 `lastMonsterSkillText`），
+    受傷飄字小字顯示技能名／暴擊（battle-fx.js `battleFxHurtLabel`），日誌標籤 `summarizeTags` 認得 `msk_*`；地圖卡片出沒列滑鼠提示列出技能。
+  - **補償**：每招的 `comp { dmg, rounds }` 以模擬量得（天南、一般玩家無防禦，每招 6000 隻 vs 無技能 1.2 萬隻）：重擊 1.12／1、毒牙 1.04／1、烈焰 1.06／1、寒息 1.17／1.16、狂暴 1.16／1、
+    自癒 1.14／1.13、幻身 1.07／1.065；撕咬、破甲對一般玩家 ±1% 內視為 1（破甲只對高防禦玩家有感，刻意的）。攻擊 ÷ dmg、收益補償 × rounds（`monsterSkillComp`）；
+    有 n 招主動技能時每招效果按 1/n 折算（每招只有 1/n 的出手機會），狂暴不折。
+  - ⚠️ 自癒原本不限次數：挑戰圖（荒古禁地、太初古礦、雷鳴大陸、崑吾山，強度 5～40 倍、一般玩家要打上百回合）會補得比玩家打得快（荒古禁地 132 → 1281 回合），改為每隻最多 2 次。
+  - 驗證（本機）：各地圖每種圖鑑（種族特性另計）對一般玩家每隻總傷害 = 均衡無技能的 0.96～1.08 倍；與第 2 期對照（各 1500 隻／地圖）一般地圖「每隻總傷害」差 ±3%、收益補償比例差 ≤ 3%；
+    挑戰圖較難約 5～7%（長時間戰鬥自癒必用滿 2 次）、每小時收益約少同比例——挑戰圖本來就是牆，接受。實戰：天南 60 秒觸發重擊 8、幻身 1、毒牙 1 次，行動說明與飄字正常；Console 無錯誤。
+- **6 隻怪物圖**（2026-10-03，版本 `20261005m`）：玩家提供一張合成圖（毒蛛、靈龜、怨魂、殭屍、術士、傀儡，圖上有中文標籤），以 ImageMagick 把 9 個標籤用相鄰背景（羽化遮罩）覆蓋後各自裁切，
+  存成 images/monsters/spider／turtle／wraith／zombie／sorcerer／puppet.jpg，`FIELD_MONSTERS` 補上 img／pos。殭屍與術士在原圖重疊，殭屍只取上半身（200×195）。至此 14 種野外妖獸都有圖。
+  驗證：戰場實況逐一顯示 6 隻，主體與臉都在畫面內；Console 無錯誤。
+- **第 4 期 B：命中／迴避曲線**（2026-10-03，版本 `20261005n`；使用者選第 4 期 A、B 都做，先上 B）
+  - 閃避改「迴避值」：被閃掉的機率 `evaDodge(D)`＝D ÷ (D + `NV2.evaK` 100)，D＝防守方 `eva` − 攻擊方 `evaPen`（命中值：敏捷 × 0.08、洞察、靈寵命中）；D ≤ 0 必中。
+    迴避 10 → 9%、20 → 17%、40 → 29%、100 → 50%。**玩家與敵人都用同一條曲線**（`resolveHit`；`evaDodge` 放在 numeric.js，gm.html 也載得到）。
+  - 取消上限：`EVA_CAP` 40、`PLAYER_EFFECTIVE_EVA_MAX` 20、靈寵／夥伴閃避各 10 的上限全部拿掉；`getPlayerCombatAttrs` 的 eva 直接相加（裝備、仙法、敏捷、靈寵增益、夥伴被動），不再回傳 `petEva／partnerEva`。
+    `PLAYER_PET_BONUS_MAX`／`PLAYER_PARTNER_BONUS_MAX` 只剩護盾保底用。套裝「閃避」6 件「閃避上限 +5%」（已無上限可加）改為「閃避 +5」。
+  - 所有「1 − 閃避/100」的估算改用 `1 − evaDodge(…)`：妖獸型態回合 `monsterTypeRounds`、種族特性 `fieldRaceKillMult`、收益補償 `nv2TypRoundsPerKill`、離線估算、鎮魔塔 BOSS 氣血 `bossStats`。
+  - 顯示：閃避一律點數不加 %（新常數 `POINT_STAT_KEYS`＝def、eva，裝備卡、詞條、套裝、仙法、資質、稱號、裝備對比共用）；人物面板「💨閃避 30.4（迴避 23.3%）」＋新增「🎯命中 N」；BOSS 介紹、懸賞「💨閃避 20」。
+  - 校準：鎮魔塔見第 51 節（全部樓層對齊改版前勝率）。死守天南城（各 15 次中位數，舊／新）8 組完全相同；野外 25 張地圖每隻總傷害與收益補償比例新舊差 ±3%。
+  - 驗證（本機）：面板、裝備卡、詞條、BOSS 房顯示正確；野外實戰 15 秒、gm.html 無 Console 錯誤。
+- **第 4 期 A：魔攻／魔防分開＋魔法暴擊**（2026-10-03，版本 `20261005o`；使用者選「玩家魔防兩種來源都做」「魔法暴擊要做」）
+  - **傷害類型**：`resolveHit` 的攻擊方多 `dmgType`（'mag'＝術法，其餘物理）。術法：打玩家走**魔防** `mdef`（同防禦公式 × 120 ÷ (120 + 魔防)），打敵人走**魔抗 %** `mres`（沒填＝同減傷 %），暴擊率用 `magCrit`。
+    - 玩家：普攻與物理技能＝物理；技能（宗門、職業、仙法、靈寶、夥伴絕學）依各自 `dmgType`（combat.js 的 `hitTarget` 第 4 參數、artifact.js `castProcSkill`）；術法技能的燒傷／中毒以術攻計。
+      鎮魔塔、死守天南城取物攻／術攻較高者，術攻較高時整場算術法（`playerStats().dmgType`、defense.js `pType`）。戰力榜照舊取較高者。
+    - 敵人：野外術法型妖獸、**魔修**、野外修士與暗殺者＝術法（`atkType: 'mag'`，術法攻擊吃「化勁」、物理吃「金身」）；懸賞人物施展武學＝術法、一般攻擊＝物理；渡劫心魔＝術法；
+      鎮魔塔魔修／心魔 BOSS＝術法（`fight.eType`）；守城首領（魔修）＝術法。
+  - **玩家魔防**＝防禦 × `MDEF_FROM_DEF` 0.6 ＋ 靈力（新制屬性點）× `MDEF_PER_SPR` 0.1 ＋ 詞條（`getBonusTotals().mdef`）；破甲光環同時削魔防（`auraPlayerAttrs`）。
+    **新詞條「魔防」**（config-enhance.js `gearSubAffixes`，2～5 × 品質倍率，`only: "accessory"`）：`rollGearSubs` 多第 5 參數 category，只有飾品抽得到（新掉落、白金進化多抽的一條）。舊裝備不變。
+  - **魔法暴擊** `nv2MagCrit()`＝悟性 × `critPer`（上限同 30%）＋靈寵暴擊增益；術法技能用。戰力 `nv2CombatPower` 依較高的攻擊種類取對應暴擊率。
+  - **敵人魔抗**：野外依型態 `MONSTER_TYPES[].mres`（加在地圖分類減傷上）：皮厚 −10（減傷高、魔抗低 → 術法剋制）、術法 +15（魔抗高、減傷低 → 物理剋制），其餘 0。BOSS、懸賞、守城沒填＝同減傷，效果不變。
+    實測（攻擊 100、無暴擊，各 4000 下）：打皮厚 物理 85／術法 100；打術法型 物理 100／術法 75。
+  - **野外平衡**：一般玩家（無防禦）也有「靈力 × 0.1」的魔防 → 術法攻擊的妖獸與修士攻擊 × `fieldMagicAtkComp(L)`＝1 ÷ 該魔防的減傷倍率，一般玩家受到的傷害不變。
+  - 顯示：人物面板「🔮魔防 18.5（減傷 13.4%）」；裝備對比多魔防列；地圖卡片型態說明寫魔抗與術法攻擊；`POINT_STAT_KEYS` 加 mdef。
+  - 驗證（本機）：飾品 3000 件抽到魔防 357 件、防具／武器 0；與第 4 期 B 對照——野外 25 張地圖每隻總傷害與收益補償差 ±3%、守城 8 組完全相同、鎮魔塔見第 51 節；
+    上古遺跡實戰鬼將＝術法、麒麟／殭屍＝物理；BOSS 房、面板、gm.html 無 Console 錯誤。（測試時直接把新角色設成金丹會在 `formatCoreShort` 報錯——改版前也一樣，是測試捷徑沒有金丹資料造成的。）
+
+## 67. 暗黑式裝備：詞綴分級、前後綴命名、洗煉、遠古／太古、傳奇威能（2026-10-03 起分期施工）
+
+- **規劃**（使用者 2026-10-03 定案）：參考《暗黑破壞神》。四期都做：D1 詞綴分級＋部位詞綴池＋前後綴命名、D2 洗煉（新材料）、D3 遠古／太古、D4 傳奇威能（**只出在白金裝備**）；命名用修仙風。
+  原則：**舊裝備照舊**（舊詞條沒有分級、照常生效），新規則只套用到新產生的裝備；整體平均強度與改版前相近。
+- **D1：詞綴分級＋部位詞綴池＋前後綴命名**（版本 `20261005p`）
+  - 資料（config-enhance.js）：`gearSubAffixes` 每條加 `w`（{ weapon, armor, accessory } 權重，沒寫＝1）、`pre`／`suf`（命名用）；新增 `GEAR_SUB_TIERS`（天 ×1.3、地 ×1.15、玄 ×1.0、黃 ×0.85、凡 ×0.7）、
+    `GEAR_SUB_TIER_WEIGHTS`（依裝備等級的 [天地玄黃凡] 權重：Lv.<100 0/0/15/35/50、100～ 0/10/30/35/25、500～ 5/20/35/25/15、1000～ 10/25/35/20/10、2500～ 20/30/30/15/5）、`GEAR_SUB_TIER_NOLEVEL` 500（沒有裝備等級的舊千寶閣商品）。
+  - 邏輯（gear.js）：`rollGearSubs(quality, external, count, exclude, category, level, opts)` 依分類權重抽詞條（`gearSubWeight`／`pickGearSubAffix`）、依等級擲分級（`rollGearSubTier`）、
+    數值 `rollGearSubValue`＝原本的隨機值 × 品級係數 × 分級倍率；詞條存成 `[key, 值, 分級]`（第三格新加，舊詞條只有兩格）。白金進化多抽的一條也帶等級與分類（enhance.js）。
+  - 命名：`getEquipDisplayName` 加 `getGearAffixName(eq)`——最強的詞條給前綴、第二強給後綴（分級高者優先，同級比「數值 ÷ 上限」；舊詞條視為玄級），例「破軍青竹蜂雲劍・不滅」；舊裝備有詞條也會顯示名字（只影響顯示，不改存檔）。
+  - 顯示：`formatGearSubs` 每條前面加分級標籤〔天〕〔地〕〔玄〕〔黃〕〔凡〕（各自顏色）。
+  - 驗證（本機，橙色 3 條 × 4000 件）：平均分級倍率 Lv.50 0.80、300 0.89、800 0.96、1500 1.01、5000 1.07；「天」級比例 0／0／5.5／9.9／19.9%。
+    部位最常出的詞條：武器 攻擊、剋制、雷／毒／火傷；防具 防禦、氣血、體質、回血；飾品 閃避、靈力、靈石、回靈、修為；魔防只出在飾品。背包卡片名字與分級標籤正常（手機名字會換行）；Console 無錯誤。
+- **D2：洗煉（新材料 🌀 洗煉石）**（版本 `20261005q`）
+  - 存檔：`player.refineStones`（state.js 預設 0；舊存檔讀檔時由預設值補上）。裝備多 `refineIdx`（鎖定的詞條位置）、`refineCount`（已洗次數）、`refinePending`（已付費待選 `{ idx, cands }`，重新整理不會白花）。
+  - 來源：分解 `DECOMPOSE_REFINE` 紫 1／橙 2／白金 10（手動、一鍵、暫存區一鍵、背包滿自動分解、鍛造自動分解都給，`getDecomposeYield().refine`、`addRefineStones`）；
+    鎮魔塔每層 BOSS `REFINE_ZHENMO`＝(1 ＋ 樓層 ÷ 20) × 問答倍率（結算畫面列出）。
+  - 洗煉（enhance.js 強化視窗下方 `renderRefineSection`／`refineEquip`／`chooseRefine`）：選一條詞條 → 花 洗煉石 `REFINE_STONE_BASE` 1 ＋ 已洗次數（最多 `REFINE_STONE_MAX` 10）＋ 靈石 H × 0.5 小時 →
+    依該裝備的分類與等級擲 `REFINE_CANDIDATES` 2 條新詞條（不會和其他條重複，可洗回同一種），「保留原本／新 1／新 2」三選一。**第一次洗煉就鎖定該條**，之後只能洗同一條（暗黑 3 規則）。
+    只限 850 種圖鑑裝備（有 `gearId` 與詞條；神器、靈寶閣寶物不行）。強化視窗持有列多「🌀 洗煉石」。`gearRollOpts(eq)`（gear.js）傳入遠古／太古的擲骰下限（D3）。
+  - 驗證（本機）：分解橙＋紫得 3 顆；洗第 2 條 → 擲出 2 條候選、選第 1 條後詞條更換、鎖定位置 1、下次費用 2 顆；再洗時選第 0 條也只會洗第 1 條；Console 無錯誤。
+- **D3：遠古／太古**（版本 `20261005r`）
+  - 設定 config-enhance.js 的 `GEAR_ANCIENT`：只對 `GEAR_ANCIENT_QUALITY` 橙色在產生時擲一次（所有管道：鍛造、奪寶、千寶閣、守城…，`createGearEquip` → `rollGearAncient`）。
+    遠古 2%：詞條至少「地」級（`minTier` 2）、四維 ×1.1；太古 0.2%：詞條全部「天」級且取範圍上限（`maxRoll`）、多 1 條詞條、四維 ×1.2。存成 `eq.ancient`（1／2）。
+  - `gearRollOpts(eq)` 回傳擲骰下限，白金進化多抽的一條、洗煉的候選都套用 → 遠古／太古進化成白金、洗煉後仍維持品質。
+  - 顯示：名稱加「遠古・」「太古・」（`gearAncientTag`，在「先天・」之後）；卡片 `getEquipCardClass` 加 `eq-ancient`（金色發光框）／`eq-primal`（赤紅脈動框，`prefers-reduced-motion` 時不動）；
+    產生時（非千寶閣上架）寫日誌「🟡 遠古遺寶出土／🔴 太古神兵現世」。
+  - **修正：四維倍率在新制沒生效**（2026-10-03，版本 `20261005E`，使用者回報）：`rollGearAncient` 只把 `statMult` 乘在舊制的 `eq.stats`，新制的屬性點由 numeric.js 的 `nv2GearStatsOf`（範本 × 品質 × 強化）算、不讀 `eq.stats`，
+    實際只影響魅力。改在 `nv2GearStatsOf` 再乘 `GEAR_ANCIENT[eq.ancient].statMult`（卡片的屬性顯示也跟著變）。驗證：同一件橙甲屬性點合計 1.50 → 遠古 1.65、太古 1.80，人物體質同步增加；Console 無錯誤。
+    （武器攻擊 `nv2WeaponAtkOf`、防禦等不受遠古／太古影響，維持原設計「四維」。）
+  - 驗證（本機）：橙色 2 萬件 → 遠古 435（2.2%）、太古 34（0.17%）；太古劍 4 條全天級、進化白金後多的一條也是天級（5 條）；遠古戒指 3 條地級；卡片邊框正常；Console 無錯誤。
+- **D4：傳奇威能（只出在白金）**（版本 `20261005s`）
+  - 設定 config-enhance.js 的 `GEAR_LEGENDS`（20 種，修仙風）：萬劍歸宗（技能連發＋法爆）、不滅金身（每波保 1 血＋氣血）、鏡花水月（閃避後強擊＋閃避）、天罡之怒（普攻群攻＋攻擊）、
+    九天玄雷、九幽寒獄、焚天業火、萬毒歸宗（屬性＋對應特效）、破軍殺伐（破甲＋斬殺）、天眼通（洞察＋追擊）、血海魔功（吸血＋噬魂）、太乙回春（回血回靈）、金剛不壞（防禦＋金身）、
+    化神護魂（魔防＋化勁）、先發制人（首擊＋燃魂）、疾風迅雷（疾風＋追擊）、五行輪轉（剋敵）、萬獸朝宗（獸魂）、招財進寶（聚財＋奪寶）、悟道通天（悟道＋通玄）。
+    **效果全部走既有實作**：`bonus` 的 key（`special:echo／undying／dodgeStrike／rage`、`fx:特效名`、def／eva／mdef／屬性傷害、atkPct／hpPct）由 gear.js 的 `getGearLegendBonusTotals()` 併入 `getBonusTotals()`（fx 不受特效上限，同 fx 多件相加）。
+  - 取得：橙色 +20 進化成白金時 `ensureGearLegend(eq)` 隨機一個，存 `eq.legend`（id）；**舊白金**由 save.js 的 `migrateGearLegends()`（`applySaveData` 內）補一個——穿戴中、背包、暫存區都補，已有的不動（只新增欄位）。
+  - 重塑：強化視窗「🌟 重塑傳奇威能」`rerollGearLegend()`，花 `LEGEND_REROLL_STONES` 20 洗煉石 ＋ 靈石 H × 2 小時，隨機換成另一種（不會抽到同一個）。
+  - 顯示：裝備卡片詞條下方金字「🌟 傳奇威能【🗡️萬劍歸宗】…」（`formatGearLegend`）。
+  - 平衡：威能是白金（橙 +20 進化）的終局獎勵，會讓頂尖玩家變強；鎮魔塔／守城的校準配置不含裝備特效，沒有因此重調。
+  - 驗證（本機）：橙 +20 進化白金得威能；沒有威能的舊白金存檔、重新整理後自動補上；穿「金剛不壞」防禦 0 → 23.8、金身 22%；重塑換成別種；穿「天罡之怒」野外實戰 15 秒（`hasSetSpecial('rage')` 為 true）；Console 無錯誤。
+
+## 68. 天賦樹（`config-talents.js`、`talent.js`；2026-10-03，版本 `20261005t`）
+
+- **規劃**（使用者 2026-10-03 定案）：依「戰鬥風格」分 6 條路線（不依職業、不依五行——職業已有主修與熟練度、五行已用在本命／共鳴／元神／相剋），讓人物等級重新有意義、build 多樣化。
+  防無限膨脹（使用者指出「轉世 100 次就能 6 條點滿」）：轉世點數遞減且封頂、整棵樹點數遠大於可得點數、核心天賦同時最多 2 個。
+- **點數**：等級 `TALENT_LEVEL_STEPS`（Lv.1～100 每 10 級、100～1000 每 50 級、1000～10000 每 250 級 → 滿級 64）＋ 轉世 `TALENT_REINCARNATE_POINTS`（第 1～3 次各 +3、第 4～9 次各 +1、之後 0 → 最多 15）＝ **最多 79 點**。
+  整棵樹 6 × 28 ＝ 168 點 → 最多點滿約 2.8 條。轉世時 `triggerReincarnate` 清空 `player.talents`；點數不足時（等級降低）`validateTalents()` 全部退回。
+- **結構**（`TALENT_BRANCHES`）：⚔️攻伐（暴擊、破甲、斬殺、金傷）／🔮術法（魔法暴擊、法爆、雷冰、連雷）／🛡️金身（防禦、魔防、回血、金身化勁）／💨身法（閃避、命中、追擊、疾風、閃擊、洞察）／
+  🐉御靈（獸魂、反震、噬魂、吸血、橫掃）／☯️造化（悟道、聚財、尋鐵、積德、奪寶、丹心）。每條 4 排：第一重 2 個 ×5、第二重 2 個 ×5（需本路線 5 點）、第三重要訣 2 個 ×3（需 12 點）、
+  第四重核心 2 個 ×1（需 20 點）。**核心天賦同時最多 `TALENT_KEYSTONE_MAX` 2 個**（全樹合計）。
+  核心：血祭（物攻 ×1.35、氣血 ×0.75）、破釜沉舟（暴擊 +10%、防禦減半）、天人合一（術攻 ×1.35、物攻 ×0.7）、萬法歸宗（增益上限 +20%）、金剛（防禦 ×1.5、閃避歸零）、不滅（每波保 1 血、氣血 ×1.1）、
+  無相（閃避 ×1.5、防禦歸零）、流光（閃避後強擊、追擊 +8%）、獸神附體（靈寵 +80%、攻擊 ×0.85）、群魔亂舞（普攻群攻、橫掃）、天道酬勤（修為靈石 +15%、攻擊 ×0.9）、點石成金（分解洗煉石 +50%）。
+- **加成**：`getTalentBonusTotals()`（以 JSON 字串比對做快取）併入 gear.js 的 `getBonusTotals()`，所以 def／eva／mdef／屬性傷害／fx:特效（不受特效上限）／special: 都走既有實作。
+  **天賦不給「攻擊 +%」這類進增益池的加成**（頂尖玩家的增益早已封頂）。新 key：
+  `crit`／`magCrit`／`hit`／`critDmg`（elements.js `getPlayerCombatAttrs`；`resolveHit` 暴擊改乘 `attacker.attrs.critDmg`）、`mult:phys／mag／hp／def／eva`（獨立倍率 `talentMult()`：numeric.js 的 `nv2Attack`、`nv2MaxHp`，elements.js 的防禦、閃避）、
+  `buffCap`（numeric.js `nv2BuffCap`）、`decomposeRefine`（enhance.js `getDecomposeYield`）。戰力 `nv2CombatPower` 不含天賦暴擊（GM 的戰力 ÷ 攻擊 檢查不受影響）。
+- **重置**：`respecTalents()`，前 `TALENT_RESPEC_FREE` 1 次免費，之後 靈石 H × 2 小時 × 已重置次數（最多 ×5）。存檔：`player.talents`、`player.talentRespecs`（state.js 預設值，舊存檔讀檔時補上，只新增欄位）。
+- **介面**：人物面板（修仙分頁）「天賦：可用 N 點」→ `#talent-modal`（index.html；6 個分頁按鈕、每排兩格節點卡＋「+1」按鈕，不能點時按鈕顯示原因；核心天賦實線粗框、要訣虛線框）。
+- **鎮魔塔**：見第 51 節「天賦樹後的再校準」（以半點天賦為一般玩家，沒點天賦的玩家會變難）。野外、守城的校準基準不含天賦，天賦等於玩家變強。
+- 驗證（本機）：點數 Lv.10／50／100／1000／10000 ＝ 1／5／10／28／64，轉世 1／3／9／100 次 ＝ 3／9／15／15，總計最多 79；第二重未投入 5 點時被擋；第 3 個核心被擋；
+  血祭 物攻 11 → 15、氣血 189 → 145；金剛 防禦 35 → 52.5、閃避 35 → 0；重置第一次免費、第二次 1,949 萬靈石；轉世後（等級 1、輪迴 100 次）可用 15 點；手機 390×844 視窗正常；Console 無錯誤。
+- **修正：天賦面板沒有關閉按鈕**（2026-10-03，版本 `20261005B`，使用者回報）：`#talent-modal` 原本沒有 `.close-btn`，`initModalTopClose`（ui.js）找不到來源按鈕就不會加右上角 ✕。
+  index.html 在 `#talent-body` 下方加固定的「關閉」按鈕（`closeModal('talent-modal')`），右上角 ✕ 也跟著出現。⚠️ 新增彈窗時，HTML 裡至少要有一顆 `.close-btn`（或 `[data-modal-close]`），內容由 JS 產生的也一樣。
+
+## 69. 做裝系統（精簡版 POE：四種通貨、鍛紋台、入魔淬煉；`craft.js`；2026-10-03，版本 `20261005u`）
+
+- **規劃**（使用者 2026-10-03 定案）：參考《流亡黯道》做裝，但精簡成 4 種通貨＋鍛紋台；難度選「**C 偏難**」（原提案掉率 ×0.5，一件接近畢業的裝備約 1 個月）；
+  **不做毀裝懲罰**（同強化：失敗不掉級、不毀裝），另加可選的賭博「入魔淬煉」（最壞是封印定型，裝備不會消失）。
+- **存檔**：`player.craftCur = { tianji, hunyuan, poxu, zaohua }`（state.js 預設；舊存檔讀檔時由預設值補上）。裝備多 `poxuAt`（最後一次破虛石的時間）、`forged`（用過鍛紋台）、`corrupt`（1 入魔／2 走火入魔封印）、`corruptExtra`（入魔大成功多出的詞綴上限）。只新增欄位。
+- **通貨**（config-enhance.js 的 `CRAFT_CURRENCIES`；每次使用另扣靈石 H × `CRAFT_COINS_HOURS` 0.5 小時）：
+  | 通貨 | 效果 | 野外每隻 | 其他來源 |
+  |---|---|---|---|
+  | 🔷 天機石 | 整件詞綴重擲品級與數值（種類不變） | 1/4000 | 鎮魔塔每層 10%；分解橙裝 5% |
+  | 💠 混元晶 | 整件詞綴全部重洗（種類、品級、數值，條數不變；洗煉鎖定解除） | 1/8000 | 鎮魔塔 30 層起 15%；守城每 20 波 1 顆 |
+  | ⚫ 破虛石 | 隨機刪一條詞綴；之後 24 小時（`CRAFT_POXU_LOCK_MS`）這件不能用造化玉／鍛紋台 | 1/20000 | 鎮魔塔樓主層（每 10 層）50% |
+  | 🔮 造化玉 | 加一條隨機詞綴（不超過 `craftSubCap`＝品質條數＋太古 1＋入魔 1） | 1/80000 | 鎮魔塔 50 層起樓主層 12.5%；分解太古裝 1 顆 |
+  鎮魔塔機率 × 問答倍率（最高 100%，`rollCraftZhenmo`）；野外以實際擊殺數擲（`onCraftFieldKills`，combat.js），離線／背景用同掉率（save.js，結算訊息列出）。
+  每天掛機 24 小時（約 2.8 萬隻）期望：天機 7、混元 3.5、破虛 1.4、造化 0.35。
+- **鍛紋台**（`forgeCraftSub`）：從該部位可出的詞綴中指定一條（品級依裝備等級隨機），花 🌀 50 洗煉石＋🔮 2 造化玉＋靈石，**每件限一次**；詞綴滿了要先破虛。
+- **入魔淬煉**（`corruptEquip`，`CRAFT_CORRUPT`）：花 🌀 20＋💠 1＋靈石，每件限一次。30% 大成功（一半機率多一條詞綴可超過上限，否則隨機一條升為天級）、30% 隨機一條品級 +1（已是天級則數值拉滿）、25% 無事、
+  15% 走火入魔：隨機一條降一級並 `corrupt = 2` 封印——之後不能洗煉（`canRefine` 擋下）也不能做裝，屬性照常生效。
+- **挑戰模式**（第 70 節）：越級地圖的做裝通貨掉率 × `getChallengeCraftMult()`（`onCraftFieldKills`）。
+- **交易**：入魔淬煉過（`corrupt` 1 或 2）的裝備不能寄售；洗煉石與四種通貨可以寄售（「⛏️ 材料」分類，第 58 節）。
+- **介面**：強化視窗洗煉區下方 `renderCraftSection`（持有數、四顆通貨按鈕、鍛紋台下拉選單、入魔淬煉）；裝備卡片詞條下方 `formatGearCraftTag`（😈 已入魔／走火入魔・封印、⚒️ 已鍛紋）。
+  分解（手動、一鍵、暫存區、背包滿自動、鍛造自動）都會擲做裝通貨並寫在日誌。
+- **驗證**（本機）：Lv.2500 橙劍依序用天機／混元／造化（滿了被擋）／破虛（冷卻 24h、造化被擋）／鍛紋台都正常；入魔 2000 次：走火 16%、多一條 15%、其餘符合；封印後洗煉與混元都被擋；
+  野外 10 天份擊殺得 天機 69／混元 34／破虛 14／造化 4（符合期望）；鎮魔塔 1～100 層一輪 天機 15／混元 10／破虛 4／造化 1；存檔重新整理後通貨保留；野外實戰 15 秒；Console 無錯誤。
+
+## 70. 挑戰模式（全地圖開放；`map.js`；2026-10-03，版本 `20261005w`）
+
+- **規劃**（使用者 2026-10-03 定案，原「最多越 1 個大境界練功」的門檻改成可確認後越級）：
+  1. 進入前跳警告：境界差、妖獸攻擊／氣血是自己主修地圖的幾倍，要按確定。
+  2. **戰死照常有死亡懲罰**（折壽、遺失 10% 靈石、回宗門；壽元歸零刪檔），玩家自己承擔——沿用 combat.js 的 `onPlayerKilledInField`，沒有另外處理。
+  3. 不能離線／背景掛機：`settleIdleSeconds`（save.js）一開始就把挑戰地圖的玩家退回宗門、沒有野外收益（也堵住線上撐過 60 秒就信任的 `idleProvenMap`）。
+  4. 收益不超標：每隻的經驗（`expRate`）、靈石（`rollKillCoins`）、聲望（`rollKillReputation`）、刷新補償（`getKillRewardMult`）、收益速度上限（`nv2RewardSpeedAdj`）、化神訣殘本的境界判定，全部改看 `getRewardMap()`——
+     挑戰中＝自己境界的主要練功地圖（`getMainMapForRealm`，config-realms.js 的 `realmPacing[境界].map`），否則＝所在地圖。所以每小時收益最多等於在主要地圖練功。
+  5. 專屬獎勵：做裝通貨（第 69 節）掉率 × `CHALLENGE_CRAFT_MULT`（config-maps.js）[1, 1.5, 2, 3]，索引＝越過門檻幾個境界（`getChallengeOver`＝地圖門檻 − 自己境界；越 1 → ×1.5、2 → ×2、3 以上 → ×3）。
+- **判定**：`isChallengeMap(item)`＝野外地圖且 `player.realmIndex < getMapMinRealm(item)`（不存旗標，突破境界後自動變回一般地圖）。只放寬境界門檻；四維門檻、暫存區滿照舊擋下。
+- **入口**：`getMapEntryBlock` 的境界不足回傳 `{ realm: true, short: '⚔️挑戰' }`；`selectMap`／`changeMap` 遇到時呼叫 `confirmChallengeMap`（遊戲內 `gameConfirm`；取消時留在地圖視窗），確定後 `changeMap(c, i, true)` 再 `afterMapArrive`（從 selectMap 拆出的「關世界地圖、切戰鬥分頁」）。
+  靈界地圖紅點（town.js）顯示「⚔️挑戰」，`goToMapByName` 不再擋境界；地圖清單按鈕顯示「⚔️ 挑戰模式進入」／「⚔️ 挑戰中」；奇遇的機緣任務（encounter.js）仍只挑進得去的地圖。
+- **驗證**（本機）：金丹選鬼谷八荒（煉虛）→ 警告「境界差 3、攻擊 5.8 倍、氣血 6.1 倍、通貨 ×2」；取消留在地圖視窗；確定進入後收益地圖＝上古遺跡（每隻靈石基數 250，而非鬼谷八荒的 2450），強化角色 20 秒得約 3000 靈石；
+  背景結算 →「挑戰模式不能離線／背景掛機，已退回宗門」；弱角色 15 秒內戰死、折壽 5.1 年、回宗門；Console 無錯誤。
+
+## 71. 野外掉寶：每小時封頂＋難圖補償（`combat.js`；2026-10-03，版本 `20261005A`）
+
+- **問題**（使用者問「同境界低等地圖掉寶率有比較低嗎」）：經驗／靈石／聲望有「刷新補償 × 收益速度上限」（第 52 節），每小時最多等於該地圖一般玩家；
+  但做裝通貨、剋制法寶、化神訣殘本是**每隻固定機率、照實際擊殺數擲**，強者到低等地圖秒怪每小時多掉約 2.7～4 倍，挑戰圖殺得慢反而只有普通圖的約 1/5。
+  另外做裝通貨的掉率（第 69 節）是以「每小時約 1160 隻」設計，新制一般玩家實際每小時只殺約 200 隻，等於掉得比定案的難度表少約 6 倍。
+- **使用者選 1＋2**（每小時封頂＋難圖補償；不做「低等地圖打折」）：
+  - `takeDropRolls(kills)`：想要的掉寶次數＝擊殺數 × `nv2KillRewardMult(所在地圖)`（一般玩家在任何地圖每小時都是 1200 次，難圖每隻多擲），
+    但不能超過額度 `dropBudget`——野外每秒 `tickDropBudget()` +1/3、最多存 `DROP_BUDGET_MAX` 60 → **殺再快每小時也最多 1200 次**。用實際秒數封頂，不靠收益速度估算（實測秒怪時估算仍會讓經驗多約 1.5 倍）。
+  - 做裝通貨擲 rolls 次（回到難度表的每小時量）；剋制法寶、化神訣殘本擲 rolls ÷ `getDropBaseMult()`（自己境界主要地圖的補償）次，一般玩家在主要地圖每小時掉量和改版前相同。
+  - 野外修士、暗殺者的每波遭遇機率再 × `waveRewardAdj`（殺太快不會多遇修士、多掉星允鐵與奪寶裝備）。
+  - 挑戰模式（第 70 節）用**所在地圖**補償（經驗則照主要地圖），所以越級的掉寶照實際難度給，再乘做裝通貨 ×1.5～×3。
+  - 離線／背景：做裝通貨改用收益次數 `combatTicks` 擲（同線上 1200 次／小時基準 × 離線速率）；法寶、殘本仍用實際擊殺數（離線本來就有速率上限）。
+  - `rollFieldHuashenScroll` 的次數可為小數（整數部分必擲、小數部分擲一次）。
+- **驗證**（本機，線上實戰）：渡劫一擊必殺去天南（元嬰圖）60 秒：擊殺每小時 540 隻、掉寶次數每小時 1080（上限 1200；改前照擊殺數且通貨不補償）；去天淵戰場 40 秒：870 次／小時（未超過上限）；Console 無錯誤。
+
+## 72. 防竄改：建置混淆、隱藏全域變數、存檔簽章、合理性檢查（`tools/build.js`、`integrity.js`；2026-10-03，版本 `20261005I`）
+
+- **目的**（使用者 2026-10-03「要如何讓玩家無法竄改資料」，選 1～4 全做）：純前端無法 100% 防止，目標是擋住一般玩家用主控台、文字編輯器改資料，並讓被改過的存檔碰不到牽涉其他玩家的功能（戰力榜、寄售）。
+- **① 建置＋混淆（`tools/build.js`、`package.json`）**：`npm ci && node tools/build.js` → `dist/`。
+  - index.html 的 113＋支 `data/*.js` 依原順序接成一支，包進 `(function(){ … })()`：`player`、`enemies` 與所有函式都變成區域名稱，**主控台打 `player.coins = …` 會出現 player is not defined**。
+  - **事件字串**（HTML／模板字串的 `onclick="…"` 等、config 的 `action: "…"`（town.js 用 `new Function` 執行）、活動的 `openFn: "…"`（activity.js 的 `window[act.openFn]`））用到的頂層函式，建置時自動掃描後掛回 `window`
+    （約 256 個，都是「按按鈕」本來就能做的事）；**另外，程式裡任何「剛好是頂層函式名稱」的字串字面值（`'bulkDismissServants'` 這種）也一併掛回**——函式名稱以字串傳進去再組成 `onclick="${fn}()"` 的寫法（ui.js 的 `renderBulkDeleteBar(…, deleteFn)`、activity.js 的 `fnName`）掃描不到事件字串，2026-10-04 版本 `20261005W` 起靠這條規則（之前混淆版的「一鍵解僱僕從」「一鍵刪除裝備」按了沒反應）；用到的頂層變數用 getter／setter 掛回（`refineSelIdx`、`craftForgeKey`、`mkForm`、`LINGJIE_SCENE_KEY`、`WORLD_SCENE_KEY`）。
+    `player`、`enemies`、`DefenseBattle`、`ZhenmoTower` 列在 `FORBIDDEN`，事件字串裡直接用到會建置失敗（守城的「重新載入」因此改成 `retryDefenseBattle()`）。
+  - ⚠️ **寫程式的新規則**：事件字串裡只能呼叫頂層函式（或上述變數），不要寫 `player.xxx`；程式內不要用 `window.某函式 = …` 來替換遊戲函式（包起來後替換不到遊戲用的那個，servant.js 的日誌靜音已改成直接 `addLog = …`）。
+  - terser：compress 2 輪＋mangle（函式範圍內名稱全換）、移除註解；1293 KB → 684 KB。HTML 註解一併移除。gm.html 的 data 腳本另接成 `data/gm-lib.js`（只壓縮，不包範圍，GM 頁內嵌程式要用全域名稱）。
+  - 不複製到 dist：`*.md`、`tools/`、原始 `data/*.js`、`package*.json`、`.` 開頭的檔案。sw.js 照舊從 index.html 找 `data/…?v=` 預先快取（現在只有 game.js 一支）。pwa.js 的 `document.currentScript` 在 game.js 裡同樣取得版本號。
+  - **開發與測試照舊用原始 index.html**（各檔分開、全域），Playwright 測試不用改；發佈前另外 `node tools/build.js`、在 `dist/` 開伺服器跑一次（掃描畫面上所有 on* 事件的函式都存在於 window）。
+- **② 發佈（`.github/workflows/pages.yml`）**：main 有新提交 → checkout → `npm ci` → 建置 → `upload-pages-artifact`（dist）→ `deploy-pages`。
+  **需要作者一次性設定**：GitHub 倉庫 Settings → Pages → Build and deployment → Source 選「**GitHub Actions**」。在那之前網站照舊直接提供原始檔（不混淆、但功能正常），Actions 的 deploy 步驟會失敗。
+  配合「原始碼倉庫改私人」（需 GitHub Pro）就連原始碼也看不到。
+  - 實測（2026-10-03 合併 PR #27）：Source 還是「Deploy from a branch」時，push 到 main 會**兩個流程都跑**（內建的 pages build and deployment 發原始檔＋本流程發 dist），哪個最後完成網站就是哪一版（那次剛好是混淆版）。
+    切到「GitHub Actions」後只剩本流程。檢查方式：Actions 頁面，最新一次 push 只出現「Build & Deploy Pages」、沒有「pages build and deployment」＝已切換；線上 index.html 只載入 `data/game.js?v=…`＝混淆版。
+- **③ 存檔簽章（`integrity.js`）**：`igSign` = 兩次 cyrb53（各帶 `IG_SALT`）共 32 位十六進位。
+  - 本機存檔：`saveLocal` 寫入 `igPrepareSave()`＝`JSON.stringify(player)`（含 `_ig: 1`）尾端再嵌 `"_sig":"…"`（同一次寫入，多分頁不會錯開）；`loadLocal` 在 `applySaveData` 前 `igVerifyLocal(data)`（拿掉 `_sig`、重新 stringify 比對）。
+    沒有 `_ig` 的改版前存檔直接接受（下次存檔補簽）；有 `_ig` 但簽章不符或遺失 → `flagSave('存檔內容被修改')`。讀檔失敗時顯示的原始存檔代碼也帶 `_sig`，貼回匯入一樣驗證得過。
+  - 存檔代碼：`exportSave` 匯出 `igSignedCopy(player)`；`confirmImportSave` 解析後 `igVerifyImport(data)`，第一次按時提示驗證結果，匯入後套用標記。
+    沒有簽章的舊代碼：存檔時間早於 `IG_UNSIGNED_UNTIL`（2026-10-06 00:00 台灣時間）才接受，否則視為被修改。攻略試算（openGuideCalc）不簽。
+- **④ 合理性檢查**：`player.audit = { play, max, used }`。`play`＝線上每秒（integrity.js 頂層 setInterval，遊戲開始、未結束、讀檔沒失敗時）＋離線／背景結算秒數（`settleIdleSeconds` 開頭）。
+  `igProgressHours()`＝realmPacing 節奏時數（已過境界合計＋目前境界的經驗比例：第 k 階需 k 份、一個境界 55 份）。每次存檔 `igAuditCheck()`：進度超過歷史最高 `max` 的部分累加到 `used`（轉世後重爬不計）；
+  `used > 2 小時 + 遊玩小時 × IG_SPEED_MAX(10)` → `flagSave('修煉進度過快…')`。改版前的存檔以第一次讀取時的進度為起點。靈石等其他數值目前不檢查（來源太多，容易誤判）。
+- **標記的效果**：`player.integrity = { flagged, reason, at }`（存在存檔裡、受簽章保護）。戰力榜上傳與守城送審略過、戰力榜頁顯示原因（leaderboard.js）；寄售上架與出價擋下（market.js）。**不刪檔、不擋單機遊玩**（避免誤判害玩家失去進度）。
+- **驗證**（本機）：改版前存檔讀取不標記且補簽；正常重新整理不標記；用文字改本機存檔的靈石 → 標記「存檔內容被修改」；匯出代碼原樣匯入通過、改過靈石再匯入 → 標記；新角色直接改成渡劫 → 標記「修煉進度過快」；標記後寄售被擋。
+  建置版：主控台 `typeof player` 為 undefined、`player.coins = …` 失敗；開 28 個畫面後掃描所有 on* 事件，缺少的函式 0 個；野外戰鬥、存讀檔、gm.html 正常；Console 無錯誤（只有沙箱連不到外部的憑證錯誤）。
+
+## 73. 只有從大地圖進入才觸發特殊事件（`map.js`；2026-10-04，版本 `20261005N`～`O`）
+
+- **規則**（使用者指定：「從右上地圖快捷鍵進入地圖無法觸發特殊事件」→「要從大地圖進入才會觸發」）：只有從**大地圖**進入地圖才呼叫 `onEncounterMapChange`（奇遇的秘密路線、野外累計次數、空間裂縫、三界召令、城中機緣、機緣任務的「前往」步驟，第 63 節）。
+  | 進入方式 | 觸發 |
+  |---|---|
+  | 人界地圖分區（worldRegions 的 `openMapCategoryModal(n)` → 清單的 `selectMap(c, i, true)`）、人界城鎮紅點（`goToTownByName` → `goToTown(i)`）、靈界紅點（`goToMapByName`） | ✅ |
+  | 洞府「宗門」鈕回宗門（`returnToSect`；秘密路線 宗門→天南城→天星城→宗門 的起點與終點只能這樣回） | ✅ |
+  | 修仙地圖彈窗 `#world-map-modal`（人界地圖右上「地圖列表」、世界導覽、PC 傳送門）的區域按鈕 `openMapCategoryModal(n, true)` 與城鎮卡片 `goToTown(i, true)` | ❌ |
+  | 系統傳送 `changeMap(0, 0)`：戰死回宗門、渡劫失敗、暫存區滿 | ❌ |
+- **實作**：`changeMap(c, i, challengeOk, bigMap)` 只在 `bigMap` 時呼叫；`selectMap(c, i, bigMap)`、`confirmChallengeMap(c, i, bigMap)` 往下傳；`openMapCategoryModal(catIndex, quick)` 在清單按鈕寫入 `selectMap(c, i, true)`（quick 時不帶）；`goToTown(i, quick)` 傳 `!quick`。
+- 驗證（本機）：快捷清單進野外、進城鎮 → 不觸發；人界分區進野外、人界紅點進城、洞府回宗門 → 觸發；戰死回宗門 → 不觸發；建置版正常；Console 無錯誤。
+- **快捷清單拿掉第四、五區**（2026-10-04，版本 `20261005P`，使用者指定）：`#world-map-modal` 只剩 落雲宗周邊／慕蘭草原／大晉王朝區域／無邊海 四顆區域按鈕；第四、五區只能從**靈界大地圖**的紅點進入（會觸發特殊事件）。
+  第四區新搬入的 九天仙域／太初古礦／上蒼原本沒有靈界紅點，config-towns.js 的靈界 `hotspots` 補上 `lj-jiutian`（玄武境東邊天空海，圖上 (630, 225)）、`lj-taichu`（角蚩族北側，(720, 245)）、`lj-shangcang`（海王族島南岸，(640, 395)，標籤「上蒼」）。
+  驗證：靈界地圖十個紅點不重疊（PC 1280 寬截圖）、點九天仙域傳送成功；快捷清單只剩四顆按鈕；Console 無錯誤。
+
+## 74. 靈界進出：五行傳送陣靈石、天元城（`lingjie.js`；2026-10-04，版本 `20261005Q`）
+
+- **規則**（使用者指定）：人界地圖飛升點要 **金、木、水、火、土傳送陣靈石各 1 顆**才能進入靈界；進入後**不能直接離開**，返回人界同樣要一套。靈界地圖人族聚居區新增城池 **天元城**，點了顯示城池圖（使用者提供 1408×768 插畫 `images/maps/tianyuan-city.jpg`）。
+- **存檔**：`player.lingStones = { 金, 木, 水, 火, 土 }`、`player.inLingjie`（state.js 預設；`migrateLingjie(data)`：改版前就待在第四、五區的玩家視為已在靈界）。
+- **飛升**：CITY_GATES「飛升點」加 `lingjie: true`，town.js 的 `enterCityGate`（改成 async）在播光柱之前 `await prepareLingjieEntry()`——已在靈界直接放行；不夠就遊戲內提示持有數；夠就確認、扣一套、`inLingjie = true`、存檔。提示文字 `hint` 可為函式（顯示持有數）。
+- **身在靈界**：世界導覽 `openWorldTab` → `openCurrentWorldScene()` 開靈界地圖；靈界地圖右上「↩ 返回人界（需五行傳送陣靈石）」→ `leaveLingjieToWorldMap()`；洞府「宗門」鈕 `returnToSect` → `tryLeaveLingjie`（付款後回宗門）。
+  付款離開時人在第四、五區的地圖會落地回宗門。`getMapEntryBlock`：第四、五區（`LINGJIE_MAP_CATEGORIES`）沒在靈界 →「🔒靈界」；在靈界去人界的地圖（宗門除外）→「🔒人界」（快捷清單也擋）。
+  **系統送回宗門**（戰死、渡劫失敗、暫存區滿的 `changeMap(0, 0)`）＝回到人界、不扣靈石（`changeMap` 在目的地不是靈界分類時清掉 `inLingjie`）。
+- **取得**（`LINGJIE_STONE_DROP`，config-towns.js）：`nv2L ≥ 9` 的野外（無邊海、第四、五區）每次掉寶（combat.js 的 `takeDropRolls`，第 71 節）每種 1/2400 → 每小時每種約 0.5 顆、約 2 小時湊一套；離線用收益次數同率（結算訊息列出）；鎮魔塔 60 層起每層 BOSS 25% × 問答倍率掉 1 顆（隨機一種）。背包顯示「💎 五行傳送陣靈石」卡片。
+- **天元城**：靈界 hotspots `lj-tianyuan`（人族聚居區城堡圖示 (415, 282)）→ `openCityGate('天元城')`；CITY_GATES 新增 `backLabel: "↩ 返回靈界"`（openCityGate 依此改返回鈕文字），點圖目前只提示「城內尚未開放」。
+- **天元城內城與靈界復活點**（2026-10-04，版本 `20261005U`，使用者提供 848×1264 內城插畫 `images/towns/tianyuan-inner.jpg`：「設定成天元城內城；玩家復活會回到城外；內城設定少數建築物，如任務榜、茶樓」）：
+  - config-maps.js 新增分類 **索引 7「靈界城鎮 (安全區)」**：`天元城外`（復活點）、`天元城`（內城），都 `hidden`、屬於 `LINGJIE_MAP_CATEGORIES`（[4, 5, 7]）——不在靈界進不去，在靈界待在這裡不會被清掉靈界狀態。
+  - 靈界地圖天元城紅點 → 城門圖（CITY_GATES）→ 點圖 `enterLingjieTown('天元城')`（傳送＋開城內場景）。`townScenes["天元城"]`：任務榜（內城門前，`openDailyQuestModal()` 每日任務）、茶樓（左側天元茶館，`openTeaHouse()`：回滿氣血靈力＋隨機一則 `LINGJIE_TEA_RUMORS` 傳聞）；右上「↩ 靈界地圖」。
+  - **2026-10-04 版本 `20261005V`**（使用者：「任務榜跟人界的分開；新增大道商行，販賣傳送石，一顆一億靈石」）：
+    - **靈界任務榜**（`openLingjieQuestModal`／`renderLingjieQuests`／`claimLingjieQuest`，`#lingjie-quest-modal`）：`player.lingQuests = { date, list }`，每天 `LINGJIE_QUEST.count` 3 個（從 4 種模板隨機），和人界每日任務完全分開。
+      種類 any（任一靈界野外）／map（從玩家階數夠的靈界野外挑一張）／race（從那些地圖會出現的種族挑一個）；進度只在**身在靈界、靈界分類的野外**線上擊殺時累計（combat.js 呼叫 `onLingjieKills(killedCount, raceKilled)`）；
+      獎勵 每小時收入 ×2～4 的靈石＋做裝通貨，部分任務給 1 顆隨機屬性傳送陣靈石。
+    - **大道商行**（`openLingjieShop`／`buyLingStones(k, n)`／`buyLingStoneSet`，`#lingjie-shop-modal`）：天元城右側「大道商行」招牌；傳送陣靈石每顆 `LINGJIE_SHOP_PRICE` 1 億靈石，可買 1 顆、5 顆或一套（五種各 1、5 億）。
+  - **復活點** `getRespawnPoint()`／`sendToRespawn()`／`respawnPlaceName()`（lingjie.js）：身在靈界＝天元城外（`LINGJIE_RESPAWN_MAP`），否則宗門。戰死（combat.js）、渡劫失敗（tribulation.js）、暫存區滿（enhance.js）、離線／背景撐不住、挑戰模式離線、暫存區滿離線（save.js）都改用它——**在靈界戰死不再免費回人界**。
+- 驗證（本機）：沒靈石點飛升台 → 提示、不進；有一套 → 確認後扣除、進靈界地圖；在靈界快捷清單去天南城被擋、洞府回宗門靈石不足被擋、付款後回宗門且第四區再被擋；戰死回宗門清掉靈界狀態；
+  世界導覽依狀態開靈界／人界；掉落 2400 次掉寶約各 1 顆；天元城手機／PC 顯示正常、返回靈界；Console 無錯誤。
+- **改名：傳送陣靈石**（2026-10-04，版本 `20261005R`，使用者說明「傳送陣靈石，非普通貨幣的靈石；是另外生成的通貨，可放置在背包內」）：畫面文字「極品靈石」全部改成「傳送陣靈石」（例「金屬性傳送陣靈石」），
+  避免和貨幣「靈石」混淆；背包改成每種一張道具卡（🟡金／🟢木／🔵水／🔴火／🟤土 屬性傳送陣靈石 ×數量）。存檔欄位 `player.lingStones` 不變。
+- **背包圖示**（2026-10-04，版本 `20261005S`）：使用者提供五行靈石合成圖，裁成 `images/items/lingstone-{metal,wood,water,fire,earth}.jpg`（192×192），config-towns.js 的 `LINGJIE_STONE_IMG`；背包卡片頂端顯示 96px 圖。
+  （同時詢問的「背包容量 500 格」：裝備背包 `MAX_EQUIP_INVENTORY` 2026-10-01 起已是 500；道具（丹藥、材料、靈石類）沒有上限，未改動。）
+
+- **至高聖地與宗門設施移到天元城**（2026-10-04，版本 `20261005AE`，使用者指定）：
+  - 第三段宗門（至高聖地，tier 3）**只能在靈界拜入或回歸**：sect.js 的 `isSectTierHere(tier)`——身在靈界只列 tier 3，人界只列 tier 1、2（`renderSects` 篩選、頂端加說明；`joinSect` 也擋）。已拜入的宗門技能與目前所屬不受影響。
+  - `townScenes["天元城"]` 新增熱點：「至高聖地」（上方宮殿 [330, 130, 240, 130]，`openSectModal()`）、「宗門設施」（右上樓房 [555, 300, 130, 110]，lingjie.js 的 `openLingjieFacility()` → `#lingjie-facility-modal`）。
+  - 宗門設施只放人界「不在宗門也能用」的五項：尋訪仙門（至高聖地）、丹藥堂、修仙背包、僕從小屋、洞府產業；門派任務、靈田、靈獸園、靈寶閣、藏書閣、鍛造閣、煉丹房、符寶坊在人界本來就要身在宗門（ui.js），靈界不提供。
+
+- **青瀾島島景**（2026-10-04，版本 `20261005AJ`，使用者提供 1408×768 插畫 `images/maps/qinglan-island.jpg`：仙人亭、瀑布、雲海、垂釣老者）：人界地圖右下「青瀾島」分區浮起後
+  改開 `openCityGate('青瀾島')`（`CITY_GATES["青瀾島"]`），顯示島景圖與「青瀾島・仙人亭（點擊圖片登島）」；點圖目前只提示「青瀾島尚未開放」，島上玩法決定後把 action 換掉即可。
+  - **島內**（同日版本 `20261005AK`，使用者提供 1408×768 插畫 `images/towns/qinglan-inner.jpg`：桃花渡口、涼亭、小攤、春和堂、碼頭）：點島景圖 → `openTownScene('青瀾島')`（`townScenes["青瀾島"]`「青瀾島・桃花渡」，不換所在地圖）。
+    熱點：春和堂 [900, 255, 220, 235]、涼亭 [360, 100, 300, 260]、小攤 [555, 380, 200, 180] 先提示敬請期待；「⛵ 搭船離島」[70, 520, 500, 220] 回人界地圖。
+  - **只能搭船離島**（版本 `20261005AL`，使用者指定）：`townScenes` 新增選填 `noLeave: true`（town.js 的 `openTownScene` 隱藏左上 `#town-scene-leave`「↩ 離開」），
+    青瀾島不設 `extraButton`（右上沒有返回人界）；另新增選填 `focusX`（圖寬 0～1，`layoutTownScene` 窄螢幕的起始視角，沒設＝置中），青瀾島 0.3＝手機一開始就看得到碼頭小船。
+  - **碼頭確認、涼亭改背景、隱藏仙翁**（版本 `20261005AM`，使用者指定）：「⛵ 搭船離島」改呼叫 town-npc.js 的 `leaveQinglanIsland()`（`gameConfirm`「是否搭船離開青瀾島？」）；涼亭熱點移除（純背景）。
+    隱藏仙翁＝青瀾島的 `hiddenNpcs`（`kind: 'xianweng'`、`chance` 0.2、`minCha` 10000）。**去背版**（版本 `20261005AN`，使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
+    沿島景圖垂釣老者的輪廓（多邊形，含斗笠、鬍鬚、雙袖、雙手）裁出，身高約 117px（同一張圖的路人約 130px），站在涼亭正面兩根前柱之後 [503, 363, 55, 94]：
+    前柱（x 500～515、540～552）與欄杆（y 457 以下）擋住的部分直接透明，只露出柱間的上半身；對話視窗另用全身圖 `npc-xianweng-portrait.png`（148×315，`portrait` 欄位）：
+    **垂釣版**（版本 `20261005AO`，使用者確認位置：「老翁要面對涼亭角的河面釣魚」；沒有背影圖，使用者選擇沿用正面去背圖）：全身圖左右鏡像（釣竿朝左）、約 117px，
+    站在涼亭左前角台基上 [345, 369, 55, 117]（取代上面的前柱遮擋版）；npc 新增 `fishing: { hand, tip, hook }`，town-npc.js 的 `getTownNpcEffects` 畫竿（手→竿尖）、
+    釣線（竿尖→水面）SVG 與三圈漣漪（`.tnpc-*`，CSS 動畫），town.js 的 `renderTownHotspots` 併進場景效果層（不擋點擊）。之後有背影圖只要換 `npc-xianweng.png`。
+    **暫時隱藏**（版本 `20261005AP`，使用者：「仙翁先隱藏，出現條件等會新增」）：`enabled: false`（`rollTownNpcs` 略過；hiddenNpcs 通用欄位），出現條件定案後改 true。
+    **低語**（版本 `20261005AS`，使用者：「仙翁出現有沒有一些低語」）：npc 新增 `whispers: { firstMs, everyMs, showMs, at, lines }`（10 句）；仙翁在場時 town-npc.js 的 `startNpcWhispers` 每 15 秒在頭頂浮出淡色楷體小字、
+    6 秒內上飄消散（`.npc-whisper`，與路人閒聊共用 `#town-chatter` 層；路人說話只清自己的對話框）；仙翁離開（`removeTownNpc`）或離島（`closeTownScene`）停止。
+    **聽完低語才能對話、兩個小遊戲**（版本 `20261005AT`，使用者指定）：`whispers.inOrder`（依序說）＋`unlockAfterAll`（10 句說完、最後一句飄完才 `hit.heardAll`，重畫人偶變成可點並加 `.awake` 金光呼吸；約 2 分半）；
+    之前人偶沒有 action（點了沒反應）。對話選項改為「🎣 仙翁釣魚」「♟️ 玲瓏棋局（五子棋・困難）」「↩ 告辭」：兩個遊戲製作中（提示敬請期待、仙翁留著），告辭＝當天不再出現。
+    釣魚畫面先做示意圖給使用者確認（直式：上方仙翁台詞、浮標與漣漪、右側「魚的位置」條＋綠色收線框、收線進度條、漁獲欄、按住收線鈕）。
+    **兩個小遊戲上線**（版本 `20261005AU`，使用者指定：「釣魚 3 竿，各種材料，最高等的魚 20% 掉金木水火土極品靈石其中一樣 1 顆；玲瓏棋局輸沒有懲罰（機緣未到），贏 40% 得五行靈石其中一種 1 顆，可下三盤」；
+    「極品靈石」＝傳送陣靈石 `player.lingStones`）：新檔 `xianweng-games.js`、設定 `XIANWENG_GAMES`（config-towns.js）；每天次數 `player.xianweng = { date, fish, chess }`（用到才建立，跨日歸零；仙翁還沒出現前不會建立）。
+    仙翁對話按鈕顯示今日剩餘次數；次數用完選該遊戲＝提示後回到對話；玩完（還竿／離席）仙翁還在就回到對話，告辭才離開。
+    - **開場動畫**：使用者提供的 Gemini 影片（10 秒、5 個鏡頭：遠景垂釣→臉→手→水面→浮標下沉），重新壓成 960 寬、保留 AAC 音效 `videos/xianweng-fishing.mp4`（約 1.1MB，sw.js 不快取 mp4）；
+      選「仙翁釣魚」就全螢幕播（`#xw-intro`，z-index 130），右下「略過 ⏭」，播完／略過／載入失敗都直接進釣魚；有聲播放被擋時改靜音播。
+    - **仙翁釣魚**（`#xw-fish-modal`）：池塘底圖是影片 6.9 秒的水面截圖 `images/towns/xianweng-pond.jpg`。拋竿（按下就算一竿）→ 1.5～4.5 秒後浮標下沉 → `biteWindowMs` 1.5 秒內按「收竿」（慢了魚跑掉）→
+      收線：右側直條裡魚亂竄，**按住**按鈕（滑鼠／觸控／空白鍵）綠框上升、放開下沉；魚在框內進度 +26%/秒、框外 −17%/秒，起始 30%，滿＝釣到、歸零＝跑掉。釣到後 700ms 內不接受拋竿（避免放開收線鈕時誤拋）。
+      魚（權重／速度／框高）：青鱗凡魚 50（凡品靈草 6、上品 2）、碧波靈鯉 30（上品 4、極品 1、洗煉石 5）、赤霞寶鯛 15（極品 2、洗煉石 10、星允鐵 5、天機石 1）、
+      **金鱗仙鯉** 5（仙品靈草 1、洗煉石 15、星允鐵 10、天機石 2、混元晶 1，另 20% 隨機一種傳送陣靈石 1 顆）；越高級越快、框越小。
+    - **玲瓏棋局**（`#xw-chess-modal`）：視窗底圖用使用者提供的棋盤插畫 `images/towns/xianweng-gomoku.jpg`（壓暗），上面是 15 路木紋棋盤（225 個按鈕 `gomokuPlay(i)`），玩家執黑先手、無禁手，連五勝；
+      下第一子才算一盤（中途離席＝輸）；贏 `chessWinStoneChance` 40% 得隨機一種傳送陣靈石 1 顆，輸／和局「機緣未到」不扣東西。
+      **困難 AI**：棋型評分（連五、活四、衝四、活三、眠三、活二…，雙活三／四三加分）攻 ×1.1＋守；能連五就下、對手要連五就擋；能**連續衝四取勝（VCF，6 層）**就直接走；
+      否則前 10 名候選各做 3 層 alpha-beta（仙翁→玩家→仙翁→評估），並扣掉「下完後玩家能 4 層內連續衝四取勝」的點（這段最多算 1.2 秒）。本機測試：對「一層貪心、先手」的電腦約四成勝、約兩成和局，平均每手約 0.1 秒。
+    - 驗證（本機）：Playwright 走完 3 竿（漁獲入帳、次數歸零、按鈕停用）、回到對話、3 盤棋（贏得靈石入帳）、手機 390 寬版面；建置版 `dist/` 新增的 onclick 函式都有公開、Console 無錯誤。
+      無頭 Chromium 沒有 H.264 解碼器，開場動畫走「載入失敗 → 直接進釣魚」分支；一般 Chrome／Safari／手機都能播 mp4（同目錄其他影片相同格式）。
+    **正式出現條件**（版本 `20261005AV`，使用者：「人物含吃藥後魅力 5000、當日線上擊殺怪物滿 2000、一天只會出現一次、每小時出現 10 分鐘、10 分鐘後隱藏」）：
+    仙翁改 `enabled` 開放、`chance: 1`、`minCha: 5000`（`getTotalCharm`＝本身＋裝備；駐顏駐魅力丹直接加在 `player.stats.cha`，已含）、`minKillsToday: 2000`、`window: { everyMin: 60, showMin: 10 }`（hiddenNpcs 通用欄位）。
+    town-npc.js：`rollTownNpcs` 改呼叫 `trySpawnTownNpc(城名, npc)`；當日線上擊殺 `getTodayFieldKills`／`addTodayFieldKills`（`player.dayKills = { date, n }`，日曆日；combat.js 的線上野外每波擊殺後呼叫，離線／背景補發不算）；
+    `getTownNpcWindow(w)`＝裝置時間每小時 :00～:09 為出現時段；`player.townNpcSeen = { id: 日期#時段 }`：今天在別的時段出現過就不再出現（同一時段離島再回來還在）；
+    出現時排 `townNpcHideTimer`，時段結束 `hideWindowTownNpc` 讓仙翁消失（對話框開著就關掉，小遊戲可以玩完但不回到對話）；待在島上時 `townNpcClock` 每 30 秒檢查，時段一到自動現身；`closeTownScene` 呼叫 `stopTownNpcClock`。
+    低語聽完（約 2 分半）才能對話，所以每個時段實際可對話約 7 分半。驗證：Playwright 假時鐘測魅力／擊殺門檻、同時段重進、10 分鐘後消失、下一小時不再出現、隔天重置、在島上等到整點自動出現。
+  - **GM 測試人物**（版本 `20261005AV`，使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：map.js 的 `isGM()`＝`player.gm === true`。GM 時 `getMapEntryBlock` 一律放行（境界、四維、靈界、暫存區），
+    `changeMap` 傳送到靈界分類地圖自動 `inLingjie = true`，`prepareLingjieEntry`／`tryLeaveLingjie` 不扣傳送陣靈石，`goToTown` 不看城鎮禁入。
+    **取得方式＝GM 後台寄信**（使用者：「可以在 GM 後台製作一隻 GM 人物嗎」）：gm.html「📮 發放獎勵」新增「🛡️ GM 權限」選單（不變／授予／撤銷）→ `rewards.gm = true|false`，
+    **只能用仙府信件寄給指定 uid**（兌換碼與全服信會被擋；`MAIL_SCHEMA_VERSION` 3，舊版遊戲提示重新整理）；玩家領信時 mailbox.js 的 `grantMailRewards(r, personal)` 只在個人信才設定 `player.gm`
+    （兌換碼、奇遇呼叫不帶 personal，不會改 GM）。寄信只有管理者能寫（firestore.rules 的 mail create），規則不用改。
+  - **路人閒聊**（版本 `20261005AQ`，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
+    town.js 的 `startTownChatter`（`openTownScene` 啟動、`closeTownScene`／換場景停止）、`showTownChatter`：只挑目前畫面看得到的路人頭頂（手機左右滑動時畫面外的人不說話），
+    句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。
+    `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；
+    對話 `#xianweng-modal`（沒有 ✕）三選一 `xianwengChoose('guide'|'chess'|'leave')`：當天見過就不再出現（`markTownNpcDone`）；**造化（獎勵）尚未決定**，目前只寫日誌與提示。
+  - **路人閒聊加快**（2026-10-04，版本 `20261005BB`，使用者：「NPC 講謠言的速度過慢」）：青瀾島 `chatter` 改為每 10 秒一句（原 30 秒）、進島 2 秒說第一句、對話框停留 6 秒。
+  - **手機直式圖**（2026-10-04，版本 `20261005AZ`，使用者提供 848×1264「青瀾島手機版換此圖」→ `images/towns/qinglan-inner-portrait.jpg`）：`townScenes["青瀾島"].portrait`
+    （春和堂 [530, 520, 240, 180]、小攤 [560, 850, 288, 400]、⛵ 搭船離島 [0, 790, 440, 420]）；直式圖新增選填 `chatterHeads`（town.js 的 `showTownChatter` 在直式圖改用它，9 位路人）。
+    隱藏 NPC 支援直式圖：npc 選填 `portraitSpot`／`portraitFishing`／`whispers.portraitAt`（town-npc.js 的 `getTownNpcSpot`、`isTownPortraitView`；沒設＝直式圖上不出現）。
+    仙翁在直式圖：涼亭石台左前角 [164, 632, 42, 90]（約 90px，同深度攤販相當），竿 手 (167, 662) → 竿尖 (100, 617)、釣線落水 (104, 738)，低語 (185, 625)。
+
+## 75. 世界 Boss（`config-world-boss.js`、`world-boss.js`、`tools/firestore.rules`、gm.html「⚔️ 世界 Boss」；2026-10-04，版本 `20261005AD`）
+
+- **使用者選定**（多人 Boss 討論後）：A 世界 Boss（非同步，全服共用一條血）＋四層防作弊——① 雲端規則硬性限制（次數、間隔、單次上限、封鎖帳號）② 獎勵以參加為主、排名只給外觀
+  ③ 延後 24 小時發獎＋GM 審核 ④ 不影響單機遊玩。細節照建議：每週六 20:00～週日 20:00（台灣）、每天 3 次、每次 30 回合、倒下不扣壽元、單次上限＝總血量 1%。
+- **入口**：活動選單「👹 域外天魔」（`config-activities.js` 的 `demon`，`openFn: openWorldBossModal`，聲望 1 萬＋大乘）。2026-10-04（版本 `20261005AF`）使用者要求「世界 Boss 暫不開放、秘境的世界 Boss 移到域外天魔」：
+  `implemented: false`＝點了只顯示敬請期待；**開放時改成 `true`**（並確認 Firebase 已發布新版規則）。原本秘境列表的世界 Boss 卡片已移除。
+- **雲端資料**（數字都是「畫面數字」的整數＝內部數值 × `combatScale()`）：
+  - `wboss/state`：`{ bid, bossIdx, maxHp, hp, cap, startAt, endAt, killedAt, lastUid, lastName, prev: { bid, maxHp, killed, endAt, lastUid } | null }`。
+  - `wbossRuns/{bid}/dmg/{uid}`：`{ uid, name, realm, stage, total, eff, n, day, dayN, lastAt, hist[≤6]: { d, t, r } }`（day＝台灣時間日序 floor((ms+8h)/1 天)）。
+  - `wbossClaims/{bid}_{uid}`：`{ uid, bid, at }`。
+- **換隻（不需要 GM）**：`wbLoad` 先跑 `wbRollover`——上一隻已結束、現在在本週時段內（`wbWindowStart`＝最近的週六 12:00 UTC）、雲端還不是本週這隻 → 交易寫入新的一隻：
+  bid＝開始時間毫秒字串、bossIdx＝週次 % 4、血量＝上一隻被打死 ×2（上限 4 兆）／沒打死 ÷2 取整（下限 400 萬）、第一隻 4000 萬（單次上限 40 萬 ≈ 強力配置渡劫打滿 30 回合）。
+  規則檢查：startAt 毫秒 % 604800000 == 216000000（週六 12:00 UTC）、endAt＝startAt＋24 小時、現在在時段內、bid＝startAt 毫秒、cap＝floor(maxHp/100)、prev 必須照抄上一隻、血量推算正確。
+- **挑戰**（`startWorldBossFight` → `wbRound`，同鎮魔塔 BOSS 戰的 `resolveHit`／`tickStatus`／光環／連擊）：Boss 強度跟著挑戰者境界（`nv2Level(player)`），
+  攻擊＝一般玩家氣血（含增益）÷ `WB.hitsToKill` 24；Boss 血量看雲端，本地只累計你造成的傷害（含 dot）。30 回合或倒下結束（中途「↩ 放棄」＝不送出、不扣次數）。
+  結束 `wbSubmit` 交易：自己的紀錄（total／eff／n／day／dayN／lastAt＝serverTimestamp／hist）＋ Boss 扣血（傷害 0 時不更新 Boss）；打到 0 記 killedAt／最後一擊。
+- **雲端規則**（`tools/firestore.rules` 的世界 Boss 區塊；Firebase 模擬器實測 35 項：正常流程與各種竄改都符合預期）：
+  - 傷害紀錄：只能寫自己的、沒被封鎖、Boss 開放中且沒死、單次 0～cap、eff 只有打滿才 +1、n +1、間隔 ≥ 60 秒、同一天 dayN ≤ 3（換日才歸 1）、day 必須是伺服器時間的日序、
+    同一筆交易的 Boss 血量 ＝ max(0, 交易前 − 這次傷害)（`getAfter` 對帳，多扣少扣都拒絕）。
+  - Boss 扣血：只能改 hp（歸 0 時加 killedAt＝伺服器時間、lastUid＝自己），且同一筆交易必須寫自己的傷害紀錄。
+  - 排行：一次最多讀 20 筆（`limit(20)`），管理者可讀全部。領獎：Boss 結束滿 24 小時、有傷害紀錄、沒被封鎖、每隻每人一次。
+- **視窗** `#world-boss-modal`：Boss 圖、雲端血條、狀態（討伐中剩餘時間／已被擊敗＋最後一擊／已結束＋下次開放）、今日次數、累計傷害、⭐有效挑戰、名次（傷害相同並列）、
+  挑戰鈕、領獎鈕、前 20 名排行、規則說明。讀取：state 1＋自己 1＋前 20 名（`WB.cacheMs` 3 分鐘內重開不重讀排行）。
+- **戰鬥畫面** `#world-boss-scene`（z-index 101，樣式比照鎮魔塔，`.zm-pop` 共用）：上方「本次傷害／上限」進度條（打滿顯示 ⭐）、主角立繪、氣血條、戰況 3 行、×1／×2／×4、略過演出、結算。
+- **獎勵** `claimWorldBossReward`：先讀該隻前 20 名算名次 → 建立領獎紀錄（規則把關）→ 發獎：靈石＝每小時收入 ×3、洗煉石 15、星允鐵 10、天機石 2、混元晶 1；Boss 被打死全部 ×2。
+  外觀稱號（`config-titles.js` 的 cond `wboss`，`bonus: {}`，天磯錄顯示「外觀稱號（無數值加成）」）：第 1 名【誅天第一】、前 10 名【誅魔先鋒】、最後一擊【斬魔一擊】。
+  可領的是「這隻（結束滿 24 小時）」或「上一隻（prev）」，大約有一週可以領；存檔 `player.wboss = { claimed: [最近 20 個 bid], titles: [] }`（state.js 預設）。
+  頭像框需要新圖（目前 32 張都已使用），使用者提供後再加。
+- **限制與防作弊**：被 `isSaveFlagged()` 判定存檔異常或 `lbBanned` 的玩家不能挑戰、不能領獎（單機照玩）。傷害在玩家端計算，作弊最多每次打滿上限＝跟強者並列。
+- **GM 後台**（gm.html「⚔️ 世界 Boss」，載入 config-world-boss.js）：目前狀態（血量、時段、擊敗、上一隻）；手動開一隻（選 Boss、總血量萬、持續小時；目前這隻變 prev）、立即結束；
+  傷害紀錄審核（目前／上一隻；可疑：煉虛以下卻打滿上限、紀錄間隔 < 60 秒、境界偏低卻每次都打滿）→ 封鎖（寫入黑名單＋刪紀錄）、刪除紀錄。
+- **上線前要做**：把新版 `tools/firestore.rules` 貼到 Firebase 主控台發布；沒發布時視窗會顯示「世界 Boss 尚未開放（伺服器設定更新中）」。
+- **驗證**：Firebase 模擬器（Firestore＋Auth）規則測試 35 項全過；遊戲接模擬器實測：秘境卡片 → 視窗 → 挑戰（略過演出）→ 戰果計入（Boss 100 萬 → 99 萬）→ 排行第 1 → 馬上再打被擋（調息中）
+  → 上一隻結束後開視窗自動換成本週這隻（100 萬沒打死 ÷2 → 下限 400 萬）→ 領獎（靈石、洗煉石、通貨、稱號【誅天第一】【誅魔先鋒】）；建置版 50 個畫面掃描無錯誤。
+
+- **域外天魔海報**（2026-10-04，版本 `20261005AY`，使用者提供 1024×1536 海報「三界之戰」：「域外天魔選項新增圖片」）：`images/secret/yuwai-tianmo.jpg`（海報，約 490KB）、`yuwai-tianmo-banner.jpg`（海報中段主角裁切 640×263）。
+  config-activities.js 的活動新增選填 `img`／`banner`：activity.js 的 `renderActivityList` 有 banner 時按鈕用它當底圖（左側漸層壓暗、鎖定時灰階）；
+  `openActivity` 遇到有 img 的活動先開 `#activity-poster-modal`（`openActivityPoster(act)`：海報、名稱、說明；未開放顯示「功能開發中，敬請期待！」、不顯示「⚔️ 進入」），已開放的按「⚔️ 進入」→ `enterActivityPoster()` 呼叫 openFn。
+- **改名「三界之戰」**（2026-10-04，版本 `20261005BA`，使用者：「活動域外天魔改名稱 三界之戰」）：config-activities.js 的活動 `demon` 名稱改為「三界之戰」（id、openFn 不變；世界 Boss 本身的視窗標題仍是「⚔️ 世界 Boss」）。

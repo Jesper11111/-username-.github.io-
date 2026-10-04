@@ -35,13 +35,13 @@ const gearSetThemes = {
     ],
     "防禦": [
         { pieces: 2, desc: "體質 +5%", bonus: { conPct: 0.05 } },
-        { pieces: 4, desc: "減傷 +5%", bonus: { def: 5 } },
+        { pieces: 4, desc: "防禦 +5", bonus: { def: 5 } },
         { pieces: 6, desc: "受到致命傷時保留 1 點氣血（每波一次）", bonus: { "special:undying": 1 } }
     ],
     "閃避": [
-        { pieces: 2, desc: "閃避 +3%", bonus: { eva: 3 } },
+        { pieces: 2, desc: "閃避 +3", bonus: { eva: 3 } },
         { pieces: 4, desc: "閃避成功後，下一擊傷害 +30%", bonus: { "special:dodgeStrike": 1 } },
-        { pieces: 6, desc: "閃避上限 +5%", bonus: { "cap:eva": 5 } }
+        { pieces: 6, desc: "閃避 +5", bonus: { eva: 5 } }   // 原「閃避上限 +5%」：2026-10-03 閃避取消上限（第 66 節第 4 期）後改直接加迴避值
     ],
     "屬性": [
         { pieces: 2, desc: "{elemLabel} +5%", bonus: { "{elem}": 5 } },

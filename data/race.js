@@ -20,7 +20,7 @@ function raceLifestealHeal(attrs, dealt) { return attrs && attrs.lifesteal && de
 function fieldRaceKillMult(map, baseEva, hit) {
     const c = fieldRaceCounts(map), total = Object.values(c).reduce((s, v) => s + v, 0);
     if (!total) return 1;
-    const through = e => 1 - Math.max(0, Math.min(95, e - hit)) / 100;
+    const through = e => 1 - evaDodge(e - hit);   // 閃避曲線（numeric.js，第 66 節第 4 期）
     let sum = 0;
     Object.keys(c).forEach(k => { const t = raceTrait(k); sum += c[k] / total * raceHpMult(k) * through(baseEva) / through(baseEva + (t.eva || 0)); });
     return sum;
@@ -108,12 +108,12 @@ function renderRaceReforgeSection(eq) {
         <button class="sys-btn" ${ok ? '' : 'disabled'} onclick="reforgeRaceGearFx()">🔮 ${eq.raceFx ? '重新銘刻' : '銘刻'}</button>
     </div>`;
 }
-function reforgeRaceGearFx() {
+async function reforgeRaceGearFx() {
     const loc = enhanceEquipId && locateEquip(enhanceEquipId);
     if (!loc || !RACE_GEAR.value[loc.eq.quality]) return;
     const eq = loc.eq, c = raceReforgeCost();
-    if ((player.starIron || 0) < c.iron || player.coins < c.coins) { alert('星允鐵或靈石不足！'); return; }
-    if (eq.raceFx && !confirm(`重新銘刻會取代目前的「對${raceTag(eq.raceFx.race)} +${+(eq.raceFx.v * 100).toFixed(1)}%」，確定？`)) return;
+    if ((player.starIron || 0) < c.iron || player.coins < c.coins) { gameAlert('星允鐵或靈石不足！'); return; }
+    if (eq.raceFx && !(await gameConfirm(`重新銘刻會取代目前的「對${raceTag(eq.raceFx.race)} +${+(eq.raceFx.v * 100).toFixed(1)}%」，確定？`))) return;
     player.starIron -= c.iron;
     player.coins -= c.coins;
     player.ironUsed = (player.ironUsed || 0) + c.iron;
@@ -213,11 +213,11 @@ function wearRaceTreasure(id) {
     refreshRaceTreasureUI();
 }
 function unwearRaceTreasure(i) { raceTreasureState(); player.raceTreasureSlots[i] = null; refreshRaceTreasureUI(); }
-function sellRaceTreasure(id) {
+async function sellRaceTreasure(id) {
     const list = raceTreasureState(), t = list.find(x => x.id === id);
     if (!t || isRaceTreasureWorn(id)) return;
     const coins = raceTreasureSellPrice(t);
-    if (!confirm(`出售 ${formatRaceTreasure(t)}，得 ${coins.toWan()} 靈石？`)) return;
+    if (!(await gameConfirm(`出售 ${formatRaceTreasure(t)}，得 ${coins.toWan()} 靈石？`))) return;
     player.raceTreasures = list.filter(x => x.id !== id);
     player.coins += coins;
     addLog(`🏺 出售${formatRaceTreasure(t)}，得 ${coins.toWan()} 靈石。`, "system", false, "item");
@@ -296,9 +296,9 @@ function renderRaceTreasureShopSection() {
 }
 function buyRaceTreasure(race) {
     const S = RACE_TREASURE_SHOP, st = raceTreasureShopState(), price = raceTreasureShopPrice();
-    if (st.bought >= S.dailyLimit) { alert('今日限購已滿，明天再來！'); return; }
-    if (player.coins < price) { alert('靈石不足！'); return; }
-    if (raceTreasureState().length >= RACE_TREASURE_MAX) { alert(`法寶已滿 ${RACE_TREASURE_MAX} 件，請先出售或合煉。`); return; }
+    if (st.bought >= S.dailyLimit) { gameAlert('今日限購已滿，明天再來！'); return; }
+    if (player.coins < price) { gameAlert('靈石不足！'); return; }
+    if (raceTreasureState().length >= RACE_TREASURE_MAX) { gameAlert(`法寶已滿 ${RACE_TREASURE_MAX} 件，請先出售或合煉。`); return; }
     player.coins -= price;
     st.bought++;
     const t = grantRaceTreasure(race, S.grade, `於千寶閣以 ${price.toWan()} 靈石購得，`);
@@ -314,11 +314,10 @@ function formatRaceDmgLine() {
     return parts.join('｜');
 }
 
-// 野外妖獸的種族比例（依這張圖會出現的 FIELD_MONSTERS，combat.js 同規則）：例 { beast: 5, ghost: 2 }
+// 野外妖獸的種族比例（依這張圖的出沒組合權重，monster.js 的 fieldMonsterPool，combat.js 同規則）：例 { beast: 7, ghost: 3 }
 function fieldRaceCounts(map) {
-    const dark = DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(map.name));
     const out = {};
-    FIELD_MONSTERS.filter(m => !dark || m.dark).forEach(m => { out[m.race] = (out[m.race] || 0) + 1; });
+    fieldMonsterPool(map).forEach(x => { out[x.m.race] = (out[x.m.race] || 0) + x.w; });
     return out;
 }
 function formatFieldRaceMix(map) {

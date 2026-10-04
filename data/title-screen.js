@@ -9,6 +9,13 @@ const TITLE_HOTSPOTS = {
     portrait:  { x: 632, y: 1427, w: 330, h: 290 }
 };
 
+// 標題下的版本名、光環下的創作者（2026-10-04 使用者指定）：同樣以圖片原始座標（文字中心）與字級（圖片像素）表示
+//   橫式：標題分隔線約 y 352、光環 y 382～672；直式：分隔線約 y 1250、光環 y 1282～1572
+const TITLE_TEXTS = {
+    landscape: { version: { x: 652, y: 368, size: 24 }, credit: { x: 652, y: 700, size: 22 } },
+    portrait:  { version: { x: 640, y: 1266, size: 26 }, credit: { x: 632, y: 1600, size: 26 } }
+};
+
 // <picture> 會依螢幕比例自動切換圖片，這裡依實際載入的檔名挑選對應座標
 function currentTitleHotspot() {
     const art = document.getElementById('title-art');
@@ -37,6 +44,17 @@ function positionTitleHotspot() {
     spot.style.top = (offsetY + hotspot.y * scale) + 'px';
     spot.style.width = (hotspot.w * scale) + 'px';
     spot.style.height = (hotspot.h * scale) + 'px';
+
+    // 版本名與創作者：同一套換算；字級最小 12px，手機上也看得清楚
+    const texts = currentTitleHotspot() === TITLE_HOTSPOTS.portrait ? TITLE_TEXTS.portrait : TITLE_TEXTS.landscape;
+    [['title-version', texts.version], ['title-credit', texts.credit]].forEach(([id, t]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.left = (offsetX + t.x * scale) + 'px';
+        el.style.top = (offsetY + t.y * scale) + 'px';
+        el.style.fontSize = Math.max(12, t.size * scale) + 'px';
+        el.style.visibility = 'visible';
+    });
 }
 
 function enterWorld() {

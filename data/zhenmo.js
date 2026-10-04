@@ -42,9 +42,9 @@ const ZhenmoTower = (() => {
         $('zhenmo-scene').style.display = 'block';
         renderHall();
     }
-    function close() {
-        if (quiz && !confirm('問答進行中，確定要離開嗎？\n未作答的題目視為答錯，本次成績會保留給這一層的 BOSS。')) return;
-        if (fight && !fight.over && !confirm('BOSS 戰進行中，確定要離開嗎？\n離開視為挑戰失敗，本層問答成績作廢。')) return;
+    async function close() {
+        if (quiz && !(await gameConfirm('問答進行中，確定要離開嗎？\n未作答的題目視為答錯，本次成績會保留給這一層的 BOSS。'))) return;
+        if (fight && !fight.over && !(await gameConfirm('BOSS 戰進行中，確定要離開嗎？\n離開視為挑戰失敗，本層問答成績作廢。'))) return;
         if (quiz) finishQuiz();
         if (fight && !fight.over) endFight(false, '中途撤離');
         stopFight();
@@ -109,7 +109,7 @@ const ZhenmoTower = (() => {
         if (z.pending && z.pending.floor === z.floor) { renderHall(); return; }   // 已有本層成績，直接進 BOSS 房
         // 有 BOSS 的樓層才扣次數（還沒有 BOSS 資料的樓層只能先答題保留成績）
         if (bossOf(z.floor) && !useSecretRealmAttempt('zhenmo')) {
-            alert(`【鎮魔塔】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`);
+            gameAlert(`【鎮魔塔】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`);
             return;
         }
         quiz = { floor: z.floor, list: drawQuestions(), i: 0, correct: 0, marks: [], locked: false };
@@ -195,7 +195,7 @@ const ZhenmoTower = (() => {
             // 攻擊以「含增益」的一般玩家氣血計算：一般玩家約 300 回合打完、BOSS 要 400 下才打倒他；atkMult 1.5／3 的關卡層就會變成門檻
             const atk = Math.round(nv2TypHp(L) * (1 + nv2TypBuff(L) / 100) / NV2.bossHitsToKill * (boss.atkMult || 1) * sup.atk * 100) / 100;   // 2 位小數（畫面 ×100）
             // 扣掉 BOSS 減傷、閃避後，一般玩家剛好約 bossRounds 回合打完；閃避用 BOSS 本身的值（不含種族特性加的閃避，否則氣血會被扣回來、特性等於沒有）
-            const through = (1 - attrs.def / 100) * (1 - (boss.eva || 0) / 100);
+            const through = (1 - attrs.def / 100) * (1 - evaDodge(boss.eva || 0));   // 閃避曲線（numeric.js，第 66 節第 4 期）
             return { atk, hp: Math.round(nv2TypNormal(L) * ZHENMO_PLAYER_SKILL_MULT * NV2.bossRounds * through * (boss.hpMult || 1) * sup.hp * raceHpMult(attrs.race)), attrs, sup };
         }
         // 攻擊倍率 atkMult 只放大攻擊；氣血 = 基準攻擊 × hpPerAtk × hpMult（兩者可分開調整）
@@ -206,7 +206,8 @@ const ZhenmoTower = (() => {
     // 回合上限：新制 BOSS 要打約 300 回合，上限放寬到 bossMaxRounds（600）
     function maxRounds() { return NUMERIC_V2 ? NV2.bossMaxRounds : ZHENMO_MAX_ROUNDS; }
     function playerStats() {
-        return { atk: Math.max(getPhysAttack(), getMagAttack()) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs() };
+        const phys = getPhysAttack(), mag = getMagAttack();   // 取較高的；術攻較高時算術法（走 BOSS 魔抗、魔法暴擊，第 66 節第 4 期 A）
+        return { atk: Math.max(phys, mag) * ZHENMO_PLAYER_SKILL_MULT, hp: getMaxHp(), attrs: getPlayerCombatAttrs(), dmgType: mag > phys ? 'mag' : undefined };
     }
     function enterBoss() {
         const z = state();
@@ -227,8 +228,8 @@ const ZhenmoTower = (() => {
             $('zm-boss-body').innerHTML = `
                 <p class="zm-boss-title">「${escapeZm(boss.title)}」強度：${realms[boss.realm]} ${boss.stage} 階${b.attrs.race ? `・種族 ${raceTag(b.attrs.race)}（${raceTrait(b.attrs.race).desc}）` : ''}</p>
                 <p class="zm-note">${escapeZm(boss.intro)}</p>
-                <p class="zm-boss-stat">攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
-                    🛡️減傷 ${b.attrs.def}% 💨閃避 ${b.attrs.eva}%${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
+                <p class="zm-boss-stat">${['demon', 'heart'].includes(b.attrs.race) ? '🔮術法' : '⚔️物理'}攻擊 ${fmtCombat(b.atk)}（${atkNote}）・氣血 ${fmtCombat(b.hp)}<br>
+                    🛡️防禦 ${formatEnemyDef(b.attrs.def)}${typeof b.attrs.mres === 'number' && b.attrs.mres !== b.attrs.def ? ` 🔮魔抗 ${b.attrs.mres}%` : ''} 💨閃避 ${+(b.attrs.eva || 0).toFixed(1)}${boss.affix ? `・${(combatAttrInfo[boss.affix] || {}).label || boss.affix} ${boss.affixVal}%` : ''}・五行 ${boss.element || '無'}</p>
                 ${b.sup && b.sup.gap >= 0.05 ? `<p class="zm-note" style="color:#f87171;">⚠️ 境界壓制：BOSS 高你 ${b.sup.gap.toFixed(1)} 個境界，攻擊 ×${b.sup.atk.toFixed(1)}、氣血 ×${b.sup.hp.toFixed(1)}</p>` : ''}
                 ${boss.auras && boss.auras.length ? `<p class="zm-note" style="color:#c4b5fd; text-align:left;">🌀 光環（整場有效，效果相加）<br>${(boss.auras || []).map(a => escapeZm(describeAura(a))).join('<br>')}</p>` : ''}
                 <p class="zm-note">擊敗獎勵（× ${p.mult}）：💎 靈石・☯️ 功德 ${r.merit ? r.merit.join('～') : 0}・🔥 異火碎片 ${r.shards ? r.shards.join('～') : 0}・🌠 星允鐵 ${r.iron ? r.iron.join('～') : 0}</p>
@@ -257,7 +258,8 @@ const ZhenmoTower = (() => {
         fight = {
             floor: z.floor, boss, mult: p.mult, round: 0, over: false, speed: fight && fight.speed || 1, tid: 0, aura,
             e: { atk: b.atk * auraSelfAtkMult(aura) * mood, hp: b.hp * mood, max: b.hp * mood, attrs: auraSelfAttrs(b.attrs, aura), st: newStatus() },
-            p: { atk: me.atk * auraPlayerAtkMult(aura), hp: me.hp, max: me.hp, attrs: auraPlayerAttrs(me.attrs, aura), st: newStatus() }
+            p: { atk: me.atk * auraPlayerAtkMult(aura), hp: me.hp, max: me.hp, attrs: auraPlayerAttrs(me.attrs, aura), st: newStatus(), dmgType: me.dmgType },
+            eType: ['demon', 'heart'].includes(b.attrs.race) ? 'mag' : undefined   // 魔修、心魔 BOSS＝術法攻擊（走魔防，第 66 節第 4 期 A）
         };
         const bg = $('zm-fight-bg');
         bg.style.backgroundImage = `url(${boss.img})`;
@@ -294,11 +296,11 @@ const ZhenmoTower = (() => {
         if (st.dot) { P.hp -= st.dot; if (!instant) popNum('hero', st.dot, 'dot'); }
         if (P.hp <= 0) return endFight(false, '身中異狀，力竭倒下');
         if (!st.frozen) {
-            const hit = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
+            const hit = resolveHit(P.atk, { attrs: P.attrs, power: P.atk, dmgType: P.dmgType }, { attrs: E.attrs, status: E.st });
             E.hp -= hit.dmg;
             // 新制敏捷連擊：再打一下（第 52 節）
             if (NUMERIC_V2 && Math.random() < nv2Combo()) {
-                const extra = resolveHit(P.atk, { attrs: P.attrs, power: P.atk }, { attrs: E.attrs, status: E.st });
+                const extra = resolveHit(P.atk, { attrs: P.attrs, power: P.atk, dmgType: P.dmgType }, { attrs: E.attrs, status: E.st });
                 E.hp -= extra.dmg;
                 if (!instant && !extra.tags.includes('dodge')) popNum('boss', extra.dmg, 'crit');
             }
@@ -313,7 +315,7 @@ const ZhenmoTower = (() => {
         if (et.dot) { E.hp -= et.dot; if (!instant) popNum('boss', et.dot, 'dot'); }
         if (E.hp <= 0) return endFight(true);
         if (!et.frozen) {
-            const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk }, { attrs: P.attrs, status: P.st });
+            const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk, dmgType: f.eType }, { attrs: P.attrs, status: P.st });
             hit.dmg *= auraCurseMult(f.aura);   // 光環詛咒：受到的傷害提高
             P.hp -= hit.dmg;
             E.hp = Math.min(E.max, E.hp + raceLifestealHeal(E.attrs, hit.dmg));   // 種族特性：魔修吸血（race.js）
@@ -365,9 +367,9 @@ const ZhenmoTower = (() => {
             if (firstClear && tg >= 0 && race) g.treasure = grantRaceTreasure(race, tg, `鎮壓鎮魔塔第 ${f.floor} 層樓主，`);
             html = `<div class="big win">鎮壓成功</div>
                 <p>第 ${f.floor} 層【${escapeZm(f.boss.name)}】伏誅（${f.round} 回合）</p>
-                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.scroll ? `<br>📖 化神訣殘本 ×${g.scroll}` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), getPartnerShardsNeed(g.partner.p))}/${getPartnerShardsNeed(g.partner.p)}）` : ''}</p>
+                <p class="zm-reward">獎勵 ×${mult}<br>💎 靈石 ${g.coins.toWan()}<br>☯️ 功德 ${g.merit.toWan()}${g.shards ? `<br>🔥 異火碎片 ×${g.shards}` : ''}${g.iron ? `<br>🌠 星允鐵 ×${g.iron}` : ''}${g.refine ? `<br>🌀 洗煉石 ×${g.refine}` : ''}${g.craft ? `<br>${g.craft}` : ''}${g.blueprint ? `<br>📜 鍛造圖紙 ×1` : ''}${g.scroll ? `<br>📖 化神訣殘本 ×${g.scroll}` : ''}${g.treasure ? `<br>${formatRaceTreasure(g.treasure, true)}` : ''}${g.partner ? `<br>🧩 ${escapeZm(getPartnerTier(g.partner.p).name)}【${escapeZm(g.partner.p.name)}】碎片 ×${g.partner.n}（${Math.min(getPartnerShards(g.partner.p.id), getPartnerShardsNeed(g.partner.p))}/${getPartnerShardsNeed(g.partner.p)}）` : ''}</p>
                 <p class="zm-note">已鎮壓 ${z.best} 層，前往第 ${z.floor} 層須重新答題。</p>`;
-            addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.scroll ? `、化神訣殘本 ×${g.scroll}` : ''}`, 'level-up', true, 'item');
+            addLog(`🗼 鎮魔塔第 ${f.floor} 層：擊敗【${f.boss.name}】！獎勵 ×${mult}：靈石 ${g.coins.toWan()}、功德 ${g.merit.toWan()}${g.shards ? `、異火碎片 ×${g.shards}` : ''}${g.iron ? `、星允鐵 ×${g.iron}` : ''}${g.scroll ? `、化神訣殘本 ×${g.scroll}` : ''}${g.craft ? `、${g.craft}` : ''}`, 'level-up', true, 'item');
             if (g.blueprint) addLog(g.blueprint, 'level-up', true, 'item');
         } else {
             z.pending = null;   // 挑戰失敗：本層問答成績作廢
@@ -391,6 +393,10 @@ const ZhenmoTower = (() => {
         if (r.merit) { g.merit = Math.floor(randInt(r.merit) * mult); player.merit = (player.merit || 0) + g.merit; settleMeritStones(); }
         if (r.shards) g.shards = addFireShards(Math.floor(randInt(r.shards) * mult));
         if (r.iron) g.iron = addStarIron(Math.floor(randInt(r.iron) * mult));
+        g.refine = addRefineStones(Math.round((REFINE_ZHENMO.base + Math.floor(floor / REFINE_ZHENMO.perFloors)) * mult));   // 洗煉石（第 67 節 D2）
+        g.craft = formatCraftGain(rollCraftZhenmo(floor, mult));   // 做裝通貨（craft.js，第 69 節）
+        const ling = rollLingStoneZhenmo(floor, mult);              // 五行傳送陣靈石（lingjie.js，第 74 節）
+        if (ling) g.craft = g.craft ? g.craft + '、' + ling : ling;
         // 鍛造圖紙（Lv.1500 以上，equipment.js）：基礎機率 × 問答倍率，最高 75%
         g.blueprint = grantBlueprint(Math.min(BLUEPRINT_DROPS.zhenmo.max, BLUEPRINT_DROPS.zhenmo.base * mult), `鎮壓【${boss.name}】，`);
         // 夥伴相遇（config-zhenmo.js 的 ZHENMO_PARTNER_MEET）

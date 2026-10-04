@@ -92,6 +92,7 @@
         <button data-tab="patrol">🛡️ 自動巡檢</button>
         <button data-tab="reward">📮 發放獎勵</button>
         <button data-tab="msgboard">💬 留言板</button>
+        <button data-tab="wboss">⚔️ 世界 Boss</button>
     </div>
 
     <!-- 戰力榜 -->
@@ -242,7 +243,7 @@
             </div>
             <div class="toolbar">
                 <label>標題 <input type="text" id="rw-title" maxlength="30" style="width: 220px; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px;"></label>
-                <label>有效 <input type="number" id="rw-days" value="30" min="0"> 天（0 = 永久）</label>
+                <label>有效 <input type="number" id="rw-days" value="30" min="0"> 天（0 = 永久；只用在兌換碼，信件一律 24 小時後自動刪除）</label>
             </div>
             <textarea id="rw-body" maxlength="300" rows="2" placeholder="內文（選填）" style="width:100%; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font-family:inherit; margin-bottom:8px;"></textarea>
             <div class="toolbar" id="rw-fields"></div>
@@ -256,6 +257,7 @@
             <div class="toolbar">
                 <label>⛩️ 先天靈根 <select id="rw-apt-root"></select></label>
                 <label>⛩️ 先天體質 <select id="rw-apt-phys"></select></label>
+                <label title="只能用在寄給指定 uid 的仙府信件；玩家領信後生效">🛡️ GM 權限 <select id="rw-gm"><option value="">（不變）</option><option value="1">授予（任意進出地圖）</option><option value="0">撤銷</option></select></label>
                 <span class="note">玩家已測過資質時會跳出「原本 vs 賜予」由玩家選擇；還沒入宗測試的，測試時直接採用</span>
             </div>
             <p class="note">獎勵預覽：<b id="rw-preview" style="color: var(--accent);">（無）</b></p>
@@ -278,6 +280,32 @@
                 <thead><tr><th>代碼</th><th>標題</th><th>獎勵</th><th>到期</th><th>已兌換</th><th>操作</th></tr></thead>
                 <tbody id="rw-code-rows"><tr><td colspan="6" class="note">登入管理者後才能查看。</td></tr></tbody>
             </table></div>
+        </div>
+    </section>
+
+    <!-- 世界 Boss（data/world-boss.js，ARCHITECTURE.md 第 75 節）：目前狀態、手動開啟／結束、傷害紀錄審核（封鎖＝不能再挑戰、不能領獎） -->
+    <section id="tab-wboss" hidden>
+        <div class="card">
+            <h2>⚔️ 目前的世界 Boss <button id="wb-reload" style="float:right;">🔄 重新讀取</button></h2>
+            <div id="wb-state" class="note">登入管理者後才能管理。</div>
+            <p class="note">平常不用操作：每週六 20:00（台灣）第一位玩家打開世界 Boss 時自動換成本週這隻，血量依上一隻自動調整（被打死 ×2、沒打死 ÷2）。</p>
+        </div>
+        <div class="card">
+            <h2>🛠️ 手動開一隻</h2>
+            <label>Boss <select id="wb-boss"></select></label>
+            <label>總血量 <input type="number" id="wb-hp" value="4000" min="1"> 萬</label>
+            <label>持續 <input type="number" id="wb-hours" value="24" min="1" max="168"> 小時</label>
+            <button id="wb-open">⚔️ 立即開啟</button>
+            <button id="wb-end" class="danger">⏹ 結束目前這隻</button>
+            <p class="note">立即開啟會取代目前這隻（目前這隻記為「上一隻」，參加者仍可在結束 24 小時後領獎）。單次傷害上限＝總血量 1%。</p>
+        </div>
+        <div class="card">
+            <h2>🔍 傷害紀錄審核 <select id="wb-which"><option value="cur">目前這隻</option><option value="prev">上一隻</option></select></h2>
+            <div class="tablewrap"><table>
+                <thead><tr><th>道號</th><th>境界</th><th>次數</th><th>⭐有效</th><th>累計傷害</th><th>可疑</th><th>uid</th><th>操作</th></tr></thead>
+                <tbody id="wb-rows"><tr><td colspan="8" class="note">登入管理者後才能查看。</td></tr></tbody>
+            </table></div>
+            <p class="note">可疑：低境界（煉虛以下）卻打滿上限、兩次挑戰間隔紀錄小於 60 秒（不該發生）、每次都打滿且境界偏低。封鎖＝寫入黑名單（不能再挑戰、不能領獎），並刪除這筆傷害紀錄（Boss 已扣的血不會補回）。</p>
         </div>
     </section>
 
@@ -306,18 +334,19 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005h"></script>
+<script src="data/config-realms.js?v=20261005BB"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005h"></script>
-<script src="data/numeric.js?v=20261005h"></script>
-<script src="data/config-leaderboard.js?v=20261005h"></script>
-<script src="data/config-mailbox.js?v=20261005h"></script>
+<script src="data/config-numeric.js?v=20261005BB"></script>
+<script src="data/numeric.js?v=20261005BB"></script>
+<script src="data/config-leaderboard.js?v=20261005BB"></script>
+<script src="data/config-mailbox.js?v=20261005BB"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005h"></script>
+<script src="data/config-aptitude.js?v=20261005BB"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005h"></script>
-<script src="data/bounty.js?v=20261005h"></script>
-<script src="data/config-defense.js?v=20261005h"></script>
+<script src="data/config-bounty.js?v=20261005BB"></script>
+<script src="data/bounty.js?v=20261005BB"></script>
+<script src="data/config-defense.js?v=20261005BB"></script>
+<script src="data/config-world-boss.js?v=20261005BB"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -336,10 +365,11 @@ const DISP = 100;
 const JUMP_DEFAULTS = { hours: 1, ratio: 4, min: 6000 };
 const JUMP_STORE_KEY = 'gm_jump_settings_v3';
 // 守城審核的預設值（頁面上可改，存在本瀏覽器 localStorage）；minPct 依據見頁面下方說明與 ARCHITECTURE.md 第 50 節
-// 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望，正常落在 1.8～2.28 倍（下限固定 DEF_POWER_ATK_MIN）
-const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.4 };
+// 新制（2026-09-28）：atkMult 改為「戰力 ÷ 攻擊 的上限」。新制戰力 = 攻擊 × 暴擊連擊技能期望（下限固定 DEF_POWER_ATK_MIN）
+// 2026-10-03 暴擊改 ×2（ARCHITECTURE.md 第 66 節）：正常落在 1.8～2.58 倍（暴擊 30%、連擊 10% 時 1.3 × 1.1 × 1.8）→ 上限預設 2.4 改 2.6，設定鍵換 v3 讓舊的 2.4 不再沿用
+const DEF_DEFAULTS = { minPct: 10, window: 30, powerTol: 1.2, atkMult: 2.6 };
 const DEF_POWER_ATK_MIN = 1.7;
-const DEF_STORE_KEY = 'gm_defense_settings_v2';
+const DEF_STORE_KEY = 'gm_defense_settings_v3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -361,8 +391,11 @@ function loadScript(src) {
 async function init() {
     if (!LEADERBOARD_FIREBASE_CONFIG) { $('who').textContent = '戰力榜尚未開通（config-leaderboard.js）'; return; }
     for (const f of ['app', 'auth', 'firestore']) await loadScript(`${LEADERBOARD_SDK_BASE}/firebase-${f}-compat.js`);
+    if (LEADERBOARD_APP_CHECK_KEY) await loadScript(`${LEADERBOARD_SDK_BASE}/firebase-app-check-compat.js`);
     // 用獨立的 app 名稱：登入狀態與遊戲的匿名帳號分開保存，GM 登入不會讓遊戲換成新的 uid（榜上多一筆）
     app = firebase.initializeApp(LEADERBOARD_FIREBASE_CONFIG, 'gm');
+    // App Check（config-leaderboard.js）：主控台強制執行後，GM 後台也要帶 App Check token 才能讀寫
+    if (LEADERBOARD_APP_CHECK_KEY) app.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(LEADERBOARD_APP_CHECK_KEY), true);
     auth = app.auth(); db = app.firestore();
     auth.onAuthStateChanged(onAuth);
 }
@@ -587,7 +620,7 @@ function verifyDefense(s) {
     const ratio = atk / need;
     if (ratio * 100 < cfg.minPct) checks.push({ ok: false, text: `攻擊只有第 ${best} 波強度的 ${(ratio * 100).toPrecision(2)}%，守不住` });
     else checks.push({ ok: true, text: '攻擊足以守住' });
-    // ③ 數值一致（新制）：戰力 ÷ 攻擊 應在 1.7～設定值（預設 2.4）之間（戰力 = 攻擊 × 暴擊連擊技能期望）
+    // ③ 數值一致（新制）：戰力 ÷ 攻擊 應在 1.7～設定值（預設 2.6）之間（戰力 = 攻擊 × 暴擊連擊技能期望）
     const pa = atk > 0 ? power / atk : Infinity;
     if (pa < DEF_POWER_ATK_MIN || pa > cfg.atkMult) checks.push({ ok: false, text: `戰力是攻擊的 ${isFinite(pa) ? pa.toFixed(2) : '∞'} 倍，不在 ${DEF_POWER_ATK_MIN}～${cfg.atkMult} 倍之間（數值不一致）` });
     const verdict = checks.some(c => c.ok === false) ? 'fail' : checks.some(c => c.ok === null) ? 'manual' : 'pass';
@@ -788,6 +821,8 @@ window.unban = id => {
 // ================== 自動巡檢（本頁開著時）==================
 async function patrol() {
     if (!isAdmin) return;
+    // 排行榜已移除（LEADERBOARD_RANKS_REMOVED）：巡檢每次要讀整個戰力榜兩次＋守城資料，白白耗掉 Firebase 讀取額度（2026-10-04）
+    if (typeof LEADERBOARD_POWER_REMOVED !== 'undefined' && LEADERBOARD_POWER_REMOVED) { log('排行榜已移除，自動巡檢不執行（節省讀取額度）', 'warn'); return; }
     log('▶ 自動巡檢開始', 'warn');
     await reloadBoard();
     const red = rows.filter(r => r._red).map(r => r.id);
@@ -863,6 +898,8 @@ function rwFormat(r) {
     const apt = r.aptitude || {};
     if (apt.root && rwRootName(apt.root)) parts.push(`⛩️靈根【${rwRootName(apt.root)}】`);
     if (apt.physique && rwPhysName(apt.physique)) parts.push(`⛩️體質【${rwPhysName(apt.physique)}】`);
+    if (r.gm === true) parts.push('🛡️授予 GM 權限');
+    if (r.gm === false) parts.push('🛡️撤銷 GM 權限');
     return parts.join('、') || '（無）';
 }
 function rwCollect() {
@@ -874,6 +911,7 @@ function rwCollect() {
     if ($('rw-apt-root').value) apt.root = JSON.parse($('rw-apt-root').value);
     if ($('rw-apt-phys').value) apt.physique = $('rw-apt-phys').value;
     if (apt.root || apt.physique) r.aptitude = apt;
+    if ($('rw-gm').value) r.gm = $('rw-gm').value === '1';
     return r;
 }
 function rwPreview() { $('rw-preview').textContent = rwFormat(rwCollect()); }
@@ -892,13 +930,13 @@ function rwInit() {
     $('rw-sv-q').innerHTML = MAIL_SERVANT_QUALITIES.map(q => `<option${q === '傳說' ? ' selected' : ''}>${q}</option>`).join('');
     $('rw-apt-root').innerHTML = '<option value="">（不送）</option>' + rwRootOptions().map(o => `<option value='${esc(JSON.stringify(o.value))}'>${esc(o.label)}</option>`).join('');
     $('rw-apt-phys').innerHTML = '<option value="">（不送）</option>' + APTITUDE_PHYSIQUE_GROUPS.map(g => g.pick.map(p => `<option value="${esc(p.id)}">${esc(g.grade)}・${esc(p.name)}</option>`).join('')).join('');
-    $('rw-apt-root').onchange = rwPreview; $('rw-apt-phys').onchange = rwPreview;
+    $('rw-apt-root').onchange = rwPreview; $('rw-apt-phys').onchange = rwPreview; $('rw-gm').onchange = rwPreview;
     $('rw-presets').innerHTML = MAIL_PRESETS.map((p, i) => `<button data-preset="${i}">${esc(p.label)}</button>`).join(' ');
     document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
         const p = MAIL_PRESETS[Number(b.dataset.preset)];
         MAIL_REWARD_FIELDS.forEach(f => { $('rw-f-' + f.key).value = p.rewards[f.key] || ''; });
         rwExtra = { blueprints: Object.assign({}, p.rewards.blueprints || {}), servants: Object.assign({}, p.rewards.servants || {}) };
-        $('rw-apt-root').value = ''; $('rw-apt-phys').value = '';
+        $('rw-apt-root').value = ''; $('rw-apt-phys').value = ''; $('rw-gm').value = '';
         $('rw-title').value = p.title || ''; $('rw-body').value = p.body || '';
         rwPreview();
     });
@@ -917,15 +955,19 @@ async function rwSend() {
     const rewards = rwCollect(), title = $('rw-title').value.trim(), body = $('rw-body').value.trim();
     if (rwFormat(rewards) === '（無）') return alert('請至少填一項獎勵。');
     const days = Math.max(0, Number($('rw-days').value) || 0);
-    const v = rewards.aptitude ? 2 : 1;   // 獎勵格式版本（config-mailbox.js 的 MAIL_SCHEMA_VERSION）：遊戲版本不夠新時會提示重新整理，不會白白用掉
+    // GM 權限只能寄給指定 uid 的個人信（兌換碼誰都能兌換、全服信每個人都會收到）
+    if ('gm' in rewards && (rwMode() !== 'mail' || $('rw-to').value === 'all')) return alert('🛡️ GM 權限只能用「仙府信件」寄給指定 uid 的玩家。');
+    const v = 'gm' in rewards ? 3 : rewards.aptitude ? 2 : 1;   // 獎勵格式版本（config-mailbox.js 的 MAIL_SCHEMA_VERSION）：遊戲版本不夠新時會提示重新整理，不會白白用掉
     const expiresAt = days ? firebase.firestore.Timestamp.fromMillis(Date.now() + days * 86400000) : null;
     if (rwMode() === 'mail') {
         const to = $('rw-to').value === 'all' ? 'all' : $('rw-uid').value.trim();
         if (!to) return alert('請填玩家 uid（戰力榜該列按「📮」自動帶入）。');
         const who = to === 'all' ? '全服玩家' : ($('rw-uid-name').textContent.replace('→ ', '') || to);
-        if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定寄出？`)) return;
+        // 信件一律隔日（MAIL_LIFETIME_HOURS 小時後）自動刪除，「有效天數」只用在兌換碼（2026-10-04 使用者要求）
+        if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${MAIL_LIFETIME_HOURS} 小時（之後自動刪除，沒領的就領不到）\n\n確定寄出？`)) return;
+        const mailExp = firebase.firestore.Timestamp.fromMillis(Date.now() + MAIL_LIFETIME_HOURS * 3600000);
         try {
-            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, v, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, v, expiresAt: mailExp, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             log(`已寄出信件給 ${who}：${rwFormat(rewards)}`, 'ok');
         } catch (e) { return log('寄信失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     } else {
@@ -948,6 +990,14 @@ async function reloadRewards() {
             db.collection(CODE_COLLECTION).get()
         ]);
         rwMails = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 隔日自動刪除：過期（expiresAt 已過，或寄出超過 MAIL_LIFETIME_HOURS 小時）的信件直接刪掉
+        const now = Date.now(), lifeMs = MAIL_LIFETIME_HOURS * 3600000;
+        const old = rwMails.filter(m => (m.expiresAt && m.expiresAt.toMillis && m.expiresAt.toMillis() < now) || (m.createdAt && m.createdAt.toMillis && m.createdAt.toMillis() + lifeMs < now));
+        if (old.length) {
+            await Promise.all(old.map(m => db.collection(MAIL_COLLECTION).doc(m.id).delete().catch(() => {})));
+            log(`已自動刪除 ${old.length} 封過期信件（寄出超過 ${MAIL_LIFETIME_HOURS} 小時）`, 'ok');
+            rwMails = rwMails.filter(m => !old.includes(m));
+        }
         rwCodes = cs.docs.map(d => Object.assign({ id: d.id }, d.data()));
     } catch (e) { rwMails = []; rwCodes = []; log('讀取信件／兌換碼失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';
@@ -988,6 +1038,14 @@ async function reloadBoardMsgs() {
         ]);
         bdRows = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
         bdMuted = mu.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 留言 8 小時後自動刪除（MSGBOARD_LIFETIME_HOURS）：開這個分頁時清掉過期的
+        const cut = Date.now() - MSGBOARD_LIFETIME_HOURS * 3600000;
+        const old = bdRows.filter(r => r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis() < cut);
+        if (old.length) {
+            await Promise.all(old.map(r => db.collection(MSGBOARD_COLLECTION).doc(r.id).delete().catch(() => {})));
+            log(`已自動刪除 ${old.length} 則超過 ${MSGBOARD_LIFETIME_HOURS} 小時的留言`, 'ok');
+            bdRows = bdRows.filter(r => !old.includes(r));
+        }
     } catch (e) { bdRows = []; bdMuted = []; log('讀取留言板失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';
     const mutedSet = new Set(bdMuted.map(m => m.id));
@@ -1015,12 +1073,90 @@ window.bdMute = id => {
 window.bdUnmute = uid => { if (confirm('解除禁言？')) db.collection(MSGBOARD_MUTED_COLLECTION).doc(uid).delete().then(() => { log('已解除禁言', 'ok'); reloadBoardMsgs(); }).catch(e => log('解除失敗：' + e.message, 'err')); };
 $('bd-reload').onclick = reloadBoardMsgs;
 
+// ================== ⚔️ 世界 Boss（第 75 節）==================
+let wbSt = null, wbRows = [];
+const wbMsOf = t => t && t.toMillis ? t.toMillis() : 0;
+const wbDt = t => t ? new Date(wbMsOf(t)).toLocaleString('zh-TW', { hour12: false }) : '—';
+async function reloadWboss() {
+    if (!isAdmin) return;
+    try {
+        const s = await db.collection(WB_STATE_COLLECTION).doc('state').get();
+        wbSt = s.exists ? s.data() : null;
+        const bid = $('wb-which').value === 'prev' ? (wbSt && wbSt.prev && wbSt.prev.bid) : (wbSt && wbSt.bid);
+        wbRows = [];
+        if (bid) { const q = await db.collection(WB_RUNS_COLLECTION).doc(bid).collection('dmg').get(); wbRows = q.docs.map(d => Object.assign({ id: d.id, _bid: bid }, d.data())); }
+    } catch (e) { log('讀取世界 Boss 失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); return; }
+    const st = wbSt, now = Date.now();
+    $('wb-state').innerHTML = !st ? '目前沒有世界 Boss（每週六 20:00 玩家第一次打開時自動建立）。' : `
+        <b>${esc((WB_BOSSES[(st.bossIdx || 0) % WB_BOSSES.length] || {}).name || '')}</b>（bid ${esc(st.bid)}）｜血量 ${fmt(st.hp)} / ${fmt(st.maxHp)}（${(st.hp / Math.max(1, st.maxHp) * 100).toFixed(1)}%）｜單次上限 ${fmt(st.cap)}<br>
+        ${wbDt(st.startAt)} ～ ${wbDt(st.endAt)}｜${st.killedAt ? `💀 ${wbDt(st.killedAt)} 被擊敗（最後一擊：${esc(st.lastName)}）` : now < wbMsOf(st.endAt) ? '⚔️ 進行中' : '⌛ 已結束'}<br>
+        上一隻：${st.prev ? `bid ${esc(st.prev.bid)}、血量 ${fmt(st.prev.maxHp)}、${st.prev.killed ? '被擊敗' : '未擊敗'}、${wbDt(st.prev.endAt)} 結束` : '無'}`;
+    const cap = $('wb-which').value === 'prev' ? Math.floor(((st && st.prev && st.prev.maxHp) || 0) / 100) : (st ? st.cap : 0);
+    wbRows.forEach(r => {
+        const f = [];
+        if ((r.realm || 0) <= 6 && (r.hist || []).some(h => h.d >= cap)) f.push('低境界打滿上限');
+        const h = (r.hist || []).map(x => x.t).sort((a, b) => a - b);
+        for (let i = 1; i < h.length; i++) if (h[i] - h[i - 1] < WB.gapSec * 1000) { f.push('間隔過短'); break; }
+        if (r.n >= 3 && r.eff === r.n && (r.realm || 0) <= 8) f.push('每次都打滿');
+        r._flags = f;
+    });
+    wbRows.sort((a, b) => (b._flags.length - a._flags.length) || (b.total - a.total));
+    $('wb-rows').innerHTML = wbRows.length ? wbRows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(realms[r.realm] || r.realm)} ${r.stage || ''}階</td><td>${r.n}</td><td>${r.eff}</td><td>${fmt(r.total)}</td>
+        <td>${r._flags.map(x => `<span class="flag red">${x}</span>`).join(' ') || '—'}</td><td class="uid">${esc(r.id)}</td>
+        <td class="rowbtns"><button class="danger" onclick="wbBan('${esc(r.id)}')">封鎖</button><button onclick="wbDel('${esc(r.id)}')">刪除紀錄</button></td></tr>`).join('')
+        : '<tr><td colspan="8" class="note">沒有紀錄。</td></tr>';
+}
+window.wbBan = id => {
+    const r = wbRows.find(x => x.id === id); if (!r) return;
+    if (!confirm(`封鎖「${r.name}」？\n不能再挑戰世界 Boss、不能領獎（也會擋下戰力榜、寄售、留言），並刪除這筆傷害紀錄。`)) return;
+    (async () => {
+        try {
+            await db.collection(LEADERBOARD_BANNED_COLLECTION).doc(id).set({ name: String(r.name || ''), realm: Number(r.realm) || 0, stage: Number(r.stage) || 1, level: 1, power: 0,
+                reason: '世界 Boss 審核', bannedBy: user.uid, bannedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection(WB_RUNS_COLLECTION).doc(r._bid).collection('dmg').doc(id).delete();
+            log(`已封鎖 ${r.name} 並刪除世界 Boss 紀錄`, 'ok');
+        } catch (e) { log('封鎖失敗：' + e.message, 'err'); }
+        reloadWboss(); reloadBans();
+    })();
+};
+window.wbDel = id => {
+    const r = wbRows.find(x => x.id === id); if (!r || !confirm(`刪除「${r.name}」的世界 Boss 傷害紀錄？（移出排行、不能領獎；Boss 已扣的血不補回）`)) return;
+    db.collection(WB_RUNS_COLLECTION).doc(r._bid).collection('dmg').doc(id).delete().then(() => { log('已刪除紀錄', 'ok'); reloadWboss(); }).catch(e => log('刪除失敗：' + e.message, 'err'));
+};
+$('wb-boss').innerHTML = WB_BOSSES.map((b, i) => `<option value="${i}">${esc(b.name)}・${esc(b.title)}</option>`).join('');
+$('wb-reload').onclick = reloadWboss;
+$('wb-which').onchange = reloadWboss;
+$('wb-open').onclick = async () => {
+    if (!isAdmin) return log('需要管理者權限', 'err');
+    const hp = Math.floor(Number($('wb-hp').value) * 10000), hours = Math.max(1, Math.min(168, Number($('wb-hours').value) || 24));
+    if (!(hp >= 100)) return alert('請填總血量。');
+    if (!confirm(`立即開啟【${WB_BOSSES[+$('wb-boss').value].name}】？\n總血量 ${fmt(hp)}、單次上限 ${fmt(Math.floor(hp / 100))}、持續 ${hours} 小時`)) return;
+    try {
+        const ref = db.collection(WB_STATE_COLLECTION).doc('state'), old = (await ref.get()).data() || null, now = Date.now();
+        await ref.set({ bid: 'gm' + now, bossIdx: +$('wb-boss').value, maxHp: hp, hp, cap: Math.floor(hp / 100),
+            startAt: firebase.firestore.Timestamp.fromMillis(now), endAt: firebase.firestore.Timestamp.fromMillis(now + hours * 3600000),
+            killedAt: null, lastUid: '', lastName: '',
+            prev: old ? { bid: old.bid, maxHp: old.maxHp, killed: !!old.killedAt, endAt: old.endAt, lastUid: old.lastUid || '' } : null });
+        log(`已開啟世界 Boss（${hours} 小時）`, 'ok');
+    } catch (e) { log('開啟失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
+    reloadWboss();
+};
+$('wb-end').onclick = async () => {
+    if (!isAdmin || !wbSt) return;
+    if (!confirm('立即結束目前這隻世界 Boss？（參加者 24 小時後可領獎）')) return;
+    try { await db.collection(WB_STATE_COLLECTION).doc('state').update({ endAt: firebase.firestore.Timestamp.fromMillis(Date.now()) }); log('已結束目前的世界 Boss', 'ok'); }
+    catch (e) { log('結束失敗：' + e.message, 'err'); }
+    reloadWboss();
+};
+
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
     ['board', 'defense', 'bans', 'patrol', 'reward'].forEach(t => { $('tab-' + t).hidden = t !== b.dataset.tab; });
     // 留言板分頁的 id 是 tab-msgboard（tab-board 已被戰力榜使用）
     $('tab-msgboard').hidden = b.dataset.tab !== 'msgboard';
     if (b.dataset.tab === 'msgboard') reloadBoardMsgs();
+    $('tab-wboss').hidden = b.dataset.tab !== 'wboss';
+    if (b.dataset.tab === 'wboss') reloadWboss();
 });
 $('btn-login').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => log('登入失敗：' + e.message + '（主控台需啟用 Google 登入方式）', 'err'));
 $('btn-logout').onclick = () => { setPatrol(false); $('patrol-on').checked = false; auth.signOut(); };

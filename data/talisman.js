@@ -21,8 +21,10 @@ function formatTalisman(type, grade) {
     let t = getTalismanType(type), g = getTalismanGrade(grade);
     if (!t || !g) return "未知符寶";
     let v = getTalismanValue(type, grade);
-    if (t.kind === "race") return `${t.icon}${g.name}${t.name}（對${RACES[t.race].name} +${v}%）`;   // 剋制符（種族剋制，race.js）
-    return `${t.icon}${g.name}${t.name}（${t.kind === "flat" ? `+${NUMERIC_V2 ? v.toFixed(1) : v.toWan()}` : `+${v}%`}）`;
+    let gn = g.color ? `<span style="color:${g.color};">${g.icon || ''}${g.name}</span>` : g.name;   // 極品：金字＋🌟
+    if (t.kind === "race") return `${t.icon}${gn}${t.name}（對${RACES[t.race].name} +${v}%）`;   // 剋制符（種族剋制，race.js）
+    if (POINT_STAT_KEYS.includes(t.key)) return `${t.icon}${gn}${t.name}（${t.key === 'def' ? '防禦' : t.key === 'eva' ? '閃避' : '魔防'} +${v}）`;   // 防禦／閃避是點數（第 66 節），不是 %
+    return `${t.icon}${gn}${t.name}（${t.kind === "flat" ? `+${NUMERIC_V2 ? v.toFixed(1) : v.toWan()}` : `+${v}%`}）`;
 }
 
 // 穿戴中裝備孔位上的剋制符，對各族的加成合計（小數，已套 RACE_TALISMAN_CAP）；race.js 的 getRaceDmgBonus 呼叫
@@ -90,8 +92,8 @@ function renderTalismanWorkshop() {
 
     // 煉製區：種類與品階全部隨機，只選次數
     let c = TALISMAN_CRAFT_COST;
-    let gradeText = talismanGrades.map(g =>
-        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${NUMERIC_V2 ? talismanFlatOf(g).toFixed(1) : g.flat.toWan()}／屬性 +${g.pct}%）`).join("｜");
+    let gradeText = talismanGrades.filter(g => g.chance > 0).map(g =>
+        `${g.name} ${Math.round(g.chance * 100)}%（四維 +${NUMERIC_V2 ? talismanFlatOf(g).toFixed(1) : g.flat.toWan()}／防禦·閃避 +${g.pct}／五行 +${g.pct}%）`).join("｜");
     let craftCard = `
         <div class="card" style="max-width: 460px; margin: 0 auto;">
             <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">每次煉製：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>
@@ -109,7 +111,7 @@ function renderTalismanWorkshop() {
         <div class="card" style="max-width: 460px; margin: 10px auto 0;">
             <p style="font-size: 0.85em; color: var(--accent); margin: 4px 0;">⚔️ 煉製剋制符：${c.ore} 礦石 ＋ ${c.coins.toWan()} 靈石</p>
             <p style="font-size: 0.8em; color: #9ca3af; margin: 4px 0;">${raceTypes.map(t => `${t.icon}${t.name}（剋${RACES[t.race].name}）`).join("、")}，隨機一種</p>
-            <p style="font-size: 0.78em; color: #9ca3af; margin: 4px 0;">${talismanGrades.map(g => `${g.name} ${Math.round(g.chance * 100)}%（對該族傷害 +${g.race}%）`).join("｜")}</p>
+            <p style="font-size: 0.78em; color: #9ca3af; margin: 4px 0;">${talismanGrades.filter(g => g.chance > 0).map(g => `${g.name} ${Math.round(g.chance * 100)}%（對該族傷害 +${g.race}%）`).join("｜")}</p>
             <p style="font-size: 0.75em; color: #9ca3af; margin: 4px 0;">同一族的剋制符合計最多 +${Math.round(RACE_TALISMAN_CAP * 100)}%（再與斬妖錄等一起最多 +${Math.round(RACE_DMG_CAP * 100)}%）</p>
             <div class="batch-btns">
                 <button class="sys-btn" onclick="craftTalisman(1, true)">×1</button>
@@ -123,7 +125,7 @@ function renderTalismanWorkshop() {
     let ownedHtml = owned.length
         ? owned.map(k => { let [type, grade] = k.split("_"); return `<span style="white-space: nowrap;">${formatTalisman(type, +grade)} ×${player.talismans[k]}</span>`; }).join("　")
         : `<span style="color: #6b7280;">尚無符寶</span>`;
-    let ownedOptions = owned.map(k => { let [type, grade] = k.split("_"); return `<option value="${k}">${formatTalisman(type, +grade)} ×${player.talismans[k]}</option>`; }).join("");
+    let ownedOptions = owned.map(k => { let [type, grade] = k.split("_"); return `<option value="${k}">${stripTalismanTags(formatTalisman(type, +grade))} ×${player.talismans[k]}</option>`; }).join("");
 
     // 鑲嵌區：已穿戴在前、背包在後，只列出有孔的裝備
     let equipped = Object.keys(player.equipment).map(slot => player.equipment[slot]).filter(eq => eq && Array.isArray(eq.sockets));
@@ -141,6 +143,9 @@ function renderTalismanWorkshop() {
 
         <h3 style="color: #c084fc; margin: 18px 0 6px;">🎴 持有符寶</h3>
         <p style="font-size: 0.85em; line-height: 1.8;">${ownedHtml}</p>
+
+        <h3 style="color: #c084fc; margin: 18px 0 6px;">⚗️ 合成（同種類升一品，一定成功）</h3>
+        ${renderTalismanMerge()}
 
         <h3 style="color: #c084fc; margin: 18px 0 6px;">💠 鑲嵌（橙色裝備 ${SOCKET_MIN}~${SOCKET_MAX} 孔）</h3>
         <p style="color: #9ca3af; font-size: 0.8em;">※ 已鑲嵌的符寶可以打掉換新，但舊符寶會碎裂消失；毀棄裝備時符寶一併消失。</p>
@@ -182,12 +187,51 @@ function rollTalisman(race) {
     return { type, grade };
 }
 
+// ---- 合成（config-talisman.js 的 TALISMAN_MERGE）：同種類 need 枚 → 下一品階 1 枚；鑲在裝備上的不算 ----
+function renderTalismanMerge() {
+    const rules = Object.keys(TALISMAN_MERGE).map(gr => { const M = TALISMAN_MERGE[gr], a = getTalismanGrade(+gr), b = getTalismanGrade(+gr + 1);
+        return `${a.name}×${M.need}→${b.name}（${M.coins.toWan()} 靈石）`; }).join("｜");
+    const rows = [];
+    talismanTypes.forEach(t => Object.keys(TALISMAN_MERGE).forEach(gr => {
+        const M = TALISMAN_MERGE[gr], have = player.talismans[talismanKey(t.key, +gr)] || 0;
+        if (have < M.need) return;
+        const can = Math.min(Math.floor(have / M.need), Math.floor(player.coins / M.coins));
+        rows.push(`<div style="display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap;">
+            <span style="flex: 1; min-width: 160px; font-size: 0.8em;">${formatTalisman(t.key, +gr)} ×${have} → ${formatTalisman(t.key, +gr + 1)}</span>
+            <button class="sys-btn" style="width: auto; padding: 4px 8px;" ${can >= 1 ? '' : 'disabled'} onclick="mergeTalisman('${t.key}', ${gr}, 1)">合成 1 次</button>
+            <button class="sys-btn" style="width: auto; padding: 4px 8px;" ${can >= 2 ? '' : 'disabled'} onclick="mergeTalisman('${t.key}', ${gr}, 'max')">全部（${can}）</button>
+        </div>`);
+    }));
+    return `<div class="card" style="max-width: 460px; margin: 0 auto; text-align: left;">
+        <p style="font-size: 0.78em; color: #9ca3af; margin: 4px 0;">${rules}；🌟極品只能合成取得</p>
+        ${rows.length ? rows.join('') : '<p style="font-size: 0.8em; color: #6b7280;">目前沒有數量足夠合成的符寶。</p>'}</div>`;
+}
+function mergeTalisman(type, grade, qty) {
+    const M = TALISMAN_MERGE[grade], t = getTalismanType(type);
+    if (!M || !t || !getTalismanGrade(grade + 1)) return;
+    const from = talismanKey(type, grade), to = talismanKey(type, grade + 1);
+    const can = Math.min(Math.floor((player.talismans[from] || 0) / M.need), Math.floor(player.coins / M.coins));
+    if (can < 1) { gameAlert(`需要 ${M.need} 枚同種${getTalismanGrade(grade).name}符寶＋${M.coins.toWan()} 靈石。`); return; }
+    const n = qty === 'max' ? can : Math.min(can, qty || 1);
+    player.talismans[from] -= M.need * n;
+    if (player.talismans[from] <= 0) delete player.talismans[from];
+    player.talismans[to] = (player.talismans[to] || 0) + n;
+    player.coins -= M.coins * n;
+    const txt = `${formatTalisman(type, grade + 1)} ×${n}`;
+    addLog(`⚗️ 符寶坊合成：${M.need * n} 枚${stripTalismanTags(formatTalisman(type, grade))} → ${stripTalismanTags(txt)}（${(M.coins * n).toWan()} 靈石）`, "equip");
+    showCraftSuccess(`符寶合成成功${n > 1 ? ` ×${n}` : ''}`, txt);
+    saveLocal();
+    renderTalismanWorkshop();
+    updateUI();
+}
+function stripTalismanTags(h) { return String(h).replace(/<[^>]+>/g, ''); }
+
 // qty：1、10 或 'max'；每次產出的種類與品階都是隨機；race＝true 煉製剋制符（同樣成本）
 function craftTalisman(qty = 1, race) {
     let c = TALISMAN_CRAFT_COST;
     let affordable = Math.min(Math.floor((player.ore || 0) / c.ore), Math.floor(player.coins / c.coins));
     if (affordable <= 0) {
-        alert(`資源不足！煉製 1 次需要 ${c.ore} 礦石 + ${c.coins.toWan()} 靈石。\n礦石可派遣傳說僕從執行「礦脈採礦」取得。`);
+        gameAlert(`資源不足！煉製 1 次需要 ${c.ore} 礦石 + ${c.coins.toWan()} 靈石。\n礦石可派遣傳說僕從執行「礦脈採礦」取得。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "煉製");
@@ -215,7 +259,7 @@ function inlayTalisman(equipId, socketIndex) {
     if (!eq || !Array.isArray(eq.sockets) || eq.sockets[socketIndex]) return;
     let select = document.getElementById(`sock-${equipId}-${socketIndex}`);
     let key = select && select.value;
-    if (!key || !(player.talismans[key] > 0)) { alert("請先選擇要鑲嵌的符寶！"); return; }
+    if (!key || !(player.talismans[key] > 0)) { gameAlert("請先選擇要鑲嵌的符寶！"); return; }
 
     let [type, grade] = key.split("_");
     player.talismans[key]--;
@@ -227,11 +271,11 @@ function inlayTalisman(equipId, socketIndex) {
 }
 
 // 打掉孔位上的符寶：符寶碎裂消失，孔位恢復為空
-function removeTalisman(equipId, socketIndex) {
+async function removeTalisman(equipId, socketIndex) {
     let eq = findEquipById(equipId);
     if (!eq || !Array.isArray(eq.sockets) || !eq.sockets[socketIndex]) return;
     let s = eq.sockets[socketIndex];
-    if (!confirm(`確定要打掉【${formatTalisman(s.type, s.grade)}】嗎？\n打掉後符寶會碎裂消失，無法取回。`)) return;
+    if (!(await gameConfirm(`確定要打掉【${formatTalisman(s.type, s.grade)}】嗎？\n打掉後符寶會碎裂消失，無法取回。`))) return;
     eq.sockets[socketIndex] = null;
     addLog(`💥 打掉了【${getEquipDisplayName(eq)}】上的【${formatTalisman(s.type, s.grade)}】，符寶碎裂消散。`, "equip");
     renderTalismanWorkshop();

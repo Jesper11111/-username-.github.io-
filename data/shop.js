@@ -81,11 +81,11 @@ function buyShopItem(id) {
     if (!item) return;
 
     let qty = getShopQty(id);
-    if (qty <= 0) { alert("請輸入正確的購買數量（至少 1 個）！"); return; }
+    if (qty <= 0) { gameAlert("請輸入正確的購買數量（至少 1 個）！"); return; }
 
     let totalCost = item.cost * qty;
     if (player.coins < totalCost) {
-        alert(`靈石不足！\n購買【${item.name}】x${qty} 需要 ${totalCost.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
+        gameAlert(`靈石不足！\n購買【${item.name}】x${qty} 需要 ${totalCost.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
         return;
     }
 

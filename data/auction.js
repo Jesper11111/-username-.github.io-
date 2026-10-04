@@ -30,7 +30,7 @@ function refreshAuctionIfDue(force) {
 // 付費立即刷新：換一批商品，但定時刷新的時間軸不變（下次上架時間照舊）
 function paidRefreshAuction() {
     // 看搶拍視窗是否開著（auctionBidItemId 搶拍結束後不會清空，不能拿來判斷）
-    if (document.getElementById('auction-bid-modal').style.display === 'flex') { alert("搶拍進行中，無法刷新商品！"); return; }
+    if (document.getElementById('auction-bid-modal').style.display === 'flex') { gameAlert("搶拍進行中，無法刷新商品！"); return; }
     if (!payForRefresh('auction', AUCTION_PAID_REFRESH_COST, AUCTION_PAID_REFRESH_DAILY, '千寶閣')) return;
     const keepAt = player.auctionRefreshAt;
     refreshAuctionIfDue(true);
@@ -115,14 +115,14 @@ function getAuctionItemInfo(item) {
 function canPayAuctionItem(item, price) {
     if (item.kind === "lifePill" || item.kind === "ironBag") {
         if (player.coins < price || (player.reputation || 0) < item.repPrice) {
-            alert(`資源不足！\n需要 ${price.toWan()} 靈石 + ${item.repPrice.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
+            gameAlert(`資源不足！\n需要 ${price.toWan()} 靈石 + ${item.repPrice.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
             return false;
         }
         return true;
     }
     if (!hasEquipInventorySpace()) return false;
     if (player.coins < price) {
-        alert(`靈石不足！\n需要 ${price.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
+        gameAlert(`靈石不足！\n需要 ${price.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
         return false;
     }
     return true;

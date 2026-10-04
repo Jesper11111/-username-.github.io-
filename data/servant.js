@@ -115,14 +115,14 @@ function assignServantQuest(servantId, questId) {
     if (questId) {
         // 從「閒置」變成「執行任務」時才需檢查派遣上限；單純更換任務不受限
         if (!servant.quest && getAssignedServantCount() >= MAX_ASSIGNED_SERVANTS) {
-            alert(`最多只能同時派遣 ${MAX_ASSIGNED_SERVANTS} 名僕從執行任務！\n請先將其他僕從設為「不指派」。`);
+            gameAlert(`最多只能同時派遣 ${MAX_ASSIGNED_SERVANTS} 名僕從執行任務！\n請先將其他僕從設為「不指派」。`);
             renderServants();
             return;
         }
         let def = getQuestDef(questId, getSectTier());
         if (!def) return;
         if (!canServantTakeQuest(servant, def)) {
-            alert(`【${def.name}】只有${def.requiredQuality}品質的僕從才能執行！`);
+            gameAlert(`【${def.name}】只有${def.requiredQuality}品質的僕從才能執行！`);
             renderServants();
             return;
         }
@@ -131,7 +131,7 @@ function assignServantQuest(servantId, questId) {
         // 換任務或從閒置出發都是新的一趟：先付這趟的靈石
         let cost = getServantTripCost(servant);
         if (!payServantTrip(servant, questId)) {
-            alert(questId === 'caravan' && caravanTripsLeft() <= 0
+            gameAlert(questId === 'caravan' && caravanTripsLeft() <= 0
                 ? `今日商隊 ${CARAVAN.dailyTrips} 趟已經跑完，明天再派吧！`
                 : `靈石不足！派遣【${servant.quality}】僕從每趟需要 ${cost} 靈石（目前 ${player.coins.toWan()}）。`);
             renderServants();
@@ -152,19 +152,19 @@ function assignServantQuest(servantId, questId) {
 }
 
 // 一鍵解僱：把所有勾選品級的僕從一次遣散
-function bulkDismissServants() {
+async function bulkDismissServants() {   // 2026-10-04 改用遊戲內對話框（App 內建瀏覽器會擋 confirm，按了沒反應）
     let selected = getCheckedBulkQualities('bulk-servant-quality');
-    if (selected.length === 0) { alert("請先勾選要解僱的品級！"); return; }
+    if (selected.length === 0) { gameAlert("請先勾選要解僱的品級！"); return; }
 
     // 鎖定的僕從一律略過
     let targets = player.servants.filter(s => selected.includes(s.quality) && !s.locked);
-    if (targets.length === 0) { alert("沒有符合勾選品級、且未鎖定的僕從。"); return; }
+    if (targets.length === 0) { gameAlert("沒有符合勾選品級、且未鎖定的僕從。"); return; }
 
     let working = targets.filter(s => s.quest).length;
     let warn = working > 0 ? `\n（其中 ${working} 名正在執行任務，解僱後任務將中止）` : "";
     let lockedSkipped = player.servants.filter(s => selected.includes(s.quality) && s.locked).length;
     let lockNote = lockedSkipped > 0 ? `\n（另有 ${lockedSkipped} 名已鎖定，不會被解僱）` : "";
-    if (!confirm(`確定要解僱 ${targets.length} 名【${selected.join('、')}】僕從嗎？${warn}${lockNote}\n此操作無法復原。`)) return;
+    if (!(await gameConfirm(`確定要解僱 ${targets.length} 名【${selected.join('、')}】僕從嗎？${warn}${lockNote}\n此操作無法復原。`))) return;
 
     let targetIds = new Set(targets.map(s => s.id));
     player.servants = player.servants.filter(s => !targetIds.has(s.id));
@@ -174,11 +174,11 @@ function bulkDismissServants() {
     updateUI();
 }
 
-function dismissServant(servantId) {
+async function dismissServant(servantId) {
     let servant = player.servants.find(s => s.id === servantId);
     if (!servant) return;
-    if (servant.locked) { alert(`僕從【${servant.name}】已鎖定，請先解除鎖定再解僱。`); return; }
-    if (!confirm(`確定要解僱僕從【${servant.name}】嗎？`)) return;
+    if (servant.locked) { gameAlert(`僕從【${servant.name}】已鎖定，請先解除鎖定再解僱。`); return; }
+    if (!(await gameConfirm(`確定要解僱僕從【${servant.name}】嗎？`))) return;
     player.servants = player.servants.filter(s => s.id !== servantId);
     addLog(`解僱了僕從【${servant.name}】。`, "servant");
     renderServants();
@@ -243,8 +243,8 @@ function settleIdleQuests(seconds) {
     const before = {};
     fields.concat(['starIron']).forEach(f => { before[f] = player[f] || 0; });
     let servantTrips = 0, ownTrips = 0, stopped = 0;
-    const savedLog = window.addLog;
-    window.addLog = () => {};   // 逐趟日誌（含星允鐵、每日任務）不寫，最後彙總
+    const savedLog = addLog;   // 直接改函式本身（建置後各檔包在同一個範圍，window.addLog 不是遊戲用的那個，第 72 節）
+    addLog = () => {};   // 逐趟日誌（含星允鐵、每日任務）不寫，最後彙總
     try {
         (player.servants || []).forEach(s => {
             if (!s.quest) return;
@@ -276,7 +276,7 @@ function settleIdleQuests(seconds) {
             }
         }
     } finally {
-        window.addLog = savedLog;
+        addLog = savedLog;
     }
     if (!servantTrips && !ownTrips) return '';
     const gains = Object.values(questRewardInfo)

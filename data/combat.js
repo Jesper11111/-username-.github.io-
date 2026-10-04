@@ -84,6 +84,7 @@ function combatTick() {
 
     // 線上實戰證明（背景／離線結算用，save.js）：同一張野外地圖連續撐過 IDLE_PROVEN_SECONDS 秒就記下這張地圖
     fieldOnlineTicks++;
+    tickDropBudget();   // 掉寶額度（第 71 節）
     if (fieldOnlineTicks >= IDLE_PROVEN_SECONDS) player.idleProvenMap = player.currentMap.name;
 
     if (enemies.length === 0) {
@@ -109,18 +110,18 @@ function combatTick() {
         let count = NUMERIC_V2 ? randInt(NV2.waveMin, NV2.waveMax) : Math.floor(Math.random() * 5) + 1;   // 新制每波 1～3 隻（config-numeric.js）
         let ms = getMapMonsterStats(player.currentMap);
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
+        resetMonsterSkillWave();   // 怪物技能的破甲計時（monster.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
-        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(player.currentMap) : 1;   // 新制收益速度上限：每波算一次（numeric.js）
-        // 外觀（名稱／圖示／圖片）從 FIELD_MONSTERS 抽（config-maps.js），幽冥禁域只出鬼怪
-        let isDarkMap = DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name));
-        let pool = FIELD_MONSTERS.filter(m => !isDarkMap || m.dark);
+        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap()) : 1;   // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）
+        // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
         for (let i = 0; i < count; i++) {
-            let look = pool[Math.floor(Math.random() * pool.length)];
+            let look = pickFieldMonster(player.currentMap);
             let one = NUMERIC_V2 ? getMapMonsterStats(player.currentMap, true) : ms;   // 新制每隻各自擲階數與強度（numeric.js）
-            let hp = one.hp * raceHpMult(look.race);   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
-            enemies.push({ hp, maxHp: hp, attack: one.atk, nv2Lv: one.L,
-                           name: look.name, icon: look.icon, img: look.img, imgPos: look.pos,
-                           attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race })), status: newStatus() });   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
+            let attrs = applyRaceTraits(Object.assign(rollMonsterAttrs(one.L), { race: look.race }));   // 新制帶同階一般玩家的命中（elements.js）；種族與特性（race.js）
+            let tm = applyMonsterType(attrs, look, one.L, player.currentMap);   // 型態：減傷、閃避、暴擊，回傳氣血／攻擊倍率
+            let hp = one.hp * raceHpMult(look.race) * tm.hp;   // 種族特性：妖獸氣血加成（config-race.js 的 RACE_TRAITS）
+            enemies.push({ hp, maxHp: hp, attack: one.atk * tm.atk, nv2Lv: one.L, mtype: look.type, mskills: look.skills || [], atkType: tm.atkType,
+                           name: look.name, icon: look.icon, img: look.img, imgPos: look.pos, attrs, status: newStatus() });
         }
         // 獵殺邪修解鎖後：每波有機率混入一名野外修士（正道／魔道各半），善／惡時另有機率混入暗殺者（merit.js）
         let extraText = [];
@@ -128,20 +129,20 @@ function combatTick() {
             let addCultivator = (faction, ambush) => {
                 let mult = ambush ? AMBUSH_POWER_MULT : FIELD_CULTIVATOR_POWER_MULT;
                 let look = ambush ? AMBUSH_IMG : CULTIVATOR_IMGS[faction];   // 戰場實況的圖（config-merit.js，只影響外觀）
-                enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult,
+                enemies.push({ hp: ms.hp * mult, maxHp: ms.hp * mult, attack: ms.atk * mult * fieldMagicAtkComp(ms.L), atkType: 'mag',   // 修士為術法攻擊（魔防；攻擊補回一般玩家魔防，monster.js）
                                icon: ambush ? AMBUSH_ICON : CULTIVATOR_ICONS[faction], cultivator: faction, ambush: ambush,
                                img: look ? look.img : undefined, imgPos: look ? look.pos : undefined,
                                attrs: applyRaceTraits(Object.assign(rollMonsterAttrs(ms.L), { nature: faction === "邪" ? "dark" : "light", race: faction === "邪" ? "demon" : null })),   // 邪修為暗、正道為光（光暗互剋）；邪修＝魔修（種族剋制），正道＝人修無種族
                                status: newStatus() });
             };
             // 每波機率乘 getWaveChanceMult()：刷新變慢（新制另有每波變長）、波數變少，每小時遇到的次數維持原設計（config-maps.js）
-            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * getWaveChanceMult()) {
+            if (Math.random() < FIELD_CULTIVATOR_WAVE_CHANCE * getWaveChanceMult() * waveRewardAdj) {   // × waveRewardAdj：殺太快（低等地圖秒怪）不會多遇修士、多掉裝備（第 71 節）
                 let faction = Math.random() < 0.5 ? "正" : "邪";
                 addCultivator(faction, false);
                 extraText.push(`一名${CULTIVATOR_ICONS[faction]}${faction === "邪" ? "魔道" : "正道"}修士`);
             }
             let karma = getKarmaState().key;
-            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * getWaveChanceMult() * getAptitudeSpecial().ambushMult) {
+            if (karma !== "neutral" && Math.random() < AMBUSH_WAVE_CHANCE * getWaveChanceMult() * waveRewardAdj * getAptitudeSpecial().ambushMult) {
                 let faction = karma === "good" ? "邪" : "正";
                 addCultivator(faction, true);
                 extraText.push(`一名${AMBUSH_ICON}${faction === "邪" ? "邪派刺客（衝著你的善名而來）" : "正道獵魔人（前來為民除害）"}`);
@@ -210,14 +211,15 @@ function fieldCombatRound() {
     let repEarned = 0;
     let killedCount = 0;
     let slainCultivators = [];
+    let raceKilled = {};
 
     enemies = enemies.filter(e => {
         if (e.hp <= 0) {
-            expEarned += player.currentMap.expRate * 15;
+            expEarned += getRewardMap().expRate * 15;   // 挑戰模式照自己境界的主要地圖（map.js，第 70 節）
             coinsEarned += rollKillCoins();
             repEarned += rollKillReputation();
             killedCount++;
-            if (e.attrs && e.attrs.race) { addRaceKill(e.attrs.race, 1); rollRaceTreasureDrops(e.attrs.race, 1); }   // 斬妖錄＋剋制法寶掉落（race.js）
+            if (e.attrs && e.attrs.race) { addRaceKill(e.attrs.race, 1); raceKilled[e.attrs.race] = (raceKilled[e.attrs.race] || 0) + 1; }   // 斬妖錄（剋制法寶掉落在下面依掉寶次數擲，第 71 節）
             if (e.cultivator) slainCultivators.push(e);
             return false;
         }
@@ -237,8 +239,15 @@ function fieldCombatRound() {
         player.coins += coinsEarned;
         player.reputation = (player.reputation || 0) + repEarned;
         addDailyProgress('kill', killedCount);
+        addTodayFieldKills(killedCount);   // 當日線上擊殺（town-npc.js；青瀾島隱藏仙翁的出現條件）
         onPartnerFieldKills(killedCount);   // 情緣任務的野外擊殺／並肩擊殺（partner.js）
-        rollFieldHuashenScroll(killedCount);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
+        // 掉寶（第 71 節）：rolls＝這批擊殺換算的掉寶次數（每小時最多 1200 次；難圖每隻多擲補回）
+        let rolls = takeDropRolls(killedCount), base = getDropBaseMult();
+        Object.keys(raceKilled).forEach(r => rollRaceTreasureDrops(r, rolls * raceKilled[r] / killedCount / base));   // 剋制法寶（race.js）
+        rollFieldHuashenScroll(rolls / base);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
+        onCraftFieldKills(rolls);               // 做裝通貨（craft.js，第 69 節）
+        rollLingStoneDrops(rolls);              // 五行傳送陣靈石（lingjie.js，第 74 節）
+        onLingjieKills(killedCount, raceKilled);   // 靈界任務榜進度（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;
@@ -287,22 +296,27 @@ function fieldCombatRound() {
         }
         waveSummary = null;
     } else {
-        // ---- 怪物回合：每隻各自命中判定（玩家的閃避/減傷生效，怪物的屬性傷害可施加在玩家身上）----
-        let playerDef = { attrs: getPlayerCombatAttrs(), status: playerStatus };
+        // ---- 怪物回合：每隻各自命中判定（玩家的閃避/防禦生效，怪物的屬性傷害可施加在玩家身上；妖獸會暴擊，第 66 節）----
+        let basePlayerAttrs = getPlayerCombatAttrs();
+        let playerDef = { attrs: playerAttrsUnderSunder(basePlayerAttrs), status: playerStatus };   // 被怪物「破甲」時防禦打折（monster.js）
         let totalDmg = 0;
         let enemyTags = [];
         let frozenCount = 0;
+        lastMonsterSkillText = '';
         enemies.forEach(e => {
             if (e.hp <= 0) return;   // 被反震／閃擊反擊打倒的，下一回合才結算擊殺
             if (e.skipTurn) { frozenCount++; return; }
-            let atk = e.attack * petEnemyAtkMult(e);   // 被靈寵削弱時攻擊降低（beast-combat.js）
-            let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk }, playerDef);
-            // 裝備特效：妖獸為物理、修士為術法（金身／化勁）；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
-            let dealt = applyPetDamageReduction(applyGearDefense(r, e, !!e.cultivator, r.tags), r);
+            let ms = monsterPreAttack(e);   // 怪物技能：狂暴、重擊、自癒、幻身（monster.js，第 66 節第 3 期）
+            let atk = e.attack * petEnemyAtkMult(e) * ms.atkMult;   // 被靈寵削弱時攻擊降低（beast-combat.js）
+            let r = resolveHit(atk, { attrs: e.attrs || {}, power: atk, dmgType: e.atkType }, playerDef);   // 術法型、魔修、修士為術法攻擊（走魔防，第 66 節第 4 期 A）
+            // 裝備特效：物理攻擊吃金身、術法攻擊吃化勁；反震、閃擊反擊（gear.js）；護盾與最低傷害保底逐擊計算（beast-combat.js）
+            let dealt = applyPetDamageReduction(applyGearDefense(r, e, e.atkType === 'mag', r.tags), r);
             totalDmg += dealt;
             if (e.hp > 0) e.hp = Math.min(e.maxHp, e.hp + raceLifestealHeal(e.attrs, dealt));   // 種族特性：魔修吸血（race.js）
+            monsterPostHit(e, ms.skill, r, dealt, atk, basePlayerAttrs);   // 撕咬、毒牙、烈焰、寒息、破甲
             enemyTags = enemyTags.concat(r.tags);
         });
+        if (fieldSunderTurns > 0) fieldSunderTurns--;
         let taken = NUMERIC_V2 ? roundDmg(totalDmg) : totalDmg;   // 多隻加總後去掉浮點尾數（新制 2 位小數）
         player.hp -= taken;
         battleFxHurt(taken, taken <= 0 && enemyTags.includes("dodge"), enemyTags);   // 戰鬥面板飄字（battle-fx.js；依妖獸屬性上色）
@@ -332,7 +346,25 @@ function getMapMonsterStats(map, roll) {
 // 新制另乘 waveRewardAdj：殺得比同境界一般玩家快太多時打折，每小時收益最多 NV2.rewardSpeedCap 倍（numeric.js 的 nv2RewardSpeedAdj）
 let waveRewardAdj = 1;
 function getKillRewardMult() {
-    return NUMERIC_V2 ? nv2KillRewardMult(player.currentMap) * waveRewardAdj : KILL_REWARD_MULT;
+    return NUMERIC_V2 ? nv2KillRewardMult(getRewardMap()) * waveRewardAdj : KILL_REWARD_MULT;   // 挑戰模式用主要地圖的補償（第 70 節）
+}
+// 掉寶次數（第 71 節，2026-10-03 使用者選「每小時封頂＋難圖補償」）：
+//   想要的次數＝擊殺數 × 所在地圖的刷新補償（nv2KillRewardMult：一般玩家在任何地圖每小時都是 1200 次，難圖殺得慢、每隻多擲）；
+//   但不能超過「野外實際經過秒數 ÷ 3」累積的額度 dropBudget（每秒 +1/3、最多存 DROP_BUDGET_MAX）→ 殺再快每小時也最多 1200 次（低等地圖秒怪不再多掉）。
+//   用所在地圖而非挑戰模式的主要地圖，所以越級挑戰的掉寶照實際難度補償（經驗則照主要地圖）
+let dropBudget = 0;
+const DROP_BUDGET_MAX = 60;
+function tickDropBudget() { dropBudget = Math.min(DROP_BUDGET_MAX, dropBudget + 1 / 3); }
+function takeDropRolls(kills) {
+    if (!NUMERIC_V2) return kills;
+    const got = Math.min(kills * nv2KillRewardMult(player.currentMap), dropBudget);
+    dropBudget -= got;
+    return got;
+}
+// 法寶、化神訣殘本原本以「實際擊殺數」校準：除以自己境界主要地圖的補償，一般玩家在主要地圖每小時掉量不變
+function getDropBaseMult() {
+    const m = typeof getMainMapForRealm === 'function' && getMainMapForRealm();
+    return NUMERIC_V2 && m ? nv2KillRewardMult(m) : 1;
 }
 // 「每波」遭遇機率（野外修士、暗殺者、懸賞人物）的補償倍率：每小時波數變少多少就放大多少
 function getWaveChanceMult() {
@@ -341,14 +373,15 @@ function getWaveChanceMult() {
 
 // 擊殺一隻妖獸的靈石：該地圖的 coins ±20%（數值表與每小時上限見 config-maps.js）
 function rollKillCoins() {
-    let base = player.currentMap.coins;
-    if (typeof base !== 'number') base = player.currentMap.diff * 10;   // 保險：舊資料沒有 coins 時沿用舊公式
+    const m = getRewardMap();   // 挑戰模式照自己境界的主要地圖（map.js，第 70 節）
+    let base = m.coins;
+    if (typeof base !== 'number') base = m.diff * 10;   // 保險：舊資料沒有 coins 時沿用舊公式
     return Math.floor(base * (0.8 + Math.random() * 0.4));
 }
 
 // 擊殺一隻妖獸的聲望：依所在地圖分類隨機 1 ~ 上限（見 config-maps.js 的 REPUTATION_MAX_BY_MAP_CATEGORY）
 function rollKillReputation() {
-    let max = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
+    let max = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(getRewardMap().name)] || 1;
     return Math.floor(Math.random() * max) + 1;
 }
 
@@ -371,10 +404,11 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
     let dealtTotal = 0;
     let baseAttrs = getPlayerCombatAttrs();
     let firstAlive = () => targets.find(t => t.hp > 0) || targets[0];
-    let hitTarget = (target, dmg, attrs) => {
+    // dmgType：'mag'＝術法技能（走敵人魔抗、魔法暴擊，第 66 節第 4 期 A）；普攻與物理技能不給
+    let hitTarget = (target, dmg, attrs, dmgType) => {
         if (!target) return 0;
         // petVulnMult：目標被靈寵施加「破綻」時受到的傷害提高（beast-combat.js）
-        let r = resolveHit(dmg * getGearHitMult(fx, target) * petVulnMult(target), { attrs, power: getPhysAttack() }, { attrs: target.attrs || {}, status: target.status || newStatus() });
+        let r = resolveHit(dmg * getGearHitMult(fx, target) * petVulnMult(target), { attrs, power: dmgType === 'mag' ? getMagAttack() : getPhysAttack(), dmgType }, { attrs: target.attrs || {}, status: target.status || newStatus() });
         target.hp -= r.dmg;
         r.tags.forEach(t => tags.push(t));
         let dealt = r.dmg + applyGearHitChain(fx, target, targets, r, tags);
@@ -409,7 +443,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
 
             if (skill.type === "aoe") {
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => targets.forEach(e => { dealt += hitTarget(e, skillDmg, attrs); });
+                skillHits = () => targets.forEach(e => { dealt += hitTarget(e, skillDmg, attrs, skill.dmgType); });
             } else if (skill.type === "heal") {
                 player.hp = Math.min(player.maxHp, player.hp + player.maxHp * skill.mult);
                 addLog(skill.msg + cost, "heal");
@@ -426,10 +460,10 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
                 // 牽制：造成傷害並以 freeze 機率定身（沿用冰凍狀態）
                 let ctrlAttrs = Object.assign({}, attrs, { ice: Math.max(attrs.ice || 0, skill.freeze * 100) });
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => (skill.aoe ? targets : [firstAlive()]).forEach(e => { dealt += hitTarget(e, skillDmg, ctrlAttrs); });
+                skillHits = () => (skill.aoe ? targets : [firstAlive()]).forEach(e => { dealt += hitTarget(e, skillDmg, ctrlAttrs, skill.dmgType); });
             } else {
                 addLog(skill.msg + cost, "skill");
-                skillHits = () => { dealt += hitTarget(firstAlive(), skillDmg, attrs); };
+                skillHits = () => { dealt += hitTarget(firstAlive(), skillDmg, attrs, skill.dmgType); };
             }
             if (skillHits) {
                 skillHits();
@@ -500,8 +534,8 @@ function onPlayerKilledInField() {
     respawnTimer = 0;
     let lostCoins = Math.floor(player.coins * 0.1);
     player.coins -= lostCoins;
-    addLog(`💀 寡不敵眾，身受重傷！被路過修士救回宗門，遺失了 ${lostCoins} 靈石... (當前氣血：1 滴殘血，開始靜修療傷)`, "combat");
-    changeMap(0, 0);
+    addLog(`💀 寡不敵眾，身受重傷！被路過修士救回${respawnPlaceName()}，遺失了 ${lostCoins} 靈石... (當前氣血：1 滴殘血，開始靜修療傷)`, "combat");
+    sendToRespawn();   // 身在靈界＝天元城外，否則宗門（lingjie.js，第 74 節）
     updateUI();
 }
 

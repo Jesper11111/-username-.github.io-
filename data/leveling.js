@@ -194,6 +194,7 @@ async function triggerReincarnate() {
         player.stage = 1;
         player.exp = 0;
         player.level = 1;
+        player.talents = {};   // 天賦：等級回 1，全部退回重新分配（轉世點數依新的輪迴次數另計，第 68 節）
         player.levelExp = 0;
         player.pendingTribulation = false;
         player.idleProvenMap = null;   // 實力大減，線上實戰證明作廢（save.js 背景／離線結算）

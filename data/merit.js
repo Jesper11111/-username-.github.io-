@@ -175,7 +175,7 @@ function renderPreciousSection() {
 function buyBreakPill(qty = 1) {
     let affordable = Math.floor(player.butianStones / BREAK_PILL_STONE_COST);
     if (affordable <= 0) {
-        alert(`七彩補天石不足！購買 1 顆破障丹需要 ${BREAK_PILL_STONE_COST} 顆（目前 ${player.butianStones}）。`);
+        gameAlert(`七彩補天石不足！購買 1 顆破障丹需要 ${BREAK_PILL_STONE_COST} 顆（目前 ${player.butianStones}）。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "購買");

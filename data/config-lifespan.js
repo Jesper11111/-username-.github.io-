@@ -16,7 +16,7 @@ const LIFESPAN_PACE_MULT = 5;
 const LIFESPAN_START_AGE = 16;
 
 // 所在地倍率：索引對應 maps 的分類（0 安全區 / 1 野外 / 2 開放世界 / 3 上古禁區 / 4 幽冥禁域 / 5 至高戰場）
-const LIFESPAN_DANGER_MULT = [1, 1.5, 2, 3, 3, 4];
+const LIFESPAN_DANGER_MULT = [1, 1.5, 2, 3, 3, 4, 3];   // 索引 6＝無邊海（同第三區）
 const LIFESPAN_TRIBULATION_MULT = 4;   // 渡劫期間
 
 // 離線期間以一半速度流逝（同樣受底線保護）

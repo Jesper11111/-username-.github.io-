@@ -51,6 +51,7 @@ function checkBackgroundCatchUp() {
 // label 只影響文字（"離線"／"背景掛機時"）
 // isOffline：true = 關掉遊戲的離線（練功收益打折，OFFLINE_REWARD_MULT）；背景補發不傳，維持原比例
 function settleIdleSeconds(offlineSeconds, label, isOffline) {
+    igAddPlaySeconds(offlineSeconds);   // 遊玩時數（合理性檢查，integrity.js 第 72 節）
     let expEarned = 0;
     let coinsEarned = 0;
     let msg = "";
@@ -62,10 +63,15 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
     // 依實力估算野外戰鬥：撐不住就退回宗門靜修；打得慢則按比例降低戰鬥次數（防止進高階地圖後直接離線刷收益）
     let est = null;
     // 暫存區滿了不能外出練功（enhance.js）：離線期間改在宗門靜修，沒有野外收益
+    // 挑戰模式（越級地圖，map.js，第 70 節）：不能離線／背景掛機，一律退回宗門、沒有野外收益（也堵住線上撐過 60 秒就信任的 idleProvenMap）
+    if (!player.currentMapIsSafe && typeof isChallengeMap === 'function' && isChallengeMap()) {
+        let fromName = player.currentMap.name;
+        { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
+        prefix = `⚔️ 挑戰模式不能離線／背景掛機，已從【${fromName}】退回【${player.currentMap.name}】靜修。\n`;
+    }
     if (!player.currentMapIsSafe && isGearStashFull()) {
         let fromName = player.currentMap.name;
-        player.currentMap = maps[0].items[0];
-        player.currentMapIsSafe = maps[0].isSafe;
+        { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
         prefix = `📦 暫存區已滿，無法在【${fromName}】歷練，已退回【${player.currentMap.name}】靜修（請先處理暫存區的裝備）。\n`;
     }
     if (!player.currentMapIsSafe) {
@@ -77,8 +83,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (!est.survivable && NUMERIC_V2 && idlePotionCanKeepUp(est)) est.survivable = true;
         if (!est.survivable) {
             let fromName = player.currentMap.name;
-            player.currentMap = maps[0].items[0];
-            player.currentMapIsSafe = maps[0].isSafe;
+            { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
             prefix = `⚠️ 以目前實力無法在【${fromName}】久留（一波妖獸約造成 ${formatShortCombat(est.waveDamage)} 傷害，氣血上限 ${formatShortCombat(est.maxHp)}），已退回【${player.currentMap.name}】靜修。\n`;
         }
     }
@@ -113,6 +118,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (partnerKills > 0) addFieldRaceTreasureDrops(player.currentMap, partnerKills);   // 剋制法寶掉落（期望值，race.js）
         // 化神訣殘本（2026-10-02 使用者要求離線也能掉）：同線上規則，化神以上地圖每隻 0.5% 掉 1～3（yuanshen.js；不另寫日誌，列在結算訊息）
         let idleScrolls = partnerKills > 0 ? rollFieldHuashenScroll(partnerKills, true) : 0;
+        let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, 1)) : '';
+        let idleLing = combatTicks > 0 ? rollLingStoneDrops(combatTicks, true) : '';   // 五行傳送陣靈石（lingjie.js，第 74 節）   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
@@ -144,6 +151,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
             + (rescuedCount > 0 ? `，並拯救了 ${rescuedCount} 名受困修士！` : '！');
         if (potion && potion.text) msg += `\n${potion.text}`;
         if (idleScrolls > 0) msg += `\n📖 斬殺妖獸時翻出【化神訣殘本】×${idleScrolls}（${player.huashenScrolls.toWan()}／${YUANSHEN_COST[0].n.toWan()}）`;
+        if (idleCraft) msg += `\n✨ 從妖獸遺骸中拾得 ${idleCraft}`;
+        if (idleLing) msg += `\n💎 從妖獸體內取出 ${idleLing}`;
         if (partnerKills > 0 && (player.partners || []).length) msg += `\n💞 情緣任務：野外擊殺 +${partnerKills.toWan()}${getPartnerTeam().length ? '（隊伍夥伴的並肩擊殺同步累計）' : ''}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
@@ -344,8 +353,8 @@ function migrateCurrentMap() {
             // 2026-09-28 地圖境界門檻（map.js 的 getMapMinRealm，最多越 1 個大境界）：境界不夠還待在裡面的舊存檔送回宗門
             // （在離線結算之前執行，所以這段離線時間算宗門靜修）
             const need = getMapMinRealm(found);
-            if (!cat.isSafe && need && player.realmIndex < need) {
-                addLog(`⛩️ 【${found.name}】需【${realms[need]}】以上才能練功（最多越一個大境界），你已被送回宗門。`, "system");
+            if (!cat.isSafe && need && isBelowMapLevel(found)) {   // 含第四、五區的等級門檻 minL（2026-10-03）
+                addLog(`⛩️ 【${found.name}】需【${typeof found.minL === 'number' ? nv2LevelLabel(getMapMinLevel(found)) : realms[need]}】以上才能練功，你已被送回宗門。`, "system");
                 break;
             }
             player.currentMap = found;
@@ -409,8 +418,8 @@ function migrateProgressionFields(savedData) {
     });
 }
 
-function resetGameCompletely() {
-    if (confirm("確定要完全重置遊戲嗎？這將清除所有存檔進度！")) {
+async function resetGameCompletely() {
+    if ((await gameConfirm("確定要完全重置遊戲嗎？這將清除所有存檔進度！"))) {
         // 重新整理時會觸發 pagehide／visibilitychange 自動存檔（main.js），不擋住的話目前角色又會被寫回去
         gameOver = true;
         localStorage.removeItem('xiuxian_save');
@@ -422,7 +431,7 @@ function saveLocal() {
     if (gameOver) return;   // 壽元耗盡後存檔已清除，不可再寫回
     if (saveLoadFailed) return;   // 讀檔失敗期間禁止寫入，保護原本的存檔
     player.lastSaveTime = Date.now();
-    localStorage.setItem('xiuxian_save', JSON.stringify(player));
+    localStorage.setItem('xiuxian_save', igPrepareSave());   // 帶簽章＋合理性檢查（integrity.js，第 72 節）
     addLog("💾 遊戲存檔成功！", "system");
 }
 
@@ -468,12 +477,14 @@ function applySaveData(data) {
     migrateEquipmentSlots();
     migrateActivityFields();
     migrateCurrentMap();
+    migrateLingjie(data);   // 改版前待在第四、五區的視為身在靈界（lingjie.js，第 74 節）
     migrateProgressionFields(data);
     migrateLegacySkills();
     migrateRealmExp();
     migrateEquipSockets();
     migrateArtifactIds();   // 更新前兌換的神器補上 lingbaoId（artifact.js）
     migrateGearIds();       // 舊裝備依「部位＋五行」對應到圖鑑，數值不變（gear.js）
+    migrateGearLegends();   // 白金裝備補一個傳奇威能（第 67 節 D4；只新增欄位）
     migrateGearCodex();     // 持有的圖鑑裝備補記進天磯錄、補齊新欄位（codex.js）
     migrateStrangeFires();  // 未命名的異火補抽成天下異火（strange-fire.js）
     migratePartners();      // 夥伴：舊版單人出戰轉為隊伍、補齊好感欄位（partner.js）
@@ -516,8 +527,10 @@ function loadLocal() {
         reportLoadFailure(save, `存檔內容無法解析（${e.message}）`, false);
         return false;
     }
+    const tampered = igVerifyLocal(data);   // 存檔簽章（integrity.js，第 72 節）；會拿掉 data._sig
     try {
         applySaveData(data);
+        if (tampered) flagSave(tampered);
     } catch (e) {
         console.error("讀檔失敗：", e);
         // 找不到畫面元素（null）幾乎都是新舊版本檔案混用，重新整理即可
@@ -546,7 +559,7 @@ function reportLoadFailure(raw, reason, versionMismatch) {
     const modal = document.getElementById('load-error-modal');
     if (!modal) {
         // 快取到舊版 index.html 時頁面上沒有這個視窗：退回用 alert，寫入一樣被封鎖
-        alert(`【存檔讀取失敗】\n你的存檔沒有被刪除，也已另外備份。\n\n錯誤原因：${reason}\n\n${hint}\n\n在問題排除前，本次遊戲不會寫入存檔。`);
+        gameAlert(`【存檔讀取失敗】\n你的存檔沒有被刪除，也已另外備份。\n\n錯誤原因：${reason}\n\n${hint}\n\n在問題排除前，本次遊戲不會寫入存檔。`);
         return;
     }
     document.getElementById('load-error-reason').innerText = `錯誤原因：${reason}`;
@@ -652,6 +665,7 @@ function setSaveCodeStatus(msg, type) {
 }
 
 let pendingImportData = null;   // 已解析、等待第二次確認的存檔
+let pendingImportTamper = null; // 匯入代碼的簽章檢查結果（null＝通過，integrity.js）
 
 function resetImportConfirm() {
     pendingImportData = null;
@@ -682,7 +696,7 @@ async function exportSave() {
     setSaveCodeStatus("產生代碼中…", "warn");
     try {
         player.lastSaveTime = Date.now();
-        box.value = await encodeSaveCode(player);
+        box.value = await encodeSaveCode(igSignedCopy(player));   // 帶簽章（integrity.js，第 72 節）
         setSaveCodeStatus(`代碼長度：${box.value.length.toWan()} 字${box.value.startsWith(SAVE_CODE_PREFIX) ? '（已壓縮）' : ''}`, "ok");
     } catch(e) {
         setSaveCodeStatus("匯出存檔失敗：" + e.message, "error");
@@ -791,6 +805,7 @@ async function confirmImportSave() {
         try {
             data = await decodeSaveCode(code);
             if (!data || typeof data !== 'object' || typeof data.realmIndex === 'undefined') throw new Error("存檔結構不符");
+            pendingImportTamper = igVerifyImport(data);   // 存檔簽章（integrity.js，第 72 節）；會拿掉 data._sig
         } catch(e) {
             let reason = e.message && e.message.startsWith("此瀏覽器") ? e.message : "請確認完整複製了整段代碼（可能只複製到一部分，或通訊軟體把它拆成好幾則訊息）。";
             setSaveCodeStatus("「存檔代碼無效」！" + reason, "error");
@@ -798,7 +813,8 @@ async function confirmImportSave() {
         }
         pendingImportData = data;
         btn.innerText = "⚠️ 再按一次，覆蓋目前進度";
-        setSaveCodeStatus(`讀取到【${sanitizePlayerName(data.name) || '無名修士'}】（${realms[data.realmIndex] || ''}）的存檔。再按一次按鈕即匯入，目前的進度會被覆蓋。`, "warn");
+        setSaveCodeStatus(`讀取到【${sanitizePlayerName(data.name) || '無名修士'}】（${realms[data.realmIndex] || ''}）的存檔。再按一次按鈕即匯入，目前的進度會被覆蓋。`
+            + (pendingImportTamper ? `\n⚠️ 存檔驗證未通過（${pendingImportTamper}）：匯入後將無法使用戰力榜與寄售。` : ''), "warn");
         return;
     }
 
@@ -806,6 +822,7 @@ async function confirmImportSave() {
     let backup = JSON.stringify(player);
     try {
         applySaveData(data);
+        if (pendingImportTamper) flagSave(pendingImportTamper);
         saveLocal();   // 立刻寫入本地存檔，避免重新整理後又回到舊進度
         resetImportConfirm();
         closeModal('save-code-modal');
@@ -816,3 +833,10 @@ async function confirmImportSave() {
         setSaveCodeStatus("匯入存檔失敗：存檔內容有誤。目前進度未受影響。", "error");
     }
 }
+
+// 白金傳奇威能（第 67 節 D4）：改版前就有的白金裝備（穿戴中、背包、暫存區）補擲一個威能；已有的不動
+function migrateGearLegends() {
+    const all = Object.values(player.equipment || {}).concat(player.equipInventory || [], player.gearStash || []);
+    all.forEach(eq => { if (eq) ensureGearLegend(eq); });
+}
+

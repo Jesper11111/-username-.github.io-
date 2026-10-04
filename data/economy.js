@@ -51,11 +51,11 @@ function marketCredit(coins) {
 function canSellEquip(eq) { return eq && eq.category !== 'artifact' && !isEquipLocked(eq) && !!MARKET_SELL.equipMinutes[eq.quality]; }
 
 // 依品級賣出背包裝備（略過鎖定、神器）；額度用完就停。qualities：品級名稱陣列
-function sellEquipByQualities(qualities) {
+async function sellEquipByQualities(qualities) {
     const targets = player.equipInventory.filter(eq => qualities.includes(eq.quality) && canSellEquip(eq));
-    if (!targets.length) { alert(`背包沒有未鎖定的【${qualities.join('、')}】裝備。`); return; }
+    if (!targets.length) { gameAlert(`背包沒有未鎖定的【${qualities.join('、')}】裝備。`); return; }
     const total = targets.reduce((s, eq) => s + equipSellPrice(eq), 0);
-    if (!confirm(`確定賣出背包內 ${targets.length} 件【${qualities.join('、')}】裝備？\n約可得 ${total.toWan()} 靈石（今日剩餘額度 ${marketCapLeft().toWan()}，額度用完會停止）。\n鑲嵌的符寶會一起賣掉，🔒 鎖定的不會賣。`)) return;
+    if (!(await gameConfirm(`確定賣出背包內 ${targets.length} 件【${qualities.join('、')}】裝備？\n約可得 ${total.toWan()} 靈石（今日剩餘額度 ${marketCapLeft().toWan()}，額度用完會停止）。\n鑲嵌的符寶會一起賣掉，🔒 鎖定的不會賣。`))) return;
     let sold = 0, got = 0;
     for (const eq of targets) {
         const p = equipSellPrice(eq);
@@ -63,7 +63,7 @@ function sellEquipByQualities(qualities) {
         player.equipInventory = player.equipInventory.filter(e => e !== eq);
         marketCredit(p); sold++; got += p;
     }
-    if (!sold) { alert(`今日回收額度只剩 ${marketCapLeft().toWan()} 靈石，不夠賣這些裝備，明天再來！`); return; }
+    if (!sold) { gameAlert(`今日回收額度只剩 ${marketCapLeft().toWan()} 靈石，不夠賣這些裝備，明天再來！`); return; }
     addLog(`🏪 坊市回收：賣出 ${sold} 件裝備，獲得 ${got.toWan()} 靈石。${sold < targets.length ? `（今日額度已滿，剩 ${targets.length - sold} 件未賣）` : ''}`, "system", false, "item");
     afterMarketSell();
 }
@@ -74,7 +74,7 @@ function sellPill(id, qty) {
     if (!item || have <= 0) return;
     const price = pillSellPrice(item);
     let n = Math.min(have, qty === 'all' ? have : qty, Math.floor(marketCapLeft() / price));
-    if (n <= 0) { alert('今日回收額度已用完，明天再來！'); return; }
+    if (n <= 0) { gameAlert('今日回收額度已用完，明天再來！'); return; }
     player.bag[id] -= n; if (player.bag[id] <= 0) delete player.bag[id];
     marketCredit(n * price);
     addLog(`🏪 坊市回收：賣出【${item.name}】×${n}，獲得 ${(n * price).toWan()} 靈石。`, "system", false, "item");
@@ -87,8 +87,8 @@ function sellMaterial(kind, qty) {
     const price = kind === 'iron' ? ironSellPrice() : shardSellPrice();
     const have = player[field] || 0;
     let n = Math.min(have, qty === 'all' ? have : qty, Math.floor(marketCapLeft() / price));
-    if (have <= 0) { alert(`沒有${name}可以賣。`); return; }
-    if (n <= 0) { alert('今日回收額度已用完，明天再來！'); return; }
+    if (have <= 0) { gameAlert(`沒有${name}可以賣。`); return; }
+    if (n <= 0) { gameAlert('今日回收額度已用完，明天再來！'); return; }
     player[field] = have - n;
     marketCredit(n * price);
     addLog(`🏪 坊市回收：賣出${name} ×${n}，獲得 ${(n * price).toWan()} 靈石。`, "system", false, "item");
@@ -215,12 +215,12 @@ function estateUpgradeCost(kind) {
     const e = estateOf(kind);
     return e.lv >= ESTATE.maxLevel ? 0 : Math.floor(getHourlyIncome() * ESTATE.upgradeHours[e.lv - 1]);
 }
-function upgradeEstate(kind) {
+async function upgradeEstate(kind) {
     const e = estateOf(kind), k = ESTATE.kinds[kind];
     if (e.lv >= ESTATE.maxLevel) return;
     const cost = estateUpgradeCost(kind);
-    if (player.coins < cost) { alert(`靈石不足！升級${k.name}需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`); return; }
-    if (!confirm(`花費 ${cost.toWan()} 靈石，將${k.name}升到 ${e.lv + 1} 級？\n（會先把目前累積的收成領出來）`)) return;
+    if (player.coins < cost) { gameAlert(`靈石不足！升級${k.name}需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`); return; }
+    if (!(await gameConfirm(`花費 ${cost.toWan()} 靈石，將${k.name}升到 ${e.lv + 1} 級？\n（會先把目前累積的收成領出來）`))) return;
     collectEstate(kind, true);
     player.coins -= cost;
     e.lv++;

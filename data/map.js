@@ -34,7 +34,7 @@ function renderTownTeleports() {
         let pic = thumb ? `<img class="map-thumb" src="${thumb}" alt="${item.name}">` : `<span class="town-thumb-empty">🏯</span>`;
         let tip = isCurrent ? (scene ? '📍 當前所在・點擊進城' : '📍 當前所在') : (scene ? '✨ 點擊傳送並進城' : '✨ 點擊傳送');
         let clickable = !isCurrent || scene;
-        return `<button class="town-card${isCurrent ? ' current' : ''}${scene ? ' has-scene' : ''}" ${clickable ? `onclick="goToTown(${i})"` : ''}>
+        return `<button class="town-card${isCurrent ? ' current' : ''}${scene ? ' has-scene' : ''}" ${clickable ? `onclick="goToTown(${i}, true)"` : ''}>
             ${pic}<b>${item.name}</b><small>${tip}</small></button>`;
     }).join('');
 }
@@ -46,8 +46,8 @@ function goToMapByName(name) {
     const f = findMapByName(name);
     if (!f) return;
     const block = getMapEntryBlock(f.c, f.i);
-    if (block) { showToast(block.msg.split('\n')[0]); return; }
-    selectMap(f.c, f.i);
+    if (block && !block.realm) { showToast(block.msg.split('\n')[0]); return; }
+    selectMap(f.c, f.i, true);   // 靈界大地圖紅點＝大地圖進入，會觸發特殊事件（第 73 節）；境界不足：changeMap 會跳挑戰模式警告（第 70 節）
 }
 
 // 依城鎮名稱傳送並進城（人界地圖的傳送點用，config-towns.js；免得寫死 maps 索引）
@@ -57,17 +57,19 @@ function goToTownByName(name) {
 }
 
 // 點城鎮傳送點：不在該城就傳送過去；有城內場景（town.js）就開啟城內畫面
-function goToTown(i) {
+// quick＝從修仙地圖彈窗（快捷清單）傳送：不觸發奇遇等特殊事件；不帶＝人界大地圖的城鎮紅點（goToTownByName），會觸發（第 73 節）
+function goToTown(i, quick) {
     let item = maps[0].items[i];
     // 被城內隱藏 NPC 打爆後的禁入時間（town-npc.js）：不傳送、只提示
-    const ban = getTownBanLeftMin(item.name);
+    const ban = isGM() ? 0 : getTownBanLeftMin(item.name);
     if (ban) { showToast(`😵 滿臉都是香腸油，還沒臉回${item.name}……（剩 ${ban} 分鐘）`); return; }
-    if (player.currentMap.name !== item.name) selectMap(0, i);
+    if (player.currentMap.name !== item.name) selectMap(0, i, !quick);
     else closeModal('world-map-modal');
     if (player.currentMap.name === item.name && hasTownScene(item.name)) openTownScene(item.name);
 }
 
-function openMapCategoryModal(catIndex) {
+// quick＝從修仙地圖彈窗（人界地圖右上「地圖列表」等快捷清單）開啟：清單裡選的地圖傳送後不觸發特殊事件（第 73 節）；人界地圖的分區紅點開啟時為 false
+function openMapCategoryModal(catIndex, quick) {
     let cat = maps[catIndex];
     document.getElementById('map-modal-title').innerText = cat.category;
     const container = document.getElementById('map-modal-list');
@@ -87,8 +89,8 @@ function openMapCategoryModal(catIndex) {
                 <p style="font-size:0.85em; color:#9ca3af;">${cat.isSafe   // 城鎮（安全區）沒有妖獸：新制上線後曾誤顯示妖獸數值（2026-09-30 修正）
                     ? `🏯 安全區：可打坐靜修`
                     : `經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}`}</p>
-                ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${player.realmIndex < getMapMinRealm(item) ? '#f87171' : '#9ca3af'};">${player.realmIndex < getMapMinRealm(item) ? '🔒 ' : ''}限制：${realms[getMapMinRealm(item)]}以上</p>` : ''}
-                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? '當前所在區域' : '前往此區域'}</button>
+                ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${isBelowMapLevel(item) ? '#f87171' : '#9ca3af'};">${isBelowMapLevel(item) ? '🔒 ' : ''}限制：${typeof item.minL === 'number' ? nv2LevelLabel(getMapMinLevel(item)) : realms[getMapMinRealm(item)]}以上</p>` : ''}
+                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex}${quick ? '' : ', true'})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && isBelowMapLevel(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
             </div>
         `;
     });
@@ -115,7 +117,8 @@ function getRecommendedMaps() {
 
 // 洞府的「宗門」（手機熱點、PC pcStageButtons）：不在宗門就先傳送回宗門，再打開宗門分頁
 function returnToSect() {
-    if (!isInSect()) changeMap(0, 0);   // maps[0].items[0] = 宗門
+    if (isInLingjie()) { tryLeaveLingjie(() => { if (!isInSect()) changeMap(0, 0, false, true); switchTab('sect'); }); return; }   // 身在靈界回宗門要付五行傳送陣靈石（第 74 節）
+    if (!isInSect()) changeMap(0, 0, false, true);   // maps[0].items[0] = 宗門；玩家自己回宗門算數（奇遇秘密路線的起點與終點，第 73 節）
     switchTab('sect');
 }
 
@@ -125,8 +128,14 @@ function returnToSect() {
 function getMapMinRealm(item) {
     let r = item.minRealm || 0;
     if (NUMERIC_V2 && typeof item.nv2L === 'number') r = Math.max(r, Math.floor(item.nv2L + 1e-9) - 1);
+    if (NUMERIC_V2 && typeof item.minL === 'number') r = Math.max(r, Math.floor(item.minL + 1e-9));
     return Math.max(0, r);
 }
+// 地圖的等級門檻（成長位置 L＝境界＋(階−1)/10）：config 的 minL（2026-10-03 第四、五區依地圖排列設定，例：神墟 12.3＝真仙 4 階），沒有就是境界門檻的 1 階
+function getMapMinLevel(item) {
+    return Math.max(getMapMinRealm(item), NUMERIC_V2 && typeof item.minL === 'number' ? item.minL : 0);
+}
+function isBelowMapLevel(item) { return nv2Level(player.realmIndex, player.stage) < getMapMinLevel(item) - 1e-9; }
 
 // 地圖卡片的難度文字：舊制顯示 diff；新制顯示妖獸氣血／攻擊（numeric.js 的 nv2MonsterStats）
 function getMapDifficultyText(item) {
@@ -138,14 +147,20 @@ function getMapDifficultyText(item) {
     let [lo, hi] = nv2MonsterLevelRange(item);
     let lvText = hi - lo < 0.05 ? nv2LevelLabel(lo) : `${nv2LevelLabel(lo)}～${nv2LevelLabel(hi)}`;
     let [sLo, sHi] = nv2MonsterStrRange(lo, item);
-    return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}<br>種族 ${formatFieldRaceMix(item)}${sup}`;   // 種族比例（race.js）
+    return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}<br>種族 ${formatFieldRaceMix(item)}<br>出沒 ${formatFieldMonsterMix(item)}${sup}`;   // 種族比例（race.js）、出沒妖獸與型態（monster.js）
 }
 
-function selectMap(cIndex, iIndex) {
+// bigMap＝從大地圖（人界／靈界地圖的紅點與分區）進入：只有這樣才觸發特殊事件（第 73 節）
+function selectMap(cIndex, iIndex, bigMap) {
     const target = maps[cIndex].items[iIndex];
-    changeMap(cIndex, iIndex);
+    const b = getMapEntryBlock(cIndex, iIndex);
+    if (b && b.realm) { confirmChallengeMap(cIndex, iIndex, bigMap); return; }   // 挑戰模式：取消時留在地圖視窗（第 70 節）
+    changeMap(cIndex, iIndex, false, bigMap);
     closeModal('map-category-modal');
     closeModal('world-map-modal');
+    afterMapArrive(cIndex, target);
+}
+function afterMapArrive(cIndex, target) {
     // 從人界／靈界地圖（town.js）選好地圖：傳送成功才一併關掉地圖回到遊戲（境界不足等被擋時留在地圖上；城鎮由 goToTown 接著開城內場景）
     const arrived = player.currentMap && player.currentMap.name === target.name;
     if (typeof currentTownScene !== 'undefined' && (currentTownScene === WORLD_SCENE_KEY || currentTownScene === LINGJIE_SCENE_KEY) && arrived) closeTownScene();
@@ -154,11 +169,15 @@ function selectMap(cIndex, iIndex) {
 }
 
 // 進入地圖的門檻檢查：回傳 { msg: 完整提示, short: 地圖紅點旁的短字 }，可以進入回傳 null（changeMap 與人界／靈界地圖紅點共用）
+// GM 測試人物（2026-10-04 使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：存檔 player.gm === true（受簽章保護，只能由開發者產生帶 gm 的存檔代碼）
+//   → 所有地圖都能直接進出（不看境界、四維、靈界、暫存區），飛升／返回人界不扣傳送陣靈石，城鎮禁入也不擋
+function isGM() { return !!(player && player.gm === true); }
 function getMapEntryBlock(cIndex, iIndex) {
+    if (isGM()) return null;
     const targetMap = maps[cIndex].items[iIndex];
     const minRealm = getMapMinRealm(targetMap);
-    if (minRealm && player.realmIndex < minRealm)
-        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${realms[minRealm]}】。\n（練功最多只能越一個大境界）`, short: `🔒${realms[minRealm]}` };
+    if (minRealm && isBelowMapLevel(targetMap))   // realm: true＝可改用挑戰模式進入（第 70 節）
+        return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${typeof targetMap.minL === 'number' ? nv2LevelLabel(getMapMinLevel(targetMap)) : realms[minRealm]}】。\n（可用「⚔️ 挑戰模式」越級進入）`, short: `⚔️挑戰`, realm: true };
     // 四維門檻：新制看 nv2MinStat 與 nv2Stat 總值（numeric.js），舊制看 minStat 與 player.stats
     const minS = NUMERIC_V2 ? targetMap.nv2MinStat : targetMap.minStat;
     if (minS) {
@@ -166,6 +185,11 @@ function getMapEntryBlock(cIndex, iIndex) {
         if (["str", "con", "int", "spr"].some(k => st(k) < minS))
             return { msg: `進入【${targetMap.name}】失敗！四維屬性全數必須大於 ${minS} 方可進入。`, short: `🔒四維${minS}` };
     }
+    // 靈界（lingjie.js，第 74 節）：第四、五區要身在靈界；身在靈界不能直接去人界的地圖（宗門例外：系統送回與洞府鈕另有處理）
+    if (isLingjieMapCategory(cIndex) && !isInLingjie())
+        return { msg: `【${targetMap.name}】位於靈界，需經人界地圖的飛升點、以五行傳送陣靈石各 1 顆飛升後才能前往。`, short: '🔒靈界' };
+    if (isInLingjie() && !isLingjieMapCategory(cIndex) && !(cIndex === 0 && iIndex === 0))
+        return { msg: `你身在靈界，無法直接前往人界的【${targetMap.name}】。\n請從靈界地圖「返回人界」（需五行傳送陣靈石各 1 顆）。`, short: '🔒人界' };
     // 暫存區滿了不能外出練功（enhance.js）
     if (!maps[cIndex].isSafe && isGearStashFull())
         return { msg: `暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}）！\n請先到背包處理暫存區的橙色裝備（移入背包、分解或毀棄），才能外出練功。`, short: '🔒暫存區滿' };
@@ -185,11 +209,14 @@ function getMapLockShort(name) {
     return b ? b.short : '';
 }
 
-function changeMap(cIndex, iIndex) {
+// bigMap（第 73 節）：只有從大地圖進入（與洞府「宗門」鈕回宗門，秘密路線要用）才呼叫 onEncounterMapChange；
+//   快捷清單、戰死／渡劫失敗／暫存區滿的系統傳送都不算（秘密路線、累計次數、空間裂縫、三界召令、城中機緣、機緣任務的前往步驟）
+function changeMap(cIndex, iIndex, challengeOk, bigMap) {
     let targetMap = maps[cIndex].items[iIndex];
 
     const block = getMapEntryBlock(cIndex, iIndex);
-    if (block) { alert(block.msg); return; }
+    if (block && block.realm && !challengeOk) { confirmChallengeMap(cIndex, iIndex, bigMap); return; }   // 挑戰模式：先跳警告（第 70 節）
+    if (block && !block.realm) { gameAlert(block.msg); return; }
 
     // 懸賞對決中換地圖＝逃離對決（懸賞保留，bounty.js）
     if (inBountyDuel) endBountyDuel("flee");
@@ -198,6 +225,8 @@ function changeMap(cIndex, iIndex) {
         enemies = [];
         respawnTimer = 0;
     }
+    if (isInLingjie() && !isLingjieMapCategory(cIndex)) player.inLingjie = false;   // 戰死、渡劫失敗等系統送回宗門＝回到人界（第 74 節）
+    if (isGM() && isLingjieMapCategory(cIndex)) player.inLingjie = true;   // GM 直接傳送到靈界地圖＝身在靈界
     player.currentMap = targetMap;
     player.currentMapIsSafe = maps[cIndex].isSafe;
     safeZoneTimer = 0;
@@ -215,9 +244,66 @@ function changeMap(cIndex, iIndex) {
     refreshCombatStatusText();
     if (player.currentMapIsSafe) {
         addLog(`🗺️ 回到安全區 ${player.currentMap.name}，開始打坐療傷。`);
+    } else if (isChallengeMap()) {
+        addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；離線或切到背景會被送回宗門。`, "combat");
     } else {
         addLog(`🗺️ 深入野外 ${player.currentMap.name}，四周充滿危險氣息。`);
     }
     updateCombatVisualPanel();
-    onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇：秘密路線、累計次數、空間裂縫、三界戰場（encounter.js，第 63 節）
+    if (bigMap) onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇（encounter.js，第 63 節）；只有大地圖進入才觸發（第 73 節）
+}
+
+// ==================== 挑戰模式（全地圖開放，第 70 節；2026-10-03 使用者定案）====================
+// 境界不足（getMapEntryBlock 的 realm）的地圖可以確認警告後越級進入：
+//   1. 進入前跳警告（境界差、妖獸比主修地圖強幾倍）  2. 戰死照常折壽、扣靈石（combat.js 的 onPlayerKilledInField，不另外處理）
+//   3. 不能離線／背景掛機：結算時一律退回宗門、沒有野外收益（save.js）  4. 經驗、靈石、聲望、刷新補償照「自己境界的主要地圖」（getRewardMap）
+//   5. 做裝通貨掉率 × getChallengeCraftMult（越 1 境 ×1.5、2 境 ×2、3 境以上 ×3，craft.js）
+function isChallengeMap(item) {
+    item = item || player.currentMap;
+    if (!item || (item === player.currentMap && player.currentMapIsSafe)) return false;
+    const f = findMapByName(item.name);
+    if (!f || maps[f.c].isSafe) return false;
+    return isBelowMapLevel(item);
+}
+// 越過門檻幾個境界（0＝不是挑戰）
+function getChallengeOver(item) { item = item || player.currentMap; return isChallengeMap(item) ? Math.max(1, getMapMinRealm(item) - player.realmIndex) : 0; }   // 同境界但階數不夠（minL）算越 1 境
+function getChallengeCraftMult() {
+    const o = getChallengeOver();
+    return o <= 0 ? 1 : (CHALLENGE_CRAFT_MULT[Math.min(o, CHALLENGE_CRAFT_MULT.length - 1)] || 1);
+}
+// 自己境界的主要練功地圖（config-realms.js 的 realmPacing）
+function getMainMapForRealm() {
+    const pace = realmPacing[Math.min(player.realmIndex, realmPacing.length - 1)];
+    const f = pace && findMapByName(pace.map);
+    return f ? maps[f.c].items[f.i] : null;
+}
+// 擊殺收益用的地圖：挑戰模式＝自己境界的主要地圖，否則＝所在地圖
+function getRewardMap() {
+    return isChallengeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;
+}
+function challengeStrengthText(item) {
+    const main = getMainMapForRealm();
+    if (!NUMERIC_V2 || !main || typeof nv2MonsterStats !== 'function') return '';
+    const a = nv2MonsterStats(item), b = nv2MonsterStats(main);
+    const r = (x, y) => (y > 0 ? x / y : 0);
+    return `妖獸攻擊約為你主修地圖【${main.name}】的 ${r(a.atk, b.atk).toFixed(1)} 倍、氣血 ${r(a.hp, b.hp).toFixed(1)} 倍`;
+}
+async function confirmChallengeMap(cIndex, iIndex, bigMap) {
+    const item = maps[cIndex].items[iIndex];
+    const suit = getMapSuitRange(item), mapRealm = suit ? suit[0] : getMapMinRealm(item) + 1, gap = Math.max(1, mapRealm - player.realmIndex), over = Math.max(1, getMapMinRealm(item) - player.realmIndex);
+    const cm = CHALLENGE_CRAFT_MULT[Math.min(over, CHALLENGE_CRAFT_MULT.length - 1)] || 1;
+    const msg = `⚔️ 挑戰模式：越級進入【${item.name}】\n`
+        + `境界差 ${gap}（妖獸約${realms[Math.min(mapRealm, realms.length - 1)]}，你是${realms[player.realmIndex]}）\n`
+        + (challengeStrengthText(item) ? challengeStrengthText(item) + '\n' : '')
+        + `\n・戰死照常折損壽元、遺失 10% 靈石（壽元歸零會刪檔），風險自負\n`
+        + `・不能離線／背景掛機：離線或切到背景會被送回宗門\n`
+        + `・經驗、靈石照你境界的主要地圖計算，不會因越級暴增\n`
+        + `・做裝通貨掉率 ×${cm}\n\n確定進入？`;
+    const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : (await gameConfirm(msg));
+    if (!ok) return;
+    changeMap(cIndex, iIndex, true, bigMap);
+    const target = maps[cIndex].items[iIndex];
+    closeModal('map-category-modal');
+    closeModal('world-map-modal');
+    afterMapArrive(cIndex, target);
 }

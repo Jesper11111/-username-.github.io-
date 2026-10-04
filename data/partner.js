@@ -126,10 +126,10 @@ function getGiftsLeft(id) {
 function giftPartner(id) {
     let p = partnerById[id];
     if (!p || !isPartnerMet(id)) return;
-    if (getBond(id).pts >= PARTNER_BOND_MAX) { alert(`與【${p.name}】的好感已滿。`); return; }
-    if (getGiftsLeft(id) <= 0) { alert(`今天已經送【${p.name}】${PARTNER_GIFT_DAILY} 次禮了，明天再來吧。`); return; }
+    if (getBond(id).pts >= PARTNER_BOND_MAX) { gameAlert(`與【${p.name}】的好感已滿。`); return; }
+    if (getGiftsLeft(id) <= 0) { gameAlert(`今天已經送【${p.name}】${PARTNER_GIFT_DAILY} 次禮了，明天再來吧。`); return; }
     let cost = getGiftCost(p);
-    if (player.coins < cost) { alert(`靈石不足！送【${p.name}】一份禮需要 ${cost.toWan()} 靈石。`); return; }
+    if (player.coins < cost) { gameAlert(`靈石不足！送【${p.name}】一份禮需要 ${cost.toWan()} 靈石。`); return; }
     player.coins -= cost;
     getBond(id).gifts++;
     addBond(id, PARTNER_GIFT_PTS, `花費 ${cost.toWan()} 靈石贈禮`);
@@ -159,7 +159,7 @@ function acceptBondQuest(id) {
     if (b.quest) return;
     let lv = getBondLevel(id).lv;
     let q = PARTNER_BOND_QUESTS[lv];
-    if (!q) { alert('好感已達最高，沒有新的情緣任務了。'); return; }
+    if (!q) { gameAlert('好感已達最高，沒有新的情緣任務了。'); return; }
     b.quest = { lv, base: getQuestStat(q.stat, id) };
     addLog(`📜 接下【${p.name}】的情緣任務「${q.name}」：${describeBondQuest(p, q)}。`, "system");
     renderPartnerModal();
@@ -183,9 +183,9 @@ function claimBondQuest(id) {
     renderPartnerModal();
 }
 
-function abandonBondQuest(id) {
+async function abandonBondQuest(id) {
     let b = getBond(id);
-    if (!b.quest || !confirm('放棄這個情緣任務？進度會清除。')) return;
+    if (!b.quest || !(await gameConfirm('放棄這個情緣任務？進度會清除。'))) return;
     b.quest = null;
     renderPartnerModal();
 }
@@ -430,8 +430,8 @@ function togglePartnerTeam(id) {
         player.partnerTeam = player.partnerTeam.filter(x => x !== id);
         addLog(`💞 【${p.title}・${p.name}】離開隊伍，回到情緣閣休息。`, "system");
     } else {
-        if (getBondLevel(id).lv < PARTNER_TEAM_MIN_LV) { alert(`好感度需達 LV${PARTNER_TEAM_MIN_LV}「熟識」才能邀請【${p.name}】入隊。`); return; }
-        if (player.partnerTeam.length >= PARTNER_TEAM_MAX) { alert(`隊伍最多 ${PARTNER_TEAM_MAX} 名夥伴，請先讓一位離隊。`); return; }
+        if (getBondLevel(id).lv < PARTNER_TEAM_MIN_LV) { gameAlert(`好感度需達 LV${PARTNER_TEAM_MIN_LV}「熟識」才能邀請【${p.name}】入隊。`); return; }
+        if (player.partnerTeam.length >= PARTNER_TEAM_MAX) { gameAlert(`隊伍最多 ${PARTNER_TEAM_MAX} 名夥伴，請先讓一位離隊。`); return; }
         player.partnerTeam.push(id);
         addLog(`💞 【${p.title}・${p.name}】加入隊伍，與你並肩作戰！`, "level-up");
     }

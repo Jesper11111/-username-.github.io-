@@ -64,12 +64,18 @@ function battleFxHit(dmg, tags) {
 }
 
 // 玩家受到傷害（dodged：全部閃掉）；tags＝對方攻擊觸發的屬性（上色用）
+// 受傷飄字的小字：怪物技能名（monster.js）＋暴擊
+function battleFxHurtLabel(tags) {
+    if (!tags) return "";
+    const sk = tags.filter(t => t.startsWith('msk_')).map(t => (MONSTER_SKILLS[t.slice(4)] || {}).name).filter(Boolean);
+    return sk.concat(tags.includes("crit") ? ["暴擊"] : []).slice(0, 2).join(' ');
+}
 function battleFxHurt(dmg, dodged, tags) {
     if (!battleFxActive()) return;
     if (dodged) { battleFxQueue.push({ kind: "dodge", side: "hero" }); return; }
     // 多隻妖獸時：閃掉其中幾隻、仍被其他隻打中 → 同時顯示「閃避」（立繪往左閃）與受傷數字
     if (tags && tags.includes("dodge")) battleFxQueue.push({ kind: "dodge", side: "hero" });
-    if (dmg > 0) battleFxQueue.push({ kind: "hurt", side: "hero", dmg, elem: battleFxElemOf(tags) });
+    if (dmg > 0) battleFxQueue.push({ kind: "hurt", side: "hero", dmg, elem: battleFxElemOf(tags), label: battleFxHurtLabel(tags) });   // 妖獸暴擊、技能名（第 66 節）
 }
 
 // 持續傷害（elements.js 的 tickStatus 回傳 { burn, poison }）：燒傷紅字、中毒綠字；onPlayer＝發作在玩家身上
@@ -223,7 +229,7 @@ function setBattleBar(fillId, trailId, cur, max) {
     }
 }
 
-// 敵方圖片（右半邊）：對手物件有 img 就用（野外妖獸由 FIELD_MONSTERS 帶入，config-maps.js）；
+// 敵方圖片（右半邊）：對手物件有 img 就用（野外妖獸由 FIELD_MONSTERS 帶入，config-monsters.js）；
 // 野外修士（正／魔）、暗殺者由 CULTIVATOR_IMGS／AMBUSH_IMG 帶入（config-merit.js）；安全區顯示 SAFE_ZONE_IMG（config-maps.js）；地圖也可設選填的 monsterImg 蓋過；心魔依性別由 HEART_DEMON_IMGS 帶入（config-tribulation.js）；懸賞對手（獵殺邪修）也依陣營用 CULTIVATOR_IMGS（bounty.js）；都沒有圖時顯示大號 emoji
 // 回傳 { src, pos } 或 null
 function getBattleFoeImg() {

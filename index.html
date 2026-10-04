@@ -848,6 +848,27 @@
             animation: rainbow-shift 4s linear infinite;
         }
         .rainbow-glow { border-width: 2px; animation: rainbow-glow 3s linear infinite; }
+        /* 天賦樹（talent.js，第 68 節） */
+        .talent-points { color: #e5e7eb; margin: 4px 0 8px; }
+        .talent-tabs { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+        #talent-modal .talent-tab { width: auto; margin: 0; padding: 6px 8px; font-size: 0.85em; border-color: var(--tc); }
+        #talent-modal .talent-tab.on { background: color-mix(in srgb, var(--tc) 30%, transparent); }
+        .talent-tab small { margin-left: 3px; color: #9ca3af; }
+        .talent-branch-desc { margin: 8px 0 4px; font-size: 0.9em; }
+        .talent-row-head { color: #9ca3af; font-size: 0.78em; margin: 8px 0 3px; text-align: left; }
+        .talent-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .talent-node { border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px; text-align: left; background: rgba(0,0,0,0.25); }
+        .talent-node.got { border-color: var(--tc); box-shadow: 0 0 6px color-mix(in srgb, var(--tc) 45%, transparent); }
+        .talent-node.notable { border-style: dashed; }
+        .talent-node.key { border-width: 2px; }
+        .talent-name { font-weight: bold; color: var(--tc); font-size: 0.9em; }
+        .talent-name span { float: right; color: #e5e7eb; font-weight: normal; }
+        .talent-desc { font-size: 0.75em; color: #d1d5db; margin: 3px 0 5px; min-height: 2.4em; }
+        #talent-modal .talent-node .sys-btn { width: 100%; margin: 0; padding: 4px; font-size: 0.8em; }
+        /* 遠古／太古裝備（ARCHITECTURE.md 第 67 節 D3）：金色／赤紅發光邊框 */
+        .card.eq-ancient { border: 2px solid #fbbf24 !important; box-shadow: 0 0 10px rgba(251, 191, 36, 0.55), inset 0 0 8px rgba(251, 191, 36, 0.18); }
+        .card.eq-primal { border: 2px solid #f43f5e !important; box-shadow: 0 0 14px rgba(244, 63, 94, 0.7), inset 0 0 10px rgba(244, 63, 94, 0.22); animation: eq-primal-pulse 2.4s ease-in-out infinite; }
+        @keyframes eq-primal-pulse { 50% { box-shadow: 0 0 22px rgba(244, 63, 94, 0.95), inset 0 0 14px rgba(244, 63, 94, 0.3); } }
         @keyframes rainbow-shift { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
         @keyframes rainbow-glow {
             0%, 100% { border-color: #ff6b6b; box-shadow: 0 0 14px rgba(255, 107, 107, 0.55); }
@@ -858,7 +879,7 @@
             83% { border-color: #e56bff; box-shadow: 0 0 14px rgba(229, 107, 255, 0.55); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .rainbow-text, .rainbow-glow, .quality-七彩, .quality-白金 { animation: none; }
+            .rainbow-text, .rainbow-glow, .quality-七彩, .quality-白金, .card.eq-primal { animation: none; }
             .rainbow-glow { border-color: #e56bff; box-shadow: 0 0 12px rgba(229, 107, 255, 0.5); }
         }
         .reincarnate-note { font-size: 0.75em; color: #9ca3af; line-height: 1.5; text-align: center; margin: -4px 0 10px; }
@@ -1146,6 +1167,44 @@
         #zm-fight-end .big { font-family: "KaiTi", "DFKai-SB", serif; font-size: 40px; font-weight: bold; letter-spacing: 8px; }
         #zm-fight-end .big.win { color: #fef3c7; text-shadow: 0 0 14px #fbbf24, 0 2px 6px #000; } #zm-fight-end .big.lose { color: #fca5a5; text-shadow: 0 0 14px #dc2626, 0 2px 6px #000; }
         #zm-fight-end p { margin: 0; color: #e5e7eb; } #zm-fight-end .zm-reward { line-height: 1.8; color: #fde68a; }
+        /* ---- 世界 Boss（world-boss.js，第 75 節）：視窗 #world-boss-modal＋全螢幕戰鬥 #world-boss-scene（樣式比照鎮魔塔 BOSS 戰）---- */
+        .wb-banner { height: 150px; border-radius: 10px; background-size: cover; position: relative; overflow: hidden; border: 1px solid #7f1d1d; }
+        .wb-banner-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 8px; background: linear-gradient(transparent, rgba(5,7,12,0.92)); display: flex; flex-direction: column; }
+        .wb-banner-text b { font-family: "KaiTi", "DFKai-SB", serif; font-size: 22px; color: #fde68a; letter-spacing: 2px; } .wb-banner-text span { font-size: 12px; color: #fca5a5; }
+        .wb-hp { position: relative; height: 22px; margin: 8px 0 4px; background: #1f0a0a; border: 1px solid #7f1d1d; border-radius: 6px; overflow: hidden; }
+        .wb-hp-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #991b1b, #ef4444); transition: width 0.4s; }
+        .wb-hp span { position: relative; display: block; text-align: center; font-size: 12px; line-height: 22px; color: #fff; text-shadow: 0 1px 2px #000; }
+        .wb-status { text-align: center; margin: 2px 0; color: #fde68a; font-size: 0.92em; }
+        .wb-me { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin: 8px 0; padding: 8px 10px; background: rgba(15,20,32,0.7); border: 1px solid #334155; border-radius: 8px; font-size: 0.85em; color: #cbd5e1; }
+        .wb-me b { color: #fde68a; }
+        .wb-go { border-color: #f87171 !important; color: #fecaca !important; font-weight: bold; } .wb-claim { border-color: #4ade80 !important; color: #bbf7d0 !important; margin-top: 6px; }
+        .wb-rank { width: 100%; border-collapse: collapse; font-size: 0.82em; } .wb-rank th, .wb-rank td { padding: 4px 6px; border-bottom: 1px solid #1f2937; text-align: left; }
+        .wb-rank th { color: #9ca3af; font-weight: normal; } .wb-rank td small { margin-left: 4px; color: #6b7280; } .wb-rank tr.me td { color: #fde68a; }
+        .wb-rules { margin-top: 10px; font-size: 0.8em; color: #9ca3af; } .wb-rules summary { cursor: pointer; color: #cbd5e1; } .wb-rules p { margin: 4px 0; line-height: 1.6; }
+        #world-boss-scene { display: none; position: fixed; inset: 0; z-index: 101; background: #05070c; overflow: hidden; }
+        #wb-fight { position: absolute; inset: 0; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; }
+        #wb-fight .zm-fbar { flex: none; padding: 8px 10px 6px; background: #07060d; }
+        #wb-fight .zm-fbar .nm { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #f3e8ff; margin-bottom: 4px; }
+        #wb-fight .zm-fbar .track { height: 10px; background: #1f2937; border-radius: 5px; overflow: hidden; }
+        #wb-fight-dmg-fill { height: 100%; width: 0; background: linear-gradient(90deg, #d97706, #fde68a); transition: width 0.25s; }
+        #wb-fight-me-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #15803d, #4ade80); transition: width 0.25s; }
+        #wb-fight .zm-fbar .hp { font-size: 11px; color: #e5e7eb; text-align: right; margin-top: 2px; }
+        #wb-fight-round { color: #fde68a; font-weight: normal; }
+        #wb-fight-scene { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+        #wb-fight-bg { position: absolute; inset: 0; background-size: cover; filter: brightness(0.85); }
+        #wb-fight-hero { position: absolute; left: 0; bottom: 0; height: 70%; max-width: 60%; object-fit: contain; object-position: left bottom; z-index: 2; pointer-events: none; filter: drop-shadow(0 0 8px rgba(253,230,138,0.45)); }
+        #wb-fight .zm-fx { position: absolute; z-index: 4; pointer-events: none; }
+        #wb-fight-boss-fx { left: 40%; right: 4%; top: 8%; height: 34%; } #wb-fight-hero-fx { left: 0; width: 55%; bottom: 40%; height: 22%; }
+        #wb-fight-log { flex: none; height: calc(3 * 1.55em); padding: 0 10px; font-size: 12px; line-height: 1.55; background: #07060d; overflow: hidden; }
+        #wb-fight-log div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #wb-fight-log .me { color: #fde68a; } #wb-fight-log .boss { color: #fca5a5; }
+        #wb-fight .wb-speed { flex: none; display: flex; gap: 6px; justify-content: flex-end; padding: 4px 10px 8px; background: #07060d; }
+        #wb-fight .wb-speed button { width: auto; margin: 0; padding: 4px 10px; font-size: 12px; color: #9ca3af; background: rgba(10,14,22,0.8); border: 1px solid #334155; border-radius: 6px; box-shadow: none; }
+        #wb-fight .wb-speed button.on { color: var(--accent); border-color: var(--accent); }
+        #wb-fight-end { position: absolute; inset: 0; z-index: 6; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; text-align: center; background: rgba(5,7,12,0.82); }
+        #wb-fight-end.on { display: flex; } #wb-fight-end p { margin: 0; color: #e5e7eb; } #wb-fight-end .zm-reward { line-height: 1.8; color: #fde68a; } #wb-fight-end .zm-note { color: #9ca3af; font-size: 12.5px; }
+        #wb-fight-end .big { font-family: "KaiTi", "DFKai-SB", serif; font-size: 30px; font-weight: bold; letter-spacing: 4px; color: #fef3c7; text-shadow: 0 0 14px #fbbf24, 0 2px 6px #000; }
+        #wb-fight-end button, #wb-fight-quit { width: auto; max-width: 360px; margin: 0; padding: 9px 18px; color: #cbd5e1; background: rgba(15,20,32,0.85); border: 1px solid #475569; border-radius: 10px; }
+        #wb-fight-quit { position: absolute; top: 8px; right: 8px; z-index: 5; padding: 4px 10px; font-size: 12px; }
         #zm-boss-body .zm-boss-wait { color: #fca5a5; font-size: 16px; margin: 4px 0; }
         /* 通關紀錄 */
         #defense-scene .defense-rec-btn {
@@ -1299,6 +1358,73 @@
         .town-figure.clickable:hover { filter: drop-shadow(0 0 10px rgba(253, 230, 138, 0.8)); }
         /* 隨機躲在角落的 NPC（town-npc.js）：PNG 已自帶接地陰影並挖掉被甕擋住的部分，不加外陰影（陰影會落在甕上露餡） */
         .town-figure.town-npc { filter: none; }
+        /* 仙翁低語聽完、可以點了：淡淡金光呼吸（town-npc.js 的 awake） */
+        .town-figure.town-npc.awake { animation: npcAwake 2.4s ease-in-out infinite; }
+        @keyframes npcAwake { 0%, 100% { filter: drop-shadow(0 0 2px rgba(253, 230, 138, 0.3)); } 50% { filter: drop-shadow(0 0 8px rgba(253, 230, 138, 0.85)); } }
+        /* 路人閒聊（town.js 的 showTownChatter）：對話框底部尖角對準路人頭頂，淡入淡出、不擋點擊 */
+        #town-chatter { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+        .town-chatter-bubble { position: absolute; transform: translate(-50%, calc(-100% - 10px)); max-width: 270px; width: max-content; padding: 6px 10px; border-radius: 10px;
+            background: rgba(255, 252, 240, 0.95); color: #3b2a1a; font-size: 13px; line-height: 1.45; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); animation: tcIn 0.35s ease-out; transition: opacity 0.6s; }
+        .town-chatter-bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: rgba(255, 252, 240, 0.95); }
+        .town-chatter-bubble.out { opacity: 0; }
+        /* 仙翁低語（town-npc.js 的 showNpcWhisper）：沒有框的淡色小字，若有若無地上飄消散 */
+        .npc-whisper { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none; font-family: "KaiTi", "DFKai-SB", serif; font-size: 12px; letter-spacing: 1px;
+            color: rgba(255, 250, 230, 0.85); text-shadow: 0 0 4px rgba(120, 160, 255, 0.6), 0 0 2px rgba(0, 0, 0, 0.8); animation: npcWhisper 6s ease-in-out forwards; }
+        @keyframes npcWhisper { 0% { opacity: 0; transform: translate(-50%, -100%); } 20% { opacity: 0.75; } 70% { opacity: 0.55; } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 22px)); } }
+        @keyframes tcIn { from { opacity: 0; transform: translate(-50%, calc(-100% - 2px)) scale(0.9); } to { opacity: 1; transform: translate(-50%, calc(-100% - 10px)); } }
+        /* 隱藏仙翁的小遊戲（xianweng-games.js）：開場動畫全螢幕、釣魚（池塘＋收線條＋進度條）、五子棋（棋盤背景用玲瓏棋局圖） */
+        #xw-intro { display: none; position: fixed; inset: 0; z-index: 130; background: #000; align-items: center; justify-content: center; }
+        #xw-intro video { width: 100%; height: 100%; object-fit: contain; }
+        .xw-intro-skip { position: absolute; right: 14px; bottom: 18px; width: auto; padding: 8px 16px; background: rgba(0,0,0,0.55); border-color: #9ca3af; color: #e5e7eb; }
+        .xw-fish-card, .xw-chess-card { max-width: 480px; border-color: #fbbf24; }
+        .xw-say { color: #e5e7eb; font-size: 0.92em; line-height: 1.6; white-space: pre-line; min-height: 3.2em; margin: 6px 0 8px; text-align: center; }
+        .xw-fish-area { display: flex; gap: 8px; height: 230px; }
+        .xw-pond { position: relative; flex: 1; border-radius: 8px; overflow: hidden; background: #1e3a4a url('images/towns/xianweng-pond.jpg') center / cover; }
+        .xw-bobber { position: absolute; left: 44%; top: 52%; width: 10px; height: 22px; margin-left: -5px; border-radius: 5px 5px 4px 4px;
+            background: linear-gradient(#ef4444 0 45%, #f8fafc 45%); box-shadow: 0 2px 4px rgba(0,0,0,0.5); animation: xwBob 2.4s ease-in-out infinite; }
+        .xw-pond-ripple { position: absolute; left: 44%; top: calc(52% + 18px); }
+        .xw-pond-ripple i { position: absolute; left: -20px; top: -6px; width: 40px; height: 12px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 50%; opacity: 0; animation: xwRipple 2.4s ease-out infinite; }
+        .xw-pond-ripple i:nth-child(2) { animation-delay: 1.2s; }
+        #xw-fish-modal[data-phase="bite"] .xw-bobber { animation: xwBite 0.25s ease-in-out infinite alternate; top: 56%; }
+        #xw-fish-modal[data-phase="bite"] .xw-pond-ripple i { animation-duration: 0.6s; border-color: #fde68a; }
+        #xw-fish-modal[data-phase="reel"] .xw-bobber { top: 60%; opacity: 0.4; animation: xwBite 0.12s linear infinite alternate; }
+        #xw-fish-modal[data-phase="idle"] .xw-bobber, #xw-fish-modal[data-phase="idle"] .xw-pond-ripple { display: none; }
+        @keyframes xwBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes xwBite { from { transform: translateY(0); } to { transform: translateY(6px); } }
+        @keyframes xwRipple { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(2.2); opacity: 0; } }
+        .xw-bar { position: relative; width: 46px; border-radius: 8px; background: linear-gradient(#0c4a6e, #082f49); border: 2px solid #a16207; overflow: hidden; }
+        #xw-fish-modal:not([data-phase="reel"]) .xw-bar { opacity: 0.35; }
+        #xw-bar-box { position: absolute; left: 3px; right: 3px; bottom: 35%; height: 30%; border-radius: 6px; background: rgba(74,222,128,0.35); border: 2px solid #4ade80; }
+        #xw-bar-box.on { background: rgba(74,222,128,0.6); }
+        #xw-bar-fish { position: absolute; left: 0; right: 0; bottom: 50%; text-align: center; font-size: 1.2em; line-height: 1.2em; pointer-events: none; }
+        .xw-prog { height: 10px; margin: 8px 0 6px; border-radius: 5px; background: #1f2937; overflow: hidden; }
+        #xw-prog-fill { height: 100%; width: 0; background: linear-gradient(90deg, #f59e0b, #4ade80); }
+        #xw-fish-modal:not([data-phase="reel"]) #xw-prog-fill { width: 0 !important; }
+        #xw-fish-catch { min-height: 1.6em; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 6px; }
+        .xw-catch-item { font-size: 0.85em; padding: 2px 8px; border-radius: 10px; background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); color: #fde68a; }
+        #xw-fish-btn { border-color: #fbbf24; color: #fde68a; font-size: 1.05em; padding: 12px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        #xw-fish-modal[data-phase="bite"] #xw-fish-btn { background: rgba(239,68,68,0.3); border-color: #f87171; color: #fff; animation: xwPulse 0.35s infinite alternate; }
+        @keyframes xwPulse { from { box-shadow: 0 0 0 rgba(248,113,113,0); } to { box-shadow: 0 0 14px rgba(248,113,113,0.9); } }
+        #xw-fish-modal[data-phase="reel"] #xw-fish-btn { background: rgba(74,222,128,0.18); border-color: #4ade80; color: #bbf7d0; }
+        #xw-chess-modal .modal-content { background: linear-gradient(rgba(10,10,14,0.82), rgba(10,10,14,0.88)), var(--xw-chess-bg) center / cover; }
+        #xw-board { display: grid; grid-template-columns: repeat(15, 1fr); width: min(100%, 440px); aspect-ratio: 1; margin: 0 auto; padding: 2%; box-sizing: border-box;
+            border-radius: 6px; background: #b07a45 linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.12)); box-shadow: 0 4px 14px rgba(0,0,0,0.6), inset 0 0 0 2px #7c4a1e; }
+        .xw-cell { position: relative; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 1; min-width: 0;
+            background-image: linear-gradient(#3b2410, #3b2410), linear-gradient(#3b2410, #3b2410); background-size: 100% 1px, 1px 100%; background-position: center; background-repeat: no-repeat; }
+        .xw-cell.b::after, .xw-cell.w::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; }
+        .xw-cell.b::after { background: radial-gradient(circle at 35% 30%, #6b7280, #111 60%); box-shadow: 1px 2px 3px rgba(0,0,0,0.6); }
+        .xw-cell.w::after { background: radial-gradient(circle at 35% 30%, #fff, #d1d5db 70%); box-shadow: 1px 2px 3px rgba(0,0,0,0.5); }
+        .xw-cell.last::before { content: ''; position: absolute; left: 50%; top: 50%; width: 22%; height: 22%; margin: -11% 0 0 -11%; border-radius: 50%; background: #ef4444; z-index: 1; }
+        .xw-cell.win::after { box-shadow: 0 0 0 2px #fbbf24, 0 0 8px #fbbf24; }
+        /* 隱藏仙翁垂釣（town-npc.js 的 getTownNpcEffects）：竿、釣線用整張圖座標的 SVG；漣漪三圈輪流擴散 */
+        .tnpc-fishing { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+        .tnpc-fishing .rod { stroke: #5b3b1e; stroke-width: 1.6; stroke-linecap: round; }
+        .tnpc-fishing .line { fill: none; stroke: rgba(255, 255, 255, 0.75); stroke-width: 0.5; }
+        .tnpc-ripple { position: absolute; width: 0; height: 0; pointer-events: none; }
+        .tnpc-ripple i { position: absolute; left: 0; top: 0; width: 22px; height: 8px; margin: -4px 0 0 -11px; border: 1.5px solid rgba(255, 255, 255, 0.7); border-radius: 50%;
+            opacity: 0; animation: tnpcRipple 3s ease-out infinite; }
+        .tnpc-ripple i:nth-child(2) { animation-delay: 1s; } .tnpc-ripple i:nth-child(3) { animation-delay: 2s; }
+        @keyframes tnpcRipple { 0% { transform: scale(0.3); opacity: 0.9; } 100% { transform: scale(2.2); opacity: 0; } }
         .town-figure.baked { filter: none; }   /* 從背景圖剪下來的人物（config-towns.js 的 cls: "baked"）：影子已在圖裡 */
         .town-figure.town-top { z-index: 2; }  /* 站在傳送點範圍裡的可點人物（例：賭坊前的牧塵）：疊在傳送點上面才點得到 */
         .town-figure.baked.clickable:hover { filter: drop-shadow(0 0 6px rgba(253, 230, 138, 0.8)); }
@@ -1686,6 +1812,11 @@
             object-position: center;
         }
 
+        /* 標題下的版本名、光環下的創作者：left/top/font-size 由 title-screen.js 依裁切比例即時設定（圖片載入前先隱藏） */
+        #title-screen .title-text { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none; visibility: hidden;
+            font-family: "KaiTi", "DFKai-SB", "BiauKai", serif; font-weight: bold; letter-spacing: 0.12em; }
+        #title-version { color: #fef3c7; text-shadow: 0 0 6px rgba(120, 72, 10, 0.95), 0 0 14px rgba(180, 120, 20, 0.8), 0 1px 2px #000; }
+        #title-credit { color: #ffffff; text-shadow: 0 0 4px #000, 0 0 10px rgba(0, 0, 0, 0.85), 0 1px 2px #000; }
         /* 疊在彩色光環上的透明按鈕；left/top/width/height 由 JS 依裁切比例即時設定 */
         #title-hotspot {
             position: absolute;
@@ -2047,7 +2178,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005h"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005BB"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -2316,6 +2447,9 @@
     </picture>
     <!-- 熱區位置由 title-screen.js 依當前圖片與 cover 裁切比例即時計算，永遠對準光環 -->
     <button id="title-hotspot" onclick="enterWorld()" aria-label="進入世界"></button>
+    <!-- 標題下的版本名、光環下的創作者（2026-10-04 使用者指定）：位置與字級同熱區由 title-screen.js 依圖片座標換算 -->
+    <div id="title-version" class="title-text">版本：飛昇靈界</div>
+    <div id="title-credit" class="title-text">創作者：銀河領主-羅峰</div>
 </div>
 
 <!-- 讀檔失敗：本地已有存檔但讀取出錯時由 save.js 的 reportLoadFailure() 顯示。沒有關閉鈕，必須選一個處理方式；
@@ -2372,7 +2506,7 @@
         <div class="hud-name-line"><span id="hud-player-name">韓立</span> <span id="hud-karma" class="karma-tag karma-neutral">中立</span> <span id="hud-title" class="title-tag" style="display: none;"></span></div>
         <div id="hud-realm" class="hud-realm">凡人 1階</div>
         <div class="hud-level-line"><span id="hud-level">Lv.1</span><span class="hud-mini-bar"><span id="hud-level-bar"></span></span></div>
-        <div class="hud-power lb-entry" style="cursor: default;">戰力 <span id="hud-power">5</span></div><!-- 2026-09-30 戰力榜已移除（config-leaderboard.js 的 LEADERBOARD_RANKS_REMOVED）；恢復時拿掉 cursor 樣式、加回 onclick="openLeaderboardModal()" 並加回 🏆 -->
+        <div class="hud-power lb-entry" style="cursor: default;">戰力 <span id="hud-power">5</span></div><!-- 戰力榜已關閉（config-leaderboard.js 的 LEADERBOARD_POWER_REMOVED）；再開放時拿掉 cursor 樣式、加回 onclick="openLeaderboardModal()" 並加回 🏆 -->
     </div>
     <div id="hud-coins" class="hud-pill-text" title="靈石" onclick="showHudResourceInfo('coins')">0</div>
     <div id="hud-rep" class="hud-pill-text" title="聲望" onclick="showHudResourceInfo('rep')">0</div>
@@ -2417,6 +2551,7 @@
             <div style="margin-top: 5px;">戰力：<span id="power-display">5</span></div>
             <div style="margin-top: 5px;">金丹：<span id="core-display" style="color: #facc15;">築基期開啟丹田</span></div>
             <div style="margin-top: 5px;">元神：<span id="yuanshen-display" style="cursor: pointer; text-decoration: underline dotted;" onclick="openYuanshenModal()">未凝聚</span></div>
+            <div style="margin-top: 5px;">天賦：<span id="talent-display" style="color: #fbbf24; cursor: pointer; text-decoration: underline dotted;" onclick="openTalentModal()">可用 0 點</span></div>
             <div style="margin-top: 5px;">資質：<span id="aptitude-display" style="color: #c084fc; cursor: pointer; text-decoration: underline dotted;" onclick="openAptitudeView()">尚未測試</span></div>
             <div style="margin-top: 5px;">當前壽命：<span id="age-display" style="color: #e5e7eb; font-weight: bold;">16 歲</span></div>
             <div style="margin-top: 5px;">剩餘壽元：<span id="lifespan-display" style="color: #4ade80; font-weight: bold;">60 年</span>
@@ -2636,7 +2771,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005h" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005BB" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-avatar-aura" class="ys-hud-aura" aria-hidden="true"></div>
@@ -2644,7 +2779,7 @@
         <span><span id="pc-hud-player-name">韓立</span> <span id="pc-hud-karma" class="karma-tag karma-neutral">中立</span> <span id="pc-hud-title" class="title-tag" style="display: none;"></span></span>
         <span id="pc-hud-realm" class="hud-realm">凡人 1階</span>
         <div class="pc-level-line"><span id="pc-hud-level">Lv.1</span><span class="hud-mini-bar"><span id="pc-hud-level-bar"></span></span></div>
-        <div class="pc-power lb-entry" style="cursor: default;">戰力 <span id="pc-hud-power">5</span></div><!-- 戰力榜已移除，恢復同上 -->
+        <div class="pc-power lb-entry" style="cursor: default;">戰力 <span id="pc-hud-power">5</span></div><!-- 戰力榜已關閉，開放同上 -->
     </div>
     <div id="pc-hud-coins" class="pc-pill" title="靈石" onclick="showHudResourceInfo('coins')">0</div>
     <div id="pc-hud-core" class="pc-pill" title="獸丹" onclick="showHudResourceInfo('core')">0</div>
@@ -2730,6 +2865,87 @@
     <div class="modal-content" style="max-width: 480px; text-align: center; border-color: var(--accent);">
         <h2 id="aptitude-title" style="color: var(--accent); margin-top: 0;">⛩️ 入門資質測試</h2>
         <div id="aptitude-body"></div>
+    </div>
+</div>
+<!-- 天賦樹（talent.js，第 68 節）：人物面板「天賦」點開；內容由 renderTalentModal() 產生 -->
+<!-- 天元城（lingjie.js，第 74 節）：大道商行、靈界任務榜 -->
+<!-- 青瀾島・隱藏仙翁（town-npc.js 的 talkToXianweng）：沒有 ✕，要選一個 -->
+<div id="xianweng-modal" class="modal-bg">
+    <div class="modal-content" style="max-width: 460px; border-color: #c084fc; text-align: center;">
+        <img id="xianweng-img" alt="隱藏仙翁" style="width: 150px; height: auto; display: block; margin: 0 auto 6px;">
+        <h2 style="color: #fde68a; margin: 0 0 6px; letter-spacing: 2px;">🎣 隱藏仙翁</h2>
+        <p id="xianweng-text" style="color: #e5e7eb; font-size: 0.95em; line-height: 1.7; white-space: pre-line; text-align: left; margin: 0 0 12px;"></p>
+        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('fishing')">🎣 仙翁釣魚 <small id="xianweng-fish-n" style="color:#9ca3af;"></small></button>
+        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('gomoku')">♟️ 玲瓏棋局（五子棋・困難） <small id="xianweng-chess-n" style="color:#9ca3af;"></small></button>
+        <button class="sys-btn" onclick="xianwengChoose('leave')">↩ 告辭</button>
+    </div>
+</div>
+<!-- 隱藏仙翁的小遊戲（xianweng-games.js）：開場動畫、仙翁釣魚、玲瓏棋局（五子棋）；沒有點背景關閉，要按按鈕離開 -->
+<div id="xw-intro">
+    <video id="xw-intro-video" playsinline preload="none"></video>
+    <button class="sys-btn xw-intro-skip" onclick="finishXianwengIntro()">略過 ⏭</button>
+</div>
+<div id="xw-fish-modal" class="modal-bg">
+    <div class="modal-content xw-fish-card">
+        <h2 style="color: #fde68a; margin: 0 0 4px; text-align: center; letter-spacing: 2px;">🎣 仙翁釣魚</h2>
+        <div id="xw-fish-left" style="text-align:center; color:#9ca3af; font-size:0.85em;"></div>
+        <p id="xw-fish-say" class="xw-say"></p>
+        <div class="xw-fish-area">
+            <div class="xw-pond">
+                <div class="xw-bobber"></div>
+                <div class="xw-pond-ripple"><i></i><i></i></div>
+            </div>
+            <div class="xw-bar" title="綠框框住魚，收線進度才會增加"><div id="xw-bar-box"></div><div id="xw-bar-fish">🐟</div></div>
+        </div>
+        <div class="xw-prog"><div id="xw-prog-fill"></div></div>
+        <div id="xw-fish-catch"></div>
+        <button id="xw-fish-btn" class="sys-btn" onclick="xianwengFishAction()">🎣 拋竿</button>
+        <button class="close-btn" style="margin-top: 8px;" onclick="closeXianwengFishing()">↩ 還竿給仙翁</button>
+    </div>
+</div>
+<div id="xw-chess-modal" class="modal-bg">
+    <div class="modal-content xw-chess-card">
+        <h2 style="color: #fde68a; margin: 0 0 4px; text-align: center; letter-spacing: 2px;">♟️ 玲瓏棋局</h2>
+        <div id="xw-chess-left" style="text-align:center; color:#9ca3af; font-size:0.85em;"></div>
+        <p id="xw-chess-say" class="xw-say"></p>
+        <div id="xw-board"></div>
+        <p style="text-align:center; color:#9ca3af; font-size:0.8em; margin:6px 0;">你執黑先行，橫、直、斜任一方向先連成五子者勝；贏了有 40% 機會得到傳送陣靈石。</p>
+        <button id="xw-chess-again" class="sys-btn" style="border-color:#fbbf24; color:#fde68a;" onclick="restartXianwengGomoku()">♟️ 再下一盤</button>
+        <button class="close-btn" style="margin-top: 8px;" onclick="closeXianwengGomoku()">↩ 起身離席</button>
+    </div>
+</div>
+<!-- 天元城・宗門設施（lingjie.js 的 openLingjieFacility，第 74 節）：靈界也能用的一般宗門設施 -->
+<div id="lingjie-facility-modal" class="modal-bg" onclick="if (event.target === this) closeModal('lingjie-facility-modal')">
+    <div class="modal-content" style="max-width: 440px; border-color: #c084fc;">
+        <h2 style="color: #d8b4fe; margin-top: 0; text-align: center;">⛩️ 天元城・宗門設施</h2>
+        <p style="text-align:center; color:#9ca3af; font-size:0.85em; margin-top:0;">身在靈界也能使用；門派任務、靈田、靈獸園、藏書閣等宗門內設施仍須回人界宗門。</p>
+        <button class="sect-btn" onclick="closeModal('lingjie-facility-modal'); openSectModal()">⛩️ 尋訪仙門（至高聖地）</button>
+        <button class="shop-btn" onclick="closeModal('lingjie-facility-modal'); openShopModal()">💊 丹藥堂 (買賣丹藥)</button>
+        <button class="sys-btn" style="border-color: rgba(250, 204, 21, 0.4); color: #facc15;" onclick="closeModal('lingjie-facility-modal'); openBagModal()">🎒 修仙背包 (道具/裝備)</button>
+        <button class="servant-btn" onclick="closeModal('lingjie-facility-modal'); openServantModal()">🤝 僕從小屋 (拯救與派遣)</button>
+        <button class="sect-btn" style="border-color:#facc15; color:#facc15;" onclick="closeModal('lingjie-facility-modal'); openEstateModal()">🏞️ 洞府產業 (靈田・礦脈收成)</button>
+        <button class="close-btn" style="margin-top: 14px;" onclick="closeModal('lingjie-facility-modal')">關閉</button>
+    </div>
+</div>
+<div id="lingjie-shop-modal" class="modal-bg" onclick="if (event.target === this) closeModal('lingjie-shop-modal')">
+    <div class="modal-content" style="max-width: 560px; text-align: center; border-color: #fbbf24;">
+        <h2 style="color: #fbbf24; margin-top: 0;">🏪 大道商行</h2>
+        <div id="lingjie-shop-body"></div>
+        <button class="close-btn" onclick="closeModal('lingjie-shop-modal')">關閉</button>
+    </div>
+</div>
+<div id="lingjie-quest-modal" class="modal-bg" onclick="if (event.target === this) closeModal('lingjie-quest-modal')">
+    <div class="modal-content" style="max-width: 520px; text-align: center; border-color: #fbbf24;">
+        <h2 style="color: #fbbf24; margin-top: 0;">📜 天元城・任務榜</h2>
+        <div id="lingjie-quest-body"></div>
+        <button class="close-btn" onclick="closeModal('lingjie-quest-modal')">關閉</button>
+    </div>
+</div>
+<div id="talent-modal" class="modal-bg">
+    <div class="modal-content" style="max-width: 560px; text-align: center; border-color: #fbbf24;">
+        <h2 style="color: #fbbf24; margin-top: 0;">🌳 天賦・道途</h2>
+        <div id="talent-body"></div>
+        <button class="close-btn" onclick="closeModal('talent-modal')">關閉</button>
     </div>
 </div>
 <!-- 元神（yuanshen.js，第 65 節）：人物面板「元神」點開；內容由 openYuanshenModal() 產生 -->
@@ -2835,11 +3051,10 @@
         <!-- 城鎮（不編號）：直接顯示傳送點卡片（map.js 的 renderTownTeleports），點擊即傳送 -->
         <div class="panel-title" style="text-align: left; margin-top: 4px;">🏯 城鎮傳送點（安全區）</div>
         <div id="world-map-towns" class="town-teleports"></div>
-        <button class="sys-btn" onclick="openMapCategoryModal(1)">📍 第一區：野外歷練區</button>
-        <button class="sys-btn" onclick="openMapCategoryModal(2)">📍 第二區：開放世界大區域</button>
-        <button class="sys-btn" onclick="openMapCategoryModal(3)">📍 第三區：上古禁區 (高難)</button>
-        <button class="sys-btn" onclick="openMapCategoryModal(4)">📍 第四區：幽冥禁域 (高難)</button>
-        <button class="sys-btn" onclick="openMapCategoryModal(5)">📍 第五區：諸天至高戰場</button>
+        <button class="sys-btn" onclick="openMapCategoryModal(1, true)">📍 落雲宗周邊</button>
+        <button class="sys-btn" onclick="openMapCategoryModal(2, true)">📍 慕蘭草原</button>
+        <button class="sys-btn" onclick="openMapCategoryModal(3, true)">📍 大晉王朝區域</button>
+        <button class="sys-btn" onclick="openMapCategoryModal(6, true)">🌊 無邊海 (渡劫解鎖·高難)</button>
         <button class="close-btn" onclick="closeModal('world-map-modal')">關閉</button>
     </div>
 </div>
@@ -2996,7 +3211,7 @@
             <div id="world-region-lift"><div id="world-region-lift-img"></div></div>
         </div>
     </div>
-    <button class="town-scene-back" onclick="closeTownScene()">↩ 離開</button>
+    <button id="town-scene-leave" class="town-scene-back" onclick="closeTownScene()">↩ 離開</button>
     <button id="town-scene-extra" class="town-scene-back town-scene-extra" style="display: none;"></button>
     <div id="town-scene-title"></div>
     <div id="town-scene-hint">↔ 左右滑動瀏覽</div>
@@ -3041,12 +3256,30 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005h" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005BB" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
 
 <!-- 秘境列表（活動「🌀 秘境」，secret-realm.js 的 renderSecretRealmList 產生卡片） -->
+<!-- 世界 Boss 視窗（world-boss.js，第 75 節）：秘境列表的「世界 Boss」卡片開啟 -->
+<!-- 活動海報（activity.js 的 openActivityPoster；config-activities.js 的 img，例：三界之戰（原域外天魔）） -->
+<div id="activity-poster-modal" class="modal-bg" onclick="if (event.target === this) closeModal('activity-poster-modal')">
+    <div class="modal-content" style="max-width: 460px; border-color: #fbbf24; text-align: center; padding-top: 12px;">
+        <img id="activity-poster-img" alt="" style="width: 100%; max-height: 62vh; object-fit: contain; border-radius: 8px; display: block; margin: 0 auto 8px;">
+        <h2 id="activity-poster-title" style="color: #fde68a; margin: 4px 0;"></h2>
+        <p id="activity-poster-desc" style="color: #cbd5e1; font-size: 0.9em; white-space: pre-line; margin: 0 0 10px;"></p>
+        <button id="activity-poster-enter" class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="enterActivityPoster()">⚔️ 進入</button>
+        <button class="close-btn" style="margin-top: 8px;" onclick="closeModal('activity-poster-modal')">關閉</button>
+    </div>
+</div>
+<div id="world-boss-modal" class="modal-bg" onclick="if (event.target === this) closeModal('world-boss-modal')">
+    <div class="modal-content" style="max-width: 560px; border-color: #f87171;">
+        <h2 style="color: #fca5a5; margin-top: 0; text-align: center;">⚔️ 世界 Boss</h2>
+        <div id="world-boss-body"></div>
+        <button class="close-btn" style="margin-top: 14px;" onclick="closeModal('world-boss-modal')">關閉</button>
+    </div>
+</div>
 <div id="secret-realm-modal" class="modal-bg" onclick="if (event.target === this) closeModal('secret-realm-modal')">
     <div class="modal-content" style="max-width: 560px; border-color: var(--accent);">
         <h2 style="color: var(--accent); margin-top: 0; text-align: center;">🌀 秘境</h2>
@@ -3099,7 +3332,7 @@
             <div class="track"><div id="defense-load-fill"></div></div>
             <div id="defense-load-bytes"></div>
             <div id="defense-load-clips"></div>
-            <div id="defense-load-error"><span id="defense-load-error-msg"></span><br><button onclick="DefenseBattle.retry()">🔄 重新載入</button></div>
+            <div id="defense-load-error"><span id="defense-load-error-msg"></span><br><button onclick="retryDefenseBattle()">🔄 重新載入</button></div>
         </div>
         <div id="defense-result">
             <div class="big" id="defense-result-title">守城成功</div>
@@ -3191,6 +3424,39 @@
                 <div id="zm-fight-end-body"></div>
                 <button class="zm-btn ghost" onclick="backToZhenmoHall()">↩ 返回塔廳</button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- 世界 Boss 戰鬥（world-boss.js，第 75 節）：30 回合；Boss 血量看雲端，這裡顯示「本次傷害／單次上限」 -->
+<div id="world-boss-scene">
+    <div id="wb-fight">
+        <div class="zm-fbar boss">
+            <div class="nm"><span id="wb-fight-name"></span><span id="wb-fight-round"></span></div>
+            <div class="track"><div id="wb-fight-dmg-fill"></div></div>
+            <div class="hp" id="wb-fight-dmg"></div>
+        </div>
+        <div id="wb-fight-scene">
+            <div id="wb-fight-bg"></div>
+            <button id="wb-fight-quit" onclick="closeWorldBossFight()">↩ 放棄</button>
+            <div id="wb-fight-boss-fx" class="zm-fx"></div>
+            <img id="wb-fight-hero" alt="">
+            <div id="wb-fight-hero-fx" class="zm-fx"></div>
+        </div>
+        <div class="zm-fbar me">
+            <div class="nm"><span>你的氣血</span></div>
+            <div class="track"><div id="wb-fight-me-fill"></div></div>
+            <div class="hp" id="wb-fight-me-hp"></div>
+        </div>
+        <div id="wb-fight-log"></div>
+        <div class="wb-speed">
+            <button data-s="1" class="on" onclick="setWorldBossSpeed(1)">×1</button>
+            <button data-s="2" onclick="setWorldBossSpeed(2)">×2</button>
+            <button data-s="4" onclick="setWorldBossSpeed(4)">×4</button>
+            <button id="wb-fight-skip" onclick="skipWorldBossFight()">⏭ 略過演出</button>
+        </div>
+        <div id="wb-fight-end">
+            <div id="wb-fight-end-body"></div>
+            <button onclick="closeWorldBossFight()">↩ 返回世界 Boss</button>
         </div>
     </div>
 </div>
@@ -3463,7 +3729,7 @@
             <div class="card">
                 <h3>駐顏駐魅力丹</h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">材料: 1株 仙品靈草 + 1000 靈石</p>
-                <p id="pill-effect-cha" style="font-size: 0.85em; color: var(--charm-color);">效果: 魅力 +20</p>
+                <p id="pill-effect-cha" style="font-size: 0.85em; color: var(--charm-color);">效果: 魅力 +0.5（上限 5000 顆）</p>
                 <p class="pill-used" id="pill-used-cha"></p>
                 <div class="batch-btns">
                     <button class="shop-btn" onclick="craftPill('cha', 1)">×1</button>
@@ -3559,114 +3825,124 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20261005h"></script>
-<script src="data/config-realms.js?v=20261005h"></script>
-<script src="data/config-level.js?v=20261005h"></script>
-<script src="data/config-lifespan.js?v=20261005h"></script>
-<script src="data/config-maps.js?v=20261005h"></script>
-<script src="data/config-sects.js?v=20261005h"></script>
-<script src="data/config-lingbao.js?v=20261005h"></script>
-<script src="data/config-shop.js?v=20261005h"></script>
-<script src="data/config-beasts.js?v=20261005h"></script>
-<script src="data/config-servants.js?v=20261005h"></script>
-<script src="data/config-equipment.js?v=20261005h"></script>
-<script src="data/config-gear-catalog.js?v=20261005h"></script>
-<script src="data/config-gear.js?v=20261005h"></script>
-<script src="data/config-enhance.js?v=20261005h"></script>
-<script src="data/config-sets.js?v=20261005h"></script>
-<script src="data/config-profession.js?v=20261005h"></script>
-<script src="data/config-aptitude.js?v=20261005h"></script>
-<script src="data/config-golden-core.js?v=20261005h"></script>
-<script src="data/config-yuanshen.js?v=20261005h"></script>
-<script src="data/config-mailbox.js?v=20261005h"></script>
-<script src="data/config-titles.js?v=20261005h"></script>
-<script src="data/config-tribulation.js?v=20261005h"></script>
-<script src="data/config-quests.js?v=20261005h"></script>
-<script src="data/config-activities.js?v=20261005h"></script>
-<script src="data/config-daily-quests.js?v=20261005h"></script>
-<script src="data/config-elements.js?v=20261005h"></script>
-<script src="data/config-merit.js?v=20261005h"></script>
-<script src="data/config-bounty.js?v=20261005h"></script>
-<script src="data/config-talisman.js?v=20261005h"></script>
-<script src="data/config-avatars.js?v=20261005h"></script>
-<script src="data/config-avatar-frames.js?v=20261005h"></script>
-<script src="data/config-spells.js?v=20261005h"></script>
-<script src="data/config-strange-fire.js?v=20261005h"></script>
-<script src="data/config-partners.js?v=20261005h"></script>
-<script src="data/config-towns.js?v=20261005h"></script>
-<script src="data/config-casino.js?v=20261005h"></script>
-<script src="data/config-leaderboard.js?v=20261005h"></script>
-<script src="data/config-secret-realms.js?v=20261005h"></script>
-<script src="data/config-defense.js?v=20261005h"></script>
-<script src="data/config-zhenmo.js?v=20261005h"></script>
-<script src="data/config-zhenmo-questions.js?v=20261005h"></script>
-<script src="data/config-numeric.js?v=20261005h"></script>
-<script src="data/config-economy.js?v=20261005h"></script>
-<script src="data/config-encounter.js?v=20261005h"></script>
-<script src="data/config-race.js?v=20261005h"></script>
-<script src="data/state.js?v=20261005h"></script>
-<script src="data/stats.js?v=20261005h"></script>
-<script src="data/numeric.js?v=20261005h"></script>
-<script src="data/elements.js?v=20261005h"></script>
-<script src="data/race.js?v=20261005h"></script>
-<script src="data/battle-fx.js?v=20261005h"></script>
-<script src="data/ui.js?v=20261005h"></script>
-<script src="data/map.js?v=20261005h"></script>
-<script src="data/town.js?v=20261005h"></script>
-<script src="data/casino.js?v=20261005h"></script>
-<script src="data/combat.js?v=20261005h"></script>
-<script src="data/leveling.js?v=20261005h"></script>
-<script src="data/lifespan.js?v=20261005h"></script>
-<script src="data/tribulation.js?v=20261005h"></script>
-<script src="data/sect.js?v=20261005h"></script>
-<script src="data/shop.js?v=20261005h"></script>
-<script src="data/bag.js?v=20261005h"></script>
-<script src="data/equipment.js?v=20261005h"></script>
-<script src="data/equip-compare.js?v=20261005h"></script>
-<script src="data/gear.js?v=20261005h"></script>
-<script src="data/enhance.js?v=20261005h"></script>
-<script src="data/profession.js?v=20261005h"></script>
-<script src="data/aptitude.js?v=20261005h"></script>
-<script src="data/golden-core.js?v=20261005h"></script>
-<script src="data/yuanshen.js?v=20261005h"></script>
-<script src="data/codex.js?v=20261005h"></script>
-<script src="data/lingbao-shop.js?v=20261005h"></script>
-<script src="data/artifact.js?v=20261005h"></script>
-<script src="data/servant.js?v=20261005h"></script>
-<script src="data/quest.js?v=20261005h"></script>
-<script src="data/activity.js?v=20261005h"></script>
-<script src="data/daily-quest.js?v=20261005h"></script>
-<script src="data/auction.js?v=20261005h"></script>
-<script src="data/merit.js?v=20261005h"></script>
-<script src="data/bounty.js?v=20261005h"></script>
-<script src="data/talisman.js?v=20261005h"></script>
-<script src="data/strange-fire.js?v=20261005h"></script>
-<script src="data/partner.js?v=20261005h"></script>
-<script src="data/town-npc.js?v=20261005h"></script>
-<script src="data/field.js?v=20261005h"></script>
-<script src="data/economy.js?v=20261005h"></script>
-<script src="data/encounter.js?v=20261005h"></script>
-<script src="data/beast-combat.js?v=20261005h"></script>
-<script src="data/spells.js?v=20261005h"></script>
-<script src="data/beast.js?v=20261005h"></script>
-<script src="data/library.js?v=20261005h"></script>
-<script src="data/alchemy.js?v=20261005h"></script>
-<script src="data/player-profile.js?v=20261005h"></script>
-<script src="data/save.js?v=20261005h"></script>
-<script src="data/config-home-pc.js?v=20261005h"></script>
-<script src="data/home-ui.js?v=20261005h"></script>
-<script src="data/settings.js?v=20261005h"></script>
-<script src="data/avatar.js?v=20261005h"></script>
-<script src="data/leaderboard.js?v=20261005h"></script>
-<script src="data/mailbox.js?v=20261005h"></script>
-<script src="data/msgboard.js?v=20261005h"></script>
-<script src="data/market.js?v=20261005h"></script>
-<script src="data/secret-realm.js?v=20261005h"></script>
-<script src="data/defense.js?v=20261005h"></script>
-<script src="data/zhenmo.js?v=20261005h"></script>
-<script src="data/title-screen.js?v=20261005h"></script>
-<script src="data/pwa.js?v=20261005h"></script>
-<script src="data/main.js?v=20261005h"></script>
+<script src="data/format.js?v=20261005BB"></script>
+<script src="data/config-realms.js?v=20261005BB"></script>
+<script src="data/config-level.js?v=20261005BB"></script>
+<script src="data/config-lifespan.js?v=20261005BB"></script>
+<script src="data/config-maps.js?v=20261005BB"></script>
+<script src="data/config-monsters.js?v=20261005BB"></script>
+<script src="data/config-talents.js?v=20261005BB"></script>
+<script src="data/config-sects.js?v=20261005BB"></script>
+<script src="data/config-lingbao.js?v=20261005BB"></script>
+<script src="data/config-shop.js?v=20261005BB"></script>
+<script src="data/config-beasts.js?v=20261005BB"></script>
+<script src="data/config-servants.js?v=20261005BB"></script>
+<script src="data/config-equipment.js?v=20261005BB"></script>
+<script src="data/config-gear-catalog.js?v=20261005BB"></script>
+<script src="data/config-gear.js?v=20261005BB"></script>
+<script src="data/config-enhance.js?v=20261005BB"></script>
+<script src="data/config-sets.js?v=20261005BB"></script>
+<script src="data/config-profession.js?v=20261005BB"></script>
+<script src="data/config-aptitude.js?v=20261005BB"></script>
+<script src="data/config-golden-core.js?v=20261005BB"></script>
+<script src="data/config-yuanshen.js?v=20261005BB"></script>
+<script src="data/config-mailbox.js?v=20261005BB"></script>
+<script src="data/config-titles.js?v=20261005BB"></script>
+<script src="data/config-tribulation.js?v=20261005BB"></script>
+<script src="data/config-quests.js?v=20261005BB"></script>
+<script src="data/config-activities.js?v=20261005BB"></script>
+<script src="data/config-daily-quests.js?v=20261005BB"></script>
+<script src="data/config-elements.js?v=20261005BB"></script>
+<script src="data/config-merit.js?v=20261005BB"></script>
+<script src="data/config-bounty.js?v=20261005BB"></script>
+<script src="data/config-talisman.js?v=20261005BB"></script>
+<script src="data/config-avatars.js?v=20261005BB"></script>
+<script src="data/config-avatar-frames.js?v=20261005BB"></script>
+<script src="data/config-spells.js?v=20261005BB"></script>
+<script src="data/config-strange-fire.js?v=20261005BB"></script>
+<script src="data/config-partners.js?v=20261005BB"></script>
+<script src="data/config-towns.js?v=20261005BB"></script>
+<script src="data/config-casino.js?v=20261005BB"></script>
+<script src="data/config-leaderboard.js?v=20261005BB"></script>
+<script src="data/config-secret-realms.js?v=20261005BB"></script>
+<script src="data/config-world-boss.js?v=20261005BB"></script>
+<script src="data/config-defense.js?v=20261005BB"></script>
+<script src="data/config-zhenmo.js?v=20261005BB"></script>
+<script src="data/config-zhenmo-questions.js?v=20261005BB"></script>
+<script src="data/config-numeric.js?v=20261005BB"></script>
+<script src="data/config-economy.js?v=20261005BB"></script>
+<script src="data/config-encounter.js?v=20261005BB"></script>
+<script src="data/config-race.js?v=20261005BB"></script>
+<script src="data/state.js?v=20261005BB"></script>
+<script src="data/stats.js?v=20261005BB"></script>
+<script src="data/numeric.js?v=20261005BB"></script>
+<script src="data/elements.js?v=20261005BB"></script>
+<script src="data/race.js?v=20261005BB"></script>
+<script src="data/monster.js?v=20261005BB"></script>
+<script src="data/talent.js?v=20261005BB"></script>
+<script src="data/battle-fx.js?v=20261005BB"></script>
+<script src="data/ui.js?v=20261005BB"></script>
+<script src="data/map.js?v=20261005BB"></script>
+<script src="data/lingjie.js?v=20261005BB"></script>
+<script src="data/town.js?v=20261005BB"></script>
+<script src="data/casino.js?v=20261005BB"></script>
+<script src="data/combat.js?v=20261005BB"></script>
+<script src="data/leveling.js?v=20261005BB"></script>
+<script src="data/lifespan.js?v=20261005BB"></script>
+<script src="data/tribulation.js?v=20261005BB"></script>
+<script src="data/sect.js?v=20261005BB"></script>
+<script src="data/shop.js?v=20261005BB"></script>
+<script src="data/bag.js?v=20261005BB"></script>
+<script src="data/equipment.js?v=20261005BB"></script>
+<script src="data/equip-compare.js?v=20261005BB"></script>
+<script src="data/gear.js?v=20261005BB"></script>
+<script src="data/enhance.js?v=20261005BB"></script>
+<script src="data/craft.js?v=20261005BB"></script>
+<script src="data/profession.js?v=20261005BB"></script>
+<script src="data/aptitude.js?v=20261005BB"></script>
+<script src="data/golden-core.js?v=20261005BB"></script>
+<script src="data/yuanshen.js?v=20261005BB"></script>
+<script src="data/codex.js?v=20261005BB"></script>
+<script src="data/lingbao-shop.js?v=20261005BB"></script>
+<script src="data/artifact.js?v=20261005BB"></script>
+<script src="data/servant.js?v=20261005BB"></script>
+<script src="data/quest.js?v=20261005BB"></script>
+<script src="data/activity.js?v=20261005BB"></script>
+<script src="data/daily-quest.js?v=20261005BB"></script>
+<script src="data/auction.js?v=20261005BB"></script>
+<script src="data/merit.js?v=20261005BB"></script>
+<script src="data/bounty.js?v=20261005BB"></script>
+<script src="data/talisman.js?v=20261005BB"></script>
+<script src="data/strange-fire.js?v=20261005BB"></script>
+<script src="data/partner.js?v=20261005BB"></script>
+<script src="data/town-npc.js?v=20261005BB"></script>
+<script src="data/xianweng-games.js?v=20261005BB"></script>
+<script src="data/field.js?v=20261005BB"></script>
+<script src="data/economy.js?v=20261005BB"></script>
+<script src="data/encounter.js?v=20261005BB"></script>
+<script src="data/beast-combat.js?v=20261005BB"></script>
+<script src="data/spells.js?v=20261005BB"></script>
+<script src="data/beast.js?v=20261005BB"></script>
+<script src="data/library.js?v=20261005BB"></script>
+<script src="data/alchemy.js?v=20261005BB"></script>
+<script src="data/player-profile.js?v=20261005BB"></script>
+<script src="data/save.js?v=20261005BB"></script>
+<script src="data/integrity.js?v=20261005BB"></script>
+<script src="data/config-home-pc.js?v=20261005BB"></script>
+<script src="data/home-ui.js?v=20261005BB"></script>
+<script src="data/settings.js?v=20261005BB"></script>
+<script src="data/avatar.js?v=20261005BB"></script>
+<script src="data/leaderboard.js?v=20261005BB"></script>
+<script src="data/mailbox.js?v=20261005BB"></script>
+<script src="data/msgboard.js?v=20261005BB"></script>
+<script src="data/market.js?v=20261005BB"></script>
+<script src="data/secret-realm.js?v=20261005BB"></script>
+<script src="data/defense.js?v=20261005BB"></script>
+<script src="data/zhenmo.js?v=20261005BB"></script>
+<script src="data/world-boss.js?v=20261005BB"></script>
+<script src="data/title-screen.js?v=20261005BB"></script>
+<script src="data/pwa.js?v=20261005BB"></script>
+<script src="data/main.js?v=20261005BB"></script>
 
 </body>
 </html>

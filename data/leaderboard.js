@@ -5,6 +5,7 @@
 let lbBackend = null;          // Promise<{ db, uid }>，失敗會清掉以便下次重試
 let lbLastUploadAt = 0;
 let lbLastRefreshAt = 0;
+let lbTabFetchedAt = {};       // 各分頁上次讀取成功的時間（LEADERBOARD_AUTO_REFRESH_MS 內重開視窗不重讀）
 let lbRows = null;             // 最近一次讀到的榜單
 let lbError = "";
 let lbBanned = null;           // null = 尚未查過；true = 被 GM 封鎖（banned/{uid}，第 50 節），不再上傳
@@ -61,7 +62,12 @@ function initLeaderboardBackend() {
         for (const f of ['app', 'auth', 'firestore']) {
             if (!loaded[f]()) await lbLoadScript(`${LEADERBOARD_SDK_BASE}/firebase-${f}-compat.js`);
         }
-        if (!firebase.apps.length) firebase.initializeApp(LEADERBOARD_FIREBASE_CONFIG);
+        if (LEADERBOARD_APP_CHECK_KEY && typeof firebase.appCheck !== 'function') await lbLoadScript(`${LEADERBOARD_SDK_BASE}/firebase-app-check-compat.js`);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(LEADERBOARD_FIREBASE_CONFIG);
+            // App Check（config-leaderboard.js）：要在第一次使用 Firestore 之前啟用；token 自動更新
+            if (LEADERBOARD_APP_CHECK_KEY) firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(LEADERBOARD_APP_CHECK_KEY), true);
+        }
         const auth = firebase.auth();
         // 等匿名登入狀態從瀏覽器還原；沒有才新登入（同一個瀏覽器會一直是同一個 uid＝同一筆榜單資料）
         let user = await new Promise(res => { const off = auth.onAuthStateChanged(u => { off(); res(u); }); });
@@ -75,8 +81,8 @@ function initLeaderboardBackend() {
 // 上傳自己的戰力；遊戲結束、讀檔失敗（角色不是真的）或距上次不到 60 秒時不上傳
 async function uploadLeaderboard() {
     if (!isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed) return;
-    if (LEADERBOARD_RANKS_REMOVED) return;   // 排行榜已移除（config-leaderboard.js）
-    if (lbBanned || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;
+    if (LEADERBOARD_POWER_REMOVED) return;   // 戰力榜已移除（config-leaderboard.js）
+    if (lbBanned || isSaveFlagged() || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;   // 存檔驗證異常不上傳（integrity.js）
     lbLastUploadAt = Date.now();
     try {
         const { db, uid } = await initLeaderboardBackend();
@@ -140,7 +146,7 @@ function submitDefenseRecord(run) {
 
 async function flushDefenseSubmit() {
     const run = player.defensePending;
-    if (!run || LEADERBOARD_RANKS_REMOVED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned) return;
+    if (!run || LEADERBOARD_RANKS_REMOVED || !isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed || lbBanned || isSaveFlagged()) return;
     if (flushDefenseSubmit.busy) return;
     flushDefenseSubmit.busy = true;
     try {
@@ -205,10 +211,10 @@ function switchLeaderboardTab(tab) {
 function applyLeaderboardTab(tab) {
     lbTab = ['defense', 'board', 'market'].includes(tab) ? tab : 'power';
     // 排行榜已移除（config-leaderboard.js）：戰力榜／守城榜分頁藏起來，一律改開留言板
-    if (LEADERBOARD_RANKS_REMOVED && (lbTab === 'power' || lbTab === 'defense')) lbTab = 'board';
+    if ((LEADERBOARD_POWER_REMOVED && lbTab === 'power') || (LEADERBOARD_RANKS_REMOVED && lbTab === 'defense')) lbTab = LEADERBOARD_POWER_REMOVED ? 'board' : 'power';
     document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => {
         b.classList.toggle('on', b.dataset.lbTab === lbTab);
-        if (LEADERBOARD_RANKS_REMOVED && (b.dataset.lbTab === 'power' || b.dataset.lbTab === 'defense')) b.style.display = 'none';
+        if ((LEADERBOARD_POWER_REMOVED && b.dataset.lbTab === 'power') || (LEADERBOARD_RANKS_REMOVED && b.dataset.lbTab === 'defense')) b.style.display = 'none';
     });
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '💬 修仙留言板', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
@@ -231,7 +237,7 @@ async function checkLeaderboardBan(db, uid) {
 
 // 由 main.js 的 initGame() 呼叫
 function startLeaderboardSync() {
-    if (!isLeaderboardConfigured() || LEADERBOARD_RANKS_REMOVED) return;
+    if (!isLeaderboardConfigured() || LEADERBOARD_POWER_REMOVED) return;
     setTimeout(uploadLeaderboard, LEADERBOARD_FIRST_UPLOAD_DELAY_MS);
     setInterval(uploadLeaderboard, LEADERBOARD_UPLOAD_INTERVAL_MS);
 }
@@ -247,11 +253,13 @@ async function fetchLeaderboard() {
 function openLeaderboardModal(tab) {
     document.getElementById('leaderboard-modal').style.display = 'flex';
     applyLeaderboardTab(tab || lbTab);
+    if (Date.now() - (lbTabFetchedAt[lbTab] || 0) < LEADERBOARD_AUTO_REFRESH_MS) { renderLeaderboard(false); return; }
     refreshLeaderboard(false);
 }
 
 async function refreshLeaderboard(manual) {
     if (!isLeaderboardConfigured()) { renderLeaderboard(); return; }
+    if (lbTab === 'market' && isMarketClosed()) { lbError = ''; renderLeaderboard(false); return; }   // 週末休市：不讀雲端（market.js）
     if (manual && Date.now() - lbLastRefreshAt < LEADERBOARD_REFRESH_COOLDOWN_MS) return;
     lbLastRefreshAt = Date.now();
     lbError = "";
@@ -264,10 +272,11 @@ async function refreshLeaderboard(manual) {
         else if (lbTab === 'board') mbBoardRows = await lbWithTimeout(fetchMsgBoard());
         else if (lbTab === 'market') await lbWithTimeout(fetchMarket());
         else lbRows = await lbWithTimeout(fetchLeaderboard());
+        lbTabFetchedAt[lbTab] = Date.now();
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
-        lbError = lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
+        lbError = (lbIsQuota(e) || (e && e.code !== 'permission-denied' && await lbProbeQuota())) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
             ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "留言板尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
             : "連線失敗，請稍後再試。";
     }
@@ -281,6 +290,20 @@ const LB_QUOTA_MSG = "雲端伺服器回報額度已滿（Firebase：Quota excee
 function lbIsQuota(e) {
     const s = String((e && (e.code || '')) + ' ' + (e && e.message || ''));
     return /resource-exhausted|quota/i.test(s);
+}
+
+// 連線逾時的時候 SDK 還在內部重試、拿不到真正的錯誤（使用者 2026-10-04 回報寄售「連線失敗」，實際是 Firebase 回 429 額度已滿）：
+//   直接打一次 Firestore REST（不登入，正常會回 403），回 429 就是額度已滿，改顯示 LB_QUOTA_MSG
+async function lbProbeQuota() {
+    const c = LEADERBOARD_FIREBASE_CONFIG;
+    // 額度已滿時部分 429 回應不帶 CORS 標頭（瀏覽器回報 Failed to fetch），最多試 3 次
+    for (let i = 0; i < 3; i++) {
+        try {
+            const r = await lbWithTimeout(fetch(`https://firestore.googleapis.com/v1/projects/${c.projectId}/databases/(default)/documents/${MARKET_COLLECTION}?pageSize=1&key=${c.apiKey}&t=${Date.now()}`));
+            return r.status === 429;
+        } catch (e) { await new Promise(res => setTimeout(res, 800)); }
+    }
+    return false;
 }
 
 function lbWithTimeout(promise) {
@@ -327,7 +350,7 @@ function renderLeaderboard(loading) {
         return;
     }
     if (lbTab === 'defense') { box.innerHTML = defenseBoardHtml(loading); return; }
-    if (lbTab === 'market') { box.innerHTML = marketHtml(loading); return; }
+    if (lbTab === 'market') { box.innerHTML = isMarketClosed() ? marketClosedHtml() : marketHtml(loading); return; }
     if (lbTab === 'board') {
         // 重繪時保留正在輸入的留言
         const draft = document.getElementById('board-input') ? document.getElementById('board-input').value : '';
@@ -347,6 +370,7 @@ function renderLeaderboard(loading) {
     }
     html += `</div>`;
     if (lbBanned) html += `<p class="lb-note" style="color:#f87171;">⛔ 你的戰力紀錄因資料異常已被移出戰力榜，無法再上榜。</p>`;
+    else if (isSaveFlagged()) html += `<p class="lb-note" style="color:#f87171;">⚠️ 存檔驗證異常（${lbEscape(player.integrity.reason || '')}），無法上榜。</p>`;
     if (loading) html += `<p class="lb-note">讀取中…</p>`;
     if (lbError) html += `<p class="lb-note" style="color:#f87171;">${lbError}</p>`;
 
