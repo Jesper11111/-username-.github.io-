@@ -1619,7 +1619,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AL`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AM`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3952,6 +3952,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     熱點：春和堂 [900, 255, 220, 235]、涼亭 [360, 100, 300, 260]、小攤 [555, 380, 200, 180] 先提示敬請期待；「⛵ 搭船離島」[70, 520, 500, 220] 回人界地圖。
   - **只能搭船離島**（版本 `20261005AL`，使用者指定）：`townScenes` 新增選填 `noLeave: true`（town.js 的 `openTownScene` 隱藏左上 `#town-scene-leave`「↩ 離開」），
     青瀾島不設 `extraButton`（右上沒有返回人界）；另新增選填 `focusX`（圖寬 0～1，`layoutTownScene` 窄螢幕的起始視角，沒設＝置中），青瀾島 0.3＝手機一開始就看得到碼頭小船。
+  - **碼頭確認、涼亭改背景、隱藏仙翁**（版本 `20261005AM`，使用者指定）：「⛵ 搭船離島」改呼叫 town-npc.js 的 `leaveQinglanIsland()`（`gameConfirm`「是否搭船離開青瀾島？」）；涼亭熱點移除（純背景）。
+    隱藏仙翁＝青瀾島的 `hiddenNpcs`（`kind: 'xianweng'`、`chance` 0.2、`minCha` 10000、位置在涼亭 [458, 285, 114, 180]、圖 `images/towns/npc-xianweng.png` 由島景圖的垂釣老者裁出加仙光羽化）：
+    `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；
+    對話 `#xianweng-modal`（沒有 ✕）三選一 `xianwengChoose('guide'|'chess'|'leave')`：當天見過就不再出現（`markTownNpcDone`）；**造化（獎勵）尚未決定**，目前只寫日誌與提示。
 
 ## 75. 世界 Boss（`config-world-boss.js`、`world-boss.js`、`tools/firestore.rules`、gm.html「⚔️ 世界 Boss」；2026-10-04，版本 `20261005AD`）
 

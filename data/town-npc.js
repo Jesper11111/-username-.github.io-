@@ -94,6 +94,7 @@ function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];
     const scene = townScenes[sceneName];
     for (const npc of (scene && scene.hiddenNpcs) || []) {
+        if (npc.minCha && getTotalCharm() < npc.minCha) continue;   // 魅力門檻（例：青瀾島隱藏仙翁 10000）
         if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
         townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
         return;
@@ -104,7 +105,9 @@ function rollTownNpcs(sceneName) {
 function getTownNpcFigures(sceneName, view) {
     const hit = townNpcSpots[sceneName];
     if (!hit || view !== townScenes[sceneName]) return [];
-    return [{ id: 'npc-' + hit.npc.id, name: hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc', action: `talkToTownNpc('${sceneName}')` }];
+    // 函式名寫成字串字面值：建置（tools/build.js）才會把它們掛回 window（點人偶的 onclick 要用）
+    const fn = hit.npc.kind === 'xianweng' ? 'talkToXianweng' : 'talkToTownNpc';
+    return [{ id: 'npc-' + hit.npc.id, name: hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc', action: `${fn}('${sceneName}')` }];
 }
 
 // 從畫面上拿掉（處理完畢）
@@ -247,4 +250,34 @@ function closeTownNpcDuel() {
     if (townNpcDuelPlace && currentTownScene === townNpcDuelPlace) closeTownScene();
     townNpcDuelPlace = null;
     updateUI();
+}
+
+// ---- 青瀾島（config-towns.js 的 townScenes["青瀾島"]，2026-10-04）----
+function getTotalCharm() { return (player.stats.cha || 0) + (getEquipBonus().cha || 0); }   // 本身＋裝備（同 numeric.js 的 cha）
+// 碼頭小船：唯一出口，先問是否離開
+async function leaveQinglanIsland() {
+    if (!(await gameConfirm('⛵ 是否搭船離開青瀾島？'))) return;
+    openTownScene(WORLD_SCENE_KEY);
+}
+// 隱藏仙翁：魅力達標、登島時機率出現在涼亭；三個選項的造化（獎勵）尚未決定，先結緣（當天見過就不再出現）
+function talkToXianweng(sceneName) {
+    const hit = townNpcSpots[sceneName];
+    if (!hit) return;
+    const L = hit.npc.lines || {};
+    document.getElementById('xianweng-img').src = hit.spot.img;
+    document.getElementById('xianweng-text').innerText = `「${L.greet || ''}」`;
+    document.getElementById('xianweng-modal').dataset.scene = sceneName;
+    document.getElementById('xianweng-modal').style.display = 'flex';
+}
+function xianwengChoose(kind) {
+    const modal = document.getElementById('xianweng-modal');
+    const sceneName = modal.dataset.scene, hit = townNpcSpots[sceneName];
+    modal.style.display = 'none';
+    if (!hit) return;
+    const L = hit.npc.lines || {};
+    markTownNpcDone(hit.npc.id);
+    removeTownNpc(sceneName);
+    if (kind === 'leave') { showToast(`🍃 ${L.bye || '仙翁飄然而去'}`); return; }
+    addLog(`🎣 青瀾島涼亭偶遇【隱藏仙翁】，${kind === 'chess' ? '陪仙翁對弈一局' : '請仙翁指點'}，結下一段仙緣。`, 'level-up');
+    gameAlert(`${L.reward || ''}\n\n（仙翁的造化尚在醞釀，敬請期待）`);
 }
