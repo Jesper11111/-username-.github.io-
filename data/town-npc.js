@@ -264,7 +264,7 @@ function talkToXianweng(sceneName) {
     const hit = townNpcSpots[sceneName];
     if (!hit) return;
     const L = hit.npc.lines || {};
-    document.getElementById('xianweng-img').src = hit.spot.img;
+    document.getElementById('xianweng-img').src = hit.npc.portrait || hit.spot.img;
     document.getElementById('xianweng-text').innerText = `「${L.greet || ''}」`;
     document.getElementById('xianweng-modal').dataset.scene = sceneName;
     document.getElementById('xianweng-modal').style.display = 'flex';

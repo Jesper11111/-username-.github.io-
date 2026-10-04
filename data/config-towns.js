@@ -313,10 +313,12 @@ const townScenes = {
         figures: [],
         // 隱藏仙翁（2026-10-04 使用者：「涼亭改成場景，圖內場景有機會出現仙翁；解鎖條件魅力 10000」）：涼亭只是背景（沒有按鈕），
         //   魅力（本身＋裝備）≥ minCha 時，每次登島 chance 機率出現在涼亭裡；點他開對話（town-npc.js 的 talkToXianweng），當天見過就不再出現
-        //   人物圖：從青瀾島島景圖的垂釣老者裁下、加仙光橢圓羽化（images/towns/npc-xianweng.png 240×380）
+        //   人物圖：從青瀾島島景圖的垂釣老者沿輪廓去背（2026-10-04 使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
+        //     場景用 npc-xianweng.png（約 117px 身高、略降亮度；站在涼亭正面兩根前柱之後，柱子與欄杆擋住的部分直接透明）；對話視窗用全身 npc-xianweng-portrait.png
         hiddenNpcs: [{
             id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 0.2, minCha: 10000,
-            spots: [{ img: "images/towns/npc-xianweng.png", rect: [458, 285, 114, 180] }],
+            spots: [{ img: "images/towns/npc-xianweng.png", rect: [503, 363, 55, 94] }],   // 身高約 117px；只露出兩根前柱之間（x 515～540）、欄杆以上，像躲在涼亭裡
+            portrait: "images/towns/npc-xianweng-portrait.png",
             lines: {
                 greet: "呵呵……老夫在此垂釣三百年，釣的不是魚，是有緣人。\n小友魅力過人，與老夫甚是投緣——這一竿，送你一場造化。",
                 reward: "仙翁撫鬚一笑：「造化未到，緣分已結。改日再來，老夫自有安排。」",
