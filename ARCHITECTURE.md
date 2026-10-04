@@ -1623,7 +1623,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AX`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AY`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4041,3 +4041,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **上線前要做**：把新版 `tools/firestore.rules` 貼到 Firebase 主控台發布；沒發布時視窗會顯示「世界 Boss 尚未開放（伺服器設定更新中）」。
 - **驗證**：Firebase 模擬器（Firestore＋Auth）規則測試 35 項全過；遊戲接模擬器實測：秘境卡片 → 視窗 → 挑戰（略過演出）→ 戰果計入（Boss 100 萬 → 99 萬）→ 排行第 1 → 馬上再打被擋（調息中）
   → 上一隻結束後開視窗自動換成本週這隻（100 萬沒打死 ÷2 → 下限 400 萬）→ 領獎（靈石、洗煉石、通貨、稱號【誅天第一】【誅魔先鋒】）；建置版 50 個畫面掃描無錯誤。
+
+- **域外天魔海報**（2026-10-04，版本 `20261005AY`，使用者提供 1024×1536 海報「三界之戰」：「域外天魔選項新增圖片」）：`images/secret/yuwai-tianmo.jpg`（海報，約 490KB）、`yuwai-tianmo-banner.jpg`（海報中段主角裁切 640×263）。
+  config-activities.js 的活動新增選填 `img`／`banner`：activity.js 的 `renderActivityList` 有 banner 時按鈕用它當底圖（左側漸層壓暗、鎖定時灰階）；
+  `openActivity` 遇到有 img 的活動先開 `#activity-poster-modal`（`openActivityPoster(act)`：海報、名稱、說明；未開放顯示「功能開發中，敬請期待！」、不顯示「⚔️ 進入」），已開放的按「⚔️ 進入」→ `enterActivityPoster()` 呼叫 openFn。

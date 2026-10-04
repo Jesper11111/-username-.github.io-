@@ -3,6 +3,7 @@
 // minRealmIndex  = 所需境界（對應 realms 陣列索引；0 = 無境界限制）
 // implemented    = false 代表功能尚未實作，點擊後顯示「敬請期待」
 // openFn         = 已實作活動要呼叫的開啟函式名稱
+// img／banner    = 選填：海報（點選後先顯示，activity.js 的 openActivityPoster）／選單按鈕底圖（橫幅，沒填就用 img）
 const activityData = [
     { id: "daily", name: "每日任務", icon: "📅", minRep: 1000, minRealmIndex: 0,
       implemented: true, openFn: "openDailyQuestModal",
@@ -25,5 +26,7 @@ const activityData = [
     // 世界 Boss（world-boss.js，第 75 節；2026-10-04 由秘境移到這裡）：使用者要求「暫不開放」→ implemented: false 只顯示敬請期待；開放時改成 true 即可
     { id: "demon", name: "域外天魔", icon: "👹", minRep: 10000, minRealmIndex: 8,
       implemented: false, openFn: "openWorldBossModal",
+      // 2026-10-04 使用者提供 1024×1536 海報「三界之戰」：點選先看海報（未開放＝敬請期待）；橫幅＝海報中段（主角）裁切 640×263
+      img: "images/secret/yuwai-tianmo.jpg", banner: "images/secret/yuwai-tianmo-banner.jpg",
       desc: "世界BOSS・每週六 20:00～週日 20:00・大乘以上開放" }
 ];
