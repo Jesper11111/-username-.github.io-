@@ -134,6 +134,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   town-npc.js         城內隱藏 NPC（第 20 節「天南市集・香腸大師奧斯卡」）：進城擲骰躲在角落、被發現後吃／不吃、必敗決鬥演出（設定在 config-towns.js 的 hiddenNpcs）
+  xianweng-games.js   青瀾島隱藏仙翁的兩個小遊戲：開場動畫、仙翁釣魚、玲瓏棋局（五子棋困難 AI）（第 74 節「青瀾島」；設定在 config-towns.js 的 XIANWENG_GAMES）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
   codex.js            天磯錄：收藏紀錄、60 個稱號、器錄／套裝／異火／稱號／職業視窗（第 37 節）
@@ -175,6 +176,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 - `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
 - `config-yuanshen.js` 接在 `config-golden-core.js` 後、`yuanshen.js` 接在 `golden-core.js` 後（第 65 節）：只宣告常數與函式，執行期才互相呼叫。
 - `town-npc.js` 緊接在 `partner.js` 後（第 20 節）：只宣告函式，執行期才讀 `townScenes`／`partnerById`，位置其實不受限。
+- `xianweng-games.js` 緊接在 `town-npc.js` 後（第 74 節）：只宣告常數與函式（`GOMOKU_N`、`GOMOKU_PATTERNS`），執行期才讀 `XIANWENG_GAMES`／`townNpcSpots`，位置其實不受限。
 - `config-encounter.js` 緊接在 `config-economy.js` 後、`encounter.js` 緊接在 `economy.js` 後（第 63 節）；兩者載入時只宣告常數與建立 IIFE，不讀其他檔，位置其實不受限。
 
 | # | 檔案 | 責任 | 依賴（讀取哪些全域） | 被誰依賴 / 誰會呼叫它 |
@@ -254,6 +256,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34i | `partner.js` | 夥伴（第 39 節）：**載入時**建 `partnerById`；`getPartnerPowerAvg`/`getPartnerTier`/`isPartnerMet`；好感 `getBond`/`getBondLevel`/`getBondLevelName`(LV5 道侶／結拜)/`addBond`/`reduceBond`/`nextBondMin`/`todayKey`/`greetPartner`/`pickGreetLine`/`getGiftCost`/`getGiftsLeft`/`giftPartner`；情緣任務 `getQuestStat`/`describeBondQuest`/`acceptBondQuest`/`getBondQuestProgress`/`claimBondQuest`/`abandonBondQuest`/`onPartnerFieldKills`；結識 `meetPartner`/`talkToPartner`(場景人偶)；彩蛋 `askPartnerEaster`/`answerPartnerEaster`/`playPartnerVideo`/`getPlayedSeconds`/`onPartnerVideoEnded`/`closePartnerVideo`、狀態 `partnerVideoCtx`；隊伍 `getPartnerTeam`/`isInTeam`/`togglePartnerTeam`/`getPartnerBonusTotals`/`partnerSkillTurn`/`migratePartners`；對話 `showPartnerDialog(p, lines, note, afterId, choices)`/`closePartnerDialog`；視窗 `partnerFilter`/`openPartnerModal(focusId)`/`setPartnerFilter`/`formatPartnerOrigin`/`renderBondSection`/`renderPartnerCard`/`renderPartnerModal` | `config-partners.js`、`player.partners`/`partnerTeam`/`partnerBond`/`fieldKills`/`evilKills`/`bountyKills`/`gender`/`coins`、`artifact.js`(castProcSkill)、`codex.js`(describeTitleBonus)、`ui.js` | `gear.js`(getBonusTotals)、`combat.js`(partnerSkillTurn、擊殺後 onPartnerFieldKills)/`tribulation.js`/`bounty.js`、`save.js`(migratePartners)、`config-towns.js`(風希人偶 talkToPartner)、`town-npc.js`(showPartnerDialog／addPartnerShards／addBond)、HTML 情緣導覽與對話框；`closePartnerDialog` 會呼叫 town-npc.js 的 `onTownNpcDialogClosed`（有定義才呼叫） |
 | 34m | `yuanshen.js` | 元神（第 65 節）：`hasYuanshen`/`getYuanshenInfo`/`getYuanshenCandidate`（資質判斷）、`getYuanshenBonusTotals`（修為）、`getYuanshenElement`（本命五行鎖定）、`getYuanshenDmg`（偏好屬性傷害）、`addHuashenScroll`/`rollHuashenScroll`/`rollFieldHuashenScroll`/`checkDailyHuashenBonus`（化神訣殘本）、`formatYuanshenShort`、`openYuanshenModal`/`condenseYuanshen`；只有函式、無載入時副作用 | `config-yuanshen.js`、`aptitude.js`(describePhysique、formatAptitudeShort)、`map.js`(getMapSuitRange)、`ui.js`(gameConfirm、addLog)、`#yuanshen-modal` DOM | `gear.js`(getBonusTotals)、`stats.js`(getPlayerElement)、`elements.js`(getPlayerCombatAttrs → resolveHit)、`combat.js`(風擊、野外掉落)、`golden-core.js`(凝聚後加成歸零)、`aptitude.js`(鎖定)、`leveling.js`(轉世清空)、`zhenmo.js`／`defense.js`／`encounter.js`／`bounty.js`／`daily-quest.js`(殘本)、`bag.js`、`ui.js`(updateUI) |
 | 34l | `town-npc.js` | 城內隱藏 NPC（第 20 節）：狀態 `townNpcSpots`（{ 城名: { npc, spot } }，本次進城擲出的結果）/`townNpcDuelTimers`/`townNpcDuelPlace`/`townNpcAskAt`（防連點，`TOWN_NPC_CHOICE_GUARD_MS`）/`townNpcAutoTimer`（「吃」消失後自動開打）/`townNpcAsking`（還沒選的城名）；`onTownNpcDialogClosed`（partner.js 的 closePartnerDialog 呼叫：問句被關掉＝開打）；`closeTownNpcDuel`（離開決鬥畫面＝關掉城內場景）；`isTownNpcDoneToday`/`markTownNpcDone`（`player.townNpc = { id: 日期 }`，用到才建立）、`getTownBanLeftMin(城名)`（`player.townBan`，被打爆後的禁入；map.js 的 goToTown 呼叫）、定時人偶 `getFigureSched`/`getScheduledFigureLeftMs`/`isScheduledFigureHere`（town.js 的 rollTownFigures 呼叫）/`talkToScheduledFigure(id)`（`player.townFigureSched`）、`rollTownNpcs(城名)`、`getTownNpcFigures(城名, view)`（只畫在主圖）、`removeTownNpc`、`talkToTownNpc`/`answerTownNpc(城名, 吃?)`、`startTownNpcDuel`；只有函式定義、無載入時副作用 | `config-towns.js`(hiddenNpcs)、`partner.js`(partnerById、showPartnerDialog、addPartnerShards、addBond、todayKey…)、`town.js`(currentTownScene、renderTownHotspots、closeTownScene)、`numeric.js`/`stats.js`(戰力、getMaxHp)、`format.js`(fmtCombat)、`#partner-dialog-modal`／`#town-duel` DOM | `town.js`(openTownScene 擲骰、renderTownHotspots 併入人偶)、`map.js`(goToTown 檢查禁入)、人偶 onclick |
+| 34m | `xianweng-games.js` | 隱藏仙翁小遊戲（第 74 節）：每日次數 `getXianwengDaily`（`player.xianweng = { date, fish, chess }`）/`xianwengFishLeft`/`xianwengChessLeft`/`grantXianwengStone`/`backToXianweng`；開場動畫 `playXianwengIntro(then)`/`finishXianwengIntro`；釣魚 `openXianwengFishing`/`xianwengFishAction`/`xianwengCast`/`xianwengHook`/`xianwengReelFrame`/`endXianwengCast`/`grantXianwengFishLoot`/`closeXianwengFishing`/`initXianwengFishControls`（狀態 `xwFish`）；五子棋 `openXianwengGomoku`/`gomokuPlay(i)`/`endXianwengGomoku`/`restartXianwengGomoku`/`closeXianwengGomoku`（狀態 `xwChess`）、AI `gomokuFive`/`gomokuCellScore`/`gomokuCandidates`/`gomokuOrdered`/`gomokuNegamax`/`gomokuWinCells`/`gomokuVCF`/`gomokuAiMove` | `config-towns.js`(XIANWENG_GAMES、LINGJIE_STONE_KEYS)、`town-npc.js`(townNpcSpots、talkToXianweng)、`lingjie.js`(addLingStone)、`enhance.js`(addRefineStones/addStarIron)、`craft.js`(addCraftCur/formatCraftGain)、`partner.js`(todayKey)、`save.js`(saveLocal)、`ui.js` | `town-npc.js`(xianwengChoose)、HTML 按鈕 |
 | 34f | `profession.js` | `getProfession`/`getProfRank`/`getProfRankName`/`getProfessionPassive`/`getProfWeaponMult`/`gainProficiency`/`gainKillProficiency`/`professionSkillTurn`/`formatProfessionTag`/`chooseProfession`/`renderProfessionTab` | `config-profession.js`、`artifact.js`(castProcSkill)、`elements.js`(getMapCategoryIndex)、`codex.js` | `stats.js`(主修武器加成)、`gear.js`(被動)、`combat.js`/`tribulation.js`/`bounty.js`(職業技能、熟練度)、`save.js`(離線熟練度)、`codex.js` |
 | 34g | `codex.js` | 收藏 `recordGearCollected`/`migrateGearCodex`/`hasCollected`/`getOpenGear`/`getTitleGear`(收藏類稱號範圍，固定不含秘境)/`countCollected`/`countCollectedQuality`、稱號 `getTitleName`/`isTitleConditionMet`/`describeTitleCondition`/`describeTitleBonus`/`getTitleBonusTotals`/`checkTitleUnlocks`/`getNameTag`/`setActiveTitle`、視窗 `codexTab`/`codexSlot`/`openCodexModal`/`setCodexTab`/`setCodexSlot`/`renderCodexModal`/`formatCodexStars`/`formatCodexStarLegend`(星星六色，第 48 節)/`CODEX_QUALITIES`/`renderCodexGear`/`renderCodexSets`/`renderCodexTitles`（異火分頁在 strange-fire.js） | `config-titles.js`、`gear.js`、`profession.js`、`strange-fire.js`(renderCodexFires/countCollectedFires)、`merit.js`(getKarmaState)、`stats.js`(getSectTier) | `gear.js`(收藏、稱號加成)、`enhance.js`、`profession.js`、`ui.js`(updateUI 每秒 checkTitleUnlocks)、`home-ui.js`(道號旁標籤)、`save.js`、HTML 天磯錄熱點 |
 | 35 | `field.js` | `herbRecipes`、`openFieldModal`/`plantHerb` | `player.spiritGrass`/`player.herbs`/`player.coins`、`ui.js`(resolveBatchCount) | HTML 按鈕（僅在「宗門」顯示） |
@@ -371,6 +374,7 @@ combatTick() 每秒執行 [combat.js]
 | `activatePartner(id)`（情緣卡片「✨ 激活」，碎片集滿 100 片） | `data/partner.js` |
 | `openPartnerModal`（手機與 PC 的「情緣」）、`setPartnerFilter(f)`、`greetPartner(id)`／`giftPartner(id)`／`acceptBondQuest(id)`／`claimBondQuest(id)`／`abandonBondQuest(id)`／`togglePartnerTeam(id)`（情緣視窗內）、`closePartnerDialog`／`answerPartnerEaster(id, yes)`（對話框）、`closePartnerVideo`（彩蛋影片）、`talkToPartner(id)`（坊市人偶） | `data/partner.js` |
 | `talkToTownNpc(城名)`（城內隱藏 NPC 人偶，town.js 動態產生）、`answerTownNpc(城名, 吃?)`（對話框「🌭 吃／不吃」）、`closeTownNpcDuel`（決鬥畫面「↩ 被轟出天南市集」）、`talkToScheduledFigure(id)`（天星城賭坊前的牧塵人偶） | `data/town-npc.js` |
+| `xianwengChoose('fishing'|'gomoku'|'leave')`（仙翁對話）、`finishXianwengIntro`（開場動畫「略過」）、`xianwengFishAction`／`closeXianwengFishing`（釣魚：拋竿／收竿、還竿；收線是按住，事件由 `initXianwengFishControls` 綁定）、`gomokuPlay(i)`／`restartXianwengGomoku`／`closeXianwengGomoku`（玲瓏棋局） | `data/town-npc.js`、`data/xianweng-games.js` |
 | `craftStrangeFire(qty)`（背包異火碎片卡片）、`openCodexModal('fires')`（背包異火卡片「查看異火榜」） | `data/strange-fire.js`／`data/codex.js` |
 | PC 版洞府的所有按鈕與建築熱點（onclick 字串寫在 `config-home-pc.js` 的 `pcStageButtons[].action`，改名函式時要一起改） | 各功能檔 |
 | `openSettingsModal`（洞府右上 ⚙️、PC 版「設置」）、`setDisplayMode(mode)`、`toggleFullscreen`、`setFontScale('s'/'m'/'l')`（後三者由 `renderSettingsModal()` 動態產生） | `data/settings.js` |
@@ -1619,7 +1623,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AT`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AU`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3965,6 +3969,21 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     **聽完低語才能對話、兩個小遊戲**（版本 `20261005AT`，使用者指定）：`whispers.inOrder`（依序說）＋`unlockAfterAll`（10 句說完、最後一句飄完才 `hit.heardAll`，重畫人偶變成可點並加 `.awake` 金光呼吸；約 2 分半）；
     之前人偶沒有 action（點了沒反應）。對話選項改為「🎣 仙翁釣魚」「♟️ 玲瓏棋局（五子棋・困難）」「↩ 告辭」：兩個遊戲製作中（提示敬請期待、仙翁留著），告辭＝當天不再出現。
     釣魚畫面先做示意圖給使用者確認（直式：上方仙翁台詞、浮標與漣漪、右側「魚的位置」條＋綠色收線框、收線進度條、漁獲欄、按住收線鈕）。
+    **兩個小遊戲上線**（版本 `20261005AU`，使用者指定：「釣魚 3 竿，各種材料，最高等的魚 20% 掉金木水火土極品靈石其中一樣 1 顆；玲瓏棋局輸沒有懲罰（機緣未到），贏 40% 得五行靈石其中一種 1 顆，可下三盤」；
+    「極品靈石」＝傳送陣靈石 `player.lingStones`）：新檔 `xianweng-games.js`、設定 `XIANWENG_GAMES`（config-towns.js）；每天次數 `player.xianweng = { date, fish, chess }`（用到才建立，跨日歸零；仙翁還沒出現前不會建立）。
+    仙翁對話按鈕顯示今日剩餘次數；次數用完選該遊戲＝提示後回到對話；玩完（還竿／離席）仙翁還在就回到對話，告辭才離開。
+    - **開場動畫**：使用者提供的 Gemini 影片（10 秒、5 個鏡頭：遠景垂釣→臉→手→水面→浮標下沉），重新壓成 960 寬、保留 AAC 音效 `videos/xianweng-fishing.mp4`（約 1.1MB，sw.js 不快取 mp4）；
+      選「仙翁釣魚」就全螢幕播（`#xw-intro`，z-index 130），右下「略過 ⏭」，播完／略過／載入失敗都直接進釣魚；有聲播放被擋時改靜音播。
+    - **仙翁釣魚**（`#xw-fish-modal`）：池塘底圖是影片 6.9 秒的水面截圖 `images/towns/xianweng-pond.jpg`。拋竿（按下就算一竿）→ 1.5～4.5 秒後浮標下沉 → `biteWindowMs` 1.5 秒內按「收竿」（慢了魚跑掉）→
+      收線：右側直條裡魚亂竄，**按住**按鈕（滑鼠／觸控／空白鍵）綠框上升、放開下沉；魚在框內進度 +26%/秒、框外 −17%/秒，起始 30%，滿＝釣到、歸零＝跑掉。釣到後 700ms 內不接受拋竿（避免放開收線鈕時誤拋）。
+      魚（權重／速度／框高）：青鱗凡魚 50（凡品靈草 6、上品 2）、碧波靈鯉 30（上品 4、極品 1、洗煉石 5）、赤霞寶鯛 15（極品 2、洗煉石 10、星允鐵 5、天機石 1）、
+      **金鱗仙鯉** 5（仙品靈草 1、洗煉石 15、星允鐵 10、天機石 2、混元晶 1，另 20% 隨機一種傳送陣靈石 1 顆）；越高級越快、框越小。
+    - **玲瓏棋局**（`#xw-chess-modal`）：視窗底圖用使用者提供的棋盤插畫 `images/towns/xianweng-gomoku.jpg`（壓暗），上面是 15 路木紋棋盤（225 個按鈕 `gomokuPlay(i)`），玩家執黑先手、無禁手，連五勝；
+      下第一子才算一盤（中途離席＝輸）；贏 `chessWinStoneChance` 40% 得隨機一種傳送陣靈石 1 顆，輸／和局「機緣未到」不扣東西。
+      **困難 AI**：棋型評分（連五、活四、衝四、活三、眠三、活二…，雙活三／四三加分）攻 ×1.1＋守；能連五就下、對手要連五就擋；能**連續衝四取勝（VCF，6 層）**就直接走；
+      否則前 10 名候選各做 3 層 alpha-beta（仙翁→玩家→仙翁→評估），並扣掉「下完後玩家能 4 層內連續衝四取勝」的點（這段最多算 1.2 秒）。本機測試：對「一層貪心、先手」的電腦約四成勝、約兩成和局，平均每手約 0.1 秒。
+    - 驗證（本機）：Playwright 走完 3 竿（漁獲入帳、次數歸零、按鈕停用）、回到對話、3 盤棋（贏得靈石入帳）、手機 390 寬版面；建置版 `dist/` 新增的 onclick 函式都有公開、Console 無錯誤。
+      無頭 Chromium 沒有 H.264 解碼器，開場動畫走「載入失敗 → 直接進釣魚」分支；一般 Chrome／Safari／手機都能播 mp4（同目錄其他影片相同格式）。
   - **路人閒聊**（版本 `20261005AQ`，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
     town.js 的 `startTownChatter`（`openTownScene` 啟動、`closeTownScene`／換場景停止）、`showTownChatter`：只挑目前畫面看得到的路人頭頂（手機左右滑動時畫面外的人不說話），
     句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。

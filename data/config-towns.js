@@ -157,6 +157,25 @@ const CITY_GATES = {
 const LINGJIE_STONE_KEYS = ["金", "木", "水", "火", "土"];
 // 背包圖示（2026-10-04 使用者提供五行靈石合成圖 848×1264，以瀏覽器 canvas 各裁一塊縮成 192×192）
 const LINGJIE_STONE_IMG = { "金": "images/items/lingstone-metal.jpg", "木": "images/items/lingstone-wood.jpg", "水": "images/items/lingstone-water.jpg", "火": "images/items/lingstone-fire.jpg", "土": "images/items/lingstone-earth.jpg" };
+// ---- 隱藏仙翁的兩個小遊戲（xianweng-games.js，第 74 節「青瀾島」；2026-10-04 使用者指定）----
+// 仙翁釣魚：每天 3 竿（選「仙翁釣魚」先播開場動畫，可略過）；釣到各種材料；最高等的魚 20% 再掉金木水火土傳送陣靈石其中一種 1 顆
+// 玲瓏棋局：五子棋（15 路、玩家執黑先手、仙翁困難 AI），每天 3 盤；贏 40% 得傳送陣靈石其中一種 1 顆；輸沒有懲罰（機緣未到）
+//   每天次數存 player.xianweng = { date, fish, chess }（用到才建立）
+const XIANWENG_GAMES = {
+    introVideo: "videos/xianweng-fishing.mp4",
+    fishCasts: 3,
+    chessGames: 3,
+    chessWinStoneChance: 0.4,
+    chessBg: "images/towns/xianweng-gomoku.jpg",
+    // 魚的等級：w＝上鉤機率權重；speed＝魚在收線條上亂竄的速度；box＝綠框高度（佔條長）；loot＝漁獲（herbs 靈草、refine 洗煉石、iron 星允鐵、craft 做裝通貨）
+    fish: [
+        { id: "fan",  name: "青鱗凡魚", icon: "🐟", w: 50, speed: 0.55, box: 0.30, loot: { herbs: { mortal: 6, high: 2 } } },
+        { id: "ling", name: "碧波靈鯉", icon: "🐠", w: 30, speed: 0.85, box: 0.26, loot: { herbs: { high: 4, epic: 1 }, refine: 5 } },
+        { id: "bao",  name: "赤霞寶鯛", icon: "🐡", w: 15, speed: 1.15, box: 0.22, loot: { herbs: { epic: 2 }, refine: 10, iron: 5, craft: { tianji: 1 } } },
+        { id: "xian", name: "金鱗仙鯉", icon: "🐉", w: 5,  speed: 1.5,  box: 0.19, loot: { herbs: { immortal: 1 }, refine: 15, iron: 10, craft: { tianji: 2, hunyuan: 1 } }, stoneChance: 0.2 }
+    ],
+    biteWindowMs: 1500   // 浮標下沉後要在這段時間內按「收竿」，太慢魚就跑了
+};
 const LINGJIE_RESPAWN_MAP = "天元城外";   // 身在靈界的復活點（lingjie.js 的 getRespawnPoint）
 const LINGJIE_TEA_RUMORS = [
     "聽說血天大陸的魔修最近又不安分了，渡劫的道友小心點。",
