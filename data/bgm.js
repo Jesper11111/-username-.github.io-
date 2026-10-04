@@ -1,23 +1,21 @@
 // ==================== 背景音樂（第 76 節）====================
-// 兩首（2026-10-04 使用者提供）：
-//   game＝遊戲背景音樂：「只放 1～2 首，到 7 分 48 秒；從遊戲登入頁面開始播放」→ audio/bgm-game.m4a（AAC 80kbps，約 4.8MB）＋ .ogg（Opus 56kbps，約 3.4MB，備用）
-//   zone＝特殊地圖音樂：videoplayback.mp4 的音軌（約 97 秒）→ audio/bgm-sanjie.m4a（AAC 96kbps，約 1.2MB）＋ .ogg（備用）；
-//         只在「三界之戰」與「靈界地圖」播放（BGM_ZONE：三界之戰海報 #activity-poster-modal、世界 Boss 視窗與戰鬥畫面、靈界大地圖 LINGJIE_SCENE_KEY）
-// 目前畫面在 BGM_ZONE 放 zone，其他畫面（含登入頁）放 game；兩首各自記住播到哪，換回來接著放。都循環播放、頭尾淡入淡出。
-// 不影響遊戲運轉：瀏覽器規定要先點過畫面才能播有聲媒體 → 第一次點擊／按鍵才建立音訊（之前不下載）；邊下載邊播（串流），載入失敗就是沒有音樂。
-//   手機開「省數據」（navigator.connection.saveData）且沒設定過時，預設關閉。
-// 開關與音量是「這台裝置」的偏好（localStorage 的 BGM_PREF_KEY），不寫進存檔；設定視窗「🎵 背景音樂」調整。
+// 2026-10-04 使用者：先後換過兩首，後來「移除這兩首歌」，改提供三首配樂「加入遊戲背景音樂」→ 三首依序輪播、播完第三首回到第一首。
+//   audio/bgm-1～3.m4a（AAC 96kbps，各約 1.4MB，約 2 分鐘）＋ .ogg（Opus 64kbps，備用）；頭 1 秒淡入、尾 2.5 秒淡出。
+// 全部畫面都播（從遊戲主頁開始）。一次只載入正在播的那一首（不會一次下載三首）。
+// 不影響遊戲運轉：頁面載入就試著播（瀏覽器允許自動播放時直接響）；被擋時主頁右上「🔇 輕觸開啟音樂」，點畫面任何地方開始；
+//   串流邊下載邊播，載入失敗就跳下一首、都失敗就沒有音樂。手機開「省數據」（navigator.connection.saveData）且沒設定過時預設關閉。
+// 開關與音量是「這台裝置」的偏好（localStorage 的 BGM_PREF_KEY），不寫進存檔；設定視窗「背景音樂」、主頁右上音樂鈕調整。
 // 切到背景（分頁隱藏、App 切走）暫停、回來繼續；有聲影片播放時（仙翁開場動畫、夥伴影片）暫停，影片停了再繼續。
 
-const BGM_TRACKS = {
-    game: { src: "audio/bgm-game.m4a", fallback: "audio/bgm-game.ogg" },
-    zone: { src: "audio/bgm-sanjie.m4a", fallback: "audio/bgm-sanjie.ogg" }   // fallback＝Opus：不支援 AAC 的瀏覽器自動改用
-};
+const BGM_PLAYLIST = [
+    { src: "audio/bgm-1.m4a", fallback: "audio/bgm-1.ogg" },
+    { src: "audio/bgm-2.m4a", fallback: "audio/bgm-2.ogg" },
+    { src: "audio/bgm-3.m4a", fallback: "audio/bgm-3.ogg" }
+];
 const BGM_PREF_KEY = "xiuxian_bgm";
-// 2026-10-04 使用者：「三界之戰、靈界地圖」→ scenes＝town.js 的城內場景名稱（靈界大地圖 LINGJIE_SCENE_KEY）
-const BGM_ZONE = { activities: ["demon"], ids: ["world-boss-modal", "world-boss-scene"], scenes: () => [LINGJIE_SCENE_KEY] };
 const BGM_DEFAULT_VOL = 0.4;
-const bgmAudios = {};   // { game: Audio, zone: Audio }（用到才建立）
+let bgmAudio = null, bgmIndex = 0, bgmFails = 0;
+let bgmUnlocked = false;   // 已經成功播放過（之後回到前景、影片結束可以自動接著放）
 
 function getBgmPref() {
     let o = null;
@@ -28,60 +26,62 @@ function getBgmPref() {
 }
 function saveBgmPref(p) { try { localStorage.setItem(BGM_PREF_KEY, JSON.stringify(p)); } catch (e) {} }
 
-// 目前畫面是不是特殊地圖（三界之戰、靈界地圖）
-function isBgmZone() {
-    const shown = id => { const e = document.getElementById(id); return !!(e && getComputedStyle(e).display !== 'none'); };
-    const poster = document.getElementById('activity-poster-modal');
-    if (typeof currentTownScene !== 'undefined' && currentTownScene && BGM_ZONE.scenes().includes(currentTownScene) && shown('town-scene')) return true;
-    return (shown('activity-poster-modal') && BGM_ZONE.activities.includes(poster.dataset.act)) || BGM_ZONE.ids.some(shown);
-}
-function currentBgmTrack() { return isBgmZone() ? 'zone' : 'game'; }
 // 有聲影片正在播（這時不放背景音樂）
 function isSoundVideoPlaying() {
     return [...document.querySelectorAll('video')].some(v => !v.paused && !v.ended && !v.muted && v.volume > 0);
 }
-function getBgmAudio(key) {
-    if (bgmAudios[key]) return bgmAudios[key];
-    const t = BGM_TRACKS[key];
-    // 先看瀏覽器能不能播 AAC，不能就直接用 Opus；載入失敗時也換一次
+// 第 i 首的網址：瀏覽器能播 AAC 用 m4a，否則用 Opus
+function bgmTrackSrc(i, useFallback) {
+    const t = BGM_PLAYLIST[i];
     const aac = new Audio().canPlayType('audio/mp4; codecs="mp4a.40.2"');
-    const a = new Audio(aac ? t.src : t.fallback);
-    a.loop = true;
+    return useFallback || !aac ? t.fallback : t.src;
+}
+function getBgmAudio() {
+    if (bgmAudio) return bgmAudio;
+    const a = new Audio(bgmTrackSrc(bgmIndex));
     a.preload = 'auto';
+    // 一首播完換下一首（三首輪流）
+    a.addEventListener('ended', () => { bgmFails = 0; switchBgmTrack((bgmIndex + 1) % BGM_PLAYLIST.length); });
+    // 載入失敗：m4a 先換 Opus，再不行跳下一首；整份清單都失敗就放棄
     a.addEventListener('error', () => {
-        if (a.src.endsWith(t.fallback)) return;
-        a.src = t.fallback;
-        playBgm();
+        const t = BGM_PLAYLIST[bgmIndex];
+        if (!a.src.endsWith(t.fallback)) { a.src = t.fallback; playBgm(); return; }
+        if (++bgmFails >= BGM_PLAYLIST.length) return;
+        switchBgmTrack((bgmIndex + 1) % BGM_PLAYLIST.length);
     });
-    return (bgmAudios[key] = a);
+    return (bgmAudio = a);
+}
+function switchBgmTrack(i) {
+    bgmIndex = i;
+    getBgmAudio().src = bgmTrackSrc(i);
+    playBgm();
 }
 function playBgm() {
-    const p = getBgmPref(), key = currentBgmTrack();
-    // 不是這個畫面的那首先停
-    Object.keys(bgmAudios).forEach(k => { if (k !== key && !bgmAudios[k].paused) bgmAudios[k].pause(); });
+    const p = getBgmPref();
     if (!p.on || p.vol <= 0 || document.hidden || isSoundVideoPlaying()) return;
-    const a = getBgmAudio(key);
+    const a = getBgmAudio();
     a.volume = p.vol;
     if (!a.paused) return;
     const r = a.play();
     if (r && r.then) r.then(() => { bgmUnlocked = true; renderBgmTitleBtn(); }, () => renderBgmTitleBtn());   // 被瀏覽器擋（還沒互動過）或載入失敗：等下次點擊再試
 }
-// 遊戲主頁（標題畫面）右上的音樂鈕 #bgm-title-btn：瀏覽器擋自動播放時顯示「🔇 輕觸開啟音樂」，播放中顯示 🔊（點了＝關）
-let bgmUnlocked = false;   // 已經成功播放過（之後換畫面可以自動接著放）
+function pauseBgm() { if (bgmAudio && !bgmAudio.paused) bgmAudio.pause(); }
+function isBgmPlaying() { return !!(bgmAudio && !bgmAudio.paused); }
+
+// 遊戲主頁（標題畫面）右上的音樂鈕 #bgm-title-btn：被擋時顯示「🔇 輕觸開啟音樂」，播放中顯示 🔊（點了＝關）
 function bgmTitleTap() {
-    const p = getBgmPref(), a = bgmAudios.game;
-    if (p.on && a && !a.paused) toggleBgm();   // 播放中：關掉
-    else { if (!p.on) toggleBgm(); else playBgm(); }
+    const p = getBgmPref();
+    if (p.on && isBgmPlaying()) toggleBgm();   // 播放中：關掉
+    else if (!p.on) toggleBgm(); else playBgm();
     renderBgmTitleBtn();
 }
 function renderBgmTitleBtn() {
     const btn = document.getElementById('bgm-title-btn');
     if (!btn) return;
-    const p = getBgmPref(), a = bgmAudios[currentBgmTrack()], playing = !!(a && !a.paused);
+    const p = getBgmPref(), playing = isBgmPlaying();
     btn.textContent = playing ? '🔊' : (p.on ? '🔇 輕觸開啟音樂' : '🔇');
     btn.classList.toggle('pulse', !playing && p.on);
 }
-function pauseBgm() { Object.values(bgmAudios).forEach(a => { if (!a.paused) a.pause(); }); }
 
 // 設定視窗
 function toggleBgm() {
@@ -90,12 +90,13 @@ function toggleBgm() {
     saveBgmPref(p);
     if (p.on) playBgm(); else pauseBgm();
     renderBgmSettings();
+    renderBgmTitleBtn();
 }
 function setBgmVolume(v) {
     const p = getBgmPref();
     p.vol = Math.min(1, Math.max(0, Number(v) / 100 || 0));
     saveBgmPref(p);
-    Object.values(bgmAudios).forEach(a => { a.volume = p.vol; });
+    if (bgmAudio) bgmAudio.volume = p.vol;
     if (p.vol <= 0) pauseBgm(); else playBgm();
     renderBgmSettings();
 }
@@ -106,21 +107,13 @@ function renderBgmSettings() {
     if (lab) lab.textContent = Math.round(p.vol * 100) + '%';
 }
 
-// 啟動：只綁事件（第一次互動才真的載入音樂）
+// 啟動：綁事件，並在遊戲主頁一打開就試著播（2026-10-04 使用者：「音樂可以在遊戲主頁開始播放嗎」）
 function initBgm() {
     let interacted = false;
-    const kick = () => { interacted = true; setTimeout(playBgm, 0); };   // 點擊的那一下可能正好打開三界之戰
-    // 遊戲主頁一打開就試著播（2026-10-04 使用者：「音樂可以在遊戲主頁開始播放嗎」）：電腦版 Chrome 等常去的網站多半允許；
-    //   手機（iOS Safari、多數 Android）一律要先點畫面 → 主頁右上顯示「🔇 輕觸開啟音樂」，點任何地方都會開始
-    setTimeout(() => { playBgm(); renderBgmTitleBtn(); }, 300);
-    // 換畫面（進出三界之戰、靈界地圖）：每秒檢查一次，該放哪首就換哪首
-    setInterval(() => {
-        renderBgmTitleBtn();
-        if (!(interacted || bgmUnlocked) || document.hidden) return;
-        const a = bgmAudios[currentBgmTrack()];
-        if (!a || a.paused) playBgm();
-    }, 1000);
+    const kick = () => { interacted = true; if (!isBgmPlaying()) setTimeout(playBgm, 0); };
     ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, kick, true));
+    setTimeout(() => { playBgm(); renderBgmTitleBtn(); }, 300);
+    setInterval(renderBgmTitleBtn, 1000);
     document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBgm(); else if (interacted || bgmUnlocked) playBgm(); });
     // 有聲影片：開始播就暫停背景音樂，停了再接著放（play／pause／ended 不會冒泡，用捕獲階段）
     document.addEventListener('play', e => { if (e.target.tagName === 'VIDEO' && !e.target.muted) pauseBgm(); }, true);
