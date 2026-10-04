@@ -134,6 +134,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   town-npc.js         城內隱藏 NPC（第 20 節「天南市集・香腸大師奧斯卡」）：進城擲骰躲在角落、被發現後吃／不吃、必敗決鬥演出（設定在 config-towns.js 的 hiddenNpcs）
+  bgm.js              背景音樂：第一次互動後循環播放、設定視窗開關與音量、切背景／有聲影片時暫停（第 76 節）
   xianweng-games.js   青瀾島隱藏仙翁的兩個小遊戲：開場動畫、仙翁釣魚、玲瓏棋局（五子棋困難 AI）（第 74 節「青瀾島」；設定在 config-towns.js 的 XIANWENG_GAMES）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
@@ -176,6 +177,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 - `config-economy.js` 載入時就執行 `questData.caravan = …`（商隊跑商），必須排在 `config-quests.js` 之後（目前放在 `config-numeric.js` 後面）；`economy.js` 放在 `field.js` 後面（第 61 節）。
 - `config-yuanshen.js` 接在 `config-golden-core.js` 後、`yuanshen.js` 接在 `golden-core.js` 後（第 65 節）：只宣告常數與函式，執行期才互相呼叫。
 - `town-npc.js` 緊接在 `partner.js` 後（第 20 節）：只宣告函式，執行期才讀 `townScenes`／`partnerById`，位置其實不受限。
+- `bgm.js` 緊接在 `settings.js` 後（第 76 節）：載入時只綁事件（pointerdown／keydown／visibilitychange、影片 play／pause／ended 捕獲），第一次互動才建立 Audio。
 - `xianweng-games.js` 緊接在 `town-npc.js` 後（第 74 節）：只宣告常數與函式（`GOMOKU_N`、`GOMOKU_PATTERNS`），執行期才讀 `XIANWENG_GAMES`／`townNpcSpots`，位置其實不受限。
 - `config-encounter.js` 緊接在 `config-economy.js` 後、`encounter.js` 緊接在 `economy.js` 後（第 63 節）；兩者載入時只宣告常數與建立 IIFE，不讀其他檔，位置其實不受限。
 
@@ -257,6 +259,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34m | `yuanshen.js` | 元神（第 65 節）：`hasYuanshen`/`getYuanshenInfo`/`getYuanshenCandidate`（資質判斷）、`getYuanshenBonusTotals`（修為）、`getYuanshenElement`（本命五行鎖定）、`getYuanshenDmg`（偏好屬性傷害）、`addHuashenScroll`/`rollHuashenScroll`/`rollFieldHuashenScroll`/`checkDailyHuashenBonus`（化神訣殘本）、`formatYuanshenShort`、`openYuanshenModal`/`condenseYuanshen`；只有函式、無載入時副作用 | `config-yuanshen.js`、`aptitude.js`(describePhysique、formatAptitudeShort)、`map.js`(getMapSuitRange)、`ui.js`(gameConfirm、addLog)、`#yuanshen-modal` DOM | `gear.js`(getBonusTotals)、`stats.js`(getPlayerElement)、`elements.js`(getPlayerCombatAttrs → resolveHit)、`combat.js`(風擊、野外掉落)、`golden-core.js`(凝聚後加成歸零)、`aptitude.js`(鎖定)、`leveling.js`(轉世清空)、`zhenmo.js`／`defense.js`／`encounter.js`／`bounty.js`／`daily-quest.js`(殘本)、`bag.js`、`ui.js`(updateUI) |
 | 34l | `town-npc.js` | 城內隱藏 NPC（第 20 節）：狀態 `townNpcSpots`（{ 城名: { npc, spot } }，本次進城擲出的結果）/`townNpcDuelTimers`/`townNpcDuelPlace`/`townNpcAskAt`（防連點，`TOWN_NPC_CHOICE_GUARD_MS`）/`townNpcAutoTimer`（「吃」消失後自動開打）/`townNpcAsking`（還沒選的城名）；`onTownNpcDialogClosed`（partner.js 的 closePartnerDialog 呼叫：問句被關掉＝開打）；`closeTownNpcDuel`（離開決鬥畫面＝關掉城內場景）；`isTownNpcDoneToday`/`markTownNpcDone`（`player.townNpc = { id: 日期 }`，用到才建立）、`getTownBanLeftMin(城名)`（`player.townBan`，被打爆後的禁入；map.js 的 goToTown 呼叫）、定時人偶 `getFigureSched`/`getScheduledFigureLeftMs`/`isScheduledFigureHere`（town.js 的 rollTownFigures 呼叫）/`talkToScheduledFigure(id)`（`player.townFigureSched`）、`rollTownNpcs(城名)`、`getTownNpcFigures(城名, view)`（只畫在主圖）、`removeTownNpc`、`talkToTownNpc`/`answerTownNpc(城名, 吃?)`、`startTownNpcDuel`；只有函式定義、無載入時副作用 | `config-towns.js`(hiddenNpcs)、`partner.js`(partnerById、showPartnerDialog、addPartnerShards、addBond、todayKey…)、`town.js`(currentTownScene、renderTownHotspots、closeTownScene)、`numeric.js`/`stats.js`(戰力、getMaxHp)、`format.js`(fmtCombat)、`#partner-dialog-modal`／`#town-duel` DOM | `town.js`(openTownScene 擲骰、renderTownHotspots 併入人偶)、`map.js`(goToTown 檢查禁入)、人偶 onclick |
 | 34m | `xianweng-games.js` | 隱藏仙翁小遊戲（第 74 節）：每日次數 `getXianwengDaily`（`player.xianweng = { date, fish, chess }`）/`xianwengFishLeft`/`xianwengChessLeft`/`grantXianwengStone`/`backToXianweng`；開場動畫 `playXianwengIntro(then)`/`finishXianwengIntro`；釣魚 `openXianwengFishing`/`xianwengFishAction`/`xianwengCast`/`xianwengHook`/`xianwengReelFrame`/`endXianwengCast`/`grantXianwengFishLoot`/`closeXianwengFishing`/`initXianwengFishControls`（狀態 `xwFish`）；五子棋 `openXianwengGomoku`/`gomokuPlay(i)`/`endXianwengGomoku`/`restartXianwengGomoku`/`closeXianwengGomoku`（狀態 `xwChess`）、AI `gomokuFive`/`gomokuCellScore`/`gomokuCandidates`/`gomokuOrdered`/`gomokuNegamax`/`gomokuWinCells`/`gomokuVCF`/`gomokuAiMove` | `config-towns.js`(XIANWENG_GAMES、LINGJIE_STONE_KEYS)、`town-npc.js`(townNpcSpots、talkToXianweng)、`lingjie.js`(addLingStone)、`enhance.js`(addRefineStones/addStarIron)、`craft.js`(addCraftCur/formatCraftGain)、`partner.js`(todayKey)、`save.js`(saveLocal)、`ui.js` | `town-npc.js`(xianwengChoose)、HTML 按鈕 |
+| 34n | `bgm.js` | 背景音樂（第 76 節）：`BGM_SRC`/`BGM_SRC_FALLBACK`/`BGM_PREF_KEY`/`bgmAudio`；`getBgmPref`/`saveBgmPref`/`isSoundVideoPlaying`/`playBgm`/`pauseBgm`/`toggleBgm`/`setBgmVolume(v)`/`renderBgmSettings`/`initBgm`（載入時呼叫，只綁事件） | `audio/bgm-main.*`、localStorage、`#bgm-*` DOM | `settings.js`(openSettingsModal 呼叫 renderBgmSettings)、設定視窗按鈕 |
 | 34f | `profession.js` | `getProfession`/`getProfRank`/`getProfRankName`/`getProfessionPassive`/`getProfWeaponMult`/`gainProficiency`/`gainKillProficiency`/`professionSkillTurn`/`formatProfessionTag`/`chooseProfession`/`renderProfessionTab` | `config-profession.js`、`artifact.js`(castProcSkill)、`elements.js`(getMapCategoryIndex)、`codex.js` | `stats.js`(主修武器加成)、`gear.js`(被動)、`combat.js`/`tribulation.js`/`bounty.js`(職業技能、熟練度)、`save.js`(離線熟練度)、`codex.js` |
 | 34g | `codex.js` | 收藏 `recordGearCollected`/`migrateGearCodex`/`hasCollected`/`getOpenGear`/`getTitleGear`(收藏類稱號範圍，固定不含秘境)/`countCollected`/`countCollectedQuality`、稱號 `getTitleName`/`isTitleConditionMet`/`describeTitleCondition`/`describeTitleBonus`/`getTitleBonusTotals`/`checkTitleUnlocks`/`getNameTag`/`setActiveTitle`、視窗 `codexTab`/`codexSlot`/`openCodexModal`/`setCodexTab`/`setCodexSlot`/`renderCodexModal`/`formatCodexStars`/`formatCodexStarLegend`(星星六色，第 48 節)/`CODEX_QUALITIES`/`renderCodexGear`/`renderCodexSets`/`renderCodexTitles`（異火分頁在 strange-fire.js） | `config-titles.js`、`gear.js`、`profession.js`、`strange-fire.js`(renderCodexFires/countCollectedFires)、`merit.js`(getKarmaState)、`stats.js`(getSectTier) | `gear.js`(收藏、稱號加成)、`enhance.js`、`profession.js`、`ui.js`(updateUI 每秒 checkTitleUnlocks)、`home-ui.js`(道號旁標籤)、`save.js`、HTML 天磯錄熱點 |
 | 35 | `field.js` | `herbRecipes`、`openFieldModal`/`plantHerb` | `player.spiritGrass`/`player.herbs`/`player.coins`、`ui.js`(resolveBatchCount) | HTML 按鈕（僅在「宗門」顯示） |
@@ -1623,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BC`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4051,3 +4054,13 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   config-activities.js 的活動新增選填 `img`／`banner`：activity.js 的 `renderActivityList` 有 banner 時按鈕用它當底圖（左側漸層壓暗、鎖定時灰階）；
   `openActivity` 遇到有 img 的活動先開 `#activity-poster-modal`（`openActivityPoster(act)`：海報、名稱、說明；未開放顯示「功能開發中，敬請期待！」、不顯示「⚔️ 進入」），已開放的按「⚔️ 進入」→ `enterActivityPoster()` 呼叫 openFn。
 - **改名「三界之戰」**（2026-10-04，版本 `20261005BA`，使用者：「活動域外天魔改名稱 三界之戰」）：config-activities.js 的活動 `demon` 名稱改為「三界之戰」（id、openFn 不變；世界 Boss 本身的視窗標題仍是「⚔️ 世界 Boss」）。
+
+## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
+
+- **來源**：使用者提供 `videoplayback.mp4`（「能加入當背景音樂嗎」），取音軌、頭 1.5 秒淡入／尾 3 秒淡出（循環接縫較順）：`audio/bgm-main.m4a`（AAC 96kbps，約 1.2MB）＋ `audio/bgm-main.ogg`（Opus 64kbps，約 0.8MB，備用）。
+  `canPlayType` 不支援 AAC 就直接用 Opus；m4a 載入失敗（`error`）也自動換 Opus。sw.js 不快取 m4a／mp3／ogg（同影片，分段請求）。
+- **播放**：瀏覽器規定要先互動才能播有聲媒體 → 第一次 pointerdown／keydown 時 `playBgm()`（標題畫面點一下就開始），`loop`。
+  分頁隱藏（切 App、鎖螢幕）`pauseBgm()`、回來繼續；有聲影片（未靜音的 `<video>`：仙翁開場動畫、夥伴影片）播放時暫停，影片暫停／結束 300ms 後繼續；守城的靜音影片不影響。
+- **設定**（⚙️ 設定視窗「背景音樂」）：`toggleBgm()` 開／關、音量滑桿 `setBgmVolume(0～100)`（預設 40%）；偏好存 localStorage `xiuxian_bgm = { on, vol }`（這台裝置，不進存檔），`openSettingsModal` 時 `renderBgmSettings()`。
+- 驗證（本機）：點擊前不載入、點擊後開始播放（無頭 Chromium 不支援 AAC → 自動用 Opus，currentTime 前進）、開關與音量即時生效並記住；建置版 on* 掃描無缺漏、Console 無錯誤。
+- ⚠️ 音樂版權：檔案由使用者提供（YouTube 下載的檔名），請確認有使用授權。
