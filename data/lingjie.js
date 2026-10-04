@@ -240,5 +240,5 @@ function claimLingjieQuest(i) {
 }
 
 // ---- 天元城・宗門設施（2026-10-04 使用者：「天元城新增一般宗門選單，在靈界也能使用尋訪仙門、背包、僕從等設施，不用回人界」）----
-//   只放人界「不在宗門也能用」的五項；門派任務、靈田、靈獸園、藏書閣等在人界本來就要身在宗門，靈界不提供
+//   人界「不在宗門也能用」的五項＋靈獸園（2026-10-04 使用者追加）；門派任務、靈田、藏書閣等在人界本來就要身在宗門，靈界不提供
 function openLingjieFacility() { document.getElementById('lingjie-facility-modal').style.display = 'flex'; }
