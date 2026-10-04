@@ -59,6 +59,7 @@ function setDisplayMode(mode) {
 function openSettingsModal() {
     document.getElementById('settings-modal').style.display = 'flex';
     renderSettingsModal();
+    renderBgmSettings();   // 背景音樂（bgm.js）
 }
 
 function isFullscreen() {
