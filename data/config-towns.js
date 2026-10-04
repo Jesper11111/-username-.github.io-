@@ -307,11 +307,22 @@ const townScenes = {
         focusX: 0.3,   // 手機一開始看左側（碼頭小船＝唯一出口）
         hotspots: [
             { id: "ql-shop", label: "春和堂", rect: [900, 255, 220, 235], action: "showToast('🏮 春和堂尚未開業，敬請期待')" },
-            { id: "ql-pavilion", label: "涼亭", rect: [360, 100, 300, 260], action: "showToast('🌸 涼亭小憩：桃花紛飛，靈氣清新（玩法敬請期待）')" },
             { id: "ql-stall", label: "小攤", rect: [555, 380, 200, 180], action: "showToast('🧺 小攤尚未開張，敬請期待')" },
-            { id: "ql-dock", label: "⛵ 搭船離島", rect: [70, 520, 500, 220], action: "openTownScene(WORLD_SCENE_KEY)" }   // 唯一出口：小船回人界地圖
+            { id: "ql-dock", label: "⛵ 搭船離島", rect: [70, 520, 500, 220], action: "leaveQinglanIsland()" }   // 唯一出口：問「是否離開」後回人界地圖（town-npc.js）
         ],
-        figures: []
+        figures: [],
+        // 隱藏仙翁（2026-10-04 使用者：「涼亭改成場景，圖內場景有機會出現仙翁；解鎖條件魅力 10000」）：涼亭只是背景（沒有按鈕），
+        //   魅力（本身＋裝備）≥ minCha 時，每次登島 chance 機率出現在涼亭裡；點他開對話（town-npc.js 的 talkToXianweng），當天見過就不再出現
+        //   人物圖：從青瀾島島景圖的垂釣老者裁下、加仙光橢圓羽化（images/towns/npc-xianweng.png 240×380）
+        hiddenNpcs: [{
+            id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 0.2, minCha: 10000,
+            spots: [{ img: "images/towns/npc-xianweng.png", rect: [458, 285, 114, 180] }],
+            lines: {
+                greet: "呵呵……老夫在此垂釣三百年，釣的不是魚，是有緣人。\n小友魅力過人，與老夫甚是投緣——這一竿，送你一場造化。",
+                reward: "仙翁撫鬚一笑：「造化未到，緣分已結。改日再來，老夫自有安排。」",
+                bye: "仙翁化作一縷清風，消失在涼亭之中……"
+            }
+        }]
     },
     "天元城": {
         title: "天元城・內城",
