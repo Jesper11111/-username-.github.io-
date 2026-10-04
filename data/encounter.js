@@ -210,7 +210,8 @@ const Encounter = (() => {
         const S = s.stats, q = s.quest;
         const questHtml = q ? `<div class="enc-card enc-quest"><div class="enc-card-main"><b>📜 機緣任務・${q.name}</b><small>${q.intro}剩 ${leftText(q.exp - now)}</small>
             ${q.steps.map((stp, i) => `<small class="${i < q.i ? 'c-jade' : i === q.i ? 'c-gold' : ''}">${i < q.i ? '✔' : i === q.i ? '▶' : '・'} ${stepText(stp, i === q.i)}</small>`).join('')}
-            <small>完成獎勵：H×${ENCOUNTER_REWARDS.quest.h} 靈石、秘典碎片 ×${ENCOUNTER_REWARDS.quest.spell}</small></div></div>`
+            <small>完成獎勵：靈石 ${Math.floor(H() * ENCOUNTER_REWARDS.quest.h).toWan()}（約 ${ENCOUNTER_REWARDS.quest.h} 小時練功收入）、秘典碎片 ×${ENCOUNTER_REWARDS.quest.spell}</small>
+            <small class="enc-muted">※「前往」要從大地圖（人界地圖分區／城鎮紅點）進入才算，右上快捷清單不算。</small></div></div>`
             : '<p class="enc-muted">目前沒有機緣任務（到天南城、天星城走走，也許有人托付）。</p>';
         box.innerHTML = `<div class="enc-list-card">
             <h3>🌀 異界與機緣</h3>
