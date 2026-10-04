@@ -158,15 +158,23 @@ function hideWindowTownNpc(sceneName, npc) {
     if (currentTownScene === sceneName) showToast(`🍃 ${(npc.lines && npc.lines.bye) || '仙翁飄然而去'}`);
 }
 
-// 目前要多畫的人偶（town.js 的 renderTownHotspots 併進 figures）；只畫在主圖上（hiddenNpcs 的座標是主圖像素）
+// 隱藏 NPC 在這張圖上的位置：主圖用擲到的 spot；手機直式圖（scene.portrait）用 npc.portraitSpot（沒有就不畫）
+function getTownNpcSpot(hit, sceneName, view) {
+    const scene = townScenes[sceneName];
+    if (view === scene) return hit.spot;
+    if (scene && view === scene.portrait) return hit.npc.portraitSpot || null;
+    return null;
+}
+function isTownPortraitView(sceneName, view) { const s = townScenes[sceneName]; return !!(s && s.portrait && view === s.portrait); }
+// 目前要多畫的人偶（town.js 的 renderTownHotspots 併進 figures）；主圖用 spots、直式圖用 portraitSpot
 function getTownNpcFigures(sceneName, view) {
-    const hit = townNpcSpots[sceneName];
-    if (!hit || view !== townScenes[sceneName]) return [];
+    const hit = townNpcSpots[sceneName], spot = hit && getTownNpcSpot(hit, sceneName, view);
+    if (!spot) return [];
     // 函式名寫成字串字面值：建置（tools/build.js）才會把它們掛回 window（點人偶的 onclick 要用）
     const fn = hit.npc.kind === 'xianweng' ? 'talkToXianweng' : 'talkToTownNpc';
     // 仙翁：低語還沒聽完（whispers.unlockAfterAll）不能點；聽完加 awake（淡淡光暈提示可以點了）
     const locked = hit.npc.whispers && hit.npc.whispers.unlockAfterAll && !hit.heardAll;
-    return [{ id: 'npc-' + hit.npc.id, name: locked ? '' : hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc' + (locked ? '' : hit.npc.whispers ? ' awake' : ''),
+    return [{ id: 'npc-' + hit.npc.id, name: locked ? '' : hit.npc.name, img: spot.img, rect: spot.rect, cls: 'town-npc' + (locked ? '' : hit.npc.whispers ? ' awake' : ''),
         action: locked ? '' : `${fn}('${sceneName}')` }];
 }
 
@@ -205,8 +213,10 @@ function showNpcWhisper(W, idx) {
     npcWhisperLast = i;
     const el = document.createElement('div');
     el.className = 'npc-whisper';
-    el.style.left = (W.at[0] / currentTownView.imgW * 100).toFixed(3) + '%';
-    el.style.top = (W.at[1] / currentTownView.imgH * 100).toFixed(3) + '%';
+    const at = isTownPortraitView(currentTownScene, currentTownView) ? W.portraitAt : W.at;   // 手機直式圖用 portraitAt
+    if (!at) return;
+    el.style.left = (at[0] / currentTownView.imgW * 100).toFixed(3) + '%';
+    el.style.top = (at[1] / currentTownView.imgH * 100).toFixed(3) + '%';
     el.style.animationDuration = ((W.showMs || 6000) / 1000) + 's';
     el.textContent = W.lines[i];
     box.querySelectorAll('.npc-whisper').forEach(e => e.remove());
@@ -216,8 +226,10 @@ function showNpcWhisper(W, idx) {
 
 function getTownNpcEffects(sceneName, view) {
     const hit = townNpcSpots[sceneName];
-    if (!hit || view !== townScenes[sceneName] || !hit.npc.fishing) return '';
-    const F = hit.npc.fishing, W = view.imgW, H = view.imgH, [hx, hy] = F.hand, [tx, ty] = F.tip, [kx, ky] = F.hook;
+    if (!hit || !getTownNpcSpot(hit, sceneName, view)) return '';
+    const F = isTownPortraitView(sceneName, view) ? hit.npc.portraitFishing : hit.npc.fishing;
+    if (!F) return '';
+    const W = view.imgW, H = view.imgH, [hx, hy] = F.hand, [tx, ty] = F.tip, [kx, ky] = F.hook;
     const pos = (x, y) => `left: ${(x / W * 100).toFixed(3)}%; top: ${(y / H * 100).toFixed(3)}%;`;
     return `<svg class="tnpc-fishing" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
             <line x1="${hx}" y1="${hy}" x2="${tx}" y2="${ty}" class="rod"/>

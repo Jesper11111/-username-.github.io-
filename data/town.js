@@ -77,7 +77,7 @@ function showTownChatter(scene, C) {
     if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
     // 只挑目前畫面看得到的路人（手機要左右滑動，畫面外的人說話玩家看不到）
     const sx = stage.clientWidth / currentTownView.imgW, left = view.scrollLeft, right = left + view.clientWidth;
-    const heads = (C.heads || []).filter(([x]) => x * sx > left + 40 && x * sx < right - 40);
+    const heads = ((currentTownView !== scene ? currentTownView.chatterHeads : C.heads) || []).filter(([x]) => x * sx > left + 40 && x * sx < right - 40);
     if (!heads.length) return;
     const [x, y] = heads[Math.floor(Math.random() * heads.length)];
     let i = Math.floor(Math.random() * C.lines.length);
