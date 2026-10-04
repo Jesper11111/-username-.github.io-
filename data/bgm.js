@@ -8,8 +8,10 @@
 // 切到背景（分頁隱藏、App 切走）暫停、回來繼續；有聲影片播放時（仙翁開場動畫、夥伴影片）暫停，影片停了再繼續。
 
 // 2026-10-04 使用者再追加五首「加入背景音」→ bgm-4～8（AAC 80kbps，各約 2.4～2.9MB，約 4～4.7 分鐘；.ogg Opus 56kbps 備用），共 8 首依序輪播
+// 2026-10-04 使用者：「昨天移除一首音樂 7 分多鐘的找得回來嗎」→ 從 git 紀錄找回 audio/bgm-game.*（7 分 48 秒），放第 1 首、開頭先播 → 共 9 首
 const BGM_TRACK_COUNT = 8;
-const BGM_PLAYLIST = Array.from({ length: BGM_TRACK_COUNT }, (_, i) => ({ src: `audio/bgm-${i + 1}.m4a`, fallback: `audio/bgm-${i + 1}.ogg` }));
+const BGM_PLAYLIST = [{ src: "audio/bgm-game.m4a", fallback: "audio/bgm-game.ogg" }]
+    .concat(Array.from({ length: BGM_TRACK_COUNT }, (_, i) => ({ src: `audio/bgm-${i + 1}.m4a`, fallback: `audio/bgm-${i + 1}.ogg` })));
 const BGM_PREF_KEY = "xiuxian_bgm";
 const BGM_DEFAULT_VOL = 0.4;
 let bgmAudio = null, bgmIndex = 0, bgmFails = 0;
