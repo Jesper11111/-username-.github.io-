@@ -31,8 +31,8 @@ function formatLockButton(eq) {
 // 刪除／分解前的共用檢查：鎖定中或穿戴中回傳 false 並提示
 function canRemoveEquip(loc) {
     if (!loc) return false;
-    if (loc.where === 'equipped') { alert('穿戴中的裝備無法刪除或分解，請先卸下。'); return false; }
-    if (isEquipLocked(loc.eq)) { alert(`【${getEquipDisplayName(loc.eq)}】已鎖定，請先解除鎖定。`); return false; }
+    if (loc.where === 'equipped') { gameAlert('穿戴中的裝備無法刪除或分解，請先卸下。'); return false; }
+    if (isEquipLocked(loc.eq)) { gameAlert(`【${getEquipDisplayName(loc.eq)}】已鎖定，請先解除鎖定。`); return false; }
     return true;
 }
 
@@ -178,14 +178,14 @@ function useItemFromBag(itemId) {
     if (!shopItem) return;
 
     if (shopItem.type === 'heal') {
-        if (potionCooldownHp > 0) { alert(`氣血類丹藥冷卻中，尚需 ${potionCooldownHp} 秒才能再次服用。`); return; }
-        if (player.hp >= player.maxHp) { alert("氣血已滿，無需使用！"); return; }
+        if (potionCooldownHp > 0) { gameAlert(`氣血類丹藥冷卻中，尚需 ${potionCooldownHp} 秒才能再次服用。`); return; }
+        if (player.hp >= player.maxHp) { gameAlert("氣血已滿，無需使用！"); return; }
         player.hp = Math.min(player.maxHp, player.hp + player.maxHp * shopItem.amount * (1 + gearFx("丹心")));
         potionCooldownHp = POTION_COOLDOWN_SECONDS;
         addLog(`🎒 從背包使用【${shopItem.name}】，氣血回復 ${Math.round(shopItem.amount * 100)}%！`, "heal");
     } else if (shopItem.type === 'mp') {
-        if (potionCooldownMp > 0) { alert(`靈力類丹藥冷卻中，尚需 ${potionCooldownMp} 秒才能再次服用。`); return; }
-        if (player.mp >= player.maxMp) { alert("靈力已滿，無需使用！"); return; }
+        if (potionCooldownMp > 0) { gameAlert(`靈力類丹藥冷卻中，尚需 ${potionCooldownMp} 秒才能再次服用。`); return; }
+        if (player.mp >= player.maxMp) { gameAlert("靈力已滿，無需使用！"); return; }
         player.mp = Math.min(player.maxMp, player.mp + player.maxMp * shopItem.amount * (1 + gearFx("丹心")));
         potionCooldownMp = POTION_COOLDOWN_SECONDS;
         addLog(`🎒 從背包使用【${shopItem.name}】，靈力回復 ${Math.round(shopItem.amount * 100)}%！`, "skill");
@@ -198,11 +198,11 @@ function useItemFromBag(itemId) {
     updateUI();
 }
 
-function deleteItemFromBag(itemId) {
+async function deleteItemFromBag(itemId) {
     if (!player.bag[itemId]) return;
     let item = shopItems.find(s => s.id === itemId);
     let name = item ? item.name : itemId;
-    if (confirm(`確定要刪除背包內的道具【${name}】嗎？`)) {
+    if ((await gameConfirm(`確定要刪除背包內的道具【${name}】嗎？`))) {
         delete player.bag[itemId];
         addLog(`🗑️ 刪除了背包道具【${name}】。`, "system");
         renderBag();
@@ -226,12 +226,12 @@ async function bulkDeleteEquipment() {
     updateUI();
 }
 
-function deleteEquipFromInventory(equipId) {
+async function deleteEquipFromInventory(equipId) {
     let index = player.equipInventory.findIndex(e => e.id === equipId);
     if (index === -1) return;
     let item = player.equipInventory[index];
     if (!canRemoveEquip({ eq: item, where: 'inventory', index })) return;
-    if (confirm(`確定要毀棄裝備【${item.quality}·${getEquipDisplayName(item)}】嗎？`)) {
+    if ((await gameConfirm(`確定要毀棄裝備【${item.quality}·${getEquipDisplayName(item)}】嗎？`))) {
         player.equipInventory.splice(index, 1);
         addLog(`🗑️ 毀棄了裝備【${getEquipDisplayName(item)}】。`, "equip");
         renderBag();

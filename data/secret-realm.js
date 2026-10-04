@@ -58,7 +58,7 @@ function openSecretRealmScene(id) {
     const r = getSecretRealm(id);
     if (!r) return;
     if (player.realmIndex < r.minRealmIndex) {
-        alert(`【${r.name}】需境界【${realms[r.minRealmIndex]}】以上才能進入。`);
+        gameAlert(`【${r.name}】需境界【${realms[r.minRealmIndex]}】以上才能進入。`);
         return;
     }
     currentSecretRealm = r;
@@ -94,7 +94,7 @@ function challengeSecretRealm() {
     const r = currentSecretRealm;
     if (!r) return;
     if (r.mode === 'defense') {   // 魔屠天南：直接進入守城（defense.js）；次數在守城真正開始時才扣
-        if (getSecretRealmAttemptsLeft(r.id) <= 0) { alert(`【${r.name}】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`); return; }
+        if (getSecretRealmAttemptsLeft(r.id) <= 0) { gameAlert(`【${r.name}】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`); return; }
         openDefenseBattle(r.id);
         return;
     }

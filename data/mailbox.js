@@ -132,9 +132,9 @@ function createMailServant(quality) {
 async function claimMail(id) {
     const m = mbMails.find(x => x.id === id);
     if (!m) return;
-    if (isMailTooNew(m)) { alert('這封信的獎勵需要新版遊戲才能領取。\n請重新整理頁面（電腦按 Ctrl＋F5）後再領，信件會保留。'); return; }
+    if (isMailTooNew(m)) { gameAlert('這封信的獎勵需要新版遊戲才能領取。\n請重新整理頁面（電腦按 Ctrl＋F5）後再領，信件會保留。'); return; }
     const space = checkMailRewardSpace(m.rewards);
-    if (space) { alert(space); return; }
+    if (space) { gameAlert(space); return; }
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         // 規則：只能建立一次（已存在會變成「更新」而被拒絕）
@@ -146,8 +146,8 @@ async function claimMail(id) {
         if (e && e.code === 'permission-denied') {   // 已領過（或信件已過期、被刪除）
             markMailClaimed(id);
             mbMails = mbMails.filter(x => x.id !== id);
-            alert('這封信已經領取過，或已過期失效。');
-        } else alert('連線失敗，請稍後再試。');
+            gameAlert('這封信已經領取過，或已過期失效。');
+        } else gameAlert('連線失敗，請稍後再試。');
         renderMailbox(); updateMailboxBadge();
         return;
     }
@@ -168,25 +168,25 @@ async function redeemCode() {
     const input = document.getElementById('redeem-code-input');
     const code = normalizeRedeemCode(input && input.value);
     if (!code) return;
-    if (!/^[A-Z0-9_-]{3,40}$/.test(code)) { alert('兌換碼格式不正確（英文、數字、- 或 _，3～40 字）。'); return; }
+    if (!/^[A-Z0-9_-]{3,40}$/.test(code)) { gameAlert('兌換碼格式不正確（英文、數字、- 或 _，3～40 字）。'); return; }
     let db, uid, info;
     try {
         ({ db, uid } = await lbWithTimeout(initLeaderboardBackend()));
         const snap = await lbWithTimeout(db.collection(CODE_COLLECTION).doc(code).get());
-        if (!snap.exists) { alert('兌換碼無效。'); return; }
+        if (!snap.exists) { gameAlert('兌換碼無效。'); return; }
         info = snap.data();
-    } catch (e) { console.warn(e); alert(e && e.code === 'permission-denied' ? '兌換碼功能尚未開放。' : '連線失敗，請稍後再試。'); return; }
-    if (info.expiresAt && info.expiresAt.toMillis && info.expiresAt.toMillis() < Date.now()) { alert('此兌換碼已過期。'); return; }
-    if (isMailTooNew(info)) { alert('這組兌換碼的獎勵需要新版遊戲才能兌換。\n請重新整理頁面（電腦按 Ctrl＋F5）後再輸入。'); return; }
+    } catch (e) { console.warn(e); gameAlert(e && e.code === 'permission-denied' ? '兌換碼功能尚未開放。' : '連線失敗，請稍後再試。'); return; }
+    if (info.expiresAt && info.expiresAt.toMillis && info.expiresAt.toMillis() < Date.now()) { gameAlert('此兌換碼已過期。'); return; }
+    if (isMailTooNew(info)) { gameAlert('這組兌換碼的獎勵需要新版遊戲才能兌換。\n請重新整理頁面（電腦按 Ctrl＋F5）後再輸入。'); return; }
     const space = checkMailRewardSpace(info.rewards);
-    if (space) { alert(space); return; }
+    if (space) { gameAlert(space); return; }
     try {
         await lbWithTimeout(db.collection(CODE_CLAIMS_COLLECTION).doc(`${uid}_${code}`).set({
             uid, code, at: firebase.firestore.FieldValue.serverTimestamp()
         }));
     } catch (e) {
         console.warn(e);
-        alert(e && e.code === 'permission-denied' ? '此兌換碼你已經兌換過了。' : '連線失敗，請稍後再試。');
+        gameAlert(e && e.code === 'permission-denied' ? '此兌換碼你已經兌換過了。' : '連線失敗，請稍後再試。');
         return;
     }
     grantMailRewards(info.rewards);
@@ -194,7 +194,7 @@ async function redeemCode() {
     if (input) input.value = '';
     saveLocal();
     updateUI();
-    alert(`兌換成功！\n${formatMailRewards(info.rewards)}`);
+    gameAlert(`兌換成功！\n${formatMailRewards(info.rewards)}`);
 }
 
 // ---- 畫面 ----

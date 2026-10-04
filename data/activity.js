@@ -73,13 +73,13 @@ function openActivity(id) {
 
     const lock = getActivityLockReason(act);
     if (lock) {
-        alert(`【${act.name}】尚未開啟\n\n${lock}\n\n開啟條件：聲望 ${act.minRep.toWan()}`
+        gameAlert(`【${act.name}】尚未開啟\n\n${lock}\n\n開啟條件：聲望 ${act.minRep.toWan()}`
             + (act.minRealmIndex > 0 ? `、境界【${realms[act.minRealmIndex]}】以上` : ""));
         return;
     }
 
     if (!act.implemented) {
-        alert(`【${act.name}】\n\n${act.desc}\n\n功能開發中，敬請期待！`);
+        gameAlert(`【${act.name}】\n\n${act.desc}\n\n功能開發中，敬請期待！`);
         return;
     }
 

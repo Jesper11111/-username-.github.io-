@@ -85,8 +85,8 @@ function stripTags(h) { return String(h).replace(/<[^>]+>/g, ''); }
 function craftLocate() {
     const loc = enhanceEquipId && locateEquip(enhanceEquipId);
     if (!loc || !canCraft(loc.eq)) return null;
-    if (loc.eq.refinePending) { alert('請先完成洗煉的三選一。'); return null; }
-    if (isCraftSealed(loc.eq)) { alert('這件裝備已走火入魔被封印，無法再做裝。'); return null; }
+    if (loc.eq.refinePending) { gameAlert('請先完成洗煉的三選一。'); return null; }
+    if (isCraftSealed(loc.eq)) { gameAlert('這件裝備已走火入魔被封印，無法再做裝。'); return null; }
     return loc.eq;
 }
 function craftAfter(eq, text) {
@@ -104,14 +104,14 @@ function fixRefineIdxAfterRemove(eq, idx) {
 }
 function payCraft(eq, k, n) {
     const coins = craftCoins();
-    if (getCraftCur(k) < n || player.coins < coins) { alert(`${CRAFT_CURRENCIES[k].name}或靈石不足！`); return false; }
+    if (getCraftCur(k) < n || player.coins < coins) { gameAlert(`${CRAFT_CURRENCIES[k].name}或靈石不足！`); return false; }
     spendCraftCur(k, n);
     player.coins -= coins;
     return true;
 }
 
 // ---- 四種通貨 ----
-function useCraftCur(k) {
+async function useCraftCur(k) {
     const eq = craftLocate();
     if (!eq) return;
     const C = craftCtx(eq);
@@ -127,13 +127,13 @@ function useCraftCur(k) {
         });
     } else if (k === 'hunyuan') {
         if (!eq.subs.length) return;
-        if (!confirm('混元晶會把整件詞綴全部重洗（種類、品級、數值），確定？')) return;
+        if (!(await gameConfirm('混元晶會把整件詞綴全部重洗（種類、品級、數值），確定？'))) return;
         if (!payCraft(eq, k, 1)) return;
         eq.subs = rollGearSubs(eq.quality, C.external, eq.subs.length, null, eq.category, eq.level, C.opts);
         delete eq.refineIdx;   // 詞綴全換了，洗煉鎖定解除（已洗次數保留）
     } else if (k === 'poxu') {
         if (eq.subs.length < 1) return;
-        if (!confirm('破虛石會「隨機」刪掉一條詞綴，可能刪到好的；之後 24 小時這件不能用造化玉／鍛紋台。確定？')) return;
+        if (!(await gameConfirm('破虛石會「隨機」刪掉一條詞綴，可能刪到好的；之後 24 小時這件不能用造化玉／鍛紋台。確定？'))) return;
         if (!payCraft(eq, k, 1)) return;
         const idx = Math.floor(Math.random() * eq.subs.length);
         const gone = stripTags(formatOneSub(eq.subs[idx]));
@@ -143,10 +143,10 @@ function useCraftCur(k) {
         craftAfter(eq, `⚫ 破虛石：刪去「${gone}」。`);
         return;
     } else if (k === 'zaohua') {
-        if (eq.subs.length >= craftSubCap(eq)) { alert('詞綴已達上限。'); return; }
-        if (craftPoxuLockLeft(eq)) { alert('剛用過破虛石，冷卻中。'); return; }
+        if (eq.subs.length >= craftSubCap(eq)) { gameAlert('詞綴已達上限。'); return; }
+        if (craftPoxuLockLeft(eq)) { gameAlert('剛用過破虛石，冷卻中。'); return; }
         const add = rollGearSubs(eq.quality, C.external, 1, eq.subs.map(s => s[0]), eq.category, eq.level, C.opts);
-        if (!add.length) { alert('沒有可加的詞綴了。'); return; }
+        if (!add.length) { gameAlert('沒有可加的詞綴了。'); return; }
         if (!payCraft(eq, k, 1)) return;
         eq.subs.push(add[0]);
         craftAfter(eq, `🔮 造化玉：新增「${stripTags(formatOneSub(add[0]))}」。`);
@@ -161,17 +161,17 @@ function craftForgeOptions(eq) {
     const have = eq.subs.map(s => s[0]);
     return gearSubAffixes.filter(s => !have.includes(s.key) && gearSubWeight(s, eq.category) > 0);
 }
-function forgeCraftSub() {
+async function forgeCraftSub() {
     const eq = craftLocate();
     if (!eq) return;
-    if (eq.forged) { alert('這件已用過鍛紋台。'); return; }
-    if (eq.subs.length >= craftSubCap(eq)) { alert('詞綴已達上限，請先用破虛石刪掉一條。'); return; }
-    if (craftPoxuLockLeft(eq)) { alert('剛用過破虛石，冷卻中。'); return; }
+    if (eq.forged) { gameAlert('這件已用過鍛紋台。'); return; }
+    if (eq.subs.length >= craftSubCap(eq)) { gameAlert('詞綴已達上限，請先用破虛石刪掉一條。'); return; }
+    if (craftPoxuLockLeft(eq)) { gameAlert('剛用過破虛石，冷卻中。'); return; }
     const s = craftForgeOptions(eq).find(x => x.key === craftForgeKey);
-    if (!s) { alert('請先選擇要鍛上的詞綴。'); return; }
+    if (!s) { gameAlert('請先選擇要鍛上的詞綴。'); return; }
     const F = CRAFT_FORGE, coins = craftCoins();
-    if ((player.refineStones || 0) < F.stones || getCraftCur('zaohua') < F.zaohua || player.coins < coins) { alert('材料或靈石不足！'); return; }
-    if (!confirm(`鍛紋台每件只能用一次，確定把「${s.label}」鍛上這件裝備？（品級隨機）`)) return;
+    if ((player.refineStones || 0) < F.stones || getCraftCur('zaohua') < F.zaohua || player.coins < coins) { gameAlert('材料或靈石不足！'); return; }
+    if (!(await gameConfirm(`鍛紋台每件只能用一次，確定把「${s.label}」鍛上這件裝備？（品級隨機）`))) return;
     player.refineStones -= F.stones;
     spendCraftCur('zaohua', F.zaohua);
     player.coins -= coins;
@@ -184,14 +184,14 @@ function forgeCraftSub() {
 }
 
 // ---- 入魔淬煉：每件一次 ----
-function corruptEquip() {
+async function corruptEquip() {
     const eq = craftLocate();
     if (!eq) return;
-    if (eq.corrupt) { alert('這件已入魔淬煉過。'); return; }
+    if (eq.corrupt) { gameAlert('這件已入魔淬煉過。'); return; }
     if (!eq.subs.length) return;
     const R = CRAFT_CORRUPT, coins = craftCoins();
-    if ((player.refineStones || 0) < R.stones || getCraftCur('hunyuan') < R.hunyuan || player.coins < coins) { alert('材料或靈石不足！'); return; }
-    if (!confirm(`入魔淬煉（每件限一次）：\n・${Math.round(R.big * 100)}% 大成功：多一條詞綴（可超過上限）或一條升為天級\n・${Math.round(R.small * 100)}% 小成功：一條詞綴品級 +1\n・${Math.round(R.none * 100)}% 沒有變化\n・${Math.round((1 - R.big - R.small - R.none) * 100)}% 走火入魔：一條詞綴降一級，並且「封印」，之後不能再洗煉或做裝（裝備不會消失）\n確定？`)) return;
+    if ((player.refineStones || 0) < R.stones || getCraftCur('hunyuan') < R.hunyuan || player.coins < coins) { gameAlert('材料或靈石不足！'); return; }
+    if (!(await gameConfirm(`入魔淬煉（每件限一次）：\n・${Math.round(R.big * 100)}% 大成功：多一條詞綴（可超過上限）或一條升為天級\n・${Math.round(R.small * 100)}% 小成功：一條詞綴品級 +1\n・${Math.round(R.none * 100)}% 沒有變化\n・${Math.round((1 - R.big - R.small - R.none) * 100)}% 走火入魔：一條詞綴降一級，並且「封印」，之後不能再洗煉或做裝（裝備不會消失）\n確定？`))) return;
     player.refineStones -= R.stones;
     spendCraftCur('hunyuan', R.hunyuan);
     player.coins -= coins;
@@ -226,7 +226,7 @@ function corruptEquip() {
         text = `走火入魔！「${before}」→「${name(i)}」，裝備被封印。`;
     }
     craftAfter(eq, `😈 入魔淬煉：${text}`);
-    alert(`入魔淬煉：${text}`);
+    gameAlert(`入魔淬煉：${text}`);
 }
 
 // ---- 卡片標籤（gear.js 的 formatEquipDetails）----

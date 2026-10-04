@@ -635,8 +635,8 @@ const DefenseBattle = (() => {
         rafId = requestAnimationFrame(tick);
     }
 
-    function close() {
-        if (D.active && !confirm(`確定要離開嗎？\n已守住的 ${D.cleared || 0} 波獎勵會保留，但今日這次挑戰次數已使用。`)) return;
+    async function close() {
+        if (D.active && !(await gameConfirm(`確定要離開嗎？\n已守住的 ${D.cleared || 0} 波獎勵會保留，但今日這次挑戰次數已使用。`))) return;
         if (D.active) logRun(false);
         opened = false; D.active = false;
         $('defense-skip').style.display = 'none';

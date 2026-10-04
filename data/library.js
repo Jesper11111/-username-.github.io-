@@ -43,13 +43,13 @@ function studyBook(statType, qty = 1) {
     const max = studyMaxOf(), gain = studyGainOf();
     let remaining = max - player.studyCounts[statType];
     if (remaining <= 0) {
-        alert(`該古籍已達參悟上限 (${max} 次)，無法繼續參悟！`);
+        gameAlert(`該古籍已達參悟上限 (${max} 次)，無法繼續參悟！`);
         return;
     }
 
     let affordable = Math.min(Math.floor(player.martialPoints / STUDY_COST), remaining);
     if (affordable <= 0) {
-        alert(`武學積分不足 ${STUDY_COST} 點！可在宗門完成【整理武學秘典】任務獲得。`);
+        gameAlert(`武學積分不足 ${STUDY_COST} 點！可在宗門完成【整理武學秘典】任務獲得。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "參悟");
@@ -130,14 +130,14 @@ function studyElementBook(key, qty = 1) {
     let book = elementBooks.find(b => b.key === key);
     if (!book) return;
     if (!isElementBookUnlocked()) {
-        alert(`屬性秘典需先拜入【${SECT_TIER_NAMES[ELEMENT_BOOK_TIER]}】宗門才能參悟！`);
+        gameAlert(`屬性秘典需先拜入【${SECT_TIER_NAMES[ELEMENT_BOOK_TIER]}】宗門才能參悟！`);
         return;
     }
     if (!player.elementStudy) player.elementStudy = {};
     let current = player.elementStudy[key] || 0;
     let remaining = ELEMENT_BOOK_MAX - current;
     if (remaining <= 0) {
-        alert(`${book.name}已達參悟上限 (${ELEMENT_BOOK_MAX} 次)，無法繼續參悟！`);
+        gameAlert(`${book.name}已達參悟上限 (${ELEMENT_BOOK_MAX} 次)，無法繼續參悟！`);
         return;
     }
 
@@ -147,7 +147,7 @@ function studyElementBook(key, qty = 1) {
         Math.floor(player.spiritGrass / c.spiritGrass),
         Math.floor(player.coins / c.coins));
     if (affordable <= 0) {
-        alert(`資源不足！參悟 1 次需要 ${c.martialPoints} 武學積分 + ${c.spiritGrass} 株靈草 + ${c.coins.toWan()} 靈石。`);
+        gameAlert(`資源不足！參悟 1 次需要 ${c.martialPoints} 武學積分 + ${c.spiritGrass} 株靈草 + ${c.coins.toWan()} 靈石。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "參悟");

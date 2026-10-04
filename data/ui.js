@@ -500,7 +500,7 @@ function resolveBatchCount(qty, affordable, actionName) {
     if (qty === 'max') return affordable;
     let n = parseInt(qty) || 1;
     if (affordable < n) {
-        alert(`目前最多只能${actionName} ${affordable} 次（受資源或次數上限限制），無法一次${actionName} ${n} 次。\n可改按「最高」一次完成 ${affordable} 次。`);
+        gameAlert(`目前最多只能${actionName} ${affordable} 次（受資源或次數上限限制），無法一次${actionName} ${n} 次。\n可改按「最高」一次完成 ${affordable} 次。`);
         return 0;
     }
     return n;

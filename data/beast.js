@@ -77,7 +77,7 @@ function tameBeast(id) {
         renderBeasts();
         updateUI();
     } else {
-        alert(`資源不足！需要 ${info.costCore.toWan()} 獸丹與 ${finalCoins.toWan()} 靈石。`);
+        gameAlert(`資源不足！需要 ${info.costCore.toWan()} 獸丹與 ${finalCoins.toWan()} 靈石。`);
     }
 }
 
@@ -85,7 +85,7 @@ function reviveBeast(id) {
     let b = player.beasts.find(x => x.id === id);
     if (!b || b.alive) return;
     if (player.beastCore < BEAST_REVIVE_COST_CORE) {
-        alert(`獸丹不足！復活需要 ${BEAST_REVIVE_COST_CORE.toWan()} 獸丹。`);
+        gameAlert(`獸丹不足！復活需要 ${BEAST_REVIVE_COST_CORE.toWan()} 獸丹。`);
         return;
     }
     player.beastCore -= BEAST_REVIVE_COST_CORE;
@@ -104,12 +104,12 @@ function toggleBeastActive(id) {
     if (!isBeastActive(b)) {
         let cost = getBeastUpkeep(b.level);
         if (player.coins < cost.coins || player.beastCore < cost.core) {
-            alert(`資源不足！出戰需能支付維持費：每 ${BEAST_UPKEEP_INTERVAL} 秒 ${cost.coins.toWan()} 靈石＋${cost.core.toWan()} 獸丹。`);
+            gameAlert(`資源不足！出戰需能支付維持費：每 ${BEAST_UPKEEP_INTERVAL} 秒 ${cost.coins.toWan()} 靈石＋${cost.core.toWan()} 獸丹。`);
             return;
         }
         // 出戰上限 BEAST_ACTIVE_MAX（config-beasts.js，三隻）：已滿時請玩家先召回一隻
         if (player.beasts.filter(x => x !== b && isBeastActive(x)).length >= BEAST_ACTIVE_MAX) {
-            alert(`最多同時 ${BEAST_ACTIVE_MAX} 隻靈寵出戰，請先召回一隻再出戰。`);
+            gameAlert(`最多同時 ${BEAST_ACTIVE_MAX} 隻靈寵出戰，請先召回一隻再出戰。`);
             return;
         }
         b.active = true;
@@ -169,13 +169,13 @@ function toggleBeastPicker(id, slot) {
     renderBeasts();
 }
 
-function learnBeastSkill(id, slot, skillId) {
+async function learnBeastSkill(id, slot, skillId) {
     let b = player.beasts.find(x => x.id === id);
     let sk = getBeastSkill(skillId);
     if (!b || !sk || b.skills[slot] || b.level < BEAST_SKILL_LEVELS[slot]) return;
-    if (sk.minLv > b.level) { alert(`【${sk.name}】需要靈寵 Lv${sk.minLv} 才能領悟。`); return; }
-    if (b.skills.includes(skillId)) { alert(`這隻靈寵已經會【${sk.name}】了。`); return; }
-    if (!confirm(`確定讓【${getBeastName(b)}】在第 ${slot + 1} 欄領悟【${beastSkillCategories[sk.cat].name}】${sk.name}？\n${describeBeastSkill(sk)}\n\n之後要更換，需花 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹重新領悟全部技能。`)) return;
+    if (sk.minLv > b.level) { gameAlert(`【${sk.name}】需要靈寵 Lv${sk.minLv} 才能領悟。`); return; }
+    if (b.skills.includes(skillId)) { gameAlert(`這隻靈寵已經會【${sk.name}】了。`); return; }
+    if (!(await gameConfirm(`確定讓【${getBeastName(b)}】在第 ${slot + 1} 欄領悟【${beastSkillCategories[sk.cat].name}】${sk.name}？\n${describeBeastSkill(sk)}\n\n之後要更換，需花 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹重新領悟全部技能。`))) return;
     b.skills[slot] = skillId;
     delete b.skillsRevamped;
     beastPickerSlot[id] = undefined;
@@ -184,11 +184,11 @@ function learnBeastSkill(id, slot, skillId) {
 }
 
 // 重新領悟：清空這隻靈寵的全部技能欄（花獸丹），之後可重新挑選
-function resetBeastSkills(id) {
+async function resetBeastSkills(id) {
     let b = player.beasts.find(x => x.id === id);
     if (!b || !b.skills.some(Boolean)) return;
-    if (player.beastCore < BEAST_SKILL_RESET_CORE) { alert(`獸丹不足！重新領悟需要 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹。`); return; }
-    if (!confirm(`花費 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹，清除【${getBeastName(b)}】已領悟的全部技能並重新挑選？`)) return;
+    if (player.beastCore < BEAST_SKILL_RESET_CORE) { gameAlert(`獸丹不足！重新領悟需要 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹。`); return; }
+    if (!(await gameConfirm(`花費 ${BEAST_SKILL_RESET_CORE.toWan()} 獸丹，清除【${getBeastName(b)}】已領悟的全部技能並重新挑選？`))) return;
     player.beastCore -= BEAST_SKILL_RESET_CORE;
     b.skills = BEAST_SKILL_LEVELS.map(() => null);
     addLog(`🐾 靈寵【${getBeastName(b)}】遺忘了所有技能，可重新領悟。`, "skill");

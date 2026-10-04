@@ -57,7 +57,7 @@ function grantQuestRewards(def, servant) {
 function openQuestModal() {
     if (!checkSectJoined()) return;
     if (!isInSect() && !player.servants.some(s => s.quest)) {
-        alert("你必須回到【宗門】才能接取任務，或先到「僕從小屋」指派僕從代為執行！");
+        gameAlert("你必須回到【宗門】才能接取任務，或先到「僕從小屋」指派僕從代為執行！");
         return;
     }
     document.getElementById('quest-modal').style.display = 'flex';
@@ -105,13 +105,13 @@ function renderQuestButtons() {
 
 function startQuest(questId) {
     if (!isInSect()) {
-        alert("你必須待在【宗門】才能親自接取任務！（或指派僕從代為執行）");
+        gameAlert("你必須待在【宗門】才能親自接取任務！（或指派僕從代為執行）");
         return;
     }
     let def = getQuestDef(questId, getSectTier());
     if (!def) return;
     if (def.requiredQuality || def.servantOnly) {
-        alert(`【${def.name}】只有${def.requiredQuality ? def.requiredQuality + '品質的' : ''}僕從才能執行，請到僕從小屋指派。`);
+        gameAlert(`【${def.name}】只有${def.requiredQuality ? def.requiredQuality + '品質的' : ''}僕從才能執行，請到僕從小屋指派。`);
         return;
     }
 

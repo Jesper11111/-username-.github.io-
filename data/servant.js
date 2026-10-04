@@ -115,14 +115,14 @@ function assignServantQuest(servantId, questId) {
     if (questId) {
         // 從「閒置」變成「執行任務」時才需檢查派遣上限；單純更換任務不受限
         if (!servant.quest && getAssignedServantCount() >= MAX_ASSIGNED_SERVANTS) {
-            alert(`最多只能同時派遣 ${MAX_ASSIGNED_SERVANTS} 名僕從執行任務！\n請先將其他僕從設為「不指派」。`);
+            gameAlert(`最多只能同時派遣 ${MAX_ASSIGNED_SERVANTS} 名僕從執行任務！\n請先將其他僕從設為「不指派」。`);
             renderServants();
             return;
         }
         let def = getQuestDef(questId, getSectTier());
         if (!def) return;
         if (!canServantTakeQuest(servant, def)) {
-            alert(`【${def.name}】只有${def.requiredQuality}品質的僕從才能執行！`);
+            gameAlert(`【${def.name}】只有${def.requiredQuality}品質的僕從才能執行！`);
             renderServants();
             return;
         }
@@ -131,7 +131,7 @@ function assignServantQuest(servantId, questId) {
         // 換任務或從閒置出發都是新的一趟：先付這趟的靈石
         let cost = getServantTripCost(servant);
         if (!payServantTrip(servant, questId)) {
-            alert(questId === 'caravan' && caravanTripsLeft() <= 0
+            gameAlert(questId === 'caravan' && caravanTripsLeft() <= 0
                 ? `今日商隊 ${CARAVAN.dailyTrips} 趟已經跑完，明天再派吧！`
                 : `靈石不足！派遣【${servant.quality}】僕從每趟需要 ${cost} 靈石（目前 ${player.coins.toWan()}）。`);
             renderServants();
@@ -174,11 +174,11 @@ async function bulkDismissServants() {   // 2026-10-04 改用遊戲內對話框�
     updateUI();
 }
 
-function dismissServant(servantId) {
+async function dismissServant(servantId) {
     let servant = player.servants.find(s => s.id === servantId);
     if (!servant) return;
-    if (servant.locked) { alert(`僕從【${servant.name}】已鎖定，請先解除鎖定再解僱。`); return; }
-    if (!confirm(`確定要解僱僕從【${servant.name}】嗎？`)) return;
+    if (servant.locked) { gameAlert(`僕從【${servant.name}】已鎖定，請先解除鎖定再解僱。`); return; }
+    if (!(await gameConfirm(`確定要解僱僕從【${servant.name}】嗎？`))) return;
     player.servants = player.servants.filter(s => s.id !== servantId);
     addLog(`解僱了僕從【${servant.name}】。`, "servant");
     renderServants();

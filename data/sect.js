@@ -3,7 +3,7 @@
 
 function checkSectJoined() {
     if (!player.sect) {
-        alert("【提示】閣下目前乃是一介散修，尚未加入任何仙門！請先至「尋訪仙門」拜入宗門後，方可使用此宗門設施。");
+        gameAlert("【提示】閣下目前乃是一介散修，尚未加入任何仙門！請先至「尋訪仙門」拜入宗門後，方可使用此宗門設施。");
         openSectModal();
         return false;
     }
@@ -71,7 +71,7 @@ function formatSectLegacyLine(sect, tier) {
         主修${sp.name}時：${sp.slot}的${NUMERIC_V2 ? '武器攻擊' : '四維'} +${Math.round((b.weaponPct || 0) * 100)}%、熟練度 ×${b.profMult || 1}</p>`;
 }
 
-function joinSect(sectName) {
+async function joinSect(sectName) {
     for (let cat of sectData) {
         let s = cat.items.find(item => item.name === sectName);
         if (!s) continue;
@@ -83,16 +83,16 @@ function joinSect(sectName) {
         //    境界成長超過該階段的 maxRealm 後仍保有原本的宗門身分，否則升上去就再也回不了舊宗門。
         if (!isOwnSect) {
             if (lockedName) {
-                alert(`此階段您已拜入【${lockedName}】，每個階段只能選擇一個宗門，無法改投【${s.name}】。\n（可按【${lockedName}】的「回歸宗門」切回該宗門）`);
+                gameAlert(`此階段您已拜入【${lockedName}】，每個階段只能選擇一個宗門，無法改投【${s.name}】。\n（可按【${lockedName}】的「回歸宗門」切回該宗門）`);
                 return;
             }
             // 只擋「境界不足」：境界超過該階段上限仍可補拜入（例如金丹後才想挑一個初級宗門），
             // 否則前期沒拜入宗門的玩家會永遠失去該階段的技能。`maxRealm` 僅供顯示，不再用於封鎖。
             if (player.realmIndex < cat.minRealm) {
-                alert(`您的境界不符合【${s.name}】的加入要求！\n（需達【${realms[cat.minRealm]}】以上）`);
+                gameAlert(`您的境界不符合【${s.name}】的加入要求！\n（需達【${realms[cat.minRealm]}】以上）`);
                 return;
             }
-            if (!confirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`)) return;
+            if (!(await gameConfirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`))) return;
             player.sectSkills[cat.tier] = s.name;
             addLog(`📜 習得【${s.name}】${SECT_TIER_NAMES[cat.tier]}技能：${s.skills.map(sk => `【${sk.name}】`).join('')}！`, "skill");
             setTimeout(checkAptitudeTest, 300);   // 第一次拜入宗門：資質測試（aptitude.js）

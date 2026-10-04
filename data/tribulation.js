@@ -41,13 +41,13 @@ function getTribulationHardPenalty() {
 
 function formatChance(rate) { return `${Math.round(rate * 100)}%`; }
 
-function triggerTribulation() {
+async function triggerTribulation() {
     if (!player.pendingTribulation) {
-        alert("目前修為尚未圓滿，無需渡劫。\n（小境界修練至 10 階且經驗滿格時，才會引來天劫）");
+        gameAlert("目前修為尚未圓滿，無需渡劫。\n（小境界修練至 10 階且經驗滿格時，才會引來天劫）");
         return;
     }
     if (inTribulation) return;
-    if (inBountyDuel) { alert("正在與懸賞人物對決，無法分心渡劫！"); return; }
+    if (inBountyDuel) { gameAlert("正在與懸賞人物對決，無法分心渡劫！"); return; }
 
     let chance = getTribulationChance();
     // 新制數字小（攻擊約 5～50），Math.floor 會把 9.7 捨成 9；改用 roundDmg（新制 2 位小數、舊制照舊捨去，elements.js）
@@ -61,8 +61,7 @@ function triggerTribulation() {
     // 沒把握（未帶破障丹）時提醒可準備破障丹
     if (!chance.hasPill && isMeritSystemOpen()) tips += `\n・🔮 沒把握？可至千寶閣以七彩補天石購買【破障丹】：心魔戰力 -10%、勝算 +10%（上限提高到 ${formatChance(BREAK_PILL_MAX_CHANCE)}）`;
 
-    if (!confirm(
-        `即將渡劫，晉升【${realms[player.realmIndex + 1]}】！\n\n`
+    if (!(await gameConfirm(`即將渡劫，晉升【${realms[player.realmIndex + 1]}】！\n\n`
         + `【渡劫勝算：${formatChance(chance.total)}】（上限 ${formatChance(chance.cap)}）\n`
         + `・基礎 ${formatChance(chance.base)}\n`
         + (chance.hard > 0 ? `・⚡ 合體期後天劫加劇 -${formatChance(chance.hard)}（心魔戰力 +${formatChance(chance.hard)}）\n` : '')
@@ -75,8 +74,7 @@ function triggerTribulation() {
         + (tips ? `\n提升勝算：${tips}\n` : '')
         + `\n心魔戰力 ${fmtCombat(demonPower)}／氣血 ${fmtCombat(demonHp)}，會施展魔功並吸取靈力。\n`
         + `渡劫失敗會重傷跌回安全區並折壽 ${getDeathLifespanCost()} 年（剩餘 ${formatLifespan(player.lifespan)} 年，渡劫期間歲月流逝加快），靈寵也會陣亡；\n`
-        + `且境界跌落 ${TRIBULATION_FAIL_STAGE_DROP} 階（10 階 → ${10 - TRIBULATION_FAIL_STAGE_DROP} 階），陷入「虛弱」（攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%）直到修回 10 階。\n\n是否開始渡劫？`
-    )) return;
+        + `且境界跌落 ${TRIBULATION_FAIL_STAGE_DROP} 階（10 階 → ${10 - TRIBULATION_FAIL_STAGE_DROP} 階），陷入「虛弱」（攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%）直到修回 10 階。\n\n是否開始渡劫？`))) return;
 
     if (chance.fruit) {
         player.spiritFruits--;

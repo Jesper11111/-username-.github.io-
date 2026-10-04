@@ -35,15 +35,15 @@ function isInCasinoTown() {
 }
 
 // 花費前的共用檢查：人在天星城、靈石足夠、未超過每日上限、大額二次確認
-function checkCasinoSpend(amount, what) {
-    if (!isInCasinoTown()) { alert(`天星賭坊只在【${CASINO_TOWN}】營業。`); return false; }
-    if (player.coins < amount) { alert(`靈石不足！${what}需要 ${amount.toWan()} 靈石（目前 ${player.coins.toWan()}）。`); return false; }
+async function checkCasinoSpend(amount, what) {
+    if (!isInCasinoTown()) { gameAlert(`天星賭坊只在【${CASINO_TOWN}】營業。`); return false; }
+    if (player.coins < amount) { gameAlert(`靈石不足！${what}需要 ${amount.toWan()} 靈石（目前 ${player.coins.toWan()}）。`); return false; }
     if (amount > getCasinoRemaining()) {
-        alert(`已接近今日下注上限！\n今日上限 ${getCasinoDailyLimit().toWan()}（依境界），還能下注 ${getCasinoRemaining().toWan()} 靈石。\n明天再來，或提升境界提高上限。`);
+        gameAlert(`已接近今日下注上限！\n今日上限 ${getCasinoDailyLimit().toWan()}（依境界），還能下注 ${getCasinoRemaining().toWan()} 靈石。\n明天再來，或提升境界提高上限。`);
         return false;
     }
     if (amount >= player.coins * CASINO_CONFIRM_RATIO &&
-        !confirm(`⚠️ ${what}要花費 ${amount.toWan()} 靈石，佔你目前靈石的 ${Math.round(amount / player.coins * 100)}%。\n確定要下注嗎？`)) return false;
+        !(await gameConfirm(`⚠️ ${what}要花費 ${amount.toWan()} 靈石，佔你目前靈石的 ${Math.round(amount / player.coins * 100)}%。\n確定要下注嗎？`))) return false;
     return true;
 }
 
@@ -103,12 +103,12 @@ function grantStoneOutcome(o) {
     return { text: '？', plain: '？', value: 0 };
 }
 
-function cutStone(stoneId, count) {
+async function cutStone(stoneId, count) {
     if (casinoBusy) return;
     let stone = casinoStones.find(s => s.id === stoneId);
     if (!stone) return;
     let cost = stone.price * count;
-    if (!checkCasinoSpend(cost, `購買 ${count} 顆${stone.name}`)) return;
+    if (!(await checkCasinoSpend(cost, `購買 ${count} 顆${stone.name}`))) return;
 
     player.coins -= cost;
     let results = [];
@@ -180,12 +180,12 @@ function judgeDice(d) {
     return false;
 }
 
-function rollDice() {
+async function rollDice() {
     if (casinoBusy) return;
     let bet = casinoDice.amount;
-    if (bet < CASINO_DICE_MIN_BET) { alert(`最低押注 ${CASINO_DICE_MIN_BET.toWan()} 靈石。`); return; }
-    if (bet > getDiceMaxBet()) { alert(`單把最多押 ${getDiceMaxBet().toWan()} 靈石（每日上限的 ${Math.round(CASINO_DICE_MAX_RATIO * 100)}%）。`); return; }
-    if (!checkCasinoSpend(bet, `押【${describeDiceBet()}】`)) return;
+    if (bet < CASINO_DICE_MIN_BET) { gameAlert(`最低押注 ${CASINO_DICE_MIN_BET.toWan()} 靈石。`); return; }
+    if (bet > getDiceMaxBet()) { gameAlert(`單把最多押 ${getDiceMaxBet().toWan()} 靈石（每日上限的 ${Math.round(CASINO_DICE_MAX_RATIO * 100)}%）。`); return; }
+    if (!(await checkCasinoSpend(bet, `押【${describeDiceBet()}】`))) return;
 
     player.coins -= bet;
     let dice = [0, 0, 0].map(() => 1 + Math.floor(Math.random() * 6));
@@ -227,7 +227,7 @@ function rollDice() {
 
 // ==================== 視窗 ====================
 function openCasinoModal(tab) {
-    if (!isInCasinoTown()) { alert(`天星賭坊只在【${CASINO_TOWN}】營業。`); return; }
+    if (!isInCasinoTown()) { gameAlert(`天星賭坊只在【${CASINO_TOWN}】營業。`); return; }
     if (tab) casinoTab = tab;
     casinoResultHtml = '';
     document.getElementById('casino-modal').style.display = 'flex';

@@ -96,11 +96,11 @@ function toggleFullscreen() {
     }
     const request = el.requestFullscreen || el.webkitRequestFullscreen;
     if (!request) {
-        alert('此瀏覽器不支援全螢幕。\niPhone 可用 Safari 的「分享 → 加入主畫面」，從主畫面開啟即為全螢幕。');
+        gameAlert('此瀏覽器不支援全螢幕。\niPhone 可用 Safari 的「分享 → 加入主畫面」，從主畫面開啟即為全螢幕。');
         return;
     }
     let result = request.call(el);
-    if (result && result.catch) result.catch(() => alert('瀏覽器拒絕進入全螢幕，請再試一次。'));
+    if (result && result.catch) result.catch(() => gameAlert('瀏覽器拒絕進入全螢幕，請再試一次。'));
 }
 
 // 進出全螢幕（含按 Esc）時更新按鈕狀態；版面由 resize 事件自動重算
