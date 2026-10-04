@@ -12,6 +12,9 @@ function checkSectJoined() {
 
 function openSectModal() { document.getElementById('sect-modal').style.display = 'flex'; renderSects(); }
 
+// 2026-10-04 使用者指定：第三段宗門（至高聖地，tier 3）只能在靈界拜入／回歸；靈界的尋訪仙門只列至高聖地，人界的只列第一、二段
+function isSectTierHere(tier) { return isInLingjie() ? tier === 3 : tier !== 3; }
+
 function renderSects() {
     const container = document.getElementById('sect-list-container');
     let joined = [1, 2, 3].filter(t => player.sectSkills[t]).map(t => `${SECT_TIER_NAMES[t]}：${player.sectSkills[t]}`);
@@ -23,7 +26,11 @@ function renderSects() {
         <p style="text-align:center; font-size:0.85em; margin-top:0;">
         已選定：${joined.length ? joined.join('／') : '尚無'}　｜　目前所屬：<span style="color:var(--sect-color);">${player.sect ? player.sect.name : '散修'}</span></p>`;
 
+    container.innerHTML += isInLingjie()
+        ? `<p style="text-align:center; color:#c084fc; font-size:0.85em; margin-top:0;">🌌 身在靈界：此處只能拜入或回歸【至高聖地】（第一、二段宗門請回人界）。</p>`
+        : `<p style="text-align:center; color:#c084fc; font-size:0.85em; margin-top:0;">🌌 第三段【至高聖地】只能在靈界天元城拜入或回歸。</p>`;
     sectData.forEach(cat => {
+        if (!isSectTierHere(cat.tier)) return;
         let lockedName = player.sectSkills[cat.tier];
         let tierNote = lockedName
             ? `<span style="color:#4ade80; font-size:0.85em;">（已選定：${lockedName}）</span>`
@@ -75,6 +82,10 @@ async function joinSect(sectName) {
     for (let cat of sectData) {
         let s = cat.items.find(item => item.name === sectName);
         if (!s) continue;
+        if (!isSectTierHere(cat.tier)) {
+            gameAlert(cat.tier === 3 ? `【${s.name}】是至高聖地，只能在靈界天元城拜入或回歸。` : `身在靈界，無法拜入或回歸人界宗門【${s.name}】。`);
+            return;
+        }
 
         let lockedName = player.sectSkills[cat.tier];
         let isOwnSect = lockedName === s.name;
