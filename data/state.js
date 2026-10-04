@@ -92,6 +92,7 @@ let player = {
     auctionItems: [],            // 千寶閣當期 5 件商品
     auctionRefreshAt: 0,         // 千寶閣下次上架的時間戳
     idleProvenMap: null,         // 線上實際撐過 IDLE_PROVEN_SECONDS 秒的野外地圖名稱；背景／離線結算信任此圖打得過（被妖獸打死時清除）
+    wboss: { claimed: [], titles: [] },   // 世界 Boss（world-boss.js，第 75 節）：已領獎的 bid（最近 20 隻）、名次稱號 id
     paidRefresh: {},             // 今日付費刷新次數 { date: 當地日期字串, auction, bounty }（activity.js 的 getPaidRefreshState）
     autoHp: { enabled: false, threshold: 50 },
     autoMp: { enabled: false, threshold: 30 },
