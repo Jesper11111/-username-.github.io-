@@ -246,6 +246,7 @@ function fieldCombatRound() {
         rollFieldHuashenScroll(rolls / base);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
         onCraftFieldKills(rolls);               // 做裝通貨（craft.js，第 69 節）
         rollLingStoneDrops(rolls);              // 五行傳送陣靈石（lingjie.js，第 74 節）
+        onLingjieKills(killedCount, raceKilled);   // 靈界任務榜進度（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;

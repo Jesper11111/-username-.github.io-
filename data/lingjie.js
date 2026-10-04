@@ -112,3 +112,121 @@ function openTeaHouse() {
     gameAlert(`🍵 天元茶館\n\n你點了一壺靈茶，歇息片刻，氣血與靈力全數恢復。\n\n鄰桌的修士壓低聲音：\n「${r}」`);
     updateUI();
 }
+
+// ---- 大道商行（天元城）：傳送陣靈石每顆 LINGJIE_SHOP_PRICE 靈石 ----
+function openLingjieShop() { renderLingjieShop(); document.getElementById('lingjie-shop-modal').style.display = 'flex'; }
+function renderLingjieShop() {
+    const box = document.getElementById('lingjie-shop-body');
+    if (!box) return;
+    const P = LINGJIE_SHOP_PRICE;
+    box.innerHTML = `<p style="color: #9ca3af; font-size: 0.85em;">持有靈石 <b style="color: var(--accent);">${player.coins.toWan()}</b>｜每顆 ${P.toWan()} 靈石</p>
+        <div class="grid-container">${LINGJIE_STONE_KEYS.map(k => `<div class="card" style="border-color: #fbbf24;">
+            <img src="${LINGJIE_STONE_IMG[k]}" alt="" style="display:block; width:72px; height:72px; margin:0 auto 4px; border-radius:10px; object-fit:cover;">
+            <h3 style="margin: 4px 0;"><span class="elem-${k}">${k}</span>屬性傳送陣靈石</h3>
+            <p style="font-size: 0.8em; color: #9ca3af;">持有 ${getLingStone(k)} 顆</p>
+            <div class="batch-btns"><button class="sys-btn" ${player.coins >= P ? '' : 'disabled'} onclick="buyLingStones('${k}', 1)">買 1 顆</button>
+            <button class="sys-btn" ${player.coins >= P * 5 ? '' : 'disabled'} onclick="buyLingStones('${k}', 5)">買 5 顆</button></div></div>`).join('')}</div>
+        <button class="sys-btn" style="margin-top: 8px;" ${player.coins >= P * 5 ? '' : 'disabled'} onclick="buyLingStoneSet()">🌀 買一套（五種各 1，共 ${(P * 5).toWan()}）</button>`;
+}
+function buyLingStones(k, n) {
+    const cost = LINGJIE_SHOP_PRICE * n;
+    if (!LINGJIE_STONE_KEYS.includes(k) || !(n > 0)) return;
+    if (player.coins < cost) { gameAlert(`靈石不足！需要 ${cost.toWan()} 靈石。`); return; }
+    player.coins -= cost;
+    addLingStone(k, n);
+    addLog(`🏪 在大道商行買下 ${k}屬性傳送陣靈石 ×${n}（${cost.toWan()} 靈石）。`, "system");
+    toastBought(`${k}屬性傳送陣靈石 ×${n}`);
+    saveLocal(); renderLingjieShop(); updateUI();
+}
+function buyLingStoneSet() {
+    const cost = LINGJIE_SHOP_PRICE * LINGJIE_STONE_KEYS.length;
+    if (player.coins < cost) { gameAlert(`靈石不足！一套需要 ${cost.toWan()} 靈石。`); return; }
+    player.coins -= cost;
+    LINGJIE_STONE_KEYS.forEach(k => addLingStone(k, 1));
+    addLog(`🏪 在大道商行買下一套五行傳送陣靈石（${cost.toWan()} 靈石）。`, "system");
+    toastBought('五行傳送陣靈石一套');
+    saveLocal(); renderLingjieShop(); updateUI();
+}
+
+// ---- 靈界任務榜（天元城，和人界的每日任務分開）：player.lingQuests = { date, list: [{ t, title, kind, target, need, prog, reward, claimed }] } ----
+function lingjieWildMaps() {
+    const out = [];
+    LINGJIE_MAP_CATEGORIES.forEach(c => { if (maps[c] && !maps[c].isSafe) maps[c].items.forEach(m => out.push(m)); });
+    return out;
+}
+function rollLingjieQuests() {
+    const today = new Date().toDateString();
+    const Q = player.lingQuests;
+    if (Q && Q.date === today && Array.isArray(Q.list)) return Q;
+    const pool = LINGJIE_QUEST.templates.slice(), list = [];
+    const mapsOk = lingjieWildMaps().filter(m => !isBelowMapLevel(m));
+    const mapList = mapsOk.length ? mapsOk : lingjieWildMaps().slice(0, 1);
+    while (list.length < LINGJIE_QUEST.count && pool.length) {
+        const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        const q = { title: t.title, kind: t.kind, need: t.need, prog: 0, reward: t.reward, claimed: false, target: null };
+        if (t.kind === 'map' && mapList.length) q.target = mapList[Math.floor(Math.random() * mapList.length)].name;
+        if (t.kind === 'race') {   // 從玩家進得去的靈界野外會出現的種族挑一個
+            const races = [...new Set(mapList.flatMap(m => fieldMonsterPool(m).map(x => x.m.race)))].filter(r => RACES[r]);
+            q.target = races.length ? races[Math.floor(Math.random() * races.length)] : 'ghost';
+        }
+        list.push(q);
+    }
+    player.lingQuests = { date: today, list };
+    return player.lingQuests;
+}
+function lingjieQuestDesc(q) {
+    if (q.kind === 'map') return `在【${q.target}】擊殺妖獸 ${q.need} 隻`;
+    if (q.kind === 'race') return `在靈界野外擊殺${(RACES[q.target] || {}).name || q.target} ${q.need} 隻`;
+    return `在靈界野外（第四、五區）擊殺妖獸 ${q.need} 隻`;
+}
+function lingjieRewardText(r) {
+    const H = getHourlyIncome(), parts = [];
+    if (r.coinsH) parts.push(`${Math.floor(H * r.coinsH).toWan()} 靈石`);
+    if (r.craft) parts.push(formatCraftGain(r.craft));
+    if (r.ling) parts.push(`傳送陣靈石 ×${r.ling}（隨機屬性）`);
+    return parts.join('、');
+}
+// combat.js 野外擊殺後呼叫：raceKilled＝{ 種族: 隻數 }
+function onLingjieKills(n, raceKilled) {
+    if (!(n > 0) || !isInLingjie() || player.currentMapIsSafe) return;
+    const c = getMapCategoryIndex(player.currentMap.name);
+    if (!isLingjieMapCategory(c)) return;
+    const Q = player.lingQuests;
+    if (!Q || Q.date !== new Date().toDateString()) return;
+    let done = false;
+    Q.list.forEach(q => {
+        if (q.claimed || q.prog >= q.need) return;
+        let add = 0;
+        if (q.kind === 'any') add = n;
+        else if (q.kind === 'map' && player.currentMap.name === q.target) add = n;
+        else if (q.kind === 'race') add = (raceKilled && raceKilled[q.target]) || 0;
+        if (!add) return;
+        q.prog = Math.min(q.need, q.prog + add);
+        if (q.prog >= q.need) done = true;
+    });
+    if (done) addLog('📜 靈界任務完成！回天元城任務榜領取獎勵。', "level-up", false, "item");
+}
+function openLingjieQuestModal() { rollLingjieQuests(); renderLingjieQuests(); document.getElementById('lingjie-quest-modal').style.display = 'flex'; }
+function renderLingjieQuests() {
+    const box = document.getElementById('lingjie-quest-body');
+    if (!box) return;
+    const Q = rollLingjieQuests();
+    box.innerHTML = `<p style="color: #9ca3af; font-size: 0.85em;">每天 ${LINGJIE_QUEST.count} 個，只有在靈界野外擊殺才算（和人界的每日任務分開）；明天刷新。</p>`
+        + Q.list.map((q, i) => `<div class="card" style="text-align: left; border-color: ${q.claimed ? '#4b5563' : q.prog >= q.need ? '#4ade80' : '#fbbf24'};">
+            <h3 style="margin: 2px 0; color: #fde68a;">📜 ${q.title}</h3>
+            <p style="font-size: 0.85em;">${lingjieQuestDesc(q)}　<b>${q.prog} / ${q.need}</b></p>
+            <p style="font-size: 0.8em; color: #9ca3af;">獎勵：${lingjieRewardText(q.reward)}</p>
+            <button class="sys-btn" ${!q.claimed && q.prog >= q.need ? '' : 'disabled'} onclick="claimLingjieQuest(${i})">${q.claimed ? '已領取' : q.prog >= q.need ? '領取獎勵' : '進行中'}</button></div>`).join('');
+}
+function claimLingjieQuest(i) {
+    const Q = rollLingjieQuests(), q = Q.list[i];
+    if (!q || q.claimed || q.prog < q.need) return;
+    q.claimed = true;
+    const r = q.reward, got = [];
+    if (r.coinsH) { const c = Math.floor(getHourlyIncome() * r.coinsH); player.coins += c; got.push(`${c.toWan()} 靈石`); }
+    if (r.craft) { for (const k in r.craft) addCraftCur(k, r.craft[k]); got.push(formatCraftGain(r.craft)); }
+    for (let n = 0; n < (r.ling || 0); n++) { const k = LINGJIE_STONE_KEYS[Math.floor(Math.random() * LINGJIE_STONE_KEYS.length)]; addLingStone(k, 1); got.push(`${k}屬性傳送陣靈石 ×1`); }
+    addLog(`📜 完成靈界任務【${q.title}】，獲得 ${got.join('、')}！`, "level-up", false, "item");
+    showCraftSuccess('靈界任務完成', got.join('、'));
+    saveLocal(); renderLingjieQuests(); updateUI();
+}
