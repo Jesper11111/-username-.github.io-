@@ -33,6 +33,7 @@ function openTownScene(name) {
     const leave = document.getElementById('town-scene-leave');
     if (leave) leave.style.display = scene.noLeave ? 'none' : '';
     document.getElementById('town-scene').style.display = 'block';
+    startTownChatter(scene);
     rollTownNpcs(name);   // 隱藏 NPC：這次進城有沒有躲在角落（town-npc.js）
     rollTownFigures(scene);
     applyTownView(true);
@@ -40,11 +41,54 @@ function openTownScene(name) {
 
 function closeTownScene() {
     clearTimeout(townFigureTimer);
+    stopTownChatter();
     hideWorldRegionNow();
     closeCityGate();
     currentTownScene = null;
     currentTownView = null;
     document.getElementById('town-scene').style.display = 'none';
+}
+
+// ---- 路人閒聊（config-towns.js 的 chatter，例：青瀾島）：每 everyMs 挑一位畫面上看得到的路人，頭頂冒出對話框 showMs 後淡出 ----
+let townChatterTimer = null, townChatterLast = -1;
+function stopTownChatter() {
+    clearTimeout(townChatterTimer); townChatterTimer = null;
+    const box = document.getElementById('town-chatter');
+    if (box) box.innerHTML = '';
+}
+function startTownChatter(scene) {
+    stopTownChatter();
+    const C = scene && scene.chatter;
+    if (!C || !C.lines || !C.lines.length) return;
+    const sceneName = currentTownScene;
+    const tick = () => {
+        if (currentTownScene !== sceneName) return;
+        showTownChatter(scene, C);
+        townChatterTimer = setTimeout(tick, C.everyMs || 30000);
+    };
+    townChatterTimer = setTimeout(tick, C.firstMs != null ? C.firstMs : (C.everyMs || 30000));
+}
+function showTownChatter(scene, C) {
+    const stage = document.getElementById('town-scene-stage'), view = document.getElementById('town-scene-view');
+    if (!stage || !view || !currentTownView) return;
+    let box = document.getElementById('town-chatter');
+    if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
+    // 只挑目前畫面看得到的路人（手機要左右滑動，畫面外的人說話玩家看不到）
+    const sx = stage.clientWidth / currentTownView.imgW, left = view.scrollLeft, right = left + view.clientWidth;
+    const heads = (C.heads || []).filter(([x]) => x * sx > left + 40 && x * sx < right - 40);
+    if (!heads.length) return;
+    const [x, y] = heads[Math.floor(Math.random() * heads.length)];
+    let i = Math.floor(Math.random() * C.lines.length);
+    if (C.lines.length > 1 && i === townChatterLast) i = (i + 1) % C.lines.length;
+    townChatterLast = i;
+    const b = document.createElement('div');
+    b.className = 'town-chatter-bubble';
+    b.style.left = (x / currentTownView.imgW * 100).toFixed(3) + '%';
+    b.style.top = (y / currentTownView.imgH * 100).toFixed(3) + '%';
+    b.textContent = C.lines[i];
+    box.innerHTML = '';
+    box.appendChild(b);
+    setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 600); }, C.showMs || 7000);
 }
 
 // 換圖（第一次開啟或轉向時）＋重排；recenter = 視角置中
