@@ -19,6 +19,10 @@ const LEADERBOARD_FIREBASE_CONFIG = {
 //   雲端資料由 GM 在 gm.html 按「💥 清空全部榜單」刪除；雲端規則沒改。要恢復改成 false（程式都還在）
 const LEADERBOARD_RANKS_REMOVED = true;
 
+// Firebase App Check（2026-10-04，保護 Firebase 額度：只有從本網站正常開啟的遊戲能連雲端，用程式直接呼叫的流量被拒）：
+//   填入 reCAPTCHA v3 的「網站金鑰」（site key，公開的，可以放程式裡；密鑰 secret key 只填在 Firebase 主控台）後啟用；空字串＝不啟用。
+//   遊戲（leaderboard.js 的 initLeaderboardBackend）與 gm.html 都會用。主控台要先觀察「已驗證」比例接近 100% 才按「強制執行」（ARCHITECTURE.md 第 42 節）
+const LEADERBOARD_APP_CHECK_KEY = "";
 const LEADERBOARD_SDK_BASE = "https://www.gstatic.com/firebasejs/10.14.1";   // compat 版，傳統 <script> 可直接用全域 firebase
 const LEADERBOARD_COLLECTION = "leaderboard";          // 每位玩家一筆，文件 id = 匿名登入的 uid
 const LEADERBOARD_BANNED_COLLECTION = "banned";        // GM 黑名單（gm.html），文件 id = 被封鎖的 uid；規則擋下其上傳

@@ -1617,7 +1617,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AG`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AH`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -2417,6 +2417,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 視窗 `#leaderboard-modal`：自己的戰力與名次（未進前 100 顯示「未進前 100 名」）、前 100 名（前三名獎牌、自己那列 `.lb-self` 高亮、境界階數／等級／宗門、多久前更新）、重新整理（冷卻 10 秒）。
 - 其他玩家的道號／宗門一律經 `lbEscape()` 才插入 innerHTML（資料來自網路，不能信任）。
 - 額度估算（Spark 免費：每日 5 萬讀、2 萬寫）：每位在線玩家每小時 12 次寫入 → 約 1,600 玩家小時／日；每次上傳另有 1 次讀取（hist，2026-09-27 起）→ 同樣 1,600 玩家小時約用掉 1.9 萬讀；每開一次榜單約 100 次讀取 → 其餘約 300 次開榜／日。玩家變多時先調長 `LEADERBOARD_UPLOAD_INTERVAL_MS` 或調小 `LEADERBOARD_TOP_N`。
+
+- **Firebase App Check**（2026-10-04，版本 `20261005AH`，保護 Firebase 額度）：`LEADERBOARD_APP_CHECK_KEY`（config-leaderboard.js，reCAPTCHA v3 網站金鑰，空字串＝不啟用）。
+  有金鑰時 `initLeaderboardBackend` 多載入 `firebase-app-check-compat.js`，`initializeApp` 後立刻 `firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(金鑰), true)`；gm.html 對 'gm' app 同樣啟用。
+  上線順序：① reCAPTCHA 管理頁建立 v3 金鑰（網域 k559610142-art.github.io）② Firebase 主控台 App Check 註冊網頁應用程式（填密鑰）③ 金鑰填進程式並發佈
+  ④ 觀察 App Check →「Cloud Firestore」已驗證請求比例接近 100%（舊版快取的玩家更新後）⑤ 按「強制執行」。強制執行前沒有任何效果，也不會擋到玩家。
 
 ## 43. 秘境入口與鎮魔塔（`config-secret-realms.js`、`secret-realm.js`；2026-09-28）
 

@@ -62,7 +62,12 @@ function initLeaderboardBackend() {
         for (const f of ['app', 'auth', 'firestore']) {
             if (!loaded[f]()) await lbLoadScript(`${LEADERBOARD_SDK_BASE}/firebase-${f}-compat.js`);
         }
-        if (!firebase.apps.length) firebase.initializeApp(LEADERBOARD_FIREBASE_CONFIG);
+        if (LEADERBOARD_APP_CHECK_KEY && typeof firebase.appCheck !== 'function') await lbLoadScript(`${LEADERBOARD_SDK_BASE}/firebase-app-check-compat.js`);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(LEADERBOARD_FIREBASE_CONFIG);
+            // App Check（config-leaderboard.js）：要在第一次使用 Firestore 之前啟用；token 自動更新
+            if (LEADERBOARD_APP_CHECK_KEY) firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(LEADERBOARD_APP_CHECK_KEY), true);
+        }
         const auth = firebase.auth();
         // 等匿名登入狀態從瀏覽器還原；沒有才新登入（同一個瀏覽器會一直是同一個 uid＝同一筆榜單資料）
         let user = await new Promise(res => { const off = auth.onAuthStateChanged(u => { off(); res(u); }); });
