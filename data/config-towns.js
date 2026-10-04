@@ -366,8 +366,10 @@ const townScenes = {
         //   人物圖：從青瀾島島景圖的垂釣老者沿輪廓去背（2026-10-04 使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
         //     場景用 npc-xianweng.png（全身約 117px、略降亮度、左右鏡像讓釣竿朝左邊河面；使用者要背影但沒有背影圖，選擇沿用這張）；對話視窗用全身 npc-xianweng-portrait.png
         hiddenNpcs: [{
-            id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 0.2, minCha: 10000,
-            enabled: false,   // 2026-10-04 使用者：「仙翁先隱藏，出現條件等會新增」→ 改 true 才會出現
+            id: "xianweng", kind: "xianweng", name: "隱藏仙翁", place: "青瀾島", chance: 1,
+            // 出現條件（2026-10-04 使用者定案）：魅力（本身含駐顏駐魅力丹＋裝備）5000、當日線上擊殺 2000、一天只出現一次、每小時出現 10 分鐘後隱藏
+            //   minKillsToday＝當天（日曆日）線上野外擊殺數（town-npc.js 的 getTodayFieldKills）；window＝每 everyMin 分鐘的前 showMin 分鐘（裝置時間，例 每小時 :00～:09）
+            minCha: 5000, minKillsToday: 2000, window: { everyMin: 60, showMin: 10 },
             spots: [{ img: "images/towns/npc-xianweng.png", rect: [345, 369, 55, 117] }],   // 涼亭左前角的台基上（使用者確認的位置），面向左邊河面垂釣
             // 釣魚演出（town-npc.js 的 getTownNpcEffects）：竿＝手 → 竿尖、釣線＝竿尖 → 水面、水面漣漪（圖上座標）
             fishing: { hand: [349, 408], tip: [262, 350], hook: [256, 512] },

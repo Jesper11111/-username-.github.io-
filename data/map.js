@@ -61,7 +61,7 @@ function goToTownByName(name) {
 function goToTown(i, quick) {
     let item = maps[0].items[i];
     // 被城內隱藏 NPC 打爆後的禁入時間（town-npc.js）：不傳送、只提示
-    const ban = getTownBanLeftMin(item.name);
+    const ban = isGM() ? 0 : getTownBanLeftMin(item.name);
     if (ban) { showToast(`😵 滿臉都是香腸油，還沒臉回${item.name}……（剩 ${ban} 分鐘）`); return; }
     if (player.currentMap.name !== item.name) selectMap(0, i, !quick);
     else closeModal('world-map-modal');
@@ -169,7 +169,11 @@ function afterMapArrive(cIndex, target) {
 }
 
 // 進入地圖的門檻檢查：回傳 { msg: 完整提示, short: 地圖紅點旁的短字 }，可以進入回傳 null（changeMap 與人界／靈界地圖紅點共用）
+// GM 測試人物（2026-10-04 使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：存檔 player.gm === true（受簽章保護，只能由開發者產生帶 gm 的存檔代碼）
+//   → 所有地圖都能直接進出（不看境界、四維、靈界、暫存區），飛升／返回人界不扣傳送陣靈石，城鎮禁入也不擋
+function isGM() { return !!(player && player.gm === true); }
 function getMapEntryBlock(cIndex, iIndex) {
+    if (isGM()) return null;
     const targetMap = maps[cIndex].items[iIndex];
     const minRealm = getMapMinRealm(targetMap);
     if (minRealm && isBelowMapLevel(targetMap))   // realm: true＝可改用挑戰模式進入（第 70 節）
@@ -222,6 +226,7 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
         respawnTimer = 0;
     }
     if (isInLingjie() && !isLingjieMapCategory(cIndex)) player.inLingjie = false;   // 戰死、渡劫失敗等系統送回宗門＝回到人界（第 74 節）
+    if (isGM() && isLingjieMapCategory(cIndex)) player.inLingjie = true;   // GM 直接傳送到靈界地圖＝身在靈界
     player.currentMap = targetMap;
     player.currentMapIsSafe = maps[cIndex].isSafe;
     safeZoneTimer = 0;

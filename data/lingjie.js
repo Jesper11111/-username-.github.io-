@@ -22,6 +22,7 @@ function isLingjieMapCategory(c) { return LINGJIE_MAP_CATEGORIES.includes(c); }
 // 飛升點（CITY_GATES 的 lingjie: true，town.js 的 enterCityGate 在播光柱之前呼叫）：已在靈界直接放行；否則檢查並扣一套靈石。回傳是否放行
 async function prepareLingjieEntry() {
     if (isInLingjie()) return true;
+    if (isGM()) { player.inLingjie = true; addLog('🛡️ GM：免傳送陣靈石飛升靈界', 'system'); saveLocal(); updateUI(); return true; }
     if (!hasLingStoneSet()) {
         gameAlert(`🌀 飛升台的五行大陣沒有回應……\n需要金、木、水、火、土傳送陣靈石各 1 顆才能飛升靈界。\n持有：${formatLingStones()}\n（傳送陣靈石在渡劫以上的野外、鎮魔塔 60 層起掉落）`);
         return false;
@@ -38,6 +39,13 @@ async function prepareLingjieEntry() {
 // 回人界：付一套靈石；身在靈界的地圖（第四、五區）會先回宗門。then＝付款後要做的事（開人界地圖、回宗門）
 async function tryLeaveLingjie(then) {
     if (!isInLingjie()) { if (then) then(); return; }
+    if (isGM()) {   // GM：免靈石返回人界
+        player.inLingjie = false;
+        const g = typeof getMapCategoryIndex === 'function' ? getMapCategoryIndex(player.currentMap.name) : -1;
+        if (isLingjieMapCategory(g)) changeMap(0, 0);
+        saveLocal(); if (then) then(); updateUI();
+        return;
+    }
     if (!hasLingStoneSet()) {
         gameAlert(`🌌 你身在靈界，空間壁壘阻隔，無法直接返回人界。\n需要金、木、水、火、土傳送陣靈石各 1 顆。\n持有：${formatLingStones()}（靈界的野外也會掉落）`);
         return;

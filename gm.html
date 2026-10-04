@@ -257,6 +257,7 @@
             <div class="toolbar">
                 <label>⛩️ 先天靈根 <select id="rw-apt-root"></select></label>
                 <label>⛩️ 先天體質 <select id="rw-apt-phys"></select></label>
+                <label title="只能用在寄給指定 uid 的仙府信件；玩家領信後生效">🛡️ GM 權限 <select id="rw-gm"><option value="">（不變）</option><option value="1">授予（任意進出地圖）</option><option value="0">撤銷</option></select></label>
                 <span class="note">玩家已測過資質時會跳出「原本 vs 賜予」由玩家選擇；還沒入宗測試的，測試時直接採用</span>
             </div>
             <p class="note">獎勵預覽：<b id="rw-preview" style="color: var(--accent);">（無）</b></p>
@@ -333,19 +334,19 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005AU"></script>
+<script src="data/config-realms.js?v=20261005AV"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005AU"></script>
-<script src="data/numeric.js?v=20261005AU"></script>
-<script src="data/config-leaderboard.js?v=20261005AU"></script>
-<script src="data/config-mailbox.js?v=20261005AU"></script>
+<script src="data/config-numeric.js?v=20261005AV"></script>
+<script src="data/numeric.js?v=20261005AV"></script>
+<script src="data/config-leaderboard.js?v=20261005AV"></script>
+<script src="data/config-mailbox.js?v=20261005AV"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005AU"></script>
+<script src="data/config-aptitude.js?v=20261005AV"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005AU"></script>
-<script src="data/bounty.js?v=20261005AU"></script>
-<script src="data/config-defense.js?v=20261005AU"></script>
-<script src="data/config-world-boss.js?v=20261005AU"></script>
+<script src="data/config-bounty.js?v=20261005AV"></script>
+<script src="data/bounty.js?v=20261005AV"></script>
+<script src="data/config-defense.js?v=20261005AV"></script>
+<script src="data/config-world-boss.js?v=20261005AV"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -897,6 +898,8 @@ function rwFormat(r) {
     const apt = r.aptitude || {};
     if (apt.root && rwRootName(apt.root)) parts.push(`⛩️靈根【${rwRootName(apt.root)}】`);
     if (apt.physique && rwPhysName(apt.physique)) parts.push(`⛩️體質【${rwPhysName(apt.physique)}】`);
+    if (r.gm === true) parts.push('🛡️授予 GM 權限');
+    if (r.gm === false) parts.push('🛡️撤銷 GM 權限');
     return parts.join('、') || '（無）';
 }
 function rwCollect() {
@@ -908,6 +911,7 @@ function rwCollect() {
     if ($('rw-apt-root').value) apt.root = JSON.parse($('rw-apt-root').value);
     if ($('rw-apt-phys').value) apt.physique = $('rw-apt-phys').value;
     if (apt.root || apt.physique) r.aptitude = apt;
+    if ($('rw-gm').value) r.gm = $('rw-gm').value === '1';
     return r;
 }
 function rwPreview() { $('rw-preview').textContent = rwFormat(rwCollect()); }
@@ -926,13 +930,13 @@ function rwInit() {
     $('rw-sv-q').innerHTML = MAIL_SERVANT_QUALITIES.map(q => `<option${q === '傳說' ? ' selected' : ''}>${q}</option>`).join('');
     $('rw-apt-root').innerHTML = '<option value="">（不送）</option>' + rwRootOptions().map(o => `<option value='${esc(JSON.stringify(o.value))}'>${esc(o.label)}</option>`).join('');
     $('rw-apt-phys').innerHTML = '<option value="">（不送）</option>' + APTITUDE_PHYSIQUE_GROUPS.map(g => g.pick.map(p => `<option value="${esc(p.id)}">${esc(g.grade)}・${esc(p.name)}</option>`).join('')).join('');
-    $('rw-apt-root').onchange = rwPreview; $('rw-apt-phys').onchange = rwPreview;
+    $('rw-apt-root').onchange = rwPreview; $('rw-apt-phys').onchange = rwPreview; $('rw-gm').onchange = rwPreview;
     $('rw-presets').innerHTML = MAIL_PRESETS.map((p, i) => `<button data-preset="${i}">${esc(p.label)}</button>`).join(' ');
     document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => {
         const p = MAIL_PRESETS[Number(b.dataset.preset)];
         MAIL_REWARD_FIELDS.forEach(f => { $('rw-f-' + f.key).value = p.rewards[f.key] || ''; });
         rwExtra = { blueprints: Object.assign({}, p.rewards.blueprints || {}), servants: Object.assign({}, p.rewards.servants || {}) };
-        $('rw-apt-root').value = ''; $('rw-apt-phys').value = '';
+        $('rw-apt-root').value = ''; $('rw-apt-phys').value = ''; $('rw-gm').value = '';
         $('rw-title').value = p.title || ''; $('rw-body').value = p.body || '';
         rwPreview();
     });
@@ -951,7 +955,9 @@ async function rwSend() {
     const rewards = rwCollect(), title = $('rw-title').value.trim(), body = $('rw-body').value.trim();
     if (rwFormat(rewards) === '（無）') return alert('請至少填一項獎勵。');
     const days = Math.max(0, Number($('rw-days').value) || 0);
-    const v = rewards.aptitude ? 2 : 1;   // 獎勵格式版本（config-mailbox.js 的 MAIL_SCHEMA_VERSION）：遊戲版本不夠新時會提示重新整理，不會白白用掉
+    // GM 權限只能寄給指定 uid 的個人信（兌換碼誰都能兌換、全服信每個人都會收到）
+    if ('gm' in rewards && (rwMode() !== 'mail' || $('rw-to').value === 'all')) return alert('🛡️ GM 權限只能用「仙府信件」寄給指定 uid 的玩家。');
+    const v = 'gm' in rewards ? 3 : rewards.aptitude ? 2 : 1;   // 獎勵格式版本（config-mailbox.js 的 MAIL_SCHEMA_VERSION）：遊戲版本不夠新時會提示重新整理，不會白白用掉
     const expiresAt = days ? firebase.firestore.Timestamp.fromMillis(Date.now() + days * 86400000) : null;
     if (rwMode() === 'mail') {
         const to = $('rw-to').value === 'all' ? 'all' : $('rw-uid').value.trim();

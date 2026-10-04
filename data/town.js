@@ -43,6 +43,7 @@ function closeTownScene() {
     clearTimeout(townFigureTimer);
     stopTownChatter();
     if (typeof stopNpcWhispers === 'function') stopNpcWhispers();
+    if (typeof stopTownNpcClock === 'function') stopTownNpcClock();
     hideWorldRegionNow();
     closeCityGate();
     currentTownScene = null;

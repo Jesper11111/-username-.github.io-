@@ -90,6 +90,8 @@ function formatMailRewards(r) {
     const rd = apt.root && describeRoot(apt.root), pd = apt.physique && describePhysique(apt.physique);
     if (rd) parts.push(`⛩️ 先天靈根【${rd.name}】`);
     if (pd) parts.push(`⛩️ 先天體質【${pd.name}】`);
+    if (r.gm === true) parts.push('🛡️ GM 權限（任意進出地圖）');
+    if (r.gm === false) parts.push('🛡️ 撤銷 GM 權限');
     return parts.join('、') || '（無獎勵）';
 }
 function countMailServants(r) {
@@ -101,8 +103,11 @@ function checkMailRewardSpace(r) {
     if (n && (player.servants || []).length + n > MAX_SERVANTS) return `僕從小屋空位不足（需要 ${n} 個，上限 ${MAX_SERVANTS} 名），請先解僱一些僕從再領取。`;
     return '';
 }
-function grantMailRewards(r) {
+// personal＝寄給個人的信（GM 權限只認個人信；全服信、兌換碼、奇遇都不會改 GM）
+function grantMailRewards(r, personal) {
     r = r || {};
+    // GM 權限（map.js 的 isGM，第 74 節）：GM 後台寄個人信 rewards.gm = true 授予、false 撤銷
+    if (personal && typeof r.gm === 'boolean') player.gm = r.gm;
     MAIL_REWARD_FIELDS.forEach(f => { const n = mbAmount(r[f.key]); if (n) player[f.field] = (player[f.field] || 0) + n; });
     if (mbAmount(r.merit)) settleMeritStones();   // 功德滿額自動凝結七彩補天石
     Object.entries(r.blueprints || {}).forEach(([k, n]) => {
@@ -151,7 +156,7 @@ async function claimMail(id) {
         renderMailbox(); updateMailboxBadge();
         return;
     }
-    grantMailRewards(m.rewards);
+    grantMailRewards(m.rewards, m.to !== 'all');
     markMailClaimed(id);
     mbMails = mbMails.filter(x => x.id !== id);
     addLog(`📮 領取信件【${m.title || '仙府來信'}】：${formatMailRewards(m.rewards)}`, "level-up", false, "item");

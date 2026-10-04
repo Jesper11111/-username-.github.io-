@@ -92,15 +92,70 @@ function talkToScheduledFigure(id) {
 // 進城時擲骰（town.js 的 openTownScene 呼叫）
 function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];
+    stopTownNpcClock();
     const scene = townScenes[sceneName];
-    for (const npc of (scene && scene.hiddenNpcs) || []) {
-        if (npc.enabled === false) continue;   // 暫時隱藏（config-towns.js 的 enabled: false）
-        if (npc.minCha && getTotalCharm() < npc.minCha) continue;   // 魅力門檻（例：青瀾島隱藏仙翁 10000）
-        if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
-        townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
-        if (npc.whispers) setTimeout(() => startNpcWhispers(sceneName), 0);   // 仙翁低語（openTownScene 之後才啟動）
-        return;
+    const list = ((scene && scene.hiddenNpcs) || []).filter(npc => npc.enabled !== false);   // 暫時隱藏（config-towns.js 的 enabled: false）
+    for (const npc of list) if (trySpawnTownNpc(sceneName, npc)) return;
+    // 有定時出現的 NPC（window）：待在城裡時每 30 秒檢查一次，時段一到就現身
+    if (list.some(npc => npc.window)) townNpcClock = setInterval(() => {
+        if (typeof currentTownScene === 'undefined' || currentTownScene !== sceneName) { stopTownNpcClock(); return; }
+        if (townNpcSpots[sceneName]) return;
+        for (const npc of list) if (npc.window && trySpawnTownNpc(sceneName, npc)) {
+            if (currentTownView) renderTownHotspots(currentTownView);
+            setTimeout(() => startNpcWhispers(sceneName), 0);
+            return;
+        }
+    }, 30000);
+}
+let townNpcClock = null, townNpcHideTimer = null;
+function stopTownNpcClock() { clearInterval(townNpcClock); townNpcClock = null; clearTimeout(townNpcHideTimer); townNpcHideTimer = null; }
+// 當日（日曆日）線上野外擊殺數：combat.js 每波擊殺後呼叫 addTodayFieldKills；存 player.dayKills = { date, n }（用到才建立）
+function getTodayFieldKills() { const d = player.dayKills; return d && d.date === todayKey() ? (d.n || 0) : 0; }
+function addTodayFieldKills(n) {
+    if (!(n > 0)) return;
+    const t = todayKey();
+    if (!player.dayKills || player.dayKills.date !== t) player.dayKills = { date: t, n: 0 };
+    player.dayKills.n += n;
+}
+// 定時出現（npc.window = { everyMin, showMin }）：目前在不在出現時段；在＝回傳 { key: 這個時段的代號, leftMs: 還剩多久 }
+function getTownNpcWindow(w, now) {
+    const d = new Date(now || Date.now());
+    const m = d.getHours() * 60 + d.getMinutes(), pos = m % w.everyMin;
+    if (pos >= w.showMin) return null;
+    return { key: todayKey() + '#' + Math.floor(m / w.everyMin), leftMs: (w.showMin - pos) * 60000 - d.getSeconds() * 1000 - d.getMilliseconds() };
+}
+// 判斷一位隱藏 NPC 這次會不會出現；出現就放進 townNpcSpots 並回傳 true
+function trySpawnTownNpc(sceneName, npc) {
+    if (npc.minCha && getTotalCharm() < npc.minCha) return false;   // 魅力門檻（本身含丹藥＋裝備）
+    if (npc.minKillsToday && getTodayFieldKills() < npc.minKillsToday) return false;   // 當日線上擊殺門檻
+    if (isTownNpcDoneToday(npc.id)) return false;
+    let win = null;
+    if (npc.window) {
+        win = getTownNpcWindow(npc.window);
+        if (!win) return false;
+        // 一天只出現一次：今天已經在別的時段出現過就不再出現（同一個時段內離開再回來還在）
+        const seen = player.townNpcSeen && player.townNpcSeen[npc.id];
+        if (seen && seen.split('#')[0] === todayKey() && seen !== win.key) return false;
     }
+    if (Math.random() >= npc.chance) return false;
+    townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
+    if (win) {
+        if (!player.townNpcSeen || typeof player.townNpcSeen !== 'object') player.townNpcSeen = {};
+        player.townNpcSeen[npc.id] = win.key;
+        clearTimeout(townNpcHideTimer);
+        townNpcHideTimer = setTimeout(() => hideWindowTownNpc(sceneName, npc), win.leftMs);   // 時段結束就隱藏
+    }
+    if (npc.whispers) setTimeout(() => startNpcWhispers(sceneName), 0);   // 仙翁低語（openTownScene 之後才啟動）
+    return true;
+}
+// 定時 NPC 的時段結束：從畫面上消失（正在對話就關掉對話框；小遊戲玩到一半可以玩完，只是不會再回到對話）
+function hideWindowTownNpc(sceneName, npc) {
+    const hit = townNpcSpots[sceneName];
+    if (!hit || hit.npc !== npc) return;
+    const modal = document.getElementById('xianweng-modal');
+    if (modal && modal.style.display === 'flex' && modal.dataset.scene === sceneName) modal.style.display = 'none';
+    removeTownNpc(sceneName);
+    if (currentTownScene === sceneName) showToast(`🍃 ${(npc.lines && npc.lines.bye) || '仙翁飄然而去'}`);
 }
 
 // 目前要多畫的人偶（town.js 的 renderTownHotspots 併進 figures）；只畫在主圖上（hiddenNpcs 的座標是主圖像素）
@@ -321,7 +376,7 @@ async function leaveQinglanIsland() {
     if (!(await gameConfirm('⛵ 是否搭船離開青瀾島？'))) return;
     openTownScene(WORLD_SCENE_KEY);
 }
-// 隱藏仙翁：魅力達標、登島時機率出現在涼亭；三個選項的造化（獎勵）尚未決定，先結緣（當天見過就不再出現）
+// 隱藏仙翁：出現條件見 config-towns.js（魅力 5000、當日線上擊殺 2000、每小時前 10 分鐘、一天一次）；對話三選一（兩個小遊戲在 xianweng-games.js、告辭＝當天不再出現）
 function talkToXianweng(sceneName) {
     const hit = townNpcSpots[sceneName];
     if (!hit) return;
