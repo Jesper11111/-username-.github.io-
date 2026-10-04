@@ -4001,11 +4001,15 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     **取得方式＝GM 後台寄信**（使用者：「可以在 GM 後台製作一隻 GM 人物嗎」）：gm.html「📮 發放獎勵」新增「🛡️ GM 權限」選單（不變／授予／撤銷）→ `rewards.gm = true|false`，
     **只能用仙府信件寄給指定 uid**（兌換碼與全服信會被擋；`MAIL_SCHEMA_VERSION` 3，舊版遊戲提示重新整理）；玩家領信時 mailbox.js 的 `grantMailRewards(r, personal)` 只在個人信才設定 `player.gm`
     （兌換碼、奇遇呼叫不帶 personal，不會改 GM）。寄信只有管理者能寫（firestore.rules 的 mail create），規則不用改。
-，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
+  - **路人閒聊**（版本 `20261005AQ`，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
     town.js 的 `startTownChatter`（`openTownScene` 啟動、`closeTownScene`／換場景停止）、`showTownChatter`：只挑目前畫面看得到的路人頭頂（手機左右滑動時畫面外的人不說話），
     句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。
     `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；
     對話 `#xianweng-modal`（沒有 ✕）三選一 `xianwengChoose('guide'|'chess'|'leave')`：當天見過就不再出現（`markTownNpcDone`）；**造化（獎勵）尚未決定**，目前只寫日誌與提示。
+  - **手機直式圖**（2026-10-04，版本 `20261005AZ`，使用者提供 848×1264「青瀾島手機版換此圖」→ `images/towns/qinglan-inner-portrait.jpg`）：`townScenes["青瀾島"].portrait`
+    （春和堂 [530, 520, 240, 180]、小攤 [560, 850, 288, 400]、⛵ 搭船離島 [0, 790, 440, 420]）；直式圖新增選填 `chatterHeads`（town.js 的 `showTownChatter` 在直式圖改用它，9 位路人）。
+    隱藏 NPC 支援直式圖：npc 選填 `portraitSpot`／`portraitFishing`／`whispers.portraitAt`（town-npc.js 的 `getTownNpcSpot`、`isTownPortraitView`；沒設＝直式圖上不出現）。
+    仙翁在直式圖：涼亭石台左前角 [164, 632, 42, 90]（約 90px，同深度攤販相當），竿 手 (167, 662) → 竿尖 (100, 617)、釣線落水 (104, 738)，低語 (185, 625)。
 
 ## 75. 世界 Boss（`config-world-boss.js`、`world-boss.js`、`tools/firestore.rules`、gm.html「⚔️ 世界 Boss」；2026-10-04，版本 `20261005AD`）
 
