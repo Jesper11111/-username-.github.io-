@@ -94,6 +94,7 @@ function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];
     const scene = townScenes[sceneName];
     for (const npc of (scene && scene.hiddenNpcs) || []) {
+        if (npc.enabled === false) continue;   // 暫時隱藏（config-towns.js 的 enabled: false）
         if (npc.minCha && getTotalCharm() < npc.minCha) continue;   // 魅力門檻（例：青瀾島隱藏仙翁 10000）
         if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
         townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
@@ -108,6 +109,18 @@ function getTownNpcFigures(sceneName, view) {
     // 函式名寫成字串字面值：建置（tools/build.js）才會把它們掛回 window（點人偶的 onclick 要用）
     const fn = hit.npc.kind === 'xianweng' ? 'talkToXianweng' : 'talkToTownNpc';
     return [{ id: 'npc-' + hit.npc.id, name: hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc', action: `${fn}('${sceneName}')` }];
+}
+
+// NPC 的場景演出（例：隱藏仙翁垂釣＝竿、釣線、水面漣漪）：畫在人偶底下、不擋點擊；npc 沒有 fishing 就不畫
+function getTownNpcEffects(sceneName, view) {
+    const hit = townNpcSpots[sceneName];
+    if (!hit || view !== townScenes[sceneName] || !hit.npc.fishing) return '';
+    const F = hit.npc.fishing, W = view.imgW, H = view.imgH, [hx, hy] = F.hand, [tx, ty] = F.tip, [kx, ky] = F.hook;
+    const pos = (x, y) => `left: ${(x / W * 100).toFixed(3)}%; top: ${(y / H * 100).toFixed(3)}%;`;
+    return `<svg class="tnpc-fishing" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="${hx}" y1="${hy}" x2="${tx}" y2="${ty}" class="rod"/>
+            <path d="M${tx} ${ty} Q ${tx - 4} ${(ty + ky) / 2} ${kx} ${ky}" class="line"/></svg>
+        <div class="tnpc-ripple" style="${pos(kx, ky)}" aria-hidden="true"><i></i><i></i><i></i></div>`;
 }
 
 // 從畫面上拿掉（處理完畢）

@@ -100,7 +100,8 @@ function renderTownHotspots(view) {
                     style="left: ${pct(x, view.imgW)}; top: ${pct(y, view.imgH)}; width: ${pct(w, view.imgW)}; height: ${pct(hh, view.imgH)};">`;
     }).join('');
     // 場景異象（effects，例：人界地圖飛升點上方雷電交加）：畫在最底層、不擋點擊
-    const effects = (view.effects || []).map(e => TOWN_SCENE_FX[e.fx] ? TOWN_SCENE_FX[e.fx](view, e.at, e) : '').join('');
+    const effects = (view.effects || []).map(e => TOWN_SCENE_FX[e.fx] ? TOWN_SCENE_FX[e.fx](view, e.at, e) : '').join('')
+        + (typeof getTownNpcEffects === 'function' ? getTownNpcEffects(currentTownScene, view) : '');   // NPC 演出（例：隱藏仙翁垂釣，town-npc.js）
     layer.innerHTML = effects + figures + (view.hotspots || []).filter(h => h.enabled !== false).map(h => {
         const [x, y, w, hh] = h.rect;
         // pin：小紅點樣式（人界地圖用）＝ rect 正中央一顆會呼吸發光的紅點，不顯示名稱（label 只當 title／aria-label）
