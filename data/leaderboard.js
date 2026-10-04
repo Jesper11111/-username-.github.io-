@@ -81,7 +81,7 @@ function initLeaderboardBackend() {
 // 上傳自己的戰力；遊戲結束、讀檔失敗（角色不是真的）或距上次不到 60 秒時不上傳
 async function uploadLeaderboard() {
     if (!isLeaderboardConfigured() || !gameStarted || gameOver || saveLoadFailed) return;
-    if (LEADERBOARD_RANKS_REMOVED) return;   // 排行榜已移除（config-leaderboard.js）
+    if (LEADERBOARD_POWER_REMOVED) return;   // 戰力榜已移除（config-leaderboard.js）
     if (lbBanned || isSaveFlagged() || Date.now() - lbLastUploadAt < LEADERBOARD_MIN_GAP_MS) return;   // 存檔驗證異常不上傳（integrity.js）
     lbLastUploadAt = Date.now();
     try {
@@ -211,10 +211,10 @@ function switchLeaderboardTab(tab) {
 function applyLeaderboardTab(tab) {
     lbTab = ['defense', 'board', 'market'].includes(tab) ? tab : 'power';
     // 排行榜已移除（config-leaderboard.js）：戰力榜／守城榜分頁藏起來，一律改開留言板
-    if (LEADERBOARD_RANKS_REMOVED && (lbTab === 'power' || lbTab === 'defense')) lbTab = 'board';
+    if ((LEADERBOARD_POWER_REMOVED && lbTab === 'power') || (LEADERBOARD_RANKS_REMOVED && lbTab === 'defense')) lbTab = LEADERBOARD_POWER_REMOVED ? 'board' : 'power';
     document.querySelectorAll('#leaderboard-modal [data-lb-tab]').forEach(b => {
         b.classList.toggle('on', b.dataset.lbTab === lbTab);
-        if (LEADERBOARD_RANKS_REMOVED && (b.dataset.lbTab === 'power' || b.dataset.lbTab === 'defense')) b.style.display = 'none';
+        if ((LEADERBOARD_POWER_REMOVED && b.dataset.lbTab === 'power') || (LEADERBOARD_RANKS_REMOVED && b.dataset.lbTab === 'defense')) b.style.display = 'none';
     });
     const title = document.getElementById('leaderboard-title');
     if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '💬 修仙留言板', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
@@ -237,7 +237,7 @@ async function checkLeaderboardBan(db, uid) {
 
 // 由 main.js 的 initGame() 呼叫
 function startLeaderboardSync() {
-    if (!isLeaderboardConfigured() || LEADERBOARD_RANKS_REMOVED) return;
+    if (!isLeaderboardConfigured() || LEADERBOARD_POWER_REMOVED) return;
     setTimeout(uploadLeaderboard, LEADERBOARD_FIRST_UPLOAD_DELAY_MS);
     setInterval(uploadLeaderboard, LEADERBOARD_UPLOAD_INTERVAL_MS);
 }
