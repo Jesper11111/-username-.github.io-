@@ -1619,7 +1619,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AR`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AS`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3960,6 +3960,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     站在涼亭左前角台基上 [345, 369, 55, 117]（取代上面的前柱遮擋版）；npc 新增 `fishing: { hand, tip, hook }`，town-npc.js 的 `getTownNpcEffects` 畫竿（手→竿尖）、
     釣線（竿尖→水面）SVG 與三圈漣漪（`.tnpc-*`，CSS 動畫），town.js 的 `renderTownHotspots` 併進場景效果層（不擋點擊）。之後有背影圖只要換 `npc-xianweng.png`。
     **暫時隱藏**（版本 `20261005AP`，使用者：「仙翁先隱藏，出現條件等會新增」）：`enabled: false`（`rollTownNpcs` 略過；hiddenNpcs 通用欄位），出現條件定案後改 true。
+    **低語**（版本 `20261005AS`，使用者：「仙翁出現有沒有一些低語」）：npc 新增 `whispers: { firstMs, everyMs, showMs, at, lines }`（10 句）；仙翁在場時 town-npc.js 的 `startNpcWhispers` 每 15 秒在頭頂浮出淡色楷體小字、
+    6 秒內上飄消散（`.npc-whisper`，與路人閒聊共用 `#town-chatter` 層；路人說話只清自己的對話框）；仙翁離開（`removeTownNpc`）或離島（`closeTownScene`）停止。
   - **路人閒聊**（版本 `20261005AQ`，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
     town.js 的 `startTownChatter`（`openTownScene` 啟動、`closeTownScene`／換場景停止）、`showTownChatter`：只挑目前畫面看得到的路人頭頂（手機左右滑動時畫面外的人不說話），
     句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。

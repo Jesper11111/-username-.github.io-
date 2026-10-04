@@ -42,6 +42,7 @@ function openTownScene(name) {
 function closeTownScene() {
     clearTimeout(townFigureTimer);
     stopTownChatter();
+    if (typeof stopNpcWhispers === 'function') stopNpcWhispers();
     hideWorldRegionNow();
     closeCityGate();
     currentTownScene = null;
@@ -86,7 +87,7 @@ function showTownChatter(scene, C) {
     b.style.left = (x / currentTownView.imgW * 100).toFixed(3) + '%';
     b.style.top = (y / currentTownView.imgH * 100).toFixed(3) + '%';
     b.textContent = C.lines[i];
-    box.innerHTML = '';
+    box.querySelectorAll('.town-chatter-bubble').forEach(e => e.remove());   // 只清路人的對話框（仙翁低語共用這一層）
     box.appendChild(b);
     setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 600); }, C.showMs || 7000);
 }

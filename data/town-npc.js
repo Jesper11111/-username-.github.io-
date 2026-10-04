@@ -98,6 +98,7 @@ function rollTownNpcs(sceneName) {
         if (npc.minCha && getTotalCharm() < npc.minCha) continue;   // 魅力門檻（例：青瀾島隱藏仙翁 10000）
         if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
         townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
+        if (npc.whispers) setTimeout(() => startNpcWhispers(sceneName), 0);   // 仙翁低語（openTownScene 之後才啟動）
         return;
     }
 }
@@ -112,6 +113,39 @@ function getTownNpcFigures(sceneName, view) {
 }
 
 // NPC 的場景演出（例：隱藏仙翁垂釣＝竿、釣線、水面漣漪）：畫在人偶底下、不擋點擊；npc 沒有 fishing 就不畫
+// 低語（config-towns.js 的 whispers）：仙翁在場時頭頂偶爾浮出淡色小字、慢慢上飄消散；畫在 #town-chatter 層（與路人閒聊共用，不擋點擊）
+let npcWhisperTimer = null, npcWhisperLast = -1;
+function stopNpcWhispers() { clearTimeout(npcWhisperTimer); npcWhisperTimer = null; }
+function startNpcWhispers(sceneName) {
+    stopNpcWhispers();
+    const hit = townNpcSpots[sceneName], W = hit && hit.npc.whispers;
+    if (!W || !W.lines || !W.lines.length) return;
+    const tick = () => {
+        if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;   // 離開或仙翁已消失
+        showNpcWhisper(W);
+        npcWhisperTimer = setTimeout(tick, W.everyMs || 15000);
+    };
+    npcWhisperTimer = setTimeout(tick, W.firstMs != null ? W.firstMs : (W.everyMs || 15000));
+}
+function showNpcWhisper(W) {
+    const stage = document.getElementById('town-scene-stage');
+    if (!stage || !currentTownView) return;
+    let box = document.getElementById('town-chatter');
+    if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
+    let i = Math.floor(Math.random() * W.lines.length);
+    if (W.lines.length > 1 && i === npcWhisperLast) i = (i + 1) % W.lines.length;
+    npcWhisperLast = i;
+    const el = document.createElement('div');
+    el.className = 'npc-whisper';
+    el.style.left = (W.at[0] / currentTownView.imgW * 100).toFixed(3) + '%';
+    el.style.top = (W.at[1] / currentTownView.imgH * 100).toFixed(3) + '%';
+    el.style.animationDuration = ((W.showMs || 6000) / 1000) + 's';
+    el.textContent = W.lines[i];
+    box.querySelectorAll('.npc-whisper').forEach(e => e.remove());
+    box.appendChild(el);
+    setTimeout(() => el.remove(), W.showMs || 6000);
+}
+
 function getTownNpcEffects(sceneName, view) {
     const hit = townNpcSpots[sceneName];
     if (!hit || view !== townScenes[sceneName] || !hit.npc.fishing) return '';
@@ -126,6 +160,8 @@ function getTownNpcEffects(sceneName, view) {
 // 從畫面上拿掉（處理完畢）
 function removeTownNpc(sceneName) {
     delete townNpcSpots[sceneName];
+    stopNpcWhispers();
+    document.querySelectorAll('#town-chatter .npc-whisper').forEach(e => e.remove());
     if (currentTownScene === sceneName && currentTownView) renderTownHotspots(currentTownView);
 }
 
