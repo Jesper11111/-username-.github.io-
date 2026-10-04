@@ -251,7 +251,7 @@ async function enterCityGate() {
     if (!cityGateName || cityGateBusy) return;
     const gate = CITY_GATES[cityGateName];
     if (!gate) { goToTownByName(cityGateName); return; }
-    if (gate.lingjie) { cityGateBusy = true; const ok = await prepareLingjieEntry(); cityGateBusy = false; if (!ok) return; }   // 飛升點：五行極品靈石（lingjie.js，第 74 節）
+    if (gate.lingjie) { cityGateBusy = true; const ok = await prepareLingjieEntry(); cityGateBusy = false; if (!ok) return; }   // 飛升點：五行傳送陣靈石（lingjie.js，第 74 節）
     if (!gate.fx) { new Function(gate.action)(); return; }
     // 有特效的入口：光柱爆亮、畫面轉白，再執行 action
     cityGateBusy = true;

@@ -395,7 +395,7 @@ const ZhenmoTower = (() => {
         if (r.iron) g.iron = addStarIron(Math.floor(randInt(r.iron) * mult));
         g.refine = addRefineStones(Math.round((REFINE_ZHENMO.base + Math.floor(floor / REFINE_ZHENMO.perFloors)) * mult));   // 洗煉石（第 67 節 D2）
         g.craft = formatCraftGain(rollCraftZhenmo(floor, mult));   // 做裝通貨（craft.js，第 69 節）
-        const ling = rollLingStoneZhenmo(floor, mult);              // 五行極品靈石（lingjie.js，第 74 節）
+        const ling = rollLingStoneZhenmo(floor, mult);              // 五行傳送陣靈石（lingjie.js，第 74 節）
         if (ling) g.craft = g.craft ? g.craft + '、' + ling : ling;
         // 鍛造圖紙（Lv.1500 以上，equipment.js）：基礎機率 × 問答倍率，最高 75%
         g.blueprint = grantBlueprint(Math.min(BLUEPRINT_DROPS.zhenmo.max, BLUEPRINT_DROPS.zhenmo.base * mult), `鎮壓【${boss.name}】，`);

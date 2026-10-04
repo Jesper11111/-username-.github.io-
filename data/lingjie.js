@@ -1,5 +1,5 @@
-// ==================== 靈界進出與五行極品靈石（第 74 節，2026-10-04 使用者指定）====================
-// 「飛升點無法直接進入：要金木水火土極品靈石各 1 顆才可進入靈界；進入靈界無法直接離開，也要五行極品靈石各 1 顆才能離開」
+// ==================== 靈界進出與五行傳送陣靈石（第 74 節，2026-10-04 使用者指定）====================
+// 「飛升點無法直接進入：要金木水火土傳送陣靈石各 1 顆才可進入靈界；進入靈界無法直接離開，也要五行傳送陣靈石各 1 顆才能離開」
 //   存檔：player.lingStones = { 金, 木, 水, 火, 土 }、player.inLingjie（身在靈界）
 //   身在靈界：世界導覽開靈界地圖；人界的地圖（宗門以外）不能進；回人界（靈界地圖「返回人界」、洞府「宗門」鈕）要付一套靈石。
 //   第四、五區（LINGJIE_MAP_CATEGORIES）只有身在靈界才能進。戰死、渡劫失敗、暫存區滿等系統傳送回宗門＝被送回人界（不扣靈石，changeMap 會清掉 inLingjie）。
@@ -15,7 +15,7 @@ function addLingStone(k, n) {
 function hasLingStoneSet() { return LINGJIE_STONE_KEYS.every(k => getLingStone(k) >= 1); }
 function payLingStoneSet() { LINGJIE_STONE_KEYS.forEach(k => { player.lingStones[k] -= 1; }); }
 function formatLingStones() { return LINGJIE_STONE_KEYS.map(k => `${k}×${getLingStone(k)}`).join(' '); }
-function lingStoneShortText() { return `五行極品靈石各 1（持有 ${formatLingStones()}）`; }
+function lingStoneShortText() { return `五行傳送陣靈石各 1（持有 ${formatLingStones()}）`; }
 function isInLingjie() { return !!(player && player.inLingjie); }
 function isLingjieMapCategory(c) { return LINGJIE_MAP_CATEGORIES.includes(c); }
 
@@ -23,10 +23,10 @@ function isLingjieMapCategory(c) { return LINGJIE_MAP_CATEGORIES.includes(c); }
 async function prepareLingjieEntry() {
     if (isInLingjie()) return true;
     if (!hasLingStoneSet()) {
-        gameAlert(`🌀 飛升台的五行大陣沒有回應……\n需要金、木、水、火、土極品靈石各 1 顆才能飛升靈界。\n持有：${formatLingStones()}\n（極品靈石在渡劫以上的野外、鎮魔塔 60 層起掉落）`);
+        gameAlert(`🌀 飛升台的五行大陣沒有回應……\n需要金、木、水、火、土傳送陣靈石各 1 顆才能飛升靈界。\n持有：${formatLingStones()}\n（傳送陣靈石在渡劫以上的野外、鎮魔塔 60 層起掉落）`);
         return false;
     }
-    if (!(await gameConfirm(`以五行極品靈石各 1 顆催動大陣，飛升靈界？\n持有：${formatLingStones()}\n⚠️ 進入靈界後不能直接離開，返回人界同樣需要五行極品靈石各 1 顆。`))) return false;
+    if (!(await gameConfirm(`以五行傳送陣靈石各 1 顆催動大陣，飛升靈界？\n持有：${formatLingStones()}\n⚠️ 進入靈界後不能直接離開，返回人界同樣需要五行傳送陣靈石各 1 顆。`))) return false;
     if (!hasLingStoneSet()) return false;
     payLingStoneSet();
     player.inLingjie = true;
@@ -39,10 +39,10 @@ async function prepareLingjieEntry() {
 async function tryLeaveLingjie(then) {
     if (!isInLingjie()) { if (then) then(); return; }
     if (!hasLingStoneSet()) {
-        gameAlert(`🌌 你身在靈界，空間壁壘阻隔，無法直接返回人界。\n需要金、木、水、火、土極品靈石各 1 顆。\n持有：${formatLingStones()}（靈界的野外也會掉落）`);
+        gameAlert(`🌌 你身在靈界，空間壁壘阻隔，無法直接返回人界。\n需要金、木、水、火、土傳送陣靈石各 1 顆。\n持有：${formatLingStones()}（靈界的野外也會掉落）`);
         return;
     }
-    if (!(await gameConfirm(`以五行極品靈石各 1 顆破開空間壁壘，返回人界？\n持有：${formatLingStones()}`))) return;
+    if (!(await gameConfirm(`以五行傳送陣靈石各 1 顆破開空間壁壘，返回人界？\n持有：${formatLingStones()}`))) return;
     if (!hasLingStoneSet()) return;
     payLingStoneSet();
     player.inLingjie = false;
@@ -67,7 +67,7 @@ function rollLingStoneDrops(rolls, silent) {
         let n = Math.floor(exp); if (Math.random() < exp - n) n++;
         if (n > 0) got[k] = addLingStone(k, n);
     });
-    const t = Object.keys(got).map(k => `${k}極品靈石×${got[k]}`).join('、');
+    const t = Object.keys(got).map(k => `${k}屬性傳送陣靈石×${got[k]}`).join('、');
     if (t && !silent) addLog(`💎 從妖獸體內取出 ${t}！`, "level-up", false, "item");
     return t;
 }
@@ -77,7 +77,7 @@ function rollLingStoneZhenmo(floor, mult) {
     if (floor < D.fromFloor || Math.random() >= Math.min(1, D.chance * (mult || 1))) return '';
     const k = LINGJIE_STONE_KEYS[Math.floor(Math.random() * LINGJIE_STONE_KEYS.length)];
     addLingStone(k, 1);
-    return `${k}極品靈石×1`;
+    return `${k}屬性傳送陣靈石×1`;
 }
 // 舊存檔：改版前就待在第四、五區的玩家視為已在靈界（save.js 的 applySaveData）
 function migrateLingjie(data) {

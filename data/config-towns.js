@@ -133,7 +133,7 @@ const CITY_GATES = {
     "飛升點": {
         img: "images/maps/feisheng-gate.jpg", imgW: 600, imgH: 894,
         hint: () => isInLingjie() ? "✨ 點擊圖片前往靈界" : `✨ 點擊圖片飛升靈界（需${lingStoneShortText()}）`,
-        lingjie: true,   // 2026-10-04：進入前要五行極品靈石各 1（lingjie.js 的 prepareLingjieEntry，第 74 節）
+        lingjie: true,   // 2026-10-04：進入前要五行傳送陣靈石各 1（lingjie.js 的 prepareLingjieEntry，第 74 節）
         action: "openTownScene(LINGJIE_SCENE_KEY)",
         fx: "feisheng"
     },
@@ -147,7 +147,7 @@ const CITY_GATES = {
 };
 
 // ---- 靈界進出（lingjie.js，第 74 節；2026-10-04 使用者指定）----
-// 五行極品靈石：player.lingStones；進、出靈界各要一套（每種 1 顆）
+// 五行傳送陣靈石：player.lingStones；進、出靈界各要一套（每種 1 顆）
 const LINGJIE_STONE_KEYS = ["金", "木", "水", "火", "土"];
 const LINGJIE_MAP_CATEGORIES = [4, 5];   // 只有身在靈界才能進的地圖分類（第四、五區）
 // 掉落：nv2L ≥ minMapL 的野外（無邊海、第四、五區…），每種每次掉寶 field 機率（每小時 1200 次掉寶 → 每種約 0.5 顆、約 2 小時一套）；鎮魔塔 fromFloor 層起 BOSS chance × 問答倍率掉 1 顆（隨機一種）
@@ -192,7 +192,7 @@ const townScenes = {
             { id: "lj-hundun",   label: "混沌初界", mapName: "混沌初界", pin: true, showLabel: true, rect: [795, 200, 70, 70], action: "goToMapByName('混沌初界')" }    // (830, 235)
         ],
         figures: [],
-        extraButton: { label: "↩ 返回人界（需五行極品靈石）", action: "leaveLingjieToWorldMap()" }   // 2026-10-04：身在靈界要付一套靈石才能回人界（lingjie.js）
+        extraButton: { label: "↩ 返回人界（需五行傳送陣靈石）", action: "leaveLingjieToWorldMap()" }   // 2026-10-04：身在靈界要付一套靈石才能回人界（lingjie.js）
     },
     [WORLD_SCENE_KEY]: {
         title: "人界",
