@@ -94,16 +94,18 @@ function renderBag() {
             </div>`);
     }
 
-    // 五行極品靈石（lingjie.js，第 74 節）
-    if (LINGJIE_STONE_KEYS.some(k => getLingStone(k) > 0)) {
+    // 五行傳送陣靈石（lingjie.js，第 74 節）：不是貨幣的靈石，是放在背包的道具；每種一張卡片
+    const LS_ICON = { "金": "🟡", "木": "🟢", "水": "🔵", "火": "🔴", "土": "🟤" };
+    LINGJIE_STONE_KEYS.forEach(k => {
+        const n = getLingStone(k);
+        if (n <= 0) return;
         hasItems = true;
         parts.push(`
             <div class="card" style="border-color: #fbbf24;">
-                <h3 style="color: #fde68a;">💎 五行極品靈石</h3>
-                <p style="font-size: 0.9em;">${LINGJIE_STONE_KEYS.map(k => `<span class="elem-${k}">${k}</span>×${getLingStone(k)}`).join('　')}</p>
-                <p style="font-size: 0.8em; color: #9ca3af;">飛升靈界、從靈界返回人界，各需五種各 1 顆${isInLingjie() ? '（🌌 你目前身在靈界）' : ''}</p>
+                <h3 style="color: #fde68a;">${LS_ICON[k]} <span class="elem-${k}">${k}</span>屬性傳送陣靈石 <span style="font-size:0.8em;">(x${n})</span></h3>
+                <p style="font-size: 0.8em; color: #9ca3af;">傳送陣用的五行靈石（不是貨幣）。飛升靈界、從靈界返回人界，各需金木水火土五種各 1 顆${isInLingjie() ? '（🌌 你目前身在靈界）' : ''}</p>
             </div>`);
-    }
+    });
 
     // 異火碎片／異火（strange-fire.js）
     let fireCards = renderStrangeFireCards();
