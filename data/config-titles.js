@@ -9,6 +9,7 @@
 //   sect 稱號的名稱會自動帶上目前的宗門名（{sect}）
 //   賭運（player.casino）：casinoStones（累計切石 N 顆）、casinoFire（切出整朵異火 N 次）、casinoTriple（押中指定豹子 N 次）、casinoBigWin（擲骰單把淨贏 ≥ N）
 //   defenseWave（秘境「魔屠天南」歷史最高守住 N 波，player.defenseBest，第 49 節）
+//   wboss（世界 Boss 名次稱號，player.wboss.titles 含 value，第 75 節；純外觀）
 //   bpCount／bpTier／bpPlatinum（圖紙器錄，codex.js，第 55 節）
 
 const titleList = [
@@ -94,5 +95,9 @@ const titleList = [
     { id: "defense30",  name: "天南守將",   cond: { type: "defenseWave", value: 30 },  bonus: { atkPct: 0.01 } },
     { id: "defense50",  name: "鎮城仙將",   cond: { type: "defenseWave", value: 50 },  bonus: { hpPct: 0.02 } },
     { id: "defense80",  name: "魔屠天南",   cond: { type: "defenseWave", value: 80 },  bonus: { atkPct: 0.02 } },
-    { id: "defense100", name: "天南城守護神", cond: { type: "defenseWave", value: 100 }, bonus: { statPct: 0.03 } }
+    { id: "defense100", name: "天南城守護神", cond: { type: "defenseWave", value: 100 }, bonus: { statPct: 0.03 } },
+    // ---- 世界 Boss（3，2026-10-04，第 75 節）：純外觀、沒有數值加成（使用者選「排名只給外觀」）；cond wboss＝player.wboss.titles 含該 id（領獎時依名次寫入）----
+    { id: "wbTop1",    name: "誅天第一",   cond: { type: "wboss", value: "wbTop1" },    bonus: {} },
+    { id: "wbTop10",   name: "誅魔先鋒",   cond: { type: "wboss", value: "wbTop10" },   bonus: {} },
+    { id: "wbLastHit", name: "斬魔一擊",   cond: { type: "wboss", value: "wbLastHit" }, bonus: {} }
 ];

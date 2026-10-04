@@ -273,5 +273,123 @@ service cloud.firestore {
           && d.updatedAt == request.time;
       }
     }
+
+    // ==================== 世界 Boss（2026-10-04，ARCHITECTURE.md 第 75 節；data/config-world-boss.js、world-boss.js）====================
+    // 數字與 config-world-boss.js 的 WB 一致（改一邊要一起改）：每天 3 次、間隔 60 秒、單次上限＝floor(總血量／100)、
+    // 開放時段＝週六 12:00 UTC 起 24 小時（startAt 毫秒 % 604800000 == 216000000）、第一隻 4000 萬、血量下限 400 萬／上限 4 兆、結束 24 小時後領獎。
+    // wboss/state：目前的 Boss。玩家可以 ① 第一次建立 ② 上一隻結束後換成本週這隻（時段、血量推算由規則檢查）③ 挑戰時扣血（與自己的傷害紀錄同一筆交易）
+    match /wboss/{docId} {
+      allow get: if request.auth != null;
+      allow list, delete: if isAdmin();
+      allow create: if (request.auth != null && docId == 'state' && wbCreateOk()) || isAdmin();
+      allow update: if (request.auth != null && docId == 'state' && (wbRolloverOk() || wbDamageOk())) || isAdmin();
+
+      function wbKeysOk(d) {
+        return d.keys().hasOnly(['bid', 'bossIdx', 'maxHp', 'hp', 'cap', 'startAt', 'endAt', 'killedAt', 'lastUid', 'lastName', 'prev'])
+          && d.bossIdx is int && d.bossIdx >= 0 && d.bossIdx < 16
+          && d.killedAt == null && d.lastUid == '' && d.lastName == '';
+      }
+      function wbWindowOk(d) {
+        return d.startAt.toMillis() % 604800000 == 216000000
+          && d.endAt == d.startAt + duration.value(86400, 's')
+          && request.time >= d.startAt && request.time < d.endAt
+          && d.bid == string(d.startAt.toMillis());
+      }
+      function wbHpOk(d) {
+        return d.maxHp is int && d.hp == d.maxHp && d.cap is int && d.cap * 100 <= d.maxHp && (d.cap + 1) * 100 > d.maxHp;
+      }
+      function wbCreateOk() {
+        let d = request.resource.data;
+        return wbKeysOk(d) && wbWindowOk(d) && wbHpOk(d) && d.maxHp == 40000000 && d.prev == null;
+      }
+      // 換隻：上一隻已結束；被打死 → 血量 ×2（上限 4 兆），沒打死 → ÷2 取整（下限 400 萬）
+      function wbRolloverOk() {
+        let o = resource.data;
+        let d = request.resource.data;
+        return d.bid != o.bid && request.time >= o.endAt
+          && wbKeysOk(d) && wbWindowOk(d) && wbHpOk(d)
+          && d.prev == {'bid': o.bid, 'maxHp': o.maxHp, 'killed': o.killedAt != null, 'endAt': o.endAt, 'lastUid': o.get('lastUid', '')}
+          && ((o.killedAt != null && (d.maxHp == o.maxHp * 2 || (o.maxHp * 2 > 4000000000000 && d.maxHp == 4000000000000)))
+              || (o.killedAt == null && (d.maxHp * 2 == o.maxHp || d.maxHp * 2 == o.maxHp - 1 || (o.maxHp / 2 < 4000000 && d.maxHp == 4000000))));
+      }
+      // 扣血：開放中、還沒死；同一筆交易裡自己的傷害紀錄（wbossRuns）也要寫入（扣多少由那邊的規則對帳）；打到 0 記最後一擊
+      function wbDamageOk() {
+        let o = resource.data;
+        let d = request.resource.data;
+        return request.time >= o.startAt && request.time < o.endAt && o.hp > 0
+          && d.hp is int && d.hp >= 0 && d.hp < o.hp
+          && getAfter(/databases/$(database)/documents/wbossRuns/$(o.bid)/dmg/$(request.auth.uid)).data.lastAt == request.time
+          && ((d.hp > 0 && d.diff(o).affectedKeys().hasOnly(['hp']))
+              || (d.hp == 0 && d.diff(o).affectedKeys().hasOnly(['hp', 'killedAt', 'lastUid', 'lastName'])
+                  && d.killedAt == request.time && d.lastUid == request.auth.uid && d.lastName is string && d.lastName.size() <= 12));
+      }
+    }
+    // 每人在某隻 Boss 的累計傷害（文件 id = uid）：次數、間隔、單次上限、Boss 扣血對帳都在這裡檢查；被封鎖的帳號不能寫
+    match /wbossRuns/{bid}/dmg/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if request.query.limit <= 20 || isAdmin();
+      allow delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == uid && !isBanned(uid) && wbRunCreateOk(bid);
+      allow update: if request.auth != null && request.auth.uid == uid && !isBanned(uid) && wbRunUpdateOk(bid);
+
+      function wbSt() { return get(/databases/$(database)/documents/wboss/state).data; }
+      function wbStAfter() { return getAfter(/databases/$(database)/documents/wboss/state).data; }
+      function wbRunCommon(bid) {
+        let st = wbSt();
+        let d = request.resource.data;
+        let t = request.time.toMillis() + 28800000;
+        return d.keys().hasOnly(['uid', 'name', 'realm', 'stage', 'total', 'eff', 'n', 'day', 'dayN', 'lastAt', 'hist'])
+          && d.uid == request.auth.uid && d.name is string && d.name.size() >= 1 && d.name.size() <= 12
+          && d.realm is int && d.realm >= 0 && d.realm <= 15 && d.stage is int
+          && d.total is int && d.eff is int && d.n is int && d.dayN is int
+          && d.day is int && d.day * 86400000 <= t && (d.day + 1) * 86400000 > t
+          && d.lastAt == request.time && d.hist is list && d.hist.size() <= 6
+          && st.bid == bid && request.time >= st.startAt && request.time < st.endAt && st.hp > 0;
+      }
+      // Boss 扣血對帳：交易後的血量 ＝ max(0, 交易前 − 這次傷害)；傷害 0 時 Boss 不更新（交易後 ＝ 交易前）
+      function wbHpAfterOk(dd) {
+        let st = wbSt();
+        let after = wbStAfter();
+        return (st.hp - dd > 0 && after.hp == st.hp - dd) || (st.hp - dd <= 0 && after.hp == 0);
+      }
+      function wbRunCreateOk(bid) {
+        let st = wbSt();
+        let d = request.resource.data;
+        return wbRunCommon(bid) && d.n == 1 && d.dayN == 1
+          && d.total >= 0 && d.total <= st.cap
+          && ((d.total == st.cap && d.eff == 1) || (d.total < st.cap && d.eff == 0))
+          && wbHpAfterOk(d.total);
+      }
+      function wbRunUpdateOk(bid) {
+        let st = wbSt();
+        let o = resource.data;
+        let d = request.resource.data;
+        let dd = d.total - o.total;
+        return wbRunCommon(bid) && d.n == o.n + 1 && request.time >= o.lastAt + duration.value(60, 's')
+          && dd >= 0 && dd <= st.cap
+          && ((dd == st.cap && d.eff == o.eff + 1) || (dd < st.cap && d.eff == o.eff))
+          && ((d.day == o.day && d.dayN == o.dayN + 1 && d.dayN <= 3) || (d.day != o.day && d.dayN == 1))
+          && wbHpAfterOk(dd);
+      }
+    }
+    // 領獎紀錄（id = bid_uid，只能建立一次）：Boss 結束滿 24 小時、有傷害紀錄、沒被封鎖
+    match /wbossClaims/{cid} {
+      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow list, delete: if isAdmin();
+      allow update: if false;
+      allow create: if request.auth != null && !isBanned(request.auth.uid)
+        && request.resource.data.keys().hasOnly(['uid', 'bid', 'at'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.bid is string
+        && cid == request.resource.data.bid + '_' + request.auth.uid
+        && request.resource.data.at == request.time
+        && exists(/databases/$(database)/documents/wbossRuns/$(request.resource.data.bid)/dmg/$(request.auth.uid))
+        && wbClaimOpen(request.resource.data.bid);
+
+      function wbClaimOpen(bid) {
+        let st = get(/databases/$(database)/documents/wboss/state).data;
+        return (st.bid == bid && request.time >= st.endAt + duration.value(86400, 's'))
+          || (st.prev != null && st.prev.bid == bid && request.time >= st.prev.endAt + duration.value(86400, 's'));
+      }
+    }
   }
 }
