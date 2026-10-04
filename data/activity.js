@@ -95,6 +95,7 @@ function openActivity(id) {
 let activityPosterId = null;
 function openActivityPoster(act) {
     activityPosterId = act.id;
+    document.getElementById('activity-poster-modal').dataset.act = act.id;   // bgm.js：三界之戰海報要放背景音樂
     document.getElementById('activity-poster-img').src = act.img;
     document.getElementById('activity-poster-img').alt = act.name;
     document.getElementById('activity-poster-title').textContent = `${act.icon} ${act.name}`;
@@ -102,6 +103,7 @@ function openActivityPoster(act) {
     const btn = document.getElementById('activity-poster-enter');
     btn.style.display = act.implemented ? '' : 'none';
     document.getElementById('activity-poster-modal').style.display = 'flex';
+    if (typeof playBgm === 'function') playBgm();   // 三界之戰：點開海報就開始放（bgm.js）
 }
 function enterActivityPoster() {
     const act = activityData.find(a => a.id === activityPosterId);
