@@ -1608,7 +1608,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005O`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005P`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3862,3 +3862,6 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   | 系統傳送 `changeMap(0, 0)`：戰死回宗門、渡劫失敗、暫存區滿 | ❌ |
 - **實作**：`changeMap(c, i, challengeOk, bigMap)` 只在 `bigMap` 時呼叫；`selectMap(c, i, bigMap)`、`confirmChallengeMap(c, i, bigMap)` 往下傳；`openMapCategoryModal(catIndex, quick)` 在清單按鈕寫入 `selectMap(c, i, true)`（quick 時不帶）；`goToTown(i, quick)` 傳 `!quick`。
 - 驗證（本機）：快捷清單進野外、進城鎮 → 不觸發；人界分區進野外、人界紅點進城、洞府回宗門 → 觸發；戰死回宗門 → 不觸發；建置版正常；Console 無錯誤。
+- **快捷清單拿掉第四、五區**（2026-10-04，版本 `20261005P`，使用者指定）：`#world-map-modal` 只剩 落雲宗周邊／慕蘭草原／大晉王朝區域／無邊海 四顆區域按鈕；第四、五區只能從**靈界大地圖**的紅點進入（會觸發特殊事件）。
+  第四區新搬入的 九天仙域／太初古礦／上蒼原本沒有靈界紅點，config-towns.js 的靈界 `hotspots` 補上 `lj-jiutian`（玄武境東邊天空海，圖上 (630, 225)）、`lj-taichu`（角蚩族北側，(720, 245)）、`lj-shangcang`（海王族島南岸，(640, 395)，標籤「上蒼」）。
+  驗證：靈界地圖十個紅點不重疊（PC 1280 寬截圖）、點九天仙域傳送成功；快捷清單只剩四顆按鈕；Console 無錯誤。

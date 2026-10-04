@@ -162,6 +162,10 @@ const townScenes = {
         //   第五區・諸天至高戰場（仙界戰場＝玄武境東岸、萬界戰場＝血天大陸、混沌初界＝天雲大陸山區）
         //   mapName：還進不去（境界／四維不足）時紅點變灰、小字加「🔒天仙」，點了用提示條說明原因（town.js、map.js 的 goToMapByName）
         hotspots: [
+            // 2026-10-04 九天仙域／太初古礦／上蒼移到第四區、人界快捷清單拿掉第四、五區 → 這三張也放上靈界地圖：九天仙域＝玄武境東邊的天空海、太初古礦＝角蚩族北側山脈、上蒼（葬天島）＝海王族島南岸
+            { id: "lj-jiutian",  label: "九天仙域", mapName: "九天仙域", pin: true, showLabel: true, rect: [595, 190, 70, 70], action: "goToMapByName('九天仙域')" },   // (630, 225)
+            { id: "lj-taichu",   label: "太初古礦", mapName: "太初古礦", pin: true, showLabel: true, rect: [685, 210, 70, 70], action: "goToMapByName('太初古礦')" },   // (720, 245)
+            { id: "lj-shangcang", label: "上蒼", mapName: "上蒼（葬天島）", pin: true, showLabel: true, rect: [605, 360, 70, 70], action: "goToMapByName('上蒼（葬天島）')" },   // (640, 395)
             { id: "lj-busi",     label: "不死山", mapName: "不死山",   pin: true, showLabel: true, rect: [135, 155, 70, 70], action: "goToMapByName('不死山')" },     // (170, 190)
             { id: "lj-shenxu",   label: "神墟", mapName: "神墟",     pin: true, showLabel: true, rect: [315, 197, 70, 70], action: "goToMapByName('神墟')" },       // (350, 232)
             { id: "lj-xianling", label: "仙陵", mapName: "仙陵",     pin: true, showLabel: true, rect: [310, 310, 70, 70], action: "goToMapByName('仙陵')" },       // (345, 345)
