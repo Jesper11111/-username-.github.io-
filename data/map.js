@@ -117,6 +117,7 @@ function getRecommendedMaps() {
 
 // 洞府的「宗門」（手機熱點、PC pcStageButtons）：不在宗門就先傳送回宗門，再打開宗門分頁
 function returnToSect() {
+    if (isInLingjie()) { tryLeaveLingjie(() => { if (!isInSect()) changeMap(0, 0, false, true); switchTab('sect'); }); return; }   // 身在靈界回宗門要付五行極品靈石（第 74 節）
     if (!isInSect()) changeMap(0, 0, false, true);   // maps[0].items[0] = 宗門；玩家自己回宗門算數（奇遇秘密路線的起點與終點，第 73 節）
     switchTab('sect');
 }
@@ -180,6 +181,11 @@ function getMapEntryBlock(cIndex, iIndex) {
         if (["str", "con", "int", "spr"].some(k => st(k) < minS))
             return { msg: `進入【${targetMap.name}】失敗！四維屬性全數必須大於 ${minS} 方可進入。`, short: `🔒四維${minS}` };
     }
+    // 靈界（lingjie.js，第 74 節）：第四、五區要身在靈界；身在靈界不能直接去人界的地圖（宗門例外：系統送回與洞府鈕另有處理）
+    if (isLingjieMapCategory(cIndex) && !isInLingjie())
+        return { msg: `【${targetMap.name}】位於靈界，需經人界地圖的飛升點、以五行極品靈石各 1 顆飛升後才能前往。`, short: '🔒靈界' };
+    if (isInLingjie() && !isLingjieMapCategory(cIndex) && !(cIndex === 0 && iIndex === 0))
+        return { msg: `你身在靈界，無法直接前往人界的【${targetMap.name}】。\n請從靈界地圖「返回人界」（需五行極品靈石各 1 顆）。`, short: '🔒人界' };
     // 暫存區滿了不能外出練功（enhance.js）
     if (!maps[cIndex].isSafe && isGearStashFull())
         return { msg: `暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}）！\n請先到背包處理暫存區的橙色裝備（移入背包、分解或毀棄），才能外出練功。`, short: '🔒暫存區滿' };
@@ -215,6 +221,7 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
         enemies = [];
         respawnTimer = 0;
     }
+    if (isInLingjie() && !isLingjieMapCategory(cIndex)) player.inLingjie = false;   // 戰死、渡劫失敗等系統送回宗門＝回到人界（第 74 節）
     player.currentMap = targetMap;
     player.currentMapIsSafe = maps[cIndex].isSafe;
     safeZoneTimer = 0;

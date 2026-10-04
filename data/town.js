@@ -236,7 +236,9 @@ function openCityGate(name) {
     document.getElementById('city-gate-img').alt = name;
     document.getElementById('city-gate-bg').style.backgroundImage = img ? `url('${img}')` : '';
     document.getElementById('city-gate-name').innerText = name;
-    document.getElementById('city-gate-hint').innerText = (gate && gate.hint) || '✨ 點擊圖片進城';
+    document.getElementById('city-gate-hint').innerText = (gate && (typeof gate.hint === 'function' ? gate.hint() : gate.hint)) || '✨ 點擊圖片進城';
+    const back = document.querySelector('#city-gate .town-scene-back');
+    if (back) back.innerText = (gate && gate.backLabel) || '↩ 返回人界';   // 天元城在靈界：返回靈界
     document.getElementById('city-gate-fx').innerHTML = gate && CITY_GATE_FX[gate.fx] ? CITY_GATE_FX[gate.fx]() : '';
     const box = document.getElementById('city-gate');
     box.classList.remove('on', 'ascend');
@@ -245,10 +247,11 @@ function openCityGate(name) {
     void box.offsetWidth;
     box.classList.add('on');
 }
-function enterCityGate() {
+async function enterCityGate() {
     if (!cityGateName || cityGateBusy) return;
     const gate = CITY_GATES[cityGateName];
     if (!gate) { goToTownByName(cityGateName); return; }
+    if (gate.lingjie) { cityGateBusy = true; const ok = await prepareLingjieEntry(); cityGateBusy = false; if (!ok) return; }   // 飛升點：五行極品靈石（lingjie.js，第 74 節）
     if (!gate.fx) { new Function(gate.action)(); return; }
     // 有特效的入口：光柱爆亮、畫面轉白，再執行 action
     cityGateBusy = true;

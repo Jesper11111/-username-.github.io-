@@ -94,6 +94,17 @@ function renderBag() {
             </div>`);
     }
 
+    // 五行極品靈石（lingjie.js，第 74 節）
+    if (LINGJIE_STONE_KEYS.some(k => getLingStone(k) > 0)) {
+        hasItems = true;
+        parts.push(`
+            <div class="card" style="border-color: #fbbf24;">
+                <h3 style="color: #fde68a;">💎 五行極品靈石</h3>
+                <p style="font-size: 0.9em;">${LINGJIE_STONE_KEYS.map(k => `<span class="elem-${k}">${k}</span>×${getLingStone(k)}`).join('　')}</p>
+                <p style="font-size: 0.8em; color: #9ca3af;">飛升靈界、從靈界返回人界，各需五種各 1 顆${isInLingjie() ? '（🌌 你目前身在靈界）' : ''}</p>
+            </div>`);
+    }
+
     // 異火碎片／異火（strange-fire.js）
     let fireCards = renderStrangeFireCards();
     if (fireCards) { hasItems = true; parts.push(fireCards); }

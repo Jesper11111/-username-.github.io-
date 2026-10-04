@@ -101,7 +101,7 @@ function switchTab(tab) {
 //   （世界分頁只有一顆「🗺️ 修仙地圖」按鈕；人界地圖右上角的「地圖列表」仍可開原本的清單）
 function openWorldTab() {
     switchTab('home');
-    openTownScene(WORLD_SCENE_KEY);
+    openCurrentWorldScene();   // 身在靈界開靈界地圖（lingjie.js，第 74 節）
 }
 
 // 命運與系統（存檔管理、轉世、重置）：手機洞府丹藥堂上方的齒輪、設定視窗內的按鈕
