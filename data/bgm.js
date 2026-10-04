@@ -1,5 +1,5 @@
 // ==================== 背景音樂（第 76 節）====================
-// 2026-10-04 使用者：先後換過兩首，後來「移除這兩首歌」，改提供三首配樂「加入遊戲背景音樂」→ 三首依序輪播、播完第三首回到第一首。
+// 2026-10-04 使用者：先後換過兩首，後來「移除這兩首歌」，改提供三首配樂「加入遊戲背景音樂」，再追加五首 → 8 首依序輪播、播完最後一首回到第一首。
 //   audio/bgm-1～3.m4a（AAC 96kbps，各約 1.4MB，約 2 分鐘）＋ .ogg（Opus 64kbps，備用）；頭 1 秒淡入、尾 2.5 秒淡出。
 // 全部畫面都播（從遊戲主頁開始）。一次只載入正在播的那一首（不會一次下載三首）。
 // 不影響遊戲運轉：頁面載入就試著播（瀏覽器允許自動播放時直接響）；被擋時主頁右上「🔇 輕觸開啟音樂」，點畫面任何地方開始；
@@ -7,11 +7,9 @@
 // 開關與音量是「這台裝置」的偏好（localStorage 的 BGM_PREF_KEY），不寫進存檔；設定視窗「背景音樂」、主頁右上音樂鈕調整。
 // 切到背景（分頁隱藏、App 切走）暫停、回來繼續；有聲影片播放時（仙翁開場動畫、夥伴影片）暫停，影片停了再繼續。
 
-const BGM_PLAYLIST = [
-    { src: "audio/bgm-1.m4a", fallback: "audio/bgm-1.ogg" },
-    { src: "audio/bgm-2.m4a", fallback: "audio/bgm-2.ogg" },
-    { src: "audio/bgm-3.m4a", fallback: "audio/bgm-3.ogg" }
-];
+// 2026-10-04 使用者再追加五首「加入背景音」→ bgm-4～8（AAC 80kbps，各約 2.4～2.9MB，約 4～4.7 分鐘；.ogg Opus 56kbps 備用），共 8 首依序輪播
+const BGM_TRACK_COUNT = 8;
+const BGM_PLAYLIST = Array.from({ length: BGM_TRACK_COUNT }, (_, i) => ({ src: `audio/bgm-${i + 1}.m4a`, fallback: `audio/bgm-${i + 1}.ogg` }));
 const BGM_PREF_KEY = "xiuxian_bgm";
 const BGM_DEFAULT_VOL = 0.4;
 let bgmAudio = null, bgmIndex = 0, bgmFails = 0;
