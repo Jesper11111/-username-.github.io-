@@ -7,6 +7,7 @@ let mbMails = [];            // 目前可領的信（未過期、未領）
 let mbLoading = false;
 let mbError = "";
 let mbLastRefresh = 0;
+let mbCheckedIds = new Set();   // 這次開遊戲已到雲端確認過「還沒領」的信（2026-10-04 節省 Firebase 讀取額度：不再每 30 分鐘重讀一次領取紀錄）
 
 function isMailboxAvailable() {
     return isLeaderboardConfigured();
@@ -24,7 +25,9 @@ async function refreshMailbox(force) {
         const list = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
             .filter(m => !claimed.has(m.id) && !(m.expiresAt && m.expiresAt.toMillis && m.expiresAt.toMillis() < now));
         // 本機沒有領取紀錄的（換過瀏覽器、清過資料），再到雲端確認一次
-        const checks = await Promise.all(list.map(m => db.collection(MAIL_CLAIMS_COLLECTION).doc(`${uid}_${m.id}`).get().then(s => s.exists).catch(() => false)));
+        //   （同一次開遊戲只查一次；在這台裝置領取會寫進 mailClaimed，不必重查）
+        const checks = await Promise.all(list.map(m => mbCheckedIds.has(m.id) ? false
+            : db.collection(MAIL_CLAIMS_COLLECTION).doc(`${uid}_${m.id}`).get().then(s => { if (!s.exists) mbCheckedIds.add(m.id); return s.exists; }).catch(() => false)));
         list.forEach((m, i) => { if (checks[i]) markMailClaimed(m.id); });
         const before = new Set(mbMails.map(m => m.id));
         mbMails = list.filter((m, i) => !checks[i]).sort((a, b) => mbTime(b.createdAt) - mbTime(a.createdAt));
@@ -33,7 +36,7 @@ async function refreshMailbox(force) {
         else if (fresh.length) addLog(`📮 仙府信箱有 ${mbMails.length} 封信待領取（右上 ⚙️ 設定 →「📮 仙府信箱」）`, "system");
         mbLastRefresh = Date.now();
     } catch (e) {
-        mbError = e && e.code === 'permission-denied' ? '信箱尚未開放（伺服器設定更新中）' : '連線失敗，請稍後再試';
+        mbError = e && e.code === 'permission-denied' ? '信箱尚未開放（伺服器設定更新中）' : (lbIsQuota(e) || await lbProbeQuota()) ? LB_QUOTA_MSG : '連線失敗，請稍後再試';
         console.warn("仙府信箱讀取失敗：", e);
     } finally {
         mbLoading = false;
@@ -53,7 +56,9 @@ function markMailClaimed(id) {
 function startMailboxSync() {
     if (!isMailboxAvailable()) return;
     setTimeout(() => refreshMailbox(true), LEADERBOARD_FIRST_UPLOAD_DELAY_MS + 5000);
-    setInterval(() => refreshMailbox(true), MAIL_REFRESH_MS);
+    // 分頁在背景（切到其他分頁、App 縮小）時不定時讀信，回到前景再補讀（節省 Firebase 讀取額度）
+    setInterval(() => { if (!document.hidden) refreshMailbox(true); }, MAIL_REFRESH_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - mbLastRefresh >= MAIL_REFRESH_MS) refreshMailbox(true); });
 }
 
 // ---- 獎勵 ----

@@ -67,11 +67,11 @@ function refreshBountyIfDue(force) {
 }
 
 // 付費立即刷新：重抽 6 名（追蹤中的懸賞會取消），定時刷新的時間軸不變
-function paidRefreshBounty() {
-    if (inBountyDuel) { alert("對決進行中，無法刷新懸賞榜！"); return; }
+async function paidRefreshBounty() {
+    if (inBountyDuel) { gameAlert("對決進行中，無法刷新懸賞榜！"); return; }
     // 次數或靈石不足就不必先問要不要取消追蹤（payForRefresh 會跳對應提示）
     let canPay = getPaidRefreshLeft('bounty', BOUNTY_PAID_REFRESH_DAILY) > 0 && (player.coins || 0) >= BOUNTY_PAID_REFRESH_COST;
-    if (canPay && getActiveBounties().length && !confirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？")) return;
+    if (canPay && getActiveBounties().length && !(await gameConfirm("刷新後，目前追蹤中的懸賞會一併取消。確定要刷新嗎？"))) return;
     if (!payForRefresh('bounty', BOUNTY_PAID_REFRESH_COST, BOUNTY_PAID_REFRESH_DAILY, '懸賞榜')) return;
     let keepAt = player.bountyRefreshAt;
     refreshBountyIfDue(true);
