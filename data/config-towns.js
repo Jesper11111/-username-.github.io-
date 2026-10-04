@@ -361,6 +361,19 @@ const townScenes = {
             { id: "ql-dock", label: "⛵ 搭船離島", rect: [70, 520, 500, 220], action: "leaveQinglanIsland()" }   // 唯一出口：問「是否離開」後回人界地圖（town-npc.js）
         ],
         figures: [],
+        // 手機直式圖（2026-10-04 使用者提供 848×1264「青瀾島手機版換此圖」：桃花、涼亭、春和堂、碼頭小船、攤販）：座標都是這張圖的像素
+        //   chatterHeads＝路人閒聊的頭頂位置（town.js 的 showTownChatter）；仙翁在直式圖的位置見下方 hiddenNpcs 的 portraitSpot／portraitFishing／whispers.portraitAt
+        portrait: {
+            img: "images/towns/qinglan-inner-portrait.jpg",
+            imgW: 848, imgH: 1264,
+            hotspots: [
+                { id: "ql-shop", label: "春和堂", rect: [530, 520, 240, 180], action: "showToast('🏮 春和堂尚未開業，敬請期待')" },
+                { id: "ql-stall", label: "小攤", rect: [560, 850, 288, 400], action: "showToast('🧺 小攤尚未開張，敬請期待')" },
+                { id: "ql-dock", label: "⛵ 搭船離島", rect: [0, 790, 440, 420], action: "leaveQinglanIsland()" }
+            ],
+            figures: [],
+            chatterHeads: [[403, 672], [460, 685], [515, 728], [580, 735], [685, 728], [745, 680], [808, 672], [505, 958], [750, 1050]]
+        },
         // 隱藏仙翁（2026-10-04 使用者：「涼亭改成場景，圖內場景有機會出現仙翁；解鎖條件魅力 10000」）：涼亭只是背景（沒有按鈕），
         //   魅力（本身＋裝備）≥ minCha 時，每次登島 chance 機率出現在涼亭裡；點他開對話（town-npc.js 的 talkToXianweng），當天見過就不再出現
         //   人物圖：從青瀾島島景圖的垂釣老者沿輪廓去背（2026-10-04 使用者：「去背景，讓玩家不注意會忽略，人物身高比例要正常」）：
@@ -373,10 +386,13 @@ const townScenes = {
             spots: [{ img: "images/towns/npc-xianweng.png", rect: [345, 369, 55, 117] }],   // 涼亭左前角的台基上（使用者確認的位置），面向左邊河面垂釣
             // 釣魚演出（town-npc.js 的 getTownNpcEffects）：竿＝手 → 竿尖、釣線＝竿尖 → 水面、水面漣漪（圖上座標）
             fishing: { hand: [349, 408], tip: [262, 350], hook: [256, 512] },
+            // 手機直式圖（qinglan-inner-portrait.jpg 848×1264）：涼亭石台左前角、面向左邊河面；身高約 90px（與同深度的攤販相當）
+            portraitSpot: { img: "images/towns/npc-xianweng.png", rect: [164, 632, 42, 90] },
+            portraitFishing: { hand: [167, 662], tip: [100, 617], hook: [104, 738] },
             // 低語（2026-10-04 使用者：「仙翁出現有沒有一些低語」）：仙翁在場時，頭頂偶爾浮出淡淡的小字慢慢飄散（town-npc.js 的 startNpcWhispers）；
             //   firstMs 出現後多久第一句、everyMs 間隔、showMs 停留；at＝字的位置（圖上座標，仙翁頭頂）
             whispers: {
-                firstMs: 4000, everyMs: 15000, showMs: 6000, at: [372, 360],
+                firstMs: 4000, everyMs: 15000, showMs: 6000, at: [372, 360], portraitAt: [185, 625],
                 // 2026-10-04 使用者：「聽完仙翁全部低語，仙翁才會出現可點擊對話選項」→ 依序說完全部 lines 後才能點（約 2 分半）
                 inOrder: true, unlockAfterAll: true,
                 lines: [
