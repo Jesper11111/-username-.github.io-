@@ -134,7 +134,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   market.js           寄售拍賣：大道石碑第四個分頁，上架、出價（先扣、被超過退回）、結標領取、下架（第 58 節；設定在 config-leaderboard.js 的 MARKET_*）
   town.js             城內場景（第二頁面）：全螢幕城內畫面、傳送點、滑動／拖曳瀏覽、座標工具（第 20 節）
   town-npc.js         城內隱藏 NPC（第 20 節「天南市集・香腸大師奧斯卡」）：進城擲骰躲在角落、被發現後吃／不吃、必敗決鬥演出（設定在 config-towns.js 的 hiddenNpcs）
-  bgm.js              背景音樂：第一次互動後循環播放、設定視窗開關與音量、切背景／有聲影片時暫停（第 76 節）
+  bgm.js              背景音樂：只在三界之戰與靈界地圖播放、設定視窗開關與音量、切背景／有聲影片時暫停（第 76 節）
   xianweng-games.js   青瀾島隱藏仙翁的兩個小遊戲：開場動畫、仙翁釣魚、玲瓏棋局（五子棋困難 AI）（第 74 節「青瀾島」；設定在 config-towns.js 的 XIANWENG_GAMES）
   strange-fire.js     異火碎片與天下異火：取得、隨機合成、收錄加成、秘境減傷、背包卡片、天磯錄「異火」分頁（第 38 節）
   partner.js          情緣・夥伴：結識、出戰、被動加成、戰鬥絕學、情緣視窗（第 39 節）
@@ -1626,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BC`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BD`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4064,3 +4064,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **設定**（⚙️ 設定視窗「背景音樂」）：`toggleBgm()` 開／關、音量滑桿 `setBgmVolume(0～100)`（預設 40%）；偏好存 localStorage `xiuxian_bgm = { on, vol }`（這台裝置，不進存檔），`openSettingsModal` 時 `renderBgmSettings()`。
 - 驗證（本機）：點擊前不載入、點擊後開始播放（無頭 Chromium 不支援 AAC → 自動用 Opus，currentTime 前進）、開關與音量即時生效並記住；建置版 on* 掃描無缺漏、Console 無錯誤。
 - ⚠️ 音樂版權：檔案由使用者提供（YouTube 下載的檔名），請確認有使用授權。
+- **只在特殊地圖播放**（2026-10-04，版本 `20261005BD`，使用者：「是要設定特殊地圖才要的」→ 選「三界之戰」，再追加「靈界地圖」）：`BGM_ZONE = { activities: ['demon'], ids: ['world-boss-modal', 'world-boss-scene'], scenes: () => [LINGJIE_SCENE_KEY] }`，
+  `isBgmZone()`＝三界之戰海報（`#activity-poster-modal` 的 `data-act`，activity.js 的 `openActivityPoster` 設定並立即 `playBgm`）、世界 Boss 視窗／戰鬥畫面、靈界大地圖（`currentTownScene` 且 `#town-scene` 顯示中）。
+  `playBgm` 不在區域內就不播；`initBgm` 每秒檢查一次，進區域播放、離開暫停。設定視窗標題改「背景音樂（三界之戰、靈界地圖）」。
+  驗證：標題畫面、洞府、秘境不播；三界之戰海報、世界 Boss 視窗、靈界地圖播放；關閉或換到人界地圖即暫停；Console 無錯誤。
