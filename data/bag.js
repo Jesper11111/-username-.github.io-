@@ -102,6 +102,7 @@ function renderBag() {
         hasItems = true;
         parts.push(`
             <div class="card" style="border-color: #fbbf24;">
+                <img src="${LINGJIE_STONE_IMG[k]}" alt="${k}屬性傳送陣靈石" style="display: block; width: 96px; height: 96px; margin: 0 auto 6px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 14px rgba(253, 230, 138, 0.35);">
                 <h3 style="color: #fde68a;">${LS_ICON[k]} <span class="elem-${k}">${k}</span>屬性傳送陣靈石 <span style="font-size:0.8em;">(x${n})</span></h3>
                 <p style="font-size: 0.8em; color: #9ca3af;">傳送陣用的五行靈石（不是貨幣）。飛升靈界、從靈界返回人界，各需金木水火土五種各 1 顆${isInLingjie() ? '（🌌 你目前身在靈界）' : ''}</p>
             </div>`);

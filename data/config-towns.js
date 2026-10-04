@@ -149,6 +149,8 @@ const CITY_GATES = {
 // ---- 靈界進出（lingjie.js，第 74 節；2026-10-04 使用者指定）----
 // 五行傳送陣靈石：player.lingStones；進、出靈界各要一套（每種 1 顆）
 const LINGJIE_STONE_KEYS = ["金", "木", "水", "火", "土"];
+// 背包圖示（2026-10-04 使用者提供五行靈石合成圖 848×1264，以瀏覽器 canvas 各裁一塊縮成 192×192）
+const LINGJIE_STONE_IMG = { "金": "images/items/lingstone-metal.jpg", "木": "images/items/lingstone-wood.jpg", "水": "images/items/lingstone-water.jpg", "火": "images/items/lingstone-fire.jpg", "土": "images/items/lingstone-earth.jpg" };
 const LINGJIE_MAP_CATEGORIES = [4, 5];   // 只有身在靈界才能進的地圖分類（第四、五區）
 // 掉落：nv2L ≥ minMapL 的野外（無邊海、第四、五區…），每種每次掉寶 field 機率（每小時 1200 次掉寶 → 每種約 0.5 顆、約 2 小時一套）；鎮魔塔 fromFloor 層起 BOSS chance × 問答倍率掉 1 顆（隨機一種）
 const LINGJIE_STONE_DROP = { minMapL: 9, field: 1 / 2400, zhenmo: { fromFloor: 60, chance: 0.25 } };
