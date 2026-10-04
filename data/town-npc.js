@@ -109,7 +109,10 @@ function getTownNpcFigures(sceneName, view) {
     if (!hit || view !== townScenes[sceneName]) return [];
     // 函式名寫成字串字面值：建置（tools/build.js）才會把它們掛回 window（點人偶的 onclick 要用）
     const fn = hit.npc.kind === 'xianweng' ? 'talkToXianweng' : 'talkToTownNpc';
-    return [{ id: 'npc-' + hit.npc.id, name: hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc', action: `${fn}('${sceneName}')` }];
+    // 仙翁：低語還沒聽完（whispers.unlockAfterAll）不能點；聽完加 awake（淡淡光暈提示可以點了）
+    const locked = hit.npc.whispers && hit.npc.whispers.unlockAfterAll && !hit.heardAll;
+    return [{ id: 'npc-' + hit.npc.id, name: locked ? '' : hit.npc.name, img: hit.spot.img, rect: hit.spot.rect, cls: 'town-npc' + (locked ? '' : hit.npc.whispers ? ' awake' : ''),
+        action: locked ? '' : `${fn}('${sceneName}')` }];
 }
 
 // NPC 的場景演出（例：隱藏仙翁垂釣＝竿、釣線、水面漣漪）：畫在人偶底下、不擋點擊；npc 沒有 fishing 就不畫
@@ -120,20 +123,30 @@ function startNpcWhispers(sceneName) {
     stopNpcWhispers();
     const hit = townNpcSpots[sceneName], W = hit && hit.npc.whispers;
     if (!W || !W.lines || !W.lines.length) return;
+    hit.whisperIdx = 0;
     const tick = () => {
         if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;   // 離開或仙翁已消失
-        showNpcWhisper(W);
+        showNpcWhisper(W, W.inOrder ? hit.whisperIdx % W.lines.length : null);
+        hit.whisperIdx++;
+        // 依序說完最後一句：解鎖對話（等最後一句飄完再亮起，重畫人偶讓它可以點）
+        if (W.unlockAfterAll && !hit.heardAll && hit.whisperIdx >= W.lines.length) {
+            setTimeout(() => {
+                if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;
+                hit.heardAll = true;
+                if (currentTownView) renderTownHotspots(currentTownView);
+            }, W.showMs || 6000);
+        }
         npcWhisperTimer = setTimeout(tick, W.everyMs || 15000);
     };
     npcWhisperTimer = setTimeout(tick, W.firstMs != null ? W.firstMs : (W.everyMs || 15000));
 }
-function showNpcWhisper(W) {
+function showNpcWhisper(W, idx) {
     const stage = document.getElementById('town-scene-stage');
     if (!stage || !currentTownView) return;
     let box = document.getElementById('town-chatter');
     if (!box) { box = document.createElement('div'); box.id = 'town-chatter'; stage.appendChild(box); }
-    let i = Math.floor(Math.random() * W.lines.length);
-    if (W.lines.length > 1 && i === npcWhisperLast) i = (i + 1) % W.lines.length;
+    let i = idx != null ? idx : Math.floor(Math.random() * W.lines.length);   // inOrder：依序；否則隨機不連續重複
+    if (idx == null && W.lines.length > 1 && i === npcWhisperLast) i = (i + 1) % W.lines.length;
     npcWhisperLast = i;
     const el = document.createElement('div');
     el.className = 'npc-whisper';
@@ -324,9 +337,13 @@ function xianwengChoose(kind) {
     modal.style.display = 'none';
     if (!hit) return;
     const L = hit.npc.lines || {};
+    if (kind === 'fishing' || kind === 'gomoku') {   // 兩個小遊戲製作中：先提示，仙翁留在原地（不算見過）
+        gameAlert(kind === 'fishing' ? '🎣 仙翁釣魚\n\n仙翁笑道：「釣竿借你，可別嚇跑了老夫的魚。」\n（小遊戲製作中，敬請期待）'
+            : '♟️ 玲瓏棋局（五子棋・困難）\n\n仙翁撚鬚：「這盤棋，老夫等了三百年。」\n（小遊戲製作中，敬請期待）');
+        return;
+    }
+    // 告辭：仙翁飄然而去，當天不再出現
     markTownNpcDone(hit.npc.id);
     removeTownNpc(sceneName);
-    if (kind === 'leave') { showToast(`🍃 ${L.bye || '仙翁飄然而去'}`); return; }
-    addLog(`🎣 青瀾島涼亭偶遇【隱藏仙翁】，${kind === 'chess' ? '陪仙翁對弈一局' : '請仙翁指點'}，結下一段仙緣。`, 'level-up');
-    gameAlert(`${L.reward || ''}\n\n（仙翁的造化尚在醞釀，敬請期待）`);
+    showToast(`🍃 ${L.bye || '仙翁飄然而去'}`);
 }

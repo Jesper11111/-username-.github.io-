@@ -356,6 +356,8 @@ const townScenes = {
             //   firstMs 出現後多久第一句、everyMs 間隔、showMs 停留；at＝字的位置（圖上座標，仙翁頭頂）
             whispers: {
                 firstMs: 4000, everyMs: 15000, showMs: 6000, at: [372, 360],
+                // 2026-10-04 使用者：「聽完仙翁全部低語，仙翁才會出現可點擊對話選項」→ 依序說完全部 lines 後才能點（約 2 分半）
+                inOrder: true, unlockAfterAll: true,
                 lines: [
                     "……三百年了，還是沒等到。",
                     "魚兒啊，你也在等人嗎？",
