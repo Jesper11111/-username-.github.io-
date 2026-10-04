@@ -140,9 +140,9 @@ const CITY_GATES = {
     // 天元城（2026-10-04 使用者提供 1408×768 城門插畫）：靈界地圖「人族聚居區」的紅點 → 顯示城池圖；城內尚未開放
     "天元城": {
         img: "images/maps/tianyuan-city.jpg", imgW: 1408, imgH: 768,
-        hint: "🏯 天元城・城門緊閉（城內尚未開放）",
+        hint: "✨ 點擊城門進入天元城",
         backLabel: "↩ 返回靈界",
-        action: "showToast('🏯 天元城城門緊閉，城內尚未開放，敬請期待')"
+        action: "enterLingjieTown('天元城')"   // 2026-10-04 內城開放（townScenes["天元城"]，lingjie.js）
     }
 };
 
@@ -151,7 +151,16 @@ const CITY_GATES = {
 const LINGJIE_STONE_KEYS = ["金", "木", "水", "火", "土"];
 // 背包圖示（2026-10-04 使用者提供五行靈石合成圖 848×1264，以瀏覽器 canvas 各裁一塊縮成 192×192）
 const LINGJIE_STONE_IMG = { "金": "images/items/lingstone-metal.jpg", "木": "images/items/lingstone-wood.jpg", "水": "images/items/lingstone-water.jpg", "火": "images/items/lingstone-fire.jpg", "土": "images/items/lingstone-earth.jpg" };
-const LINGJIE_MAP_CATEGORIES = [4, 5];   // 只有身在靈界才能進的地圖分類（第四、五區）
+const LINGJIE_RESPAWN_MAP = "天元城外";   // 身在靈界的復活點（lingjie.js 的 getRespawnPoint）
+const LINGJIE_TEA_RUMORS = [
+    "聽說血天大陸的魔修最近又不安分了，渡劫的道友小心點。",
+    "靈界的傳送陣要五行靈石各一顆，少一顆都催動不了，回人界的路可不便宜。",
+    "鎮魔塔六十層以上的守關者，身上常帶著傳送陣靈石。",
+    "混沌初界那邊的妖獸，強得連大羅金仙都要繞道走。",
+    "天元城外常有被妖獸打回來的修士躺著，守衛都見怪不怪了。",
+    "有人在海王族的島上看過上蒼的入口，誰知道是真是假。"
+];
+const LINGJIE_MAP_CATEGORIES = [4, 5, 7];   // 只有身在靈界才能進的地圖分類（第四、五區、靈界城鎮＝天元城）
 // 掉落：nv2L ≥ minMapL 的野外（無邊海、第四、五區…），每種每次掉寶 field 機率（每小時 1200 次掉寶 → 每種約 0.5 顆、約 2 小時一套）；鎮魔塔 fromFloor 層起 BOSS chance × 問答倍率掉 1 顆（隨機一種）
 const LINGJIE_STONE_DROP = { minMapL: 9, field: 1 / 2400, zhenmo: { fromFloor: 60, chance: 0.25 } };
 
@@ -265,6 +274,19 @@ const townScenes = {
                 shout: "我有一根大香腸——噴！"
             }
         }]
+    },
+    // 天元城內城（2026-10-04 使用者提供 848×1264 直式插畫）：靈界的安全區城鎮；建築物先放 任務榜、茶樓（使用者指定「少數建築物」）
+    //   任務榜＝內城門前（牌坊與城門）→ 每日任務；茶樓＝左側「天元茶館」→ lingjie.js 的 openTeaHouse（歇息回滿氣血靈力＋聽傳聞）
+    "天元城": {
+        title: "天元城・內城",
+        img: "images/towns/tianyuan-inner.jpg",
+        imgW: 848, imgH: 1264,
+        hotspots: [
+            { id: "ty-quest", label: "任務榜", rect: [350, 280, 150, 150], action: "openDailyQuestModal()" },
+            { id: "ty-tea", label: "茶樓", rect: [150, 480, 200, 260], action: "openTeaHouse()" }
+        ],
+        figures: [],
+        extraButton: { label: "↩ 靈界地圖", action: "openTownScene(LINGJIE_SCENE_KEY)" }
     },
     "天星城": {
         title: "天星城・坊市",

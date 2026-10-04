@@ -248,7 +248,7 @@ function endTribulation(success) {
         player.hp = 1;
         addLog(`💀 【渡劫失敗】心魔反噬，你身受重傷跌落凡塵，遺失了 ${lostCoins.toWan()} 靈石。`, "combat");
         addLog(`📉 道基受損，境界跌落【${realms[player.realmIndex]} ${fromStage}階 → ${player.stage}階】，並陷入「虛弱」：攻擊、氣血與靈力上限 -${Math.round((1 - WEAKNESS_STAT_MULT) * 100)}%，直到重新修回 10 階才會解除；戰力要等 10 階修為修滿才會完全恢復。`, "combat");
-        changeMap(0, 0);
+        sendToRespawn();   // 身在靈界＝天元城外（lingjie.js，第 74 節）
         updateUI();
     }
 }

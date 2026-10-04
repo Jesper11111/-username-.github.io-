@@ -79,6 +79,12 @@ const maps = [
         { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
         { name: "星空古路", expRate: 3000, nv2Str: [10, 15], diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] }       // 仙人初境・挑戰
+    ]},
+    // 靈界城鎮（2026-10-04 使用者指定：天元城內城＋城外；身在靈界戰死、渡劫失敗、暫存區滿、離線撐不住都回「天元城外」；lingjie.js 的 getRespawnPoint，第 74 節）
+    //   加在最後（索引 7），屬於靈界（config-towns.js 的 LINGJIE_MAP_CATEGORIES）；hidden＝不列在任何地圖清單，只能從靈界地圖的天元城紅點進入
+    { category: "靈界城鎮 (安全區)", isSafe: true, items: [
+        { name: "天元城外", expRate: 3, diff: 1, coins: 0, hidden: true },
+        { name: "天元城", expRate: 3, diff: 1, coins: 0, hidden: true }
     ]}
 ];
 

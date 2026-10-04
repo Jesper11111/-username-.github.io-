@@ -332,8 +332,8 @@ function receiveLootEquip(eq) {
 // 暫存區滿時：不能待在野外（combat.js 每回合、map.js 換地圖時檢查）；回傳 true 代表已被擋下
 function enforceGearStashLimit() {
     if (!isGearStashFull() || player.currentMapIsSafe) return false;
-    addLog(`📦 暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}），請先處理暫存區的橙色裝備才能外出練功！已返回宗門。`, "system");
-    changeMap(0, 0);
+    addLog(`📦 暫存區已滿（${GEAR_STASH_MAX}/${GEAR_STASH_MAX}），請先處理暫存區的橙色裝備才能外出練功！已返回${respawnPlaceName()}。`, "system");
+    sendToRespawn();   // 身在靈界＝天元城外（lingjie.js，第 74 節）
     return true;
 }
 
