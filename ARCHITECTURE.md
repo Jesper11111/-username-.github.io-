@@ -574,7 +574,7 @@ combatTick() 每秒執行 [combat.js]
 | 千寶閣（拍賣場） | 5,000 | 無 | ✅ 已實作（每 3 小時刷新 5 件） |
 | 秘境 | 5,000 | 煉虛 | ✅ 入口已開放（秘境列表＋鎮魔塔場景，第 43 節）；塔內玩法 ⏳ 敬請期待 |
 | 獵殺邪修 | 8,000 | 金丹 | ✅ 已開放（2026-09-25）：懸賞榜每 4 小時刷新 6 名＋野外修士＋善惡值（第 27、36 節） |
-| 域外天魔（世界BOSS） | 10,000 | 大乘 | ⏳ 敬請期待 |
+| 域外天魔（世界BOSS） | 10,000 | 大乘 | ⏳ 已完成、暫不開放（`implemented: false`，開放改 true；第 75 節） |
 
 - **解鎖判定**一律走 `getActivityLockReason()`，未達標會說明缺什麼；
   `implemented: false` 的活動即使達標也只顯示「敬請期待」。
@@ -1617,7 +1617,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AE`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AF`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3358,6 +3358,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **開放寄售洗煉石與做裝通貨**（2026-10-03，版本 `20261005x`，使用者同意）：`MARKET_STACKS` 加 🌀洗煉石（`player.refineStones`）與 🔷天機石／💠混元晶／⚫破虛石／🔮造化玉（`key: "craft:xxx"`、`cur` 指向 `player.craftCur` 的那一格），都歸「⛏️ 材料」分類（雲端規則的 kind 不用改）。
   market.js 的數量型物品一律經 `mkStackHave(s)`／`mkStackAdd(s, n)` 讀寫（做裝通貨走 craft.js 的 getCraftCur／addCraftCur／spendCraftCur）。驗證：材料清單列出、上架扣數量、數量不足擋下、退回加回；Console 無錯誤。
 
+- **週末休市**（2026-10-04，版本 `20261005AF`，使用者：「寄賣只開放週一～週五，六日的網路流量要留給世界 Boss」）：`MARKET_OPEN_DAYS` [1～5]（台灣時間星期）；
+  market.js 的 `isMarketClosed()`：週六、週日寄售分頁顯示「🏮 寄售週末休市」（`marketClosedHtml`），`refreshLeaderboard` 遇到休市的寄售分頁直接返回、**不讀雲端**；
+  上架、出價、領退款、領物品／靈石、下架開頭都 `marketClosedAlert()`。休市期間結束的拍賣照常結束，週一再到「待處理」領取。
+
 ## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
 - 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。
 - 版面（`#combat-visual-panel`，桌機 300px 高、手機 260／240px）：**左右對戰構圖**（2026-09-28 玩家反映整張立繪放不下對手而改）——左 56% 我方立繪 `#bf-hero`（`player.gender` 決定，**不跟頭像走**）、右 56% 敵方 `#bf-foe`，兩邊用 clip-path 切成同一條斜線 (56%,0)→(44%,100%)，`svg.bf-divider` 畫金線、中央 `.bf-vs`；上下漸層壓暗。
@@ -3935,7 +3939,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 
 - **使用者選定**（多人 Boss 討論後）：A 世界 Boss（非同步，全服共用一條血）＋四層防作弊——① 雲端規則硬性限制（次數、間隔、單次上限、封鎖帳號）② 獎勵以參加為主、排名只給外觀
   ③ 延後 24 小時發獎＋GM 審核 ④ 不影響單機遊玩。細節照建議：每週六 20:00～週日 20:00（台灣）、每天 3 次、每次 30 回合、倒下不扣壽元、單次上限＝總血量 1%。
-- **入口**：秘境列表（`config-secret-realms.js` 第 3 張卡 `mode: 'worldboss'`）→ `openSecretRealmScene` 遇到 worldboss 直接 `openWorldBossModal()`（不走海報場景）。
+- **入口**：活動選單「👹 域外天魔」（`config-activities.js` 的 `demon`，`openFn: openWorldBossModal`，聲望 1 萬＋大乘）。2026-10-04（版本 `20261005AF`）使用者要求「世界 Boss 暫不開放、秘境的世界 Boss 移到域外天魔」：
+  `implemented: false`＝點了只顯示敬請期待；**開放時改成 `true`**（並確認 Firebase 已發布新版規則）。原本秘境列表的世界 Boss 卡片已移除。
 - **雲端資料**（數字都是「畫面數字」的整數＝內部數值 × `combatScale()`）：
   - `wboss/state`：`{ bid, bossIdx, maxHp, hp, cap, startAt, endAt, killedAt, lastUid, lastName, prev: { bid, maxHp, killed, endAt, lastUid } | null }`。
   - `wbossRuns/{bid}/dmg/{uid}`：`{ uid, name, realm, stage, total, eff, n, day, dayN, lastAt, hist[≤6]: { d, t, r } }`（day＝台灣時間日序 floor((ms+8h)/1 天)）。

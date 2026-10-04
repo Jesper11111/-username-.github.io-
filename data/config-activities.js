@@ -22,7 +22,8 @@ const activityData = [
       implemented: true, openFn: "openEvilHallScene",   // 先進殺手殿堂場景，點匾額才開懸賞榜（merit.js）
       desc: "懸賞榜・每 4 小時刷新 6 名" },
 
+    // 世界 Boss（world-boss.js，第 75 節；2026-10-04 由秘境移到這裡）：使用者要求「暫不開放」→ implemented: false 只顯示敬請期待；開放時改成 true 即可
     { id: "demon", name: "域外天魔", icon: "👹", minRep: 10000, minRealmIndex: 8,
-      implemented: false,
-      desc: "世界BOSS・大乘以上開放" }
+      implemented: false, openFn: "openWorldBossModal",
+      desc: "世界BOSS・每週六 20:00～週日 20:00・大乘以上開放" }
 ];
