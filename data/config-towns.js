@@ -297,7 +297,10 @@ const townScenes = {
         hotspots: [
             { id: "ty-quest", label: "任務榜", rect: [350, 280, 150, 150], action: "openLingjieQuestModal()" },   // 2026-10-04 改成靈界專屬任務榜（和人界每日任務分開）
             { id: "ty-tea", label: "茶樓", rect: [150, 480, 200, 260], action: "openTeaHouse()" },
-            { id: "ty-shop", label: "大道商行", rect: [540, 560, 140, 200], action: "openLingjieShop()" }   // 右側「大道商行」招牌：販賣傳送陣靈石
+            { id: "ty-shop", label: "大道商行", rect: [540, 560, 140, 200], action: "openLingjieShop()" },   // 右側「大道商行」招牌：販賣傳送陣靈石
+            // 2026-10-04 使用者指定：第三段宗門（至高聖地）只能在靈界拜入；天元城也有一般宗門設施（尋訪仙門、背包、僕從…），不用回人界
+            { id: "ty-sect", label: "至高聖地", rect: [330, 130, 240, 130], action: "openSectModal()" },          // 上方宮殿：拜入／回歸第三段宗門（sect.js 在靈界只列至高聖地）
+            { id: "ty-facility", label: "宗門設施", rect: [555, 300, 130, 110], action: "openLingjieFacility()" }   // 右上樓房（手機畫面置中時左側會被切掉，所以放右邊）：一般宗門設施（lingjie.js）
         ],
         figures: [],
         extraButton: { label: "↩ 靈界地圖", action: "openTownScene(LINGJIE_SCENE_KEY)" }
