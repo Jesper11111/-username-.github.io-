@@ -19,7 +19,7 @@ const LEADERBOARD_FIREBASE_CONFIG = {
 //   雲端資料由 GM 在 gm.html 按「💥 清空全部榜單」刪除；雲端規則沒改。要恢復改成 false（程式都還在）
 // 2026-10-04 使用者：「戰力排行榜先開放，我等一下再關閉」→ 拆成兩個開關：戰力榜 LEADERBOARD_POWER_REMOVED、死守天南城榜 LEADERBOARD_RANKS_REMOVED
 //   要再關閉戰力榜：LEADERBOARD_POWER_REMOVED 改回 true（並把 index.html 兩個 HUD 戰力的 onclick／🏆 拿掉）、換版本號
-const LEADERBOARD_POWER_REMOVED = false;
+const LEADERBOARD_POWER_REMOVED = true;   // 2026-10-04 使用者：「關閉戰力榜」（GM 設定完後再次關閉）
 const LEADERBOARD_RANKS_REMOVED = true;   // 現在只代表死守天南城榜（守城送審）
 
 // Firebase App Check（2026-10-04，保護 Firebase 額度：只有從本網站正常開啟的遊戲能連雲端，用程式直接呼叫的流量被拒）：
