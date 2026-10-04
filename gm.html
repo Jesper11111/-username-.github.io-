@@ -242,7 +242,7 @@
             </div>
             <div class="toolbar">
                 <label>標題 <input type="text" id="rw-title" maxlength="30" style="width: 220px; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px;"></label>
-                <label>有效 <input type="number" id="rw-days" value="30" min="0"> 天（0 = 永久）</label>
+                <label>有效 <input type="number" id="rw-days" value="30" min="0"> 天（0 = 永久；只用在兌換碼，信件一律 24 小時後自動刪除）</label>
             </div>
             <textarea id="rw-body" maxlength="300" rows="2" placeholder="內文（選填）" style="width:100%; background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px; font-family:inherit; margin-bottom:8px;"></textarea>
             <div class="toolbar" id="rw-fields"></div>
@@ -306,18 +306,18 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005AA"></script>
+<script src="data/config-realms.js?v=20261005AB"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005AA"></script>
-<script src="data/numeric.js?v=20261005AA"></script>
-<script src="data/config-leaderboard.js?v=20261005AA"></script>
-<script src="data/config-mailbox.js?v=20261005AA"></script>
+<script src="data/config-numeric.js?v=20261005AB"></script>
+<script src="data/numeric.js?v=20261005AB"></script>
+<script src="data/config-leaderboard.js?v=20261005AB"></script>
+<script src="data/config-mailbox.js?v=20261005AB"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005AA"></script>
+<script src="data/config-aptitude.js?v=20261005AB"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005AA"></script>
-<script src="data/bounty.js?v=20261005AA"></script>
-<script src="data/config-defense.js?v=20261005AA"></script>
+<script src="data/config-bounty.js?v=20261005AB"></script>
+<script src="data/bounty.js?v=20261005AB"></script>
+<script src="data/config-defense.js?v=20261005AB"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -926,9 +926,11 @@ async function rwSend() {
         const to = $('rw-to').value === 'all' ? 'all' : $('rw-uid').value.trim();
         if (!to) return alert('請填玩家 uid（戰力榜該列按「📮」自動帶入）。');
         const who = to === 'all' ? '全服玩家' : ($('rw-uid-name').textContent.replace('→ ', '') || to);
-        if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${days ? days + ' 天' : '永久'}\n\n確定寄出？`)) return;
+        // 信件一律隔日（MAIL_LIFETIME_HOURS 小時後）自動刪除，「有效天數」只用在兌換碼（2026-10-04 使用者要求）
+        if (!confirm(`寄給【${who}】\n標題：${title || '仙府來信'}\n獎勵：${rwFormat(rewards)}\n有效：${MAIL_LIFETIME_HOURS} 小時（之後自動刪除，沒領的就領不到）\n\n確定寄出？`)) return;
+        const mailExp = firebase.firestore.Timestamp.fromMillis(Date.now() + MAIL_LIFETIME_HOURS * 3600000);
         try {
-            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, v, expiresAt, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection(MAIL_COLLECTION).add({ to, title: title || '仙府來信', body, rewards, v, expiresAt: mailExp, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             log(`已寄出信件給 ${who}：${rwFormat(rewards)}`, 'ok');
         } catch (e) { return log('寄信失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     } else {
@@ -951,6 +953,14 @@ async function reloadRewards() {
             db.collection(CODE_COLLECTION).get()
         ]);
         rwMails = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 隔日自動刪除：過期（expiresAt 已過，或寄出超過 MAIL_LIFETIME_HOURS 小時）的信件直接刪掉
+        const now = Date.now(), lifeMs = MAIL_LIFETIME_HOURS * 3600000;
+        const old = rwMails.filter(m => (m.expiresAt && m.expiresAt.toMillis && m.expiresAt.toMillis() < now) || (m.createdAt && m.createdAt.toMillis && m.createdAt.toMillis() + lifeMs < now));
+        if (old.length) {
+            await Promise.all(old.map(m => db.collection(MAIL_COLLECTION).doc(m.id).delete().catch(() => {})));
+            log(`已自動刪除 ${old.length} 封過期信件（寄出超過 ${MAIL_LIFETIME_HOURS} 小時）`, 'ok');
+            rwMails = rwMails.filter(m => !old.includes(m));
+        }
         rwCodes = cs.docs.map(d => Object.assign({ id: d.id }, d.data()));
     } catch (e) { rwMails = []; rwCodes = []; log('讀取信件／兌換碼失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';

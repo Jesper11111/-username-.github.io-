@@ -7,6 +7,7 @@ let mbMails = [];            // 目前可領的信（未過期、未領）
 let mbLoading = false;
 let mbError = "";
 let mbLastRefresh = 0;
+let mbDeletedIds = new Set();   // 這次開遊戲已嘗試刪除的過期信（每封只試一次）
 let mbCheckedIds = new Set();   // 這次開遊戲已到雲端確認過「還沒領」的信（2026-10-04 節省 Firebase 讀取額度：不再每 30 分鐘重讀一次領取紀錄）
 
 function isMailboxAvailable() {
@@ -22,8 +23,13 @@ async function refreshMailbox(force) {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
         const snap = await lbWithTimeout(db.collection(MAIL_COLLECTION).where('to', 'in', ['all', uid]).get());
         const now = Date.now(), claimed = new Set(player.mailClaimed || []);
-        const list = snap.docs.map(d => Object.assign({ id: d.id }, d.data()))
-            .filter(m => !claimed.has(m.id) && !(m.expiresAt && m.expiresAt.toMillis && m.expiresAt.toMillis() < now));
+        const all = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 過期（隔日）的信順手刪除，之後所有玩家都不必再讀到它；規則還沒發布新版時會被拒絕，忽略即可
+        all.filter(m => isMailExpired(m, now) && !mbDeletedIds.has(m.id)).forEach(m => {
+            mbDeletedIds.add(m.id);
+            db.collection(MAIL_COLLECTION).doc(m.id).delete().catch(() => {});
+        });
+        const list = all.filter(m => !claimed.has(m.id) && !isMailExpired(m, now));
         // 本機沒有領取紀錄的（換過瀏覽器、清過資料），再到雲端確認一次
         //   （同一次開遊戲只查一次；在這台裝置領取會寫進 mailClaimed，不必重查）
         const checks = await Promise.all(list.map(m => mbCheckedIds.has(m.id) ? false
@@ -44,6 +50,13 @@ async function refreshMailbox(force) {
         if (document.getElementById('mailbox-modal').style.display === 'flex') renderMailbox();
     }
 }
+// 信件過期：expiresAt 已過，或寄出超過 MAIL_LIFETIME_HOURS（舊的永久信也一樣隔日過期）
+function mailExpireAt(m) {
+    const exp = m.expiresAt && m.expiresAt.toMillis ? m.expiresAt.toMillis() : Infinity;
+    const born = m.createdAt && m.createdAt.toMillis ? m.createdAt.toMillis() + MAIL_LIFETIME_HOURS * 3600000 : Infinity;
+    return Math.min(exp, born);
+}
+function isMailExpired(m, now) { return mailExpireAt(m) < (now || Date.now()); }
 // 信件／兌換碼的獎勵格式比這版遊戲新（GM 寄出時寫入 v，config-mailbox.js 的 MAIL_SCHEMA_VERSION）
 function isMailTooNew(m) {
     return Number(m && m.v || 1) > MAIL_SCHEMA_VERSION;
@@ -200,7 +213,7 @@ function renderMailbox() {
             <h3 style="margin:0 0 4px; color: var(--accent);">📜 ${lbEscape(m.title || '仙府來信')}</h3>
             ${m.body ? `<p style="font-size:0.85em; color:#e5e7eb; white-space:pre-wrap; margin:4px 0;">${lbEscape(m.body)}</p>` : ''}
             <p style="font-size:0.85em; color:#facc15; margin:4px 0;">${lbEscape(formatMailRewards(m.rewards))}</p>
-            <p style="font-size:0.75em; color:#6b7280; margin:2px 0;">${m.to === 'all' ? '全服信件' : '個人信件'}${m.expiresAt && m.expiresAt.toMillis ? `｜${new Date(m.expiresAt.toMillis()).toLocaleDateString('zh-TW')} 前領取` : ''}</p>
+            <p style="font-size:0.75em; color:#6b7280; margin:2px 0;">${m.to === 'all' ? '全服信件' : '個人信件'}${isFinite(mailExpireAt(m)) ? `｜${new Date(mailExpireAt(m)).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })} 前領取（逾時自動刪除）` : ''}</p>
             ${isMailTooNew(m) ? '<p style="font-size:0.8em; color:#f87171;">⚠️ 需要新版遊戲才能領取，請重新整理頁面（Ctrl＋F5）</p>' : ''}
             <button class="sys-btn" onclick="claimMail('${lbEscape(m.id)}')">🎁 領取</button>
         </div>`).join('');

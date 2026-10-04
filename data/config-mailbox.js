@@ -8,6 +8,10 @@ const MAIL_COLLECTION = "mail";
 const MAIL_CLAIMS_COLLECTION = "mailClaims";
 const CODE_COLLECTION = "codes";
 const CODE_CLAIMS_COLLECTION = "codeClaims";
+// 信件隔日自動刪除（2026-10-04 使用者要求；舊信件每次讀信都會被讀到，耗 Firebase 讀取額度）：
+//   信件寄出後 MAIL_LIFETIME_HOURS 小時過期（gm.html 寄信一律寫 expiresAt＝寄出＋24 小時；舊的永久信以 createdAt＋24 小時計）
+//   過期的信：玩家的遊戲讀到就順手刪除（tools/firestore.rules 允許刪除「寄給自己或全服、已過期」的信），GM 後台開「發放獎勵」時也會刪
+const MAIL_LIFETIME_HOURS = 24;
 const MAIL_REFRESH_MS = 2 * 60 * 60 * 1000;   // 2026-10-04 由 30 分鐘改 2 小時（Firebase 讀取額度用完）；打開信箱時照樣會讀
 // 獎勵格式版本：GM 寄出時寫進信件／兌換碼的 v；遊戲只領 v ≤ 本值的，比較新的會提示「請重新整理遊戲」而不建立領取紀錄
 //   （2026-09-28 事故：玩家用還沒支援「先天資質」的舊版遊戲領了資質信，領取紀錄建立了卻沒有效果，那封信也不能再領）
