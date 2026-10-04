@@ -1608,7 +1608,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005M`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005N`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3850,3 +3850,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **標記的效果**：`player.integrity = { flagged, reason, at }`（存在存檔裡、受簽章保護）。戰力榜上傳與守城送審略過、戰力榜頁顯示原因（leaderboard.js）；寄售上架與出價擋下（market.js）。**不刪檔、不擋單機遊玩**（避免誤判害玩家失去進度）。
 - **驗證**（本機）：改版前存檔讀取不標記且補簽；正常重新整理不標記；用文字改本機存檔的靈石 → 標記「存檔內容被修改」；匯出代碼原樣匯入通過、改過靈石再匯入 → 標記；新角色直接改成渡劫 → 標記「修煉進度過快」；標記後寄售被擋。
   建置版：主控台 `typeof player` 為 undefined、`player.coins = …` 失敗；開 28 個畫面後掃描所有 on* 事件，缺少的函式 0 個；野外戰鬥、存讀檔、gm.html 正常；Console 無錯誤（只有沙箱連不到外部的憑證錯誤）。
+
+## 73. 快捷清單傳送不觸發特殊事件（`map.js`；2026-10-04，版本 `20261005N`）
+
+- **規則**（使用者指定「從右上地圖快捷鍵進入地圖，無法觸發特殊事件」）：從**修仙地圖彈窗** `#world-map-modal`（人界地圖右上「地圖列表」、世界導覽、PC 傳送門開的那個）裡的
+  區域按鈕或城鎮傳送卡片進入地圖，**不呼叫 `onEncounterMapChange`**——奇遇的秘密路線、野外累計次數、空間裂縫、三界召令、城中機緣、機緣任務的「前往」步驟都不算（第 63 節）。
+  從人界地圖的分區紅點（worldRegions 的 `openMapCategoryModal(n)`）、城鎮紅點（`goToTownByName`）、靈界紅點（`goToMapByName`）進入則照常觸發。
+- **實作**：`openMapCategoryModal(catIndex, quick)` 把 quick 寫進清單按鈕 `selectMap(c, i, true)`；`goToTown(i, quick)`（傳送卡片傳 true）；`selectMap(c, i, quick)` → `changeMap(c, i, challengeOk, quick)`／`confirmChallengeMap(c, i, quick)`；
+  `changeMap` 只在 `!quick` 時呼叫 `onEncounterMapChange`。index.html 的區域按鈕都改成 `openMapCategoryModal(n, true)`。
+- 驗證（本機）：快捷清單進野外、進城鎮 → 不觸發；人界分區進野外、人界紅點進城 → 觸發；建置版畫面事件函式齊全；Console 無錯誤。

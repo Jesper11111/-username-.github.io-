@@ -34,7 +34,7 @@ function renderTownTeleports() {
         let pic = thumb ? `<img class="map-thumb" src="${thumb}" alt="${item.name}">` : `<span class="town-thumb-empty">🏯</span>`;
         let tip = isCurrent ? (scene ? '📍 當前所在・點擊進城' : '📍 當前所在') : (scene ? '✨ 點擊傳送並進城' : '✨ 點擊傳送');
         let clickable = !isCurrent || scene;
-        return `<button class="town-card${isCurrent ? ' current' : ''}${scene ? ' has-scene' : ''}" ${clickable ? `onclick="goToTown(${i})"` : ''}>
+        return `<button class="town-card${isCurrent ? ' current' : ''}${scene ? ' has-scene' : ''}" ${clickable ? `onclick="goToTown(${i}, true)"` : ''}>
             ${pic}<b>${item.name}</b><small>${tip}</small></button>`;
     }).join('');
 }
@@ -57,17 +57,19 @@ function goToTownByName(name) {
 }
 
 // 點城鎮傳送點：不在該城就傳送過去；有城內場景（town.js）就開啟城內畫面
-function goToTown(i) {
+// quick＝從修仙地圖彈窗（快捷清單）傳送：不觸發奇遇等特殊事件（第 73 節）
+function goToTown(i, quick) {
     let item = maps[0].items[i];
     // 被城內隱藏 NPC 打爆後的禁入時間（town-npc.js）：不傳送、只提示
     const ban = getTownBanLeftMin(item.name);
     if (ban) { showToast(`😵 滿臉都是香腸油，還沒臉回${item.name}……（剩 ${ban} 分鐘）`); return; }
-    if (player.currentMap.name !== item.name) selectMap(0, i);
+    if (player.currentMap.name !== item.name) selectMap(0, i, quick);
     else closeModal('world-map-modal');
     if (player.currentMap.name === item.name && hasTownScene(item.name)) openTownScene(item.name);
 }
 
-function openMapCategoryModal(catIndex) {
+// quick＝從修仙地圖彈窗（人界地圖右上「地圖列表」等快捷清單）開啟：清單裡選的地圖傳送後不觸發特殊事件（第 73 節）；人界地圖的分區紅點開啟時為 false
+function openMapCategoryModal(catIndex, quick) {
     let cat = maps[catIndex];
     document.getElementById('map-modal-title').innerText = cat.category;
     const container = document.getElementById('map-modal-list');
@@ -88,7 +90,7 @@ function openMapCategoryModal(catIndex) {
                     ? `🏯 安全區：可打坐靜修`
                     : `經驗倍率: x${item.expRate} | ${getMapDifficultyText(item)}`}</p>
                 ${getMapMinRealm(item) ? `<p style="font-size:0.8em; color:${isBelowMapLevel(item) ? '#f87171' : '#9ca3af'};">${isBelowMapLevel(item) ? '🔒 ' : ''}限制：${typeof item.minL === 'number' ? nv2LevelLabel(getMapMinLevel(item)) : realms[getMapMinRealm(item)]}以上</p>` : ''}
-                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && isBelowMapLevel(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
+                <button class="sys-btn ${isCurrent ? 'active' : ''}" onclick="selectMap(${catIndex}, ${iIndex}${quick ? ', true' : ''})">${isCurrent ? (isChallengeMap(item) ? '⚔️ 挑戰中' : '當前所在區域') : (!cat.isSafe && isBelowMapLevel(item) ? '⚔️ 挑戰模式進入' : '前往此區域')}</button>
             </div>
         `;
     });
@@ -147,11 +149,11 @@ function getMapDifficultyText(item) {
     return `妖獸 ${lvText}（強度 ${sLo}～${sHi} 倍）<br>平均 氣血 ${fmtCombat(ms.hp)}／攻擊 ${fmtCombat(ms.atk)}<br>種族 ${formatFieldRaceMix(item)}<br>出沒 ${formatFieldMonsterMix(item)}${sup}`;   // 種族比例（race.js）、出沒妖獸與型態（monster.js）
 }
 
-function selectMap(cIndex, iIndex) {
+function selectMap(cIndex, iIndex, quick) {
     const target = maps[cIndex].items[iIndex];
     const b = getMapEntryBlock(cIndex, iIndex);
-    if (b && b.realm) { confirmChallengeMap(cIndex, iIndex); return; }   // 挑戰模式：取消時留在地圖視窗（第 70 節）
-    changeMap(cIndex, iIndex);
+    if (b && b.realm) { confirmChallengeMap(cIndex, iIndex, quick); return; }   // 挑戰模式：取消時留在地圖視窗（第 70 節）
+    changeMap(cIndex, iIndex, false, quick);
     closeModal('map-category-modal');
     closeModal('world-map-modal');
     afterMapArrive(cIndex, target);
@@ -196,11 +198,12 @@ function getMapLockShort(name) {
     return b ? b.short : '';
 }
 
-function changeMap(cIndex, iIndex, challengeOk) {
+// quick＝快捷清單傳送（第 73 節）：不呼叫 onEncounterMapChange（秘密路線、累計次數、空間裂縫、三界召令、城中機緣、機緣任務的前往步驟都不算）
+function changeMap(cIndex, iIndex, challengeOk, quick) {
     let targetMap = maps[cIndex].items[iIndex];
 
     const block = getMapEntryBlock(cIndex, iIndex);
-    if (block && block.realm && !challengeOk) { confirmChallengeMap(cIndex, iIndex); return; }   // 挑戰模式：先跳警告（第 70 節）
+    if (block && block.realm && !challengeOk) { confirmChallengeMap(cIndex, iIndex, quick); return; }   // 挑戰模式：先跳警告（第 70 節）
     if (block && !block.realm) { alert(block.msg); return; }
 
     // 懸賞對決中換地圖＝逃離對決（懸賞保留，bounty.js）
@@ -233,7 +236,7 @@ function changeMap(cIndex, iIndex, challengeOk) {
         addLog(`🗺️ 深入野外 ${player.currentMap.name}，四周充滿危險氣息。`);
     }
     updateCombatVisualPanel();
-    onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇：秘密路線、累計次數、空間裂縫、三界戰場（encounter.js，第 63 節）
+    if (!quick) onEncounterMapChange(targetMap, player.currentMapIsSafe);   // 奇遇（encounter.js，第 63 節）；快捷清單傳送不觸發（第 73 節）
 }
 
 // ==================== 挑戰模式（全地圖開放，第 70 節；2026-10-03 使用者定案）====================
@@ -271,7 +274,7 @@ function challengeStrengthText(item) {
     const r = (x, y) => (y > 0 ? x / y : 0);
     return `妖獸攻擊約為你主修地圖【${main.name}】的 ${r(a.atk, b.atk).toFixed(1)} 倍、氣血 ${r(a.hp, b.hp).toFixed(1)} 倍`;
 }
-async function confirmChallengeMap(cIndex, iIndex) {
+async function confirmChallengeMap(cIndex, iIndex, quick) {
     const item = maps[cIndex].items[iIndex];
     const suit = getMapSuitRange(item), mapRealm = suit ? suit[0] : getMapMinRealm(item) + 1, gap = Math.max(1, mapRealm - player.realmIndex), over = Math.max(1, getMapMinRealm(item) - player.realmIndex);
     const cm = CHALLENGE_CRAFT_MULT[Math.min(over, CHALLENGE_CRAFT_MULT.length - 1)] || 1;
@@ -284,7 +287,7 @@ async function confirmChallengeMap(cIndex, iIndex) {
         + `・做裝通貨掉率 ×${cm}\n\n確定進入？`;
     const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : confirm(msg);
     if (!ok) return;
-    changeMap(cIndex, iIndex, true);
+    changeMap(cIndex, iIndex, true, quick);
     const target = maps[cIndex].items[iIndex];
     closeModal('map-category-modal');
     closeModal('world-map-modal');
