@@ -121,7 +121,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (partnerKills > 0) addFieldRaceTreasureDrops(player.currentMap, partnerKills);   // 剋制法寶掉落（期望值，race.js）
         // 化神訣殘本（2026-10-02 使用者要求離線也能掉）：同線上規則，化神以上地圖每隻 0.5% 掉 1～3（yuanshen.js；不另寫日誌，列在結算訊息）
         let idleScrolls = partnerKills > 0 ? rollFieldHuashenScroll(partnerKills, true) : 0;
-        let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, 1)) : '';   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
+        let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, 1)) : '';
+        let idleLing = combatTicks > 0 ? rollLingStoneDrops(combatTicks, true) : '';   // 五行極品靈石（lingjie.js，第 74 節）   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
@@ -154,6 +155,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (potion && potion.text) msg += `\n${potion.text}`;
         if (idleScrolls > 0) msg += `\n📖 斬殺妖獸時翻出【化神訣殘本】×${idleScrolls}（${player.huashenScrolls.toWan()}／${YUANSHEN_COST[0].n.toWan()}）`;
         if (idleCraft) msg += `\n✨ 從妖獸遺骸中拾得 ${idleCraft}`;
+        if (idleLing) msg += `\n💎 從妖獸體內取出 ${idleLing}`;
         if (partnerKills > 0 && (player.partners || []).length) msg += `\n💞 情緣任務：野外擊殺 +${partnerKills.toWan()}${getPartnerTeam().length ? '（隊伍夥伴的並肩擊殺同步累計）' : ''}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
@@ -478,6 +480,7 @@ function applySaveData(data) {
     migrateEquipmentSlots();
     migrateActivityFields();
     migrateCurrentMap();
+    migrateLingjie(data);   // 改版前待在第四、五區的視為身在靈界（lingjie.js，第 74 節）
     migrateProgressionFields(data);
     migrateLegacySkills();
     migrateRealmExp();

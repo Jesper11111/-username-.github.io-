@@ -38,7 +38,9 @@ let player = {
     // 裝備系統（第 37 節）
     starIron: 0,                 // 星允鐵：強化／進化用（enhance.js）
     refineStones: 0,             // 洗煉石：洗煉裝備詞條用（enhance.js，第 67 節 D2）
-    craftCur: { tianji: 0, hunyuan: 0, poxu: 0, zaohua: 0 },   // 做裝通貨：天機石／混元晶／破虛石／造化玉（craft.js，第 69 節）
+    craftCur: { tianji: 0, hunyuan: 0, poxu: 0, zaohua: 0 },
+    lingStones: { "金": 0, "木": 0, "水": 0, "火": 0, "土": 0 },   // 五行極品靈石：進出靈界各要一套（lingjie.js，第 74 節）
+    inLingjie: false,            // 身在靈界（飛升後；回人界要再付一套）   // 做裝通貨：天機石／混元晶／破虛石／造化玉（craft.js，第 69 節）
     talents: {},                 // 天賦樹：{ 節點 id: 點數 }（talent.js，第 68 節）
     talentRespecs: 0,            // 天賦已重置次數
     ironShards: 0,               // 碎鐵：分解白～紫取得，每 SHARDS_PER_IRON 個自動合成 1 顆星允鐵

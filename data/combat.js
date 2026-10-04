@@ -245,6 +245,7 @@ function fieldCombatRound() {
         Object.keys(raceKilled).forEach(r => rollRaceTreasureDrops(r, rolls * raceKilled[r] / killedCount / base));   // 剋制法寶（race.js）
         rollFieldHuashenScroll(rolls / base);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
         onCraftFieldKills(rolls);               // 做裝通貨（craft.js，第 69 節）
+        rollLingStoneDrops(rolls);              // 五行極品靈石（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
             waveSummary.kills += killedCount;
