@@ -75,7 +75,7 @@ const maps = [
     // ⚠️ 加在最後（索引 6），不插在第三區後面：分類索引被 monsterAttrsByMapCategory／REPUTATION_MAX_BY_MAP_CATEGORY／PROF_MAP_MULT／LIFESPAN_DANGER_MULT／DARK_MAP_CATEGORIES 等使用，
     //    插在中間會讓幽冥禁域、諸天戰場的索引全部位移。各表的索引 6 一律同第三區
     { category: "無邊海 (渡劫解鎖·高難)", isSafe: false, items: [
-        { name: "血天大陸", expRate: 2500, nv2Str: [3, 8], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通（2026-10-03 使用者指定強度 3～8 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
+        { name: "血天大陸", expRate: 2500, nv2Str: [8, 15], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },        // 渡劫・普通（2026-10-04 使用者指定強度 8～15 倍；2026-10-03 為 3～8、原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "天淵戰場", expRate: 3000, nv2FixedL: 9.9, nv2Str: [11, 20], diff: 6000000, coins: 3150, minRealm: 9, minStat: 2000, nv2L: 9, nv2MinStat: 100, suit: [9, 9] },       // 渡劫・挑戰（2026-10-03 使用者指出「雷鳴 8-15、天淵 8-20」下限沒跟著升：8～20 → 11～20，崑吾 5→雷鳴 8→天淵 11→荒古 15）
         { name: "星空古路", expRate: 3000, nv2Str: [10, 15], diff: 10000000, coins: 3350, minRealm: 10, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] },   // 仙人初境・普通（2026-10-03 使用者指定強度 10～15 倍，原一般規則 1.5～3；妖獸仍隨玩家階數）
         { name: "荒古禁地", expRate: 5000, nv2FixedL: 10.9, nv2Str: [15, 25], diff: 10000000, coins: 3350, minRealm: 6, minStat: 2000, nv2L: 10, nv2MinStat: 100, suit: [10, 10] }       // 仙人初境・挑戰
