@@ -94,6 +94,7 @@ function rollTownNpcs(sceneName) {
     delete townNpcSpots[sceneName];
     const scene = townScenes[sceneName];
     for (const npc of (scene && scene.hiddenNpcs) || []) {
+        if (npc.enabled === false) continue;   // 暫時隱藏（config-towns.js 的 enabled: false）
         if (npc.minCha && getTotalCharm() < npc.minCha) continue;   // 魅力門檻（例：青瀾島隱藏仙翁 10000）
         if (isTownNpcDoneToday(npc.id) || Math.random() >= npc.chance) continue;
         townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };

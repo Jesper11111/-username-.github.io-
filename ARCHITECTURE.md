@@ -1619,7 +1619,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AO`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AP`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3959,6 +3959,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     **垂釣版**（版本 `20261005AO`，使用者確認位置：「老翁要面對涼亭角的河面釣魚」；沒有背影圖，使用者選擇沿用正面去背圖）：全身圖左右鏡像（釣竿朝左）、約 117px，
     站在涼亭左前角台基上 [345, 369, 55, 117]（取代上面的前柱遮擋版）；npc 新增 `fishing: { hand, tip, hook }`，town-npc.js 的 `getTownNpcEffects` 畫竿（手→竿尖）、
     釣線（竿尖→水面）SVG 與三圈漣漪（`.tnpc-*`，CSS 動畫），town.js 的 `renderTownHotspots` 併進場景效果層（不擋點擊）。之後有背影圖只要換 `npc-xianweng.png`。
+    **暫時隱藏**（版本 `20261005AP`，使用者：「仙翁先隱藏，出現條件等會新增」）：`enabled: false`（`rollTownNpcs` 略過；hiddenNpcs 通用欄位），出現條件定案後改 true。
     `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；
     對話 `#xianweng-modal`（沒有 ✕）三選一 `xianwengChoose('guide'|'chess'|'leave')`：當天見過就不再出現（`markTownNpcDone`）；**造化（獎勵）尚未決定**，目前只寫日誌與提示。
 
