@@ -27,13 +27,13 @@ const maps = [
           thumb: "images/maps/tiannan-city-male.jpg", thumbFemale: "images/maps/tiannan-city-female.jpg" },
         { name: "天星城", expRate: 3, diff: 1, coins: 0, thumb: "images/maps/tianxing-city.jpg" }   // 亂星海的主城；第二區已有戰鬥地圖「亂星海」，名稱不可重複
     ]},
-    { category: "一、野外歷練 (戰鬥區)", isSafe: false, items: [
+    { category: "落雲宗周邊 (野外歷練)", isSafe: false, items: [
         //                                                      coins   ≈ 每小時上限
         { name: "靈山大川", expRate: 8, diff: 2, coins: 20, nv2L: 0, nv2AtkMult: 0.7, suit: [0, 1] },   // 新手圖：新制妖獸攻擊 ×0.7（剛入門沒有宗門技能也不會戰死）        //   2.3 萬
         { name: "深淵險地", expRate: 20, diff: 50, coins: 80, nv2L: 2, suit: [2, 2] },       //   9.3 萬
         { name: "上古遺跡", expRate: 50, diff: 350, coins: 250, nv2L: 3, suit: [3, 3] }      //  29 萬
     ]},
-    { category: "二、開放世界大區域 (高難度戰鬥)", isSafe: false, items: [
+    { category: "慕蘭草原 (高難度戰鬥)", isSafe: false, items: [
         { name: "天南", expRate: 100, diff: 40000, coins: 1000, nv2L: 4, suit: [4, 4] },      // 116 萬
         { name: "亂星海", expRate: 300, diff: 100000, coins: 1650, nv2L: 5, suit: [5, 5] },    // 191 萬（上限 200 萬）
         { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] }, // 284 萬（上限 300 萬）
@@ -41,7 +41,7 @@ const maps = [
         //   nv2L 6 ＝ 境界壓制以煉虛 1 階起算（煉虛玩家不吃壓制）；靈石介於鬼谷八荒與崑吾山之間
         { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] } // 296 萬
     ]},
-    { category: "三、上古禁區 (煉虛解鎖·高難)", isSafe: false, items: [
+    { category: "大晉王朝區域 (煉虛解鎖·高難)", isSafe: false, items: [
         // 2026-09-30 使用者要求「地圖依經驗排序」：本區由經驗低到高排列（同經驗時境界低的在前）；各區都照此規則，新增地圖時插在對應位置
         // 普通圖（2026-09-30 使用者要求「每個境界補一張普通圖」）：黑風海域／蠻荒古地／血天大陸／星空古路／九天仙域，妖獸照一般規則（隨玩家階數、強度 1.5～3 倍），
         //   經驗、靈石沿用挑戰圖改版前的數值，並當作修煉節奏表（config-realms.js）的主要練功圖 → 升階所需經驗不變
