@@ -148,7 +148,7 @@ const CITY_GATES = {
     "青瀾島": {
         img: "images/maps/qinglan-island.jpg", imgW: 1408, imgH: 768,
         hint: "✨ 青瀾島・仙人亭（點擊圖片登島）",
-        action: "showToast('🏝️ 青瀾島尚未開放，敬請期待')"
+        action: "openTownScene('青瀾島')"   // 2026-10-04 島內開放（townScenes["青瀾島"]）
     }
 };
 
@@ -296,6 +296,21 @@ const townScenes = {
     },
     // 天元城內城（2026-10-04 使用者提供 848×1264 直式插畫）：靈界的安全區城鎮；建築物先放 任務榜、茶樓（使用者指定「少數建築物」）
     //   任務榜＝內城門前（牌坊與城門）→ 每日任務；茶樓＝左側「天元茶館」→ lingjie.js 的 openTeaHouse（歇息回滿氣血靈力＋聽傳聞）
+    // 青瀾島島內（2026-10-04 使用者提供 1408×768 插畫：桃花渡口、涼亭、小攤、「春和堂」商號、碼頭小船）：從人界地圖青瀾島登島（不換所在地圖，純場景）
+    //   建築物玩法未定：春和堂、涼亭、小攤先提示「敬請期待」，碼頭＝回人界地圖；決定後把 action 換掉
+    "青瀾島": {
+        title: "青瀾島・桃花渡",
+        img: "images/towns/qinglan-inner.jpg",
+        imgW: 1408, imgH: 768,
+        hotspots: [
+            { id: "ql-shop", label: "春和堂", rect: [900, 255, 220, 235], action: "showToast('🏮 春和堂尚未開業，敬請期待')" },
+            { id: "ql-pavilion", label: "涼亭", rect: [360, 100, 300, 260], action: "showToast('🌸 涼亭小憩：桃花紛飛，靈氣清新（玩法敬請期待）')" },
+            { id: "ql-stall", label: "小攤", rect: [555, 380, 200, 180], action: "showToast('🧺 小攤尚未開張，敬請期待')" },
+            { id: "ql-dock", label: "碼頭", rect: [70, 520, 500, 220], action: "openTownScene(WORLD_SCENE_KEY)" }   // 搭船離島＝回人界地圖
+        ],
+        figures: [],
+        extraButton: { label: "↩ 人界地圖", action: "openTownScene(WORLD_SCENE_KEY)" }
+    },
     "天元城": {
         title: "天元城・內城",
         img: "images/towns/tianyuan-inner.jpg",
