@@ -1623,7 +1623,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BA`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4006,6 +4006,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。
     `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；
     對話 `#xianweng-modal`（沒有 ✕）三選一 `xianwengChoose('guide'|'chess'|'leave')`：當天見過就不再出現（`markTownNpcDone`）；**造化（獎勵）尚未決定**，目前只寫日誌與提示。
+  - **路人閒聊加快**（2026-10-04，版本 `20261005BB`，使用者：「NPC 講謠言的速度過慢」）：青瀾島 `chatter` 改為每 10 秒一句（原 30 秒）、進島 2 秒說第一句、對話框停留 6 秒。
   - **手機直式圖**（2026-10-04，版本 `20261005AZ`，使用者提供 848×1264「青瀾島手機版換此圖」→ `images/towns/qinglan-inner-portrait.jpg`）：`townScenes["青瀾島"].portrait`
     （春和堂 [530, 520, 240, 180]、小攤 [560, 850, 288, 400]、⛵ 搭船離島 [0, 790, 440, 420]）；直式圖新增選填 `chatterHeads`（town.js 的 `showTownChatter` 在直式圖改用它，9 位路人）。
     隱藏 NPC 支援直式圖：npc 選填 `portraitSpot`／`portraitFishing`／`whispers.portraitAt`（town-npc.js 的 `getTownNpcSpot`、`isTownPortraitView`；沒設＝直式圖上不出現）。
