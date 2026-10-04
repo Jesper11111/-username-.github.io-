@@ -7,13 +7,13 @@ const pillRecipes = {
     con: { name: "洗髓丹",         herb: "high",     herbName: "上品靈草", coins: 0,    stat: "con", gain: 25,  statName: "體質" },
     int: { name: "悟道丹",         herb: "epic",     herbName: "極品靈草", coins: 0,    stat: "int", gain: 50,  statName: "悟性" },
     spr: { name: "九轉聚靈丹",     herb: "immortal", herbName: "仙品靈草", coins: 0,    stat: "spr", gain: 100, statName: "靈力" },
-    cha: { name: "駐顏駐魅力丹",   herb: "immortal", herbName: "仙品靈草", coins: 1000, stat: "cha", gain: 20,  statName: "魅力" },
+    cha: { name: "駐顏駐魅力丹",   herb: "immortal", herbName: "仙品靈草", coins: 1000, stat: "cha", gain: 0.5, max: 5000, statName: "魅力" },   // 2026-10-04 使用者指定：每顆 +0.5、上限 5000 顆（原 +20、無上限；之前服用的不回溯）
     agi: { name: "身法丹",         herb: "high",     herbName: "上品靈草", coins: 0,    stat: "agi", gain: 0,   statName: "敏捷", v2Only: true }   // 新制才有
 };
 
-// 每顆的增加量與上限：新制一律 +0.1、200 顆（魅力丹不影響戰鬥，沿用舊制的 +20、無上限）
+// 每顆的增加量與上限：新制一律 +0.1、200 顆；魅力丹不影響戰鬥，用自己的 gain／max（2026-10-04 起 +0.5、5000 顆，pillUsed.cha 從 2026-09-27 起累計）
 function pillGainOf(type) { return NUMERIC_V2 && type !== 'cha' ? NV2.pillGain : pillRecipes[type].gain; }
-function pillMaxOf(type) { return NUMERIC_V2 && type !== 'cha' ? NV2.pillMax : Infinity; }
+function pillMaxOf(type) { return NUMERIC_V2 && type !== 'cha' ? NV2.pillMax : (pillRecipes[type].max || Infinity); }
 
 function openAlchemyModal() {
     if (!checkSectJoined()) return;
@@ -40,7 +40,7 @@ function renderPillUsed() {
             ? `已服用 ${counted} / ${max} 顆（${pillRecipes[k].statName} +${(counted * gain).toFixed(1)}）`
             : `已服用 ${n.toWan()} 顆（累計 ${pillRecipes[k].statName} +${(n * gain).toWan()}）`;
         const eff = document.getElementById(`pill-effect-${k}`);
-        if (eff) eff.textContent = `效果: ${pillRecipes[k].statName} +${NUMERIC_V2 && k !== 'cha' ? gain.toFixed(1) : gain}`;
+        if (eff) eff.textContent = `效果: ${pillRecipes[k].statName} +${NUMERIC_V2 && k !== 'cha' ? gain.toFixed(1) : gain}${k === 'cha' ? `（上限 ${max.toWan()} 顆）` : ''}`;
     });
 }
 
@@ -69,7 +69,7 @@ function craftPill(type, qty = 1) {
     player.coins -= r.coins * n;
     if (!NUMERIC_V2 || type === 'cha') player.stats[r.stat] += gain * n;   // 新制的戰鬥屬性由服用顆數計算（numeric.js），不改 player.stats
     used[type] = (used[type] || 0) + n;
-    const gainText = NUMERIC_V2 && type !== 'cha' ? (gain * n).toFixed(1) : (gain * n).toWan();
+    const gainText = (NUMERIC_V2 && type !== 'cha') || !Number.isInteger(gain * n) ? (+(gain * n).toFixed(1)).toWan() : (gain * n).toWan();
     addDailyProgress('craft', n);
     addLog(`🧪 煉製並服用 ${n} 顆【${r.name}】，${r.statName} +${gainText}！`, "heal");
     showCraftSuccess(`煉成【${r.name}】×${n.toWan()}`, `已服用，${r.statName} +${gainText}（累計服用 ${used[type].toWan()}${max < Infinity ? ` / ${max}` : ''} 顆）`);
