@@ -107,7 +107,7 @@ function rollMonsterAttrs(L) {
     if (Math.random() < profile.affixProb) {
         attrs[MONSTER_AFFIX_TYPES[Math.floor(Math.random() * MONSTER_AFFIX_TYPES.length)]] = profile.affixChance;
     }
-    if (DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name))) attrs.nature = "dark";   // 幽冥禁域妖獸本質為暗（光暗互剋）
+    if (player.currentMap.dark !== false && DARK_MAP_CATEGORIES.includes(getMapCategoryIndex(player.currentMap.name))) attrs.nature = "dark";   // 幽冥禁域妖獸本質為暗（光暗互剋）；地圖 dark: false 不套用（2026-10-04 移入第四區的三張圖）
     return attrs;
 }
 
