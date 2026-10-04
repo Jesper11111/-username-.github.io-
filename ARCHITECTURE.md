@@ -1613,7 +1613,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005Y`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005Z`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3246,7 +3246,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `blueprints: { "劍_1500": 張數 }`、`servants: { "傳說": 人數 }`（品質同 servantQualities，產生格式同野外救出的僕從）。每項上限 `MAIL_REWARD_MAX`（防手誤）。
   凝元丹是煉好直接服用、背包沒有此道具，所以不能寄。
 - **遊戲端**（mailbox.js，共用戰力榜的 Firebase 連線 `initLeaderboardBackend`，戰力榜未開通時不連網）：
-  - `startMailboxSync()`（main.js 的 `initGame`）：進遊戲約 20 秒後、之後每 `MAIL_REFRESH_MS` 30 分鐘 `refreshMailbox()`：查 `where('to', 'in', ['all', uid])`，過濾過期與已領
+  - `startMailboxSync()`（main.js 的 `initGame`）：進遊戲約 20 秒後、之後每 `MAIL_REFRESH_MS` 2 小時（2026-10-04 前為 30 分鐘）`refreshMailbox()`：查 `where('to', 'in', ['all', uid])`，過濾過期與已領
     （本機快取 `player.mailClaimed`；沒有快取的再各讀一次 `mailClaims` 確認），有新信寫日誌提示。
   - 入口：⚙️ 設定視窗「📮 仙府信箱（N 封待領）」→ `#mailbox-modal`：信件卡片（標題、內文、獎勵、全服／個人、期限、🎁 領取）、🔄 重新整理、🎟️ 兌換碼輸入框。
   - 領取 `claimMail(id)`／兌換 `redeemCode()`：先檢查僕從空位（`MAX_SERVANTS`）→ 建立雲端領取紀錄 → 成功才 `grantMailRewards` 加進存檔、寫日誌（道具分頁）並立即存檔；
@@ -3295,6 +3295,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 驗證（本機，模擬雲端）：留言送出（「白癡」換成＊＊、換行合併）、列表顯示與 HTML 跳脫、自己的留言可刪、60 秒冷卻提示；gm.html 分頁切換正常；Console 無錯誤。**雲端規則需發布後線上實測**。
 
 ## 58. 寄售拍賣＋主頁「留言板」入口（`market.js`；2026-09-28，版本 `20260930b`）
+- **Firebase 讀取額度用完後的節省措施**（2026-10-04，版本 `20261005Z`；使用者 Firebase 主控台：讀取 14 萬／日、免費 5 萬，寫入 1,785、刪除 575 都很低）：
+  - 使用者指定：寄售每人同時 1 件（`MARKET_MAX_ACTIVE`）、清單數量 30（`MARKET_SHOW_N`、`MSGBOARD_SHOW_N`、`LEADERBOARD_TOP_N`）。
+  - 大道石碑重開：同一分頁 `LEADERBOARD_AUTO_REFRESH_MS` 3 分鐘內讀過就直接顯示（`lbTabFetchedAt`），「重新整理」冷卻 10 → 30 秒；寄售上架／出價／領取後照樣重讀。
+  - 信箱定時讀取 30 分鐘 → 2 小時（`MAIL_REFRESH_MS`，背景分頁不讀，第 56 節）。
+  - gm.html 自動巡檢：`LEADERBOARD_RANKS_REMOVED` 時不執行（原本每次讀整個戰力榜兩次＋守城資料）。
+  - tools/firestore.rules：`mail`、`market` list、`marketRefunds` 的 `isAdmin()`（要多讀 1 次 admins）移到條件最後；**要到 Firebase 主控台貼上發布才生效**。
 
 - **主頁左下角**：背景圖上的「郵件」按鈕（原本「興建中」）改為 `openLeaderboardModal('board')`，用 `.nav-label-cover.stage-label-cover` 蓋上「留言板」字樣；
   PC 版 `config-home-pc.js` 的 `mail` 按鈕同樣改動作，新增 `cover` 欄位（home-ui.js 產生蓋字）。大道石碑分頁改成 2×2 排列（`.lb-tabs` grid）。
@@ -3309,7 +3315,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - `marketRefunds/{id}_{被超過時的 bidCount}`：`{ uid, amount, listingId, label, at }`，只能在出價交易中為前一位出價者、以他的出價金額建立；本人刪除＝領回靈石。
   - `marketClaims/{id}_item`／`{id}_coins`：結標後得標者領物品、賣家領 `floor(成交價 × 95%)`；每種只能建立一次。本機快取 `player.marketClaimed` 避免重複顯示；兩邊都領完時順手刪除拍賣品。
 - **物品進出**：上架時 `mkTakeItem` 從存檔扣除（鎖定中的裝備不能上架；穿在身上的要先卸下），上架失敗或取消就放回；領取 `mkGiveItem`（裝備換新 id、解除鎖定、記入天磯錄與圖紙器錄；背包裝備滿時先擋下）。
-  出價成功才扣靈石；每人同時最多寄售 `MARKET_MAX_ACTIVE` 5 件（玩家端檢查）。
+  出價成功才扣靈石；每人同時最多寄售 `MARKET_MAX_ACTIVE` 1 件（玩家端檢查；2026-10-04 由 5 改 1）。
 - **限制**：物品與靈石在玩家端加減（純前端遊戲），改存檔的人本來就能自己加；雲端規則保證每一步只能領一次、出價規則正確。GM 目前只能在 Firebase 主控台刪除拍賣品，
   **有人出價的拍賣品被刪時，出價者的靈石不會自動退回**（之後若要 GM 強制下架，需要加「GM 建立退款單」的規則與後台按鈕）。
 - 驗證（本機，模擬雲端）：上架圖紙 ×2（存檔扣 2）→ A 出價 1000（扣靈石）→ B 出 1020 被擋「至少 1,050」→ B 出 1100 → A 的退款單 1000、領回 → 結標後 B 領到圖紙 ×2、重複領取被擋 → 賣家領 1,045（95%）→ 兩邊領完拍賣品自動刪除；

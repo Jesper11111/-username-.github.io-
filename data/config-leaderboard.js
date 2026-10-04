@@ -32,15 +32,16 @@ const LEADERBOARD_HISTORY_SIZE = 24;                   // 紀錄保留最近 24 
 // 兩日紀錄 hist2（2026-09-27）：距 hist2 最後一筆 ≥ 30 分鐘時才把上一筆接上去，保留 96 筆 = 約 2 天；GM 可據此比對長時間成長與延後審核守城（規則寫死 1800 秒／96，改這裡要一起改規則）
 const LEADERBOARD_HISTORY2_SIZE = 96;
 const LEADERBOARD_HISTORY2_GAP_SEC = 30 * 60;
-const LEADERBOARD_TOP_N = 100;                        // 榜單顯示前 N 名（規則限制單次最多讀 100 筆）
-const LEADERBOARD_REFRESH_COOLDOWN_MS = 10 * 1000;     // 視窗內「重新整理」按鈕冷卻
+const LEADERBOARD_TOP_N = 30;                         // 榜單顯示前 N 名（規則限制單次最多讀 100 筆；2026-10-04 使用者要求 30，節省 Firebase 讀取額度）
+const LEADERBOARD_REFRESH_COOLDOWN_MS = 30 * 1000;     // 視窗內「重新整理」按鈕冷卻（2026-10-04 由 10 秒改 30 秒，節省讀取額度）
+const LEADERBOARD_AUTO_REFRESH_MS = 3 * 60 * 1000;     // 打開大道石碑時，同一分頁 3 分鐘內讀過就直接顯示上次的資料、不重讀（按「重新整理」才讀；2026-10-04）
 const LEADERBOARD_TIMEOUT_MS = 8 * 1000;               // 開榜單時上傳／讀取最多等幾毫秒（斷線時不會卡在「讀取中」）
 
 // ---- 修仙留言板（msgboard.js、gm.html「💬 留言板」，ARCHITECTURE.md 第 57 節；2026-09-28）----
 const MSGBOARD_COLLECTION = "board";              // 留言（自動 id）：{ uid, name, realm, stage, text, createdAt }
 const MSGBOARD_LIMIT_COLLECTION = "boardLimit";   // 每人最後留言時間（文件 id = uid），規則用它限制每 60 秒一則
 const MSGBOARD_MUTED_COLLECTION = "muted";        // GM 禁言名單（文件 id = uid）
-const MSGBOARD_SHOW_N = 50;                       // 打開時讀最新幾則（規則限制單次最多 50）
+const MSGBOARD_SHOW_N = 30;                       // 打開時讀最新幾則（規則限制單次最多 50；2026-10-04 使用者要求 30）
 const MSGBOARD_MAX_LEN = 100;                     // 每則字數上限（規則同樣限制，改這裡要一起改規則）
 const MSGBOARD_COOLDOWN_SEC = 60;                 // 每人留言間隔（規則同樣限制）
 // ---- 寄售拍賣（market.js，大道石碑「🏪 寄售」分頁，ARCHITECTURE.md 第 58 節；2026-09-28 使用者選定規則）----
@@ -53,8 +54,8 @@ const MARKET_FEE = 0.10;                          // 成交手續費 10%，賣�
 // 上架登錄費（2026-10-03 使用者新增，回收多餘靈石）：max(起標價 × pct, 每小時收入 × minHours)，上架時先扣、不論成交與否都不退（雲端寫入失敗才退）
 const MARKET_LIST_FEE = { pct: 0.02, minHours: 0.25 };
 const MARKET_EXTEND_SEC = 300;                    // 最後 5 分鐘有人出價，結束時間延到出價後 5 分鐘（避免最後一秒搶標）
-const MARKET_MAX_ACTIVE = 5;                      // 每人同時最多掛幾件（玩家端檢查）
-const MARKET_SHOW_N = 50;                         // 拍賣中的清單最多讀幾件（規則限制單次最多 50）
+const MARKET_MAX_ACTIVE = 1;                      // 每人同時最多掛幾件（玩家端檢查；2026-10-04 使用者要求由 5 改 1，節省讀取額度）
+const MARKET_SHOW_N = 30;                         // 拍賣中的清單最多讀幾件（規則限制單次最多 50；2026-10-04 使用者要求 30）
 const MARKET_MAX_PRICE = 1e12;
 // 可寄售的數量型物品（使用者選：材料＋珍貴道具；另有鍛造圖紙、背包裝備）
 const MARKET_STACKS = [
