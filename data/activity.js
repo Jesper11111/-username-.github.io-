@@ -91,7 +91,7 @@ function openActivity(id) {
     window[act.openFn]();
 }
 
-// 活動海報（config-activities.js 的 img，例：域外天魔「三界之戰」）：#activity-poster-modal；已開放的活動按「進入」才開啟
+// 活動海報（config-activities.js 的 img，例：三界之戰（原域外天魔））：#activity-poster-modal；已開放的活動按「進入」才開啟
 let activityPosterId = null;
 function openActivityPoster(act) {
     activityPosterId = act.id;
