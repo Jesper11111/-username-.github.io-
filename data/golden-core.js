@@ -114,13 +114,13 @@ function formatCoreShort() {
 // ---- 凝元丹（煉丹房）----
 function craftCorePill(qty = 1) {
     const kind = getCoreFillKind(), p = CORE_PILL;
-    if (!kind) { alert(`${p.name}只在築基期（充盈丹田）與金丹期（溫養金丹）有效。`); return; }
+    if (!kind) { gameAlert(`${p.name}只在築基期（充盈丹田）與金丹期（溫養金丹）有效。`); return; }
     const g = getGoldenCore();
     const need = Math.ceil((1 - g[kind]) / p.gain - 1e-9);
-    if (need <= 0) { alert(`${kind === 'dantian' ? '丹田' : '溫養'}已滿，不需要再服用。`); return; }
+    if (need <= 0) { gameAlert(`${kind === 'dantian' ? '丹田' : '溫養'}已滿，不需要再服用。`); return; }
     const herbs = (player.herbs && player.herbs[p.herb]) || 0;
     const affordable = Math.min(need, Math.floor(herbs / p.herbCost), Math.floor(player.coins / p.coins));
-    if (affordable <= 0) { alert(`材料不足！煉製 1 顆${p.name}需要 ${p.herbCost} 株${p.herbName}＋${p.coins.toWan()} 靈石。`); return; }
+    if (affordable <= 0) { gameAlert(`材料不足！煉製 1 顆${p.name}需要 ${p.herbCost} 株${p.herbName}＋${p.coins.toWan()} 靈石。`); return; }
     const n = resolveBatchCount(qty, affordable, "煉製");
     if (!n) return;
     player.herbs[p.herb] -= p.herbCost * n;
@@ -144,7 +144,7 @@ function renderCorePillCard() {
 function buySpiritFruit(qty = 1) {
     const f = SPIRIT_FRUIT;
     const affordable = Math.floor((player.butianStones || 0) / f.stoneCost);
-    if (affordable <= 0) { alert(`七彩補天石不足！購買 1 顆${f.name}需要 ${f.stoneCost} 顆（目前 ${player.butianStones || 0}）。`); return; }
+    if (affordable <= 0) { gameAlert(`七彩補天石不足！購買 1 顆${f.name}需要 ${f.stoneCost} 顆（目前 ${player.butianStones || 0}）。`); return; }
     const n = resolveBatchCount(qty, affordable, "購買");
     if (!n) return;
     player.butianStones -= f.stoneCost * n;

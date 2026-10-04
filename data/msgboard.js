@@ -29,9 +29,9 @@ async function postBoardMessage() {
     const input = document.getElementById('board-input');
     const text = filterBoardText(input && input.value);
     if (!text) return;
-    if (lbBanned || mbBoardMuted) { alert('你已被禁止留言。'); return; }
+    if (lbBanned || mbBoardMuted) { gameAlert('你已被禁止留言。'); return; }
     const wait = Math.ceil(MSGBOARD_COOLDOWN_SEC - (Date.now() - mbBoardLastPost) / 1000);
-    if (wait > 0) { alert(`留言太快了，請 ${wait} 秒後再試。`); return; }
+    if (wait > 0) { gameAlert(`留言太快了，請 ${wait} 秒後再試。`); return; }
     const btn = document.getElementById('board-send');
     if (btn) btn.disabled = true;
     try {
@@ -51,7 +51,7 @@ async function postBoardMessage() {
         mbBoardRows = await lbWithTimeout(fetchMsgBoard());
     } catch (e) {
         console.warn("留言失敗：", e);
-        alert(e && e.code === 'permission-denied'
+        gameAlert(e && e.code === 'permission-denied'
             ? `留言失敗：每 ${MSGBOARD_COOLDOWN_SEC} 秒只能留言一次，或你已被禁止留言。`
             : '連線失敗，請稍後再試。');
     } finally {
@@ -61,12 +61,12 @@ async function postBoardMessage() {
 }
 
 async function deleteBoardMessage(id) {
-    if (!confirm('刪除這則留言？')) return;
+    if (!(await gameConfirm('刪除這則留言？'))) return;
     try {
         const { db } = await lbWithTimeout(initLeaderboardBackend());
         await lbWithTimeout(db.collection(MSGBOARD_COLLECTION).doc(id).delete());
         mbBoardRows = (mbBoardRows || []).filter(r => r.id !== id);
-    } catch (e) { console.warn(e); alert('刪除失敗，請稍後再試。'); }
+    } catch (e) { console.warn(e); gameAlert('刪除失敗，請稍後再試。'); }
     renderLeaderboard(false);
 }
 

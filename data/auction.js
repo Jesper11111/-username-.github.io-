@@ -115,14 +115,14 @@ function getAuctionItemInfo(item) {
 function canPayAuctionItem(item, price) {
     if (item.kind === "lifePill" || item.kind === "ironBag") {
         if (player.coins < price || (player.reputation || 0) < item.repPrice) {
-            alert(`資源不足！\n需要 ${price.toWan()} 靈石 + ${item.repPrice.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
+            gameAlert(`資源不足！\n需要 ${price.toWan()} 靈石 + ${item.repPrice.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
             return false;
         }
         return true;
     }
     if (!hasEquipInventorySpace()) return false;
     if (player.coins < price) {
-        alert(`靈石不足！\n需要 ${price.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
+        gameAlert(`靈石不足！\n需要 ${price.toWan()} 靈石，你目前只有 ${player.coins.toWan()} 靈石。`);
         return false;
     }
     return true;

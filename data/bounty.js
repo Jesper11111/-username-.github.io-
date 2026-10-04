@@ -151,7 +151,7 @@ function acceptAllBounties() {
 
 // id 不給 = 放棄全部追蹤
 function abandonBounty(id) {
-    if (inBountyDuel) { alert("對決進行中，無法放棄懸賞！"); return; }
+    if (inBountyDuel) { gameAlert("對決進行中，無法放棄懸賞！"); return; }
     let ids = getTrackedBountyIds();
     player.activeBountyIds = id ? ids.filter(x => x !== id) : [];
     addLog(id ? `📜 你放棄了一份追蹤中的懸賞。` : `📜 你放棄了所有追蹤中的懸賞。`, "system");

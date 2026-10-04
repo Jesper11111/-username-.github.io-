@@ -212,7 +212,7 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
 
     const block = getMapEntryBlock(cIndex, iIndex);
     if (block && block.realm && !challengeOk) { confirmChallengeMap(cIndex, iIndex, bigMap); return; }   // 挑戰模式：先跳警告（第 70 節）
-    if (block && !block.realm) { alert(block.msg); return; }
+    if (block && !block.realm) { gameAlert(block.msg); return; }
 
     // 懸賞對決中換地圖＝逃離對決（懸賞保留，bounty.js）
     if (inBountyDuel) endBountyDuel("flee");
@@ -294,7 +294,7 @@ async function confirmChallengeMap(cIndex, iIndex, bigMap) {
         + `・不能離線／背景掛機：離線或切到背景會被送回宗門\n`
         + `・經驗、靈石照你境界的主要地圖計算，不會因越級暴增\n`
         + `・做裝通貨掉率 ×${cm}\n\n確定進入？`;
-    const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : confirm(msg);
+    const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : (await gameConfirm(msg));
     if (!ok) return;
     changeMap(cIndex, iIndex, true, bigMap);
     const target = maps[cIndex].items[iIndex];

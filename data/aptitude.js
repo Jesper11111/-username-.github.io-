@@ -300,7 +300,7 @@ function confirmAptitudeFirst() {
 
 // 人物面板點「資質」：查看目前資質，並可用道具重測
 function openAptitudeView() {
-    if (!player.aptitude) { if (player.sect) openAptitudeTest(); else alert('拜入宗門後才會進行資質測試。'); return; }
+    if (!player.aptitude) { if (player.sect) openAptitudeTest(); else gameAlert('拜入宗門後才會進行資質測試。'); return; }
     const r = describeRoot(player.aptitude.root), p = describePhysique(player.aptitude.physique);
     const rp = player.rootPills || 0, pp = player.physiquePills || 0;
     const locked = typeof hasYuanshen === 'function' && hasYuanshen();   // 凝聚元神後資質鎖定（yuanshen.js）
@@ -392,7 +392,7 @@ function showNextAptitudeGift() {
 function buyAptitudePill(part, qty = 1) {
     const key = part === 'root' ? 'rootPills' : 'physiquePills', item = aptitudeItems[part === 'root' ? 'rootPill' : 'physiquePill'];
     const affordable = Math.floor((player.butianStones || 0) / APTITUDE_REROLL_COST);
-    if (affordable <= 0) { alert(`七彩補天石不足！購買 1 顆${item.name}需要 ${APTITUDE_REROLL_COST} 顆（目前 ${player.butianStones || 0}）。`); return; }
+    if (affordable <= 0) { gameAlert(`七彩補天石不足！購買 1 顆${item.name}需要 ${APTITUDE_REROLL_COST} 顆（目前 ${player.butianStones || 0}）。`); return; }
     const n = resolveBatchCount(qty, affordable, "購買");
     if (!n) return;
     player.butianStones -= APTITUDE_REROLL_COST * n;

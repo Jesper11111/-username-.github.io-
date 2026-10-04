@@ -1613,7 +1613,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AC`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3333,6 +3333,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **修正：寄售無法出價**（2026-10-01，版本 `20261004l`～`n`，使用者問「寄賣行商品無法出價原因」）。查到兩個原因：
   1. **瀏覽器內建 `confirm()`／`alert()` 不顯示**：Claude 預覽面板（console：「Page dialog suppressed… confirm() returned false」）與 LINE／FB 等 App 內建瀏覽器會擋掉，
      `confirm` 直接回傳 false＝按了取消，出價靜靜結束。→ ui.js 新增遊戲內對話框 `gameConfirm(msg)`（回傳 Promise<boolean>，要 await）／`gameAlert(msg)`（不暫停程式），`#game-dialog` 動態建立、z-index 100001（index.html CSS）；
+     - **全面改用遊戲內對話框**（2026-10-04，版本 `20261005AC`，使用者要求「檢查是否有 BUG」時發現）：data/*.js 剩下的 37 處原生 `confirm` 全部改 `await gameConfirm(…)`，所在函式改 `async`
+       （渡劫 `triggerTribulation`、拜入宗門 `joinSect`、解僱 `dismissServant`、分解／進化／洗煉／重塑、做裝通貨、頭像光環購買、靈寶閣兌換、職業、賭坊 `checkCasinoSpend`（呼叫端 `cutStone`／`rollDice` 一併 await）、
+       守城／鎮魔塔中途離開 `close` 等）；138 處原生 `alert` 改 `gameAlert`。壽元耗盡（lifespan.js）改成 `gameDialog(…, false).then(() => location.reload())`，按確定才重新載入。
+       ⚠️ 新程式一律用 `gameConfirm`／`gameAlert`；用到 `await gameConfirm` 的函式回傳 Promise，呼叫端如果要用回傳值也要 await。
      market.js 的 3 個 confirm、17 個 alert 全部改用。上架改成先 `mkTakeItem(f, true)` 只檢查＋給確認框看、確定後才真的扣（等待確認期間物品留在背包，避免自動存檔後關網頁遺失）；出價確認後再檢查一次靈石。
      **新功能一律用 gameConfirm／gameAlert**；其餘 40 個檔案約 160 處 confirm／alert 是既有寫法、這次沒改。
   2. **雲端交易回報額度已滿**：實測一般讀取（get）、寫入（被規則擋下時正常回 permission-denied）都正常，但 `runTransaction`（出價用）一直回 `resource-exhausted: Quota exceeded`（HTTP 429），SDK 重試約 7 秒後放棄，原本只顯示「連線失敗」。

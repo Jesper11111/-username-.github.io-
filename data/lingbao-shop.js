@@ -63,23 +63,23 @@ function renderLingbaoShopUI() {
     }).join('');
 }
 
-function buyLingbaoItem(itemId) {
+async function buyLingbaoItem(itemId) {
     let item = lingbaoShopItems.find(i => i.id === itemId);
     if (!item) return;
     if (!player.lingbaoSold) player.lingbaoSold = [];
-    if (player.lingbaoSold.includes(item.id)) { alert("此寶物已兌換，不會再補貨。"); return; }
+    if (player.lingbaoSold.includes(item.id)) { gameAlert("此寶物已兌換，不會再補貨。"); return; }
     if (!player.sectSkills[item.tier]) {
-        alert(`需先拜入${SECT_TIER_NAMES[item.tier]}宗門，才能兌換此階段的寶物。`);
+        gameAlert(`需先拜入${SECT_TIER_NAMES[item.tier]}宗門，才能兌換此階段的寶物。`);
         return;
     }
 
     let cost = getLingbaoCost(item);
     if (player.coins < cost.coins || (player.reputation || 0) < cost.rep) {
-        alert(`資源不足！兌換【${item.name}】需要 ${cost.coins.toWan()} 靈石 + ${cost.rep.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
+        gameAlert(`資源不足！兌換【${item.name}】需要 ${cost.coins.toWan()} 靈石 + ${cost.rep.toWan()} 聲望。\n你目前有 ${player.coins.toWan()} 靈石、${(player.reputation || 0).toWan()} 聲望。`);
         return;
     }
     if (item.type === 'equip' && !hasEquipInventorySpace()) return;
-    if (!confirm(`確定以 ${cost.coins.toWan()} 靈石 + ${cost.rep.toWan()} 聲望 兌換【${item.name}】嗎？\n此為唯一性寶物，兌換後不會再補貨。`)) return;
+    if (!(await gameConfirm(`確定以 ${cost.coins.toWan()} 靈石 + ${cost.rep.toWan()} 聲望 兌換【${item.name}】嗎？\n此為唯一性寶物，兌換後不會再補貨。`))) return;
 
     player.coins -= cost.coins;
     player.reputation -= cost.rep;

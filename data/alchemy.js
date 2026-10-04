@@ -52,14 +52,14 @@ function craftPill(type, qty = 1) {
     const max = pillMaxOf(type), gain = pillGainOf(type);
     const room = max - (used[type] || 0);
     if (room <= 0) {
-        alert(`【${r.name}】已服用 ${max} 顆，藥力已達極限，再服也無效。`);
+        gameAlert(`【${r.name}】已服用 ${max} 顆，藥力已達極限，再服也無效。`);
         return;
     }
 
     let affordable = Math.min(player.herbs[r.herb], room);
     if (r.coins > 0) affordable = Math.min(affordable, Math.floor(player.coins / r.coins));
     if (affordable <= 0) {
-        alert(`材料不足！煉製 1 顆【${r.name}】需要 1 株${r.herbName}${r.coins > 0 ? ` 與 ${r.coins} 靈石` : ''}。`);
+        gameAlert(`材料不足！煉製 1 顆【${r.name}】需要 1 株${r.herbName}${r.coins > 0 ? ` 與 ${r.coins} 靈石` : ''}。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "煉製");

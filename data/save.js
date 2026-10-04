@@ -418,8 +418,8 @@ function migrateProgressionFields(savedData) {
     });
 }
 
-function resetGameCompletely() {
-    if (confirm("確定要完全重置遊戲嗎？這將清除所有存檔進度！")) {
+async function resetGameCompletely() {
+    if ((await gameConfirm("確定要完全重置遊戲嗎？這將清除所有存檔進度！"))) {
         // 重新整理時會觸發 pagehide／visibilitychange 自動存檔（main.js），不擋住的話目前角色又會被寫回去
         gameOver = true;
         localStorage.removeItem('xiuxian_save');
@@ -559,7 +559,7 @@ function reportLoadFailure(raw, reason, versionMismatch) {
     const modal = document.getElementById('load-error-modal');
     if (!modal) {
         // 快取到舊版 index.html 時頁面上沒有這個視窗：退回用 alert，寫入一樣被封鎖
-        alert(`【存檔讀取失敗】\n你的存檔沒有被刪除，也已另外備份。\n\n錯誤原因：${reason}\n\n${hint}\n\n在問題排除前，本次遊戲不會寫入存檔。`);
+        gameAlert(`【存檔讀取失敗】\n你的存檔沒有被刪除，也已另外備份。\n\n錯誤原因：${reason}\n\n${hint}\n\n在問題排除前，本次遊戲不會寫入存檔。`);
         return;
     }
     document.getElementById('load-error-reason').innerText = `錯誤原因：${reason}`;

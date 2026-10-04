@@ -62,8 +62,8 @@ function addDailyProgress(type, amount) {
 function claimDailyQuest(index) {
     const q = player.dailyQuests[index];
     if (!q) return;
-    if (q.claimed) { alert("此任務獎勵已領取。"); return; }
-    if (q.progress < q.target) { alert("任務尚未完成！"); return; }
+    if (q.claimed) { gameAlert("此任務獎勵已領取。"); return; }
+    if (q.progress < q.target) { gameAlert("任務尚未完成！"); return; }
 
     const def = dailyQuestPool.find(d => d.type === q.type);
     const reward = dailyQuestRewards[q.tier];
@@ -81,7 +81,7 @@ function claimDailyQuest(index) {
 // 一次領取所有已完成的任務獎勵
 function claimAllDailyQuests() {
     const ready = player.dailyQuests.filter(q => !q.claimed && q.progress >= q.target);
-    if (ready.length === 0) { alert("目前沒有可領取的任務獎勵。"); return; }
+    if (ready.length === 0) { gameAlert("目前沒有可領取的任務獎勵。"); return; }
 
     let coins = 0, rep = 0, mp = 0;
     ready.forEach(q => {

@@ -211,7 +211,7 @@ function mergeTalisman(type, grade, qty) {
     if (!M || !t || !getTalismanGrade(grade + 1)) return;
     const from = talismanKey(type, grade), to = talismanKey(type, grade + 1);
     const can = Math.min(Math.floor((player.talismans[from] || 0) / M.need), Math.floor(player.coins / M.coins));
-    if (can < 1) { alert(`需要 ${M.need} 枚同種${getTalismanGrade(grade).name}符寶＋${M.coins.toWan()} 靈石。`); return; }
+    if (can < 1) { gameAlert(`需要 ${M.need} 枚同種${getTalismanGrade(grade).name}符寶＋${M.coins.toWan()} 靈石。`); return; }
     const n = qty === 'max' ? can : Math.min(can, qty || 1);
     player.talismans[from] -= M.need * n;
     if (player.talismans[from] <= 0) delete player.talismans[from];
@@ -231,7 +231,7 @@ function craftTalisman(qty = 1, race) {
     let c = TALISMAN_CRAFT_COST;
     let affordable = Math.min(Math.floor((player.ore || 0) / c.ore), Math.floor(player.coins / c.coins));
     if (affordable <= 0) {
-        alert(`資源不足！煉製 1 次需要 ${c.ore} 礦石 + ${c.coins.toWan()} 靈石。\n礦石可派遣傳說僕從執行「礦脈採礦」取得。`);
+        gameAlert(`資源不足！煉製 1 次需要 ${c.ore} 礦石 + ${c.coins.toWan()} 靈石。\n礦石可派遣傳說僕從執行「礦脈採礦」取得。`);
         return;
     }
     let n = resolveBatchCount(qty, affordable, "煉製");
@@ -259,7 +259,7 @@ function inlayTalisman(equipId, socketIndex) {
     if (!eq || !Array.isArray(eq.sockets) || eq.sockets[socketIndex]) return;
     let select = document.getElementById(`sock-${equipId}-${socketIndex}`);
     let key = select && select.value;
-    if (!key || !(player.talismans[key] > 0)) { alert("請先選擇要鑲嵌的符寶！"); return; }
+    if (!key || !(player.talismans[key] > 0)) { gameAlert("請先選擇要鑲嵌的符寶！"); return; }
 
     let [type, grade] = key.split("_");
     player.talismans[key]--;
@@ -271,11 +271,11 @@ function inlayTalisman(equipId, socketIndex) {
 }
 
 // 打掉孔位上的符寶：符寶碎裂消失，孔位恢復為空
-function removeTalisman(equipId, socketIndex) {
+async function removeTalisman(equipId, socketIndex) {
     let eq = findEquipById(equipId);
     if (!eq || !Array.isArray(eq.sockets) || !eq.sockets[socketIndex]) return;
     let s = eq.sockets[socketIndex];
-    if (!confirm(`確定要打掉【${formatTalisman(s.type, s.grade)}】嗎？\n打掉後符寶會碎裂消失，無法取回。`)) return;
+    if (!(await gameConfirm(`確定要打掉【${formatTalisman(s.type, s.grade)}】嗎？\n打掉後符寶會碎裂消失，無法取回。`))) return;
     eq.sockets[socketIndex] = null;
     addLog(`💥 打掉了【${getEquipDisplayName(eq)}】上的【${formatTalisman(s.type, s.grade)}】，符寶碎裂消散。`, "equip");
     renderTalismanWorkshop();

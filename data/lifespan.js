@@ -110,7 +110,7 @@ function triggerLifespanGameOver() {
     localStorage.removeItem('xiuxian_save');
     addLog(`💀 壽元耗盡，身死道消……`, "combat");
     setTimeout(() => {
-        alert(`【身死道消】\n${player.name} 壽元已盡，一身修為化為塵土。\n存檔已清除，請重新踏上修仙之路。`);
-        location.reload();
+        // 遊戲內提示框不會暫停程式：按確定後才重新載入（原生 alert 在 App 內建瀏覽器不顯示）
+        gameDialog(`【身死道消】\n${player.name} 壽元已盡，一身修為化為塵土。\n存檔已清除，請重新踏上修仙之路。`, false).then(() => location.reload());
     }, 100);
 }

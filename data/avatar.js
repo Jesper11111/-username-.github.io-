@@ -85,15 +85,15 @@ function renderAvatarModal() {
 }
 
 // 花靈石解鎖頭像（unlock.type === "coins"）：扣款、永久解鎖並立即換上
-function buyAvatar(id) {
+async function buyAvatar(id) {
     let av = avatarList.find(a => a.id === id);
     if (!av || isAvatarUnlocked(av) || !av.unlock || av.unlock.type !== "coins") return;
     let cost = av.unlock.value;
     if (player.coins < cost) {
-        alert(`靈石不足！解鎖頭像【${av.name}】需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`);
+        gameAlert(`靈石不足！解鎖頭像【${av.name}】需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`);
         return;
     }
-    if (!confirm(`確定花費 ${cost.toWan()} 靈石解鎖頭像【${av.name}】嗎？\n解鎖後永久可用，轉世也不會失去。`)) return;
+    if (!(await gameConfirm(`確定花費 ${cost.toWan()} 靈石解鎖頭像【${av.name}】嗎？\n解鎖後永久可用，轉世也不會失去。`))) return;
 
     player.coins -= cost;
     if (!Array.isArray(player.unlockedAvatars)) player.unlockedAvatars = [];
@@ -203,15 +203,15 @@ function selectFrame(id) {
     saveLocal();
 }
 
-function buyFrame(id) {
+async function buyFrame(id) {
     let fr = avatarFrameList.find(f => f.id === id);
     if (!fr || isFrameUnlocked(fr) || !fr.unlock || fr.unlock.type !== "coins") return;
     let cost = fr.unlock.value;
     if (player.coins < cost) {
-        alert(`靈石不足！解鎖頭像光環【${fr.name}】需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`);
+        gameAlert(`靈石不足！解鎖頭像光環【${fr.name}】需要 ${cost.toWan()} 靈石（目前 ${player.coins.toWan()}）。`);
         return;
     }
-    if (!confirm(`確定花費 ${cost.toWan()} 靈石解鎖頭像光環【${fr.name}】嗎？\n解鎖後永久可用，轉世也不會失去。`)) return;
+    if (!(await gameConfirm(`確定花費 ${cost.toWan()} 靈石解鎖頭像光環【${fr.name}】嗎？\n解鎖後永久可用，轉世也不會失去。`))) return;
     player.coins -= cost;
     if (!Array.isArray(player.unlockedFrames)) player.unlockedFrames = [];
     player.unlockedFrames.push(fr.id);

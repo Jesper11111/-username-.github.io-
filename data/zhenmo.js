@@ -42,9 +42,9 @@ const ZhenmoTower = (() => {
         $('zhenmo-scene').style.display = 'block';
         renderHall();
     }
-    function close() {
-        if (quiz && !confirm('問答進行中，確定要離開嗎？\n未作答的題目視為答錯，本次成績會保留給這一層的 BOSS。')) return;
-        if (fight && !fight.over && !confirm('BOSS 戰進行中，確定要離開嗎？\n離開視為挑戰失敗，本層問答成績作廢。')) return;
+    async function close() {
+        if (quiz && !(await gameConfirm('問答進行中，確定要離開嗎？\n未作答的題目視為答錯，本次成績會保留給這一層的 BOSS。'))) return;
+        if (fight && !fight.over && !(await gameConfirm('BOSS 戰進行中，確定要離開嗎？\n離開視為挑戰失敗，本層問答成績作廢。'))) return;
         if (quiz) finishQuiz();
         if (fight && !fight.over) endFight(false, '中途撤離');
         stopFight();
@@ -109,7 +109,7 @@ const ZhenmoTower = (() => {
         if (z.pending && z.pending.floor === z.floor) { renderHall(); return; }   // 已有本層成績，直接進 BOSS 房
         // 有 BOSS 的樓層才扣次數（還沒有 BOSS 資料的樓層只能先答題保留成績）
         if (bossOf(z.floor) && !useSecretRealmAttempt('zhenmo')) {
-            alert(`【鎮魔塔】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`);
+            gameAlert(`【鎮魔塔】今日 ${SECRET_REALM_DAILY_ATTEMPTS} 次挑戰已用完，明日再來。`);
             return;
         }
         quiz = { floor: z.floor, list: drawQuestions(), i: 0, correct: 0, marks: [], locked: false };
