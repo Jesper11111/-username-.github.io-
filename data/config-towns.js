@@ -352,6 +352,23 @@ const townScenes = {
             spots: [{ img: "images/towns/npc-xianweng.png", rect: [345, 369, 55, 117] }],   // 涼亭左前角的台基上（使用者確認的位置），面向左邊河面垂釣
             // 釣魚演出（town-npc.js 的 getTownNpcEffects）：竿＝手 → 竿尖、釣線＝竿尖 → 水面、水面漣漪（圖上座標）
             fishing: { hand: [349, 408], tip: [262, 350], hook: [256, 512] },
+            // 低語（2026-10-04 使用者：「仙翁出現有沒有一些低語」）：仙翁在場時，頭頂偶爾浮出淡淡的小字慢慢飄散（town-npc.js 的 startNpcWhispers）；
+            //   firstMs 出現後多久第一句、everyMs 間隔、showMs 停留；at＝字的位置（圖上座標，仙翁頭頂）
+            whispers: {
+                firstMs: 4000, everyMs: 15000, showMs: 6000, at: [372, 360],
+                lines: [
+                    "……三百年了，還是沒等到。",
+                    "魚兒啊，你也在等人嗎？",
+                    "桃花開了又謝，謝了又開……",
+                    "釣竿不動，心卻動了。",
+                    "小友，看得見老夫？",
+                    "今日的風，有些像當年。",
+                    "願者上鉤，不願者……也罷。",
+                    "她說過，桃花渡見。",
+                    "這一局棋，下了三百年。",
+                    "呵……有緣人，近了。"
+                ]
+            },
             portrait: "images/towns/npc-xianweng-portrait.png",
             lines: {
                 greet: "呵呵……老夫在此垂釣三百年，釣的不是魚，是有緣人。\n小友魅力過人，與老夫甚是投緣——這一竿，送你一場造化。",
