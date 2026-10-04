@@ -328,6 +328,8 @@ function talkToXianweng(sceneName) {
     const L = hit.npc.lines || {};
     document.getElementById('xianweng-img').src = hit.npc.portrait || hit.spot.img;
     document.getElementById('xianweng-text').innerText = `「${L.greet || ''}」`;
+    document.getElementById('xianweng-fish-n').innerText = `今日剩 ${xianwengFishLeft()} 竿`;
+    document.getElementById('xianweng-chess-n').innerText = `今日剩 ${xianwengChessLeft()} 盤`;
     document.getElementById('xianweng-modal').dataset.scene = sceneName;
     document.getElementById('xianweng-modal').style.display = 'flex';
 }
@@ -337,9 +339,15 @@ function xianwengChoose(kind) {
     modal.style.display = 'none';
     if (!hit) return;
     const L = hit.npc.lines || {};
-    if (kind === 'fishing' || kind === 'gomoku') {   // 兩個小遊戲製作中：先提示，仙翁留在原地（不算見過）
-        gameAlert(kind === 'fishing' ? '🎣 仙翁釣魚\n\n仙翁笑道：「釣竿借你，可別嚇跑了老夫的魚。」\n（小遊戲製作中，敬請期待）'
-            : '♟️ 玲瓏棋局（五子棋・困難）\n\n仙翁撚鬚：「這盤棋，老夫等了三百年。」\n（小遊戲製作中，敬請期待）');
+    // 兩個小遊戲（xianweng-games.js）：仙翁留在原地（不算見過），玩完回到這個對話；每天各 3 次
+    if (kind === 'fishing') {
+        if (xianwengFishLeft() <= 0) { gameDialog('🎣 仙翁釣魚\n\n仙翁收著釣竿：「今日的魚已經釣夠了，明日再來吧。」', false).then(() => talkToXianweng(sceneName)); return; }
+        playXianwengIntro(() => openXianwengFishing(sceneName));   // 先播開場動畫（可略過）
+        return;
+    }
+    if (kind === 'gomoku') {
+        if (xianwengChessLeft() <= 0) { gameDialog('♟️ 玲瓏棋局\n\n仙翁搖頭：「今日已對弈三盤，明日再來吧。」', false).then(() => talkToXianweng(sceneName)); return; }
+        openXianwengGomoku(sceneName);
         return;
     }
     // 告辭：仙翁飄然而去，當天不再出現

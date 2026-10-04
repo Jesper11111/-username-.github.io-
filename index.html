@@ -1372,6 +1372,50 @@
             color: rgba(255, 250, 230, 0.85); text-shadow: 0 0 4px rgba(120, 160, 255, 0.6), 0 0 2px rgba(0, 0, 0, 0.8); animation: npcWhisper 6s ease-in-out forwards; }
         @keyframes npcWhisper { 0% { opacity: 0; transform: translate(-50%, -100%); } 20% { opacity: 0.75; } 70% { opacity: 0.55; } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 22px)); } }
         @keyframes tcIn { from { opacity: 0; transform: translate(-50%, calc(-100% - 2px)) scale(0.9); } to { opacity: 1; transform: translate(-50%, calc(-100% - 10px)); } }
+        /* 隱藏仙翁的小遊戲（xianweng-games.js）：開場動畫全螢幕、釣魚（池塘＋收線條＋進度條）、五子棋（棋盤背景用玲瓏棋局圖） */
+        #xw-intro { display: none; position: fixed; inset: 0; z-index: 130; background: #000; align-items: center; justify-content: center; }
+        #xw-intro video { width: 100%; height: 100%; object-fit: contain; }
+        .xw-intro-skip { position: absolute; right: 14px; bottom: 18px; width: auto; padding: 8px 16px; background: rgba(0,0,0,0.55); border-color: #9ca3af; color: #e5e7eb; }
+        .xw-fish-card, .xw-chess-card { max-width: 480px; border-color: #fbbf24; }
+        .xw-say { color: #e5e7eb; font-size: 0.92em; line-height: 1.6; white-space: pre-line; min-height: 3.2em; margin: 6px 0 8px; text-align: center; }
+        .xw-fish-area { display: flex; gap: 8px; height: 230px; }
+        .xw-pond { position: relative; flex: 1; border-radius: 8px; overflow: hidden; background: #1e3a4a url('images/towns/xianweng-pond.jpg') center / cover; }
+        .xw-bobber { position: absolute; left: 44%; top: 52%; width: 10px; height: 22px; margin-left: -5px; border-radius: 5px 5px 4px 4px;
+            background: linear-gradient(#ef4444 0 45%, #f8fafc 45%); box-shadow: 0 2px 4px rgba(0,0,0,0.5); animation: xwBob 2.4s ease-in-out infinite; }
+        .xw-pond-ripple { position: absolute; left: 44%; top: calc(52% + 18px); }
+        .xw-pond-ripple i { position: absolute; left: -20px; top: -6px; width: 40px; height: 12px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 50%; opacity: 0; animation: xwRipple 2.4s ease-out infinite; }
+        .xw-pond-ripple i:nth-child(2) { animation-delay: 1.2s; }
+        #xw-fish-modal[data-phase="bite"] .xw-bobber { animation: xwBite 0.25s ease-in-out infinite alternate; top: 56%; }
+        #xw-fish-modal[data-phase="bite"] .xw-pond-ripple i { animation-duration: 0.6s; border-color: #fde68a; }
+        #xw-fish-modal[data-phase="reel"] .xw-bobber { top: 60%; opacity: 0.4; animation: xwBite 0.12s linear infinite alternate; }
+        #xw-fish-modal[data-phase="idle"] .xw-bobber, #xw-fish-modal[data-phase="idle"] .xw-pond-ripple { display: none; }
+        @keyframes xwBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes xwBite { from { transform: translateY(0); } to { transform: translateY(6px); } }
+        @keyframes xwRipple { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(2.2); opacity: 0; } }
+        .xw-bar { position: relative; width: 46px; border-radius: 8px; background: linear-gradient(#0c4a6e, #082f49); border: 2px solid #a16207; overflow: hidden; }
+        #xw-fish-modal:not([data-phase="reel"]) .xw-bar { opacity: 0.35; }
+        #xw-bar-box { position: absolute; left: 3px; right: 3px; bottom: 35%; height: 30%; border-radius: 6px; background: rgba(74,222,128,0.35); border: 2px solid #4ade80; }
+        #xw-bar-box.on { background: rgba(74,222,128,0.6); }
+        #xw-bar-fish { position: absolute; left: 0; right: 0; bottom: 50%; text-align: center; font-size: 1.2em; line-height: 1.2em; pointer-events: none; }
+        .xw-prog { height: 10px; margin: 8px 0 6px; border-radius: 5px; background: #1f2937; overflow: hidden; }
+        #xw-prog-fill { height: 100%; width: 0; background: linear-gradient(90deg, #f59e0b, #4ade80); }
+        #xw-fish-modal:not([data-phase="reel"]) #xw-prog-fill { width: 0 !important; }
+        #xw-fish-catch { min-height: 1.6em; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 6px; }
+        .xw-catch-item { font-size: 0.85em; padding: 2px 8px; border-radius: 10px; background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); color: #fde68a; }
+        #xw-fish-btn { border-color: #fbbf24; color: #fde68a; font-size: 1.05em; padding: 12px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        #xw-fish-modal[data-phase="bite"] #xw-fish-btn { background: rgba(239,68,68,0.3); border-color: #f87171; color: #fff; animation: xwPulse 0.35s infinite alternate; }
+        @keyframes xwPulse { from { box-shadow: 0 0 0 rgba(248,113,113,0); } to { box-shadow: 0 0 14px rgba(248,113,113,0.9); } }
+        #xw-fish-modal[data-phase="reel"] #xw-fish-btn { background: rgba(74,222,128,0.18); border-color: #4ade80; color: #bbf7d0; }
+        #xw-chess-modal .modal-content { background: linear-gradient(rgba(10,10,14,0.82), rgba(10,10,14,0.88)), var(--xw-chess-bg) center / cover; }
+        #xw-board { display: grid; grid-template-columns: repeat(15, 1fr); width: min(100%, 440px); aspect-ratio: 1; margin: 0 auto; padding: 2%; box-sizing: border-box;
+            border-radius: 6px; background: #b07a45 linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.12)); box-shadow: 0 4px 14px rgba(0,0,0,0.6), inset 0 0 0 2px #7c4a1e; }
+        .xw-cell { position: relative; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 1; min-width: 0;
+            background-image: linear-gradient(#3b2410, #3b2410), linear-gradient(#3b2410, #3b2410); background-size: 100% 1px, 1px 100%; background-position: center; background-repeat: no-repeat; }
+        .xw-cell.b::after, .xw-cell.w::after { content: ''; position: absolute; inset: 8%; border-radius: 50%; }
+        .xw-cell.b::after { background: radial-gradient(circle at 35% 30%, #6b7280, #111 60%); box-shadow: 1px 2px 3px rgba(0,0,0,0.6); }
+        .xw-cell.w::after { background: radial-gradient(circle at 35% 30%, #fff, #d1d5db 70%); box-shadow: 1px 2px 3px rgba(0,0,0,0.5); }
+        .xw-cell.last::before { content: ''; position: absolute; left: 50%; top: 50%; width: 22%; height: 22%; margin: -11% 0 0 -11%; border-radius: 50%; background: #ef4444; z-index: 1; }
+        .xw-cell.win::after { box-shadow: 0 0 0 2px #fbbf24, 0 0 8px #fbbf24; }
         /* 隱藏仙翁垂釣（town-npc.js 的 getTownNpcEffects）：竿、釣線用整張圖座標的 SVG；漣漪三圈輪流擴散 */
         .tnpc-fishing { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
         .tnpc-fishing .rod { stroke: #5b3b1e; stroke-width: 1.6; stroke-linecap: round; }
@@ -2134,7 +2178,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005AT"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005AU"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -2727,7 +2771,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005AT" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005AU" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-avatar-aura" class="ys-hud-aura" aria-hidden="true"></div>
@@ -2831,9 +2875,43 @@
         <img id="xianweng-img" alt="隱藏仙翁" style="width: 150px; height: auto; display: block; margin: 0 auto 6px;">
         <h2 style="color: #fde68a; margin: 0 0 6px; letter-spacing: 2px;">🎣 隱藏仙翁</h2>
         <p id="xianweng-text" style="color: #e5e7eb; font-size: 0.95em; line-height: 1.7; white-space: pre-line; text-align: left; margin: 0 0 12px;"></p>
-        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('fishing')">🎣 仙翁釣魚</button>
-        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('gomoku')">♟️ 玲瓏棋局（五子棋・困難）</button>
+        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('fishing')">🎣 仙翁釣魚 <small id="xianweng-fish-n" style="color:#9ca3af;"></small></button>
+        <button class="sys-btn" style="border-color: #fbbf24; color: #fde68a;" onclick="xianwengChoose('gomoku')">♟️ 玲瓏棋局（五子棋・困難） <small id="xianweng-chess-n" style="color:#9ca3af;"></small></button>
         <button class="sys-btn" onclick="xianwengChoose('leave')">↩ 告辭</button>
+    </div>
+</div>
+<!-- 隱藏仙翁的小遊戲（xianweng-games.js）：開場動畫、仙翁釣魚、玲瓏棋局（五子棋）；沒有點背景關閉，要按按鈕離開 -->
+<div id="xw-intro">
+    <video id="xw-intro-video" playsinline preload="none"></video>
+    <button class="sys-btn xw-intro-skip" onclick="finishXianwengIntro()">略過 ⏭</button>
+</div>
+<div id="xw-fish-modal" class="modal-bg">
+    <div class="modal-content xw-fish-card">
+        <h2 style="color: #fde68a; margin: 0 0 4px; text-align: center; letter-spacing: 2px;">🎣 仙翁釣魚</h2>
+        <div id="xw-fish-left" style="text-align:center; color:#9ca3af; font-size:0.85em;"></div>
+        <p id="xw-fish-say" class="xw-say"></p>
+        <div class="xw-fish-area">
+            <div class="xw-pond">
+                <div class="xw-bobber"></div>
+                <div class="xw-pond-ripple"><i></i><i></i></div>
+            </div>
+            <div class="xw-bar" title="綠框框住魚，收線進度才會增加"><div id="xw-bar-box"></div><div id="xw-bar-fish">🐟</div></div>
+        </div>
+        <div class="xw-prog"><div id="xw-prog-fill"></div></div>
+        <div id="xw-fish-catch"></div>
+        <button id="xw-fish-btn" class="sys-btn" onclick="xianwengFishAction()">🎣 拋竿</button>
+        <button class="close-btn" style="margin-top: 8px;" onclick="closeXianwengFishing()">↩ 還竿給仙翁</button>
+    </div>
+</div>
+<div id="xw-chess-modal" class="modal-bg">
+    <div class="modal-content xw-chess-card">
+        <h2 style="color: #fde68a; margin: 0 0 4px; text-align: center; letter-spacing: 2px;">♟️ 玲瓏棋局</h2>
+        <div id="xw-chess-left" style="text-align:center; color:#9ca3af; font-size:0.85em;"></div>
+        <p id="xw-chess-say" class="xw-say"></p>
+        <div id="xw-board"></div>
+        <p style="text-align:center; color:#9ca3af; font-size:0.8em; margin:6px 0;">你執黑先行，橫、直、斜任一方向先連成五子者勝；贏了有 40% 機會得到傳送陣靈石。</p>
+        <button id="xw-chess-again" class="sys-btn" style="border-color:#fbbf24; color:#fde68a;" onclick="restartXianwengGomoku()">♟️ 再下一盤</button>
+        <button class="close-btn" style="margin-top: 8px;" onclick="closeXianwengGomoku()">↩ 起身離席</button>
     </div>
 </div>
 <!-- 天元城・宗門設施（lingjie.js 的 openLingjieFacility，第 74 節）：靈界也能用的一般宗門設施 -->
@@ -3178,7 +3256,7 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005AT" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005AU" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -3737,123 +3815,124 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20261005AT"></script>
-<script src="data/config-realms.js?v=20261005AT"></script>
-<script src="data/config-level.js?v=20261005AT"></script>
-<script src="data/config-lifespan.js?v=20261005AT"></script>
-<script src="data/config-maps.js?v=20261005AT"></script>
-<script src="data/config-monsters.js?v=20261005AT"></script>
-<script src="data/config-talents.js?v=20261005AT"></script>
-<script src="data/config-sects.js?v=20261005AT"></script>
-<script src="data/config-lingbao.js?v=20261005AT"></script>
-<script src="data/config-shop.js?v=20261005AT"></script>
-<script src="data/config-beasts.js?v=20261005AT"></script>
-<script src="data/config-servants.js?v=20261005AT"></script>
-<script src="data/config-equipment.js?v=20261005AT"></script>
-<script src="data/config-gear-catalog.js?v=20261005AT"></script>
-<script src="data/config-gear.js?v=20261005AT"></script>
-<script src="data/config-enhance.js?v=20261005AT"></script>
-<script src="data/config-sets.js?v=20261005AT"></script>
-<script src="data/config-profession.js?v=20261005AT"></script>
-<script src="data/config-aptitude.js?v=20261005AT"></script>
-<script src="data/config-golden-core.js?v=20261005AT"></script>
-<script src="data/config-yuanshen.js?v=20261005AT"></script>
-<script src="data/config-mailbox.js?v=20261005AT"></script>
-<script src="data/config-titles.js?v=20261005AT"></script>
-<script src="data/config-tribulation.js?v=20261005AT"></script>
-<script src="data/config-quests.js?v=20261005AT"></script>
-<script src="data/config-activities.js?v=20261005AT"></script>
-<script src="data/config-daily-quests.js?v=20261005AT"></script>
-<script src="data/config-elements.js?v=20261005AT"></script>
-<script src="data/config-merit.js?v=20261005AT"></script>
-<script src="data/config-bounty.js?v=20261005AT"></script>
-<script src="data/config-talisman.js?v=20261005AT"></script>
-<script src="data/config-avatars.js?v=20261005AT"></script>
-<script src="data/config-avatar-frames.js?v=20261005AT"></script>
-<script src="data/config-spells.js?v=20261005AT"></script>
-<script src="data/config-strange-fire.js?v=20261005AT"></script>
-<script src="data/config-partners.js?v=20261005AT"></script>
-<script src="data/config-towns.js?v=20261005AT"></script>
-<script src="data/config-casino.js?v=20261005AT"></script>
-<script src="data/config-leaderboard.js?v=20261005AT"></script>
-<script src="data/config-secret-realms.js?v=20261005AT"></script>
-<script src="data/config-world-boss.js?v=20261005AT"></script>
-<script src="data/config-defense.js?v=20261005AT"></script>
-<script src="data/config-zhenmo.js?v=20261005AT"></script>
-<script src="data/config-zhenmo-questions.js?v=20261005AT"></script>
-<script src="data/config-numeric.js?v=20261005AT"></script>
-<script src="data/config-economy.js?v=20261005AT"></script>
-<script src="data/config-encounter.js?v=20261005AT"></script>
-<script src="data/config-race.js?v=20261005AT"></script>
-<script src="data/state.js?v=20261005AT"></script>
-<script src="data/stats.js?v=20261005AT"></script>
-<script src="data/numeric.js?v=20261005AT"></script>
-<script src="data/elements.js?v=20261005AT"></script>
-<script src="data/race.js?v=20261005AT"></script>
-<script src="data/monster.js?v=20261005AT"></script>
-<script src="data/talent.js?v=20261005AT"></script>
-<script src="data/battle-fx.js?v=20261005AT"></script>
-<script src="data/ui.js?v=20261005AT"></script>
-<script src="data/map.js?v=20261005AT"></script>
-<script src="data/lingjie.js?v=20261005AT"></script>
-<script src="data/town.js?v=20261005AT"></script>
-<script src="data/casino.js?v=20261005AT"></script>
-<script src="data/combat.js?v=20261005AT"></script>
-<script src="data/leveling.js?v=20261005AT"></script>
-<script src="data/lifespan.js?v=20261005AT"></script>
-<script src="data/tribulation.js?v=20261005AT"></script>
-<script src="data/sect.js?v=20261005AT"></script>
-<script src="data/shop.js?v=20261005AT"></script>
-<script src="data/bag.js?v=20261005AT"></script>
-<script src="data/equipment.js?v=20261005AT"></script>
-<script src="data/equip-compare.js?v=20261005AT"></script>
-<script src="data/gear.js?v=20261005AT"></script>
-<script src="data/enhance.js?v=20261005AT"></script>
-<script src="data/craft.js?v=20261005AT"></script>
-<script src="data/profession.js?v=20261005AT"></script>
-<script src="data/aptitude.js?v=20261005AT"></script>
-<script src="data/golden-core.js?v=20261005AT"></script>
-<script src="data/yuanshen.js?v=20261005AT"></script>
-<script src="data/codex.js?v=20261005AT"></script>
-<script src="data/lingbao-shop.js?v=20261005AT"></script>
-<script src="data/artifact.js?v=20261005AT"></script>
-<script src="data/servant.js?v=20261005AT"></script>
-<script src="data/quest.js?v=20261005AT"></script>
-<script src="data/activity.js?v=20261005AT"></script>
-<script src="data/daily-quest.js?v=20261005AT"></script>
-<script src="data/auction.js?v=20261005AT"></script>
-<script src="data/merit.js?v=20261005AT"></script>
-<script src="data/bounty.js?v=20261005AT"></script>
-<script src="data/talisman.js?v=20261005AT"></script>
-<script src="data/strange-fire.js?v=20261005AT"></script>
-<script src="data/partner.js?v=20261005AT"></script>
-<script src="data/town-npc.js?v=20261005AT"></script>
-<script src="data/field.js?v=20261005AT"></script>
-<script src="data/economy.js?v=20261005AT"></script>
-<script src="data/encounter.js?v=20261005AT"></script>
-<script src="data/beast-combat.js?v=20261005AT"></script>
-<script src="data/spells.js?v=20261005AT"></script>
-<script src="data/beast.js?v=20261005AT"></script>
-<script src="data/library.js?v=20261005AT"></script>
-<script src="data/alchemy.js?v=20261005AT"></script>
-<script src="data/player-profile.js?v=20261005AT"></script>
-<script src="data/save.js?v=20261005AT"></script>
-<script src="data/integrity.js?v=20261005AT"></script>
-<script src="data/config-home-pc.js?v=20261005AT"></script>
-<script src="data/home-ui.js?v=20261005AT"></script>
-<script src="data/settings.js?v=20261005AT"></script>
-<script src="data/avatar.js?v=20261005AT"></script>
-<script src="data/leaderboard.js?v=20261005AT"></script>
-<script src="data/mailbox.js?v=20261005AT"></script>
-<script src="data/msgboard.js?v=20261005AT"></script>
-<script src="data/market.js?v=20261005AT"></script>
-<script src="data/secret-realm.js?v=20261005AT"></script>
-<script src="data/defense.js?v=20261005AT"></script>
-<script src="data/zhenmo.js?v=20261005AT"></script>
-<script src="data/world-boss.js?v=20261005AT"></script>
-<script src="data/title-screen.js?v=20261005AT"></script>
-<script src="data/pwa.js?v=20261005AT"></script>
-<script src="data/main.js?v=20261005AT"></script>
+<script src="data/format.js?v=20261005AU"></script>
+<script src="data/config-realms.js?v=20261005AU"></script>
+<script src="data/config-level.js?v=20261005AU"></script>
+<script src="data/config-lifespan.js?v=20261005AU"></script>
+<script src="data/config-maps.js?v=20261005AU"></script>
+<script src="data/config-monsters.js?v=20261005AU"></script>
+<script src="data/config-talents.js?v=20261005AU"></script>
+<script src="data/config-sects.js?v=20261005AU"></script>
+<script src="data/config-lingbao.js?v=20261005AU"></script>
+<script src="data/config-shop.js?v=20261005AU"></script>
+<script src="data/config-beasts.js?v=20261005AU"></script>
+<script src="data/config-servants.js?v=20261005AU"></script>
+<script src="data/config-equipment.js?v=20261005AU"></script>
+<script src="data/config-gear-catalog.js?v=20261005AU"></script>
+<script src="data/config-gear.js?v=20261005AU"></script>
+<script src="data/config-enhance.js?v=20261005AU"></script>
+<script src="data/config-sets.js?v=20261005AU"></script>
+<script src="data/config-profession.js?v=20261005AU"></script>
+<script src="data/config-aptitude.js?v=20261005AU"></script>
+<script src="data/config-golden-core.js?v=20261005AU"></script>
+<script src="data/config-yuanshen.js?v=20261005AU"></script>
+<script src="data/config-mailbox.js?v=20261005AU"></script>
+<script src="data/config-titles.js?v=20261005AU"></script>
+<script src="data/config-tribulation.js?v=20261005AU"></script>
+<script src="data/config-quests.js?v=20261005AU"></script>
+<script src="data/config-activities.js?v=20261005AU"></script>
+<script src="data/config-daily-quests.js?v=20261005AU"></script>
+<script src="data/config-elements.js?v=20261005AU"></script>
+<script src="data/config-merit.js?v=20261005AU"></script>
+<script src="data/config-bounty.js?v=20261005AU"></script>
+<script src="data/config-talisman.js?v=20261005AU"></script>
+<script src="data/config-avatars.js?v=20261005AU"></script>
+<script src="data/config-avatar-frames.js?v=20261005AU"></script>
+<script src="data/config-spells.js?v=20261005AU"></script>
+<script src="data/config-strange-fire.js?v=20261005AU"></script>
+<script src="data/config-partners.js?v=20261005AU"></script>
+<script src="data/config-towns.js?v=20261005AU"></script>
+<script src="data/config-casino.js?v=20261005AU"></script>
+<script src="data/config-leaderboard.js?v=20261005AU"></script>
+<script src="data/config-secret-realms.js?v=20261005AU"></script>
+<script src="data/config-world-boss.js?v=20261005AU"></script>
+<script src="data/config-defense.js?v=20261005AU"></script>
+<script src="data/config-zhenmo.js?v=20261005AU"></script>
+<script src="data/config-zhenmo-questions.js?v=20261005AU"></script>
+<script src="data/config-numeric.js?v=20261005AU"></script>
+<script src="data/config-economy.js?v=20261005AU"></script>
+<script src="data/config-encounter.js?v=20261005AU"></script>
+<script src="data/config-race.js?v=20261005AU"></script>
+<script src="data/state.js?v=20261005AU"></script>
+<script src="data/stats.js?v=20261005AU"></script>
+<script src="data/numeric.js?v=20261005AU"></script>
+<script src="data/elements.js?v=20261005AU"></script>
+<script src="data/race.js?v=20261005AU"></script>
+<script src="data/monster.js?v=20261005AU"></script>
+<script src="data/talent.js?v=20261005AU"></script>
+<script src="data/battle-fx.js?v=20261005AU"></script>
+<script src="data/ui.js?v=20261005AU"></script>
+<script src="data/map.js?v=20261005AU"></script>
+<script src="data/lingjie.js?v=20261005AU"></script>
+<script src="data/town.js?v=20261005AU"></script>
+<script src="data/casino.js?v=20261005AU"></script>
+<script src="data/combat.js?v=20261005AU"></script>
+<script src="data/leveling.js?v=20261005AU"></script>
+<script src="data/lifespan.js?v=20261005AU"></script>
+<script src="data/tribulation.js?v=20261005AU"></script>
+<script src="data/sect.js?v=20261005AU"></script>
+<script src="data/shop.js?v=20261005AU"></script>
+<script src="data/bag.js?v=20261005AU"></script>
+<script src="data/equipment.js?v=20261005AU"></script>
+<script src="data/equip-compare.js?v=20261005AU"></script>
+<script src="data/gear.js?v=20261005AU"></script>
+<script src="data/enhance.js?v=20261005AU"></script>
+<script src="data/craft.js?v=20261005AU"></script>
+<script src="data/profession.js?v=20261005AU"></script>
+<script src="data/aptitude.js?v=20261005AU"></script>
+<script src="data/golden-core.js?v=20261005AU"></script>
+<script src="data/yuanshen.js?v=20261005AU"></script>
+<script src="data/codex.js?v=20261005AU"></script>
+<script src="data/lingbao-shop.js?v=20261005AU"></script>
+<script src="data/artifact.js?v=20261005AU"></script>
+<script src="data/servant.js?v=20261005AU"></script>
+<script src="data/quest.js?v=20261005AU"></script>
+<script src="data/activity.js?v=20261005AU"></script>
+<script src="data/daily-quest.js?v=20261005AU"></script>
+<script src="data/auction.js?v=20261005AU"></script>
+<script src="data/merit.js?v=20261005AU"></script>
+<script src="data/bounty.js?v=20261005AU"></script>
+<script src="data/talisman.js?v=20261005AU"></script>
+<script src="data/strange-fire.js?v=20261005AU"></script>
+<script src="data/partner.js?v=20261005AU"></script>
+<script src="data/town-npc.js?v=20261005AU"></script>
+<script src="data/xianweng-games.js?v=20261005AU"></script>
+<script src="data/field.js?v=20261005AU"></script>
+<script src="data/economy.js?v=20261005AU"></script>
+<script src="data/encounter.js?v=20261005AU"></script>
+<script src="data/beast-combat.js?v=20261005AU"></script>
+<script src="data/spells.js?v=20261005AU"></script>
+<script src="data/beast.js?v=20261005AU"></script>
+<script src="data/library.js?v=20261005AU"></script>
+<script src="data/alchemy.js?v=20261005AU"></script>
+<script src="data/player-profile.js?v=20261005AU"></script>
+<script src="data/save.js?v=20261005AU"></script>
+<script src="data/integrity.js?v=20261005AU"></script>
+<script src="data/config-home-pc.js?v=20261005AU"></script>
+<script src="data/home-ui.js?v=20261005AU"></script>
+<script src="data/settings.js?v=20261005AU"></script>
+<script src="data/avatar.js?v=20261005AU"></script>
+<script src="data/leaderboard.js?v=20261005AU"></script>
+<script src="data/mailbox.js?v=20261005AU"></script>
+<script src="data/msgboard.js?v=20261005AU"></script>
+<script src="data/market.js?v=20261005AU"></script>
+<script src="data/secret-realm.js?v=20261005AU"></script>
+<script src="data/defense.js?v=20261005AU"></script>
+<script src="data/zhenmo.js?v=20261005AU"></script>
+<script src="data/world-boss.js?v=20261005AU"></script>
+<script src="data/title-screen.js?v=20261005AU"></script>
+<script src="data/pwa.js?v=20261005AU"></script>
+<script src="data/main.js?v=20261005AU"></script>
 
 </body>
 </html>
