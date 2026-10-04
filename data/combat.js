@@ -532,8 +532,8 @@ function onPlayerKilledInField() {
     respawnTimer = 0;
     let lostCoins = Math.floor(player.coins * 0.1);
     player.coins -= lostCoins;
-    addLog(`💀 寡不敵眾，身受重傷！被路過修士救回宗門，遺失了 ${lostCoins} 靈石... (當前氣血：1 滴殘血，開始靜修療傷)`, "combat");
-    changeMap(0, 0);
+    addLog(`💀 寡不敵眾，身受重傷！被路過修士救回${respawnPlaceName()}，遺失了 ${lostCoins} 靈石... (當前氣血：1 滴殘血，開始靜修療傷)`, "combat");
+    sendToRespawn();   // 身在靈界＝天元城外，否則宗門（lingjie.js，第 74 節）
     updateUI();
 }
 

@@ -85,3 +85,30 @@ function migrateLingjie(data) {
     const c = player.currentMap ? getMapCategoryIndex(player.currentMap.name) : -1;
     player.inLingjie = isLingjieMapCategory(c);
 }
+
+// ---- 天元城（靈界的安全區城鎮，config-maps.js 索引 7）----
+// 復活點：身在靈界＝天元城外（使用者指定「玩家復活會回到城外」），否則＝宗門；戰死、渡劫失敗、暫存區滿、離線撐不住都用這裡
+function getRespawnPoint() {
+    const f = isInLingjie() && findMapByName(LINGJIE_RESPAWN_MAP);
+    return f || { c: 0, i: 0 };
+}
+function sendToRespawn() { const r = getRespawnPoint(); changeMap(r.c, r.i); }
+function respawnPlaceName() { return isInLingjie() ? LINGJIE_RESPAWN_MAP : '宗門'; }
+// 天元城城門圖（CITY_GATES）點下去：傳送到城內並開城內場景
+function enterLingjieTown(name) {
+    const f = findMapByName(name);
+    if (!f) return;
+    if (player.currentMap.name !== name) selectMap(f.c, f.i, true);
+    if (player.currentMap.name !== name) return;   // 被擋下（例：不在靈界）
+    closeCityGate();
+    openTownScene(name);
+}
+// 茶樓：歇息回滿氣血靈力，順便聽一則傳聞（LINGJIE_TEA_RUMORS）
+function openTeaHouse() {
+    player.hp = getMaxHp();
+    if (typeof getMaxMp === 'function') player.mp = getMaxMp();
+    const r = LINGJIE_TEA_RUMORS[Math.floor(Math.random() * LINGJIE_TEA_RUMORS.length)];
+    addLog('🍵 在天元茶館歇息片刻，氣血與靈力恢復了。', "heal");
+    gameAlert(`🍵 天元茶館\n\n你點了一壺靈茶，歇息片刻，氣血與靈力全數恢復。\n\n鄰桌的修士壓低聲音：\n「${r}」`);
+    updateUI();
+}

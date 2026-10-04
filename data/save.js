@@ -66,14 +66,12 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
     // 挑戰模式（越級地圖，map.js，第 70 節）：不能離線／背景掛機，一律退回宗門、沒有野外收益（也堵住線上撐過 60 秒就信任的 idleProvenMap）
     if (!player.currentMapIsSafe && typeof isChallengeMap === 'function' && isChallengeMap()) {
         let fromName = player.currentMap.name;
-        player.currentMap = maps[0].items[0];
-        player.currentMapIsSafe = maps[0].isSafe;
+        { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
         prefix = `⚔️ 挑戰模式不能離線／背景掛機，已從【${fromName}】退回【${player.currentMap.name}】靜修。\n`;
     }
     if (!player.currentMapIsSafe && isGearStashFull()) {
         let fromName = player.currentMap.name;
-        player.currentMap = maps[0].items[0];
-        player.currentMapIsSafe = maps[0].isSafe;
+        { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
         prefix = `📦 暫存區已滿，無法在【${fromName}】歷練，已退回【${player.currentMap.name}】靜修（請先處理暫存區的裝備）。\n`;
     }
     if (!player.currentMapIsSafe) {
@@ -85,8 +83,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (!est.survivable && NUMERIC_V2 && idlePotionCanKeepUp(est)) est.survivable = true;
         if (!est.survivable) {
             let fromName = player.currentMap.name;
-            player.currentMap = maps[0].items[0];
-            player.currentMapIsSafe = maps[0].isSafe;
+            { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
             prefix = `⚠️ 以目前實力無法在【${fromName}】久留（一波妖獸約造成 ${formatShortCombat(est.waveDamage)} 傷害，氣血上限 ${formatShortCombat(est.maxHp)}），已退回【${player.currentMap.name}】靜修。\n`;
         }
     }
