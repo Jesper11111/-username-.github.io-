@@ -48,11 +48,11 @@ function getPaidRefreshLeft(kind, limit) {
 // 檢查次數與靈石並扣款；成功回傳 true
 function payForRefresh(kind, cost, limit, name) {
     if (getPaidRefreshLeft(kind, limit) <= 0) {
-        alert(`【${name}】今日刷新次數已用完（每日 ${limit} 次），明天再來吧！`);
+        gameAlert(`【${name}】今日刷新次數已用完（每日 ${limit} 次），明天再來吧！`);
         return false;
     }
     if ((player.coins || 0) < cost) {
-        alert(`靈石不足！立即刷新【${name}】需要 ${cost.toWan()} 靈石。`);
+        gameAlert(`靈石不足！立即刷新【${name}】需要 ${cost.toWan()} 靈石。`);
         return false;
     }
     player.coins -= cost;

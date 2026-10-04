@@ -267,7 +267,7 @@ async function refreshLeaderboard(manual) {
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
-        lbError = lbIsQuota(e) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
+        lbError = (lbIsQuota(e) || (e && e.code !== 'permission-denied' && await lbProbeQuota())) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
             ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "留言板尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
             : "連線失敗，請稍後再試。";
     }
@@ -281,6 +281,20 @@ const LB_QUOTA_MSG = "雲端伺服器回報額度已滿（Firebase：Quota excee
 function lbIsQuota(e) {
     const s = String((e && (e.code || '')) + ' ' + (e && e.message || ''));
     return /resource-exhausted|quota/i.test(s);
+}
+
+// 連線逾時的時候 SDK 還在內部重試、拿不到真正的錯誤（使用者 2026-10-04 回報寄售「連線失敗」，實際是 Firebase 回 429 額度已滿）：
+//   直接打一次 Firestore REST（不登入，正常會回 403），回 429 就是額度已滿，改顯示 LB_QUOTA_MSG
+async function lbProbeQuota() {
+    const c = LEADERBOARD_FIREBASE_CONFIG;
+    // 額度已滿時部分 429 回應不帶 CORS 標頭（瀏覽器回報 Failed to fetch），最多試 3 次
+    for (let i = 0; i < 3; i++) {
+        try {
+            const r = await lbWithTimeout(fetch(`https://firestore.googleapis.com/v1/projects/${c.projectId}/databases/(default)/documents/${MARKET_COLLECTION}?pageSize=1&key=${c.apiKey}&t=${Date.now()}`));
+            return r.status === 429;
+        } catch (e) { await new Promise(res => setTimeout(res, 800)); }
+    }
+    return false;
 }
 
 function lbWithTimeout(promise) {
