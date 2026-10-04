@@ -333,19 +333,19 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005AF"></script>
+<script src="data/config-realms.js?v=20261005AG"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005AF"></script>
-<script src="data/numeric.js?v=20261005AF"></script>
-<script src="data/config-leaderboard.js?v=20261005AF"></script>
-<script src="data/config-mailbox.js?v=20261005AF"></script>
+<script src="data/config-numeric.js?v=20261005AG"></script>
+<script src="data/numeric.js?v=20261005AG"></script>
+<script src="data/config-leaderboard.js?v=20261005AG"></script>
+<script src="data/config-mailbox.js?v=20261005AG"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005AF"></script>
+<script src="data/config-aptitude.js?v=20261005AG"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005AF"></script>
-<script src="data/bounty.js?v=20261005AF"></script>
-<script src="data/config-defense.js?v=20261005AF"></script>
-<script src="data/config-world-boss.js?v=20261005AF"></script>
+<script src="data/config-bounty.js?v=20261005AG"></script>
+<script src="data/bounty.js?v=20261005AG"></script>
+<script src="data/config-defense.js?v=20261005AG"></script>
+<script src="data/config-world-boss.js?v=20261005AG"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -1029,6 +1029,14 @@ async function reloadBoardMsgs() {
         ]);
         bdRows = ms.docs.map(d => Object.assign({ id: d.id }, d.data()));
         bdMuted = mu.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        // 留言 8 小時後自動刪除（MSGBOARD_LIFETIME_HOURS）：開這個分頁時清掉過期的
+        const cut = Date.now() - MSGBOARD_LIFETIME_HOURS * 3600000;
+        const old = bdRows.filter(r => r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis() < cut);
+        if (old.length) {
+            await Promise.all(old.map(r => db.collection(MSGBOARD_COLLECTION).doc(r.id).delete().catch(() => {})));
+            log(`已自動刪除 ${old.length} 則超過 ${MSGBOARD_LIFETIME_HOURS} 小時的留言`, 'ok');
+            bdRows = bdRows.filter(r => !old.includes(r));
+        }
     } catch (e) { bdRows = []; bdMuted = []; log('讀取留言板失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     const dt = t => t && t.toMillis ? new Date(t.toMillis()).toLocaleString('zh-TW', { hour12: false }) : '—';
     const mutedSet = new Set(bdMuted.map(m => m.id));
