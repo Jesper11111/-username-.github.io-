@@ -17,7 +17,10 @@ const LEADERBOARD_FIREBASE_CONFIG = {
 // 移除排行榜（2026-09-30 使用者要求：先「暫停紀錄」，後改為「刪除戰力榜與死守天南城榜」）：
 //   true 時不上傳戰力、守城不送審（也不排入待送），大道石碑沒有戰力榜／守城榜分頁（只剩留言板、寄售），HUD 戰力數字不能點。
 //   雲端資料由 GM 在 gm.html 按「💥 清空全部榜單」刪除；雲端規則沒改。要恢復改成 false（程式都還在）
-const LEADERBOARD_RANKS_REMOVED = true;
+// 2026-10-04 使用者：「戰力排行榜先開放，我等一下再關閉」→ 拆成兩個開關：戰力榜 LEADERBOARD_POWER_REMOVED、死守天南城榜 LEADERBOARD_RANKS_REMOVED
+//   要再關閉戰力榜：LEADERBOARD_POWER_REMOVED 改回 true（並把 index.html 兩個 HUD 戰力的 onclick／🏆 拿掉）、換版本號
+const LEADERBOARD_POWER_REMOVED = false;
+const LEADERBOARD_RANKS_REMOVED = true;   // 現在只代表死守天南城榜（守城送審）
 
 // Firebase App Check（2026-10-04，保護 Firebase 額度：只有從本網站正常開啟的遊戲能連雲端，用程式直接呼叫的流量被拒）：
 //   填入 reCAPTCHA v3 的「網站金鑰」（site key，公開的，可以放程式裡；密鑰 secret key 只填在 Firebase 主控台）後啟用；空字串＝不啟用。

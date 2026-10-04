@@ -1623,7 +1623,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AV`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AW`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -2374,6 +2374,10 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 只擋玩家端，雲端規則沒改；要完全封住得改 `tools/firestore.rules`。gm.html 功能不受影響。
   - 恢復：`LEADERBOARD_RANKS_REMOVED = false`、index.html 兩個 HUD 戰力加回 `onclick="openLeaderboardModal()"` 與 🏆（HTML 註解有寫）、更新版本號。
   - 驗證（本機，真實 Firebase 唯讀）：上傳被略過、守城 99 波未排入、HUD 戰力無 onclick、大道石碑只剩留言板與寄售、指定開守城榜會改開留言板；Console 無錯誤。
+
+- **戰力榜重新開放**（2026-10-04，版本 `20261005AW`，使用者：「戰力排行榜先開放，我等一下再關閉」）：開關拆成兩個——`LEADERBOARD_POWER_REMOVED = false`（戰力榜：上傳、定時同步、大道石碑分頁、HUD 戰力 🏆 可點、gm.html 自動巡檢）
+  與 `LEADERBOARD_RANKS_REMOVED = true`（現在只管死守天南城榜：送審、分頁、守城介面文字，仍關閉）。再關閉戰力榜：`LEADERBOARD_POWER_REMOVED` 改 true、index.html 兩個 HUD 戰力拿掉 onclick 與 🏆、換版本號。
+  注意：開放期間每位在線玩家每 5 分鐘上傳一次戰力（Firebase 寫入額度）。
 
 ### 開通步驟（管理者做一次）
 1. 到 https://console.firebase.google.com 建立專案（可關閉 Google Analytics）。
