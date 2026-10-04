@@ -42,7 +42,7 @@ self.addEventListener('fetch', event => {
     if (req.method !== 'GET') return;
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;
-    if (/\.(mp4|webm|mov|m4a|mp3|ogg)$/i.test(url.pathname)) return;   // 影片、音樂（背景音樂 audio/bgm-main.m4a）不進快取：檔案大、播放器會用分段請求
+    if (/\.(mp4|webm|mov|m4a|mp3|ogg)$/i.test(url.pathname)) return;   // 影片、音樂（背景音樂 audio/bgm-*.m4a／.ogg）不進快取：檔案大、播放器會用分段請求
     if (req.mode === 'navigate' || /\.html$/i.test(url.pathname) || url.pathname.endsWith('/')) {
         event.respondWith(networkFirst(req, url));
     } else if (url.searchParams.has('v') && /\.js$/i.test(url.pathname)) {
