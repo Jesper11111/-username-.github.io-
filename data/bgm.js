@@ -64,7 +64,22 @@ function playBgm() {
     a.volume = p.vol;
     if (!a.paused) return;
     const r = a.play();
-    if (r && r.catch) r.catch(() => {});   // 還沒互動過或載入失敗：等下次點擊再試
+    if (r && r.then) r.then(() => { bgmUnlocked = true; renderBgmTitleBtn(); }, () => renderBgmTitleBtn());   // 被瀏覽器擋（還沒互動過）或載入失敗：等下次點擊再試
+}
+// 遊戲主頁（標題畫面）右上的音樂鈕 #bgm-title-btn：瀏覽器擋自動播放時顯示「🔇 輕觸開啟音樂」，播放中顯示 🔊（點了＝關）
+let bgmUnlocked = false;   // 已經成功播放過（之後換畫面可以自動接著放）
+function bgmTitleTap() {
+    const p = getBgmPref(), a = bgmAudios.game;
+    if (p.on && a && !a.paused) toggleBgm();   // 播放中：關掉
+    else { if (!p.on) toggleBgm(); else playBgm(); }
+    renderBgmTitleBtn();
+}
+function renderBgmTitleBtn() {
+    const btn = document.getElementById('bgm-title-btn');
+    if (!btn) return;
+    const p = getBgmPref(), a = bgmAudios[currentBgmTrack()], playing = !!(a && !a.paused);
+    btn.textContent = playing ? '🔊' : (p.on ? '🔇 輕觸開啟音樂' : '🔇');
+    btn.classList.toggle('pulse', !playing && p.on);
 }
 function pauseBgm() { Object.values(bgmAudios).forEach(a => { if (!a.paused) a.pause(); }); }
 
@@ -95,16 +110,20 @@ function renderBgmSettings() {
 function initBgm() {
     let interacted = false;
     const kick = () => { interacted = true; setTimeout(playBgm, 0); };   // 點擊的那一下可能正好打開三界之戰
+    // 遊戲主頁一打開就試著播（2026-10-04 使用者：「音樂可以在遊戲主頁開始播放嗎」）：電腦版 Chrome 等常去的網站多半允許；
+    //   手機（iOS Safari、多數 Android）一律要先點畫面 → 主頁右上顯示「🔇 輕觸開啟音樂」，點任何地方都會開始
+    setTimeout(() => { playBgm(); renderBgmTitleBtn(); }, 300);
     // 換畫面（進出三界之戰、靈界地圖）：每秒檢查一次，該放哪首就換哪首
     setInterval(() => {
-        if (!interacted || document.hidden) return;
+        renderBgmTitleBtn();
+        if (!(interacted || bgmUnlocked) || document.hidden) return;
         const a = bgmAudios[currentBgmTrack()];
         if (!a || a.paused) playBgm();
     }, 1000);
     ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, kick, true));
-    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBgm(); else if (interacted) playBgm(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBgm(); else if (interacted || bgmUnlocked) playBgm(); });
     // 有聲影片：開始播就暫停背景音樂，停了再接著放（play／pause／ended 不會冒泡，用捕獲階段）
     document.addEventListener('play', e => { if (e.target.tagName === 'VIDEO' && !e.target.muted) pauseBgm(); }, true);
-    ['pause', 'ended'].forEach(t => document.addEventListener(t, e => { if (e.target.tagName === 'VIDEO' && interacted) setTimeout(playBgm, 300); }, true));
+    ['pause', 'ended'].forEach(t => document.addEventListener(t, e => { if (e.target.tagName === 'VIDEO' && (interacted || bgmUnlocked)) setTimeout(playBgm, 300); }, true));
 }
 initBgm();
