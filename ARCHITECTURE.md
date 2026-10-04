@@ -1623,7 +1623,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AU`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005AV`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3281,6 +3281,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **上線順序**：① 主控台發布新版 `tools/firestore.rules`（含第 52 節的新戰力上限與本節的信箱規則）→ ② push → ③ GM 後台寄信或建兌換碼。規則未發布時，信箱顯示「信箱尚未開放」、兌換顯示「兌換碼功能尚未開放」，不影響遊戲。
 - 驗證（本機）：預設禮包發放 → 靈石 +100 萬、多一名傳說僕從（效率 ×3）；圖紙、補天石、星允鐵入帳；僕從小屋滿時擋下並提示；信件卡片與內文跳脫正常、設定按鈕顯示「1 封待領」；
   連線雲端（規則未發布）顯示「信箱尚未開放」、兌換碼格式檢查與「尚未開放」提示正常；gm.html 分頁、預設、圖紙加入、「📮」帶入 uid 正常；Console 無錯誤。**寫入雲端與規則需發布後線上實測**。
+- **GM 權限也能寄**（2026-10-04，版本 `20261005AV`）：`rewards.gm`（true 授予／false 撤銷），只限寄給指定 uid 的信，見第 74 節「GM 測試人物」。
 - **先天資質也能寄**（2026-09-28，版本 `20260929x`，使用者要求）：`rewards.aptitude = { root: { group, id? 或 elems? }, physique: id }`。
   - GM：「⛩️ 先天靈根」選單列出全部 48 種（有 pick 的組逐一列、五行組合的組列出所有組合：天 5、雙 10、三 10、四 5、五 1），「⛩️ 先天體質」列出 24 種；gm.html 因此多載入 `config-aptitude.js`（只有常數）。
   - 玩家（aptitude.js 的 `offerAptitudeGift`）：**已測過資質** → 逐項跳出「原本 vs 仙府賜予」，按「改用賜予的／保留原本」（沿用重測的 `finishAptitudeReroll`，佇列 `aptitudeGiftQueue` 靈根、體質各問一次，日誌「📮 接受仙府賜予」）；
@@ -3984,7 +3985,18 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
       否則前 10 名候選各做 3 層 alpha-beta（仙翁→玩家→仙翁→評估），並扣掉「下完後玩家能 4 層內連續衝四取勝」的點（這段最多算 1.2 秒）。本機測試：對「一層貪心、先手」的電腦約四成勝、約兩成和局，平均每手約 0.1 秒。
     - 驗證（本機）：Playwright 走完 3 竿（漁獲入帳、次數歸零、按鈕停用）、回到對話、3 盤棋（贏得靈石入帳）、手機 390 寬版面；建置版 `dist/` 新增的 onclick 函式都有公開、Console 無錯誤。
       無頭 Chromium 沒有 H.264 解碼器，開場動畫走「載入失敗 → 直接進釣魚」分支；一般 Chrome／Safari／手機都能播 mp4（同目錄其他影片相同格式）。
-  - **路人閒聊**（版本 `20261005AQ`，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
+    **正式出現條件**（版本 `20261005AV`，使用者：「人物含吃藥後魅力 5000、當日線上擊殺怪物滿 2000、一天只會出現一次、每小時出現 10 分鐘、10 分鐘後隱藏」）：
+    仙翁改 `enabled` 開放、`chance: 1`、`minCha: 5000`（`getTotalCharm`＝本身＋裝備；駐顏駐魅力丹直接加在 `player.stats.cha`，已含）、`minKillsToday: 2000`、`window: { everyMin: 60, showMin: 10 }`（hiddenNpcs 通用欄位）。
+    town-npc.js：`rollTownNpcs` 改呼叫 `trySpawnTownNpc(城名, npc)`；當日線上擊殺 `getTodayFieldKills`／`addTodayFieldKills`（`player.dayKills = { date, n }`，日曆日；combat.js 的線上野外每波擊殺後呼叫，離線／背景補發不算）；
+    `getTownNpcWindow(w)`＝裝置時間每小時 :00～:09 為出現時段；`player.townNpcSeen = { id: 日期#時段 }`：今天在別的時段出現過就不再出現（同一時段離島再回來還在）；
+    出現時排 `townNpcHideTimer`，時段結束 `hideWindowTownNpc` 讓仙翁消失（對話框開著就關掉，小遊戲可以玩完但不回到對話）；待在島上時 `townNpcClock` 每 30 秒檢查，時段一到自動現身；`closeTownScene` 呼叫 `stopTownNpcClock`。
+    低語聽完（約 2 分半）才能對話，所以每個時段實際可對話約 7 分半。驗證：Playwright 假時鐘測魅力／擊殺門檻、同時段重進、10 分鐘後消失、下一小時不再出現、隔天重置、在島上等到整點自動出現。
+  - **GM 測試人物**（版本 `20261005AV`，使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：map.js 的 `isGM()`＝`player.gm === true`。GM 時 `getMapEntryBlock` 一律放行（境界、四維、靈界、暫存區），
+    `changeMap` 傳送到靈界分類地圖自動 `inLingjie = true`，`prepareLingjieEntry`／`tryLeaveLingjie` 不扣傳送陣靈石，`goToTown` 不看城鎮禁入。
+    **取得方式＝GM 後台寄信**（使用者：「可以在 GM 後台製作一隻 GM 人物嗎」）：gm.html「📮 發放獎勵」新增「🛡️ GM 權限」選單（不變／授予／撤銷）→ `rewards.gm = true|false`，
+    **只能用仙府信件寄給指定 uid**（兌換碼與全服信會被擋；`MAIL_SCHEMA_VERSION` 3，舊版遊戲提示重新整理）；玩家領信時 mailbox.js 的 `grantMailRewards(r, personal)` 只在個人信才設定 `player.gm`
+    （兌換碼、奇遇呼叫不帶 personal，不會改 GM）。寄信只有管理者能寫（firestore.rules 的 mail create），規則不用改。
+，使用者：「周圍路人每 30 秒頭頂出現對話框，傳聞三百年前就有仙翁在此地垂釣……」）：`townScenes` 新增選填 `chatter: { everyMs, firstMs, showMs, heads, lines }`；
     town.js 的 `startTownChatter`（`openTownScene` 啟動、`closeTownScene`／換場景停止）、`showTownChatter`：只挑目前畫面看得到的路人頭頂（手機左右滑動時畫面外的人不說話），
     句子不連續重複，對話框 `#town-chatter .town-chatter-bubble`（不擋點擊、淡入淡出）。青瀾島：第一句進島 3 秒後、之後每 30 秒、停留 7 秒、8 位路人、7 句傳聞（仙翁伏筆）；版本 `20261005AR` 依使用者要求增加到 22 句（仙翁的往事、釣竿、下棋、等人等傳聞）。
     `rollTownNpcs` 新增魅力門檻（`getTotalCharm()`＝本身＋裝備）；`getTownNpcFigures` 依 kind 換成 `talkToXianweng`（函式名寫成字串字面值，建置才會公開）；

@@ -239,6 +239,7 @@ function fieldCombatRound() {
         player.coins += coinsEarned;
         player.reputation = (player.reputation || 0) + repEarned;
         addDailyProgress('kill', killedCount);
+        addTodayFieldKills(killedCount);   // 當日線上擊殺（town-npc.js；青瀾島隱藏仙翁的出現條件）
         onPartnerFieldKills(killedCount);   // 情緣任務的野外擊殺／並肩擊殺（partner.js）
         // 掉寶（第 71 節）：rolls＝這批擊殺換算的掉寶次數（每小時最多 1200 次；難圖每隻多擲補回）
         let rolls = takeDropRolls(killedCount), base = getDropBaseMult();
