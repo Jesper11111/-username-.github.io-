@@ -29,6 +29,9 @@ function openTownScene(name) {
         extra.style.display = scene.extraButton ? '' : 'none';
         if (scene.extraButton) { extra.innerText = scene.extraButton.label; extra.setAttribute('onclick', scene.extraButton.action); }
     }
+    // noLeave（config-towns.js，例：青瀾島只能搭船離島）：隱藏左上「↩ 離開」
+    const leave = document.getElementById('town-scene-leave');
+    if (leave) leave.style.display = scene.noLeave ? 'none' : '';
     document.getElementById('town-scene').style.display = 'block';
     rollTownNpcs(name);   // 隱藏 NPC：這次進城有沒有躲在角落（town-npc.js）
     rollTownFigures(scene);
@@ -179,7 +182,9 @@ function layoutTownScene(recenter) {
     stage.style.width = w + 'px';
     stage.style.height = h + 'px';
     if (recenter) {
-        box.scrollLeft = (w - vw) / 2;
+        // focusX（config-towns.js，圖寬的 0～1）：窄螢幕一開始看哪裡；沒設＝置中（例：青瀾島從碼頭小船那側開始，玩家才找得到出口）
+        const fx = townScenes[currentTownScene] && townScenes[currentTownScene].focusX;
+        box.scrollLeft = typeof fx === 'number' ? Math.max(0, Math.min(w - vw, w * fx - vw / 2)) : (w - vw) / 2;
         box.scrollTop = (h - vh) / 2;
     }
     const hint = document.getElementById('town-scene-hint');
