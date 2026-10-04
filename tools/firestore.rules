@@ -71,7 +71,8 @@ service cloud.firestore {
     // ---- 仙府信箱與兌換碼（data/mailbox.js、gm.html「📮 發放獎勵」，ARCHITECTURE.md 第 56 節）----
     // 信件：GM 寫；玩家只能讀寄給全服（to == 'all'）或寄給自己 uid 的信（遊戲以 where('to', 'in', ['all', uid]) 查詢）
     match /mail/{mailId} {
-      allow get, list: if isAdmin() || (request.auth != null && resource.data.to in ['all', request.auth.uid]);
+      // 2026-10-04：isAdmin() 本身要多讀 1 次（exists），放最後；玩家的查詢先符合前面的條件就不會再讀
+      allow get, list: if (request.auth != null && resource.data.to in ['all', request.auth.uid]) || isAdmin();
       allow write: if isAdmin();
     }
     // 領取紀錄：文件 id 必須是「自己的 uid_信件 id」，只能建立一次（已存在時 set 會變成 update 而被拒絕），玩家不能改、不能刪
@@ -151,8 +152,8 @@ service cloud.firestore {
     // 拍賣品：所有人可讀（清單單次 ≤ 50；查自己賣的／自己出價的不限）
     match /market/{lid} {
       allow get: if true;
-      allow list: if request.query.limit <= 50 || isAdmin()
-        || (request.auth != null && (resource.data.seller == request.auth.uid || resource.data.bidder == request.auth.uid));
+      allow list: if request.query.limit <= 50
+        || (request.auth != null && (resource.data.seller == request.auth.uid || resource.data.bidder == request.auth.uid)) || isAdmin();
       // 上架：賣家是自己、沒有出價、結束時間在 12～48 小時之間（多留 1 分鐘誤差）
       allow create: if request.auth != null && !isBanned(request.auth.uid)
         && request.resource.data.keys().hasOnly(['seller', 'sellerName', 'kind', 'item', 'label', 'startPrice', 'bid', 'bidder', 'bidderName', 'bidCount', 'createdAt', 'endsAt'])
@@ -191,7 +192,7 @@ service cloud.firestore {
     }
     // 退款單：只能在出價交易中、為「被超過的前一位出價者」建立（金額＝他的出價）；本人刪除＝領回
     match /marketRefunds/{rid} {
-      allow get, list, delete: if isAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow get, list, delete: if (request.auth != null && resource.data.uid == request.auth.uid) || isAdmin();
       allow update: if false;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['uid', 'amount', 'listingId', 'label', 'at'])

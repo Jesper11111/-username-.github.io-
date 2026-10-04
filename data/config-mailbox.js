@@ -8,11 +8,11 @@ const MAIL_COLLECTION = "mail";
 const MAIL_CLAIMS_COLLECTION = "mailClaims";
 const CODE_COLLECTION = "codes";
 const CODE_CLAIMS_COLLECTION = "codeClaims";
-const MAIL_REFRESH_MS = 30 * 60 * 1000;
+const MAIL_REFRESH_MS = 2 * 60 * 60 * 1000;   // 2026-10-04 由 30 分鐘改 2 小時（Firebase 讀取額度用完）；打開信箱時照樣會讀
 // 獎勵格式版本：GM 寄出時寫進信件／兌換碼的 v；遊戲只領 v ≤ 本值的，比較新的會提示「請重新整理遊戲」而不建立領取紀錄
 //   （2026-09-28 事故：玩家用還沒支援「先天資質」的舊版遊戲領了資質信，領取紀錄建立了卻沒有效果，那封信也不能再領）
 //   1 = 數量／圖紙／僕從；2 = 加上先天資質。新增獎勵種類時 +1
-const MAIL_SCHEMA_VERSION = 2;   // 遊戲在線時每 30 分鐘檢查一次信箱（打開信箱時也會檢查）
+const MAIL_SCHEMA_VERSION = 2;   // 遊戲在線時每 2 小時檢查一次信箱（打開信箱時也會檢查）
 
 // 獎勵：rewards = { coins: 1000000, butianStones: 5, …, blueprints: { "劍_1500": 1 }, servants: { "傳說": 1 } }
 // 數量型：field = 加到 player 的欄位（星允鐵直接加數量，不套「尋鐵」加成）

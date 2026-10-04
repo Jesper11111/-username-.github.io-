@@ -5,6 +5,7 @@
 let lbBackend = null;          // Promise<{ db, uid }>，失敗會清掉以便下次重試
 let lbLastUploadAt = 0;
 let lbLastRefreshAt = 0;
+let lbTabFetchedAt = {};       // 各分頁上次讀取成功的時間（LEADERBOARD_AUTO_REFRESH_MS 內重開視窗不重讀）
 let lbRows = null;             // 最近一次讀到的榜單
 let lbError = "";
 let lbBanned = null;           // null = 尚未查過；true = 被 GM 封鎖（banned/{uid}，第 50 節），不再上傳
@@ -247,6 +248,7 @@ async function fetchLeaderboard() {
 function openLeaderboardModal(tab) {
     document.getElementById('leaderboard-modal').style.display = 'flex';
     applyLeaderboardTab(tab || lbTab);
+    if (Date.now() - (lbTabFetchedAt[lbTab] || 0) < LEADERBOARD_AUTO_REFRESH_MS) { renderLeaderboard(false); return; }
     refreshLeaderboard(false);
 }
 
@@ -264,6 +266,7 @@ async function refreshLeaderboard(manual) {
         else if (lbTab === 'board') mbBoardRows = await lbWithTimeout(fetchMsgBoard());
         else if (lbTab === 'market') await lbWithTimeout(fetchMarket());
         else lbRows = await lbWithTimeout(fetchLeaderboard());
+        lbTabFetchedAt[lbTab] = Date.now();
     } catch (e) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
