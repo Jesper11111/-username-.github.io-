@@ -210,15 +210,15 @@ function deleteItemFromBag(itemId) {
 }
 
 // 一鍵刪除：把背包內所有勾選品級的裝備一次清掉（已穿戴、鎖定中的不受影響）
-function bulkDeleteEquipment() {
+async function bulkDeleteEquipment() {
     let selected = getCheckedBulkQualities('bulk-equip-quality');
-    if (selected.length === 0) { alert("請先勾選要刪除的品級！"); return; }
+    if (selected.length === 0) { gameAlert("請先勾選要刪除的品級！"); return; }
 
     let keep = getCheckedBulkQualities('bulk-keep-element');
     let targets = player.equipInventory.filter(eq => selected.includes(eq.quality) && !isEquipLocked(eq) && !keep.includes(eq.element));
-    if (targets.length === 0) { alert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
+    if (targets.length === 0) { gameAlert("背包內沒有符合勾選品級、未鎖定且不在保留屬性內的裝備。"); return; }
 
-    if (!confirm(`確定要刪除背包內 ${targets.length} 件【${selected.join('、')}】裝備嗎？（🔒 鎖定的不會刪除${keep.length ? '；保留屬性：' + keep.join('') : ''}）\n此操作無法復原。`)) return;
+    if (!(await gameConfirm(`確定要刪除背包內 ${targets.length} 件【${selected.join('、')}】裝備嗎？（🔒 鎖定的不會刪除${keep.length ? '；保留屬性：' + keep.join('') : ''}）\n此操作無法復原。`))) return;
 
     player.equipInventory = player.equipInventory.filter(eq => !targets.includes(eq));
     addLog(`🗑️ 一鍵刪除了 ${targets.length} 件裝備（${selected.join('、')}）。`, "equip");

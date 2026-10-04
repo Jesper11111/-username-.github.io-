@@ -45,6 +45,9 @@ function handlerNames(texts, decl) {
         for (const m of t.matchAll(/javascript:([^"']*)/g)) snippets.push(m[1]);
     }
     const used = new Set();
+    // 以字串傳進去、再組成 onclick 的函式名稱（例：ui.js 的 renderBulkDeleteBar(…, "bulkDismissServants") 產生 onclick="${deleteFn}()"）：
+    //   程式裡任何「剛好是頂層函式名稱」的字串字面值也一併公開（2026-10-04 一鍵解僱僕從、一鍵刪除裝備在混淆版失效的修正）
+    for (const t of texts) for (const m of t.matchAll(/["'`]([A-Za-z_$][\w$]*)["'`]/g)) if (decl[m[1]] === 'function') used.add(m[1]);
     for (let h of snippets) {
         h = h.replace(/\$\{[^{}]*(\{[^{}]*\}[^{}]*)*\}/g, ' 0 ').replace(/'[^']*'|"[^"]*"|`[^`]*`/g, ' 0 ');
         for (const m of h.matchAll(/(^|[^.\w$])([A-Za-z_$][\w$]*)/g)) if (decl[m[2]]) used.add(m[2]);

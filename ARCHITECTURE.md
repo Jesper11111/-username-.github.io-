@@ -532,6 +532,7 @@ combatTick() 每秒執行 [combat.js]
 - **僕從鎖定**（2026-09-28）：僕從物件的 `s.locked`（true = 鎖定，隨存檔保存，舊存檔沒有此欄位 = 未鎖定，不需 migrate）。
   僕從卡片有「🔓 鎖定／🔒 已鎖定」按鈕 → `toggleServantLock(id)`，名稱後加 🔒。鎖定中「解僱僕從」按鈕為 disabled，
   `dismissServant()` 開頭也會擋下（跳提示）；`bulkDismissServants()` 只解僱未鎖定的，確認視窗與日誌會註明略過幾名。
+  確認與提示改用遊戲內對話框（`gameConfirm`／`gameAlert`，函式改為 async；背包的 `bulkDeleteEquipment` 同，2026-10-04 版本 `20261005W`）。
   鎖定不影響指派任務。**日後新增任何會移除僕從的功能，都要略過 `s.locked` 的僕從。**
 - **裝備鎖定**（2026-09-26）：裝備物件的 `eq.locked`（true = 鎖定，隨裝備存檔，舊裝備沒有此欄位 = 未鎖定）。
   背包、暫存區、角色裝備視窗的每張卡片都有 `formatLockButton(eq)` 產生的「🔓 鎖定／🔒 已鎖定」按鈕 → `toggleEquipLock(id)`（用 `locateEquip` 找三處）；
@@ -1610,7 +1611,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005V`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005W`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3830,7 +3831,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **① 建置＋混淆（`tools/build.js`、`package.json`）**：`npm ci && node tools/build.js` → `dist/`。
   - index.html 的 113＋支 `data/*.js` 依原順序接成一支，包進 `(function(){ … })()`：`player`、`enemies` 與所有函式都變成區域名稱，**主控台打 `player.coins = …` 會出現 player is not defined**。
   - **事件字串**（HTML／模板字串的 `onclick="…"` 等、config 的 `action: "…"`（town.js 用 `new Function` 執行）、活動的 `openFn: "…"`（activity.js 的 `window[act.openFn]`））用到的頂層函式，建置時自動掃描後掛回 `window`
-    （約 244 個，都是「按按鈕」本來就能做的事）；用到的頂層變數用 getter／setter 掛回（`refineSelIdx`、`craftForgeKey`、`mkForm`、`LINGJIE_SCENE_KEY`、`WORLD_SCENE_KEY`）。
+    （約 256 個，都是「按按鈕」本來就能做的事）；**另外，程式裡任何「剛好是頂層函式名稱」的字串字面值（`'bulkDismissServants'` 這種）也一併掛回**——函式名稱以字串傳進去再組成 `onclick="${fn}()"` 的寫法（ui.js 的 `renderBulkDeleteBar(…, deleteFn)`、activity.js 的 `fnName`）掃描不到事件字串，2026-10-04 版本 `20261005W` 起靠這條規則（之前混淆版的「一鍵解僱僕從」「一鍵刪除裝備」按了沒反應）；用到的頂層變數用 getter／setter 掛回（`refineSelIdx`、`craftForgeKey`、`mkForm`、`LINGJIE_SCENE_KEY`、`WORLD_SCENE_KEY`）。
     `player`、`enemies`、`DefenseBattle`、`ZhenmoTower` 列在 `FORBIDDEN`，事件字串裡直接用到會建置失敗（守城的「重新載入」因此改成 `retryDefenseBattle()`）。
   - ⚠️ **寫程式的新規則**：事件字串裡只能呼叫頂層函式（或上述變數），不要寫 `player.xxx`；程式內不要用 `window.某函式 = …` 來替換遊戲函式（包起來後替換不到遊戲用的那個，servant.js 的日誌靜音已改成直接 `addLog = …`）。
   - terser：compress 2 輪＋mangle（函式範圍內名稱全換）、移除註解；1293 KB → 684 KB。HTML 註解一併移除。gm.html 的 data 腳本另接成 `data/gm-lib.js`（只壓縮，不包範圍，GM 頁內嵌程式要用全域名稱）。

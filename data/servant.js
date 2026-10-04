@@ -152,19 +152,19 @@ function assignServantQuest(servantId, questId) {
 }
 
 // 一鍵解僱：把所有勾選品級的僕從一次遣散
-function bulkDismissServants() {
+async function bulkDismissServants() {   // 2026-10-04 改用遊戲內對話框（App 內建瀏覽器會擋 confirm，按了沒反應）
     let selected = getCheckedBulkQualities('bulk-servant-quality');
-    if (selected.length === 0) { alert("請先勾選要解僱的品級！"); return; }
+    if (selected.length === 0) { gameAlert("請先勾選要解僱的品級！"); return; }
 
     // 鎖定的僕從一律略過
     let targets = player.servants.filter(s => selected.includes(s.quality) && !s.locked);
-    if (targets.length === 0) { alert("沒有符合勾選品級、且未鎖定的僕從。"); return; }
+    if (targets.length === 0) { gameAlert("沒有符合勾選品級、且未鎖定的僕從。"); return; }
 
     let working = targets.filter(s => s.quest).length;
     let warn = working > 0 ? `\n（其中 ${working} 名正在執行任務，解僱後任務將中止）` : "";
     let lockedSkipped = player.servants.filter(s => selected.includes(s.quality) && s.locked).length;
     let lockNote = lockedSkipped > 0 ? `\n（另有 ${lockedSkipped} 名已鎖定，不會被解僱）` : "";
-    if (!confirm(`確定要解僱 ${targets.length} 名【${selected.join('、')}】僕從嗎？${warn}${lockNote}\n此操作無法復原。`)) return;
+    if (!(await gameConfirm(`確定要解僱 ${targets.length} 名【${selected.join('、')}】僕從嗎？${warn}${lockNote}\n此操作無法復原。`))) return;
 
     let targetIds = new Set(targets.map(s => s.id));
     player.servants = player.servants.filter(s => !targetIds.has(s.id));
