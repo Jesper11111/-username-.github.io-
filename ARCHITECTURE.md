@@ -1626,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BN`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BO`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4061,6 +4061,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **域外天魔海報**（2026-10-04，版本 `20261005AY`，使用者提供 1024×1536 海報「三界之戰」：「域外天魔選項新增圖片」）：`images/secret/yuwai-tianmo.jpg`（海報，約 490KB）、`yuwai-tianmo-banner.jpg`（海報中段主角裁切 640×263）。
   config-activities.js 的活動新增選填 `img`／`banner`：activity.js 的 `renderActivityList` 有 banner 時按鈕用它當底圖（左側漸層壓暗、鎖定時灰階）；
   `openActivity` 遇到有 img 的活動先開 `#activity-poster-modal`（`openActivityPoster(act)`：海報、名稱、說明；未開放顯示「功能開發中，敬請期待！」、不顯示「⚔️ 進入」），已開放的按「⚔️ 進入」→ `enterActivityPoster()` 呼叫 openFn。
+- **正式開放＋GM 預約開啟**（2026-10-05，版本 `20261005BO`，使用者：「今晚 8 點世界 Boss 開啟」）：config-activities.js 的 `demon` 改 `implemented: true`；
+  gm.html「手動開一隻」新增「開始時間」（`#wb-start` datetime-local，留空＝立即、不能早於現在；以 GM 電腦時間為準）→ startAt＝該時間、endAt＝startAt＋持續小時；狀態列顯示「⏳ 預約中」。
+  玩家端原本就支援未來的 startAt（顯示「尚未開放（還有多久）」）；預約中不再顯示「下一隻：每週六 20:00」。管理者寫入不受規則的週六時段限制；每週六 20:00 的自動換隻照舊（GM 開的這隻結束後才換）。
 - **改名「三界之戰」**（2026-10-04，版本 `20261005BA`，使用者：「活動域外天魔改名稱 三界之戰」）：config-activities.js 的活動 `demon` 名稱改為「三界之戰」（id、openFn 不變；世界 Boss 本身的視窗標題仍是「⚔️ 世界 Boss」）。
 
 ## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
