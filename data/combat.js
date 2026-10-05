@@ -114,7 +114,7 @@ function combatTick() {
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         resetMonsterSkillWave();   // 怪物技能的破甲計時（monster.js）
         waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
-        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap()) : 1;   // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）
+        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap(), getObservedRoundsPerKill()) : 1;   // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）
         // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
         for (let i = 0; i < count; i++) {
             let look = pickFieldMonster(player.currentMap);
@@ -293,6 +293,7 @@ function fieldCombatRound() {
         // 日誌減量：一波一則彙總（取代逐回合的出手／斬殺訊息）
         if (waveSummary && waveSummary.kills > 0) {
             let s = waveSummary;
+            recordObservedRoundsPerKill(s.rounds / s.kills);   // 收益速度上限用實測速度（numeric.js 的 nv2RewardSpeedAdj）
             let expText = (player.pendingTribulation && s.exp === 0) ? "修為已滿(待渡劫)" : `${Math.floor(s.exp).toWan()} 經驗`;
             addLog(`⚔️ ${s.rounds} 回合擊退 ${s.kills} 名敵手，獲得 ${expText}、${s.coins.toWan()} 靈石、${s.rep.toWan()} 聲望。`, "combat", true);
         }
@@ -347,6 +348,14 @@ function getMapMonsterStats(map, roll) {
 // 每隻擊殺收益的補償倍率：舊制為刷新變慢的 KILL_REWARD_MULT（config-maps.js）；新制妖獸要打很多下，改用 nv2KillRewardMult（numeric.js）
 // 新制另乘 waveRewardAdj：殺得比同境界一般玩家快太多時打折，每小時收益最多 NV2.rewardSpeedCap 倍（numeric.js 的 nv2RewardSpeedAdj）
 let waveRewardAdj = 1;
+// 實測速度（2026-10-05）：這張地圖最近幾波的「每隻回合數」（一波回合數 ÷ 擊殺數，指數平均），換圖就重來；不存檔
+let waveObs = { map: null, rpk: null };
+function recordObservedRoundsPerKill(rpk) {
+    if (!(rpk > 0) || !player.currentMap) return;
+    const name = player.currentMap.name;
+    waveObs = waveObs.map === name && waveObs.rpk != null ? { map: name, rpk: waveObs.rpk * 0.7 + rpk * 0.3 } : { map: name, rpk };
+}
+function getObservedRoundsPerKill() { return player.currentMap && waveObs.map === player.currentMap.name ? waveObs.rpk : null; }
 function getKillRewardMult() {
     return NUMERIC_V2 ? nv2KillRewardMult(getRewardMap()) * waveRewardAdj : KILL_REWARD_MULT;   // 挑戰模式用主要地圖的補償（第 70 節）
 }
