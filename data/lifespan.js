@@ -26,10 +26,18 @@ function getAgingMultiplier() {
 }
 
 // 該境界給的壽元在「安全區」可撐幾小時（見 config-lifespan.js 的說明）
+//   有指定倍數（config-lifespan.js 的 LIFESPAN_TARGET_RATIO）的境界：倍數 ＝ 撐的時數倍率 ×（累積壽元 − 底線）÷ 本境界壽元，反推撐的時數倍率
 function getAgingHours(realmIndex) {
     let pace = realmPacing[realmIndex] || realmPacing[realmPacing.length - 1];
     let mapDanger = LIFESPAN_DANGER_MULT[getMapCategoryIndex(pace.map)] || 1;
-    return Math.max(LIFESPAN_MIN_AGING_HOURS, pace.hours * LIFESPAN_PACE_MULT * mapDanger);
+    let paceMult = LIFESPAN_PACE_MULT;
+    let target = typeof LIFESPAN_TARGET_RATIO !== 'undefined' && LIFESPAN_TARGET_RATIO[realmIndex];
+    let row = lifespanByRealm[realmIndex];
+    if (target && row) {
+        let usable = getInitialLifespanForRealm(realmIndex) - row.deathCost * LIFESPAN_FLOOR_DEATHS;
+        if (usable > 0) paceMult = target * row.gain / usable;
+    }
+    return Math.max(LIFESPAN_MIN_AGING_HOURS, pace.hours * paceMult * mapDanger);
 }
 
 // 目前每分鐘流逝的年數（未觸底時）
