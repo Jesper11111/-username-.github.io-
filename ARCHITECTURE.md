@@ -1626,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BK`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BL`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4002,6 +4002,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     `getTownNpcWindow(w)`＝裝置時間每小時 :00～:09 為出現時段；`player.townNpcSeen = { id: 日期#時段 }`：今天在別的時段出現過就不再出現（同一時段離島再回來還在）；
     出現時排 `townNpcHideTimer`，時段結束 `hideWindowTownNpc` 讓仙翁消失（對話框開著就關掉，小遊戲可以玩完但不回到對話）；待在島上時 `townNpcClock` 每 30 秒檢查，時段一到自動現身；`closeTownScene` 呼叫 `stopTownNpcClock`。
     低語聽完（約 2 分半）才能對話，所以每個時段實際可對話約 7 分半。驗證：Playwright 假時鐘測魅力／擊殺門檻、同時段重進、10 分鐘後消失、下一小時不再出現、隔天重置、在島上等到整點自動出現。
+    **擊殺門檻降為 1000**（2026-10-05，版本 `20261005BL`，使用者：「改成 1000 隻」）：`minKillsToday: 1000`。野外每波 3 隻、刷新 10 秒，一擊斬殺時每秒約 0.21 隻 → 最快約 1 小時 20 分（原 2000 約 2 小時 40 分）。
   - **GM 測試人物**（版本 `20261005AV`，使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：map.js 的 `isGM()`＝`player.gm === true`。GM 時 `getMapEntryBlock` 一律放行（境界、四維、靈界、暫存區），
     `changeMap` 傳送到靈界分類地圖自動 `inLingjie = true`，`prepareLingjieEntry`／`tryLeaveLingjie` 不扣傳送陣靈石，`goToTown` 不看城鎮禁入。
     **取得方式＝GM 後台寄信**（使用者：「可以在 GM 後台製作一隻 GM 人物嗎」）：gm.html「📮 發放獎勵」新增「🛡️ GM 權限」選單（不變／授予／撤銷）→ `rewards.gm = true|false`，
