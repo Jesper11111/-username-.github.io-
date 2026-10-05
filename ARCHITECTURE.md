@@ -187,7 +187,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 0 | `format.js` | `fmtNum(n)`（1 萬以下千分位；以上 萬／億／兆，小數依大小 2／1／0 位、尾端 0 省略、不加逗號）、`Number.prototype.toWan`／`String.prototype.toWan`（不可列舉） | 無 | 幾乎所有檔案顯示數字時的 `.toWan()` |
 | 1 | `config-realms.js` | `realms` 境界名稱陣列、修煉節奏表 `realmPacing`（每境界目標時數/主要地圖/估算加成）、`REALM_PACING_KILLS_PER_SEC` | 無（`realmPacing.map` 是地圖名稱字串，執行期才查 `maps`） | `stats.js`(getRealmStageExp/getNextExp)、`lifespan.js`(getAgingHours)、`ui.js`、`leveling.js` |
 | 2 | `config-level.js` | `MAX_PLAYER_LEVEL`、`LEVEL_UP_*` 成長值、`LEVEL_EXP_SEGMENTS` 經驗曲線 | 無 | `stats.js`(getLevelExpNeeded、getMaxHp/getMaxMp)、`leveling.js`(gainLevelExp)、`ui.js` |
-| 3 | `config-lifespan.js` | `lifespanByRealm` 各境界壽元增加量與死亡折壽、歲月流逝常數 `LIFESPAN_MIN_AGING_HOURS`/`LIFESPAN_PACE_MULT`/`LIFESPAN_DANGER_MULT`/`LIFESPAN_TRIBULATION_MULT`/`LIFESPAN_OFFLINE_RATE`/`LIFESPAN_FLOOR_DEATHS`、起始年齡 `LIFESPAN_START_AGE` | 無 | `lifespan.js`、`leveling.js`(轉世重設壽元與年齡)、`ui.js`(年齡顯示) |
+| 3 | `config-lifespan.js` | `lifespanByRealm` 各境界壽元增加量與死亡折壽、歲月流逝常數 `LIFESPAN_MIN_AGING_HOURS`/`LIFESPAN_PACE_MULT`/`LIFESPAN_TARGET_RATIO`/`LIFESPAN_DANGER_MULT`/`LIFESPAN_TRIBULATION_MULT`/`LIFESPAN_OFFLINE_RATE`/`LIFESPAN_FLOOR_DEATHS`、起始年齡 `LIFESPAN_START_AGE` | 無 | `lifespan.js`、`leveling.js`(轉世重設壽元與年齡)、`ui.js`(年齡顯示) |
 | 4 | `config-maps.js` | `SECT_MAP_NAME`（"宗門"，唯一安全區的名稱）、`maps` 地圖資料（含各圖 `coins` 每隻靈石）、`KILLS_PER_HOUR_ESTIMATE`、`REPUTATION_MAX_BY_MAP_CATEGORY`（各區擊殺聲望上限）、`OFFLINE_COMBAT_RATE`/`OFFLINE_REPUTATION_RATE`、離線實力估算 `IDLE_WAVE_AVG_MONSTERS`/`IDLE_WAVE_GAP_TICKS`/線上實戰證明門檻 `IDLE_PROVEN_SECONDS`、怪物刷新 `MONSTER_RESPAWN_SECONDS`(10)／收益補償 `KILL_REWARD_MULT`／打坐日誌間隔 `MEDITATE_LOG_SECONDS`（第 33 節末）、`monsterIcons`；野外妖獸圖鑑 `FIELD_MONSTERS` 已搬到緊接在後的 `config-monsters.js`（型態、各地圖出沒組合，邏輯 `monster.js` 排在 race.js 之後，第 66 節） | 無 | `state.js`、`map.js`(isInSect)、`combat.js`、`ui.js`、`save.js`(migrateCurrentMap) |
 | 5 | `config-sects.js` | `sectData` 宗門與技能表（宗門可選填 `faction: "邪"`，目前為皇朝、天魔教、九幽黃泉；沒寫 = 正）、`SECT_SKILL_BONUS`、`SECT_TIER_NAMES`、`findSectByName()`；尾端迴圈替每招補上 `tier`/`mult` | 無 | `sect.js`、`stats.js`(getSectTier/getAllSkills)、`ui.js`、`save.js`(重新綁定宗門)、`merit.js`(getPlayerFaction) |
 | 6 | `config-lingbao.js` | `legacySkillAdjustments` 舊版禁術下修數值、`artifactSkills` 神器專屬技能（key = 商品 id）、`lingbaoTierCosts` 各階段兌換價格、`ARTIFACT_COST_COINS` 神器靈石價（1 億）、`lingbaoShopItems` 三階段戰略級寶物與武學 | 無 | `lingbao-shop.js`、`equipment.js`(五行說明列固定屬性裝備)、`artifact.js` |
@@ -808,6 +808,9 @@ combatTick() 每秒執行 [combat.js]
     修煉時數與主要地圖取自 `config-realms.js` 的 `realmPacing`（第 26 節）。
     → **在該境界的主要地圖掛機，一個境界給的壽元約可撐「修滿該境界所需時間」的 5 倍**；前期（凡人）至少維持安全區 6 小時。
     改修煉時數時壽元會自動跟著對齊，不需另外調整。
+    **指定倍數**（2026-10-05，版本 `20261005BV`，使用者指定）：`LIFESPAN_TARGET_RATIO = { 9: 19, 10: 20, 13: 25, 14: 28, 15: 30 }`＝渡劫 19、仙人初境 20、大羅金仙 25、混元大羅金仙 28、混沌道祖 30 倍——
+    「從凡人累積到該境界的壽元（扣底線）在主要地圖可撐修煉時數的幾倍」。倍數 ＝ 撐時倍率 ×（累積壽元 − 底線）÷ 本境界壽元（與修煉時數無關），`getAgingHours` 反推撐時倍率取代 5
+    （渡劫 5.52、仙人初境 5.59、大羅金仙 11.4、混元 15.0、道祖 15.5）。只改流逝速度，壽元增加量與死亡折壽不變。其他境界維持 5（約 7.6～24 倍）。
   - 所在地倍率 `LIFESPAN_DANGER_MULT`：安全區 ×1、野外 ×1.5、開放世界 ×2、上古禁區 ×3、幽冥禁域 ×3、至高戰場 ×4（索引 0～5）；渡劫中 ×4。離線 ×0.5（倍率依離線時所在地）。
 
     | 境界 | 主要地圖 | 修滿約需 | 壽元在主要地圖可撐 | 底線 |
@@ -1628,7 +1631,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BU`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BV`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。

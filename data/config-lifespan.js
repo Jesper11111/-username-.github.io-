@@ -11,6 +11,10 @@
 //   修煉時數與主要地圖見 config-realms.js 的 realmPacing
 const LIFESPAN_MIN_AGING_HOURS = 6;
 const LIFESPAN_PACE_MULT = 5;
+// 指定境界的「累積壽元可撐倍數」（2026-10-05 使用者指定）：在主要地圖，從凡人累積到該境界的壽元（扣掉底線）可撐「修滿該境界所需時間」的幾倍。
+//   預設（LIFESPAN_PACE_MULT 5）約 17～24 倍、大羅金仙以後約 10 倍；這裡列的境界改用指定倍數換算流逝速度（lifespan.js 的 getAgingHours），
+//   只改流逝速度，各境界獲得的壽元與死亡折壽不變。索引對應 realms：9 渡劫、10 仙人初境、13 大羅金仙、14 混元大羅金仙、15 混沌道祖
+const LIFESPAN_TARGET_RATIO = { 9: 19, 10: 20, 13: 25, 14: 28, 15: 30 };
 
 // 新角色（與轉世後）的起始年齡；年齡只會隨歲月流逝增加（折壽不算年齡）
 const LIFESPAN_START_AGE = 16;
