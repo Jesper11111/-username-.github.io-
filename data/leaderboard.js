@@ -259,7 +259,7 @@ function openLeaderboardModal(tab) {
 
 async function refreshLeaderboard(manual) {
     if (!isLeaderboardConfigured()) { renderLeaderboard(); return; }
-    if (lbTab === 'market' && isMarketClosed()) { lbError = ''; renderLeaderboard(false); return; }   // 週末休市：不讀雲端（market.js）
+    if (lbTab === 'market' && isMarketClosed()) { lbError = ''; renderLeaderboard(false); return; }   // 休市（週末、週一 15～24 點）：不讀雲端（market.js）
     if (manual && Date.now() - lbLastRefreshAt < LEADERBOARD_REFRESH_COOLDOWN_MS) return;
     lbLastRefreshAt = Date.now();
     lbError = "";

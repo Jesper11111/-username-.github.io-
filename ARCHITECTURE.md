@@ -1626,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BM`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BN`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3385,6 +3385,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **週末休市**（2026-10-04，版本 `20261005AF`，使用者：「寄賣只開放週一～週五，六日的網路流量要留給世界 Boss」）：`MARKET_OPEN_DAYS` [1～5]（台灣時間星期）；
   market.js 的 `isMarketClosed()`：週六、週日寄售分頁顯示「🏮 寄售週末休市」（`marketClosedHtml`），`refreshLeaderboard` 遇到休市的寄售分頁直接返回、**不讀雲端**；
   上架、出價、領退款、領物品／靈石、下架開頭都 `marketClosedAlert()`。休市期間結束的拍賣照常結束，週一再到「待處理」領取。
+- **每週一 15:00～24:00 休市**（2026-10-05，版本 `20261005BN`，使用者：「星期一下午三點賣場關閉、半夜開啟」→ 每週固定、週二 00:00 恢復）：config-leaderboard.js 新增 `MARKET_CLOSED_HOURS = { 1: [15, 24] }`（開放日裡的休市時段，台灣時間）；
+  market.js 新增 `marketCloseInfo()`（null＝開放；否則 `{ title, why, reopen }`），`isMarketClosed`／`marketClosedAlert`／`marketClosedHtml` 都改用它，週末與週一時段顯示各自的標題與恢復時間。雲端規則未限制時段（同週末休市，只在玩家端擋）。
 
 ## 59. 戰場實況改版：人物立繪＋爆擊血條（`battle-fx.js`；2026-09-28，版本 `20260930f`）
 - 玩家要求：戰鬥面板人物區改放人物圖（男角用男、女角用女）、加一條有打擊感的「爆擊血條」，參考圖是金紅圓環＋金框血條（血條上的數字是畫死的，所以血條用 CSS 重做，只裁了圓環當徽章）。
