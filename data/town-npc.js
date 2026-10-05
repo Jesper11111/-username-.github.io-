@@ -138,15 +138,23 @@ function trySpawnTownNpc(sceneName, npc) {
         if (seen && seen.split('#')[0] === todayKey() && seen !== win.key) return false;
     }
     if (Math.random() >= npc.chance) return false;
-    townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
+    const hit = townNpcSpots[sceneName] = { npc, spot: npc.spots[Math.floor(Math.random() * npc.spots.length)] };
     if (win) {
-        if (!player.townNpcSeen || typeof player.townNpcSeen !== 'object') player.townNpcSeen = {};
-        player.townNpcSeen[npc.id] = win.key;
+        // 「今天見過」要等真的見到才算（2026-10-05 修正：原本一出現就記，時段尾段才到島上的玩家低語還沒聽完仙翁就消失，當天也不會再出現）：
+        //   有低語門檻（unlockAfterAll）的，聽完低語、可以對話時才記（startNpcWhispers）；同一時段已聽完的，離島再回來直接可以對話
+        hit.winKey = win.key;
+        const W = npc.whispers;
+        if (W && W.unlockAfterAll) { if (player.townNpcSeen && player.townNpcSeen[npc.id] === win.key) hit.heardAll = true; }
+        else markTownNpcSeen(npc.id, win.key);
         clearTimeout(townNpcHideTimer);
         townNpcHideTimer = setTimeout(() => hideWindowTownNpc(sceneName, npc), win.leftMs);   // 時段結束就隱藏
     }
     if (npc.whispers) setTimeout(() => startNpcWhispers(sceneName), 0);   // 仙翁低語（openTownScene 之後才啟動）
     return true;
+}
+function markTownNpcSeen(id, key) {
+    if (!player.townNpcSeen || typeof player.townNpcSeen !== 'object') player.townNpcSeen = {};
+    player.townNpcSeen[id] = key;
 }
 // 定時 NPC 的時段結束：從畫面上消失（正在對話就關掉對話框；小遊戲玩到一半可以玩完，只是不會再回到對話）
 function hideWindowTownNpc(sceneName, npc) {
@@ -196,6 +204,7 @@ function startNpcWhispers(sceneName) {
             setTimeout(() => {
                 if (currentTownScene !== sceneName || townNpcSpots[sceneName] !== hit) return;
                 hit.heardAll = true;
+                if (hit.winKey) markTownNpcSeen(hit.npc.id, hit.winKey);   // 聽完低語＝今天見過（一天只出現一次從這裡算）
                 if (currentTownView) renderTownHotspots(currentTownView);
             }, W.showMs || 6000);
         }
