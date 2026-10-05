@@ -200,15 +200,66 @@ async function startWorldBossFight() {
     $('wb-fight-hero').src = player.gender === 'female' ? ZHENMO_HERO_IMG.female : ZHENMO_HERO_IMG.male;
     $('wb-fight-log').innerHTML = '';
     $('wb-fight-end').classList.remove('on');
-    $('wb-fight-skip').style.display = '';
     wbSetSpeed(1);
     closeModal('world-boss-modal');
     $('world-boss-scene').style.display = 'block';
+    wbOpStart();
     wbUpdateBars();
     wbLog(`⚔️ ${B.name}：「區區凡人，也敢犯我？」`, 'boss');
     (B.auras || []).forEach(a => wbLog(`🌀 ${B.name}展開光環${describeAura(a)}`, 'boss'));
     wbFight.tid = setTimeout(wbStep, 700);
 }
+// ---- OP王動畫（WB.opVideos 依序播，播完從 WB.opLoopFrom 循環，直到戰鬥結束；不能跳過）----
+// 每個不同的檔案一個 <video>（開戰就預載），同一個檔案重播只把 currentTime 歸 0，換支時才切換顯示，銜接不會黑一下。
+// 開戰是玩家點擊的當下就呼叫 play()（手機才允許有聲播放）；被擋就改靜音播。載入失敗就留著 Boss 圖。
+let wbOp = null;   // { idx, els: { src: video }, cur }
+function wbOpStart() {
+    wbOpStop();
+    const list = WB.opVideos || [];
+    const box = document.getElementById('wb-fight-video');
+    if (!list.length || !box) return;
+    wbOp = { idx: 0, els: {}, cur: null };
+    [...new Set(list)].forEach(src => {
+        const v = document.createElement('video');
+        v.src = src; v.preload = 'auto'; v.playsInline = true;
+        v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+        v.addEventListener('ended', wbOpNext);
+        v.addEventListener('error', () => { if (wbOp && wbOp.cur === v) wbOpStop(); });
+        box.appendChild(v);
+        wbOp.els[src] = v;
+    });
+    wbOpShow(0);
+}
+function wbOpShow(i) {
+    if (!wbOp) return;
+    const src = WB.opVideos[i], v = wbOp.els[src];
+    wbOp.idx = i;
+    if (wbOp.cur && wbOp.cur !== v) wbOp.cur.pause();
+    wbOp.cur = v;
+    try { v.currentTime = 0; } catch (e) {}
+    const p = v.play();
+    if (p && p.catch) p.catch(e => {
+        if (e && e.name === 'NotAllowedError' && !v.muted) { v.muted = true; v.play().catch(() => {}); }
+    });
+    v.addEventListener('playing', function on() {
+        v.removeEventListener('playing', on);
+        if (!wbOp || wbOp.cur !== v) return;
+        Object.values(wbOp.els).forEach(x => x.classList.toggle('on', x === v));
+        document.getElementById('wb-fight-video').classList.add('on');
+    });
+}
+function wbOpNext() {
+    if (!wbOp) return;
+    const n = WB.opVideos.length;
+    wbOpShow(wbOp.idx + 1 < n ? wbOp.idx + 1 : Math.min(WB.opLoopFrom || 0, n - 1));
+}
+function wbOpStop() {
+    const box = document.getElementById('wb-fight-video');
+    if (wbOp) Object.values(wbOp.els).forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
+    wbOp = null;
+    if (box) { box.innerHTML = ''; box.classList.remove('on'); }
+}
+
 function wbRound(instant) {
     const f = wbFight, P = f.p, E = f.e;
     f.round++;
@@ -245,11 +296,6 @@ function wbStep() {
     if (!wbFight || wbFight.over) return;
     wbRound(false);
     if (wbFight && !wbFight.over) wbFight.tid = setTimeout(wbStep, ZHENMO_ROUND_MS / wbFight.speed);
-}
-function skipWorldBossFight() {
-    if (!wbFight || wbFight.over) return;
-    clearTimeout(wbFight.tid);
-    while (wbFight && !wbFight.over) wbRound(true);
 }
 function wbSetSpeed(s) {
     if (!wbFight) return;
@@ -291,8 +337,8 @@ async function wbEndFight(reason) {
     if (!f || f.over) return;
     f.over = true;
     clearTimeout(f.tid);
+    wbOpStop();
     wbUpdateBars();
-    document.getElementById('wb-fight-skip').style.display = 'none';
     const raw = wbScore(f), d = Math.min(raw, f.cap);
     const endBody = document.getElementById('wb-fight-end-body');
     endBody.innerHTML = `<div class="big">${reason}</div><p>本次傷害 ${fmtNum(raw)}${raw > f.cap ? `（計入上限 ${fmtNum(f.cap)}）` : ''}</p><p class="zm-note">傳送戰果中……</p>`;
@@ -346,6 +392,7 @@ function closeWorldBossFight() {
     if (wbFight && !wbFight.over) {   // 中途離開＝放棄這次（不送出、不扣次數）
         clearTimeout(wbFight.tid);
     }
+    wbOpStop();
     wbFight = null;
     document.getElementById('world-boss-scene').style.display = 'none';
     openWorldBossModal();

@@ -28,7 +28,11 @@ const WB = {
     rewards: { coinsH: 3, refine: 15, iron: 10, craft: { tianji: 2, hunyuan: 1 } },
     killMult: 2,
     // 外觀稱號（config-titles.js 的 cond type 'wboss'，沒有數值加成）
-    titles: { top1: "wbTop1", top10: "wbTop10", lastHit: "wbLastHit" }
+    titles: { top1: "wbTop1", top10: "wbTop10", lastHit: "wbLastHit" },
+    // 戰鬥畫面的 OP王動畫（2026-10-05 使用者提供 op1／OP2／OP3，「1→2→3 後循環 2→3 不停」「無法跳過，直到設定的回合或死亡才結束」）：
+    //   依序播 opVideos，播完從 opLoopFrom 那支開始循環；OP2 與 OP3 是同一個檔案，所以兩格都指向 op2.mp4（只下載一次）
+    opVideos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op2.mp4"],
+    opLoopFrom: 1
 };
 
 // 輪替的 Boss（依開放的週次輪流；圖片沿用鎮魔塔 BOSS 圖）。數值不用 realm：強度跟著挑戰者的境界（world-boss.js 的 wbBossStats）
