@@ -201,6 +201,7 @@ async function startWorldBossFight() {
     $('wb-fight-log').innerHTML = '';
     $('wb-fight-end').classList.remove('on');
     wbSetSpeed(1);
+    document.querySelector('#world-boss-scene .wb-speed').style.display = B.videos ? 'none' : '';   // 有專屬動畫的 Boss 不能加速
     closeModal('world-boss-modal');
     $('world-boss-scene').style.display = 'block';
     wbOpStart(B);
@@ -295,10 +296,10 @@ function wbRound(instant) {
 function wbStep() {
     if (!wbFight || wbFight.over) return;
     wbRound(false);
-    if (wbFight && !wbFight.over) wbFight.tid = setTimeout(wbStep, ZHENMO_ROUND_MS / wbFight.speed);
+    if (wbFight && !wbFight.over) wbFight.tid = setTimeout(wbStep, (wbFight.B.roundMs || ZHENMO_ROUND_MS) / wbFight.speed);
 }
 function wbSetSpeed(s) {
-    if (!wbFight) return;
+    if (!wbFight || (wbFight.B.videos && s !== 1)) return;
     wbFight.speed = s;
     document.querySelectorAll('#world-boss-scene .wb-speed button[data-s]').forEach(b => b.classList.toggle('on', +b.dataset.s === s));
 }

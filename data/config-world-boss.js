@@ -71,6 +71,8 @@ const WB_BOSSES = [
         skills: ["紫焰天斬", "金甲護體", "星河一劍", "武神降世"],
         auras: [{ name: "金甲護體", player: { atk: 0.05 }, self: { def: 5 } }],
         videos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op2.mp4"],
-        videoLoopFrom: 1
+        videoLoopFrom: 1,
+        // 使用者選「戰鬥時間跟著動畫走」：一回合 1 秒，30 回合約 30 秒＝三段動畫剛好播完一輪；有動畫的 Boss 不能加速（隱藏 ×1／×2／×4）
+        roundMs: 1000
     }
 ];

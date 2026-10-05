@@ -4100,10 +4100,14 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     有聲播放被擋（`NotAllowedError`）就改成靜音播；影片載入失敗就 `wbOpStop`，留著 Boss 圖。
     `wbEndFight`（30 回合或倒下）與 `closeWorldBossFight`（放棄）都會 `wbOpStop()`：暫停影片、清掉 src、移除元素。
   - 樣式：`#wb-fight-video` 疊在 `#wb-fight-bg` 上、主角立繪下（z-index 1）。黑底＋`object-fit: contain`（影片本身是黑底，直式畫面上下留黑），開始播放才淡入（`.on`）。
-  - **不能跳過**：移除「⏭ 略過演出」按鈕和 `skipWorldBossFight`。×1／×2／×4 加速和「↩ 放棄」（不送出、不扣次數）保留；影片照常循環，不受加速影響。
+  - **不能跳過**：移除「⏭ 略過演出」按鈕和 `skipWorldBossFight`。「↩ 放棄」（不送出、不扣次數）保留。
+  - **戰鬥時間跟著動畫走**（使用者看完展示後選 1）：原本一回合 `ZHENMO_ROUND_MS` 650ms，30 回合約 20 秒，第 3 段還沒播戰鬥就結束；×4 只要 5 秒。
+    改成 Boss 選填 `roundMs`（OP王 1000），`wbStep` 用 `B.roundMs || ZHENMO_ROUND_MS`，30 回合約 30 秒＝三段動畫各播一次。
+    有 `videos` 的 Boss 隱藏 ×1／×2／×4（`startWorldBossFight` 設 `.wb-speed` 的 display），`wbSetSpeed` 也只接受 1。其他四隻照舊可以加速。
   - 影片有聲音，播放時背景音樂會依第 76 節的 `isSoundVideoPlaying` 自動暫停，戰鬥結束後繼續。
   - 驗證（本機，戰果送出改成假的）：OP王 依序播放 0:op1 → 1:op2 → 2:op2 → 1:op2 → 2:op2…，銜接時一直有畫面；撐過 30 回合或倒下時影片停止並移除；
-    八岐大蛇不建立影片、照舊顯示 Boss 圖；世界 Boss 視窗橫幅顯示「OP王・金甲武神」；Console 無錯誤。
+    八岐大蛇不建立影片、照舊顯示 Boss 圖，加速鈕照舊顯示；世界 Boss 視窗橫幅顯示「OP王・金甲武神」；
+    OP王 加速鈕隱藏、強制 ×4 無效，第 1 段 0.1 秒、第 2 段 11.1 秒、第 3 段 21.4 秒開始，第 30 回合在 30.0 秒結束（第 3 段播到約 8.6 秒）；Console 無錯誤。
 
 ## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
 
