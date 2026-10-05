@@ -125,7 +125,7 @@ function renderWorldBoss() {
     const status = st.killedAt ? `💀 已被擊敗${st.lastName ? `（最後一擊：${wbEsc(st.lastName)}）` : ''}`
         : now < wbMs(st.startAt) ? `尚未開放（${wbFmtLeft(wbMs(st.startAt) - now)} 後）`
         : active ? `⚔️ 討伐中・剩 ${wbFmtLeft(wbMs(st.endAt) - now)}` : '⌛ 討伐時間已結束';
-    const nextLine = !active ? `<p class="lb-note">下一隻：每週六 20:00 開放（還有 ${wbFmtLeft(wbNextOpen(now) - now)}）</p>` : '';
+    const nextLine = !active && now >= wbMs(st.startAt) ? `<p class="lb-note">下一隻：每週六 20:00 開放（還有 ${wbFmtLeft(wbNextOpen(now) - now)}）</p>` : '';
     const left = wbTodayLeft(wbMine);
     const gapLeft = wbMine ? WB.gapSec * 1000 - (now - wbMs(wbMine.lastAt)) : 0;
     const myRank = wbMine ? wbRankOf(wbTop, wbMine.total) : 0;

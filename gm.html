@@ -295,9 +295,10 @@
             <label>Boss <select id="wb-boss"></select></label>
             <label>總血量 <input type="number" id="wb-hp" value="4000" min="1"> 萬</label>
             <label>持續 <input type="number" id="wb-hours" value="24" min="1" max="168"> 小時</label>
-            <button id="wb-open">⚔️ 立即開啟</button>
+            <label>開始時間 <input type="datetime-local" id="wb-start">（留空＝立即；以這台電腦的時間為準）</label>
+            <button id="wb-open">⚔️ 開啟</button>
             <button id="wb-end" class="danger">⏹ 結束目前這隻</button>
-            <p class="note">立即開啟會取代目前這隻（目前這隻記為「上一隻」，參加者仍可在結束 24 小時後領獎）。單次傷害上限＝總血量 1%。</p>
+            <p class="note">開啟會立刻取代目前這隻（目前這隻記為「上一隻」，參加者仍可在結束 24 小時後領獎）。填了開始時間＝預約：玩家先看到「尚未開放（還有多久）」，時間到才能挑戰。單次傷害上限＝總血量 1%。</p>
         </div>
         <div class="card">
             <h2>🔍 傷害紀錄審核 <select id="wb-which"><option value="cur">目前這隻</option><option value="prev">上一隻</option></select></h2>
@@ -334,19 +335,19 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005BN"></script>
+<script src="data/config-realms.js?v=20261005BO"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005BN"></script>
-<script src="data/numeric.js?v=20261005BN"></script>
-<script src="data/config-leaderboard.js?v=20261005BN"></script>
-<script src="data/config-mailbox.js?v=20261005BN"></script>
+<script src="data/config-numeric.js?v=20261005BO"></script>
+<script src="data/numeric.js?v=20261005BO"></script>
+<script src="data/config-leaderboard.js?v=20261005BO"></script>
+<script src="data/config-mailbox.js?v=20261005BO"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005BN"></script>
+<script src="data/config-aptitude.js?v=20261005BO"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005BN"></script>
-<script src="data/bounty.js?v=20261005BN"></script>
-<script src="data/config-defense.js?v=20261005BN"></script>
-<script src="data/config-world-boss.js?v=20261005BN"></script>
+<script src="data/config-bounty.js?v=20261005BO"></script>
+<script src="data/bounty.js?v=20261005BO"></script>
+<script src="data/config-defense.js?v=20261005BO"></script>
+<script src="data/config-world-boss.js?v=20261005BO"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -1089,7 +1090,7 @@ async function reloadWboss() {
     const st = wbSt, now = Date.now();
     $('wb-state').innerHTML = !st ? '目前沒有世界 Boss（每週六 20:00 玩家第一次打開時自動建立）。' : `
         <b>${esc((WB_BOSSES[(st.bossIdx || 0) % WB_BOSSES.length] || {}).name || '')}</b>（bid ${esc(st.bid)}）｜血量 ${fmt(st.hp)} / ${fmt(st.maxHp)}（${(st.hp / Math.max(1, st.maxHp) * 100).toFixed(1)}%）｜單次上限 ${fmt(st.cap)}<br>
-        ${wbDt(st.startAt)} ～ ${wbDt(st.endAt)}｜${st.killedAt ? `💀 ${wbDt(st.killedAt)} 被擊敗（最後一擊：${esc(st.lastName)}）` : now < wbMsOf(st.endAt) ? '⚔️ 進行中' : '⌛ 已結束'}<br>
+        ${wbDt(st.startAt)} ～ ${wbDt(st.endAt)}｜${st.killedAt ? `💀 ${wbDt(st.killedAt)} 被擊敗（最後一擊：${esc(st.lastName)}）` : now < wbMsOf(st.startAt) ? '⏳ 預約中（尚未開始）' : now < wbMsOf(st.endAt) ? '⚔️ 進行中' : '⌛ 已結束'}<br>
         上一隻：${st.prev ? `bid ${esc(st.prev.bid)}、血量 ${fmt(st.prev.maxHp)}、${st.prev.killed ? '被擊敗' : '未擊敗'}、${wbDt(st.prev.endAt)} 結束` : '無'}`;
     const cap = $('wb-which').value === 'prev' ? Math.floor(((st && st.prev && st.prev.maxHp) || 0) / 100) : (st ? st.cap : 0);
     wbRows.forEach(r => {
@@ -1130,14 +1131,19 @@ $('wb-open').onclick = async () => {
     if (!isAdmin) return log('需要管理者權限', 'err');
     const hp = Math.floor(Number($('wb-hp').value) * 10000), hours = Math.max(1, Math.min(168, Number($('wb-hours').value) || 24));
     if (!(hp >= 100)) return alert('請填總血量。');
-    if (!confirm(`立即開啟【${WB_BOSSES[+$('wb-boss').value].name}】？\n總血量 ${fmt(hp)}、單次上限 ${fmt(Math.floor(hp / 100))}、持續 ${hours} 小時`)) return;
+    // 開始時間（2026-10-05 預約開啟）：留空＝立即；不能早於現在
+    const startIn = $('wb-start').value, start = startIn ? new Date(startIn).getTime() : Date.now();
+    if (!(start > 0)) return alert('開始時間格式不對。');
+    if (start < Date.now() - 60000) return alert('開始時間已經過了，請留空（立即）或填之後的時間。');
+    const whenTxt = startIn ? `${new Date(start).toLocaleString('zh-TW', { hour12: false })} 開始` : '立即開始';
+    if (!confirm(`開啟【${WB_BOSSES[+$('wb-boss').value].name}】？\n${whenTxt}、持續 ${hours} 小時\n總血量 ${fmt(hp)}、單次上限 ${fmt(Math.floor(hp / 100))}`)) return;
     try {
         const ref = db.collection(WB_STATE_COLLECTION).doc('state'), old = (await ref.get()).data() || null, now = Date.now();
         await ref.set({ bid: 'gm' + now, bossIdx: +$('wb-boss').value, maxHp: hp, hp, cap: Math.floor(hp / 100),
-            startAt: firebase.firestore.Timestamp.fromMillis(now), endAt: firebase.firestore.Timestamp.fromMillis(now + hours * 3600000),
+            startAt: firebase.firestore.Timestamp.fromMillis(start), endAt: firebase.firestore.Timestamp.fromMillis(start + hours * 3600000),
             killedAt: null, lastUid: '', lastName: '',
             prev: old ? { bid: old.bid, maxHp: old.maxHp, killed: !!old.killedAt, endAt: old.endAt, lastUid: old.lastUid || '' } : null });
-        log(`已開啟世界 Boss（${hours} 小時）`, 'ok');
+        log(`已開啟世界 Boss（${whenTxt}、${hours} 小時）`, 'ok');
     } catch (e) { log('開啟失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); }
     reloadWboss();
 };

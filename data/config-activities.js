@@ -26,7 +26,7 @@ const activityData = [
     // 世界 Boss（world-boss.js，第 75 節；2026-10-04 由秘境移到這裡）：使用者要求「暫不開放」→ implemented: false 只顯示敬請期待；開放時改成 true 即可
     { id: "demon", name: "三界之戰", icon: "👹",   // 2026-10-04 使用者：原「域外天魔」改名「三界之戰」（同海報標題）
       minRep: 10000, minRealmIndex: 8,
-      implemented: false, openFn: "openWorldBossModal",
+      implemented: true, openFn: "openWorldBossModal",   // 2026-10-05 使用者：「今晚 8 點世界 Boss 開啟」→ 開放（第一隻由 GM 後台預約 20:00 開始）
       // 2026-10-04 使用者提供 1024×1536 海報「三界之戰」：點選先看海報（未開放＝敬請期待）；橫幅＝海報中段（主角）裁切 640×263
       img: "images/secret/yuwai-tianmo.jpg", banner: "images/secret/yuwai-tianmo-banner.jpg",
       desc: "世界BOSS・每週六 20:00～週日 20:00・大乘以上開放" }
