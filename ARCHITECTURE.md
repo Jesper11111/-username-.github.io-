@@ -1626,7 +1626,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BP`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BQ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4011,6 +4011,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   :08 以後才到島上的玩家還沒聽完仙翁就隨時段消失，當天其他時段也不會再出現。改為 `trySpawnTownNpc` 只記 `hit.winKey`，**聽完低語（`heardAll`）時才 `markTownNpcSeen`**；
   同一時段已聽完的，離島再回來 `heardAll` 直接為真（不用重聽）。沒有低語門檻的定時 NPC 仍在出現時就記。
   驗證（假時鐘）：10:08 進島 → 10:10 消失未聽完 → 11:00 再出現 → 11:03 聽完可對話 → 同時段離島再回直接可對話 → 12:00 不再出現；Console 無錯誤。
+    **出現時段改為每小時 :00～:19**（2026-10-05，版本 `20261005BQ`，使用者：「仙翁時間改成每小時 00 分～20 分出現」）：`window.showMin` 10 → 20（:20 整消失）；扣掉約 2 分 25 秒低語，每個時段可對話約 17 分半。
   - **GM 測試人物**（版本 `20261005AV`，使用者：「把測試人物設置為 GM，開啟進出任何地圖權限」）：map.js 的 `isGM()`＝`player.gm === true`。GM 時 `getMapEntryBlock` 一律放行（境界、四維、靈界、暫存區），
     `changeMap` 傳送到靈界分類地圖自動 `inLingjie = true`，`prepareLingjieEntry`／`tryLeaveLingjie` 不扣傳送陣靈石，`goToTown` 不看城鎮禁入。
     **取得方式＝GM 後台寄信**（使用者：「可以在 GM 後台製作一隻 GM 人物嗎」）：gm.html「📮 發放獎勵」新增「🛡️ GM 權限」選單（不變／授予／撤銷）→ `rewards.gm = true|false`，
