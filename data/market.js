@@ -10,16 +10,31 @@
 let mkActive = null, mkMine = [], mkWins = [], mkRefunds = [];
 let mkForm = { kind: 'blueprint' };
 
-// 週末休市（MARKET_OPEN_DAYS，台灣時間）
-function isMarketClosed() { return !MARKET_OPEN_DAYS.includes(new Date(Date.now() + 8 * 3600 * 1000).getUTCDay()); }
+// 休市（台灣時間）：週末整天（MARKET_OPEN_DAYS 以外）＋開放日裡的固定時段（MARKET_CLOSED_HOURS，每週一 15:00～24:00）
+// 回傳 null＝開放中；否則 { title, why, reopen }
+function marketCloseInfo() {
+    const t = new Date(Date.now() + 8 * 3600 * 1000), day = t.getUTCDay(), h = t.getUTCHours();
+    if (!MARKET_OPEN_DAYS.includes(day))
+        return { title: '寄售週末休市', why: '寄售只在週一～週五開放（台灣時間），週末的連線額度留給世界 Boss。', reopen: '週一 00:00' };
+    const w = typeof MARKET_CLOSED_HOURS !== 'undefined' && MARKET_CLOSED_HOURS[day];
+    if (w && h >= w[0] && h < w[1]) {
+        const names = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        const next = w[1] >= 24 ? `${names[(day + 1) % 7]} 00:00` : `今天 ${String(w[1]).padStart(2, '0')}:00`;
+        return { title: `寄售${names[day]}休市`, why: `每${names[day]} ${String(w[0]).padStart(2, '0')}:00 起休市（台灣時間）。`, reopen: next };
+    }
+    return null;
+}
+function isMarketClosed() { return !!marketCloseInfo(); }
 function marketClosedAlert() {
-    if (!isMarketClosed()) return false;
-    gameAlert('寄售週末休市（週六、週日），週一 00:00 恢復。\n休市期間結束的拍賣，週一再領取即可。');
+    const c = marketCloseInfo();
+    if (!c) return false;
+    gameAlert(`${c.title}，${c.reopen} 恢復。\n休市期間結束的拍賣不會消失，恢復後再領取即可。`);
     return true;
 }
 function marketClosedHtml() {
-    return `<p class="lb-note" style="font-size:1em; color:#fde68a;">🏮 寄售週末休市</p>
-        <p class="lb-note">寄售只在週一～週五開放（台灣時間），週末的連線額度留給世界 Boss。<br>休市期間結束的拍賣不會消失，週一 00:00 恢復後到「待處理」領取即可。</p>`;
+    const c = marketCloseInfo() || { title: '寄售休市', why: '', reopen: '稍後' };
+    return `<p class="lb-note" style="font-size:1em; color:#fde68a;">🏮 ${c.title}</p>
+        <p class="lb-note">${c.why}<br>休市期間結束的拍賣不會消失，${c.reopen} 恢復後到「待處理」領取即可。</p>`;
 }
 function mkTs(ms) { return firebase.firestore.Timestamp.fromMillis(ms); }
 function mkMs(ts) { return ts && ts.toMillis ? ts.toMillis() : 0; }
