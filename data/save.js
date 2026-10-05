@@ -114,6 +114,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // combatTicks 是「收益次數」（新制含每隻收益補償 getKillRewardMult），換回實際擊殺數，與線上同樣速度
         let partnerKills = Math.floor(combatTicks / (NUMERIC_V2 ? getKillRewardMult() : 1));
         if (partnerKills > 0) onPartnerFieldKills(partnerKills);
+        // 隱藏仙翁的當日擊殺（2026-10-05 使用者：「切換背景也可以」）：背景補發算、關掉遊戲的離線不算（town-npc.js）
+        if (partnerKills > 0 && !isOffline) addTodayFieldKills(partnerKills);
         if (partnerKills > 0) addFieldRaceKills(player.currentMap, partnerKills);   // 斬妖錄：依這張圖的種族比例計入（race.js）
         if (partnerKills > 0) addFieldRaceTreasureDrops(player.currentMap, partnerKills);   // 剋制法寶掉落（期望值，race.js）
         // 化神訣殘本（2026-10-02 使用者要求離線也能掉）：同線上規則，化神以上地圖每隻 0.5% 掉 1～3（yuanshen.js；不另寫日誌，列在結算訊息）

@@ -109,7 +109,7 @@ function rollTownNpcs(sceneName) {
 }
 let townNpcClock = null, townNpcHideTimer = null;
 function stopTownNpcClock() { clearInterval(townNpcClock); townNpcClock = null; clearTimeout(townNpcHideTimer); townNpcHideTimer = null; }
-// 當日（日曆日）線上野外擊殺數：combat.js 每波擊殺後呼叫 addTodayFieldKills；存 player.dayKills = { date, n }（用到才建立）
+// 當日（日曆日）線上野外擊殺數：combat.js 每波擊殺後、save.js 背景補發（切 App、鎖螢幕；關掉遊戲的離線不算）時呼叫 addTodayFieldKills；存 player.dayKills = { date, n }（用到才建立）
 function getTodayFieldKills() { const d = player.dayKills; return d && d.date === todayKey() ? (d.n || 0) : 0; }
 function addTodayFieldKills(n) {
     if (!(n > 0)) return;
