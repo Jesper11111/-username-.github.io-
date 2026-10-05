@@ -27,6 +27,19 @@ function igHash(str, seed) {
 }
 function igSign(str) { return igHash(IG_SALT + str, 7) + igHash(str + IG_SALT, 1013); }
 
+// 一次性解除標記（2026-10-05 使用者：「把被系統標記的玩家解除標記」）：這個時間以前被標記的存檔，讀檔時清掉標記，
+//   並把合理性檢查的起點重設為目前進度（否則「修煉進度過快」下次存檔又會被標回去）。之後新的異常照常標記。
+const IG_AMNESTY_AT = Date.UTC(2026, 9, 5, 9);   // 2026-10-05 17:00（台灣時間）
+function igAmnesty() {
+    const g = player && player.integrity;
+    if (!g || !g.flagged || !(g.at < IG_AMNESTY_AT)) return;
+    player.integrity = null;
+    if (!player.audit || typeof player.audit !== 'object') player.audit = {};
+    try { player.audit.max = igProgressHours(); } catch (e) { delete player.audit.max; }
+    player.audit.used = 0;
+    addLog('✅ 存檔驗證標記已由系統解除，戰力榜、寄售與世界 Boss 恢復使用。', 'system');
+}
+
 function isSaveFlagged() { return !!(player && player.integrity && player.integrity.flagged); }
 function flagSave(reason) {
     if (isSaveFlagged()) return;
