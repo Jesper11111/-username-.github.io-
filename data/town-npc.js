@@ -397,7 +397,7 @@ async function leaveQinglanIsland() {
     if (!(await gameConfirm('⛵ 是否搭船離開青瀾島？'))) return;
     openTownScene(WORLD_SCENE_KEY);
 }
-// 隱藏仙翁：出現條件見 config-towns.js（魅力 5000、當日線上擊殺 1000、每小時前 10 分鐘、一天一次）；對話三選一（兩個小遊戲在 xianweng-games.js、告辭＝當天不再出現）
+// 隱藏仙翁：出現條件見 config-towns.js（魅力 5000、當日線上擊殺 1000、每小時前 20 分鐘、一天一次）；對話三選一（兩個小遊戲在 xianweng-games.js、告辭＝當天不再出現）
 function talkToXianweng(sceneName) {
     const hit = townNpcSpots[sceneName];
     if (!hit) return;
