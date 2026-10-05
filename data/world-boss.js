@@ -203,22 +203,22 @@ async function startWorldBossFight() {
     wbSetSpeed(1);
     closeModal('world-boss-modal');
     $('world-boss-scene').style.display = 'block';
-    wbOpStart();
+    wbOpStart(B);
     wbUpdateBars();
     wbLog(`⚔️ ${B.name}：「區區凡人，也敢犯我？」`, 'boss');
     (B.auras || []).forEach(a => wbLog(`🌀 ${B.name}展開光環${describeAura(a)}`, 'boss'));
     wbFight.tid = setTimeout(wbStep, 700);
 }
-// ---- OP王動畫（WB.opVideos 依序播，播完從 WB.opLoopFrom 循環，直到戰鬥結束；不能跳過）----
+// ---- Boss 專屬動畫（B.videos 依序播，播完從 B.videoLoopFrom 循環，直到戰鬥結束；不能跳過。目前只有 OP王 有）----
 // 每個不同的檔案一個 <video>（開戰就預載），同一個檔案重播只把 currentTime 歸 0，換支時才切換顯示，銜接不會黑一下。
 // 開戰是玩家點擊的當下就呼叫 play()（手機才允許有聲播放）；被擋就改靜音播。載入失敗就留著 Boss 圖。
-let wbOp = null;   // { idx, els: { src: video }, cur }
-function wbOpStart() {
+let wbOp = null;   // { list, loopFrom, idx, els: { src: video }, cur }
+function wbOpStart(B) {
     wbOpStop();
-    const list = WB.opVideos || [];
+    const list = (B && B.videos) || [];
     const box = document.getElementById('wb-fight-video');
     if (!list.length || !box) return;
-    wbOp = { idx: 0, els: {}, cur: null };
+    wbOp = { list, loopFrom: B.videoLoopFrom || 0, idx: 0, els: {}, cur: null };
     [...new Set(list)].forEach(src => {
         const v = document.createElement('video');
         v.src = src; v.preload = 'auto'; v.playsInline = true;
@@ -232,7 +232,7 @@ function wbOpStart() {
 }
 function wbOpShow(i) {
     if (!wbOp) return;
-    const src = WB.opVideos[i], v = wbOp.els[src];
+    const src = wbOp.list[i], v = wbOp.els[src];
     wbOp.idx = i;
     if (wbOp.cur && wbOp.cur !== v) wbOp.cur.pause();
     wbOp.cur = v;
@@ -250,8 +250,8 @@ function wbOpShow(i) {
 }
 function wbOpNext() {
     if (!wbOp) return;
-    const n = WB.opVideos.length;
-    wbOpShow(wbOp.idx + 1 < n ? wbOp.idx + 1 : Math.min(WB.opLoopFrom || 0, n - 1));
+    const n = wbOp.list.length;
+    wbOpShow(wbOp.idx + 1 < n ? wbOp.idx + 1 : Math.min(wbOp.loopFrom, n - 1));
 }
 function wbOpStop() {
     const box = document.getElementById('wb-fight-video');

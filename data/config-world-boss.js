@@ -28,14 +28,12 @@ const WB = {
     rewards: { coinsH: 3, refine: 15, iron: 10, craft: { tianji: 2, hunyuan: 1 } },
     killMult: 2,
     // 外觀稱號（config-titles.js 的 cond type 'wboss'，沒有數值加成）
-    titles: { top1: "wbTop1", top10: "wbTop10", lastHit: "wbLastHit" },
-    // 戰鬥畫面的 OP王動畫（2026-10-05 使用者提供 op1／OP2／OP3，「1→2→3 後循環 2→3 不停」「無法跳過，直到設定的回合或死亡才結束」）：
-    //   依序播 opVideos，播完從 opLoopFrom 那支開始循環；OP2 與 OP3 是同一個檔案，所以兩格都指向 op2.mp4（只下載一次）
-    opVideos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op2.mp4"],
-    opLoopFrom: 1
+    titles: { top1: "wbTop1", top10: "wbTop10", lastHit: "wbLastHit" }
 };
 
 // 輪替的 Boss（依開放的週次輪流；圖片沿用鎮魔塔 BOSS 圖）。數值不用 realm：強度跟著挑戰者的境界（world-boss.js 的 wbBossStats）
+// ⚠️ 新 Boss 一律加在最後：雲端 wboss/state 存的是 bossIdx（索引），插在中間會讓進行中的那隻變成別隻（規則允許 0～15）。
+// 選填 videos／videoLoopFrom：戰鬥畫面的專屬動畫，依序播放，播完從 videoLoopFrom 那支開始循環，直到戰鬥結束（不能跳過）
 const WB_BOSSES = [
     {
         name: "八岐大蛇", title: "八首噬天", img: "images/zhenmo/boss-yamata.jpg", imgPos: "50% 25%", race: "beast", element: "水",
@@ -64,5 +62,15 @@ const WB_BOSSES = [
         intro: "八咫神鏡照見眾生心魔，日輪神威之下，唯有道心堅定者方能久戰。",
         skills: ["日輪神威", "八咫照心", "天岩戶封印", "烈日灼魂"],
         auras: [{ name: "天岩戶封印", player: { freeze: 0.03 }, self: { atk: 0.05 } }]
+    },
+    {
+        // 2026-10-05 使用者提供 op1／OP2／OP3 動畫：「影片專屬 OP王」「1→2→3 後循環 2→3 不停」。OP2 與 OP3 是同一個檔案，兩格都指向 op2.mp4（只下載一次）
+        name: "OP王", title: "金甲武神", img: "images/zhenmo/boss-opwang.jpg", imgPos: "60% 60%", race: "demon", element: "金",
+        def: 22, eva: 12, affix: "metal", affixVal: 20, atkMult: 1, icon: "⚔️",
+        intro: "金甲覆身、紫焰為刃的域外武神，一劍劈開星河，諸天修士須合力方能抵擋。",
+        skills: ["紫焰天斬", "金甲護體", "星河一劍", "武神降世"],
+        auras: [{ name: "金甲護體", player: { atk: 0.05 }, self: { def: 5 } }],
+        videos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op2.mp4"],
+        videoLoopFrom: 1
     }
 ];

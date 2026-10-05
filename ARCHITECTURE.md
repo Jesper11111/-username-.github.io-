@@ -28,7 +28,7 @@ images/               圖片素材
   evil-hall.jpg       殺手殿堂場景背景（937×625，玩家提供；獵殺邪修入口，見第 27 節）
   secret/             秘境海報（config-secret-realms.js 的 img，第 43 節）：zhenmo-tower.jpg 鎮魔塔（768×1365，9:16，玩家提供的水墨海報，圖上已有標題與標語）、
                       motu-tiannan.jpg 魔屠天南手機版（852×1846）／motu-tiannan-pc.jpg PC 版（1024×1536），玩家提供的 webp 以瀏覽器轉 JPG（圖上無字，標題由程式疊上，第 49 節）
-  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄 848×1264 直式插畫、boss-tiangou.jpg 第 10 層樓主天狗 848×1264 水墨插畫、boss-shiyue.jpg 第 15 層鎮關者噬月魔子 848×1264、boss-yamata.jpg 第 20 層樓主八岐大蛇 848×1264 浮世繪、boss-amaterasu.jpg 第 30 層樓主天照大神 848×1264 浮世繪、boss-susanoo.jpg 第 40 層樓主需佐能呼 848×1264 浮世繪、boss-liudao.jpg 第 50 層樓主六道極聖 848×1264、boss-tiancai.jpg 第 60 層樓主天裁真君 848×1264）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
+  zhenmo/             鎮魔塔戰鬥畫面（第 51 節；boss-modaifu.jpg 第 7 層墨大夫、boss-moxue.jpg 第 8 層墨居仁・血魔真身 848×1264、boss-xixiong.jpg 第 9 層襲胸雙雄 848×1264 直式插畫、boss-tiangou.jpg 第 10 層樓主天狗 848×1264 水墨插畫、boss-shiyue.jpg 第 15 層鎮關者噬月魔子 848×1264、boss-yamata.jpg 第 20 層樓主八岐大蛇 848×1264 浮世繪、boss-amaterasu.jpg 第 30 層樓主天照大神 848×1264 浮世繪、boss-susanoo.jpg 第 40 層樓主需佐能呼 848×1264 浮世繪、boss-liudao.jpg 第 50 層樓主六道極聖 848×1264、boss-tiancai.jpg 第 60 層樓主天裁真君 848×1264；boss-opwang.jpg 世界 Boss OP王 640×480，從 OP2 動畫截圖，第 75 節）：hero-female.png／hero-male.png 主角背影立繪（玩家提供的一張雙人圖，於 x=461～465 白線左右裁切，
                       黑底依亮度轉透明並還原邊緣顏色，tools 外的一次性腳本；460×843／459×843），boss-qitianshen.jpg 第 1 層 BOSS 棄天神（2026-09-27 換成玩家提供的直式版 848×1264，2:3，左上有字）、boss-bumiegu.jpg 第 2 層 BOSS 不滅骨（2026-09-27 換成玩家提供的直式版 848×1264，2:3）、boss-zhuzhou.jpg 第 3 層 BOSS 主咒之王、boss-guihu.jpg 第 4 層 BOSS 幽冥鬼虎、boss-qingming.jpg 第 5 層 BOSS 青瞑爪龍（皆 848×1264）、boss-pharaoh.jpg 第 6 層 BOSS 黑暗法老王（玩家提供 687×1024，2:3，右下角有極小的「1024x1536」字樣）
   icons/              PWA 圖示（第 64 節）：icon-192／icon-512（any）、icon-maskable-512（Android 自適應，取景較寬讓標題落在中間 80% 安全區）、
                       apple-touch-icon（180）、favicon-32；皆由玩家提供的 1024×1024 海報 icon-source-1024.jpg 裁出（2026-10-01 第二版：韓立、南宮婉對望＋中間金色直式書法標題，取標題特寫、左右各露半張臉；第一版海報留在 icon-source-1024-v1.jpg）
@@ -56,7 +56,7 @@ images/               圖片素材
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
 videos/               影片：fengxi-dance.mp4 風希跳舞彩蛋（玩家提供；2026-09-27 壓成 854×480、18 秒、約 0.52 Mbps＋AAC 64k 單聲道、1.35 MB，第 39 節）
-  world-boss/         世界 Boss 戰鬥畫面的 OP王動畫（第 75 節）：op1.mp4 標題卡、op2.mp4 金甲武神（使用者提供的 op1／OP2／OP3，OP2 與 OP3 是同一個檔案；1280×720 5 Mbps 6.3MB → 854×480 1.2 Mbps＋AAC，各約 1.7MB，Media Foundation 轉檔＋faststart）
+  world-boss/         世界 Boss「OP王」專屬的戰鬥動畫（第 75 節）：op1.mp4 標題卡、op2.mp4 金甲武神（使用者提供的 op1／OP2／OP3，OP2 與 OP3 是同一個檔案；1280×720 5 Mbps 6.3MB → 854×480 1.2 Mbps＋AAC，各約 1.7MB，Media Foundation 轉檔＋faststart）
   defense/            死守天南城背景影片（第 49 節）：battle.mp4 城牆雷戰（10.97 秒、2.75 MB）、flame.mp4 佛焰金身（8.8 秒、2.38 MB）、sword.mp4 巨劍劍氣（8.73 秒、2.34 MB），
                       皆 720×1280、H.264、無聲、頭尾淡入淡出（trim 0.6）；原始檔 v1c771…mp4／Pippit_0926_BuddhaFlame.mp4／Pippit_0926_GiantSwordAura.mp4（1080×1920、10～18 MB）仍在 videos/
 tools/                不會被遊戲載入的維護工具
@@ -4056,7 +4056,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - `wbossRuns/{bid}/dmg/{uid}`：`{ uid, name, realm, stage, total, eff, n, day, dayN, lastAt, hist[≤6]: { d, t, r } }`（day＝台灣時間日序 floor((ms+8h)/1 天)）。
   - `wbossClaims/{bid}_{uid}`：`{ uid, bid, at }`。
 - **換隻（不需要 GM）**：`wbLoad` 先跑 `wbRollover`——上一隻已結束、現在在本週時段內（`wbWindowStart`＝最近的週六 12:00 UTC）、雲端還不是本週這隻 → 交易寫入新的一隻：
-  bid＝開始時間毫秒字串、bossIdx＝週次 % 4、血量＝上一隻被打死 ×2（上限 4 兆）／沒打死 ÷2 取整（下限 400 萬）、第一隻 4000 萬（單次上限 40 萬 ≈ 強力配置渡劫打滿 30 回合）。
+  bid＝開始時間毫秒字串、bossIdx＝週次 % Boss 數（2026-10-05 起 5 隻）、血量＝上一隻被打死 ×2（上限 4 兆）／沒打死 ÷2 取整（下限 400 萬）、第一隻 4000 萬（單次上限 40 萬 ≈ 強力配置渡劫打滿 30 回合）。
   規則檢查：startAt 毫秒 % 604800000 == 216000000（週六 12:00 UTC）、endAt＝startAt＋24 小時、現在在時段內、bid＝startAt 毫秒、cap＝floor(maxHp/100)、prev 必須照抄上一隻、血量推算正確。
 - **挑戰**（`startWorldBossFight` → `wbRound`，同鎮魔塔 BOSS 戰的 `resolveHit`／`tickStatus`／光環／連擊）：Boss 強度跟著挑戰者境界（`nv2Level(player)`），
   攻擊＝一般玩家氣血（含增益）÷ `WB.hitsToKill` 24；Boss 血量看雲端，本地只累計你造成的傷害（含 dot）。30 回合或倒下結束（中途「↩ 放棄」＝不送出、不扣次數）。
@@ -4087,18 +4087,23 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   gm.html「手動開一隻」新增「開始時間」（`#wb-start` datetime-local，留空＝立即、不能早於現在；以 GM 電腦時間為準）→ startAt＝該時間、endAt＝startAt＋持續小時；狀態列顯示「⏳ 預約中」。
   玩家端原本就支援未來的 startAt（顯示「尚未開放（還有多久）」）；預約中不再顯示「下一隻：每週六 20:00」。管理者寫入不受規則的週六時段限制；每週六 20:00 的自動換隻照舊（GM 開的這隻結束後才換）。
 - **改名「三界之戰」**（2026-10-04，版本 `20261005BA`，使用者：「活動域外天魔改名稱 三界之戰」）：config-activities.js 的活動 `demon` 名稱改為「三界之戰」（id、openFn 不變；世界 Boss 本身的視窗標題仍是「⚔️ 世界 Boss」）。
-- **戰鬥畫面 OP王動畫**（2026-10-05，版本 `20261005BX`，使用者提供 op1／OP2／OP3：「三個動畫連續處理」→ 選「1→2→3 後循環 2→3 不停」、
-  「世界 Boss OP王戰鬥畫面，玩家持續攻擊，無法跳過影片，直到設定的回合或死亡才結束」）：
-  - 設定 `WB.opVideos`（依序播放的清單）＋`WB.opLoopFrom: 1`（播完從第 2 支循環）。OP2 與 OP3 是同一個檔案（MD5 相同，使用者確認「就是一樣」），兩格都指向 `videos/world-boss/op2.mp4`，只下載一次。
-  - 全部 Boss 共用（目前沒有叫「OP王」的 Boss；要只給某一隻，再改成 Boss 自己的欄位）。
-  - world-boss.js：`startWorldBossFight` 在玩家點擊的當下呼叫 `wbOpStart()`：每個不同的檔案建一個 `<video>` 放進 `#wb-fight-video`（開戰就預載）。
-    `wbOpShow(i)` 播第 i 支，同一個檔案重播只把 currentTime 歸 0；`playing` 之後才切換顯示，所以不會黑一下。`ended` 時 `wbOpNext` 播下一支，最後一支播完回到 `opLoopFrom`。
+- **第五隻 Boss「OP王」＋專屬戰鬥動畫**（2026-10-05，版本 `20261005BX`，使用者提供 op1／OP2／OP3：「三個動畫連續處理」→ 選「1→2→3 後循環 2→3 不停」、
+  「世界 Boss OP王戰鬥畫面，玩家持續攻擊，無法跳過影片，直到設定的回合或死亡才結束」→「影片專屬 OP王」）：
+  - `WB_BOSSES` 最後新增 **OP王・金甲武神**（索引 4；魔修、金、金重擊 20、防 22、閃避 12；光環「金甲護體」玩家攻擊 −5%、自身防 +5）。
+    圖 `images/zhenmo/boss-opwang.jpg`：從 OP2 第 1.5 秒截圖（640×480，約 33KB，Media Foundation `MediaComposition.GetThumbnailAsync`）。
+    ⚠️ 新 Boss 一律加在陣列最後：雲端存的是 `bossIdx`，插在中間會讓進行中的那隻變成別隻（規則允許 0～15，不必改規則）。
+    每週自動換隻改成週次 % 5，GM 後台「手動開一隻」的下拉選單也會自動出現 OP王。舊版程式（還沒更新的玩家）遇到索引 4 會顯示成第 0 隻（八岐大蛇），更新後就正常。
+  - Boss 選填欄位 `videos`（依序播放的清單）＋`videoLoopFrom`（播完從第幾支開始循環）。OP王：`[op1, op2, op2]`、`videoLoopFrom: 1`。
+    OP2 與 OP3 是同一個檔案（MD5 相同，使用者確認「就是一樣」），兩格都指向 `videos/world-boss/op2.mp4`，只下載一次。沒有 `videos` 的 Boss 照舊顯示 Boss 圖。
+  - world-boss.js：`startWorldBossFight` 在玩家點擊的當下呼叫 `wbOpStart(B)`：每個不同的檔案建一個 `<video>` 放進 `#wb-fight-video`（開戰就預載）。
+    `wbOpShow(i)` 播第 i 支，同一個檔案重播只把 currentTime 歸 0；`playing` 之後才切換顯示，所以不會黑一下。`ended` 時 `wbOpNext` 播下一支，最後一支播完回到 `videoLoopFrom`。
     有聲播放被擋（`NotAllowedError`）就改成靜音播；影片載入失敗就 `wbOpStop`，留著 Boss 圖。
     `wbEndFight`（30 回合或倒下）與 `closeWorldBossFight`（放棄）都會 `wbOpStop()`：暫停影片、清掉 src、移除元素。
   - 樣式：`#wb-fight-video` 疊在 `#wb-fight-bg` 上、主角立繪下（z-index 1）。黑底＋`object-fit: contain`（影片本身是黑底，直式畫面上下留黑），開始播放才淡入（`.on`）。
   - **不能跳過**：移除「⏭ 略過演出」按鈕和 `skipWorldBossFight`。×1／×2／×4 加速和「↩ 放棄」（不送出、不扣次數）保留；影片照常循環，不受加速影響。
   - 影片有聲音，播放時背景音樂會依第 76 節的 `isSoundVideoPlaying` 自動暫停，戰鬥結束後繼續。
-  - 驗證（本機，戰果送出改成假的）：依序播放 0:op1 → 1:op2 → 2:op2 → 1:op2 → 2:op2…，銜接時一直有畫面；撐過 30 回合或倒下時影片停止並移除；Console 無錯誤。
+  - 驗證（本機，戰果送出改成假的）：OP王 依序播放 0:op1 → 1:op2 → 2:op2 → 1:op2 → 2:op2…，銜接時一直有畫面；撐過 30 回合或倒下時影片停止並移除；
+    八岐大蛇不建立影片、照舊顯示 Boss 圖；世界 Boss 視窗橫幅顯示「OP王・金甲武神」；Console 無錯誤。
 
 ## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
 
