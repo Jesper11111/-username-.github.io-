@@ -6,6 +6,8 @@ function combatTick() {
 
     // 分頁在背景被瀏覽器放慢／暫停時，補發沒跑到的秒數（離線公式，見 save.js）
     checkBackgroundCatchUp();
+    // 加速器（timeguard.js，第 77 節）：時間流速異常時按比例跳過，讓每真實秒最多跑一次
+    if (typeof tgAllowTick === 'function' && !tgAllowTick()) return;
 
     if (gameOver || player.hp <= 0) return;
 

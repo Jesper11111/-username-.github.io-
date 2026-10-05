@@ -119,7 +119,7 @@ function addTodayFieldKills(n) {
 }
 // 定時出現（npc.window = { everyMin, showMin }）：目前在不在出現時段；在＝回傳 { key: 這個時段的代號, leftMs: 還剩多久 }
 function getTownNpcWindow(w, now) {
-    const d = new Date(now || Date.now());
+    const d = new Date(now || gameNow());   // 伺服器校正後的時間（timeguard.js），調裝置時鐘叫不出仙翁
     const m = d.getHours() * 60 + d.getMinutes(), pos = m % w.everyMin;
     if (pos >= w.showMin) return null;
     return { key: todayKey() + '#' + Math.floor(m / w.everyMin), leftMs: (w.showMin - pos) * 60000 - d.getSeconds() * 1000 - d.getMilliseconds() };

@@ -1,22 +1,31 @@
 // 存讀檔：localStorage 本地存檔、匯出/匯入代碼、離線掛機收益結算、完全重置
 
+// 2026-10-05 時間防護（timeguard.js，第 77 節）：離線秒數先向伺服器確認（調快裝置時鐘不會多算），確認完才結算（通常 1 秒內）
 function calcOfflineProgress() {
     if (!player.lastSaveTime) return;
 
     let now = Date.now();
-    let offlineSeconds = Math.floor((now - player.lastSaveTime) / 1000);
-
+    let localSeconds = Math.floor((now - player.lastSaveTime) / 1000);
+    const lastSaveSrv = player.lastSaveSrv;
+    player.lastSaveTime = now;   // 先記下，等對時期間自動存檔也不會重複計算這段離線
+    if (localSeconds < 10) return; // 離線小於10秒不觸發
+    const p = player;
+    const verify = typeof tgVerifyOfflineSeconds === 'function' ? tgVerifyOfflineSeconds(localSeconds, lastSaveSrv) : Promise.resolve({ sec: localSeconds, note: '' });
+    verify.then(v => { if (player === p && !gameOver) settleOfflineSeconds(v.sec, v.note); });
+}
+function settleOfflineSeconds(offlineSeconds, note) {
     // 離線上限 OFFLINE_MAX_SECONDS（12 小時，config-maps.js）
     let rawSeconds = offlineSeconds;
     if (offlineSeconds > OFFLINE_MAX_SECONDS) {
         offlineSeconds = OFFLINE_MAX_SECONDS;
     }
 
-    if (offlineSeconds < 10) return; // 離線小於10秒不觸發
+    if (offlineSeconds < 10) { if (note) addLog(note, "system"); return; }
 
     let msg = settleIdleSeconds(offlineSeconds, "離線", true);   // true = 真正離線：練功收益約為線上 50%
     if (rawSeconds > OFFLINE_MAX_SECONDS) msg += `\n⏰ 離線 ${formatIdleDuration(rawSeconds)}，最多結算 ${OFFLINE_MAX_SECONDS / 3600} 小時。`;
-    player.lastSaveTime = Date.now();
+    if (note) msg += `\n${note}`;
+    updateUI();
     addLog(`🌙 ${msg}`, "system");
     // 遊戲內提示框（ui.js 的 gameAlert）：原生 alert 在 LINE／FB 內建瀏覽器、預覽面板不會顯示，玩家看不到結算（2026-10-02 改）
     setTimeout(() => { gameAlert(`【離線掛機收益結算】\n${msg}`); }, 500);
@@ -34,7 +43,11 @@ function checkBackgroundCatchUp() {
     lastTickAt = now;
     if (!prev) return;
     let gap = now - prev;
-    if (gap > BACKGROUND_TICK_SLACK_MS) missedTickMs += gap - 1000;
+    if (gap > BACKGROUND_TICK_SLACK_MS) {
+        // 一次跳很久（鎖螢幕、切 App，或把裝置時鐘往後調）：先向伺服器確認實際經過多久（timeguard.js，第 77 節）
+        if (typeof tgVerifyGap === 'function' && gap > TG_GAP_VERIFY_MS) tgVerifyGap(prev, gap - 1000).then(ms => { missedTickMs += ms; });
+        else missedTickMs += gap - 1000;
+    }
 
     // 渡劫／懸賞對決中、已死亡或遊戲結束時不補發（對決數十秒內就會分出勝負），丟棄累積的時間
     if (gameOver || inTribulation || inBountyDuel || player.hp <= 0) { missedTickMs = 0; return; }
@@ -433,6 +446,7 @@ function saveLocal() {
     if (gameOver) return;   // 壽元耗盡後存檔已清除，不可再寫回
     if (saveLoadFailed) return;   // 讀檔失敗期間禁止寫入，保護原本的存檔
     player.lastSaveTime = Date.now();
+    if (typeof tgSaveStamp === 'function') tgSaveStamp();   // 伺服器時間戳（timeguard.js，離線結算用）
     localStorage.setItem('xiuxian_save', igPrepareSave());   // 帶簽章＋合理性檢查（integrity.js，第 72 節）
     addLog("💾 遊戲存檔成功！", "system");
 }

@@ -121,6 +121,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   enhance.js          強化／進化（白金）／分解／星允鐵與碎鐵／暫存區／千寶閣星允鐵（第 37 節）
   lingjie.js          靈界進出（第 74 節）：五行極品靈石 player.lingStones、身在靈界 player.inLingjie、飛升／返回人界扣靈石、極品靈石掉落（載入在 map.js 之後）
   integrity.js        存檔簽章與合理性檢查（第 72 節）：存檔／存檔代碼帶 _sig、修煉進度對遊玩時數、異常時停用戰力榜與寄售（載入在 save.js 之後）
+  timeguard.js        時間防護（第 77 節）：以網站 Date 標頭對時，擋加速器與調系統時間（離線結算、背景補發、每日重置用 gameNow()；載入在 integrity.js 之後）
   craft.js            做裝系統（第 69 節）：四種通貨（天機石／混元晶／破虛石／造化玉）的掉落與使用、鍛紋台、入魔淬煉；介面嵌在強化視窗
   profession.js       職業（劍修等 6 種）：主修、熟練度 10 階、被動、職業技能（第 37 節）；宗門傳承加成 getSectLegacy（第 53 節）
   aptitude.js         資質測試：先天靈根＋先天體質的擲骰、加成彙總、測試／查看／重測視窗、洗髓丹與伐骨丹（第 53 節）
@@ -250,6 +251,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 34d | `gear.js` | **載入時執行** 展開 `gearList`/`gearById`/`gearBySlot`；`getGearDef`/`getQualityObj`/`getCraftChannel`/`pickGearDef`/`buildGearStats`/`createGearEquip`（鍛造、千寶閣、奪寶共用）、隨機詞條 `rollGearSubs`/`formatGearSubs`/`getGearSubTotals`、加成彙總 `getBonusTotals`（詞條＋套裝＋稱號＋職業）/`getGearPctBonus`、套裝 `getEquippedSetCounts`/`resolveSetTier`/`getSetBonusTotals`/`formatSetInfo`/`hasSetSpecial`、強化倍率 `getEnhanceMult`/`getEquipEffectiveStats`、奪寶 `tryLootDrop`、顯示 `getEquipDisplayName`/`formatEquipTitle`/`formatEquipDetails`/`formatGearSubline`/`describeGearEffect`/`formatGearEffect`、特效 `getGearEffects`/`gearFx`、每波狀態 `gearWaveRound`/`gearFirstStrikeUsed`/`gearUndyingUsed`/`gearDodgeStrikeReady`/`resetGearWave`、戰鬥 `getGearHitMult`/`applyGearHitChain`/`applyGearDefense`/`applyGearRegen`/`tryGearUndying`、舊存檔 `migrateGearIds` | `config-gear*.js`、`config-enhance.js`、`config-sets.js`、`equipTypes`/`equipQualities`/`EQUIP_LEVELS`、`lingbaoShopItems`、`talisman.js`(ensureSockets)、`codex.js`、`profession.js`、`enhance.js`(receiveLootEquip) | `equipment.js`/`auction.js`(產生裝備)、`stats.js`/`elements.js`/`combat.js`/`tribulation.js`/`bounty.js`(加成與特效)、`bag.js`/`equipment.js`/`auction.js`/`talisman.js`(卡片)、`save.js` |
 | 20b | `lingjie.js` | 靈界（第 74 節）：`getLingStone`/`addLingStone`/`hasLingStoneSet`/`payLingStoneSet`/`formatLingStones`/`lingStoneShortText`、`isInLingjie`/`isLingjieMapCategory`、`prepareLingjieEntry`(飛升點，town.js 的 enterCityGate)/`tryLeaveLingjie(then)`/`leaveLingjieToWorldMap`(靈界地圖右上鈕)/`openCurrentWorldScene`(世界導覽)、掉落 `rollLingStoneDrops(rolls, silent)`/`rollLingStoneZhenmo`、`migrateLingjie(data)` | `config-towns.js`(LINGJIE_*)、`map.js`(changeMap/getMapCategoryIndex)、`town.js`(openTownScene/closeCityGate)、`ui.js`(gameAlert/gameConfirm) | `map.js`(getMapEntryBlock、changeMap、returnToSect)、`town.js`、`home-ui.js`(openWorldTab)、`combat.js`、`save.js`、`zhenmo.js`、`bag.js` |
 | 33b | `integrity.js` | 存檔驗證（第 72 節）：`igSign`/`igHash`、`igPrepareSave`(saveLocal 寫入字串，嵌 _sig)/`igVerifyLocal`(loadLocal)/`igSignedCopy`(匯出)/`igVerifyImport`(匯入)、`isSaveFlagged`/`flagSave`、合理性 `igProgressHours`/`igAuditCheck`/`igAddPlaySeconds`（頂層 setInterval 每秒累計遊玩時數） | `player`、`realmPacing`、`stats.js`(getNextExp)、`main.js`(gameStarted)、`ui.js`(addLog) | `save.js`(存讀檔、匯入匯出、離線秒數)、`leaderboard.js`(不上傳)、`market.js`(不能寄售／出價) |
+| 33c | `timeguard.js` | 時間防護（第 77 節）：`gameNow`（伺服器校正後的現在時間）、`tgFetchServerTime`/`tgSync`（HEAD 讀 Date 標頭、測速）、`tgAllowTick`/`tgPlaySecondsPerTick`（加速時按比例跳過）、`tgVerifyGap`（背景大間隔確認）、`tgVerifyOfflineSeconds`（離線秒數確認）、`tgSaveStamp`（存檔記 `player.lastSaveSrv`）；變數 `tgOffset`/`tgSpeed`；載入即對時、每 2 分鐘一次 | `ui.js`(addLog)、`player` | `save.js`(calcOfflineProgress/checkBackgroundCatchUp/saveLocal)、`combat.js`(combatTick)、`integrity.js`(遊玩秒數)、每日重置的 todayKey 類（partner/encounter/activity/casino/economy/enhance/lingjie/race/secret-realm/daily-quest）、`town-npc.js`(仙翁時段) |
 | 34e2 | `craft.js` | 做裝（第 69 節）：通貨 `getCraftCur`/`addCraftCur`/`formatCraftGain`/`craftGainSuffix`、掉落 `rollCraftFieldDrops`/`onCraftFieldKills`/`rollCraftZhenmo`/`rollCraftDecompose`/`rollCraftDecomposeMany`、`canCraft`/`craftSubCap`/`craftPoxuLockLeft`/`isCraftSealed`/`setSubTier`、操作 `useCraftCur(k)`/`forgeCraftSub`(鍛紋台，`craftForgeKey`)/`corruptEquip`(入魔淬煉)、顯示 `renderCraftSection`/`formatGearCraftTag` | `config-enhance.js`(CRAFT_*)、`gear.js`(rollGearSubs/rollGearSubTier/rollGearSubValue/gearRollOpts)、`enhance.js`(enhanceEquipId/locateEquip/renderEnhanceModal/formatOneSub)、`save.js`(saveLocal) | `enhance.js`(強化視窗、分解)、`equipment.js`(鍛造自動分解)、`gear.js`(卡片標籤)、`combat.js`(野外擊殺)、`save.js`(離線)、`zhenmo.js`、`defense.js` |
 | 34e | `enhance.js` | `randInt`、星允鐵 `addStarIron`/`addIronShards`、`locateEquip`/`removeLocatedEquip`、強化 `getEnhanceInfo`/`canEvolve`/`enhanceEquipId`/`openEnhanceModal`/`renderEnhanceModal`/`getEvolveStatRatio`/`enhanceEquip`/`promptEvolveEquip`(+20 系統通知)/`evolveEquip(skipConfirm)`、分解 `getDecomposeYield`/`formatDecomposeYield`/`decomposeEquip`/`bulkDecomposeEquipment`、暫存區 `isGearStashFull`/`receiveLootEquip`/`enforceGearStashLimit`/`moveStashToBag`/`deleteStashEquip`/`renderStashSection`、`refreshEquipViews`、千寶閣 `getIronShopState`/`renderIronShopSection`/`buyStarIron`/`rollIronBagItem` | `config-enhance.js`、`gear.js`、`codex.js`(checkTitleUnlocks、稱號強化成功率)、`map.js`(changeMap)、`ui.js` | `bag.js`/`equipment.js`(按鈕與暫存區)、`auction.js`、`combat.js`/`bounty.js`/`servant.js`(星允鐵)、`map.js`/`save.js`(暫存區滿) |
 | 34h | `strange-fire.js` | 異火（第 38 節）：**載入時**建 `strangeFireById`；`addFireShards(n, source)`(取得碎片，供未來秘境掉落呼叫)/`rollStrangeFire`/`gainStrangeFire`/`craftStrangeFire(qty)`(合成，數字或 'max')/`getStrangeFireRealmReduction`(秘境受傷減免比例)/`getStrangeFireBonusTotals`(收錄加成)/`countCollectedFires`/`migrateStrangeFires`(舊存檔)/`renderStrangeFireCards`(背包卡片)/`renderCodexFires`(天磯錄分頁) | `config-strange-fire.js`、`player.fireShards`/`strangeFires`/`fireCollection`、`codex.js`(describeTitleBonus、openCodexModal)、`ui.js` | `bag.js`(renderBag)、`gear.js`(getBonusTotals)、`codex.js`(異火分頁、頂端統計)、`save.js`(applySaveData)；未來秘境（掉落、受擊減傷） |
@@ -1626,7 +1628,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BQ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BR`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4103,3 +4105,25 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `BGM_TRACK_COUNT = 8`，`BGM_PLAYLIST` 依序 1→8→1。驗證：模擬播完依序換到 2…8 再回 1；Console 無錯誤。audio 資料夾合計約 29MB（玩家一次只下載正在播的那首）。
 - **找回 7 分 48 秒那首、放第一首**（2026-10-04，版本 `20261005BK`，使用者：「昨天移除一首音樂 7 分多鐘的找得回來嗎」→ 選「放第 1 首、開頭先播」）：從 commit `dd177a2` 之前的紀錄還原 `audio/bgm-game.m4a`／`.ogg`（原檔，未重新轉檔），
   `BGM_PLAYLIST` 開頭加這首，其後接 `bgm-1～8`（`BGM_TRACK_COUNT` 仍是 8＝編號曲數），共 9 首依序 game→1→…→8→game。原特殊曲 `bgm-sanjie.*` 沒有還原。
+
+## 77. 時間防護：加速器、調系統時間（`timeguard.js`；2026-10-05，版本 `20261005BR`）
+
+- **使用者選定**（問「有判斷加速器的手段嗎」→ 選 ②③＋溫和處理）：② 整個程式加速（Cheat Engine 之類，Date.now／performance.now 一起變快）③ 調裝置時鐘。
+  **溫和**＝不標記存檔，只讓多出來的收益不算。原本第 72 節的「修煉進度過快」抓不到加速器（遊玩秒數也是同一個計時器累計，比例不變）。
+- **參考時間**：本網站回應的 `Date` 標頭（GitHub Pages／Fastly，玩家改不了、不花 Firebase 額度）。`fetch(location.pathname + '?tg=亂數', { method: 'HEAD', cache: 'no-store' })`；sw.js 只攔 GET，不會拿到快取。
+  Date 只到秒 → +500ms 加半個來回時間。`tgOffset`＝伺服器 − Date.now()；`gameNow()`＝Date.now() + tgOffset（還沒對過＝裝置時間）。載入即對時，之後每 `TG_SYNC_MS` 2 分鐘。
+- **② 加速器**：每次對時比較 performance.now 經過秒數 ÷ 伺服器經過秒數（窗口至少 100 伺服器秒）；> 1.15 倍 → `tgSpeed`＝該倍率（最多 20），< 1.08 恢復 1。
+  combat.js 的 `combatTick` 在 `checkBackgroundCatchUp` 之後問 `tgAllowTick()`：按 1/tgSpeed 放行（每真實秒最多一次，修煉、收益、壽元都回到真實速度）；integrity.js 遊玩秒數每秒加 `tgPlaySecondsPerTick()`。第一次偵測寫一則系統日誌。
+  偵測需要約 100 秒真實時間，這段不擋。
+- **③ 調系統時間**：
+  - **離線結算**（save.js 的 `calcOfflineProgress` → 確認後 `settleOfflineSeconds`）：`saveLocal` 時 `tgSaveStamp()` 記 `player.lastSaveSrv`（估計的伺服器時間；本次還沒對過時保留舊值）。
+    讀檔時 `tgVerifyOfflineSeconds(裝置算的秒數, lastSaveSrv)`：真正離線＝伺服器現在 − lastSaveSrv − 等待對時的秒數，取與裝置秒數的較小值（差 5 分鐘以內視為正常）；
+    舊存檔沒有 lastSaveSrv → 用「裝置時鐘比伺服器快多少」扣回；兩次都連不上 → 最多算 30 分鐘（`TG_UNVERIFIED_OFFLINE_SEC`）並提示。被調整時結算訊息加一行說明。
+    calcOfflineProgress 一開始就把 lastSaveTime 設成現在（對時期間自動存檔不會重複計算）。
+  - **背景補發**（`checkBackgroundCatchUp`）：一次間隔超過 1 分鐘（鎖螢幕、切 App、或把時鐘往後調）→ `tgVerifyGap(上次 tick 的 Date, 間隔)` 以「伺服器現在 − (上次 tick + 跳之前的 tgOffset)」確認，只補真的經過的時間；確認不了最多補 10 分鐘。
+  - **每日重置**：`new Date().toDateString()` 類的日期鍵（partner.js 的 todayKey、encounter.js 的 todayKey／weekStart、activity、casino、economy、enhance、lingjie、race、secret-realm）改用 `new Date(gameNow())`；
+    每日任務刷新（daily-quest.js；`clampRefreshAt` 新增選填 now）、隱藏仙翁出現時段（town-npc.js 的 `getTownNpcWindow`）也用 gameNow()。其他計時（寄售、奇遇期限、懸賞／拍賣刷新等）仍用裝置時間。
+- **限制**：沒網路時退回裝置時間（離線結算另有 30 分鐘上限）；只防一般玩家，會改程式的人仍可繞過（純前端的限制）。
+- **驗證**（Playwright 攔截 `?tg=` 自訂伺服器時間＋假時鐘）：A 存檔後實際 10 分鐘、時鐘調快 12 小時 → 結算 600 秒並提示；B 舊存檔（無 lastSaveSrv）時鐘快 12 小時 → 約 10 分鐘；C 正常離線 3 小時 → 10800 秒；
+  D 連不上 → 1800 秒並提示；E 加速 5 倍 → 偵測 4.84 倍、之後頁面 100 秒只放行 21 次、恢復正常後 tgSpeed 回 1；F 遊戲中時鐘調快 30 小時 → 背景補發只補約 1.5 秒；G 裝置日期調到隔天 → todayKey 仍是伺服器的今天。
+  實際伺服器（不攔截）對時 offset −105ms；線上 GitHub Pages 的 HEAD 有 Date 標頭；建置版正常；Console 無錯誤。

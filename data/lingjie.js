@@ -163,7 +163,7 @@ function lingjieWildMaps() {
     return out;
 }
 function rollLingjieQuests() {
-    const today = new Date().toDateString();
+    const today = new Date(gameNow()).toDateString();
     const Q = player.lingQuests;
     if (Q && Q.date === today && Array.isArray(Q.list)) return Q;
     const pool = LINGJIE_QUEST.templates.slice(), list = [];
@@ -200,7 +200,7 @@ function onLingjieKills(n, raceKilled) {
     const c = getMapCategoryIndex(player.currentMap.name);
     if (!isLingjieMapCategory(c)) return;
     const Q = player.lingQuests;
-    if (!Q || Q.date !== new Date().toDateString()) return;
+    if (!Q || Q.date !== new Date(gameNow()).toDateString()) return;
     let done = false;
     Q.list.forEach(q => {
         if (q.claimed || q.prog >= q.need) return;

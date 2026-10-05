@@ -93,4 +93,4 @@ function igAddPlaySeconds(sec) {
     if (!player.audit || typeof player.audit !== 'object') player.audit = {};
     player.audit.play = (player.audit.play || 0) + sec;
 }
-setInterval(() => { if (typeof gameStarted !== 'undefined' && gameStarted && !gameOver && !saveLoadFailed) igAddPlaySeconds(1); }, 1000);
+setInterval(() => { if (typeof gameStarted !== 'undefined' && gameStarted && !gameOver && !saveLoadFailed) igAddPlaySeconds(typeof tgPlaySecondsPerTick === 'function' ? tgPlaySecondsPerTick() : 1); }, 1000);

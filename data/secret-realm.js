@@ -9,7 +9,7 @@ function getSecretRealm(id) {
 
 // ---- 每日次數：每個秘境各自 SECRET_REALM_DAILY_ATTEMPTS 次（存檔 player.secretRealmDaily = { date, used: { 秘境id: 次數 } }）----
 function getSecretRealmDaily() {
-    const today = new Date().toDateString();
+    const today = new Date(gameNow()).toDateString();
     if (!player.secretRealmDaily || player.secretRealmDaily.date !== today) player.secretRealmDaily = { date: today, used: {} };
     return player.secretRealmDaily;
 }

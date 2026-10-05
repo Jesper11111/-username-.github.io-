@@ -9,11 +9,11 @@ function openDailyQuestModal() {
 
 // 時間到就重新產生任務；未完成的進度一併清空
 function refreshDailyQuestsIfDue(force) {
-    const now = Date.now();
+    const now = gameNow();   // 伺服器校正後的時間（timeguard.js，第 77 節）
     // 縮短刷新間隔（12 → 4 小時）時，舊存檔的 dailyRefreshAt 仍是照舊間隔算的，
     // 不修掉的話玩家得先等完舊的一輪。超出新間隔就直接壓回上限。
     // 同一個保護也處理存檔轉移／系統時間被調過造成的時間軸異常（ui.js 的 clampRefreshAt）
-    player.dailyRefreshAt = clampRefreshAt(player.dailyRefreshAt, DAILY_REFRESH_HOURS);
+    player.dailyRefreshAt = clampRefreshAt(player.dailyRefreshAt, DAILY_REFRESH_HOURS, now);
 
     if (!force && player.dailyRefreshAt && now < player.dailyRefreshAt
         && Array.isArray(player.dailyQuests) && player.dailyQuests.length > 0) {
@@ -139,7 +139,7 @@ function renderDailyQuests() {
     container.innerHTML = `
         <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-bottom: 14px; font-size: 0.88em;">
             <span style="color: var(--accent);">完成進度：${done} / ${player.dailyQuests.length}</span>
-            <span style="color: #9ca3af;">下次刷新：${formatCountdown(player.dailyRefreshAt - Date.now())}</span>
+            <span style="color: #9ca3af;">下次刷新：${formatCountdown(player.dailyRefreshAt - gameNow())}</span>
         </div>
         <button class="sys-btn" ${claimable === 0 ? 'disabled' : ''} onclick="claimAllDailyQuests()" style="margin-bottom: 14px;">
             🎁 一鍵領取全部獎勵${claimable > 0 ? `（${claimable} 項）` : ''}

@@ -510,9 +510,9 @@ function resolveBatchCount(qty, affordable, actionName) {
 // 刷新時間軸保護（千寶閣／懸賞榜／每日任務）：存檔轉移到時鐘不同的裝置、或系統時間被調過，
 // 「下次刷新」的時間戳可能遠在未來（倒數出現幾百小時、長時間不刷新）。超過一個週期就壓回「現在 + 一個週期」；
 // 非數字（壞掉的存檔）視為 0 = 立即刷新。
-function clampRefreshAt(at, hours) {
+function clampRefreshAt(at, hours, now) {   // now：選填（每日任務傳伺服器校正後的時間，timeguard.js）
     if (typeof at !== 'number' || !isFinite(at)) return 0;
-    return Math.min(at, Date.now() + hours * 3600 * 1000);
+    return Math.min(at, (now || Date.now()) + hours * 3600 * 1000);
 }
 
 function formatCountdown(ms) {
