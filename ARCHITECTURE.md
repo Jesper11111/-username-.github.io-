@@ -676,6 +676,7 @@ combatTick() 每秒執行 [combat.js]
   （`<picture>` 切換來源時也會觸發 `load`，所以跨斷點縮放會自動校正）。
   ※ 若日後更換封面圖，只需重新量測光環座標並改 `TITLE_HOTSPOTS`，其餘不必動。
 - **版本名與創作者**（2026-10-04，版本 `20261005AI`，使用者指定）：標題「凡塵修仙傳」下方 `#title-version`「版本：飛昇靈界」（金色）、光環下方 `#title-credit`「創作者：銀河領主-羅峰」（白字黑影）。
+  **2026-10-05（版本 `20261005CA`，使用者：「封面的版本改成三界之戰」）**：`#title-version` 改「版本：三界之戰」。
   位置與字級寫在 title-screen.js 的 `TITLE_TEXTS`（圖片原始座標＋字級圖片像素），`positionTitleHotspot()` 用同一套 cover 換算；字級最小 12px。換版本名改 index.html 的文字即可。
 - **啟動時機**：`window.onload` 只呼叫 `initTitleScreen()`，**不會**直接開始遊戲。
   讀檔、性別選擇、離線收益結算全部延後到玩家點擊後才執行（`main.js` 的 `startGame()`）。
@@ -1632,7 +1633,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BZ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CA`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
