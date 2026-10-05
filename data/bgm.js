@@ -15,7 +15,8 @@ const BGM_PLAYLIST = [{ src: "audio/bgm-game.m4a", fallback: "audio/bgm-game.ogg
 // 特殊地圖曲（2026-10-05 使用者：「原本靈界的背景音樂」→ 選 A 恢復原本設計）：videoplayback.mp4 的音軌（約 97 秒，循環），從 git 紀錄還原 audio/bgm-sanjie.*；
 //   只在「三界之戰」（活動海報、世界 Boss 視窗與戰鬥畫面）與「靈界大地圖」（town.js 的城內場景 LINGJIE_SCENE_KEY）播放，離開後回到輪播接著放
 const BGM_ZONE_TRACK = { src: "audio/bgm-sanjie.m4a", fallback: "audio/bgm-sanjie.ogg" };
-const BGM_ZONE = { activities: ["demon"], ids: ["world-boss-modal", "world-boss-scene"], scenes: () => [LINGJIE_SCENE_KEY] };
+// 2026-10-05 使用者：「靈界天元城內 背景音樂要跟靈界地圖以及三界戰場一樣」→ 天元城內城（townScenes["天元城"]）也播特殊曲
+const BGM_ZONE = { activities: ["demon"], ids: ["world-boss-modal", "world-boss-scene"], scenes: () => [LINGJIE_SCENE_KEY, "天元城"] };
 let bgmZoneAudio = null;
 const BGM_PREF_KEY = "xiuxian_bgm";
 const BGM_DEFAULT_VOL = 0.4;
@@ -61,7 +62,7 @@ function switchBgmTrack(i) {
     getBgmAudio().src = bgmTrackSrc(i);
     playBgm();
 }
-// 目前畫面是不是特殊地圖（三界之戰、靈界大地圖）
+// 目前畫面是不是特殊地圖（三界之戰、靈界大地圖、天元城內城）
 function isBgmZone() {
     const shown = id => { const e = document.getElementById(id); return !!(e && getComputedStyle(e).display !== 'none'); };
     if (typeof currentTownScene !== 'undefined' && currentTownScene && BGM_ZONE.scenes().includes(currentTownScene) && shown('town-scene')) return true;
@@ -138,7 +139,7 @@ function initBgm() {
     const kick = () => { interacted = true; if (!isBgmPlaying()) setTimeout(playBgm, 0); };
     ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, kick, true));
     setTimeout(() => { playBgm(); renderBgmTitleBtn(); }, 300);
-    // 每秒：更新主頁音樂鈕；進出三界之戰、靈界大地圖時換曲（該放的那首沒在放就 playBgm）
+    // 每秒：更新主頁音樂鈕；進出三界之戰、靈界大地圖、天元城內城時換曲（該放的那首沒在放就 playBgm）
     setInterval(() => {
         renderBgmTitleBtn();
         if (!(interacted || bgmUnlocked) || document.hidden) return;
