@@ -402,7 +402,7 @@ function refreshEquipViews() {
 
 // ---- 千寶閣：星允鐵（常駐每日限購＋刷新格的星允鐵袋）----
 function getIronShopState() {
-    let today = new Date().toDateString();
+    let today = new Date(gameNow()).toDateString();
     if (!player.ironShop || player.ironShop.date !== today) player.ironShop = { date: today, bought: 0 };
     return player.ironShop;
 }

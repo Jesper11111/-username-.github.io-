@@ -10,7 +10,7 @@ let casinoResultHtml = '';       // 最近一次結果（重繪視窗時保留�
 const casinoDice = { type: 'big', pick: 6, total: 10, amount: 10000 };
 
 function getCasinoState() {
-    let today = new Date().toDateString();
+    let today = new Date(gameNow()).toDateString();
     if (!player.casino || typeof player.casino !== 'object') player.casino = {};
     let c = player.casino;
     if (c.date !== today) { c.date = today; c.wagered = 0; c.net = 0; c.bestText = ''; c.bestValue = 0; }

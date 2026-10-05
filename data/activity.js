@@ -37,7 +37,7 @@ function renderActivityList() {
 // ---- 付費立即刷新（千寶閣、懸賞榜共用）----
 // 每日次數用「當地日期字串」判斷換日，不用時間戳：存檔轉移到其他裝置時不會算錯。kind：'auction'／'bounty'
 function getPaidRefreshState() {
-    const today = new Date().toDateString();
+    const today = new Date(gameNow()).toDateString();
     if (!player.paidRefresh || typeof player.paidRefresh !== 'object' || player.paidRefresh.date !== today) {
         player.paidRefresh = { date: today };
     }

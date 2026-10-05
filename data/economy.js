@@ -3,7 +3,7 @@
 //   player.marketSell = { date, total }（今日已回收的靈石）、player.autoSellFull（背包滿時白～紫自動賣出）
 //   player.caravanDaily = { date, n }（今日商隊已出發趟數）、player.estate = { field: { lv, last }, mine: { lv, last } }
 
-function economyToday() { return new Date().toDateString(); }
+function economyToday() { return new Date(gameNow()).toDateString(); }
 
 // H＝目前境界主要練功地圖掛機 1 小時的靈石（config-realms.js 的 realmPacing → 該地圖 coins × 每小時擊殺數）
 function getHourlyIncome(realmIndex) {

@@ -92,7 +92,7 @@ function nextBondMin(id) {
     return next ? next.min : PARTNER_BOND_MAX;
 }
 
-function todayKey() { return new Date().toDateString(); }
+function todayKey() { return new Date(gameNow()).toDateString(); }
 
 // 每日問候：每位每天一次，顯示台詞並加好感
 function greetPartner(id) {

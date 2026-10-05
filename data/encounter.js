@@ -43,8 +43,8 @@ const Encounter = (() => {
         for (const k of keys) { if ((r -= pool[k]) < 0) return k; }
         return keys[0];
     }
-    function todayKey() { return new Date().toDateString(); }
-    function weekStart() { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; }
+    function todayKey() { return new Date(gameNow()).toDateString(); }
+    function weekStart() { const d = new Date(gameNow()); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; }
     function weekKey() { return weekStart().toDateString(); }
     function weekEndTs() { return weekStart().getTime() + 7 * 86400000; }
     function dailyLeft(cat) { return capOf(cat || 'otherworld') - counterOf(cat || 'otherworld').n; }

@@ -273,7 +273,7 @@ function renderRaceTreasurePanel() {
 
 // ---- 千寶閣常駐：剋制法寶（auction.js 的 renderAuction 呼叫）----
 function raceTreasureShopState() {
-    const today = new Date().toDateString();
+    const today = new Date(gameNow()).toDateString();
     if (!player.raceTreasureShop || player.raceTreasureShop.date !== today) player.raceTreasureShop = { date: today, bought: 0 };
     return player.raceTreasureShop;
 }
