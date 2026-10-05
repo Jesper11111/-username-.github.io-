@@ -519,6 +519,7 @@ function applySaveData(data) {
 
     // 功德改為滿 MERIT_PER_BUTIAN_STONE 自動凝結（舊存檔若已超過，讀檔時直接凝結）
     settleMeritStones();
+    if (typeof igAmnesty === 'function') igAmnesty();   // 一次性解除舊的存檔異常標記（integrity.js，第 72 節）
     calcOfflineProgress();
     updateUI();
     updateSectFacilitiesUI();
