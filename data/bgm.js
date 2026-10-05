@@ -12,6 +12,11 @@
 const BGM_TRACK_COUNT = 8;
 const BGM_PLAYLIST = [{ src: "audio/bgm-game.m4a", fallback: "audio/bgm-game.ogg" }]
     .concat(Array.from({ length: BGM_TRACK_COUNT }, (_, i) => ({ src: `audio/bgm-${i + 1}.m4a`, fallback: `audio/bgm-${i + 1}.ogg` })));
+// 特殊地圖曲（2026-10-05 使用者：「原本靈界的背景音樂」→ 選 A 恢復原本設計）：videoplayback.mp4 的音軌（約 97 秒，循環），從 git 紀錄還原 audio/bgm-sanjie.*；
+//   只在「三界之戰」（活動海報、世界 Boss 視窗與戰鬥畫面）與「靈界大地圖」（town.js 的城內場景 LINGJIE_SCENE_KEY）播放，離開後回到輪播接著放
+const BGM_ZONE_TRACK = { src: "audio/bgm-sanjie.m4a", fallback: "audio/bgm-sanjie.ogg" };
+const BGM_ZONE = { activities: ["demon"], ids: ["world-boss-modal", "world-boss-scene"], scenes: () => [LINGJIE_SCENE_KEY] };
+let bgmZoneAudio = null;
 const BGM_PREF_KEY = "xiuxian_bgm";
 const BGM_DEFAULT_VOL = 0.4;
 let bgmAudio = null, bgmIndex = 0, bgmFails = 0;
@@ -56,17 +61,37 @@ function switchBgmTrack(i) {
     getBgmAudio().src = bgmTrackSrc(i);
     playBgm();
 }
+// 目前畫面是不是特殊地圖（三界之戰、靈界大地圖）
+function isBgmZone() {
+    const shown = id => { const e = document.getElementById(id); return !!(e && getComputedStyle(e).display !== 'none'); };
+    if (typeof currentTownScene !== 'undefined' && currentTownScene && BGM_ZONE.scenes().includes(currentTownScene) && shown('town-scene')) return true;
+    if (typeof activityPosterId !== 'undefined' && BGM_ZONE.activities.includes(activityPosterId) && shown('activity-poster-modal')) return true;
+    return BGM_ZONE.ids.some(shown);
+}
+function getBgmZoneAudio() {
+    if (bgmZoneAudio) return bgmZoneAudio;
+    const t = BGM_ZONE_TRACK, aac = new Audio().canPlayType('audio/mp4; codecs="mp4a.40.2"');
+    const a = new Audio(aac ? t.src : t.fallback);
+    a.loop = true;
+    a.preload = 'auto';
+    a.addEventListener('error', () => { if (!a.src.endsWith(t.fallback)) { a.src = t.fallback; playBgm(); } });
+    return (bgmZoneAudio = a);
+}
 function playBgm() {
     const p = getBgmPref();
+    const zone = isBgmZone();
+    // 不是這個畫面的那一邊先停（輪播與特殊地圖曲各自記住播到哪）
+    if (zone) { if (bgmAudio && !bgmAudio.paused) bgmAudio.pause(); }
+    else if (bgmZoneAudio && !bgmZoneAudio.paused) bgmZoneAudio.pause();
     if (!p.on || p.vol <= 0 || document.hidden || isSoundVideoPlaying()) return;
-    const a = getBgmAudio();
+    const a = zone ? getBgmZoneAudio() : getBgmAudio();
     a.volume = p.vol;
     if (!a.paused) return;
     const r = a.play();
     if (r && r.then) r.then(() => { bgmUnlocked = true; renderBgmTitleBtn(); }, () => renderBgmTitleBtn());   // 被瀏覽器擋（還沒互動過）或載入失敗：等下次點擊再試
 }
-function pauseBgm() { if (bgmAudio && !bgmAudio.paused) bgmAudio.pause(); }
-function isBgmPlaying() { return !!(bgmAudio && !bgmAudio.paused); }
+function pauseBgm() { [bgmAudio, bgmZoneAudio].forEach(a => { if (a && !a.paused) a.pause(); }); }
+function isBgmPlaying() { return [bgmAudio, bgmZoneAudio].some(a => a && !a.paused); }
 
 // 遊戲主頁（標題畫面）右上的音樂鈕 #bgm-title-btn：被擋時顯示「🔇 輕觸開啟音樂」，播放中顯示 🔊（點了＝關）
 function bgmTitleTap() {
@@ -96,7 +121,7 @@ function setBgmVolume(v) {
     const p = getBgmPref();
     p.vol = Math.min(1, Math.max(0, Number(v) / 100 || 0));
     saveBgmPref(p);
-    if (bgmAudio) bgmAudio.volume = p.vol;
+    [bgmAudio, bgmZoneAudio].forEach(a => { if (a) a.volume = p.vol; });
     if (p.vol <= 0) pauseBgm(); else playBgm();
     renderBgmSettings();
 }
@@ -113,7 +138,13 @@ function initBgm() {
     const kick = () => { interacted = true; if (!isBgmPlaying()) setTimeout(playBgm, 0); };
     ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, kick, true));
     setTimeout(() => { playBgm(); renderBgmTitleBtn(); }, 300);
-    setInterval(renderBgmTitleBtn, 1000);
+    // 每秒：更新主頁音樂鈕；進出三界之戰、靈界大地圖時換曲（該放的那首沒在放就 playBgm）
+    setInterval(() => {
+        renderBgmTitleBtn();
+        if (!(interacted || bgmUnlocked) || document.hidden) return;
+        const want = isBgmZone() ? bgmZoneAudio : bgmAudio;
+        if (!want || want.paused) playBgm();
+    }, 1000);
     document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBgm(); else if (interacted || bgmUnlocked) playBgm(); });
     // 有聲影片：開始播就暫停背景音樂，停了再接著放（play／pause／ended 不會冒泡，用捕獲階段）
     document.addEventListener('play', e => { if (e.target.tagName === 'VIDEO' && !e.target.muted) pauseBgm(); }, true);
