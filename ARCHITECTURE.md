@@ -1632,7 +1632,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BY`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005BZ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4146,6 +4146,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   bgm.js 新增 `BGM_ZONE_TRACK`、`BGM_ZONE`（活動 `demon` 海報、`#world-boss-modal`、`#world-boss-scene`、靈界大地圖 `LINGJIE_SCENE_KEY`）、`isBgmZone()`（海報改看 activity.js 的 `activityPosterId`）、`getBgmZoneAudio()`／`bgmZoneAudio`；
   `playBgm` 依 isBgmZone 播特殊曲或輪播（另一邊暫停、各自記住進度），`pauseBgm`／`isBgmPlaying`／`setBgmVolume` 兩邊都處理；`initBgm` 每秒檢查，該放的那首沒在放就 `playBgm`。
   驗證：遊戲中輪播 → 開靈界大地圖改播特殊曲 → 關閉回輪播 → 開世界 Boss 特殊曲 → 關閉回輪播；建置版同樣；Console 無錯誤。
+- **天元城內城也播特殊曲**（2026-10-05，版本 `20261005BZ`，使用者：「靈界天元城內 背景音樂要跟靈界地圖以及三界戰場一樣」）：`BGM_ZONE.scenes` 加 `"天元城"`（`townScenes["天元城"]` 內城場景）。
+  靈界地圖 → 天元城城門圖（疊在靈界地圖上）→ 內城 → 「↩ 靈界地圖」全程同一首特殊曲、不中斷；離開到洞府等畫面回輪播。
 
 ## 77. 時間防護：加速器、調系統時間（`timeguard.js`；2026-10-05，版本 `20261005BR`）
 
