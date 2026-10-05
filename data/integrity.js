@@ -11,7 +11,9 @@
 
 const IG_SALT = "fc凡塵✦" + "7Qx!pL2#vR";
 const IG_UNSIGNED_UNTIL = Date.UTC(2026, 9, 5, 16);   // 2026-10-06 00:00（台灣時間）前匯出的舊代碼不帶簽章也接受
-const IG_SPEED_MAX = 10;    // 修煉進度最多比節奏表快幾倍（一般玩家約 1 倍、強力配置約 3～5 倍）
+// 2026-10-05 10 → 60（使用者：「先把門檻改成 60 倍」）：頂級配置合法就能到 20～25 倍（宗門×靈寵×悟道、越級高經驗地圖），
+//   加上收益速度上限的漏洞（估算沒算群攻、靈寵、夥伴）實測 40 倍（玩家「糊道友」）。改數值的通常快上百倍。
+const IG_SPEED_MAX = 60;    // 修煉進度最多比節奏表快幾倍
 const IG_GRACE_HOURS = 2;
 
 function igHash(str, seed) {
@@ -32,7 +34,10 @@ function igSign(str) { return igHash(IG_SALT + str, 7) + igHash(str + IG_SALT, 1
 const IG_AMNESTY_AT = Date.UTC(2026, 9, 5, 9);   // 2026-10-05 17:00（台灣時間）
 function igAmnesty() {
     const g = player && player.integrity;
-    if (!g || !g.flagged || !(g.at < IG_AMNESTY_AT)) return;
+    if (!g || !g.flagged) return;
+    // 解除：① IG_AMNESTY_AT 以前的所有標記 ②「修煉進度過快」是在比現在低的門檻下判的（舊標記沒有 speedMax＝10 倍；之後再調高門檻也自動解除）
+    const oldSpeed = /^修煉進度過快/.test(g.reason || '') && (g.speedMax || 10) < IG_SPEED_MAX;
+    if (!(g.at < IG_AMNESTY_AT) && !oldSpeed) return;
     player.integrity = null;
     if (!player.audit || typeof player.audit !== 'object') player.audit = {};
     try { player.audit.max = igProgressHours(); } catch (e) { delete player.audit.max; }
@@ -41,9 +46,9 @@ function igAmnesty() {
 }
 
 function isSaveFlagged() { return !!(player && player.integrity && player.integrity.flagged); }
-function flagSave(reason) {
+function flagSave(reason, extra) {
     if (isSaveFlagged()) return;
-    player.integrity = { flagged: true, reason, at: Date.now() };
+    player.integrity = Object.assign({ flagged: true, reason, at: Date.now() }, extra || {});
     addLog(`⚠️ 存檔驗證異常（${reason}）：已停用戰力榜與寄售。單機遊玩不受影響。`, "system");
 }
 
@@ -98,7 +103,7 @@ function igAuditCheck() {
     if (typeof a.used !== 'number') a.used = 0;
     if (typeof a.max !== 'number') { a.max = prog; return; }   // 第一次（含改版前的存檔）：以目前進度為起點
     if (prog > a.max) { a.used += prog - a.max; a.max = prog; }
-    if (a.used > IG_GRACE_HOURS + a.play / 3600 * IG_SPEED_MAX) flagSave(`修煉進度過快：${a.used.toFixed(1)} 小時的進度只花了 ${(a.play / 3600).toFixed(1)} 小時`);
+    if (a.used > IG_GRACE_HOURS + a.play / 3600 * IG_SPEED_MAX) flagSave(`修煉進度過快：${a.used.toFixed(1)} 小時的進度只花了 ${(a.play / 3600).toFixed(1)} 小時`, { speedMax: IG_SPEED_MAX });
 }
 // 遊玩時數：線上每秒（main.js 的主迴圈時鐘）；離線／背景由 save.js 的 settleIdleSeconds 加
 function igAddPlaySeconds(sec) {
