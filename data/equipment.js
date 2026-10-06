@@ -264,7 +264,7 @@ function forgeEquipment(qty = 1) {
     let results = [], decomposed = [], dShards = 0, dIron = 0, full = false;
     for (let i = 0; i < n; i++) {
         if (player.equipInventory.length >= MAX_EQUIP_INVENTORY) { full = true; break; }   // 背包滿（只會發生在有不分解的品級時）
-        let eq = forgeOneEquipment(name, level, cost);
+        let eq = forgeOneEquipment(name, level, cost, isBlueprint ? BLUEPRINT_QUALITY_ODDS : FORGE_QUALITY_ODDS);   // 圖紙橙色 20%（第 55 節）
         results.push(eq);
         if (auto.includes(eq.quality)) {
             player.equipInventory.pop();   // forgeOneEquipment 剛放進背包的那件
@@ -305,15 +305,13 @@ function forgeEquipment(qty = 1) {
 
 // 打造一件指定等級的裝備並放進背包（扣靈石），回傳新裝備
 // 從該等級對應的可製作清單（凡俗／修真／至高，gear.js 的 getCraftChannel）隨機抽一種，五行跟著那一種裝備
-function forgeOneEquipment(name, level, cost = FORGE_COST) {
+// odds：品質機率（config-equipment.js 的 FORGE_QUALITY_ODDS／BLUEPRINT_QUALITY_ODDS，依 equipQualities 順序）
+function forgeOneEquipment(name, level, cost = FORGE_COST, odds = FORGE_QUALITY_ODDS) {
     player.coins -= cost;
 
-    let qRand = Math.random();
+    let qRand = Math.random(), acc = 0;
     let qualityObj = equipQualities[0];
-    if (qRand < 0.05) qualityObj = equipQualities[4];
-    else if (qRand < 0.15) qualityObj = equipQualities[3];
-    else if (qRand < 0.35) qualityObj = equipQualities[2];
-    else if (qRand < 0.65) qualityObj = equipQualities[1];
+    for (let i = 0; i < odds.length; i++) { acc += odds[i]; if (qRand < acc) { qualityObj = equipQualities[i]; break; } }
 
     let def = pickGearDef(name, getCraftChannel(level));
     let newEquip = createGearEquip(def, qualityObj, level * EQUIP_LEVEL_STAT_MULT * qualityObj.mult, level);

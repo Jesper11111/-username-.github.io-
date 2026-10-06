@@ -1633,7 +1633,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CG`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CH`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3241,6 +3241,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 死守天南城首領波（每 10 波）10% ＋ 波數 × 0.5%（第 100 波 60%，defense.js 的 `grantWave`；結算畫面列「📜 鍛造圖紙 ×N」）
   - 鎮魔塔擊敗 BOSS 30% × 問答倍率，最多 75%（zhenmo.js 的 `grantRewards`；結算畫面與日誌）
   - ⚠️ 圖紙分 17 個部位，湊齊一整套要很多張；掉率是預設值，上線後看玩家取得速度再調。
+  - **圖紙鍛造橙色 20%**（2026-10-06，版本 `20261005CH`，使用者：「橙色製作率提高成 20%」）：品質機率改成設定表，config-equipment.js 的 `FORGE_QUALITY_ODDS`（一般靈石鍛造，白綠藍紫橙 35／30／20／10／5%，不變）、
+    `BLUEPRINT_QUALITY_ODDS`（圖紙 20／30／20／10／20%，多出的 15% 從白色扣）；`forgeOneEquipment(name, level, cost, odds)` 依表抽品質，`forgeEquipment` 圖紙檔傳圖紙表。遠古／太古照舊（橙色中 2%／0.2%）。
   - **2026-10-06 調整**（版本 `20261005CC`，使用者：「5000 等以下圖紙掉落機率增加」「凡界只能打到 3000 等以內圖紙」；加倍幅度使用者未指定，先用 ×2）：
     config-equipment.js 新增 `BLUEPRINT_DROP_RULES = { lowMaxLevel: 5000, lowMult: 2, mortalMaxLevel: 3000 }`。
     `getBlueprintDropLevel()`：不在靈界（`isInLingjie()` 為否）時只取 ≤ 3000 的檔次（最高 2500 檔）；在靈界照人物等級。
