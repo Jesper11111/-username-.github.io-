@@ -64,15 +64,16 @@ const WB_BOSSES = [
         auras: [{ name: "天岩戶封印", player: { freeze: 0.03 }, self: { atk: 0.05 } }]
     },
     {
-        // 2026-10-05 使用者提供 op1／OP2／OP3 動畫：「影片專屬 OP王」「1→2→3 後循環 2→3 不停」。OP2 與 OP3 是同一個檔案，兩格都指向 op2.mp4（只下載一次）
+        // 2026-10-05 使用者提供 op1／OP2／OP3 動畫：「影片專屬 OP王」「1→2→3 後循環 2→3 不停」。（OP2 與 OP3 原本是同一個檔案，10/6 第三段換成新影片）
         name: "OP王", title: "金甲武神", img: "images/zhenmo/boss-opwang.jpg", imgPos: "60% 60%", race: "demon", element: "金",
         def: 22, eva: 12, affix: "metal", affixVal: 20, atkMult: 1, icon: "⚔️",
         intro: "金甲覆身、紫焰為刃的域外武神，一劍劈開星河，諸天修士須合力方能抵擋。",
         skills: ["紫焰天斬", "金甲護體", "星河一劍", "武神降世"],
         auras: [{ name: "金甲護體", player: { atk: 0.05 }, self: { def: 5 } }],
-        videos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op2.mp4"],
+        // 2026-10-06 使用者提供新的第三段（20 秒）：「op王第三段動畫 換成這個」→ op3.mp4
+        videos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op3.mp4"],
         videoLoopFrom: 1,
-        // 使用者選「戰鬥時間跟著動畫走」：一回合 1 秒，30 回合約 30 秒＝三段動畫剛好播完一輪；有動畫的 Boss 不能加速（隱藏 ×1／×2／×4）
-        roundMs: 1000
+        // 使用者選「戰鬥時間跟著動畫走」：三段共 10＋10＋20 秒，一回合 1.34 秒，30 回合約 40 秒＝三段動畫剛好播完一輪；有動畫的 Boss 不能加速（隱藏 ×1／×2／×4）
+        roundMs: 1340
     }
 ];

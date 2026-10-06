@@ -56,7 +56,8 @@ images/               圖片素材
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
 videos/               影片：fengxi-dance.mp4 風希跳舞彩蛋（玩家提供；2026-09-27 壓成 854×480、18 秒、約 0.52 Mbps＋AAC 64k 單聲道、1.35 MB，第 39 節）
-  world-boss/         世界 Boss「OP王」專屬的戰鬥動畫（第 75 節）：op1.mp4 標題卡、op2.mp4 金甲武神（使用者提供的 op1／OP2／OP3，OP2 與 OP3 是同一個檔案；1280×720 5 Mbps 6.3MB → 854×480 1.2 Mbps＋AAC，各約 1.7MB，Media Foundation 轉檔＋faststart）
+  world-boss/         世界 Boss「OP王」專屬的戰鬥動畫（第 75 節）：op1.mp4 標題卡、op2.mp4 金甲武神（使用者提供的 op1／OP2／OP3，OP2 與 OP3 原本是同一個檔案；1280×720 5 Mbps 6.3MB → 854×480 1.2 Mbps＋AAC，各約 1.7MB，Media Foundation 轉檔＋faststart）、
+                      op3.mp4 第三段（2026-10-06 使用者提供 gemini_generated_video_0fcfc6c4.mp4，1280×720 20 秒 13.3MB → 854×480 1.2 Mbps＋AAC 128k、20 秒、3.4MB，同樣轉檔＋faststart）
   defense/            死守天南城背景影片（第 49 節）：battle.mp4 城牆雷戰（10.97 秒、2.75 MB）、flame.mp4 佛焰金身（8.8 秒、2.38 MB）、sword.mp4 巨劍劍氣（8.73 秒、2.34 MB），
                       皆 720×1280、H.264、無聲、頭尾淡入淡出（trim 0.6）；原始檔 v1c771…mp4／Pippit_0926_BuddhaFlame.mp4／Pippit_0926_GiantSwordAura.mp4（1080×1920、10～18 MB）仍在 videos/
 tools/                不會被遊戲載入的維護工具
@@ -1635,7 +1636,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CL`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CM`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4157,6 +4158,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 驗證（本機，戰果送出改成假的）：OP王 依序播放 0:op1 → 1:op2 → 2:op2 → 1:op2 → 2:op2…，銜接時一直有畫面；撐過 30 回合或倒下時影片停止並移除；
     八岐大蛇不建立影片、照舊顯示 Boss 圖，加速鈕照舊顯示；世界 Boss 視窗橫幅顯示「OP王・金甲武神」；
     OP王 加速鈕隱藏、強制 ×4 無效，第 1 段 0.1 秒、第 2 段 11.1 秒、第 3 段 21.4 秒開始，第 30 回合在 30.0 秒結束（第 3 段播到約 8.6 秒）；Console 無錯誤。
+  - **第三段換新影片**（2026-10-06，版本 `20261005CM`，使用者：「op王第三段動畫 換成這個」）：新增 `videos/world-boss/op3.mp4`（20 秒，第 1 節），
+    `videos` 改為 `[op1, op2, op3]`（`videoLoopFrom: 1` 不變＝之後循環 op2→op3）。三段共 10＋10＋20＝40 秒，依「戰鬥時間跟著動畫走」把 `roundMs` 1000 → **1340**（30 回合約 40 秒）。
+    world-boss.js 不用改（每個不同檔案本來就各建一個 `<video>`）。驗證（本機）：op1 0.1 秒 → op2 10.5 秒 → op3 20.8 秒 → 41.2 秒回到 op2；op3 畫面可正常解碼；Console 無錯誤。
 
 ## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
 
