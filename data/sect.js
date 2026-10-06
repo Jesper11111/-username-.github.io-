@@ -105,7 +105,8 @@ async function joinSect(sectName) {
             }
             if (!(await gameConfirm(`確定拜入【${s.name}】嗎？\n\n此階段（${SECT_TIER_NAMES[cat.tier]}）只能選擇一個宗門，選定後無法更改。\n將學會：${s.skills.map(sk => sk.name).join('、')}`))) return;
             player.sectSkills[cat.tier] = s.name;
-            addLog(`📜 習得【${s.name}】${SECT_TIER_NAMES[cat.tier]}技能：${s.skills.map(sk => `【${sk.name}】`).join('')}！`, "skill");
+            addLog(`📜 習得【${s.name}】${SECT_TIER_NAMES[cat.tier]}技能：${s.skills.map(sk => `【${sk.name}】`).join('')}！（已放進武學密典的技能格，可到武學密典調整）`, "skill");
+            autoSlotSectSkills();   // 宗門武學放技能格才施放（spells.js，第 35 節）
             setTimeout(checkAptitudeTest, 300);   // 第一次拜入宗門：資質測試（aptitude.js）
         }
 

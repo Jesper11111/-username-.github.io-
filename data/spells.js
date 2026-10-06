@@ -1,8 +1,9 @@
 // 仙法系統與「武學密典」彈窗（ARCHITECTURE.md 第 35 節）；資料表在 config-spells.js
 //   player.spells     = 已學會的仙法 id（下品／中品／上品：秘典碎片合成 synthesizeSpell；絕學尚無取得方式）
 //   player.spellShards／spellShardsMid／spellShardsHigh = 下品／中品／上品武學秘典碎片（config-spells.js 的 SPELL_SHARD_KINDS）
-//   player.spellSlots = 技能格內放的主動仙法 id（格數 = 1 + 人物等級 ÷ SPELL_SLOT_LEVEL_STEP）
-// 被動光環學會即生效（getSpellAuraBonus，stats.js／elements.js 讀取）；主動仙法放進技能格才會施放（getAllSkills 讀取）
+//   player.spellSlots = 技能格內放的主動仙法 id 或宗門武學 "sect:招式名"（格數 = SPELL_SLOT_BASE + 人物等級 ÷ SPELL_SLOT_LEVEL_STEP）
+//   player.sectSkillSeen = 已自動放過格子的宗門武學 id（新學會的才自動放進空格；玩家卸下後不會再被塞回去）
+// 被動光環學會即生效（getSpellAuraBonus，stats.js／elements.js 讀取）；主動仙法與宗門武學放進技能格才會施放（getAllSkills 讀取）
 
 // ---- 由 config-spells.js 組出 200 招（載入時執行一次，只讀同檔之前載入的設定）----
 const spellList = (function buildSpellList() {
@@ -71,15 +72,58 @@ function isSpellLearned(id) {
     return Array.isArray(player.spells) && player.spells.includes(id);
 }
 
-// 技能格數：Lv1 起 1 格，每 SPELL_SLOT_LEVEL_STEP 級多 1 格
+// 技能格數：基本 SPELL_SLOT_BASE 格，每 SPELL_SLOT_LEVEL_STEP 級多 1 格
 function getSpellSlotCount() {
-    return 1 + Math.floor((player.level || 1) / SPELL_SLOT_LEVEL_STEP);
+    return SPELL_SLOT_BASE + Math.floor((player.level || 1) / SPELL_SLOT_LEVEL_STEP);
+}
+
+// ---- 宗門武學（2026-10-06 併入武學密典、放技能格才施放）----
+// 目前已拜入各階段宗門的招式：[{ id: "sect:招式名", skill, sect, tier }]
+function getLearnedSectSkills() {
+    const out = [];
+    [1, 2, 3].forEach(tier => {
+        const sect = player.sectSkills && player.sectSkills[tier] ? findSectByName(player.sectSkills[tier]) : null;
+        if (sect) sect.skills.forEach(sk => out.push({ id: SECT_SKILL_SLOT_PREFIX + sk.name, skill: sk, sect, tier }));
+    });
+    return out;
+}
+function isSectSkillId(id) { return typeof id === 'string' && id.startsWith(SECT_SKILL_SLOT_PREFIX); }
+function getLearnedSectSkill(id) { return isSectSkillId(id) ? getLearnedSectSkills().find(e => e.id === id) || null : null; }
+// 技能格內的這一項是否有效（已學會的主動仙法，或目前宗門的武學）
+function isValidSlotEntry(id) {
+    if (isSectSkillId(id)) return !!getLearnedSectSkill(id);
+    const s = getSpell(id);
+    return !!(s && s.active && isSpellLearned(id));
+}
+// 新學會的宗門武學自動放進空格（讀檔、拜入宗門、開密典時呼叫）；放過的記在 sectSkillSeen，玩家卸下後不再自動放回
+function autoSlotSectSkills() {
+    if (!player) return;
+    if (!Array.isArray(player.sectSkillSeen)) player.sectSkillSeen = [];
+    if (!Array.isArray(player.spellSlots)) player.spellSlots = [];
+    const count = getSpellSlotCount();
+    getLearnedSectSkills().forEach(e => {
+        if (player.sectSkillSeen.includes(e.id)) return;
+        player.sectSkillSeen.push(e.id);
+        if (player.spellSlots.slice(0, count).includes(e.id)) return;
+        for (let i = 0; i < count; i++) {
+            if (!isValidSlotEntry(player.spellSlots[i])) { player.spellSlots[i] = e.id; return; }
+        }
+    });
 }
 
 // 目前技能格內、已學會的主動仙法（超過格數的部分不生效，例如轉世等級重置後）
 function getEquippedSpells() {
     let slots = Array.isArray(player.spellSlots) ? player.spellSlots.slice(0, getSpellSlotCount()) : [];
     return slots.map(getSpell).filter(s => s && s.active && isSpellLearned(s.id));
+}
+// 技能格內的全部戰鬥技能（仙法＋宗門武學；stats.js 的 getAllSkills）
+function getEquippedCombatSkills() {
+    let slots = Array.isArray(player.spellSlots) ? player.spellSlots.slice(0, getSpellSlotCount()) : [];
+    return slots.map(id => {
+        if (isSectSkillId(id)) { const e = getLearnedSectSkill(id); return e ? e.skill : null; }
+        const s = getSpell(id);
+        return s && s.active && isSpellLearned(s.id) ? spellToCombatSkill(s) : null;
+    }).filter(Boolean);
 }
 
 // 所有已學會的被動光環加總（負值是魔功的代價）
@@ -212,6 +256,7 @@ function selectSpell(id) {
 function renderSpellModal() {
     const box = document.getElementById('spell-modal-body');
     if (!box) return;
+    autoSlotSectSkills();
     let learnedCount = spellList.filter(s => isSpellLearned(s.id)).length;
     let slotCount = getSpellSlotCount();
     let slots = Array.isArray(player.spellSlots) ? player.spellSlots : [];
@@ -219,14 +264,26 @@ function renderSpellModal() {
     // 技能格
     let slotHtml = '';
     for (let i = 0; i < slotCount; i++) {
-        let s = getSpell(slots[i]);
-        let valid = s && isSpellLearned(s.id);
+        let id = slots[i], valid = isValidSlotEntry(id), label = '';
+        if (valid) { const e = getLearnedSectSkill(id); const s = getSpell(id); label = e ? `🏯 ${e.skill.name}` : `${SPELL_ROLES[s.role].icon} ${s.name}`; }
         slotHtml += `<div class="spell-slot${valid ? ' filled' : ''}">
             <span class="spell-slot-no">${i + 1}</span>
-            ${valid ? `${SPELL_ROLES[s.role].icon} ${s.name}<button class="spell-slot-x" onclick="unequipSpell(${i})" aria-label="卸下">✕</button>` : '<span class="spell-slot-empty">空格</span>'}
+            ${valid ? `${label}<button class="spell-slot-x" onclick="unequipSpell(${i})" aria-label="卸下">✕</button>` : '<span class="spell-slot-empty">空格</span>'}
         </div>`;
     }
-    let nextLv = slotCount * SPELL_SLOT_LEVEL_STEP;
+    let nextLv = (Math.floor((player.level || 1) / SPELL_SLOT_LEVEL_STEP) + 1) * SPELL_SLOT_LEVEL_STEP;
+
+    // 宗門武學（2026-10-06 併入密典）：已拜入宗門的招式，放進技能格才會施放
+    const slotted = slots.slice(0, slotCount);
+    const typeName = { single: "單體", aoe: "群體" };
+    const sectList = getLearnedSectSkills();
+    const sectHtml = `<div class="spell-sect-box"><div class="spell-sect-title">🏯 宗門武學（放進技能格才會施放）</div>`
+        + (sectList.length ? sectList.map(e => {
+            const sk = e.skill, on = slotted.includes(e.id);
+            return `<div class="spell-sect-row"><span>【${sk.name}】<small>${SECT_TIER_NAMES[e.tier]}・${e.sect.name}｜${typeName[sk.type] || sk.type}・${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}・威力 ${Math.round(sk.mult * 100)}%・耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}</small></span>`
+                + (on ? `<span class="spell-sect-on">✅ 已在技能格</span>` : `<button class="sys-btn" onclick="equipSpell('${e.id}')">放入技能格</button>`) + `</div>`;
+        }).join('') : `<div class="spell-sect-row"><small>尚未拜入宗門。拜入後的宗門武學會列在這裡。</small></div>`)
+        + `</div>`;
 
     // 篩選列
     const chip = (key, value, label) => `<button class="spell-chip${spellFilter[key] === value ? ' on' : ''}" onclick="setSpellFilter('${key}', '${value}')">${label}</button>`;
@@ -284,28 +341,28 @@ function renderSpellModal() {
         <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${spellList.length} 種仙法｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
         ${shardHtml}
         <div class="spell-slots">${slotHtml}</div>
+        ${sectHtml}
         ${filters}
         ${detail}
         <div class="spell-count">顯示 ${shown.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
         <div class="spell-grid">${cards}</div>`;
 }
 
-// 放入第一個空格；格子都滿時替換最後一格
+// 放入第一個空格；格子都滿時替換最後一格（仙法 id 或宗門武學 "sect:招式名"）
 function equipSpell(id) {
-    let s = getSpell(id);
-    if (!s || !s.active || !isSpellLearned(id)) return;
+    if (!isValidSlotEntry(id)) return;
+    const e = getLearnedSectSkill(id), name = e ? e.skill.name : getSpell(id).name;
     if (!Array.isArray(player.spellSlots)) player.spellSlots = [];
     let count = getSpellSlotCount();
     let slots = player.spellSlots.slice(0, count);
     if (slots.includes(id)) return;
     let idx = -1;
     for (let i = 0; i < count; i++) {
-        let cur = getSpell(slots[i]);
-        if (!cur || !isSpellLearned(cur.id)) { idx = i; break; }
+        if (!isValidSlotEntry(slots[i])) { idx = i; break; }
     }
     if (idx === -1) idx = count - 1;
     player.spellSlots[idx] = id;
-    addLog(`📜 將仙法【${s.name}】放入第 ${idx + 1} 格技能格。`, "skill");
+    addLog(`📜 將${e ? '宗門武學' : '仙法'}【${name}】放入第 ${idx + 1} 格技能格。`, "skill");
     renderSpellModal();
     updateUI();
 }

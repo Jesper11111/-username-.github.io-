@@ -531,6 +531,7 @@ function applySaveData(data) {
     migrateGearCodex();     // 持有的圖鑑裝備補記進天磯錄、補齊新欄位（codex.js）
     migrateStrangeFires();  // 未命名的異火補抽成天下異火（strange-fire.js）
     migratePartners();      // 夥伴：舊版單人出戰轉為隊伍、補齊好感欄位（partner.js）
+    autoSlotSectSkills();   // 宗門武學併入武學密典（spells.js，第 35 節）：已學會的放進技能空格（只新增欄位 sectSkillSeen）
     enforceBeastActiveLimit();   // 出戰上限 BEAST_ACTIVE_MAX（2026-09-30 起三隻）：超過的保留排前面的（beast-combat.js）
     beastMp = {}; partnerMp = {};   // 靈寵、夥伴靈力從滿的開始
 
