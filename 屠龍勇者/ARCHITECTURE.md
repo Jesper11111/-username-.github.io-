@@ -22,11 +22,15 @@
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
 | `data/ui-panels.js` | 主畫面 7 個分頁（狩獵／地圖／角色／背包／技能／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
-| `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動 |
+| `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
+| `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
+| `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
+| `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png` |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → player → enchant → combat → town → save → ui → ui-create → ui-panels → main`
+`config → classes → skills → items → monsters → zones → player → enchant → combat → town → save → ui → ui-create → ui-panels → pwa → main`
 
 - 上層資料檔（config～zones）只在「載入時」用到更前面的檔案。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -34,7 +38,8 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007c`）。
+  SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
 - `onclick="…"` 字串只呼叫頂層函式並傳字面值，不直接寫 `player`（與修仙的混淆建置規則一致）。
@@ -120,4 +125,17 @@ kills, deaths, settings, created`
 
 ## 11. 尚未實作（之後可做）
 
-離線收益、寵物／召喚（妖精、王族）、血盟、變身卷軸、更多地圖（龍之谷、遺忘之島…）、PWA、音效與怪物圖片。
+離線收益、寵物／召喚（妖精、王族）、血盟、變身卷軸、更多地圖（龍之谷、遺忘之島…）、音效與怪物圖片。
+
+## 12. PWA（可安裝的 App 版）
+
+- `manifest.json`：`id`／`scope`／`start_url` 都相對本資料夾，和修仙是**兩個不同的 App**，可以同時安裝。
+- `sw.js?v=版本號` 由 `pwa.js` 以 `scope: './'` 註冊。範圍比修仙根目錄的 SW 更精確，所以屠龍頁面由這支接手。
+- 快取：頁面網路優先；帶 `?v=` 的 JS 快取優先（`dragon-core-版本`，新版啟用時刪舊版）；圖示、manifest 先給快取再背景更新（`dragon-assets`）。
+  同網域 `caches` 是共用的，所以名稱一律 `dragon-` 開頭；修仙 SW 只清 `fanchen-core-`，兩邊不會互刪。
+- 安裝時預先抓 `index.html` 及裡面所有 `data/*.js?v=`，第一次離線開也完整。
+- 新版本：每 30 分鐘與切回前景時抓 `index.html` 比對 `config.js?v=`，不同就在畫面下方顯示「🔄 有新版本，點此更新」（存檔後重新整理）。
+- 安裝入口：標題畫面與「⚙️ 設定」的「📲 安裝到主畫面」→ `openInstallGuide`（Chrome／Edge 直接跳系統安裝視窗；iPhone 顯示 Safari 加入主畫面步驟；LINE 等內建瀏覽器提示改用一般瀏覽器）。
+- iPhone 主畫面版與 Safari 存檔分開，第一次從主畫面開且沒存檔時提醒一次（`dragonSlayer_pwa_hint`）。
+- 圖示由 PowerShell `System.Drawing` 產生（紅底金框「屠龍」二字），要換圖直接覆蓋 `images/` 同檔名即可。
+- 本機測試會在 localhost:8790 註冊 SW；測完可在 DevTools → Application → Service Workers 註銷，避免讀到舊快取。

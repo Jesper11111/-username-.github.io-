@@ -34,6 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = GAME_TITLE;
     showTitle();
     setInterval(gameTick, TICK_MS);
+    initPwa();
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
 window.addEventListener('pagehide', saveGame);

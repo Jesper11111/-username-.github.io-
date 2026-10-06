@@ -452,6 +452,10 @@ function renderSettings() {
             ${chk('teleOn', '危險時自動使用瞬間移動卷軸')}${num('telePct', 'HP 低於 % 瞬移', 5, 90)}
             ${chk('autoHome', '藥水／彈藥用完或負重過高時自動回家')}${num('weightPct', '負重超過 % 回家', 30, 100)}
         </div>
+        <div class="panel"><h4>📲 App</h4>
+            <div class="btn-row"><button onclick="openInstallGuide()">📲 安裝到主畫面</button></div>
+            <small class="muted">安裝後有自己的圖示、全螢幕開啟，沒網路也能玩。</small>
+        </div>
         <div class="panel"><h4>💾 存檔</h4>
             <div class="btn-row">
                 <button onclick="manualSave()">手動存檔</button>
