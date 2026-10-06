@@ -28,6 +28,10 @@ const FORGE_COST = 10000;   // 每次鍛造的靈石（不分等級）
 // 品質照鍛造閣原本的機率；不受宗門階段限制（圖紙本身就是門檻）。之後規劃玩家交易／離線寄賣
 const BLUEPRINT_LEVELS = [1500, 2500, 3500, 5000, 6500, 8000, 10000];
 const BLUEPRINT_FORGE_COST = 100000;
+// 品質機率（依 equipQualities 順序：白、綠、藍、紫、橙）：一般靈石鍛造 35／30／20／10／5%；
+//   圖紙鍛造 2026-10-06 使用者：「橙色製作率提高成 20%」→ 多出的 15% 從白色扣（白 20%），其餘不變
+const FORGE_QUALITY_ODDS = [0.35, 0.30, 0.20, 0.10, 0.05];
+const BLUEPRINT_QUALITY_ODDS = [0.20, 0.30, 0.20, 0.10, 0.20];
 // 掉落（equipment.js 的 grantBlueprint）：圖紙等級 = 不超過人物等級的最高一檔（未滿 Lv.1500 給 1500 檔，先存著），部位從可鍛造的 17 部位隨機
 //   tian：天榜懸賞伏誅的機率；defenseBoss：死守天南城首領波（每 10 波）＝ base ＋ 波數 × perWave（第 100 波 60%）；
 //   zhenmo：鎮魔塔擊敗 BOSS ＝ base × 問答倍率（全對 ×2.5 → 75%）
