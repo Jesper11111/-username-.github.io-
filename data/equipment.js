@@ -365,8 +365,8 @@ function rollBlueprintChallengeDrops(rolls, silent) {
     return n ? `鍛造圖紙 ×${n}` : '';
 }
 // 依機率給一張圖紙；中了回傳日誌文字，沒中回傳 ''（呼叫端：bounty.js 天榜、defense.js 首領波、zhenmo.js BOSS）
-function grantBlueprint(chance, sourceText) {
-    let level = getBlueprintDropLevel();
+function grantBlueprint(chance, sourceText, fixedLevel) {
+    let level = fixedLevel || getBlueprintDropLevel();   // fixedLevel：時空秘境固定檔次（map.js，第 78 節）
     if (level <= BLUEPRINT_DROP_RULES.lowMaxLevel) chance = Math.min(1, chance * BLUEPRINT_DROP_RULES.lowMult);   // 5000 等以下機率加倍
     if (!(Math.random() < chance)) return '';
     // 部位隨機（可鍛造的 17 個部位平均，不含神器）

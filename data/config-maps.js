@@ -39,7 +39,13 @@ const maps = [
         { name: "鬼谷八荒", expRate: 1000, diff: 300000, coins: 2450, nv2L: 6, suit: [6, 6] }, // 284 萬（上限 300 萬）
         // 2026-09-30 使用者新增：煉虛可進、經驗 1200；妖獸固定煉虛 10 階（nv2FixedL）、強度 5～10 倍（nv2Str，一般地圖 1.5～3）。
         //   nv2L 6 ＝ 境界壓制以煉虛 1 階起算（煉虛玩家不吃壓制）；靈石介於鬼谷八荒與崑吾山之間
-        { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] } // 296 萬
+        { name: "墜魔谷", expRate: 1200, diff: 500000, coins: 2550, minRealm: 6, nv2L: 6, nv2FixedL: 6.9, nv2Str: [5, 10], suit: [6, 6] }, // 296 萬
+        // 時空秘境（2026-10-06 使用者：「亂星海增加時空秘境地圖」，設定見下方 SPACETIME_REALM）：只能從人界地圖「亂星海」分區進入（hidden），仙人初境以下（maxRealm）
+        //   妖獸＝玩家自己境界的 10 階 × 30 倍（nv2L／nv2FixedL／suit 隨玩家境界的 getter）；刷新 3 秒（respawnSec）；經驗、靈石、聲望照自己境界的主要地圖（map.js 的 getRewardMap）
+        { name: "時空秘境", expRate: 3, diff: 1, coins: 0, hidden: true, spacetime: true, maxRealm: 10, respawnSec: 3, nv2Str: [30, 30],
+          get nv2L() { return typeof player !== 'undefined' && player ? Math.min(player.realmIndex || 0, 10) : 0; },
+          get nv2FixedL() { return this.nv2L + 0.9; },
+          get suit() { return [this.nv2L, this.nv2L]; } }
     ]},
     { category: "大晉王朝區域 (煉虛解鎖·高難)", isSafe: false, items: [
         // 2026-09-30 使用者要求「地圖依經驗排序」：本區由經驗低到高排列（同經驗時境界低的在前）；各區都照此規則，新增地圖時插在對應位置
@@ -111,6 +117,13 @@ const OFFLINE_COMBAT_RATE = 0.3;
 const MEDITATE_LOG_SECONDS = 30;
 // 野外一波全滅後，等多少秒刷新下一波（2026-09-28 由 5 秒改為 10 秒，減少戰鬥節奏與日誌量）
 const MONSTER_RESPAWN_SECONDS = 10;
+// 地圖可用 respawnSec 自訂刷新秒數（時空秘境 3 秒：刷新期間的調息少，降低生存率；map.js 的 getMapRespawnSeconds）
+// 時空秘境（亂星海，2026-10-06 使用者指定；map.js 的 enterSpacetimeRealm／rollSpacetimeDrops）：
+//   maxRealm：仙人初境（索引 10）以下可進；str：妖獸強度＝自己境界 10 階的幾倍；craftMult：做裝通貨與中品武學秘典碎片掉率倍數（map.js 的 getChallengeCraftMult）
+//   專屬掉落（每次掉寶的機率，每小時最多 1200 次）：blueprintMaxLevel 3000 等以內最高的圖紙檔（2500 等）；lingStone 五行傳送陣靈石每種；starIron 星允鐵 1～3；fireShard 異火碎片 1～2
+//   掉率使用者未指定，先用這組：圖紙 1/3000（再經 5000 等以下 ×2 → 每小時約 0.8 張）、靈石每種每小時約 1 顆、星允鐵約 12 顆、異火碎片約 4.5 片
+const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3,
+    blueprintMaxLevel: 3000, blueprint: 1 / 3000, lingStone: 1 / 1200, starIron: 1 / 200, fireShard: 1 / 400 };
 // 離線／背景依實力估算戰鬥效率用（save.js 的 estimateIdleCombat）：一波平均隻數（1～5 隻）、波與波之間的秒數（刷新＋生成 1 秒）
 const IDLE_WAVE_AVG_MONSTERS = 3;
 const IDLE_WAVE_GAP_TICKS = MONSTER_RESPAWN_SECONDS + 1;

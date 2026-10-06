@@ -1633,7 +1633,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CE`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CF`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4194,3 +4194,25 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **驗證**（Playwright 攔截 `?tg=` 自訂伺服器時間＋假時鐘）：A 存檔後實際 10 分鐘、時鐘調快 12 小時 → 結算 600 秒並提示；B 舊存檔（無 lastSaveSrv）時鐘快 12 小時 → 約 10 分鐘；C 正常離線 3 小時 → 10800 秒；
   D 連不上 → 1800 秒並提示；E 加速 5 倍 → 偵測 4.84 倍、之後頁面 100 秒只放行 21 次、恢復正常後 tgSpeed 回 1；F 遊戲中時鐘調快 30 小時 → 背景補發只補約 1.5 秒；G 裝置日期調到隔天 → todayKey 仍是伺服器的今天。
   實際伺服器（不攔截）對時 offset −105ms；線上 GitHub Pages 的 HEAD 有 Date 標頭；建置版正常；Console 無錯誤。
+
+## 78. 時空秘境（亂星海；`map.js`、`config-maps.js`；2026-10-06，版本 `20261005CF`）
+
+- **使用者指定**：「亂星海增加時空秘境地圖；仙人初境以下都可以進入；強度為每個境界的 10 階的 30 倍；怪物刷新速度 3 秒，讓玩家沒有足夠的緩衝時間，降低生存率；
+  掉落 3000 等裝備製作書、中品武學秘典碎片、金木水火土極品靈石（＝傳送陣靈石，第 74 節改名）、各種材料」。
+- **地圖**（config-maps.js 第二區「慕蘭草原」最後一張，`hidden`、`spacetime: true`）：`maxRealm: 10`（仙人初境以下；`getMapEntryBlock` 新增境界上限檢查，短字「🔒仙人初境以下」）、
+  `respawnSec: 3`、`nv2Str: [30, 30]`；`nv2L`／`nv2FixedL`／`suit` 是 **getter**：`nv2L`＝玩家境界（最高 10），`nv2FixedL`＝境界＋0.9（該境界 10 階）→ 妖獸＝自己境界 10 階 × 30 倍、沒有境界壓制、不算挑戰模式。
+  存檔裡的 currentMap 是當時數值的副本，讀檔時 `migrateCurrentMap` 依名稱改指回這個物件，getter 照常生效。
+- **入口**：人界地圖「亂星海」分區（config-towns.js 的 `worldRegions.luanxing`，原本「尚未開放」）→ `enterSpacetimeRealm()`：檢查門檻、`gameConfirm` 說明（強度、3 秒刷新、死亡懲罰、收益、掉落）→ `selectMap`。
+- **刷新**：`getMapRespawnSeconds(map)`（地圖 `respawnSec`，沒有＝`MONSTER_RESPAWN_SECONDS` 10 秒）；combat.js 波次全滅後用它；save.js 離線丹藥估算（`settleIdlePotions`）的刷新調息也改用它（3 秒調息少，耗藥多）。
+- **收益**：`getRewardMap()` 在時空秘境＝自己境界的主要地圖（同挑戰模式，第 70 節），經驗、靈石、聲望、刷新補償不因 30 倍強度暴增；可離線／背景掛機（撐不住照常退回）。
+- **掉落**（`SPACETIME_REALM`，config-maps.js；掉率使用者未指定，先用這組；每次掉寶＝`takeDropRolls` 的次數，每小時最多 1200，離線用收益次數）：
+  - `rollSpacetimeDrops(rolls, silent)`（map.js）：鍛造圖紙 1/3000，固定 `getSpacetimeBlueprintLevel()`＝3000 等以內最高檔（**2500 等**；圖紙沒有 3000 等這一檔，第 55 節），再經 `grantBlueprint` 的 5000 等以下 ×2 → 每小時約 0.7 張；
+    五行傳送陣靈石每種 1/1200（每小時各約 1 顆）；星允鐵 1/200 × 1～3（約 12 顆）；異火碎片 1/400 × 1～2（約 4.5 片）。
+    `grantBlueprint(chance, sourceText, fixedLevel)` 新增選填固定檔次；lingjie.js 的 `rollLingStoneDrops` 在時空秘境不套一般規則（改由這裡掉）。
+  - `getChallengeCraftMult()` 在時空秘境回傳 `craftMult` 3 → 做裝通貨（線上、離線）與中品武學秘典碎片（第 35 節，人界野外＝中品）×3，每小時約 12 片。
+- **讀檔修正（第 70 節相關）**：save.js 的 `migrateCurrentMap` 原本把「境界不夠還待在裡面」的玩家送回宗門——挑戰模式改成可離線掛機後，這會讓關掉遊戲再開的離線掛機無效；
+  改成留在原地（離線結算照實力估算），只有超過 `maxRealm`（時空秘境的天仙以上）才送回宗門。
+- **驗證**（本機）：亂星海分區跳出說明、確定後進入（原始版與建置版）；凡人妖獸「凡人10階」、倍率 30、氣血為巔峰 1 倍的 30.1 倍；新角色 30 秒內戰死、折壽回宗門；
+  妖獸秒殺時「3 秒後刷新」倒數 3→2→1；100 小時模擬：圖紙 0.70 張／小時（全是 2500 等）、靈石各 1.00、星允鐵 12.1、異火 4.5、中品碎片 12.0；
+  離線 1 小時留在時空秘境、靈石與主要地圖相同（11,440）並列出專屬掉落；挑戰地圖存檔重載留在原地；天仙存在時空秘境的存檔重載送回宗門；天仙進入被擋、仙人初境可進；Console 無錯誤。
+

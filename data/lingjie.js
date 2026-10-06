@@ -68,7 +68,7 @@ function openCurrentWorldScene() { openTownScene(isInLingjie() ? LINGJIE_SCENE_K
 // 掉落（combat.js：rolls＝takeDropRolls 的掉寶次數；離線用收益次數）；只在 LINGJIE_STONE_DROP.minMapL 以上的野外
 function rollLingStoneDrops(rolls, silent) {
     const D = LINGJIE_STONE_DROP, m = player.currentMap;
-    if (!(rolls > 0) || !m || player.currentMapIsSafe || !(typeof m.nv2L === 'number' && m.nv2L >= D.minMapL)) return '';
+    if (!(rolls > 0) || !m || player.currentMapIsSafe || m.spacetime || !(typeof m.nv2L === 'number' && m.nv2L >= D.minMapL)) return '';   // 時空秘境另有掉率（map.js 的 rollSpacetimeDrops）
     const got = {};
     LINGJIE_STONE_KEYS.forEach(k => {
         const exp = rolls * D.field;

@@ -175,6 +175,9 @@ function isGM() { return !!(player && player.gm === true); }
 function getMapEntryBlock(cIndex, iIndex) {
     if (isGM()) return null;
     const targetMap = maps[cIndex].items[iIndex];
+    // 境界上限（時空秘境：仙人初境以下，第 78 節）
+    if (typeof targetMap.maxRealm === 'number' && player.realmIndex > targetMap.maxRealm)
+        return { msg: `【${targetMap.name}】只有${realms[targetMap.maxRealm]}以下的修士才能進入。`, short: `🔒${realms[targetMap.maxRealm]}以下` };
     const minRealm = getMapMinRealm(targetMap);
     if (minRealm && isBelowMapLevel(targetMap))   // realm: true＝可改用挑戰模式進入（第 70 節）
         return { msg: `進入【${targetMap.name}】失敗！您的境界未達【${typeof targetMap.minL === 'number' ? nv2LevelLabel(getMapMinLevel(targetMap)) : realms[minRealm]}】。\n（可用「⚔️ 挑戰模式」越級進入）`, short: `⚔️挑戰`, realm: true };
@@ -244,6 +247,8 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
     refreshCombatStatusText();
     if (player.currentMapIsSafe) {
         addLog(`🗺️ 回到安全區 ${player.currentMap.name}，開始打坐療傷。`);
+    } else if (player.currentMap.spacetime) {
+        addLog(`🌀 踏入【${player.currentMap.name}】！妖獸皆為你境界巔峰的 ${SPACETIME_REALM_STR()} 倍強度，3 秒便再度湧現，戰死照常折壽。`, "combat");
     } else if (isChallengeMap()) {
         addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；可離線／背景掛機（撐不住會退回）。`, "combat");
     } else {
@@ -268,6 +273,7 @@ function isChallengeMap(item) {
 // 越過門檻幾個境界（0＝不是挑戰）
 function getChallengeOver(item) { item = item || player.currentMap; return isChallengeMap(item) ? Math.max(1, getMapMinRealm(item) - player.realmIndex) : 0; }   // 同境界但階數不夠（minL）算越 1 境
 function getChallengeCraftMult() {
+    if (isSpacetimeMap()) return SPACETIME_REALM.craftMult;   // 時空秘境：做裝通貨、中品武學秘典碎片 ×3（第 78 節）
     const o = getChallengeOver();
     return o <= 0 ? 1 : (CHALLENGE_CRAFT_MULT[Math.min(o, CHALLENGE_CRAFT_MULT.length - 1)] || 1);
 }
@@ -279,7 +285,62 @@ function getMainMapForRealm() {
 }
 // 擊殺收益用的地圖：挑戰模式＝自己境界的主要地圖，否則＝所在地圖
 function getRewardMap() {
-    return isChallengeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;
+    return isChallengeMap() || isSpacetimeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;   // 時空秘境同樣照主要地圖（第 78 節）
+}
+
+// ==================== 時空秘境（亂星海，第 78 節；2026-10-06 使用者指定）====================
+// 人界地圖「亂星海」分區 → enterSpacetimeRealm；仙人初境以下可進；妖獸＝自己境界 10 階 × 30 倍、刷新 3 秒（config-maps.js 的 SPACETIME_REALM 與地圖 getter）
+// 經驗、靈石、聲望照自己境界的主要地圖（getRewardMap）；專屬掉落 rollSpacetimeDrops；做裝通貨、中品武學秘典碎片 ×3（getChallengeCraftMult）
+function isSpacetimeMap(item) {
+    item = item || player.currentMap;
+    return !!(item && item.spacetime && !(item === player.currentMap && player.currentMapIsSafe));
+}
+function getMapRespawnSeconds(item) {
+    item = item || player.currentMap;
+    return item && typeof item.respawnSec === 'number' ? item.respawnSec : MONSTER_RESPAWN_SECONDS;
+}
+function SPACETIME_REALM_STR() { const f = findMapByName(SPACETIME_REALM.name); const m = f && maps[f.c].items[f.i]; return m && m.nv2Str ? m.nv2Str[0] : 30; }
+// 圖紙等級：blueprintMaxLevel（3000）以內最高的一檔（2500 等）
+function getSpacetimeBlueprintLevel() {
+    const fit = BLUEPRINT_LEVELS.filter(l => l <= SPACETIME_REALM.blueprintMaxLevel);
+    return fit.length ? fit[fit.length - 1] : BLUEPRINT_LEVELS[0];
+}
+async function enterSpacetimeRealm() {
+    const f = findMapByName(SPACETIME_REALM.name);
+    if (!f) return;
+    if (isSpacetimeMap()) { showToast('🌀 你已身在時空秘境'); return; }
+    const block = getMapEntryBlock(f.c, f.i);
+    if (block) { gameAlert(block.msg); return; }
+    const msg = `🌀 亂星海・時空秘境\n`
+        + `\n・${realms[SPACETIME_REALM.maxRealm]}以下皆可進入`
+        + `\n・妖獸＝你所在境界的 10 階 × ${SPACETIME_REALM_STR()} 倍強度（你是${realms[player.realmIndex]}）`
+        + `\n・妖獸 ${getMapRespawnSeconds(maps[f.c].items[f.i])} 秒就刷新，幾乎沒有調息的時間，戰死照常折損壽元、遺失 10% 靈石`
+        + `\n・經驗、靈石照你境界的主要地圖計算`
+        + `\n・專屬掉落：${getSpacetimeBlueprintLevel()} 等鍛造圖紙、中品武學秘典碎片、金木水火土傳送陣靈石、星允鐵、異火碎片、做裝通貨（×${SPACETIME_REALM.craftMult}）`
+        + `\n\n確定進入？`;
+    if (!(await gameConfirm(msg))) return;
+    selectMap(f.c, f.i, true);
+}
+// 專屬掉落（combat.js 線上：rolls＝takeDropRolls 的掉寶次數；save.js 離線／背景：收益次數）；回傳摘要文字
+function rollSpacetimeDrops(rolls, silent) {
+    if (!(rolls > 0) || !isSpacetimeMap()) return '';
+    const D = SPACETIME_REALM, parts = [];
+    const count = p => { const e = rolls * p; let n = Math.floor(e); if (Math.random() < e - n) n++; return n; };
+    // 鍛造圖紙（固定檔次；5000 等以下 ×2 照 grantBlueprint）
+    let bp = 0, tries = count(1);
+    for (let i = 0; i < tries; i++) { const t = grantBlueprint(D.blueprint, '時空秘境斬殺妖獸，', getSpacetimeBlueprintLevel()); if (t) { bp++; if (!silent) addLog(t, "level-up", false, "item"); } }
+    if (bp) parts.push(`鍛造圖紙 ×${bp}`);
+    // 五行傳送陣靈石
+    const st = LINGJIE_STONE_KEYS.map(k => { const n = count(D.lingStone); return n > 0 ? `${k}屬性傳送陣靈石×${addLingStone(k, n)}` : ''; }).filter(Boolean);
+    parts.push(...st);
+    // 星允鐵、異火碎片
+    let iron = 0; for (let i = count(D.starIron); i > 0; i--) iron += 1 + Math.floor(Math.random() * 3);
+    if (iron) { const got = addStarIron(iron); if (got) parts.push(`星允鐵×${got}`); }
+    let fire = 0; for (let i = count(D.fireShard); i > 0; i--) fire += 1 + Math.floor(Math.random() * 2);
+    if (fire) parts.push(`異火碎片×${addFireShards(fire)}`);
+    const t = parts.join('、');
+    if (t && !silent) addLog(`🌀 時空秘境的妖獸遺落 ${t}！`, "level-up", false, "item");
+    return t;
 }
 function challengeStrengthText(item) {
     const main = getMainMapForRealm();
