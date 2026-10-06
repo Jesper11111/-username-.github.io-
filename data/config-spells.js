@@ -15,6 +15,16 @@ const SPELL_SLOT_LEVEL_STEP = 100;   // 每幾級多開一格技能格（Lv1 即
 //   player.spellShards；武學密典視窗「合成」→ 隨機習得一招尚未學會的下品仙法（spells.js 的 synthesizeSpell）；來源見 config-encounter.js
 const SPELL_SHARD_NEED = 100;
 const SPELL_SHARD_GRADE = "low";
+// 中品／上品武學秘典碎片（2026-10-06 使用者：「凡界新增中品武學碎片」「靈界新增上品武學碎片」）：同樣 100 片合成，隨機習得一招尚未學會的該品仙法
+//   key：存檔欄位；from：武學密典顯示的來源。中品＝凡界（人界）野外妖獸、上品＝靈界野外妖獸（spells.js 的 rollSpellShardFieldDrops）
+const SPELL_SHARD_KINDS = {
+    low:  { key: "spellShards",     from: "奇遇、機緣探索取得" },
+    mid:  { key: "spellShardsMid",  from: "凡界（人界）野外妖獸掉落" },
+    high: { key: "spellShardsHigh", from: "靈界野外妖獸掉落" }
+};
+// 野外掉落：每次掉寶（combat.js 的 takeDropRolls，每小時最多 1200 次；離線用收益次數）掉 1 片的機率
+//   中品 1/300 → 每小時約 4 片（約 25 小時合成一招）；上品 1/600 → 每小時約 2 片（約 50 小時一招）
+const SPELL_SHARD_FIELD_DROP = { mid: 1 / 300, high: 1 / 600 };
 
 const SPELL_GRADES = {
     low:      { name: "下品", color: "#9ca3af" },

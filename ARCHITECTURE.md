@@ -1633,7 +1633,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CC`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CD`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -1945,7 +1945,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 
 ## 35. 仙法與武學密典（`config-spells.js`、`spells.js`）
 
-不分流派的武學，任何人都可修習。**下品**可用「下品武學秘典碎片」合成（2026-10-01，見本節末）；中品以上**目前沒有取得方式**，密典顯示灰色但可瀏覽效果。
+不分流派的武學，任何人都可修習。**下品**可用「下品武學秘典碎片」合成（2026-10-01，見本節末）；**中品／上品**用凡界／靈界野外掉的中品／上品碎片合成（2026-10-06，見本節末）；絕學**目前沒有取得方式**，密典顯示灰色但可瀏覽效果。
 
 ### 200 種的組成
 - **10 屬性 × 3 品（下／中／上）× 6 招 = 180**，每品 6 招依序：單體攻擊、群體攻擊、牽制、補助、補血、光環（被動）。
@@ -2001,8 +2001,16 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 來源：所有奇遇與機緣（第 63 節的 `ENCOUNTER_REWARDS` 各項 `spell`），約每日 60～80 片。
 - 驗證：105 片合成 → 習得「掌心雷」（下品），剩 5 片、未學 60 → 59。
 
+### 中品／上品武學秘典碎片（2026-10-06，版本 `20261005CD`）
+- 使用者：「凡界新增中品武學碎片」「靈界新增上品武學碎片」。存檔 `player.spellShardsMid`、`player.spellShardsHigh`（下品仍是 `player.spellShards`）；同樣 `SPELL_SHARD_NEED` 100 片合成。
+- config-spells.js：`SPELL_SHARD_KINDS`（low／mid／high → 存檔欄位、來源文字）、`SPELL_SHARD_FIELD_DROP`（每次掉寶的機率：中品 1/300、上品 1/600；掉率使用者未指定，先用這組）。
+- spells.js：`spellShardName(grade)`、`getSpellShards(grade)`；`addSpellShards(n, source, grade)`、`unlearnedShardSpells(grade)`、`synthesizeSpell(grade)` 都多了 grade（省略＝下品，舊呼叫不變）；
+  `rollSpellShardFieldDrops(rolls, silent)`：所在野外（非安全區）屬於靈界分類（`isLingjieMapCategory`）＝上品，否則（凡界）＝中品；期望值＝掉寶次數 × 機率。
+  combat.js 線上掉寶（`takeDropRolls` 的 rolls，第 71 節：每小時最多 1200 次 → 中品約 4 片／小時、上品約 2 片／小時）；save.js 離線／背景用收益次數 `combatTicks`，結算訊息列「📜 妖獸身上掉出 …」。
+- 武學密典視窗頂端改成下品／中品／上品三列碎片進度與「🔮 合成X品武學」按鈕（`synthesizeSpell('mid')` 等）；未學會的中品／上品招式說明改為「集滿X品武學秘典碎片合成時隨機習得（來源）」。
+
 ### 待決定
-- 中品以上的取得方式（購買／掉落／千寶閣／參悟）。之後只要把 id 寫進 `player.spells` 即可學會。
+- 絕學的取得方式（購買／掉落／千寶閣／參悟）。之後只要把 id 寫進 `player.spells` 即可學會。
 - 被動光環目前**全部學會即全部生效**，200 種全學的疊加還沒做平衡；若要限制可改成光環也要放格子。
 
 ## 36. 懸賞榜與懸賞對決（`config-bounty.js`、`bounty.js`）
