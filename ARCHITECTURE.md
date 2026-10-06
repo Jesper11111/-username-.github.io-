@@ -1636,7 +1636,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CM`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CN`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -4163,6 +4163,16 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     world-boss.js 不用改（每個不同檔案本來就各建一個 `<video>`）。驗證（本機）：op1 0.1 秒 → op2 10.5 秒 → op3 20.8 秒 → 41.2 秒回到 op2；op3 畫面可正常解碼；Console 無錯誤。
     實戰（假的雲端狀態＋`wbSubmit` 換成只記錄、不連網，從視窗按「挑戰」）：新角色第 18 回合倒下（23.7 秒）→ 影片停止移除、結算顯示已計入；
     撐滿 30 回合在 39.9 秒結束，當時 op3 播到約 19.4 秒（全長 20.1 秒），影片皆為有聲播放；Console 無錯誤。
+- **人物攻擊反應**（2026-10-06，版本 `20261005CN`，使用者：「目前玩家打世界王不像仙魔戰場一樣人物有攻擊的反應」；原本 `#wb-fight-hero` 是靜止圖，連鎮魔塔的前衝都沒有）：
+  - 樣式（index.html 世界 Boss 區塊）：`#wb-fight-hero` 待機呼吸 `wbBreathe`；`.lunge` 出手前衝（往右上＋發光）、`.hurt` 受擊後仰泛紅、`.evade` 閃避殘影往左。
+    動作都寫成 `animation: wbBreathe …, 動作 …`（後列優先，同第 59 節的寫法）。`#wb-fight-scene.boss-hit` 讓背景圖與動畫 `#wb-fight-bg`／`#wb-fight-video` 閃白小震；
+    `.shake` 整個戰場震動；新元素 `#wb-fight-slash`（劍光，沿用鎮魔塔 `zmSlash`）、`#wb-fight-flash`（白光）、`#wb-fight-hurt`（四周紅框）。`prefers-reduced-motion` 時關閉。
+  - world-boss.js：`wbHeroFx(cls)`（用 battle-fx.js 的 `restartAnim`，同時移除另外兩個動作）、`wbAttackFx(hits)`（每回合出手：前衝＋劍光；有打中 → Boss 閃白；
+    暴擊／重擊／雷擊或連擊 → 震動＋白光）、`wbHurtFx(hit)`（閃避 → 殘影；打中 → 受擊＋紅框；Boss 暴擊再震動）。
+  - 節奏：Boss 反擊的演出（受傷飄字、人物受擊、戰況文字）延後半回合（`roundMs × 0.45 ÷ 速度`）才播，先看到自己出手、再看到 Boss 打過來；
+    氣血條也等那時才扣（`wbFight.shownHp` 暫存扣血前的值，`wbUpdateBars` 優先顯示它；結束時顯示實際值）。飄字的暴擊色多判斷 `crit` 標籤（原本只看連擊、重擊、雷擊）。
+  - 驗證（本機，假雲端狀態＋`wbSubmit` 不連網）：OP王 30 回合每回合前衝＋劍光＋Boss 閃白（0.74 秒），約 0.6 秒後受擊＋紅框；手動觸發暴擊 → 震動＋白光、閃避 → 立繪左移半透明；
+    八岐大蛇 ×4 加速 6 秒打完 30 回合、動作照常；Console 無錯誤。
 
 ## 76. 背景音樂（`bgm.js`；2026-10-04，版本 `20261005BC`）
 

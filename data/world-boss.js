@@ -274,8 +274,9 @@ function wbRound(instant) {
         if (Math.random() < nv2Combo()) hits.push(resolveHit(P.atk, { attrs: P.attrs, power: P.atk, dmgType: P.dmgType }, { attrs: E.attrs, status: E.st }));
         hits.forEach((hit, i) => {
             f.dealt += hit.dmg;
-            if (!instant) wbPop('boss', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : (i || hit.tags.includes('metal') || hit.tags.includes('thunder')) ? 'crit' : '');
+            if (!instant) wbPop('boss', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : (i || hit.tags.includes('crit') || hit.tags.includes('metal') || hit.tags.includes('thunder')) ? 'crit' : '');
         });
+        if (!instant) wbAttackFx(hits);
         if (!instant && (f.round % 3 === 1)) wbLog(`🗡️ 第 ${f.round} 回合，你造成 ${fmtCombat(hits.reduce((s, h) => s + h.dmg, 0))} 傷害`, 'me');
     } else if (!instant) wbLog('❄️ 你被凍結，無法出手', 'me');
     const et = tickStatus(E.st);
@@ -283,15 +284,48 @@ function wbRound(instant) {
     if (!et.frozen) {
         const hit = resolveHit(E.atk, { attrs: E.attrs, power: E.atk, dmgType: f.eType }, { attrs: P.attrs, status: P.st });
         hit.dmg *= auraCurseMult(f.aura);
+        if (!instant) f.shownHp = P.hp;   // 氣血條等 Boss 的攻擊演出到了才扣
         P.hp -= hit.dmg;
         if (!instant) {
-            wbPop('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
-            if (f.round % 3 === 2) wbLog(`${f.B.icon || '⚡'} ${f.B.name}施展【${f.B.skills[f.round % f.B.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${fmtCombat(hit.dmg)} 傷害`}`, 'boss');
+            // Boss 反擊晚半回合才演出（先看到自己出手、再看到 Boss 打過來）
+            const lag = Math.round((f.B.roundMs || ZHENMO_ROUND_MS) * 0.45 / f.speed);
+            const msg = f.round % 3 === 2 ? `${f.B.icon || '⚡'} ${f.B.name}施展【${f.B.skills[f.round % f.B.skills.length]}】${hit.tags.includes('dodge') ? '，被你閃過' : `，你受到 ${fmtCombat(hit.dmg)} 傷害`}` : '';
+            setTimeout(() => {
+                if (wbFight !== f) return;
+                wbPop('hero', hit.tags.includes('dodge') ? '閃避' : hit.dmg, hit.tags.includes('dodge') ? 'miss' : 'hurt');
+                wbHurtFx(hit);
+                if (msg) wbLog(msg, 'boss');
+                f.shownHp = null;
+                wbUpdateBars();
+            }, lag);
         }
     }
     if (P.hp <= 0) return wbEndFight(`被${f.B.name}擊倒`);
     if (f.round >= WB.rounds) return wbEndFight(`撐過 ${WB.rounds} 回合`);
     if (!instant) wbUpdateBars();
+}
+// 人物攻擊反應（2026-10-06 使用者：「打世界王不像仙魔戰場一樣人物有攻擊的反應」；樣式在 index.html 的 #wb-fight-hero.lunge／hurt／evade）
+// restartAnim 在 battle-fx.js（移除再加回 class 讓動畫重播，第三參數同時移除衝突的動作）
+const WB_HERO_FX = ['lunge', 'hurt', 'evade'];
+function wbHeroFx(cls) { restartAnim(document.getElementById('wb-fight-hero'), cls, WB_HERO_FX.filter(c => c !== cls)); }
+// 出手：前衝＋劍光；打中 Boss 閃白小震；暴擊／重擊／雷擊／連擊整個戰場震動＋白光
+function wbAttackFx(hits) {
+    wbHeroFx('lunge');
+    restartAnim(document.getElementById('wb-fight-slash'), 'on');
+    if (!hits.some(h => !h.tags.includes('dodge') && h.dmg > 0)) return;
+    restartAnim(document.getElementById('wb-fight-scene'), 'boss-hit');
+    if (hits.length > 1 || hits.some(h => ['crit', 'metal', 'thunder'].some(t => h.tags.includes(t)))) {
+        restartAnim(document.getElementById('wb-fight-scene'), 'shake');
+        restartAnim(document.getElementById('wb-fight-flash'), 'on');
+    }
+}
+// Boss 打過來：閃掉＝殘影往左閃；打中＝後仰泛紅＋四周紅框，Boss 暴擊再加震動
+function wbHurtFx(hit) {
+    if (hit.tags.includes('dodge')) { wbHeroFx('evade'); return; }
+    if (!(hit.dmg > 0)) return;
+    wbHeroFx('hurt');
+    restartAnim(document.getElementById('wb-fight-hurt'), 'on');
+    if (hit.tags.includes('crit')) restartAnim(document.getElementById('wb-fight-scene'), 'shake');
 }
 function wbStep() {
     if (!wbFight || wbFight.over) return;
@@ -310,8 +344,9 @@ function wbUpdateBars() {
     const dealt = wbScore(f), $ = id => document.getElementById(id);
     $('wb-fight-dmg-fill').style.width = `${Math.min(100, dealt / Math.max(1, f.cap) * 100)}%`;
     $('wb-fight-dmg').textContent = `本次傷害 ${fmtNum(Math.min(dealt, f.cap))} / 上限 ${fmtNum(f.cap)}${dealt >= f.cap ? ' ⭐' : ''}`;
-    $('wb-fight-me-fill').style.width = `${Math.max(0, f.p.hp / f.p.max) * 100}%`;
-    $('wb-fight-me-hp').textContent = `${fmtCombat(Math.max(0, f.p.hp))} / ${fmtCombat(f.p.max)}`;
+    const hp = f.shownHp != null && !f.over ? f.shownHp : f.p.hp;   // Boss 反擊演出前先顯示扣血前的氣血（wbRound）
+    $('wb-fight-me-fill').style.width = `${Math.max(0, hp / f.p.max) * 100}%`;
+    $('wb-fight-me-hp').textContent = `${fmtCombat(Math.max(0, hp))} / ${fmtCombat(f.p.max)}`;
     $('wb-fight-round').textContent = `第 ${f.round} / ${WB.rounds} 回合`;
 }
 function wbPop(who, v, cls) {
