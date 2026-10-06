@@ -342,15 +342,18 @@ function listBlueprints() {
         return { slot: k.slice(0, i), level: Number(k.slice(i + 1)), count };
     }).sort((a, b) => a.level - b.level || slots.indexOf(a.slot) - slots.indexOf(b.slot));
 }
-// 掉落的圖紙等級：不超過人物等級的最高一檔；未滿 Lv.1500 給 1500 檔
+// 掉落的圖紙等級：不超過人物等級的最高一檔；未滿 Lv.1500 給 1500 檔；人界（不在靈界）最高 BLUEPRINT_DROP_RULES.mortalMaxLevel 以內
 function getBlueprintDropLevel() {
-    let fit = BLUEPRINT_LEVELS.filter(l => l <= player.level);
+    const inLingjie = typeof isInLingjie === 'function' && isInLingjie();
+    const cap = inLingjie ? Infinity : BLUEPRINT_DROP_RULES.mortalMaxLevel;
+    let fit = BLUEPRINT_LEVELS.filter(l => l <= player.level && l <= cap);
     return fit.length ? fit[fit.length - 1] : BLUEPRINT_LEVELS[0];
 }
 // 依機率給一張圖紙；中了回傳日誌文字，沒中回傳 ''（呼叫端：bounty.js 天榜、defense.js 首領波、zhenmo.js BOSS）
 function grantBlueprint(chance, sourceText) {
-    if (!(Math.random() < chance)) return '';
     let level = getBlueprintDropLevel();
+    if (level <= BLUEPRINT_DROP_RULES.lowMaxLevel) chance = Math.min(1, chance * BLUEPRINT_DROP_RULES.lowMult);   // 5000 等以下機率加倍
+    if (!(Math.random() < chance)) return '';
     // 部位隨機（可鍛造的 17 個部位平均，不含神器）
     let slots = Object.keys(equipTypes).filter(s => !NON_FORGEABLE_SLOTS.includes(s));
     let slot = slots[Math.floor(Math.random() * slots.length)];

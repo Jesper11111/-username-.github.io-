@@ -36,6 +36,9 @@ const BLUEPRINT_DROPS = {
     defenseBoss: { base: 0.10, perWave: 0.005 },
     zhenmo: { base: 0.30, max: 0.75 }
 };
+// 2026-10-06 使用者：「5000 等以下圖紙掉落機率增加」→ 掉落等級在 lowMaxLevel 以下時，上面的機率再 × lowMult（最高 100%）
+//   「凡界只能打到 3000 等以內圖紙」→ 不在靈界（人界）時，掉落等級最高 mortalMaxLevel（＝2500 檔）；在靈界照人物等級
+const BLUEPRINT_DROP_RULES = { lowMaxLevel: 5000, lowMult: 2, mortalMaxLevel: 3000 };
 
 // 五行屬性列表（鍛造隨機抽取）
 const wuxingElements = ["金", "木", "水", "火", "土"];
