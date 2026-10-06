@@ -34,7 +34,10 @@ const BLUEPRINT_FORGE_COST = 100000;
 const BLUEPRINT_DROPS = {
     tian: 0.30,
     defenseBoss: { base: 0.10, perWave: 0.005 },
-    zhenmo: { base: 0.30, max: 0.75 }
+    zhenmo: { base: 0.30, max: 0.75 },
+    // 挑戰模式（越級地圖，第 70 節；2026-10-06 使用者：「挑戰模式下 武學碎片，裝備圖紙掉落機率提升」）：野外每次掉寶 challengeField × 挑戰倍率（×1.5～×3）
+    //   再經 grantBlueprint 的 5000 等以下 ×2 → 每小時（1200 次）約 0.6～1.2 張（5000 等以下）
+    challengeField: 1 / 6000
 };
 // 2026-10-06 使用者：「5000 等以下圖紙掉落機率增加」→ 掉落等級在 lowMaxLevel 以下時，上面的機率再 × lowMult（最高 100%）
 //   「凡界只能打到 3000 等以內圖紙」→ 不在靈界（人界）時，掉落等級最高 mortalMaxLevel（＝2500 檔）；在靈界照人物等級

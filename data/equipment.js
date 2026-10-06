@@ -349,6 +349,21 @@ function getBlueprintDropLevel() {
     let fit = BLUEPRINT_LEVELS.filter(l => l <= player.level && l <= cap);
     return fit.length ? fit[fit.length - 1] : BLUEPRINT_LEVELS[0];
 }
+// 挑戰模式的野外圖紙（combat.js 線上：rolls＝takeDropRolls 的掉寶次數；save.js 離線／背景：收益次數）；不是挑戰地圖不掉
+//   每次 BLUEPRINT_DROPS.challengeField × 挑戰倍率（getChallengeCraftMult），等級與 5000 等以下加倍照 grantBlueprint
+function rollBlueprintChallengeDrops(rolls, silent) {
+    if (!(rolls > 0) || typeof isChallengeMap !== 'function' || !isChallengeMap()) return '';
+    const p = BLUEPRINT_DROPS.challengeField * getChallengeCraftMult();
+    let tries = Math.floor(rolls); if (Math.random() < rolls - tries) tries++;
+    let n = 0;
+    for (let i = 0; i < tries; i++) {
+        const t = grantBlueprint(p, '挑戰模式斬殺妖獸，');
+        if (!t) continue;
+        n++;
+        if (!silent) addLog(t, "level-up", false, "item");
+    }
+    return n ? `鍛造圖紙 ×${n}` : '';
+}
 // 依機率給一張圖紙；中了回傳日誌文字，沒中回傳 ''（呼叫端：bounty.js 天榜、defense.js 首領波、zhenmo.js BOSS）
 function grantBlueprint(chance, sourceText) {
     let level = getBlueprintDropLevel();

@@ -162,7 +162,8 @@ function rollSpellShardFieldDrops(rolls, silent) {
     if (!(rolls > 0) || !m || player.currentMapIsSafe) return '';
     const inLing = typeof isLingjieMapCategory === 'function' && isLingjieMapCategory(getMapCategoryIndex(m.name));
     const grade = inLing ? 'high' : 'mid';
-    const exp = rolls * SPELL_SHARD_FIELD_DROP[grade];
+    const cm = typeof getChallengeCraftMult === 'function' ? getChallengeCraftMult() : 1;   // 挑戰模式（第 70 節）：越 1 境 ×1.5、2 境 ×2、3 境以上 ×3
+    const exp = rolls * SPELL_SHARD_FIELD_DROP[grade] * cm;
     let n = Math.floor(exp); if (Math.random() < exp - n) n++;
     if (!(n > 0)) return '';
     addSpellShards(n, null, grade);

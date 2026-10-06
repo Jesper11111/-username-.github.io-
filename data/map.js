@@ -245,7 +245,7 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
     if (player.currentMapIsSafe) {
         addLog(`🗺️ 回到安全區 ${player.currentMap.name}，開始打坐療傷。`);
     } else if (isChallengeMap()) {
-        addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；離線或切到背景會被送回宗門。`, "combat");
+        addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；可離線／背景掛機（撐不住會退回）。`, "combat");
     } else {
         addLog(`🗺️ 深入野外 ${player.currentMap.name}，四周充滿危險氣息。`);
     }
@@ -256,8 +256,8 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
 // ==================== 挑戰模式（全地圖開放，第 70 節；2026-10-03 使用者定案）====================
 // 境界不足（getMapEntryBlock 的 realm）的地圖可以確認警告後越級進入：
 //   1. 進入前跳警告（境界差、妖獸比主修地圖強幾倍）  2. 戰死照常折壽、扣靈石（combat.js 的 onPlayerKilledInField，不另外處理）
-//   3. 不能離線／背景掛機：結算時一律退回宗門、沒有野外收益（save.js）  4. 經驗、靈石、聲望、刷新補償照「自己境界的主要地圖」（getRewardMap）
-//   5. 做裝通貨掉率 × getChallengeCraftMult（越 1 境 ×1.5、2 境 ×2、3 境以上 ×3，craft.js）
+//   3. 可以離線／背景掛機（2026-10-06 起；原本一律退回宗門）：撐不住照常退回，收益照主要地圖（save.js）  4. 經驗、靈石、聲望、刷新補償照「自己境界的主要地圖」（getRewardMap）
+//   5. 做裝通貨、中品／上品武學碎片掉率 × getChallengeCraftMult（越 1 境 ×1.5、2 境 ×2、3 境以上 ×3，craft.js／spells.js）；另有野外鍛造圖紙（equipment.js 的 rollBlueprintChallengeDrops）
 function isChallengeMap(item) {
     item = item || player.currentMap;
     if (!item || (item === player.currentMap && player.currentMapIsSafe)) return false;
@@ -296,9 +296,9 @@ async function confirmChallengeMap(cIndex, iIndex, bigMap) {
         + `境界差 ${gap}（妖獸約${realms[Math.min(mapRealm, realms.length - 1)]}，你是${realms[player.realmIndex]}）\n`
         + (challengeStrengthText(item) ? challengeStrengthText(item) + '\n' : '')
         + `\n・戰死照常折損壽元、遺失 10% 靈石（壽元歸零會刪檔），風險自負\n`
-        + `・不能離線／背景掛機：離線或切到背景會被送回宗門\n`
+        + `・可離線／背景掛機（以目前實力撐不住時照常退回）\n`
         + `・經驗、靈石照你境界的主要地圖計算，不會因越級暴增\n`
-        + `・做裝通貨掉率 ×${cm}\n\n確定進入？`;
+        + `・做裝通貨、武學秘典碎片掉率 ×${cm}，並有機會掉落鍛造圖紙\n\n確定進入？`;
     const ok = typeof gameConfirm === 'function' ? await gameConfirm(msg) : (await gameConfirm(msg));
     if (!ok) return;
     changeMap(cIndex, iIndex, true, bigMap);
