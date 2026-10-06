@@ -251,6 +251,7 @@ function fieldCombatRound() {
         rollLingStoneDrops(rolls);              // 五行傳送陣靈石（lingjie.js，第 74 節）
         rollSpellShardFieldDrops(rolls);        // 中品（凡界）／上品（靈界）武學秘典碎片（spells.js，第 35 節；挑戰模式 ×1.5～×3）
         rollBlueprintChallengeDrops(rolls);     // 挑戰模式才有的野外鍛造圖紙（equipment.js，第 70 節）
+        rollSpacetimeDrops(rolls);              // 時空秘境專屬掉落（map.js，第 78 節）
         onLingjieKills(killedCount, raceKilled);   // 靈界任務榜進度（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {
@@ -289,8 +290,8 @@ function fieldCombatRound() {
     if (waveSummary) waveSummary.rounds++;
 
     if (enemies.length === 0) {
-        respawnTimer = MONSTER_RESPAWN_SECONDS;
-        document.getElementById('combat-status').innerText = `⚔️ 敵方全滅！${MONSTER_RESPAWN_SECONDS}秒後刷新下一波怪物...`;
+        respawnTimer = getMapRespawnSeconds();   // 時空秘境 3 秒（map.js，第 78 節）
+        document.getElementById('combat-status').innerText = `⚔️ 敵方全滅！${respawnTimer}秒後刷新下一波怪物...`;
         document.getElementById('combat-status').style.color = '#fb923c';
         // 日誌減量：一波一則彙總（取代逐回合的出手／斬殺訊息）
         if (waveSummary && waveSummary.kills > 0) {

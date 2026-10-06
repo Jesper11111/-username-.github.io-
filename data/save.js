@@ -131,7 +131,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // 化神訣殘本（2026-10-02 使用者要求離線也能掉）：同線上規則，化神以上地圖每隻 0.5% 掉 1～3（yuanshen.js；不另寫日誌，列在結算訊息）
         let idleScrolls = partnerKills > 0 ? rollFieldHuashenScroll(partnerKills, true) : 0;
         let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, typeof getChallengeCraftMult === 'function' ? getChallengeCraftMult() : 1)) : '';   // 挑戰模式 ×1.5～×3
-        let idleBlueprints = combatTicks > 0 ? rollBlueprintChallengeDrops(combatTicks, true) : '';   // 挑戰模式才有的野外圖紙（equipment.js，第 70 節）
+        let idleBlueprints = combatTicks > 0 ? rollBlueprintChallengeDrops(combatTicks, true) : '';
+        let idleSpacetime = combatTicks > 0 ? rollSpacetimeDrops(combatTicks, true) : '';   // 時空秘境專屬掉落（map.js，第 78 節）   // 挑戰模式才有的野外圖紙（equipment.js，第 70 節）
         let idleSpellShards = combatTicks > 0 ? rollSpellShardFieldDrops(combatTicks, true) : '';   // 中品／上品武學秘典碎片（spells.js，第 35 節）
         let idleLing = combatTicks > 0 ? rollLingStoneDrops(combatTicks, true) : '';   // 五行傳送陣靈石（lingjie.js，第 74 節）   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
 
@@ -169,6 +170,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (idleLing) msg += `\n💎 從妖獸體內取出 ${idleLing}`;
         if (idleSpellShards) msg += `\n📜 妖獸身上掉出 ${idleSpellShards}`;
         if (idleBlueprints) msg += `\n📜 挑戰模式斬殺妖獸，獲得${idleBlueprints}（至鍛造閣打造）`;
+        if (idleSpacetime) msg += `\n🌀 時空秘境的妖獸遺落 ${idleSpacetime}`;
         if (partnerKills > 0 && (player.partners || []).length) msg += `\n💞 情緣任務：野外擊殺 +${partnerKills.toWan()}${getPartnerTeam().length ? '（隊伍夥伴的並肩擊殺同步累計）' : ''}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
@@ -246,8 +248,9 @@ function idlePotionCanKeepUp(est) {
 // coinsFull：假設全程都打得下去時的靈石收入（購買可用「原有靈石＋收入」支付）
 function settleIdlePotions(est, seconds, isOffline, coinsFull) {
     const maxHp = getMaxHp();
-    const cycle = IDLE_WAVE_GAP_TICKS + NV2.waveAvg * est.hits;                // 一輪秒數
-    const rest = Math.min(maxHp, maxHp * NV2.restHealPct / 100 * MONSTER_RESPAWN_SECONDS);
+    const respawn = typeof getMapRespawnSeconds === 'function' ? getMapRespawnSeconds() : MONSTER_RESPAWN_SECONDS;   // 時空秘境 3 秒（第 78 節）
+    const cycle = respawn + 1 + NV2.waveAvg * est.hits;                // 一輪秒數
+    const rest = Math.min(maxHp, maxHp * NV2.restHealPct / 100 * respawn);
     const perCycle = Math.max(0, est.waveDamage - rest);                       // 每輪要靠丹藥補的氣血
     const cycles = seconds * (isOffline ? OFFLINE_REWARD_MULT : 1) / cycle;    // 與收益同比例（離線打折的部分也不耗藥）
     const need = perCycle * cycles;
@@ -366,11 +369,10 @@ function migrateCurrentMap() {
     for (let cat of maps) {
         let found = cat.items.find(item => item.name === name);
         if (found) {
-            // 2026-09-28 地圖境界門檻（map.js 的 getMapMinRealm，最多越 1 個大境界）：境界不夠還待在裡面的舊存檔送回宗門
-            // （在離線結算之前執行，所以這段離線時間算宗門靜修）
-            const need = getMapMinRealm(found);
-            if (!cat.isSafe && need && isBelowMapLevel(found)) {   // 含第四、五區的等級門檻 minL（2026-10-03）
-                addLog(`⛩️ 【${found.name}】需【${typeof found.minL === 'number' ? nv2LevelLabel(getMapMinLevel(found)) : realms[need]}】以上才能練功，你已被送回宗門。`, "system");
+            // 境界不夠還待在裡面＝挑戰模式（第 70 節）：2026-10-06 起可離線掛機，留在原地（原本一律送回宗門，離線掛機因此無效）。
+            // 境界超過上限（時空秘境：仙人初境以下，第 78 節）才送回宗門（在離線結算之前執行，所以這段離線時間算宗門靜修）
+            if (!cat.isSafe && typeof found.maxRealm === 'number' && player.realmIndex > found.maxRealm) {
+                addLog(`⛩️ 【${found.name}】只有${realms[found.maxRealm]}以下才能練功，你已被送回宗門。`, "system");
                 break;
             }
             player.currentMap = found;
