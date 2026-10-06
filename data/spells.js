@@ -87,6 +87,19 @@ function getLearnedSectSkills() {
     });
     return out;
 }
+// 武學密典收錄的全部宗門武學（36 招，不論是否學會）：{ id, name, grade, tier, sect, skill, faction, role }
+const sectSkillCatalog = (function () {
+    const list = [];
+    sectData.forEach(cat => cat.items.forEach(sect => sect.skills.forEach(sk => list.push({
+        id: SECT_SKILL_SLOT_PREFIX + sk.name, name: sk.name, grade: sk.grade, tier: cat.tier, sect, skill: sk,
+        faction: sect.faction || "正", role: "atk"
+    }))));
+    return list;
+})();
+function getSectCatalogEntry(id) { return sectSkillCatalog.find(e => e.id === id) || null; }
+function describeSectSkill(sk) {
+    return `${sk.type === "aoe" ? "對全部敵人各" : "對單一敵人"}造成 ${sk.dmgType === "mag" ? "術法攻擊" : "物理攻擊"} × ${sk.mult} 傷害｜耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}`;
+}
 function isSectSkillId(id) { return typeof id === 'string' && id.startsWith(SECT_SKILL_SLOT_PREFIX); }
 function getLearnedSectSkill(id) { return isSectSkillId(id) ? getLearnedSectSkills().find(e => e.id === id) || null : null; }
 // 技能格內的這一項是否有效（已學會的主動仙法，或目前宗門的武學）
@@ -257,7 +270,8 @@ function renderSpellModal() {
     const box = document.getElementById('spell-modal-body');
     if (!box) return;
     autoSlotSectSkills();
-    let learnedCount = spellList.filter(s => isSpellLearned(s.id)).length;
+    let learnedCount = spellList.filter(s => isSpellLearned(s.id)).length + getLearnedSectSkills().length;
+    const totalCount = spellList.length + sectSkillCatalog.length;
     let slotCount = getSpellSlotCount();
     let slots = Array.isArray(player.spellSlots) ? player.spellSlots : [];
 
@@ -280,7 +294,7 @@ function renderSpellModal() {
     const sectHtml = `<div class="spell-sect-box"><div class="spell-sect-title">🏯 宗門武學（放進技能格才會施放）</div>`
         + (sectList.length ? sectList.map(e => {
             const sk = e.skill, on = slotted.includes(e.id);
-            return `<div class="spell-sect-row"><span>【${sk.name}】<small>${SECT_TIER_NAMES[e.tier]}・${e.sect.name}｜${typeName[sk.type] || sk.type}・${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}・威力 ${Math.round(sk.mult * 100)}%・耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}</small></span>`
+            return `<div class="spell-sect-row"><span>【${sk.name}】<small><span style="color:${SPELL_GRADES[sk.grade].color};">${SPELL_GRADES[sk.grade].name}</span>・${SECT_TIER_NAMES[e.tier]}・${e.sect.name}｜${typeName[sk.type] || sk.type}・${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}・威力 ${Math.round(sk.mult * 100)}%・耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}</small></span>`
                 + (on ? `<span class="spell-sect-on">✅ 已在技能格</span>` : `<button class="sys-btn" onclick="equipSpell('${e.id}')">放入技能格</button>`) + `</div>`;
         }).join('') : `<div class="spell-sect-row"><small>尚未拜入宗門。拜入後的宗門武學會列在這裡。</small></div>`)
         + `</div>`;
@@ -288,18 +302,27 @@ function renderSpellModal() {
     // 篩選列
     const chip = (key, value, label) => `<button class="spell-chip${spellFilter[key] === value ? ' on' : ''}" onclick="setSpellFilter('${key}', '${value}')">${label}</button>`;
     let filters = `
-        <div class="spell-filter-row">${chip('attr', 'all', '全部屬性')}${spellAttributes.map(a => chip('attr', a.key, a.name)).join('')}${chip('attr', 'law', '法則')}</div>
+        <div class="spell-filter-row">${chip('attr', 'all', '全部屬性')}${spellAttributes.map(a => chip('attr', a.key, a.name)).join('')}${chip('attr', 'law', '法則')}${chip('attr', 'sect', '🏯宗門')}</div>
         <div class="spell-filter-row">${chip('faction', 'all', '正邪不限')}${chip('faction', '正', '☯️ 正道')}${chip('faction', '邪', '😈 邪道')}
             ${chip('role', 'all', '全部類型')}${Object.keys(SPELL_ROLES).map(r => chip('role', r, SPELL_ROLES[r].icon + SPELL_ROLES[r].name)).join('')}</div>
         <div class="spell-filter-row">${chip('grade', 'all', '全部品階')}${Object.keys(SPELL_GRADES).map(g => chip('grade', g, SPELL_GRADES[g].name)).join('')}</div>`;
 
-    let shown = spellList.filter(s =>
-        (spellFilter.attr === "all" || (spellFilter.attr === "law" ? !s.attr : s.attr === spellFilter.attr)) &&
+    // 仙法＋宗門武學（2026-10-06 收錄進密典；屬性篩選「🏯宗門」只看宗門武學）
+    const pass = (s, isSect) =>
+        (spellFilter.attr === "all" || (isSect ? spellFilter.attr === "sect" : spellFilter.attr !== "sect" && (spellFilter.attr === "law" ? !s.attr : s.attr === spellFilter.attr))) &&
         (spellFilter.faction === "all" || s.faction === spellFilter.faction) &&
         (spellFilter.role === "all" || s.role === spellFilter.role) &&
-        (spellFilter.grade === "all" || s.grade === spellFilter.grade));
+        (spellFilter.grade === "all" || s.grade === spellFilter.grade);
+    let shown = spellList.filter(s => pass(s, false));
+    const shownSect = sectSkillCatalog.filter(e => pass(e, true));
 
-    let cards = shown.map(s => {
+    let cards = shownSect.map(e => {
+        const learned = !!getLearnedSectSkill(e.id), g = SPELL_GRADES[e.grade];
+        return `<button class="spell-card${learned ? ' learned' : ''}${spellSelectedId === e.id ? ' selected' : ''}" onclick="selectSpell('${e.id}')">
+            <span class="spell-card-name">${e.name}</span>
+            <span class="spell-card-meta"><span style="color:${learned ? g.color : '#6b7280'};">${g.name}</span>・🏯${e.sect.name}・${e.skill.type === 'aoe' ? '群體' : '單體'}${e.faction === "邪" ? '・魔' : ''}</span>
+        </button>`;
+    }).join('') + shown.map(s => {
         let learned = isSpellLearned(s.id);
         let g = SPELL_GRADES[s.grade];
         return `<button class="spell-card${learned ? ' learned' : ''}${spellSelectedId === s.id ? ' selected' : ''}" onclick="selectSpell('${s.id}')">
@@ -311,7 +334,20 @@ function renderSpellModal() {
     // 選中的詳細資訊
     let detail = '';
     let sel = getSpell(spellSelectedId);
-    if (sel) {
+    const selSect = getSectCatalogEntry(spellSelectedId);
+    if (selSect) {
+        const learned = !!getLearnedSectSkill(selSect.id), sk = selSect.skill, g = SPELL_GRADES[selSect.grade];
+        let action;
+        if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（拜入${SECT_TIER_NAMES[selSect.tier]}宗門【${selSect.sect.name}】即可習得）</p>`;
+        else if (slots.slice(0, slotCount).includes(selSect.id)) action = `<p class="spell-detail-note">✅ 已放入技能格</p>`;
+        else action = `<button class="sys-btn" onclick="equipSpell('${selSect.id}')">放入技能格</button>`;
+        detail = `<div class="spell-detail">
+            <div class="spell-detail-title" style="color:${g.color};">${sk.name}</div>
+            <div class="spell-detail-tags">${g.name}｜宗門武學（${SECT_TIER_NAMES[selSect.tier]}・${selSect.sect.name}）｜${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}｜⚔️攻擊（主動）</div>
+            <div class="spell-detail-desc">${describeSectSkill(sk)}</div>
+            ${action}
+        </div>`;
+    } else if (sel) {
         let learned = isSpellLearned(sel.id);
         let action = '';
         if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（${SPELL_SHARD_KINDS[sel.grade] ? `集滿${spellShardName(sel.grade)}合成時隨機習得（${SPELL_SHARD_KINDS[sel.grade].from}）` : '取得方式尚未開放'}）</p>`;
@@ -338,13 +374,13 @@ function renderSpellModal() {
     }).join('');
 
     box.innerHTML = `
-        <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${spellList.length} 種仙法｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
+        <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${totalCount} 種武學（仙法 ${spellList.length}＋宗門武學 ${sectSkillCatalog.length}）｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
         ${shardHtml}
         <div class="spell-slots">${slotHtml}</div>
         ${sectHtml}
         ${filters}
         ${detail}
-        <div class="spell-count">顯示 ${shown.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
+        <div class="spell-count">顯示 ${shown.length + shownSect.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
         <div class="spell-grid">${cards}</div>`;
 }
 
