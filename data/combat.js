@@ -14,6 +14,9 @@ function combatTick() {
     // 歲月流逝：每秒依所在地危險度消耗壽元（觸及底線後停止，見 lifespan.js）
     ageLifespan(1);
 
+    // 時空秘境：每秒消耗靈石維持秘境能量，付不起送回復活點（map.js，第 78 節）
+    if (!tickSpacetimeUpkeep()) return;
+
     // 出戰靈寵每 BEAST_UPKEEP_INTERVAL 秒扣維持費（渡劫中同樣計費，付不起自動召回，見 beast-combat.js）
     tickBeastUpkeep();
 
@@ -387,6 +390,7 @@ function getWaveChanceMult() {
 
 // 擊殺一隻妖獸的靈石：該地圖的 coins ±20%（數值表與每小時上限見 config-maps.js）
 function rollKillCoins() {
+    if (isSpacetimeMap()) return 0;   // 時空秘境不掉靈石（第 78 節）
     const m = getRewardMap();   // 挑戰模式照自己境界的主要地圖（map.js，第 70 節）
     let base = m.coins;
     if (typeof base !== 'number') base = m.diff * 10;   // 保險：舊資料沒有 coins 時沿用舊公式

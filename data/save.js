@@ -97,6 +97,19 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         }
     }
 
+    // 時空秘境（第 78 節）：每秒消耗 upkeepPerSec 靈石；只能撐 靈石 ÷ 每秒消耗 秒，之後被送回復活點靜修
+    let spacetimeCost = 0, spacetimeShortSec = 0, spacetimeFrom = '';
+    const totalIdleSeconds = offlineSeconds;   // 下面的戰鬥段落可能只算撐得起的秒數；壽元、任務、靈寵維持費仍用全部時間（結尾還原）
+    if (!player.currentMapIsSafe && typeof isSpacetimeMap === 'function' && isSpacetimeMap()) {
+        const per = SPACETIME_REALM.upkeepPerSec;
+        const canPay = Math.min(offlineSeconds, Math.floor((player.coins || 0) / per));
+        spacetimeShortSec = offlineSeconds - canPay;
+        offlineSeconds = canPay;
+        spacetimeCost = canPay * per;
+        player.coins -= spacetimeCost;
+        spacetimeFrom = player.currentMap.name;
+    }
+
     if (player.currentMapIsSafe) {
         let ticks = Math.floor(offlineSeconds / 5);
         expEarned = ticks * (player.currentMap.expRate * 50);
@@ -109,7 +122,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // 再乘上實力效率 est.rateMult（能秒殺 = 1；打得越久越低）
         let combatTicks = Math.floor(offlineSeconds * OFFLINE_COMBAT_RATE * est.rateMult * (isOffline ? OFFLINE_REWARD_MULT : 1));
         const rewardMap = typeof getRewardMap === 'function' ? getRewardMap() : player.currentMap;   // 挑戰模式＝自己境界的主要地圖（第 70 節）
-        let coinPerTick = typeof rewardMap.coins === 'number' ? rewardMap.coins : rewardMap.diff * 10;
+        let coinPerTick = isSpacetimeMap() ? 0 : (typeof rewardMap.coins === 'number' ? rewardMap.coins : rewardMap.diff * 10);   // 時空秘境不掉靈石
         // 新制：離線／背景也消耗丹藥（背包優先、不夠再以靈石自動購買）；丹藥不夠時只算撐得住的那一段
         let potion = NUMERIC_V2 ? settleIdlePotions(est, offlineSeconds, isOffline, combatTicks * coinPerTick) : null;
         if (potion && potion.f < 1) combatTicks = Math.floor(combatTicks * potion.f);
@@ -176,6 +189,17 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
             msg += NUMERIC_V2
                 ? `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 回合才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（達到同境界一般水準時為 100%）。`
                 : `\n⚔️ 以目前實力約需 ${est.hits.toFixed(1)} 擊才能斬殺一隻，戰鬥效率 ${Math.round(est.rateMult * 100)}%（能一擊斬殺時為 100%）。`;
+        }
+    }
+    // 時空秘境的能量消耗（第 78 節）：列出花費；靈石撐不到的時間被送回復活點，剩下的時間算靜修
+    if (spacetimeFrom) {
+        offlineSeconds = totalIdleSeconds;
+        msg += `\n🌀 維持時空秘境能量，消耗 ${spacetimeCost.toWan()} 靈石（每秒 ${SPACETIME_REALM.upkeepPerSec.toWan()}）`;
+        if (spacetimeShortSec > 0) {
+            sendToRespawn();
+            const restExp = Math.floor(spacetimeShortSec / 5) * player.currentMap.expRate * 50;
+            const got = player.pendingTribulation ? 0 : (gainExp(restExp) || 0);
+            msg += `\n🌀 ${formatIdleDuration(totalIdleSeconds - spacetimeShortSec)}後靈石耗盡，被時空亂流送回【${player.currentMap.name}】，之後的 ${formatIdleDuration(spacetimeShortSec)} 靜修獲得 ${Math.floor(got)} 點經驗。`;
         }
     }
     msg = prefix + msg;

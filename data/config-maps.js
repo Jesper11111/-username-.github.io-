@@ -122,7 +122,9 @@ const MONSTER_RESPAWN_SECONDS = 10;
 //   maxRealm：仙人初境（索引 10）以下可進；str：妖獸強度＝自己境界 10 階的幾倍；craftMult：做裝通貨與中品武學秘典碎片掉率倍數（map.js 的 getChallengeCraftMult）
 //   專屬掉落（每次掉寶的機率，每小時最多 1200 次）：blueprintMaxLevel 3000 等以內最高的圖紙檔（2500 等）；lingStone 五行傳送陣靈石每種；starIron 星允鐵 1～3；fireShard 異火碎片 1～2
 //   掉率使用者未指定，先用這組：圖紙 1/3000（再經 5000 等以下 ×2 → 每小時約 0.8 張）、靈石每種每小時約 1 顆、星允鐵約 12 顆、異火碎片約 4.5 片
-const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3,
+// 2026-10-06 使用者：「時空秘境內不會掉落任何靈石；相反每秒扣 1 萬靈石才足以支撐開啟時空秘境的能量消耗」
+//   upkeepPerSec：每秒消耗的靈石（線上 combat.js 每秒、離線／背景 save.js 按秒數）；付不起就被送回復活點（宗門）；擊殺靈石為 0（combat.js 的 rollKillCoins）
+const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3, upkeepPerSec: 10000,
     blueprintMaxLevel: 3000, blueprint: 1 / 3000, lingStone: 1 / 1200, starIron: 1 / 200, fireShard: 1 / 400 };
 // 離線／背景依實力估算戰鬥效率用（save.js 的 estimateIdleCombat）：一波平均隻數（1～5 隻）、波與波之間的秒數（刷新＋生成 1 秒）
 const IDLE_WAVE_AVG_MONSTERS = 3;

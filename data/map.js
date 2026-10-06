@@ -248,7 +248,7 @@ function changeMap(cIndex, iIndex, challengeOk, bigMap) {
     if (player.currentMapIsSafe) {
         addLog(`🗺️ 回到安全區 ${player.currentMap.name}，開始打坐療傷。`);
     } else if (player.currentMap.spacetime) {
-        addLog(`🌀 踏入【${player.currentMap.name}】！妖獸皆為你境界巔峰的 ${SPACETIME_REALM_STR()} 倍強度，3 秒便再度湧現，戰死照常折壽。`, "combat");
+        addLog(`🌀 踏入【${player.currentMap.name}】！妖獸皆為你境界巔峰的 ${SPACETIME_REALM_STR()} 倍強度，3 秒便再度湧現，戰死照常折壽；每秒消耗 ${SPACETIME_REALM.upkeepPerSec.toWan()} 靈石維持秘境能量。`, "combat");
     } else if (isChallengeMap()) {
         addLog(`⚔️ 挑戰模式：越級闖入【${player.currentMap.name}】！戰死照常折壽；可離線／背景掛機（撐不住會退回）。`, "combat");
     } else {
@@ -311,15 +311,31 @@ async function enterSpacetimeRealm() {
     if (isSpacetimeMap()) { showToast('🌀 你已身在時空秘境'); return; }
     const block = getMapEntryBlock(f.c, f.i);
     if (block) { gameAlert(block.msg); return; }
+    const cost = SPACETIME_REALM.upkeepPerSec;
+    if ((player.coins || 0) < cost) { gameAlert(`開啟時空秘境每秒需消耗 ${cost.toWan()} 靈石維持能量，你的靈石不足。`); return; }
     const msg = `🌀 亂星海・時空秘境\n`
         + `\n・${realms[SPACETIME_REALM.maxRealm]}以下皆可進入`
         + `\n・妖獸＝你所在境界的 10 階 × ${SPACETIME_REALM_STR()} 倍強度（你是${realms[player.realmIndex]}）`
         + `\n・妖獸 ${getMapRespawnSeconds(maps[f.c].items[f.i])} 秒就刷新，幾乎沒有調息的時間，戰死照常折損壽元、遺失 10% 靈石`
-        + `\n・經驗、靈石照你境界的主要地圖計算`
+        + `\n・秘境內不會掉落任何靈石；每秒消耗 ${cost.toWan()} 靈石維持秘境能量（一小時 ${(cost * 3600).toWan()}），靈石耗盡會被送回${respawnPlaceName()}`
+        + `\n・你目前的靈石約可支撐 ${formatIdleDuration(Math.floor((player.coins || 0) / cost))}`
+        + `\n・經驗照你境界的主要地圖計算`
         + `\n・專屬掉落：${getSpacetimeBlueprintLevel()} 等鍛造圖紙、中品武學秘典碎片、金木水火土傳送陣靈石、星允鐵、異火碎片、做裝通貨（×${SPACETIME_REALM.craftMult}）`
         + `\n\n確定進入？`;
     if (!(await gameConfirm(msg))) return;
     selectMap(f.c, f.i, true);
+}
+// 每秒的能量消耗（combat.js 的 combatTick 每秒呼叫）：扣 upkeepPerSec 靈石；付不起就送回復活點，回傳 false（這一秒不再戰鬥）
+function tickSpacetimeUpkeep() {
+    if (!isSpacetimeMap()) return true;
+    const cost = SPACETIME_REALM.upkeepPerSec;
+    if ((player.coins || 0) >= cost) { player.coins -= cost; return true; }
+    const name = player.currentMap.name;
+    sendToRespawn();
+    addLog(`🌀 靈石耗盡，無法再支撐【${name}】的能量消耗（每秒 ${cost.toWan()} 靈石），被時空亂流送回【${player.currentMap.name}】。`, "system", true);
+    if (typeof showToast === 'function') showToast('🌀 靈石耗盡，已離開時空秘境', 'warn');
+    updateUI();
+    return false;
 }
 // 專屬掉落（combat.js 線上：rolls＝takeDropRolls 的掉寶次數；save.js 離線／背景：收益次數）；回傳摘要文字
 function rollSpacetimeDrops(rolls, silent) {
