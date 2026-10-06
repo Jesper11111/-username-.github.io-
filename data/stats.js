@@ -221,12 +221,9 @@ function getSectTier() {
 // 目前可施展的所有技能：各階段已學的宗門技能（初級→高級）+ 靈寶閣習得的禁術
 function getAllSkills() {
     let skills = [];
-    for (let tier of [1, 2, 3]) {
-        let sect = player.sectSkills && player.sectSkills[tier] ? findSectByName(player.sectSkills[tier]) : null;
-        if (sect) skills = skills.concat(sect.skills);
-    }
-    if (player.learnedSkills) skills = skills.concat(player.learnedSkills);
-    // 技能格內的主動仙法（spells.js）
-    skills = skills.concat(getEquippedSpells().map(spellToCombatSkill));
+    // 宗門武學 2026-10-06 起併入武學密典：要放進技能格才施放（spells.js 的 getEquippedCombatSkills）
+    if (player.learnedSkills) skills = skills.concat(player.learnedSkills);   // 靈寶閣技能：照舊自動參戰
+    // 技能格內的主動仙法與宗門武學（spells.js）
+    skills = skills.concat(getEquippedCombatSkills());
     return skills;
 }

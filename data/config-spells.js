@@ -10,7 +10,11 @@
 // ⚠️ id 會寫進存檔（player.spells / player.spellSlots），上線後不要改；改名稱或數值沒關係。
 
 const SPELL_EVIL_POWER = 1.25;   // 魔功傷害倍率
-const SPELL_SLOT_LEVEL_STEP = 100;   // 每幾級多開一格技能格（Lv1 即有 1 格）
+const SPELL_SLOT_LEVEL_STEP = 100;   // 每幾級多開一格技能格
+// 2026-10-06 使用者：「把宗門學會的武學跟秘典武學合併，都放在秘典武學內」→ 選「放格子且格數增加」：
+//   宗門武學也要放進技能格才會施放（不再自動參戰），技能格改成 基本 SPELL_SLOT_BASE 格＋每 SPELL_SLOT_LEVEL_STEP 級 1 格（原本基本 1 格）
+const SPELL_SLOT_BASE = 3;
+const SECT_SKILL_SLOT_PREFIX = "sect:";   // 技能格內的宗門武學 id＝"sect:" + 招式名稱（招式名稱不重複；寫進存檔，上線後不要改招式名）
 // 下品武學秘典碎片（2026-10-01 使用者要求「新增下品武學秘典碎片，100 個可合成，在奇遇機緣等探索發現」）：
 //   player.spellShards；武學密典視窗「合成」→ 隨機習得一招尚未學會的下品仙法（spells.js 的 synthesizeSpell）；來源見 config-encounter.js
 const SPELL_SHARD_NEED = 100;
