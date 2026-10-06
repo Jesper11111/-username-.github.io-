@@ -219,7 +219,7 @@ function wbOpStart(B) {
     const list = (B && B.videos) || [];
     const box = document.getElementById('wb-fight-video');
     if (!list.length || !box) return;
-    wbOp = { list, loopFrom: B.videoLoopFrom || 0, idx: 0, els: {}, cur: null };
+    wbOp = { list, loopFrom: B.videoLoopFrom || 0, idx: 0, els: {}, cur: null, lines: B.videoLines || [] };
     [...new Set(list)].forEach(src => {
         const v = document.createElement('video');
         v.src = src; v.preload = 'auto'; v.playsInline = true;
@@ -247,7 +247,29 @@ function wbOpShow(i) {
         if (!wbOp || wbOp.cur !== v) return;
         Object.values(wbOp.els).forEach(x => x.classList.toggle('on', x === v));
         document.getElementById('wb-fight-video').classList.add('on');
+        wbSayPlay(i);
     });
+}
+// 動畫對白（B.videoLines[i]）：該段開始播放時排程，換段或停止時清掉
+let wbSayTids = [];
+function wbSayClear() {
+    wbSayTids.forEach(clearTimeout); wbSayTids = [];
+    const box = document.getElementById('wb-op-say');
+    if (box) box.innerHTML = '';
+}
+function wbSayPlay(i) {
+    wbSayClear();
+    const lines = wbOp && wbOp.lines[i], box = document.getElementById('wb-op-say');
+    if (!lines || !box) return;
+    lines.forEach(L => wbSayTids.push(setTimeout(() => {
+        if (!wbOp) return;
+        const s = document.createElement('span');
+        s.className = 'wb-say ' + (L.cls || '');
+        s.textContent = L.text;
+        box.appendChild(s);
+        if (L.hit) { restartAnim(document.getElementById('wb-fight-scene'), 'shake'); restartAnim(document.getElementById('wb-fight-flash'), 'on'); }
+        wbSayTids.push(setTimeout(() => { s.classList.add('out'); setTimeout(() => s.remove(), 300); }, Math.max(0, L.end - L.at) * 1000));
+    }, L.at * 1000)));
 }
 function wbOpNext() {
     if (!wbOp) return;
@@ -258,6 +280,7 @@ function wbOpStop() {
     const box = document.getElementById('wb-fight-video');
     if (wbOp) Object.values(wbOp.els).forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
     wbOp = null;
+    wbSayClear();
     if (box) { box.innerHTML = ''; box.classList.remove('on'); }
 }
 

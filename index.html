@@ -1197,6 +1197,18 @@
         #wb-fight-video.on { opacity: 1; }
         #wb-fight-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; visibility: hidden; }
         #wb-fight-video video.on { visibility: visible; }
+        /* 動畫對白（world-boss.js 的 wbSayPlay、config 的 videoLines）：放在畫面上方（影片上方的黑色區域），不壓立繪、不擋 Boss；z-index 在受傷紅框之上；
+           row＝獨立一行、big＝大字、chant＝招式喊聲逐字蹦出 */
+        #wb-op-say { position: absolute; left: 4%; right: 4%; top: 9%; z-index: 6; pointer-events: none; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 10px; }
+        /* 楷體筆畫細，不用 -webkit-text-stroke（會把字吃暗），改用黑色陰影勾邊＋外發光 */
+        .wb-say { font-family: "KaiTi", "DFKai-SB", serif; font-weight: bold; font-size: 22px; color: #ffe9a8; letter-spacing: 2px; white-space: nowrap;
+            text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000, 0 0 12px rgba(239, 68, 68, 0.85); animation: wbSayIn 0.35s ease-out; }
+        .wb-say.row { flex-basis: 100%; text-align: center; }
+        .wb-say.big { font-size: 30px; color: #fffbeb; text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000, 0 0 16px #f59e0b, 0 0 28px rgba(220, 38, 38, 0.8); }
+        .wb-say.chant { font-size: 40px; color: #fffbeb; letter-spacing: 0; text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000, 0 0 18px #f97316, 0 0 32px #dc2626; animation: wbChant 0.45s cubic-bezier(.2, 1.6, .4, 1); }
+        .wb-say.out { opacity: 0; transition: opacity 0.3s; }
+        @keyframes wbSayIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes wbChant { 0% { opacity: 0; transform: scale(2.4); } 60% { opacity: 1; transform: scale(0.92); } 100% { transform: none; } }
         #wb-fight-hero { position: absolute; left: 0; bottom: 0; height: 70%; max-width: 60%; object-fit: contain; object-position: left bottom; z-index: 2; pointer-events: none; filter: drop-shadow(0 0 8px rgba(253,230,138,0.45));
             transform-origin: 30% 100%; animation: wbBreathe 3.2s ease-in-out infinite alternate; }
         /* 人物攻擊反應（world-boss.js 的 wbFx，2026-10-06 使用者：「打世界王不像仙魔戰場一樣人物有攻擊的反應」）：
@@ -2213,7 +2225,7 @@
         #pc-stage { display: none; position: relative; flex: none; overflow: hidden; --u: 0.93px; font-size: calc(var(--u) * 14); }
         body.layout-pc #pc-stage { display: block; }
         body.layout-pc #app-stage { display: none; }
-        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005CN"); }
+        body.layout-pc::before { background-image: url("images/home-bg-pc.jpg?v=20261005CO"); }
         #pc-stage-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
         #pc-hud-avatar {
             position: absolute; left: 1.890%; top: 3.255%; width: 7.558%; height: 13.542%;
@@ -2808,7 +2820,7 @@
      按鈕與建築熱點由 home-ui.js 的 renderPcStage() 依 config-home-pc.js 產生；分頁面板 #tab-sheet 在 PC 版時搬進這裡。
      id 一律是手機版的 hud-xxx 加上 pc- 前綴，updateHomeHud() 同時寫入兩邊。 -->
 <div id="pc-stage">
-    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005CN" alt="">
+    <img id="pc-stage-bg" src="images/home-bg-pc.jpg?v=20261005CO" alt="">
     <img id="pc-hud-avatar" alt="更換頭像" title="點擊更換頭像" onclick="openAvatarModal()">
     <img id="pc-hud-avatar-frame" alt="">
     <div id="pc-hud-avatar-aura" class="ys-hud-aura" aria-hidden="true"></div>
@@ -3300,7 +3312,7 @@
 </div>
 
 <div id="evil-hall-scene">
-    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005CN" alt="">
+    <img class="evil-hall-bg" src="images/evil-hall.jpg?v=20261005CO" alt="">
     <button class="evil-hall-back" onclick="closeEvilHallScene()">↩ 離開</button>
     <button class="evil-hall-plaque" onclick="openEvilHuntModal()" aria-label="殺手殿堂（開啟懸賞榜）">殺手殿堂</button>
 </div>
@@ -3482,6 +3494,7 @@
         <div id="wb-fight-scene">
             <div id="wb-fight-bg"></div>
             <div id="wb-fight-video"></div>
+            <div id="wb-op-say"></div>
             <button id="wb-fight-quit" onclick="closeWorldBossFight()">↩ 放棄</button>
             <div id="wb-fight-slash"></div>
             <div id="wb-fight-boss-fx" class="zm-fx"></div>
@@ -3872,126 +3885,126 @@
 
 <!-- ⚠️ 版本號 ?v=：每次發佈（推上 GitHub Pages）前要把所有 ?v= 改成新的值（全部取代即可）。
      GitHub Pages 會快取檔案約 10 分鐘，沒改版本號時玩家可能拿到「舊 index.html＋新 JS」而讀檔失敗。見 ARCHITECTURE.md 第 30 節 -->
-<script src="data/format.js?v=20261005CN"></script>
-<script src="data/config-realms.js?v=20261005CN"></script>
-<script src="data/config-level.js?v=20261005CN"></script>
-<script src="data/config-lifespan.js?v=20261005CN"></script>
-<script src="data/config-maps.js?v=20261005CN"></script>
-<script src="data/config-monsters.js?v=20261005CN"></script>
-<script src="data/config-talents.js?v=20261005CN"></script>
-<script src="data/config-sects.js?v=20261005CN"></script>
-<script src="data/config-lingbao.js?v=20261005CN"></script>
-<script src="data/config-shop.js?v=20261005CN"></script>
-<script src="data/config-beasts.js?v=20261005CN"></script>
-<script src="data/config-servants.js?v=20261005CN"></script>
-<script src="data/config-equipment.js?v=20261005CN"></script>
-<script src="data/config-gear-catalog.js?v=20261005CN"></script>
-<script src="data/config-gear.js?v=20261005CN"></script>
-<script src="data/config-enhance.js?v=20261005CN"></script>
-<script src="data/config-sets.js?v=20261005CN"></script>
-<script src="data/config-profession.js?v=20261005CN"></script>
-<script src="data/config-aptitude.js?v=20261005CN"></script>
-<script src="data/config-golden-core.js?v=20261005CN"></script>
-<script src="data/config-yuanshen.js?v=20261005CN"></script>
-<script src="data/config-mailbox.js?v=20261005CN"></script>
-<script src="data/config-titles.js?v=20261005CN"></script>
-<script src="data/config-tribulation.js?v=20261005CN"></script>
-<script src="data/config-quests.js?v=20261005CN"></script>
-<script src="data/config-activities.js?v=20261005CN"></script>
-<script src="data/config-daily-quests.js?v=20261005CN"></script>
-<script src="data/config-elements.js?v=20261005CN"></script>
-<script src="data/config-merit.js?v=20261005CN"></script>
-<script src="data/config-bounty.js?v=20261005CN"></script>
-<script src="data/config-talisman.js?v=20261005CN"></script>
-<script src="data/config-avatars.js?v=20261005CN"></script>
-<script src="data/config-avatar-frames.js?v=20261005CN"></script>
-<script src="data/config-spells.js?v=20261005CN"></script>
-<script src="data/config-strange-fire.js?v=20261005CN"></script>
-<script src="data/config-partners.js?v=20261005CN"></script>
-<script src="data/config-towns.js?v=20261005CN"></script>
-<script src="data/config-casino.js?v=20261005CN"></script>
-<script src="data/config-leaderboard.js?v=20261005CN"></script>
-<script src="data/config-secret-realms.js?v=20261005CN"></script>
-<script src="data/config-world-boss.js?v=20261005CN"></script>
-<script src="data/config-defense.js?v=20261005CN"></script>
-<script src="data/config-zhenmo.js?v=20261005CN"></script>
-<script src="data/config-zhenmo-questions.js?v=20261005CN"></script>
-<script src="data/config-numeric.js?v=20261005CN"></script>
-<script src="data/config-economy.js?v=20261005CN"></script>
-<script src="data/config-encounter.js?v=20261005CN"></script>
-<script src="data/config-race.js?v=20261005CN"></script>
-<script src="data/state.js?v=20261005CN"></script>
-<script src="data/stats.js?v=20261005CN"></script>
-<script src="data/numeric.js?v=20261005CN"></script>
-<script src="data/elements.js?v=20261005CN"></script>
-<script src="data/race.js?v=20261005CN"></script>
-<script src="data/monster.js?v=20261005CN"></script>
-<script src="data/talent.js?v=20261005CN"></script>
-<script src="data/battle-fx.js?v=20261005CN"></script>
-<script src="data/ui.js?v=20261005CN"></script>
-<script src="data/map.js?v=20261005CN"></script>
-<script src="data/lingjie.js?v=20261005CN"></script>
-<script src="data/town.js?v=20261005CN"></script>
-<script src="data/casino.js?v=20261005CN"></script>
-<script src="data/combat.js?v=20261005CN"></script>
-<script src="data/leveling.js?v=20261005CN"></script>
-<script src="data/lifespan.js?v=20261005CN"></script>
-<script src="data/tribulation.js?v=20261005CN"></script>
-<script src="data/sect.js?v=20261005CN"></script>
-<script src="data/shop.js?v=20261005CN"></script>
-<script src="data/bag.js?v=20261005CN"></script>
-<script src="data/equipment.js?v=20261005CN"></script>
-<script src="data/equip-compare.js?v=20261005CN"></script>
-<script src="data/gear.js?v=20261005CN"></script>
-<script src="data/enhance.js?v=20261005CN"></script>
-<script src="data/craft.js?v=20261005CN"></script>
-<script src="data/profession.js?v=20261005CN"></script>
-<script src="data/aptitude.js?v=20261005CN"></script>
-<script src="data/golden-core.js?v=20261005CN"></script>
-<script src="data/yuanshen.js?v=20261005CN"></script>
-<script src="data/codex.js?v=20261005CN"></script>
-<script src="data/lingbao-shop.js?v=20261005CN"></script>
-<script src="data/artifact.js?v=20261005CN"></script>
-<script src="data/servant.js?v=20261005CN"></script>
-<script src="data/quest.js?v=20261005CN"></script>
-<script src="data/activity.js?v=20261005CN"></script>
-<script src="data/daily-quest.js?v=20261005CN"></script>
-<script src="data/auction.js?v=20261005CN"></script>
-<script src="data/merit.js?v=20261005CN"></script>
-<script src="data/bounty.js?v=20261005CN"></script>
-<script src="data/talisman.js?v=20261005CN"></script>
-<script src="data/strange-fire.js?v=20261005CN"></script>
-<script src="data/partner.js?v=20261005CN"></script>
-<script src="data/town-npc.js?v=20261005CN"></script>
-<script src="data/xianweng-games.js?v=20261005CN"></script>
-<script src="data/field.js?v=20261005CN"></script>
-<script src="data/economy.js?v=20261005CN"></script>
-<script src="data/encounter.js?v=20261005CN"></script>
-<script src="data/beast-combat.js?v=20261005CN"></script>
-<script src="data/spells.js?v=20261005CN"></script>
-<script src="data/beast.js?v=20261005CN"></script>
-<script src="data/library.js?v=20261005CN"></script>
-<script src="data/alchemy.js?v=20261005CN"></script>
-<script src="data/player-profile.js?v=20261005CN"></script>
-<script src="data/save.js?v=20261005CN"></script>
-<script src="data/integrity.js?v=20261005CN"></script>
-<script src="data/timeguard.js?v=20261005CN"></script>
-<script src="data/config-home-pc.js?v=20261005CN"></script>
-<script src="data/home-ui.js?v=20261005CN"></script>
-<script src="data/settings.js?v=20261005CN"></script>
-<script src="data/bgm.js?v=20261005CN"></script>
-<script src="data/avatar.js?v=20261005CN"></script>
-<script src="data/leaderboard.js?v=20261005CN"></script>
-<script src="data/mailbox.js?v=20261005CN"></script>
-<script src="data/msgboard.js?v=20261005CN"></script>
-<script src="data/market.js?v=20261005CN"></script>
-<script src="data/secret-realm.js?v=20261005CN"></script>
-<script src="data/defense.js?v=20261005CN"></script>
-<script src="data/zhenmo.js?v=20261005CN"></script>
-<script src="data/world-boss.js?v=20261005CN"></script>
-<script src="data/title-screen.js?v=20261005CN"></script>
-<script src="data/pwa.js?v=20261005CN"></script>
-<script src="data/main.js?v=20261005CN"></script>
+<script src="data/format.js?v=20261005CO"></script>
+<script src="data/config-realms.js?v=20261005CO"></script>
+<script src="data/config-level.js?v=20261005CO"></script>
+<script src="data/config-lifespan.js?v=20261005CO"></script>
+<script src="data/config-maps.js?v=20261005CO"></script>
+<script src="data/config-monsters.js?v=20261005CO"></script>
+<script src="data/config-talents.js?v=20261005CO"></script>
+<script src="data/config-sects.js?v=20261005CO"></script>
+<script src="data/config-lingbao.js?v=20261005CO"></script>
+<script src="data/config-shop.js?v=20261005CO"></script>
+<script src="data/config-beasts.js?v=20261005CO"></script>
+<script src="data/config-servants.js?v=20261005CO"></script>
+<script src="data/config-equipment.js?v=20261005CO"></script>
+<script src="data/config-gear-catalog.js?v=20261005CO"></script>
+<script src="data/config-gear.js?v=20261005CO"></script>
+<script src="data/config-enhance.js?v=20261005CO"></script>
+<script src="data/config-sets.js?v=20261005CO"></script>
+<script src="data/config-profession.js?v=20261005CO"></script>
+<script src="data/config-aptitude.js?v=20261005CO"></script>
+<script src="data/config-golden-core.js?v=20261005CO"></script>
+<script src="data/config-yuanshen.js?v=20261005CO"></script>
+<script src="data/config-mailbox.js?v=20261005CO"></script>
+<script src="data/config-titles.js?v=20261005CO"></script>
+<script src="data/config-tribulation.js?v=20261005CO"></script>
+<script src="data/config-quests.js?v=20261005CO"></script>
+<script src="data/config-activities.js?v=20261005CO"></script>
+<script src="data/config-daily-quests.js?v=20261005CO"></script>
+<script src="data/config-elements.js?v=20261005CO"></script>
+<script src="data/config-merit.js?v=20261005CO"></script>
+<script src="data/config-bounty.js?v=20261005CO"></script>
+<script src="data/config-talisman.js?v=20261005CO"></script>
+<script src="data/config-avatars.js?v=20261005CO"></script>
+<script src="data/config-avatar-frames.js?v=20261005CO"></script>
+<script src="data/config-spells.js?v=20261005CO"></script>
+<script src="data/config-strange-fire.js?v=20261005CO"></script>
+<script src="data/config-partners.js?v=20261005CO"></script>
+<script src="data/config-towns.js?v=20261005CO"></script>
+<script src="data/config-casino.js?v=20261005CO"></script>
+<script src="data/config-leaderboard.js?v=20261005CO"></script>
+<script src="data/config-secret-realms.js?v=20261005CO"></script>
+<script src="data/config-world-boss.js?v=20261005CO"></script>
+<script src="data/config-defense.js?v=20261005CO"></script>
+<script src="data/config-zhenmo.js?v=20261005CO"></script>
+<script src="data/config-zhenmo-questions.js?v=20261005CO"></script>
+<script src="data/config-numeric.js?v=20261005CO"></script>
+<script src="data/config-economy.js?v=20261005CO"></script>
+<script src="data/config-encounter.js?v=20261005CO"></script>
+<script src="data/config-race.js?v=20261005CO"></script>
+<script src="data/state.js?v=20261005CO"></script>
+<script src="data/stats.js?v=20261005CO"></script>
+<script src="data/numeric.js?v=20261005CO"></script>
+<script src="data/elements.js?v=20261005CO"></script>
+<script src="data/race.js?v=20261005CO"></script>
+<script src="data/monster.js?v=20261005CO"></script>
+<script src="data/talent.js?v=20261005CO"></script>
+<script src="data/battle-fx.js?v=20261005CO"></script>
+<script src="data/ui.js?v=20261005CO"></script>
+<script src="data/map.js?v=20261005CO"></script>
+<script src="data/lingjie.js?v=20261005CO"></script>
+<script src="data/town.js?v=20261005CO"></script>
+<script src="data/casino.js?v=20261005CO"></script>
+<script src="data/combat.js?v=20261005CO"></script>
+<script src="data/leveling.js?v=20261005CO"></script>
+<script src="data/lifespan.js?v=20261005CO"></script>
+<script src="data/tribulation.js?v=20261005CO"></script>
+<script src="data/sect.js?v=20261005CO"></script>
+<script src="data/shop.js?v=20261005CO"></script>
+<script src="data/bag.js?v=20261005CO"></script>
+<script src="data/equipment.js?v=20261005CO"></script>
+<script src="data/equip-compare.js?v=20261005CO"></script>
+<script src="data/gear.js?v=20261005CO"></script>
+<script src="data/enhance.js?v=20261005CO"></script>
+<script src="data/craft.js?v=20261005CO"></script>
+<script src="data/profession.js?v=20261005CO"></script>
+<script src="data/aptitude.js?v=20261005CO"></script>
+<script src="data/golden-core.js?v=20261005CO"></script>
+<script src="data/yuanshen.js?v=20261005CO"></script>
+<script src="data/codex.js?v=20261005CO"></script>
+<script src="data/lingbao-shop.js?v=20261005CO"></script>
+<script src="data/artifact.js?v=20261005CO"></script>
+<script src="data/servant.js?v=20261005CO"></script>
+<script src="data/quest.js?v=20261005CO"></script>
+<script src="data/activity.js?v=20261005CO"></script>
+<script src="data/daily-quest.js?v=20261005CO"></script>
+<script src="data/auction.js?v=20261005CO"></script>
+<script src="data/merit.js?v=20261005CO"></script>
+<script src="data/bounty.js?v=20261005CO"></script>
+<script src="data/talisman.js?v=20261005CO"></script>
+<script src="data/strange-fire.js?v=20261005CO"></script>
+<script src="data/partner.js?v=20261005CO"></script>
+<script src="data/town-npc.js?v=20261005CO"></script>
+<script src="data/xianweng-games.js?v=20261005CO"></script>
+<script src="data/field.js?v=20261005CO"></script>
+<script src="data/economy.js?v=20261005CO"></script>
+<script src="data/encounter.js?v=20261005CO"></script>
+<script src="data/beast-combat.js?v=20261005CO"></script>
+<script src="data/spells.js?v=20261005CO"></script>
+<script src="data/beast.js?v=20261005CO"></script>
+<script src="data/library.js?v=20261005CO"></script>
+<script src="data/alchemy.js?v=20261005CO"></script>
+<script src="data/player-profile.js?v=20261005CO"></script>
+<script src="data/save.js?v=20261005CO"></script>
+<script src="data/integrity.js?v=20261005CO"></script>
+<script src="data/timeguard.js?v=20261005CO"></script>
+<script src="data/config-home-pc.js?v=20261005CO"></script>
+<script src="data/home-ui.js?v=20261005CO"></script>
+<script src="data/settings.js?v=20261005CO"></script>
+<script src="data/bgm.js?v=20261005CO"></script>
+<script src="data/avatar.js?v=20261005CO"></script>
+<script src="data/leaderboard.js?v=20261005CO"></script>
+<script src="data/mailbox.js?v=20261005CO"></script>
+<script src="data/msgboard.js?v=20261005CO"></script>
+<script src="data/market.js?v=20261005CO"></script>
+<script src="data/secret-realm.js?v=20261005CO"></script>
+<script src="data/defense.js?v=20261005CO"></script>
+<script src="data/zhenmo.js?v=20261005CO"></script>
+<script src="data/world-boss.js?v=20261005CO"></script>
+<script src="data/title-screen.js?v=20261005CO"></script>
+<script src="data/pwa.js?v=20261005CO"></script>
+<script src="data/main.js?v=20261005CO"></script>
 
 </body>
 </html>
