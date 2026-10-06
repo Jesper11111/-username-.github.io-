@@ -17,6 +17,8 @@
 //   學會宗門技能對渡劫的幫助是固定的勝算加成（最多 +10%）。
 const SECT_SKILL_BONUS = { 1: 0.50, 2: 1.00, 3: 2.00 };   // 初級 150% / 中級 200% / 高級 300%
 const SECT_TIER_NAMES = { 1: "初級", 2: "中級", 3: "高級" };
+// 宗門武學收錄進武學密典的品階（2026-10-06 使用者：「宗門武學最高級設定成上品武學」）：初級→下品、中級→中品、高級→上品（只是分類，威力仍照 SECT_SKILL_BONUS）
+const SECT_SKILL_GRADE = { 1: "low", 2: "mid", 3: "high" };
 
 const sectData = [
     { category: "一、凡俗宗門 (金丹期以前可加入)", tier: 1, minRealm: 0, maxRealm: 3, items: [
@@ -93,6 +95,7 @@ sectData.forEach(cat => {
         sect.skills.forEach(sk => {
             sk.tier = cat.tier;
             sk.mult = 1 + SECT_SKILL_BONUS[cat.tier];
+            sk.grade = SECT_SKILL_GRADE[cat.tier];
         });
     });
 });
