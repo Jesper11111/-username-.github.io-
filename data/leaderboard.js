@@ -217,7 +217,7 @@ function applyLeaderboardTab(tab) {
         if ((LEADERBOARD_POWER_REMOVED && b.dataset.lbTab === 'power') || (LEADERBOARD_RANKS_REMOVED && b.dataset.lbTab === 'defense')) b.style.display = 'none';
     });
     const title = document.getElementById('leaderboard-title');
-    if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '💬 修仙留言板', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
+    if (title) title.textContent = { defense: '🏯 死守天南城・通關榜', board: '🎤 修仙卡拉OK歡唱區', market: '🏪 寄售拍賣' }[lbTab] || '🏆 天下戰力榜';
 }
 
 // 兩個 Firestore Timestamp 相差幾奈秒（a − b）；BigInt 以免奈秒精度被浮點數吃掉
@@ -277,7 +277,7 @@ async function refreshLeaderboard(manual) {
         console.warn("戰力榜讀取失敗：", e);
         // permission-denied：伺服器規則不允許（多半是新榜單上線但主控台還沒發布新版 tools/firestore.rules）
         lbError = (lbIsQuota(e) || (e && e.code !== 'permission-denied' && await lbProbeQuota())) ? LB_QUOTA_MSG : e && e.code === 'permission-denied'
-            ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "留言板尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
+            ? (lbTab === 'defense' ? "守城榜尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'board' ? "修仙卡拉OK歡唱區尚未開放（伺服器設定更新中），請稍後再試。" : lbTab === 'market' ? "寄售尚未開放（伺服器設定更新中），請稍後再試。" : "榜單暫時無法讀取（伺服器設定更新中）。")
             : "連線失敗，請稍後再試。";
     }
     renderLeaderboard(false);

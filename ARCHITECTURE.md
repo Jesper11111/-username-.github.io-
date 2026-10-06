@@ -1633,7 +1633,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CA`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3321,6 +3321,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - gm.html 載入的 `data/*.js` 全部加上 `?v=`（原本沒有，GitHub Pages 快取時 GM 頁可能還在用舊設定檔）；**發佈新版時 gm.html 的 `?v=` 也要一起改**（第 30 節）。
 
 ## 57. 修仙留言板（`msgboard.js`、gm.html「💬 留言板」；2026-09-28，版本 `20260929z`）
+
+- **更名「修仙卡拉OK歡唱區」**（2026-10-06，版本 `20261005CB`，使用者：「修仙留言板更名 修仙卡拉ok歡唱區」）：只改玩家看得到的名稱，功能、程式名稱（`msgboard.js`、`lbTab = 'board'`、`MSGBOARD_*`）與 Firestore 資料不變。
+  視窗標題（leaderboard.js）與設定視窗按鈕＝「🎤 修仙卡拉OK歡唱區」；大道石碑分頁＝「🎤 歡唱區」；主頁左下按鈕（手機 index.html、PC config-home-pc.js 的 `mail`）蓋字＝「歡唱區」（按鈕只放得下 3 個字）；未開放提示、aria-label 同步。gm.html 後台仍叫「💬 留言板」。
 
 - 使用者要「玩家留言對話框」，選擇**留言板**（不是即時聊天）：打開時才讀最新 `MSGBOARD_SHOW_N` 50 則，不即時推送，讀取額度只在開啟時用掉 50 次。
 - **入口**：大道石碑（戰力榜視窗）第三個分頁「💬 留言板」（leaderboard.js 的 `lbTab = 'board'`，`applyLeaderboardTab`／`refreshLeaderboard`／`renderLeaderboard` 分流到 `fetchMsgBoard`／`msgBoardHtml`）；⚙️ 設定視窗「💬 修仙留言板」按鈕直接開這個分頁。
