@@ -1,6 +1,6 @@
 // 仙法系統與「武學密典」彈窗（ARCHITECTURE.md 第 35 節）；資料表在 config-spells.js
-//   player.spells     = 已學會的仙法 id（下品：秘典碎片合成 synthesizeSpell；中品以上尚無取得方式）
-//   player.spellShards = 下品武學秘典碎片
+//   player.spells     = 已學會的仙法 id（下品／中品／上品：秘典碎片合成 synthesizeSpell；絕學尚無取得方式）
+//   player.spellShards／spellShardsMid／spellShardsHigh = 下品／中品／上品武學秘典碎片（config-spells.js 的 SPELL_SHARD_KINDS）
 //   player.spellSlots = 技能格內放的主動仙法 id（格數 = 1 + 人物等級 ÷ SPELL_SLOT_LEVEL_STEP）
 // 被動光環學會即生效（getSpellAuraBonus，stats.js／elements.js 讀取）；主動仙法放進技能格才會施放（getAllSkills 讀取）
 
@@ -140,22 +140,45 @@ function describeSpell(s) {
     return parts.join("；");
 }
 
-// ---- 下品武學秘典碎片（第 35 節末；來源在奇遇／機緣，encounter.js）----
-function addSpellShards(n, source) {
+// ---- 武學秘典碎片（第 35 節末）：下品來自奇遇／機緣（encounter.js）；中品＝凡界野外、上品＝靈界野外（rollSpellShardFieldDrops）----
+function spellShardName(grade) { return `${SPELL_GRADES[grade].name}武學秘典碎片`; }
+function getSpellShards(grade) { return player[SPELL_SHARD_KINDS[grade].key] || 0; }
+function addSpellShards(n, source, grade) {
+    grade = SPELL_SHARD_KINDS[grade] ? grade : SPELL_SHARD_GRADE;
     n = Math.floor(n);
     if (!(n > 0)) return 0;
-    player.spellShards = (player.spellShards || 0) + n;
-    if (source) addLog(`📜 ${source}，獲得下品武學秘典碎片 ×${n}（${player.spellShards} / ${SPELL_SHARD_NEED}）`, "level-up", false, "item");
+    const key = SPELL_SHARD_KINDS[grade].key;
+    player[key] = (player[key] || 0) + n;
+    if (source) addLog(`📜 ${source}，獲得${spellShardName(grade)} ×${n}（${player[key]} / ${SPELL_SHARD_NEED}）`, "level-up", false, "item");
     return n;
 }
-function unlearnedShardSpells() { return spellList.filter(s => s.grade === SPELL_SHARD_GRADE && !isSpellLearned(s.id)); }
-// 集滿 SPELL_SHARD_NEED 片：隨機習得一招尚未學會的下品仙法
-function synthesizeSpell() {
-    const pool = unlearnedShardSpells();
-    if (!pool.length) { gameAlert('下品仙法已全部習得。'); return; }
-    if ((player.spellShards || 0) < SPELL_SHARD_NEED) { gameAlert(`秘典碎片不足！需要 ${SPELL_SHARD_NEED} 片（目前 ${player.spellShards || 0}）。`); return; }
+function unlearnedShardSpells(grade) {
+    grade = SPELL_SHARD_KINDS[grade] ? grade : SPELL_SHARD_GRADE;
+    return spellList.filter(s => s.grade === grade && !isSpellLearned(s.id));
+}
+// 野外掉落（combat.js：rolls＝takeDropRolls 的掉寶次數；離線用收益次數，save.js）：所在野外是靈界分類＝上品，否則（凡界）＝中品
+function rollSpellShardFieldDrops(rolls, silent) {
+    const m = player.currentMap;
+    if (!(rolls > 0) || !m || player.currentMapIsSafe) return '';
+    const inLing = typeof isLingjieMapCategory === 'function' && isLingjieMapCategory(getMapCategoryIndex(m.name));
+    const grade = inLing ? 'high' : 'mid';
+    const exp = rolls * SPELL_SHARD_FIELD_DROP[grade];
+    let n = Math.floor(exp); if (Math.random() < exp - n) n++;
+    if (!(n > 0)) return '';
+    addSpellShards(n, null, grade);
+    const t = `${spellShardName(grade)}×${n}`;
+    if (!silent) addLog(`📜 妖獸身上掉出 ${t}（${getSpellShards(grade)} / ${SPELL_SHARD_NEED}）`, "level-up", false, "item");
+    return t;
+}
+// 集滿 SPELL_SHARD_NEED 片：隨機習得一招尚未學會的該品仙法
+function synthesizeSpell(grade) {
+    grade = SPELL_SHARD_KINDS[grade] ? grade : SPELL_SHARD_GRADE;
+    const gname = SPELL_GRADES[grade].name, key = SPELL_SHARD_KINDS[grade].key;
+    const pool = unlearnedShardSpells(grade);
+    if (!pool.length) { gameAlert(`${gname}仙法已全部習得。`); return; }
+    if (getSpellShards(grade) < SPELL_SHARD_NEED) { gameAlert(`${spellShardName(grade)}不足！需要 ${SPELL_SHARD_NEED} 片（目前 ${getSpellShards(grade)}）。`); return; }
     const s = pool[Math.floor(Math.random() * pool.length)];
-    player.spellShards -= SPELL_SHARD_NEED;
+    player[key] -= SPELL_SHARD_NEED;
     if (!Array.isArray(player.spells)) player.spells = [];
     player.spells.push(s.id);
     spellSelectedId = s.id;
@@ -233,7 +256,7 @@ function renderSpellModal() {
     if (sel) {
         let learned = isSpellLearned(sel.id);
         let action = '';
-        if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（${sel.grade === SPELL_SHARD_GRADE ? '集滿秘典碎片合成時隨機習得' : '取得方式尚未開放'}）</p>`;
+        if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（${SPELL_SHARD_KINDS[sel.grade] ? `集滿${spellShardName(sel.grade)}合成時隨機習得（${SPELL_SHARD_KINDS[sel.grade].from}）` : '取得方式尚未開放'}）</p>`;
         else if (!sel.active) action = `<p class="spell-detail-note">🌟 被動光環，已永久生效</p>`;
         else if (slots.slice(0, slotCount).includes(sel.id)) action = `<p class="spell-detail-note">✅ 已放入技能格</p>`;
         else action = `<button class="sys-btn" onclick="equipSpell('${sel.id}')">放入技能格</button>`;
@@ -246,12 +269,15 @@ function renderSpellModal() {
     }
 
     // 秘典碎片合成
-    const shards = player.spellShards || 0, left = unlearnedShardSpells().length;
-    const shardPct = Math.min(100, shards / SPELL_SHARD_NEED * 100);
-    const shardHtml = `<div class="spell-shard-box">
-        <div>📜 下品武學秘典碎片 <b>${shards}</b> / ${SPELL_SHARD_NEED}<span class="spell-shard-note">（奇遇、機緣探索取得；下品仙法尚有 ${left} 招未習得）</span></div>
+    // 下品／中品／上品各一列（中品、上品沒有碎片時也顯示，讓玩家知道去哪裡打）
+    const shardHtml = Object.keys(SPELL_SHARD_KINDS).map(grade => {
+        const shards = getSpellShards(grade), left = unlearnedShardSpells(grade).length, gname = SPELL_GRADES[grade].name;
+        const shardPct = Math.min(100, shards / SPELL_SHARD_NEED * 100);
+        return `<div class="spell-shard-box">
+        <div>📜 <span style="color:${SPELL_GRADES[grade].color};">${spellShardName(grade)}</span> <b>${shards}</b> / ${SPELL_SHARD_NEED}<span class="spell-shard-note">（${SPELL_SHARD_KINDS[grade].from}；${gname}仙法尚有 ${left} 招未習得）</span></div>
         <div class="spell-shard-track"><i style="width:${shardPct}%"></i></div>
-        <button class="sys-btn" onclick="synthesizeSpell()" ${shards >= SPELL_SHARD_NEED && left ? '' : 'disabled'}>🔮 合成下品武學（消耗 ${SPELL_SHARD_NEED} 片，隨機習得一招）</button></div>`;
+        <button class="sys-btn" onclick="synthesizeSpell('${grade}')" ${shards >= SPELL_SHARD_NEED && left ? '' : 'disabled'}>🔮 合成${gname}武學（消耗 ${SPELL_SHARD_NEED} 片，隨機習得一招）</button></div>`;
+    }).join('');
 
     box.innerHTML = `
         <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${spellList.length} 種仙法｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
