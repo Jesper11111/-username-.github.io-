@@ -268,6 +268,7 @@ function wbSayPlay(i) {
         s.textContent = L.text;
         box.appendChild(s);
         if (L.hit) { restartAnim(document.getElementById('wb-fight-scene'), 'shake'); restartAnim(document.getElementById('wb-fight-flash'), 'on'); }
+        if (L.log && wbFight && !wbFight.over) wbLog(L.log, 'boss');
         wbSayTids.push(setTimeout(() => { s.classList.add('out'); setTimeout(() => s.remove(), 300); }, Math.max(0, L.end - L.at) * 1000));
     }, L.at * 1000)));
 }

@@ -74,11 +74,14 @@ const WB_BOSSES = [
         videos: ["videos/world-boss/op1.mp4", "videos/world-boss/op2.mp4", "videos/world-boss/op3.mp4"],
         videoLoopFrom: 1,
         // 動畫對白（2026-10-06 使用者：「影片op王加上一下對白：愚蠢的刁民 吃我一劍!! 登! 龍! 閃!」）：跟 videos 一一對應，null＝那段沒有對白；
-        // 每句 { at 該段開播後第幾秒出現, end 第幾秒消失, text, cls（row＝獨立一行、big＝大字、chant＝招式喊聲逐字蹦出）, hit（出現時震動＋白光） }；循環重播時對白也重播
+        // 每句 { at 該段開播後第幾秒出現, end 第幾秒消失, text, cls（row＝獨立一行、big＝大字、chant＝招式喊聲逐字蹦出）, hit（出現時震動＋白光）, log（同時寫進戰況） }；循環重播時對白也重播
+        // 使用者：「字可以放在第三段影片，登龍閃放在最後絕招使用」→ 全部放 op3；第 30 回合約在 op3 第 19 秒，登龍閃排在 17～18.8 秒當最後的絕招
         videoLines: [
             null,
-            [{ at: 1.0, end: 8.5, text: "愚蠢的刁民", cls: "row" }, { at: 2.6, end: 8.5, text: "吃我一劍!!", cls: "row big" }],
-            [{ at: 1.5, end: 9, text: "登!", cls: "chant" }, { at: 2.5, end: 9, text: "龍!", cls: "chant" }, { at: 3.5, end: 9, text: "閃!", cls: "chant", hit: true }]
+            null,
+            [{ at: 1.0, end: 8, text: "愚蠢的刁民", cls: "row" }, { at: 2.6, end: 8, text: "吃我一劍!!", cls: "row big" },
+             { at: 17.0, end: 20.5, text: "登!", cls: "chant" }, { at: 17.9, end: 20.5, text: "龍!", cls: "chant" },
+             { at: 18.8, end: 20.5, text: "閃!", cls: "chant", hit: true, log: "💥 OP王施展絕招【登龍閃】！" }]
         ],
         // 使用者選「戰鬥時間跟著動畫走」：三段共 10＋10＋20 秒，一回合 1.34 秒，30 回合約 40 秒＝三段動畫剛好播完一輪；有動畫的 Boss 不能加速（隱藏 ×1／×2／×4）
         roundMs: 1340
