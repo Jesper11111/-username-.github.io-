@@ -1,4 +1,4 @@
-// 修仙留言板（ARCHITECTURE.md 第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*，GM 管理在 gm.html「💬 留言板」）
+// 修仙留言板（2026-10-06 畫面名稱改「修仙卡拉OK歡唱區」；ARCHITECTURE.md 第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*，GM 管理在 gm.html「💬 留言板」）
 // 放在大道石碑（戰力榜視窗）的第三個分頁；打開時才讀最新 50 則，不即時推送（省 Firebase 讀取額度）
 // 送出：同一個批次寫入 留言 ＋ boardLimit/{uid}（最後留言時間），規則要求兩者同時成立，且距上次 ≥ 60 秒 → 每人每 60 秒一則由雲端強制
 
