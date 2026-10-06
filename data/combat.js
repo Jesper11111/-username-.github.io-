@@ -249,7 +249,8 @@ function fieldCombatRound() {
         rollFieldHuashenScroll(rolls / base);   // 化神訣殘本：化神以上地圖每隻 0.5%（yuanshen.js）
         onCraftFieldKills(rolls);               // 做裝通貨（craft.js，第 69 節）
         rollLingStoneDrops(rolls);              // 五行傳送陣靈石（lingjie.js，第 74 節）
-        rollSpellShardFieldDrops(rolls);        // 中品（凡界）／上品（靈界）武學秘典碎片（spells.js，第 35 節）
+        rollSpellShardFieldDrops(rolls);        // 中品（凡界）／上品（靈界）武學秘典碎片（spells.js，第 35 節；挑戰模式 ×1.5～×3）
+        rollBlueprintChallengeDrops(rolls);     // 挑戰模式才有的野外鍛造圖紙（equipment.js，第 70 節）
         onLingjieKills(killedCount, raceKilled);   // 靈界任務榜進度（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {

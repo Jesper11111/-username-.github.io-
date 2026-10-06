@@ -76,12 +76,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
     // 依實力估算野外戰鬥：撐不住就退回宗門靜修；打得慢則按比例降低戰鬥次數（防止進高階地圖後直接離線刷收益）
     let est = null;
     // 暫存區滿了不能外出練功（enhance.js）：離線期間改在宗門靜修，沒有野外收益
-    // 挑戰模式（越級地圖，map.js，第 70 節）：不能離線／背景掛機，一律退回宗門、沒有野外收益（也堵住線上撐過 60 秒就信任的 idleProvenMap）
-    if (!player.currentMapIsSafe && typeof isChallengeMap === 'function' && isChallengeMap()) {
-        let fromName = player.currentMap.name;
-        { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
-        prefix = `⚔️ 挑戰模式不能離線／背景掛機，已從【${fromName}】退回【${player.currentMap.name}】靜修。\n`;
-    }
+    // 挑戰模式（越級地圖，map.js，第 70 節）：2026-10-06 起可離線／背景掛機（使用者：「挑戰模式設定可掛機練功」）。
+    //   撐不撐得住照下面的實力估算（妖獸強度看所在的挑戰地圖）；經驗、靈石、聲望照 getRewardMap（自己境界的主要地圖），不會因越級暴增
     if (!player.currentMapIsSafe && isGearStashFull()) {
         let fromName = player.currentMap.name;
         { const rp = getRespawnPoint(); player.currentMap = maps[rp.c].items[rp.i]; player.currentMapIsSafe = maps[rp.c].isSafe; }   // 身在靈界＝天元城外（第 74 節）
@@ -112,11 +108,12 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // OFFLINE_COMBAT_RATE = 離線每秒的戰鬥次數（見 config-maps.js，刻意低於線上滿速的每秒 0.32 隻）
         // 再乘上實力效率 est.rateMult（能秒殺 = 1；打得越久越低）
         let combatTicks = Math.floor(offlineSeconds * OFFLINE_COMBAT_RATE * est.rateMult * (isOffline ? OFFLINE_REWARD_MULT : 1));
-        let coinPerTick = typeof player.currentMap.coins === 'number' ? player.currentMap.coins : player.currentMap.diff * 10;
+        const rewardMap = typeof getRewardMap === 'function' ? getRewardMap() : player.currentMap;   // 挑戰模式＝自己境界的主要地圖（第 70 節）
+        let coinPerTick = typeof rewardMap.coins === 'number' ? rewardMap.coins : rewardMap.diff * 10;
         // 新制：離線／背景也消耗丹藥（背包優先、不夠再以靈石自動購買）；丹藥不夠時只算撐得住的那一段
         let potion = NUMERIC_V2 ? settleIdlePotions(est, offlineSeconds, isOffline, combatTicks * coinPerTick) : null;
         if (potion && potion.f < 1) combatTicks = Math.floor(combatTicks * potion.f);
-        expEarned = combatTicks * (player.currentMap.expRate * 15);
+        expEarned = combatTicks * (rewardMap.expRate * 15);
         coinsEarned = combatTicks * coinPerTick;
 
         let gained = gainExp(expEarned) || 0;
@@ -133,12 +130,13 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (partnerKills > 0) addFieldRaceTreasureDrops(player.currentMap, partnerKills);   // 剋制法寶掉落（期望值，race.js）
         // 化神訣殘本（2026-10-02 使用者要求離線也能掉）：同線上規則，化神以上地圖每隻 0.5% 掉 1～3（yuanshen.js；不另寫日誌，列在結算訊息）
         let idleScrolls = partnerKills > 0 ? rollFieldHuashenScroll(partnerKills, true) : 0;
-        let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, 1)) : '';
+        let idleCraft = combatTicks > 0 ? formatCraftGain(rollCraftFieldDrops(combatTicks, typeof getChallengeCraftMult === 'function' ? getChallengeCraftMult() : 1)) : '';   // 挑戰模式 ×1.5～×3
+        let idleBlueprints = combatTicks > 0 ? rollBlueprintChallengeDrops(combatTicks, true) : '';   // 挑戰模式才有的野外圖紙（equipment.js，第 70 節）
         let idleSpellShards = combatTicks > 0 ? rollSpellShardFieldDrops(combatTicks, true) : '';   // 中品／上品武學秘典碎片（spells.js，第 35 節）
         let idleLing = combatTicks > 0 ? rollLingStoneDrops(combatTicks, true) : '';   // 五行傳送陣靈石（lingjie.js，第 74 節）   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
-        let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(player.currentMap.name)] || 1;
+        let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(rewardMap.name)] || 1;
         let repEarned = Math.floor(combatTicks * ((repMax + 1) / 2) * (isOffline ? OFFLINE_REPUTATION_RATE_OFFLINE : OFFLINE_REPUTATION_RATE));
         player.reputation = (player.reputation || 0) + repEarned;
 
@@ -170,6 +168,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (idleCraft) msg += `\n✨ 從妖獸遺骸中拾得 ${idleCraft}`;
         if (idleLing) msg += `\n💎 從妖獸體內取出 ${idleLing}`;
         if (idleSpellShards) msg += `\n📜 妖獸身上掉出 ${idleSpellShards}`;
+        if (idleBlueprints) msg += `\n📜 挑戰模式斬殺妖獸，獲得${idleBlueprints}（至鍛造閣打造）`;
         if (partnerKills > 0 && (player.partners || []).length) msg += `\n💞 情緣任務：野外擊殺 +${partnerKills.toWan()}${getPartnerTeam().length ? '（隊伍夥伴的並肩擊殺同步累計）' : ''}`;
         if (est.rateMult < 0.995) {
             msg += NUMERIC_V2
