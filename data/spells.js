@@ -287,17 +287,6 @@ function renderSpellModal() {
     }
     let nextLv = (Math.floor((player.level || 1) / SPELL_SLOT_LEVEL_STEP) + 1) * SPELL_SLOT_LEVEL_STEP;
 
-    // 宗門武學（2026-10-06 併入密典）：已拜入宗門的招式，放進技能格才會施放
-    const slotted = slots.slice(0, slotCount);
-    const typeName = { single: "單體", aoe: "群體" };
-    const sectList = getLearnedSectSkills();
-    const sectHtml = `<div class="spell-sect-box"><div class="spell-sect-title">🏯 宗門武學（放進技能格才會施放）</div>`
-        + (sectList.length ? sectList.map(e => {
-            const sk = e.skill, on = slotted.includes(e.id);
-            return `<div class="spell-sect-row"><span>【${sk.name}】<small><span style="color:${SPELL_GRADES[sk.grade].color};">${SPELL_GRADES[sk.grade].name}</span>・${SECT_TIER_NAMES[e.tier]}・${e.sect.name}｜${typeName[sk.type] || sk.type}・${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}・威力 ${Math.round(sk.mult * 100)}%・耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}</small></span>`
-                + (on ? `<span class="spell-sect-on">✅ 已在技能格</span>` : `<button class="sys-btn" onclick="equipSpell('${e.id}')">放入技能格</button>`) + `</div>`;
-        }).join('') : `<div class="spell-sect-row"><small>尚未拜入宗門。拜入後的宗門武學會列在這裡。</small></div>`)
-        + `</div>`;
 
     // 篩選列
     const chip = (key, value, label) => `<button class="spell-chip${spellFilter[key] === value ? ' on' : ''}" onclick="setSpellFilter('${key}', '${value}')">${label}</button>`;
@@ -377,7 +366,6 @@ function renderSpellModal() {
         <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${totalCount} 種武學（仙法 ${spellList.length}＋宗門武學 ${sectSkillCatalog.length}）｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
         ${shardHtml}
         <div class="spell-slots">${slotHtml}</div>
-        ${sectHtml}
         ${filters}
         ${detail}
         <div class="spell-count">顯示 ${shown.length + shownSect.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
