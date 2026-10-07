@@ -30,7 +30,7 @@
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節） |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）；`sprites/` 人物模型、`classes/` 職業立繪（第 18 節） |
 
 ## 2. 載入順序與依賴
 
@@ -42,7 +42,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007j`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007l`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -250,3 +250,15 @@ kills, deaths, settings, created`
 - 特效：怪物／玩家 HP 減少時飄白色／紅色傷害數字並前衝；HP 回復飄綠色；讀遊戲訊息分類補上 MISS、爆擊（黃色大字）、魔法光環、LEVEL UP、掉寶 🎁。
 - 村莊：商店、回收、旅館、倉庫、鍛造、傳送師 6 棟建築圍在角色旁邊，點一下打開對應設施（傳送師＝地圖）。
 - 迴圈：`requestAnimationFrame`，只在狩獵畫面顯示時跑（`huntVisible()`），分頁隱藏時不更新；canvas 依 `devicePixelRatio` 調整解析度。
+
+## 18. 人物模型與職業立繪
+
+- 在 `classes.js` 的職業資料加欄位即可，沒有就用職業圖示（emoji）：
+  - `sprite: { src, cellW, cellH, frames, rows: { down, right, up }, drawH }`：走路動作表，每列一個方向、每列 `frames` 格；向左＝向右水平鏡像；`drawH` 是地圖上顯示的高度（CSS px）。
+  - `art`：職業立繪（16:9 裁切顯示），出現在創角畫面的職業介紹與「人物狀態」頁頂端。
+- `ui-scene.js`：`spriteImage(src)` 載入並快取圖片（載入完成前先畫 emoji）；走路時每 110ms 換一格，停下來用中間那格；腳底對齊所在格子。
+- 目前已有：**惡魔**（`images/sprites/demon-walk.png` 5 格×3 方向，每格 84×128；`images/classes/demon.jpg` 960×536）。
+- 素材處理（使用者給的 JPG 動作表，背景深灰藍 38,38,46）：用 C#（System.Drawing）依背景色距離去背成透明 PNG，
+  每格以身體中心裁切；原圖相鄰兩格的翅膀與劍互相重疊，所以每個方向用「上半／下半不同的左右界線＋邊緣淡出」避開隔壁那格，翼尖會稍微變淡。
+  之後若要更乾淨：請美術提供「每格分開、中間留空、背景單色或透明」的動作表（建議每格同尺寸、角色置中、腳底同一高度）。
+- 新增其他職業模型：把圖放進 `images/sprites/`、`images/classes/`，在該職業加 `sprite`／`art`，並把檔名加進 `sw.js` 安裝時預先快取的清單。

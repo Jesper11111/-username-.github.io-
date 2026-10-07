@@ -41,7 +41,8 @@ function renderCreate() {
     $('create-classes').innerHTML = Object.keys(CLASSES).map(id =>
         `<button class="class-card ${id === createState.cls ? 'active' : ''}" onclick="selectClass('${id}')">
             <span class="class-icon">${CLASSES[id].icon}</span>${CLASSES[id].name}</button>`).join('');
-    $('create-desc').innerHTML = `<b>${c.icon} ${c.name}</b><p>${c.desc}</p><p class="story-text">${CLASS_STORIES[createState.cls].story}</p>
+    $('create-desc').innerHTML = (c.art ? `<img class="class-art" src="${c.art}?v=${GAME_VERSION}" alt="${c.name}">` : '') +
+        `<b>${c.icon} ${c.name}</b><p>${c.desc}</p><p class="story-text">${CLASS_STORIES[createState.cls].story}</p>
         <small class="muted">可用武器：${c.weapons.map(w => WEAPON_TYPES[w].name).join('、')}${c.shield ? '、盾牌' : '（不能用盾）'}</small>`;
     $('create-stats').innerHTML = STAT_KEYS.map(k => `
         <div class="stat-row">

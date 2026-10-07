@@ -20,7 +20,7 @@ self.addEventListener('install', event => {
             const urls = [...html.matchAll(/src="(data\/[^"]+\?v=[^"]+)"/g)].map(m => new URL(m[1], self.location).href);
             await Promise.all(urls.map(u => cache.add(u).catch(() => {})));
             const assets = await caches.open(ASSETS);
-            await Promise.all(['manifest.json', 'images/icon-192.png', 'images/icon-512.png', 'images/frame.jpg?v=1'].map(u => assets.add(u).catch(() => {})));
+            await Promise.all(['manifest.json', 'images/icon-192.png', 'images/icon-512.png', 'images/frame.jpg?v=1', 'images/sprites/demon-walk.png', 'images/sprites/demon-attack.png', 'images/sprites/demon-cast.png', 'images/sprites/demon-hit.png', 'images/classes/demon.jpg'].map(u => assets.add(u).catch(() => {})));
         }
         await self.skipWaiting();
     })());

@@ -184,6 +184,7 @@ function travelTowerBtn() {
 function renderChar() {
     const st = calcStats(), c = CLASSES[player.cls];
     let h = `<div class="panel">
+        ${c.art ? `<img class="class-art" src="${c.art}?v=${GAME_VERSION}" alt="${c.name}">` : ''}
         <div class="loc">${c.icon} ${esc(player.name)} <small class="muted">${c.name} Lv.${player.lv}</small></div>
         <small class="muted">${c.desc}</small>
         <div class="exp-line">經驗 ${fmt(player.exp)} / ${fmt(expToNext(player.lv))}</div>

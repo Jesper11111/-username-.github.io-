@@ -32,6 +32,14 @@ const TOWN_BUILDINGS = [
 let scene = null;   // { key, grid, theme, pl:{x,y,rx,ry,path,dir,lunge}, mons:[], engaged, floats:[], ... }
 let sceneRaf = 0;
 
+// 人物模型圖片快取（classes.js 的 sprite.src）；還沒載入完成時先用職業圖示
+const spriteCache = {};
+function spriteImage(src) {
+    let img = spriteCache[src];
+    if (!img) { img = spriteCache[src] = new Image(); img.src = src + '?v=' + GAME_VERSION; }
+    return img.complete && img.naturalWidth ? img : null;
+}
+
 function openTownSub(sub) { townSub = sub; switchTab('town'); }
 
 // ───────── 地圖產生 ─────────
@@ -58,6 +66,8 @@ function themeFor() {
 
 function buildScene() {
     const key = sceneKey(), theme = themeFor(), rnd = seededRand(hashStr(key));
+    const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
+    if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
     const grid = [];   // 0 地板、1 牆、2 障礙物（畫 emoji）、3 建築
     for (let y = 0; y < MAP_H; y++) {
         grid.push([]);
@@ -219,6 +229,7 @@ function sceneUpdate(dt) {
         }
     }
     if (pl.path.length) {
+        scene.walkClock = (scene.walkClock || 0) + dt;
         const [nx, ny] = pl.path[0];
         if (!freeTileFor(nx, ny)) pl.path = [];
         else {
@@ -238,6 +249,7 @@ function sceneUpdate(dt) {
     for (const e of scene.effects) e.t += dt;
     scene.effects = scene.effects.filter(e => e.t < e.dur);
     if (pl.lunge) { pl.lunge.t += dt; if (pl.lunge.t > 180) pl.lunge = null; }
+    if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
 }
 
@@ -246,37 +258,58 @@ function addFloat(tx, ty, text, color, big) {
 }
 
 // 從 HP 變化與遊戲訊息產生傷害數字、MISS、特效
+// 人物動作：attack 攻擊、cast 施法、hit 受傷（播完回到走路／站立）；攻擊與施法不會被受傷打斷
+function playAnim(name) {
+    const sp = CLASSES[player.cls].sprite;
+    if (!sp || !sp[name]) return;
+    const cur = scene.pl.anim;
+    if (name === 'hit' && cur && cur.name !== 'hit' && cur.t < cur.dur) return;
+    const n = sp[name].frames[animDir(scene.pl.dir)];
+    scene.pl.anim = { name, t: 0, dur: n * sp[name].ms };
+}
+function animDir(dir) { return dir === 'left' ? 'right' : dir; }
+
 function sceneReadEvents() {
     const pl = scene.pl, e = scene.engaged;
+    // 先讀遊戲訊息：判斷這次是魔法還是普攻、有沒有爆擊
+    let castNow = false, missNow = false;
+    for (const l of gameLog) {
+        if (l.seq <= scene.lastSeq) continue;
+        if (l.cls === 'crit') scene.critNext = true;
+        if (l.cls === 'miss') {
+            if (l.msg.includes('沒有命中') && e) { addFloat(e.rx, e.ry, 'MISS', '#9a9a9a'); missNow = true; }
+            else addFloat(pl.rx, pl.ry, 'MISS', '#9a9a9a');
+        }
+        if (l.cls === 'magic' && e) { scene.effects.push({ x: e.rx, y: e.ry, t: 0, dur: 400, color: '#b48cff' }); if (l.msg.startsWith('🔮')) castNow = true; }
+        if (l.cls === 'heal' && l.msg.startsWith('✨')) {
+            castNow = true;
+            if (l.msg.startsWith('✨ 施放')) scene.effects.push({ x: pl.rx, y: pl.ry, t: 0, dur: 500, color: '#8fd0ff' });
+        }
+        if (l.cls === 'lvup' && l.msg.startsWith('🎉')) addFloat(pl.rx, pl.ry - 0.5, 'LEVEL UP!', '#ffd34d', true);
+        if ((l.cls === 'rare' || l.cls === 'loot') && l.msg.startsWith('🎁')) addFloat(pl.rx, pl.ry - 0.8, '🎁', '#fff');
+    }
+    scene.lastSeq = logSeq;
+    let dealt = false;
     if (e && e.inst) {
         const hp = Math.max(0, e.inst.hp);
         if (hp < e.lastHp) {
             addFloat(e.rx, e.ry, '-' + fmt(e.lastHp - hp), scene.critNext ? '#ffd34d' : '#ffffff', scene.critNext);
             scene.critNext = false;
-            pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 };
+            dealt = true;
+            if (!CLASSES[player.cls].sprite) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 };
         }
         e.lastHp = hp;
     }
+    if (castNow) playAnim('cast');
+    else if (dealt || missNow) playAnim('attack');
     if (player.hp < scene.lastPlayerHp) {
         addFloat(pl.rx, pl.ry, '-' + fmt(scene.lastPlayerHp - player.hp), '#ff6b5b');
         if (e) e.lunge = { dx: pl.x - e.x, dy: pl.y - e.y, t: 0 };
+        playAnim('hit');
     } else if (player.hp > scene.lastPlayerHp + 1 && scene.lastPlayerHp > 0) {
         addFloat(pl.rx, pl.ry, '+' + fmt(player.hp - scene.lastPlayerHp), '#7fe07a');
     }
     scene.lastPlayerHp = player.hp;
-    for (const l of gameLog) {
-        if (l.seq <= scene.lastSeq) continue;
-        if (l.cls === 'crit') scene.critNext = true;
-        if (l.cls === 'miss') {
-            if (l.msg.includes('沒有命中') && e) addFloat(e.rx, e.ry, 'MISS', '#9a9a9a');
-            else addFloat(pl.rx, pl.ry, 'MISS', '#9a9a9a');
-        }
-        if (l.cls === 'magic' && e) scene.effects.push({ x: e.rx, y: e.ry, t: 0, dur: 400, color: '#b48cff' });
-        if (l.cls === 'heal' && l.msg.startsWith('✨ 施放')) scene.effects.push({ x: pl.rx, y: pl.ry, t: 0, dur: 500, color: '#8fd0ff' });
-        if (l.cls === 'lvup' && l.msg.startsWith('🎉')) addFloat(pl.rx, pl.ry - 0.5, 'LEVEL UP!', '#ffd34d', true);
-        if ((l.cls === 'rare' || l.cls === 'loot') && l.msg.startsWith('🎁')) addFloat(pl.rx, pl.ry - 0.8, '🎁', '#fff');
-    }
-    scene.lastSeq = logSeq;
 }
 
 // ───────── 繪圖 ─────────
@@ -314,9 +347,10 @@ function sceneDraw(ctx, W, H) {
             drawLabel(ctx, b.name, sx, sy + 24, '#ffe7a8');
         }
     }
-    // 怪物
+    // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
+    const labels = [];
     const actorFont = '24px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-    for (const m of scene.mons) {
+    const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
         if (m.lunge) { const k = Math.sin(m.lunge.t / 180 * Math.PI) * 8; sx += m.lunge.dx * k; sy += m.lunge.dy * k; }
         ctx.globalAlpha = m.dead ? Math.max(0, m.dying / 600) : 1;
@@ -325,26 +359,53 @@ function sceneDraw(ctx, W, H) {
         ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 16 : 11, 4, 0, 0, Math.PI * 2); ctx.fill();
         ctx.font = big ? '38px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
         ctx.fillText(m.icon, sx, sy - (big ? 6 : 0));
-        if (m === scene.engaged && m.inst) {
-            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1);
-            ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, sy - (big ? 34 : 22), w, 5);
-            ctx.fillStyle = '#d64036'; ctx.fillRect(sx - w / 2, sy - (big ? 34 : 22), w * pct, 5);
-            drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, sy - (big ? 42 : 30), m.inst.boss ? '#ff8a6a' : '#e8e0cc');
-        }
         ctx.globalAlpha = 1;
-    }
-    // 角色
-    let px = pl.rx * TILE - camX + TILE / 2, py = pl.ry * TILE - camY + TILE / 2;
-    if (pl.lunge) { const k = Math.sin(pl.lunge.t / 180 * Math.PI) * 9; px += pl.lunge.dx * k; py += pl.lunge.dy * k; }
-    const bob = pl.path.length ? Math.sin(gameNow / 90) * 2 : 0;
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); ctx.ellipse(px, py + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.font = '26px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-    ctx.save();
-    if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
-    ctx.fillText(CLASSES[player.cls].icon, px, py - 2 + bob);
-    ctx.restore();
-    drawLabel(ctx, player.name, px, py - 24, '#9fe0ff');
+        if (m === scene.engaged && m.inst) {
+            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 34 : 22);
+            labels.push(() => {
+                ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
+                ctx.fillStyle = '#d64036'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
+                drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : '#e8e0cc');
+            });
+        }
+    };
+    const drawPlayer = () => {
+        let px = pl.rx * TILE - camX + TILE / 2, py = pl.ry * TILE - camY + TILE / 2;
+        if (pl.lunge) { const k = Math.sin(pl.lunge.t / 180 * Math.PI) * 9; px += pl.lunge.dx * k; py += pl.lunge.dy * k; }
+        const bob = pl.path.length ? Math.sin(gameNow / 90) * 2 : 0;
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.ellipse(px, py + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+        const sp = CLASSES[player.cls].sprite;
+        // 目前動作：攻擊／施法／受傷播放中就用它，否則走路（停下來用中間那格當站立）
+        const playing = pl.anim && pl.anim.t < pl.anim.dur && sp && sp[pl.anim.name] && spriteImage(sp[pl.anim.name].src);
+        const anim = playing ? sp[pl.anim.name] : sp && sp.walk;
+        const img = anim && spriteImage(anim.src);
+        let labelY = py - 24;
+        if (img) {
+            // 列＝方向（向左＝向右鏡像）；縮放成 drawH 身高；腳底對齊所在格子
+            const d = animDir(pl.dir), rowIdx = { down: 0, right: 1, up: 2 }[d], n = anim.frames[d];
+            let frame;
+            if (playing) frame = Math.min(n - 1, Math.floor(pl.anim.t / anim.ms));
+            else frame = pl.path.length ? Math.floor(scene.walkClock / anim.ms) % n : Math.floor(n / 2);
+            const k = sp.drawH / sp.charH, dw = anim.cellW * k, dh = anim.cellH * k;
+            ctx.save();
+            if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
+            ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
+            ctx.restore();
+            labelY = py + 14 - sp.drawH - 6;
+        } else {
+            ctx.font = '26px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+            ctx.save();
+            if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
+            ctx.fillText(CLASSES[player.cls].icon, px, py - 2 + bob);
+            ctx.restore();
+        }
+        labels.push(() => drawLabel(ctx, player.name, px, labelY, '#9fe0ff'));
+    };
+    const actors = scene.mons.map(m => ({ y: m.ry, draw: () => drawMon(m) }));
+    actors.push({ y: pl.ry + 0.01, draw: drawPlayer });
+    actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
+    labels.forEach(f => f());
     // 特效、飄字
     for (const e of scene.effects) {
         const sx = e.x * TILE - camX + TILE / 2, sy = e.y * TILE - camY + TILE / 2, k = e.t / e.dur;

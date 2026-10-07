@@ -94,5 +94,15 @@ const CLASSES = {
         hp: [11, 15], mp: [2, 4], startHp: 15, startMp: 3, mr: 5, spDiv: 8, mpRegenK: 0.4,
         weapons: ['scythe', 'claw'], shield: false, start: ['reaperScythe', 'leatherArmor'],
         slayer: { tags: ['human', 'holy'], mult: 1.3, label: '人型與神聖系' },
+        // 人物模型（ui-scene.js）：每個動作一張圖，列＝方向（向下／向右／向上，向左＝向右鏡像），欄＝格數
+        // charH：角色在格子內的身高（所有動作都縮放到 113px，切換動作時大小一致）；drawH：地圖上顯示的身高
+        sprite: {
+            drawH: 72, charH: 113,
+            walk:   { src: 'images/sprites/demon-walk.png',   cellW: 84,  cellH: 128, frames: { down: 5, right: 5, up: 5 }, ms: 110 },
+            attack: { src: 'images/sprites/demon-attack.png', cellW: 144, cellH: 150, frames: { down: 8, right: 8, up: 6 }, ms: 60 },
+            cast:   { src: 'images/sprites/demon-cast.png',   cellW: 96,  cellH: 150, frames: { down: 6, right: 6, up: 6 }, ms: 80 },
+            hit:    { src: 'images/sprites/demon-hit.png',    cellW: 196, cellH: 150, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/demon.jpg',
     },
 };
