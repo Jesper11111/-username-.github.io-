@@ -20,10 +20,10 @@ const SECT_SKILL_SLOT_PREFIX = "sect:";   // 技能格內的宗門武學 id＝"s
 const SPELL_SHARD_NEED = 100;
 const SPELL_SHARD_GRADE = "low";
 // 中品／上品武學秘典碎片（2026-10-06 使用者：「凡界新增中品武學碎片」「靈界新增上品武學碎片」）：同樣 100 片合成，隨機習得一招尚未學會的該品仙法
-//   key：存檔欄位；from：武學密典顯示的來源。中品＝凡界（人界）野外妖獸、上品＝靈界野外妖獸（spells.js 的 rollSpellShardFieldDrops）
+//   key：存檔欄位；from：武學密典顯示的來源。中品＝凡界（人界）＋靈界野外妖獸（2026-10-07 起靈界也掉）、上品＝靈界野外妖獸（spells.js 的 rollSpellShardFieldDrops）
 const SPELL_SHARD_KINDS = {
     low:  { key: "spellShards",     from: "奇遇、機緣探索取得" },
-    mid:  { key: "spellShardsMid",  from: "凡界（人界）野外妖獸掉落" },
+    mid:  { key: "spellShardsMid",  from: "凡界（人界）、靈界野外妖獸掉落" },
     high: { key: "spellShardsHigh", from: "靈界野外妖獸掉落" }
 };
 // 野外掉落：每次掉寶（combat.js 的 takeDropRolls，每小時最多 1200 次；離線用收益次數）掉 1 片的機率
