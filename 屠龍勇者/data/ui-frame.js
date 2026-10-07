@@ -23,10 +23,39 @@ const SLOT_DEFS = [
 ];
 const SLOT_X = [410, 500, 590, 680, 770, 858];   // 原圖中 6 個格子的左邊 x
 
+// ───────── PC 橫式外框（images/frame-pc.jpg＋frame-pc-mask.png，原圖 2000×1116）─────────
+// 底部一排：左 2 圓鈕、12 方格、右 2 圓鈕（x、y、w、h 是原圖座標）
+const PC_W = 2000, PC_H = 1116;
+const PC_SQ = k => ({ x: 590 + k * 70, y: 936, w: 62, h: 60 });
+const PC_SLOTS = [
+    { icon: '🧝', name: '人物狀態', tab: 'char',  x: 347, y: 933, w: 66, h: 66, round: true },
+    { icon: '✨', name: '技能',     tab: 'skill', x: 447, y: 933, w: 66, h: 66, round: true },
+    { icon: '📜', name: '任務',     tab: 'quest', ...PC_SQ(0) },
+    { icon: '🎒', name: '背包',     tab: 'bag',   ...PC_SQ(1) },
+    { icon: '🏘️', name: '村莊',     tab: 'town',  ...PC_SQ(2) },
+    { icon: '🧪', name: '治癒藥水', count: () => healPotionCount(), use: quickHeal, ...PC_SQ(3) },
+    { icon: '💨', name: '自我加速藥水', count: () => countItem('greenPotion'), use: () => quickPotion('greenPotion'), ...PC_SQ(4) },
+    { icon: '⚡', name: '勇敢藥水類', count: () => { const id = braveItemFor(player.cls); return id ? countItem(id) : 0; }, use: () => { const id = braveItemFor(player.cls); if (id) quickPotion(id); }, ...PC_SQ(5) },
+    { icon: '💧', name: '藍色藥水', count: () => countItem('bluePotion'), use: () => quickPotion('bluePotion'), ...PC_SQ(6) },
+    { icon: '📜', name: '回家卷軸', count: () => countItem('homeScroll'), use: () => homeScrollBtn(), ...PC_SQ(7) },
+    { icon: '🌀', name: '瞬間移動卷軸', count: () => countItem('teleScroll'), use: quickTele, ...PC_SQ(8) },
+    { icon: () => player.hunting ? '⏸' : '▶', name: '開始／停止掛機', use: toggleHuntSlot, ...PC_SQ(9) },
+    { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(10) },
+    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(11) },
+    { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
+    { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
+];
+function isPcFrame() { return displayMode === 'pc'; }
+function currentSlotDefs() { return isPcFrame() ? PC_SLOTS : SLOT_DEFS; }
+function toggleHuntSlot() {
+    if (!currentZone()) { showToast('先從地圖前往狩獵地點'); return; }
+    if (player.hunting) stopHunt('⏸ 停止掛機'); else startHunt();
+}
+
 // ───────── 畫面尺寸（設定 →「🖥️ 畫面尺寸」；存在這台裝置，不進角色存檔）─────────
 //   auto  自動尺寸：外框寬 = min(螢幕寬, 560, 螢幕高 × 0.62)，高度滿版
 //   phone 手機 9:16：遊戲區固定 9:16，置中、四周黑邊
-//   pc    PC 16:9：遊戲區固定 16:9；左邊外框（9:16）一直顯示狩獵，右邊側欄顯示其他分頁
+//   pc    PC 16:9：改用橫式外框（frame-pc），中間大地圖一直顯示狩獵，其他分頁疊在地圖右側的視窗
 //   full  全螢幕：進入瀏覽器全螢幕，外框寬度不設 560 上限
 const DISPLAY_KEY = 'dragonSlayer_display';
 const DISPLAY_MODES = { auto: '自動尺寸', phone: '手機 9:16', pc: 'PC 16:9', full: '全螢幕' };
@@ -45,7 +74,7 @@ function layoutFrame() {
     if (displayMode === 'phone') {
         sh = Math.min(H, W * 16 / 9); sw = sh * 9 / 16; fw = sw;
     } else if (displayMode === 'pc') {
-        sh = Math.min(H, W * 9 / 16); sw = sh * 16 / 9; fw = sh * 9 / 16;
+        sh = Math.min(H, W * PC_H / PC_W); sw = sh * PC_W / PC_H; fw = sw;
     } else {
         sh = H;
         fw = Math.min(W, displayMode === 'full' ? W : FRAME_MAX_W, Math.floor(H * FRAME_MIN_RATIO));
@@ -56,9 +85,9 @@ function layoutFrame() {
     stage.style.height = sh + 'px';
     f.style.width = fw + 'px';
     f.style.height = sh + 'px';
-    f.style.setProperty('--s', (fw / FRAME_W).toFixed(5));
-    side.classList.toggle('hidden', !isSideLayout());
-    side.style.width = (sw - fw) + 'px';
+    f.style.setProperty('--s', (fw / (isPcFrame() ? PC_W : FRAME_W)).toFixed(5));
+    f.classList.toggle('pc', isPcFrame());
+    side.classList.add('hidden');
 }
 window.addEventListener('resize', layoutFrame);
 document.addEventListener('fullscreenchange', layoutFrame);
@@ -118,22 +147,28 @@ let slotSig = '';
 function renderSlots(force) {
     const box = $('slots');
     if (!box || !player) return;
-    const counts = SLOT_DEFS.map(d => d.count ? d.count() : '');
-    const sig = currentTab + '|' + counts.join(',');
+    const defs = currentSlotDefs(), pc = isPcFrame();
+    const counts = defs.map(d => d.count ? d.count() : '');
+    const sig = [pc, currentTab, player.hunting, counts.join(',')].join('|');
     if (!force && sig === slotSig) return;
     slotSig = sig;
-    box.innerHTML = SLOT_DEFS.map((d, i) => {
+    box.innerHTML = defs.map((d, i) => {
         const n = counts[i];
         const empty = d.count && n <= 0;
-        return `<button class="slot ${d.tab === currentTab ? 'active' : ''} ${empty ? 'empty' : ''}" style="left:calc(var(--s) * ${SLOT_X[i] - SLOT_X[0]}px)"
-            onclick="slotClick(${i})" title="${d.name}" aria-label="${d.name}">${d.icon}${d.count ? `<b>${n > 999 ? '999+' : n}</b>` : ''}</button>`;
+        const icon = typeof d.icon === 'function' ? d.icon() : d.icon;
+        const pos = pc
+            ? `left:calc(var(--s) * ${d.x}px);top:calc(var(--s) * ${d.y}px);width:calc(var(--s) * ${d.w}px);height:calc(var(--s) * ${d.h}px)`
+            : `left:calc(var(--s) * ${SLOT_X[i] - SLOT_X[0]}px)`;
+        return `<button class="slot ${d.round ? 'round' : ''} ${d.tab === currentTab ? 'active' : ''} ${empty ? 'empty' : ''}" style="${pos}"
+            onclick="slotClick(${i})" title="${d.name}" aria-label="${d.name}">${icon}${d.count ? `<b>${n > 999 ? '999+' : n}</b>` : ''}</button>`;
     }).join('');
 }
 
 function slotClick(i) {
-    const d = SLOT_DEFS[i];
-    if (d.tab) { switchTab(currentTab === d.tab && !isSideLayout() ? 'hunt' : d.tab); return; }
+    const d = currentSlotDefs()[i];
+    if (d.tab) { switchTab(currentTab === d.tab ? 'hunt' : d.tab); return; }
     d.use();
+    renderSlots(true);
     renderStatus();
     if (huntVisible()) updateHuntLive();
 }

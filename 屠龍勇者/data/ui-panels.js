@@ -27,7 +27,7 @@ function switchTab(tab) {
     closeDrawers();
     renderTabs();
     renderPanel();
-    $(isSideLayout() ? 'side' : 'panel').scrollTop = 0;
+    $(isSideLayout() ? 'overlay' : 'panel').scrollTop = 0;
 }
 
 // 狩獵畫面目前是否顯示中（PC 16:9 版面時狩獵一直在外框中間）
@@ -36,7 +36,8 @@ function huntVisible() { return currentTab === 'hunt' || isSideLayout(); }
 const PANEL_FNS = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings };
 
 function panelHead(tab, withBack) {
-    return `<div class="panel-head"><b>${TABS[tab][0]} ${TABS[tab][1]}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">✖ 返回狩獵</button>` : ''}</div>`;
+    const back = isSideLayout() ? '✖ 關閉' : '✖ 返回狩獵';
+    return `<div class="panel-head"><b>${TABS[tab][0]} ${TABS[tab][1]}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">${back}</button>` : ''}</div>`;
 }
 
 function refreshUI() {
@@ -46,16 +47,19 @@ function refreshUI() {
 }
 
 function renderPanel() {
+    const ov = $('overlay');
     if (isSideLayout()) {
-        // PC 16:9：外框中間固定狩獵，右側欄顯示目前分頁（預設人物狀態）
-        const tab = currentTab === 'hunt' ? 'char' : currentTab;
+        // PC 橫式外框：中間大地圖固定狩獵；其他分頁疊在地圖右側的視窗（按「關閉」回到只看地圖）
         $('panel').innerHTML = renderHunt();
-        $('side').innerHTML = panelHead(tab, false) + PANEL_FNS[tab]();
+        const open = currentTab !== 'hunt';
+        ov.classList.toggle('hidden', !open);
+        ov.innerHTML = open ? panelHead(currentTab, true) + PANEL_FNS[currentTab]() : '';
         lastLogRendered = 0;
         updateHuntLive();
         return;
     }
-    $('side').innerHTML = '';
+    ov.classList.add('hidden');
+    ov.innerHTML = '';
     // 非狩獵分頁加上標題列與「返回狩獵」
     const head = currentTab === 'hunt' ? '' : panelHead(currentTab, true);
     $('panel').innerHTML = head + PANEL_FNS[currentTab]();
@@ -79,9 +83,11 @@ function huntViewHtml(title) {
             <div class="scene-top">${title}</div>
             <div id="hunt-buffs" class="buffs scene-buffs"></div>
         </div>
-        <div class="btn-row scene-btns" id="hunt-btns"></div>
-        <div id="hunt-session" class="session"></div>
-        <div id="hunt-log" class="log scene-log"></div>
+        <div class="hunt-ctrl">
+            <div class="btn-row scene-btns" id="hunt-btns"></div>
+            <div id="hunt-session" class="session"></div>
+            <div id="hunt-log" class="log scene-log"></div>
+        </div>
     </div>`;
 }
 

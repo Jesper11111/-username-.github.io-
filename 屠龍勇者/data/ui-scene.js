@@ -316,7 +316,9 @@ function sceneReadEvents() {
 function sceneDraw(ctx, W, H) {
     const pl = scene.pl, th = scene.theme;
     const camX = clamp(pl.rx * TILE + TILE / 2 - W / 2, 0, Math.max(0, MAP_W * TILE - W));
-    const camY = clamp(pl.ry * TILE + TILE / 2 - H / 2, 0, Math.max(0, MAP_H * TILE - H));
+    // 很寬的畫面（PC 橫式外框）角色畫在偏下方，避開上方惡魔頭與角色資訊
+    const focusY = W > H * 2 ? H * 0.62 : H / 2;
+    const camY = clamp(pl.ry * TILE + TILE / 2 - focusY, 0, Math.max(0, MAP_H * TILE - H));
     ctx.fillStyle = th.wall;
     ctx.fillRect(0, 0, W, H);
     const x0 = Math.floor(camX / TILE), y0 = Math.floor(camY / TILE);
@@ -458,8 +460,11 @@ function sceneFrame(ts) {
     const W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const ctx = cv.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (!document.hidden) { sceneUpdate(dt); sceneDraw(ctx, W, H); }
+    // 畫面寬時放大格子（最多顯示約 20 格寬），PC 大地圖不會顯得太小
+    const z = clamp(W / (TILE * 20), 1, 2.2);
+    scene.zoom = z;
+    ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
+    if (!document.hidden) { sceneUpdate(dt); sceneDraw(ctx, W / z, H / z); }
     sceneRaf = requestAnimationFrame(sceneFrame);
 }
 
@@ -470,7 +475,8 @@ function startScene() {
 function sceneClick(ev) {
     if (!scene || player.loc.type !== 'town') return;
     const cv = $('scene-canvas'), r = cv.getBoundingClientRect();
-    const tx = Math.floor((ev.clientX - r.left + scene.cam.x) / TILE), ty = Math.floor((ev.clientY - r.top + scene.cam.y) / TILE);
+    const z = scene.zoom || 1;
+    const tx = Math.floor(((ev.clientX - r.left) / z + scene.cam.x) / TILE), ty = Math.floor(((ev.clientY - r.top) / z + scene.cam.y) / TILE);
     const b = TOWN_BUILDINGS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
     if (b) b.act();
 }

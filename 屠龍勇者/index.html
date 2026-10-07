@@ -189,6 +189,44 @@
     .scene-btns { margin-top: 0; gap: 6px; }
     .scene-btns button { padding: 6px 10px; font-size: 13px; }
     .hunt-view .session { margin-bottom: 0; font-size: 11px; }
+    .hunt-ctrl { flex: none; display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── PC 橫式外框（#frame.pc；位置＝原圖 2000×1116 座標 × --s，見 ARCHITECTURE.md 第 19 節）── */
+    #frame-art, #overlay { display: none; }
+    #frame.pc { border-image: none; background: #000; }
+    #frame.pc #frame-art {
+        display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        background: url(images/frame-pc.jpg?v=1) center / 100% 100% no-repeat;
+        -webkit-mask: url(images/frame-pc-mask.png?v=1) center / 100% 100% no-repeat;
+        mask: url(images/frame-pc-mask.png?v=1) center / 100% 100% no-repeat;
+    }
+    #frame.pc .pillar, #frame.pc .drawer { display: none; }
+    #frame.pc #panel { left: calc(var(--s) * 92px); right: calc(var(--s) * 92px); top: calc(var(--s) * 150px); bottom: calc(var(--s) * 278px); padding: 0; overflow: hidden; z-index: 1; }
+    #frame.pc .hunt-view { position: relative; display: block; }
+    #frame.pc .scene-wrap { position: absolute; inset: 0; border: 0; border-radius: 0; }
+    #frame.pc .scene-top { left: calc(var(--s) * 100px); top: calc(var(--s) * 220px); font-size: 14px; }
+    #frame.pc .scene-buffs { left: calc(var(--s) * 100px); top: calc(var(--s) * 255px); right: auto; width: calc(var(--s) * 500px); }
+    #frame.pc .hunt-ctrl {
+        position: absolute; left: calc(var(--s) * 52px); bottom: calc(var(--s) * 14px); width: calc(var(--s) * 560px);
+        padding: 6px 8px; background: #0b0807d9; border: 1px solid #5a4028; border-radius: 8px; z-index: 1;
+    }
+    #frame.pc .hunt-view .scene-log { height: calc(var(--s) * 150px); min-height: 60px; }
+    #frame.pc #hud-top { top: calc(var(--s) * 272px); left: calc(var(--s) * 760px); right: calc(var(--s) * 760px); z-index: 3; font-size: 13px; }
+    #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; }
+    #frame.pc .orb { width: calc(var(--s) * 240px); height: calc(var(--s) * 240px); bottom: calc(var(--s) * 76px); }
+    #frame.pc .orb.hp { left: calc(var(--s) * 60px); }
+    #frame.pc .orb.mp { right: calc(var(--s) * 60px); }
+    #frame.pc .orb span { font-size: 13px; }
+    #frame.pc #slots { left: 0; top: 0; width: 100%; height: 100%; bottom: auto; pointer-events: none; }
+    #frame.pc .slot { pointer-events: auto; font-size: calc(var(--s) * 34px); }
+    #frame.pc .slot.round { border-radius: 50%; }
+    #frame.pc .slot b { font-size: 10px; }
+    #frame.pc #overlay {
+        display: block; position: absolute; z-index: 4; overflow-y: auto;
+        left: calc(var(--s) * 1120px); right: calc(var(--s) * 120px); top: calc(var(--s) * 300px); bottom: calc(var(--s) * 300px);
+        padding: 10px 12px; background: #120e0bf2; border: 1px solid #8a6a3a; border-radius: 10px; box-shadow: 0 0 24px #000;
+    }
+    #frame.pc #overlay.hidden { display: none; }
     .hunt-view .scene-log { flex: none; height: 76px; font-size: 12px; line-height: 1.4; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); }
     /* 狩獵（舊） */
     .mon-card { display: flex; align-items: center; gap: 12px; min-height: 76px; }
@@ -327,6 +365,9 @@
         <div id="frame">
             <div id="hud-top"></div>
             <main id="panel"></main>
+            <!-- PC 橫式外框：外框圖蓋在地圖上（窗口用遮罩挖空）；其他分頁開在 #overlay 視窗 -->
+            <div id="frame-art"></div>
+            <div id="overlay" class="hidden"></div>
             <div id="hud-bottom"></div>
             <button id="pillar-left" class="pillar left" onclick="toggleDrawer('left')" aria-label="角色選單"></button>
             <button id="pillar-right" class="pillar right" onclick="toggleDrawer('right')" aria-label="系統選單"></button>
@@ -346,25 +387,25 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261007n"></script>
-<script src="data/classes.js?v=20261007n"></script>
-<script src="data/skills.js?v=20261007n"></script>
-<script src="data/items.js?v=20261007n"></script>
-<script src="data/monsters.js?v=20261007n"></script>
-<script src="data/zones.js?v=20261007n"></script>
-<script src="data/quests.js?v=20261007n"></script>
-<script src="data/player.js?v=20261007n"></script>
-<script src="data/enchant.js?v=20261007n"></script>
-<script src="data/combat.js?v=20261007n"></script>
-<script src="data/town.js?v=20261007n"></script>
-<script src="data/save.js?v=20261007n"></script>
-<script src="data/offline.js?v=20261007n"></script>
-<script src="data/ui.js?v=20261007n"></script>
-<script src="data/ui-create.js?v=20261007n"></script>
-<script src="data/ui-panels.js?v=20261007n"></script>
-<script src="data/ui-frame.js?v=20261007n"></script>
-<script src="data/ui-scene.js?v=20261007n"></script>
-<script src="data/pwa.js?v=20261007n"></script>
-<script src="data/main.js?v=20261007n"></script>
+<script src="data/config.js?v=20261008b"></script>
+<script src="data/classes.js?v=20261008b"></script>
+<script src="data/skills.js?v=20261008b"></script>
+<script src="data/items.js?v=20261008b"></script>
+<script src="data/monsters.js?v=20261008b"></script>
+<script src="data/zones.js?v=20261008b"></script>
+<script src="data/quests.js?v=20261008b"></script>
+<script src="data/player.js?v=20261008b"></script>
+<script src="data/enchant.js?v=20261008b"></script>
+<script src="data/combat.js?v=20261008b"></script>
+<script src="data/town.js?v=20261008b"></script>
+<script src="data/save.js?v=20261008b"></script>
+<script src="data/offline.js?v=20261008b"></script>
+<script src="data/ui.js?v=20261008b"></script>
+<script src="data/ui-create.js?v=20261008b"></script>
+<script src="data/ui-panels.js?v=20261008b"></script>
+<script src="data/ui-frame.js?v=20261008b"></script>
+<script src="data/ui-scene.js?v=20261008b"></script>
+<script src="data/pwa.js?v=20261008b"></script>
+<script src="data/main.js?v=20261008b"></script>
 </body>
 </html>
