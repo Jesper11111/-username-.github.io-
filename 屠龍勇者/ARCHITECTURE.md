@@ -42,7 +42,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007l`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007n`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -254,11 +254,30 @@ kills, deaths, settings, created`
 ## 18. 人物模型與職業立繪
 
 - 在 `classes.js` 的職業資料加欄位即可，沒有就用職業圖示（emoji）：
-  - `sprite: { src, cellW, cellH, frames, rows: { down, right, up }, drawH }`：走路動作表，每列一個方向、每列 `frames` 格；向左＝向右水平鏡像；`drawH` 是地圖上顯示的高度（CSS px）。
+  - `sprite: { drawH, charH, walk, attack, cast, hit }`：每個動作一張圖，**列＝方向（0 向下、1 向右、2 向上；向左＝向右水平鏡像）**，欄＝格數。
+    每個動作 `{ src, cellW, cellH, frames: { down, right, up }, ms }`（每格毫秒）。所有動作都把角色縮放成 `charH`（113px）身高、腳底貼格子底部，切換動作時大小與位置一致；地圖上依 `drawH`（72px）顯示。
   - `art`：職業立繪（16:9 裁切顯示），出現在創角畫面的職業介紹與「人物狀態」頁頂端。
-- `ui-scene.js`：`spriteImage(src)` 載入並快取圖片（載入完成前先畫 emoji）；走路時每 110ms 換一格，停下來用中間那格；腳底對齊所在格子。
-- 目前已有：**惡魔**（`images/sprites/demon-walk.png` 5 格×3 方向，每格 84×128；`images/classes/demon.jpg` 960×536）。
-- 素材處理（使用者給的 JPG 動作表，背景深灰藍 38,38,46）：用 C#（System.Drawing）依背景色距離去背成透明 PNG，
-  每格以身體中心裁切；原圖相鄰兩格的翅膀與劍互相重疊，所以每個方向用「上半／下半不同的左右界線＋邊緣淡出」避開隔壁那格，翼尖會稍微變淡。
-  之後若要更乾淨：請美術提供「每格分開、中間留空、背景單色或透明」的動作表（建議每格同尺寸、角色置中、腳底同一高度）。
-- 新增其他職業模型：把圖放進 `images/sprites/`、`images/classes/`，在該職業加 `sprite`／`art`，並把檔名加進 `sw.js` 安裝時預先快取的清單。
+- 動作觸發（`ui-scene.js` 的 `sceneReadEvents` → `playAnim`）：
+  - 普攻、技能打到怪（怪物 HP 減少）或沒打中（MISS）→ **attack**
+  - 攻擊魔法（訊息 🔮）、施放增益／治癒（訊息 ✨）→ **cast**
+  - 自己 HP 減少 → **hit**（攻擊、施法播放中不會被受傷打斷）
+  - 動作播完回到 **walk**：移動時輪播，停下來用中間那格當站立。有人物模型時不再用「前衝」位移。
+- 畫的順序：角色與怪物依 y 由上往下畫（下面的蓋在上面的前面），名字與血條最後統一畫在最上層。
+- 地圖建立時先載入該職業所有動作圖（`spriteImage`）；圖也加進 `sw.js` 安裝時預先快取的清單。
+- 目前已有：**惡魔**
+
+| 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |
+|---|---|---|---|---|---|
+| 走路 | `images/sprites/demon-walk.png` | 84×128 | 5／5／5 | 110ms | 273KB |
+| 攻擊 | `images/sprites/demon-attack.png` | 144×150 | 8／8／6 | 60ms | 643KB |
+| 施法 | `images/sprites/demon-cast.png` | 96×150 | 6／6／6 | 80ms | 400KB |
+| 受傷 | `images/sprites/demon-hit.png` | 196×150 | 3／3／3 | 90ms | 309KB |
+| 立繪 | `images/classes/demon.jpg` | 960×536 | | | 123KB |
+
+- 素材處理（使用者給的 JPG 動作表）：用 C#（System.Drawing）裁切，背景色取每格裁切框四角的中位數，依顏色距離去背成透明 PNG，邊緣淡出；
+  每格以「身體中心、腳底」對齊後縮放到同一身高。注意事項：
+  - 走路表相鄰格的翅膀與劍互相重疊，用上下半不同的左右界線避開，翼尖會稍微變淡。
+  - 攻擊表「向上」第 7、8 格畫成正面（產圖錯誤），沒有使用，向上攻擊只用 6 格。
+  - 受傷用較大的那張（1663×1289）；施法格子較窄，翼尖會被格子邊切掉一點。
+  - 之後新素材建議：每格分開、中間留空、背景單色或透明，每格同尺寸、角色置中、腳底同一高度。
+- 新增其他職業模型：把圖放進 `images/sprites/`、`images/classes/`，在該職業加 `sprite`／`art`，並把檔名加進 `sw.js` 的預先快取清單。
