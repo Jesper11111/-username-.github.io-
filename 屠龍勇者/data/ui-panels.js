@@ -5,25 +5,26 @@ let bagFilter = 'all';
 let townSub = 'shop';
 let lastLogRendered = 0;
 
-const TABS = [
-    ['hunt', '⚔️', '狩獵'], ['map', '🗺️', '地圖'], ['char', '🧝', '角色'], ['bag', '🎒', '背包'],
-    ['skill', '✨', '技能'], ['quest', '📜', '任務'], ['town', '🏘️', '村莊'], ['set', '⚙️', '設定'],
-];
+// 各分頁名稱（狩獵是預設主畫面；其他分頁從左右柱子抽屜或底部格子打開）
+const TABS = {
+    hunt: ['⚔️', '狩獵'], map: ['🗺️', '地圖'], char: ['🧝', '人物狀態'], bag: ['🎒', '背包'],
+    skill: ['✨', '技能'], quest: ['📜', '任務'], town: ['🏘️', '村莊'], set: ['⚙️', '設定'],
+};
 
 function enterGame() {
     showScreen('game');
     currentTab = 'hunt';
+    layoutFrame();
     renderTabs();
     refreshUI();
 }
 
-function renderTabs() {
-    $('tabs').innerHTML = TABS.map(([id, icon, name]) =>
-        `<button class="tab ${id === currentTab ? 'active' : ''}" onclick="switchTab('${id}')"><span>${icon}</span>${name}</button>`).join('');
-}
+// 更新抽屜、底部格子的「目前分頁」標示（ui-frame.js）
+function renderTabs() { renderFrameNav(); }
 
 function switchTab(tab) {
     currentTab = tab;
+    closeDrawers();
     renderTabs();
     renderPanel();
     $('panel').scrollTop = 0;
@@ -37,7 +38,10 @@ function refreshUI() {
 
 function renderPanel() {
     const fn = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings }[currentTab];
-    $('panel').innerHTML = fn();
+    // 非狩獵分頁加上標題列與「返回狩獵」
+    const head = currentTab === 'hunt' ? '' :
+        `<div class="panel-head"><b>${TABS[currentTab][0]} ${TABS[currentTab][1]}</b><button class="mini secondary" onclick="switchTab('hunt')">✖ 返回狩獵</button></div>`;
+    $('panel').innerHTML = head + fn();
     if (currentTab === 'hunt') { lastLogRendered = 0; updateHuntLive(); }
 }
 
@@ -207,7 +211,7 @@ function renderChar() {
     const dragons = DRAGON_IDS.map(id => `${player.dragons[id] ? '✅' : '⬜'} ${MONSTERS[id].name}`).join('<br>');
     h += `<div class="panel"><h4>冒險紀錄</h4><div class="kv-grid">
         <span>擊殺數</span><b>${fmt(player.kills)}</b><span>死亡數</span><b>${player.deaths}</b>
-        <span>傲慢之塔</span><b>可到 ${player.towerMax}F</b></div>
+        <span>魔塔</span><b>可到 ${player.towerMax}F</b></div>
         <p class="dragon-list">${dragons}</p>${hasDragonTitle() ? '<p class="good">👑 稱號：屠龍勇者</p>' : ''}</div>`;
     return h;
 }

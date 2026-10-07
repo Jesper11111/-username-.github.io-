@@ -66,7 +66,7 @@ function changeFloor(delta) {
     if (f < 1 || f > player.towerMax) { showToast(f > player.towerMax ? `需先擊敗 ${player.towerMax}F 的守關首領` : '已經是最底層'); return; }
     player.loc.floor = f;
     if (hunt) { hunt.mon = null; hunt.state = 'search'; hunt.timer = 800; }
-    addLog(`🏛️ 移動到傲慢之塔 ${f}F`, 'sys');
+    addLog(`🏛️ 移動到魔塔 ${f}F`, 'sys');
 }
 
 // ───────── 藥水 ─────────
@@ -355,7 +355,7 @@ function onKill() {
     if (mon.towerFloor) {
         player.towerCleared[mon.towerFloor] = true;
         const next = Math.min(100, mon.towerFloor + 10);
-        if (next > player.towerMax) { player.towerMax = next; addLog(`🏛️ 解鎖傲慢之塔 ${next}F！`, 'rare'); }
+        if (next > player.towerMax) { player.towerMax = next; addLog(`🏛️ 解鎖魔塔 ${next}F！`, 'rare'); }
     }
     if (mon.dragon) {
         const first = !player.dragons[mon.id];

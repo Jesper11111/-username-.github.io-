@@ -12,7 +12,7 @@
 | `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（12 職業，含 `slayer` 種族剋制） |
 | `data/skills.js` | `SKILLS[職業]` 技能／魔法、`COMMON_SKILLS`、`findSkill` |
 | `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
-| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、傲慢之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
+| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、魔塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
@@ -23,16 +23,17 @@
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
-| `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／角色／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
+| `data/ui-frame.js` | 主畫面外框：`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15 節） |
+| `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png` |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → ui-frame → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -40,7 +41,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007g`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -113,7 +114,7 @@
 | 古魯丁地監 4～7 樓 | 24～36 | 古魯丁村 | 稀有：巴風特 1% |
 | 象牙塔 | 34～46 | 奇岩城 | 稀有：惡魔 0.8% |
 | 金字塔 | 44～56 | 奇岩城 | 稀有：歐西里斯 0.8% |
-| 傲慢之塔 1～100F | 45～90 | 亞丁城 | 怪物 Lv = 44 + 樓層×0.45；10 的倍數樓有守關首領，擊敗才解鎖上 10 層（`towerMax`） |
+| 魔塔 1～100F | 45～90 | 亞丁城 | 怪物 Lv = 44 + 樓層×0.45；10 的倍數樓有守關首領，擊敗才解鎖上 10 層（`towerMax`） |
 | 四大龍巢穴 | 60／70／80／88 | 亞丁城 | 依序：安塔瑞斯 → 法利昂 → 林德拜爾 → 巴拉卡斯；討伐後巢穴封閉 6 小時（真實時間） |
 
 - 村莊間傳送費：每差一級 200；從村莊傳送到地圖收 `fee`。在地圖要回村：回家卷軸（立即）或步行（15 秒）。
@@ -170,7 +171,7 @@ kills, deaths, settings, created`
 | 1 | 15 | 收集任務道具 ×10（掉率 30%；修羅是擊倒 100 隻） | 說話之島地監／古魯丁地監 1～3 樓 | 職業斗篷（修羅為腰帶）＋3,000 金幣 |
 | 2 | 30 | 擊倒 20 隻後引出任務首領並討伐 | 古魯丁地監 4～7 樓 | 職業武器＋10,000 金幣 |
 | 3 | 45 | 收集任務道具 ×8（掉率 20%） | 象牙塔／金字塔 | 職業飾品＋30,000 金幣 |
-| 4 | 60 | 擊倒 30 隻後引出任務首領並討伐 | 傲慢之塔（任一非首領樓層） | 職業傳說武器＋80,000 金幣＋萬能藥 1，獲得**職業稱號** |
+| 4 | 60 | 擊倒 30 隻後引出任務首領並討伐 | 魔塔（任一非首領樓層） | 職業傳說武器＋80,000 金幣＋萬能藥 1，獲得**職業稱號** |
 
 - 接任務、回報都要在村莊（任何村莊都找得到 NPC）；進度只在指定地圖累積。
 - 任務道具 `q_職業_章`（`cat: 'quest'`，不能賣、重量 0）由程式自動建立；回報時扣除。
@@ -193,3 +194,26 @@ kills, deaths, settings, created`
 - 不給：道具掉落、任務進度（避免估算誤差影響稀有物品與劇情）。
 - 常數在 `config.js`：`OFFLINE_MIN_MS`（30 秒）、`OFFLINE_MAX_MS`（12 小時）、`OFFLINE_RATE`（50%）、`OFFLINE_SAMPLE_MS`（10 分鐘）。
 - 結算一次約 0.01～0.1 秒，結果以「🌙 離線收益」對話框顯示並寫入遊戲訊息。
+
+## 15. 主畫面外框（`ui-frame.js`、`images/frame.jpg`）
+
+- 素材：使用者提供的惡魔拱門框（原圖 1342×2000 JPG，中間的「透明格子」其實是畫進去的灰格紋）。
+  用 C# 程式（System.Drawing）以「視窗形狀遮罩＋顏色擴散」把格紋與底部紅煙挖掉，保留惡魔爪、鎖鏈、骷髏、欄杆尖刺，
+  再把挖掉的地方填成遊戲底色 `#100c0a`，輸出 `frame.jpg`（約 293KB，不需要透明度）。要換框就用同尺寸的圖覆蓋，並把 `index.html` 的 `frame.jpg?v=` 加一。
+- 版面：`#frame` 用 CSS `border-image` 九宮格鋪滿畫面：slice `715 102 655 104 fill`，上方（拱門、惡魔頭）與下方（法球、欄杆、格子）維持比例，
+  左右柱子（符文段）以 `round` 重複延伸到手機高度。外框寬 = min(螢幕寬, 560px, 螢幕高 × 0.62)，`--s` = 寬 ÷ 1342。
+- 所有元素位置都寫成「原圖座標 × `--s`」：
+
+| 元素 | 原圖位置 | 內容 |
+|---|---|---|
+| `#hud-top` | y≈336，x 262～1080（惡魔下巴下方） | 名稱、職業 Lv、稱號、金幣、AC、MR、負重 |
+| `#panel` | x 112～1232，y 445 ～ 底部往上 626 | 目前分頁內容（預設狩獵）；非狩獵分頁有標題列與「返回狩獵」 |
+| `#hud-bottom` | 兩骷髏之間、欄杆上方 | 地點／掛機狀態、EXP 條 |
+| 左柱 `#pillar-left` | x 0～104，柱子符文段 | 點擊滑出抽屜：人物狀態、技能、任務 |
+| 右柱 `#pillar-right` | x 1240～1342 | 點擊滑出抽屜：地圖、設定 |
+| 紅球 `#orb-hp` | 中心 (230, 1740)，直徑 296 | HP；上方變暗＝損失比例；點一下喝治癒藥水 |
+| 藍球 `#orb-mp` | 中心 (1112, 1740) | MP；點一下喝藍色藥水 |
+| 底部 6 格 `#slots` | y 1765～1842，x 410／500／590／680／770／858，寬 77 | 背包、村莊、治癒藥水、自我加速藥水、回家卷軸、瞬間移動卷軸（顯示數量，用完變暗） |
+
+- 原本上方的分頁列（`#tabs`）已移除；`renderTabs()` 改為更新抽屜與格子的「目前分頁」標示。`renderStatus()` 改寫外框 HUD。
+- 標題畫面、創角畫面維持原樣（沒有外框）。

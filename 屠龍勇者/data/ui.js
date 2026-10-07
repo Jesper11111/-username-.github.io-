@@ -16,25 +16,33 @@ function bar(cur, max, cls, label) {
     return `<div class="bar ${cls}"><div class="bar-fill" style="width:${pct}%"></div><span>${label != null ? label : `${Math.max(0, Math.floor(cur))} / ${max}`}</span></div>`;
 }
 
+// 外框 HUD：上方角色資訊、紅藍法球（HP／MP）、下方地點與經驗條、底部格子數量（ui-frame.js）
 function renderStatus() {
-    if (!player || !$('status')) return;
+    if (!player || SIM_MODE || !$('hud-top')) return;
     const st = calcStats(), c = CLASSES[player.cls];
     const expPct = player.lv >= MAX_LEVEL ? 100 : player.exp / expToNext(player.lv) * 100;
     const wp = invWeight() / st.weightMax * 100;
-    $('status').innerHTML = `
-        <div class="st-top">
-            <b>${c.icon} ${esc(player.name)}</b>
-            ${hasDragonTitle() ? '<span class="title-badge">屠龍勇者</span>' : ''}
-            ${questTitleEarned() ? `<span class="title-badge">${CLASS_STORIES[player.cls].title}</span>` : ''}
-            <span class="muted">${c.name} Lv.${player.lv}</span>
-            <span class="st-gold">💰 ${fmt(player.gold)}</span>
-        </div>
-        <div class="st-bars">${bar(player.hp, st.maxHp, 'hp')}${bar(player.mp, st.maxMp, 'mp')}</div>
-        <div class="st-row">
-            <span>EXP ${expPct.toFixed(2)}%</span><span>AC ${st.ac}</span><span>MR ${st.mr}</span>
-            <span class="${wp >= 82 ? 'bad' : wp >= 50 ? 'warn' : ''}">負重 ${Math.floor(wp)}%</span>
-        </div>
-        <div class="bar exp thin"><div class="bar-fill" style="width:${expPct}%"></div></div>`;
+    const badges = (hasDragonTitle() ? '<span class="title-badge">屠龍勇者</span>' : '') +
+        (questTitleEarned() ? `<span class="title-badge">${CLASS_STORIES[player.cls].title}</span>` : '');
+    $('hud-top').innerHTML = `
+        <div class="hud-name">${c.icon} <b>${esc(player.name)}</b> <span>${c.name} Lv.${player.lv}</span>${badges}</div>
+        <div class="hud-stats"><span class="gold">💰${fmt(player.gold)}</span><span>AC ${st.ac}</span><span>MR ${st.mr}</span>
+            <span class="${wp >= 82 ? 'bad' : wp >= 50 ? 'warn' : ''}">負重${Math.floor(wp)}%</span></div>`;
+    setOrb('orb-hp', player.hp, st.maxHp, 'HP');
+    setOrb('orb-mp', player.mp, st.maxMp, 'MP');
+    const where = player.loc.type === 'town' ? `${TOWNS[player.loc.id].icon} ${TOWNS[player.loc.id].name}`
+        : `📍 ${zoneTitle()}${walkHome ? '・步行回村中' : player.hunting ? '・<span class="good">掛機中</span>' : '・停止'}`;
+    $('hud-bottom').innerHTML = `<div class="hud-where">${where}</div>
+        <div class="bar exp hud-exp"><div class="bar-fill" style="width:${expPct}%"></div><span>EXP ${expPct.toFixed(2)}%</span></div>`;
+    renderSlots();
+}
+
+function setOrb(id, cur, max, label) {
+    const el = $(id);
+    if (!el) return;
+    const pct = max > 0 ? clamp(cur / max, 0, 1) : 0;
+    el.querySelector('.orb-empty').style.height = `${(1 - pct) * 100}%`;
+    el.querySelector('span').innerHTML = `${label}<br>${Math.max(0, Math.floor(cur))}/${max}`;
 }
 
 function showToast(msg, ms = 1800) {

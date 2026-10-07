@@ -152,7 +152,7 @@ const ITEMS = {
     baphometHorn:  { name: '巴風特之角',     cat: 'material', wt: 5, sell: 3000 },
     demonHeart:    { name: '惡魔之心',       cat: 'material', wt: 5, sell: 5000 },
     osirisSeal:    { name: '歐西里斯的封印', cat: 'material', wt: 5, sell: 6000 },
-    towerSoul:     { name: '傲慢之魂',       cat: 'material', wt: 1, sell: 2000 },
+    towerSoul:     { name: '魔塔之魂',       cat: 'material', wt: 1, sell: 2000 },
     antharasScale: { name: '地龍之鱗',       cat: 'material', wt: 10, sell: 20000 },
     fafurionScale: { name: '水龍之鱗',       cat: 'material', wt: 10, sell: 30000 },
     lindviorScale: { name: '風龍之鱗',       cat: 'material', wt: 10, sell: 40000 },

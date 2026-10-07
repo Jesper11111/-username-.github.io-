@@ -9,7 +9,7 @@ const TOWNS = {
 };
 const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 
-// type：field 野外／dungeon 地監／tower 傲慢之塔／dragon 龍穴
+// type：field 野外／dungeon 地監／tower 魔塔／dragon 龍穴
 // town：回家卷軸、死亡時回到的村莊；fee：從村莊傳送過去的費用
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
@@ -58,7 +58,7 @@ const ZONES = [
         desc: '沙漠中的古代陵墓，冥王歐西里斯沉睡於此。',
     },
     {
-        id: 'tower', name: '傲慢之塔', icon: '🏛️', type: 'tower', lv: [45, 90], town: 'aden', fee: 1000,
+        id: 'tower', name: '魔塔', icon: '🏛️', type: 'tower', lv: [45, 90], town: 'aden', fee: 1000,
         drops: [{ id: 'towerSoul', p: 0.02 }, { id: 'elixir', p: 0.0003 }, { id: 'bWeaponScroll', p: 0.001 }, { id: 'bArmorScroll', p: 0.0015 },
             { id: 'knightHelm', p: 0.0008 }, { id: 'knightShield', p: 0.0008 }, { id: 'holyMace', p: 0.0004 }, { id: 'tsurugi', p: 0.0002 }],
         desc: '共 100 層，每 10 層有守關首領，擊敗後才能往上 10 層。',

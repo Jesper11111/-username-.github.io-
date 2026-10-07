@@ -80,14 +80,88 @@
     .stat-row b { text-align: center; font-size: 17px; }
     .points-left { text-align: right; margin-top: 6px; color: var(--gold); }
 
-    /* 遊戲主畫面 */
-    #screen-game { height: 100vh; height: 100dvh; }
-    #status { padding: 10px 16px 8px; background: #0009; border-bottom: 1px solid var(--line); }
-    .st-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-    .st-gold { margin-left: auto; color: var(--gold); }
-    .title-badge { background: linear-gradient(90deg, #8a2d1f, #c8902c); color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
-    .st-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .st-row { display: flex; justify-content: space-between; font-size: 12px; margin: 5px 0 3px; color: var(--muted); }
+    /* 遊戲主畫面：外框（原圖座標 × --s） */
+    body:has(#screen-game.active) { background: #050403; }
+    #app:has(#screen-game.active) { max-width: none; }
+    #screen-game { height: 100vh; height: 100dvh; align-items: center; }
+    #frame {
+        --s: 0.28;
+        position: relative; flex: 1 1 auto; min-height: 0; width: 100%; overflow: hidden; background: #100c0a;
+        border-style: solid; border-color: transparent; border-width: 0;
+        border-image-source: url(images/frame.jpg?v=1);
+        border-image-slice: 715 102 655 104 fill;
+        border-image-width: calc(var(--s) * 715px) calc(var(--s) * 102px) calc(var(--s) * 655px) calc(var(--s) * 104px);
+        border-image-repeat: stretch round;
+    }
+    #hud-top {
+        position: absolute; top: calc(var(--s) * 336px); left: calc(var(--s) * 262px); right: calc(var(--s) * 262px);
+        text-align: center; font-size: 12px; line-height: 1.45; text-shadow: 0 1px 3px #000; pointer-events: none;
+    }
+    .hud-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hud-name span { color: var(--muted); }
+    .hud-stats { display: flex; justify-content: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .hud-stats .gold { color: var(--gold); }
+    #panel {
+        position: absolute; top: calc(var(--s) * 445px); left: calc(var(--s) * 112px); right: calc(var(--s) * 110px);
+        bottom: calc(var(--s) * 626px); overflow-y: auto; padding: 4px 6px 10px;
+    }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--gold); }
+    #hud-bottom {
+        position: absolute; left: calc(var(--s) * 214px); right: calc(var(--s) * 214px);
+        bottom: calc(var(--s) * 420px); height: calc(var(--s) * 200px);
+        display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; font-size: 12px; text-shadow: 0 1px 3px #000;
+    }
+    .hud-where { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hud-exp { height: 14px; }
+    .hud-exp span { line-height: 13px; font-size: 11px; }
+    .pillar {
+        position: absolute; top: calc(var(--s) * 715px); bottom: calc(var(--s) * 655px); width: calc(var(--s) * 104px);
+        background: transparent; border: 0; border-radius: 0; padding: 0; z-index: 4;
+    }
+    .pillar.left { left: 0; }
+    .pillar.right { right: 0; width: calc(var(--s) * 102px); }
+    .pillar::after {
+        content: '❯'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        color: #ff8a5a; font-size: 20px; text-shadow: 0 0 6px #ff3a1a, 0 0 14px #ff3a1a; animation: rune-pulse 2.2s ease-in-out infinite;
+    }
+    .pillar.right::after { content: '❮'; }
+    .pillar.open::after { content: '✕'; animation: none; }
+    .pillar:hover:not(:disabled) { filter: none; background: radial-gradient(ellipse at center, #ff3a1a22, transparent 70%); }
+    @keyframes rune-pulse { 50% { opacity: .35; } }
+    .drawer {
+        position: absolute; top: calc(var(--s) * 760px); width: min(62%, 240px); z-index: 6; padding: 10px;
+        display: flex; flex-direction: column; gap: 8px;
+        background: linear-gradient(#2b2119, #120d0a); border: 1px solid #7a5530; box-shadow: 0 0 24px #000, inset 0 0 18px #0008;
+        transition: transform .25s ease, visibility .25s;
+        visibility: hidden;
+    }
+    .drawer.left { left: calc(var(--s) * 104px); border-radius: 0 12px 12px 0; transform: translateX(calc(-100% - var(--s) * 110px)); }
+    .drawer.right { right: calc(var(--s) * 102px); border-radius: 12px 0 0 12px; transform: translateX(calc(100% + var(--s) * 110px)); }
+    .drawer.open { transform: none; visibility: visible; }
+    .drawer button { display: flex; align-items: center; gap: 10px; text-align: left; background: #3a2a1e; border: 1px solid #5a4028; padding: 11px 12px; }
+    .drawer button span { font-size: 20px; }
+    .drawer button.active { border-color: var(--gold); color: var(--gold); }
+    .orb {
+        position: absolute; bottom: calc(var(--s) * 112px); width: calc(var(--s) * 296px); height: calc(var(--s) * 296px);
+        border-radius: 50%; background: transparent; border: 0; padding: 0; overflow: hidden; z-index: 3;
+    }
+    .orb.hp { left: calc(var(--s) * 82px); }
+    .orb.mp { right: calc(var(--s) * 82px); }
+    .orb:hover:not(:disabled) { filter: brightness(1.1); }
+    .orb-empty { position: absolute; left: 0; right: 0; top: 0; height: 0; background: #000b; transition: height .3s; }
+    .orb span {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+        font-size: 11px; font-weight: bold; line-height: 1.15; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 0 2px #000;
+    }
+    #slots { position: absolute; left: calc(var(--s) * 410px); bottom: calc(var(--s) * 158px); width: calc(var(--s) * 525px); height: calc(var(--s) * 77px); z-index: 3; }
+    .slot {
+        position: absolute; top: 0; width: calc(var(--s) * 77px); height: 100%; padding: 0; border: 0; border-radius: 3px;
+        background: transparent; font-size: calc(var(--s) * 46px); line-height: 1; display: flex; align-items: center; justify-content: center;
+    }
+    .slot b { position: absolute; right: 1px; bottom: 0; font-size: 9px; line-height: 1; text-shadow: 0 0 2px #000, 0 0 3px #000; }
+    .slot.active { box-shadow: 0 0 0 2px var(--gold), 0 0 8px var(--gold); }
+    .slot.empty { opacity: .35; }
+    .title-badge { background: linear-gradient(90deg, #8a2d1f, #c8902c); color: #fff; font-size: 10px; padding: 0 5px; border-radius: 4px; margin-left: 4px; }
     .bar { position: relative; height: 18px; background: #0008; border-radius: 4px; overflow: hidden; font-size: 12px; border: 1px solid #0006; }
     .bar.thin { height: 4px; border: 0; }
     .bar-fill { height: 100%; transition: width .2s; }
@@ -96,11 +170,6 @@
     .bar.mp .bar-fill { background: linear-gradient(#5591e0, var(--mp)); }
     .bar.exp .bar-fill { background: var(--exp); }
     .bar.wt .bar-fill { background: #8a7a55; }
-    #tabs { display: grid; grid-template-columns: repeat(8, 1fr); background: #0006; border-bottom: 1px solid var(--line); }
-    .tab { background: none; border: 0; border-radius: 0; padding: 7px 0 5px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; align-items: center; }
-    .tab span { font-size: 18px; }
-    .tab.active { color: var(--gold); box-shadow: inset 0 -2px 0 var(--gold); }
-    #panel { flex: 1; overflow-y: auto; padding: 12px 16px 24px; }
 
     /* 狩獵 */
     .mon-card { display: flex; align-items: center; gap: 12px; min-height: 76px; }
@@ -234,9 +303,19 @@
 
     <!-- 遊戲 -->
     <section id="screen-game" class="screen">
-        <header id="status"></header>
-        <nav id="tabs"></nav>
-        <main id="panel"></main>
+        <!-- 外框（images/frame.jpg 九宮格），位置見 ARCHITECTURE.md 第 15 節 -->
+        <div id="frame">
+            <div id="hud-top"></div>
+            <main id="panel"></main>
+            <div id="hud-bottom"></div>
+            <button id="pillar-left" class="pillar left" onclick="toggleDrawer('left')" aria-label="角色選單"></button>
+            <button id="pillar-right" class="pillar right" onclick="toggleDrawer('right')" aria-label="系統選單"></button>
+            <div id="drawer-left" class="drawer left"></div>
+            <div id="drawer-right" class="drawer right"></div>
+            <button id="orb-hp" class="orb hp" onclick="orbHpClick()" aria-label="HP，點一下喝治癒藥水"><div class="orb-empty"></div><span></span></button>
+            <button id="orb-mp" class="orb mp" onclick="orbMpClick()" aria-label="MP，點一下喝藍色藥水"><div class="orb-empty"></div><span></span></button>
+            <div id="slots"></div>
+        </div>
     </section>
 </div>
 
@@ -244,23 +323,24 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261007e"></script>
-<script src="data/classes.js?v=20261007e"></script>
-<script src="data/skills.js?v=20261007e"></script>
-<script src="data/items.js?v=20261007e"></script>
-<script src="data/monsters.js?v=20261007e"></script>
-<script src="data/zones.js?v=20261007e"></script>
-<script src="data/quests.js?v=20261007e"></script>
-<script src="data/player.js?v=20261007e"></script>
-<script src="data/enchant.js?v=20261007e"></script>
-<script src="data/combat.js?v=20261007e"></script>
-<script src="data/town.js?v=20261007e"></script>
-<script src="data/save.js?v=20261007e"></script>
-<script src="data/offline.js?v=20261007e"></script>
-<script src="data/ui.js?v=20261007e"></script>
-<script src="data/ui-create.js?v=20261007e"></script>
-<script src="data/ui-panels.js?v=20261007e"></script>
-<script src="data/pwa.js?v=20261007e"></script>
-<script src="data/main.js?v=20261007e"></script>
+<script src="data/config.js?v=20261007g"></script>
+<script src="data/classes.js?v=20261007g"></script>
+<script src="data/skills.js?v=20261007g"></script>
+<script src="data/items.js?v=20261007g"></script>
+<script src="data/monsters.js?v=20261007g"></script>
+<script src="data/zones.js?v=20261007g"></script>
+<script src="data/quests.js?v=20261007g"></script>
+<script src="data/player.js?v=20261007g"></script>
+<script src="data/enchant.js?v=20261007g"></script>
+<script src="data/combat.js?v=20261007g"></script>
+<script src="data/town.js?v=20261007g"></script>
+<script src="data/save.js?v=20261007g"></script>
+<script src="data/offline.js?v=20261007g"></script>
+<script src="data/ui.js?v=20261007g"></script>
+<script src="data/ui-create.js?v=20261007g"></script>
+<script src="data/ui-panels.js?v=20261007g"></script>
+<script src="data/ui-frame.js?v=20261007g"></script>
+<script src="data/pwa.js?v=20261007g"></script>
+<script src="data/main.js?v=20261007g"></script>
 </body>
 </html>

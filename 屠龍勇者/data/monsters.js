@@ -90,7 +90,7 @@ const MONSTERS = {
     },
 };
 
-// 傲慢之塔：每 10 層一個主題，10、20…100 樓有守關首領
+// 魔塔：每 10 層一個主題，10、20…100 樓有守關首領
 const TOWER_THEMES = [
     ['骷髏神射手', '死亡騎士的隨從'], ['石像鬼', '暗影刺客'], ['火焰之影', '熔岩高崙'], ['冰原狼人', '冰之魔女'], ['巫妖', '死靈法師'],
     ['墮落天使', '地獄騎士'], ['混沌戰士', '混沌法師'], ['深淵魔物', '虛空行者'], ['冥界守衛', '冥界死神'], ['冥法親衛', '冥法巫師'],
@@ -107,7 +107,7 @@ const MONSTER_TAGS = {
     goblin: ['human'], dwarf: ['human'], orc: ['human'], dwarfWarrior: ['human'], orcArcher: ['human'], gandiOrc: ['human'],
     blackKnight: ['human'], ivoryMage: ['human'], hellhound: ['demon'], baphomet: ['demon'], demon: ['demon'],
     sphinx: ['holy'], anubis: ['holy'], osiris: ['holy'],
-    // 傲慢之塔（依名稱）
+    // 魔塔（依名稱）
     '暗影刺客': ['human'], '石像鬼': ['demon'], '火焰之影': ['demon'], '炎魔之影': ['demon'], '冰之魔女': ['human'], '死靈法師': ['human'],
     '墮落天使': ['holy'], '墮落的大天使': ['holy'], '地獄騎士': ['demon'], '混沌戰士': ['human'], '混沌法師': ['human'], '混沌之主': ['demon'],
     '深淵魔物': ['demon'], '虛空行者': ['demon'], '深淵領主': ['demon'], '冥法親衛': ['human'], '冥法巫師': ['human'], '冥法軍王': ['human'],
