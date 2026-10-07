@@ -23,14 +23,77 @@ const SLOT_DEFS = [
 ];
 const SLOT_X = [410, 500, 590, 680, 770, 858];   // 原圖中 6 個格子的左邊 x
 
+// ───────── 畫面尺寸（設定 →「🖥️ 畫面尺寸」；存在這台裝置，不進角色存檔）─────────
+//   auto  自動尺寸：外框寬 = min(螢幕寬, 560, 螢幕高 × 0.62)，高度滿版
+//   phone 手機 9:16：遊戲區固定 9:16，置中、四周黑邊
+//   pc    PC 16:9：遊戲區固定 16:9；左邊外框（9:16）一直顯示狩獵，右邊側欄顯示其他分頁
+//   full  全螢幕：進入瀏覽器全螢幕，外框寬度不設 560 上限
+const DISPLAY_KEY = 'dragonSlayer_display';
+const DISPLAY_MODES = { auto: '自動尺寸', phone: '手機 9:16', pc: 'PC 16:9', full: '全螢幕' };
+const DISPLAY_MODE_ICONS = { auto: '🔄', phone: '📱', pc: '🖥️', full: '⛶' };
+let displayMode = 'auto';
+try { displayMode = localStorage.getItem(DISPLAY_KEY) || 'auto'; } catch (e) {}
+if (!DISPLAY_MODES[displayMode]) displayMode = 'auto';
+
+function isSideLayout() { return displayMode === 'pc'; }
+
 function layoutFrame() {
-    const f = $('frame');
+    const f = $('frame'), stage = $('stage'), side = $('side');
     if (!f) return;
-    const w = Math.min(window.innerWidth, FRAME_MAX_W, Math.floor(window.innerHeight * FRAME_MIN_RATIO));
-    f.style.width = w + 'px';
-    f.style.setProperty('--s', (w / FRAME_W).toFixed(5));
+    const W = window.innerWidth, H = window.innerHeight;
+    let sw, sh, fw;
+    if (displayMode === 'phone') {
+        sh = Math.min(H, W * 16 / 9); sw = sh * 9 / 16; fw = sw;
+    } else if (displayMode === 'pc') {
+        sh = Math.min(H, W * 9 / 16); sw = sh * 16 / 9; fw = sh * 9 / 16;
+    } else {
+        sh = H;
+        fw = Math.min(W, displayMode === 'full' ? W : FRAME_MAX_W, Math.floor(H * FRAME_MIN_RATIO));
+        sw = fw;
+    }
+    sw = Math.floor(sw); sh = Math.floor(sh); fw = Math.floor(fw);
+    stage.style.width = sw + 'px';
+    stage.style.height = sh + 'px';
+    f.style.width = fw + 'px';
+    f.style.height = sh + 'px';
+    f.style.setProperty('--s', (fw / FRAME_W).toFixed(5));
+    side.classList.toggle('hidden', !isSideLayout());
+    side.style.width = (sw - fw) + 'px';
 }
 window.addEventListener('resize', layoutFrame);
+document.addEventListener('fullscreenchange', layoutFrame);
+document.addEventListener('webkitfullscreenchange', layoutFrame);
+
+function setDisplayMode(mode) {
+    if (!DISPLAY_MODES[mode]) return;
+    const wasSide = isSideLayout();
+    displayMode = mode;
+    try { localStorage.setItem(DISPLAY_KEY, mode); } catch (e) {}
+    if (mode === 'full') enterFullscreen(); else exitFullscreen();
+    // 從 PC 版面切回單欄時，回到狩獵畫面
+    if (wasSide && !isSideLayout()) currentTab = 'hunt';
+    layoutFrame();
+    renderTabs();
+    refreshUI();
+    showToast(`畫面尺寸：${DISPLAY_MODES[mode]}`);
+    if (mode === 'pc' && window.innerWidth < window.innerHeight) showToast('PC 16:9 適合電腦或橫放的手機，直拿手機建議用「自動尺寸」', 3500);
+}
+
+function enterFullscreen() {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!fn) { showToast('這個瀏覽器不支援全螢幕，可改用「📲 安裝到主畫面」', 3000); return; }
+    try {
+        const p = fn.call(el);
+        if (p && p.catch) p.catch(() => showToast('無法進入全螢幕'));
+    } catch (e) { showToast('無法進入全螢幕'); }
+}
+
+function exitFullscreen() {
+    if (!(document.fullscreenElement || document.webkitFullscreenElement)) return;
+    const fn = document.exitFullscreen || document.webkitExitFullscreen;
+    try { const p = fn.call(document); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
 
 // ───────── 左右柱子抽屜 ─────────
 function toggleDrawer(side) {
@@ -69,10 +132,10 @@ function renderSlots(force) {
 
 function slotClick(i) {
     const d = SLOT_DEFS[i];
-    if (d.tab) { switchTab(currentTab === d.tab ? 'hunt' : d.tab); return; }
+    if (d.tab) { switchTab(currentTab === d.tab && !isSideLayout() ? 'hunt' : d.tab); return; }
     d.use();
     renderStatus();
-    if (currentTab === 'hunt') updateHuntLive();
+    if (huntVisible()) updateHuntLive();
 }
 
 // ───────── 快捷使用 ─────────

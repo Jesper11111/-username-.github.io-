@@ -23,7 +23,7 @@ function gameTick() {
     if (uiAcc >= 250) {
         uiAcc = 0;
         renderStatus();
-        if (currentTab === 'hunt') updateHuntLive();
+        if (huntVisible()) updateHuntLive();
     }
     saveAcc += dt;
     if (saveAcc >= AUTOSAVE_MS) { saveAcc = 0; saveGame(); }

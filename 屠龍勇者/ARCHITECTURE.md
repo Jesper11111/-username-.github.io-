@@ -23,7 +23,8 @@
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
-| `data/ui-frame.js` | 主畫面外框：`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15 節） |
+| `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
+| `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
@@ -33,7 +34,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → ui-frame → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -41,7 +42,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007j`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -217,3 +218,35 @@ kills, deaths, settings, created`
 
 - 原本上方的分頁列（`#tabs`）已移除；`renderTabs()` 改為更新抽屜與格子的「目前分頁」標示。`renderStatus()` 改寫外框 HUD。
 - 標題畫面、創角畫面維持原樣（沒有外框）。
+
+## 16. 畫面尺寸（設定 →「🖥️ 畫面尺寸」）
+
+- 存在這台裝置的 `localStorage`（key `dragonSlayer_display`），不進角色存檔；標題畫面也會沿用。
+- 結構：`#screen-game > #stage > #frame（外框）＋ #side（右側欄）`，`layoutFrame()` 依模式算出 `#stage`、`#frame`、`#side` 的像素大小與 `--s`。
+
+| 模式 | 遊戲區 | 外框 | 右側欄 |
+|---|---|---|---|
+| 🔄 自動尺寸 `auto` | 滿版高度 | 寬 = min(螢幕寬, 560, 螢幕高 × 0.62) | 無 |
+| 📱 手機 9:16 `phone` | 固定 9:16，置中，四周黑邊 | 填滿遊戲區 | 無 |
+| 🖥️ PC 16:9 `pc` | 固定 16:9，置中 | 9:16，靠左，**固定顯示狩獵** | 其他分頁（預設人物狀態） |
+| ⛶ 全螢幕 `full` | 進入瀏覽器全螢幕（`requestFullscreen`），同自動但不設 560 上限 | | 無 |
+
+- PC 16:9 時 `isSideLayout()` 為 true：`renderPanel()` 同時畫狩獵（`#panel`）與目前分頁（`#side`），`huntVisible()` 讓狩獵即時更新一直運作；
+  抽屜、底部格子打開的頁面都進右側欄，「返回狩獵」按鈕不顯示。切回其他模式時自動回到狩獵。直拿手機選 PC 16:9 會提示改用自動尺寸。
+- 全螢幕需要使用者點擊才能進入；重新整理後瀏覽器會退出全螢幕（版面仍是全螢幕模式，再點一次即可）。iPhone Safari 不支援，會提示改用「安裝到主畫面」。
+
+## 17. 中間即時地圖（`ui-scene.js`）
+
+- 狩獵畫面（`renderHunt` → `huntViewHtml`）中間是 `<canvas id="scene-canvas">`，下方是操作按鈕、補給／效率、精簡訊息（最近 30 行）。
+  進入遊戲後一律顯示這個畫面；「地圖」（傳送清單）只在按右柱抽屜或村莊傳送師時才打開，不會自動彈出。
+- **只負責畫面**：戰鬥結果仍由 `combat.js` 決定（尋怪 0.6～1.6 秒、命中、傷害），所以離線收益與平衡模擬都不受影響。
+- 地圖：28×28 格（每格 32px），依 `sceneKey()`（村莊 id 或 地點＋樓層）用固定亂數種子產生，同一個地點每次長一樣。
+  外圈是牆，中間 3×3 保留空地，其他格依主題密度放障礙物；主題 `SCENE_THEMES`：村莊、野外（說話之島）、地監、象牙塔、金字塔、魔塔、龍穴。
+- 角色：用職業圖示，一格一格上下左右移動（每秒 5.5 格），朝左走時圖示翻轉，移動中會上下晃。
+  - 掛機尋怪中：BFS 尋路走到最近的地圖怪旁邊。
+  - 開打（`hunt.mon` 出現）：把最近的地圖怪綁定成這隻戰鬥對象（沒有就在旁邊生一隻；龍穴直接出現在角色上方），顯示名稱、等級、血條，走到旁邊面對面。
+  - 停止掛機、村莊：原地附近隨機走動。
+- 怪物：地圖上維持 6 隻（外觀依地點與玩家等級挑），每 0.9～2.6 秒隨機走一格；被打倒的淡出後在附近補新的。
+- 特效：怪物／玩家 HP 減少時飄白色／紅色傷害數字並前衝；HP 回復飄綠色；讀遊戲訊息分類補上 MISS、爆擊（黃色大字）、魔法光環、LEVEL UP、掉寶 🎁。
+- 村莊：商店、回收、旅館、倉庫、鍛造、傳送師 6 棟建築圍在角色旁邊，點一下打開對應設施（傳送師＝地圖）。
+- 迴圈：`requestAnimationFrame`，只在狩獵畫面顯示時跑（`huntVisible()`），分頁隱藏時不更新；canvas 依 `devicePixelRatio` 調整解析度。

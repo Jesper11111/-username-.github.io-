@@ -27,7 +27,16 @@ function switchTab(tab) {
     closeDrawers();
     renderTabs();
     renderPanel();
-    $('panel').scrollTop = 0;
+    $(isSideLayout() ? 'side' : 'panel').scrollTop = 0;
+}
+
+// 狩獵畫面目前是否顯示中（PC 16:9 版面時狩獵一直在外框中間）
+function huntVisible() { return currentTab === 'hunt' || isSideLayout(); }
+
+const PANEL_FNS = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings };
+
+function panelHead(tab, withBack) {
+    return `<div class="panel-head"><b>${TABS[tab][0]} ${TABS[tab][1]}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">✖ 返回狩獵</button>` : ''}</div>`;
 }
 
 function refreshUI() {
@@ -37,11 +46,19 @@ function refreshUI() {
 }
 
 function renderPanel() {
-    const fn = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings }[currentTab];
+    if (isSideLayout()) {
+        // PC 16:9：外框中間固定狩獵，右側欄顯示目前分頁（預設人物狀態）
+        const tab = currentTab === 'hunt' ? 'char' : currentTab;
+        $('panel').innerHTML = renderHunt();
+        $('side').innerHTML = panelHead(tab, false) + PANEL_FNS[tab]();
+        lastLogRendered = 0;
+        updateHuntLive();
+        return;
+    }
+    $('side').innerHTML = '';
     // 非狩獵分頁加上標題列與「返回狩獵」
-    const head = currentTab === 'hunt' ? '' :
-        `<div class="panel-head"><b>${TABS[currentTab][0]} ${TABS[currentTab][1]}</b><button class="mini secondary" onclick="switchTab('hunt')">✖ 返回狩獵</button></div>`;
-    $('panel').innerHTML = head + fn();
+    const head = currentTab === 'hunt' ? '' : panelHead(currentTab, true);
+    $('panel').innerHTML = head + PANEL_FNS[currentTab]();
     if (currentTab === 'hunt') { lastLogRendered = 0; updateHuntLive(); }
 }
 
@@ -49,25 +66,27 @@ function renderPanel() {
 function renderHunt() {
     if (inTown()) {
         const t = currentTown();
-        return `<div class="panel">
-                <div class="loc">${t.icon} ${t.name}</div>
-                <p class="muted">村莊裡很安全（自然回復 ×3）。補給好藥水、卷軸再出發吧。</p>
-                <div class="btn-row"><button onclick="switchTab('map')">🗺️ 選擇狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button></div>
-            </div>
-            <div id="hunt-mon" class="hidden"></div><div id="hunt-buffs" class="buffs"></div><div id="hunt-session" class="hidden"></div>
-            <div id="hunt-log" class="panel log"></div>`;
+        return huntViewHtml(`${t.icon} ${t.name}<small>　點建築打開設施</small>`);
     }
-    return `<div class="panel">
-            <div class="loc">📍 ${zoneTitle()}</div>
-            <div class="btn-row" id="hunt-btns"></div>
+    return huntViewHtml(`📍 ${zoneTitle()}`);
+}
+
+// 中間的即時地圖（ui-scene.js 畫在 canvas 上）＋下方操作列、補給、精簡訊息
+function huntViewHtml(title) {
+    return `<div class="hunt-view">
+        <div class="scene-wrap">
+            <canvas id="scene-canvas" onclick="sceneClick(event)"></canvas>
+            <div class="scene-top">${title}</div>
+            <div id="hunt-buffs" class="buffs scene-buffs"></div>
         </div>
-        <div id="hunt-mon" class="panel mon-card"></div>
-        <div id="hunt-buffs" class="buffs"></div>
+        <div class="btn-row scene-btns" id="hunt-btns"></div>
         <div id="hunt-session" class="session"></div>
-        <div id="hunt-log" class="panel log"></div>`;
+        <div id="hunt-log" class="log scene-log"></div>
+    </div>`;
 }
 
 function huntButtonsHtml() {
+    if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
     let h = player.hunting
@@ -84,24 +103,10 @@ function huntButtonsHtml() {
 function updateHuntLive() {
     const btns = $('hunt-btns');
     if (btns) {
-        const sig = [player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
+        const sig = [inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
         if (btns.dataset.sig !== sig) { btns.dataset.sig = sig; btns.innerHTML = huntButtonsHtml(); }
     }
-    const monBox = $('hunt-mon');
-    if (monBox && !inTown()) {
-        let h;
-        if (walkHome) h = `<div class="mon-wait">🚶 步行回${TOWNS[walkHome.town].name}中…還有 ${Math.ceil((walkHome.until - gameNow) / 1000)} 秒</div>`;
-        else if (!player.hunting) h = `<div class="mon-wait">⏸ 停止中。按「開始掛機」自動戰鬥。</div>`;
-        else if (!hunt || hunt.state === 'search' || !hunt.mon) h = `<div class="mon-wait">🔍 尋找怪物中…</div>`;
-        else {
-            const m = hunt.mon;
-            const tags = [m.undead && '不死', m.demon && '惡魔', m.holy && '神聖', m.human && '人型', m.large && '大型', m.dragon && '龍族', m.questBoss && '任務首領', m.boss && !m.questBoss && '首領'].filter(Boolean).join('・');
-            h = `<div class="mon-icon ${m.boss ? 'boss' : ''}">${m.icon}</div>
-                <div class="mon-info"><b>${m.name}</b> <small class="muted">Lv.${m.lv}${tags ? '・' + tags : ''}</small>
-                ${bar(m.hp, m.maxHp, 'hp')}</div>`;
-        }
-        monBox.innerHTML = h;
-    }
+    startScene();
     const buffs = $('hunt-buffs');
     if (buffs) {
         const now = gameNow;
@@ -121,11 +126,11 @@ function updateHuntLive() {
             line = `<div>擊殺 ${session.kills}｜經驗 ${fmt(session.exp)}（${fmt(session.exp / hrs)}／小時）｜金幣 ${fmt(session.gold)}</div>`;
         }
         ses.innerHTML = line + `<div>${supplies.join('　')}</div>`;
-    }
+    } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
     const logBox = $('hunt-log');
     if (logBox && lastLogRendered !== logSeq) {
         lastLogRendered = logSeq;
-        logBox.innerHTML = gameLog.slice(-60).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
+        logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
         logBox.scrollTop = logBox.scrollHeight;
     }
 }
@@ -474,7 +479,13 @@ function renderSettings() {
     const s = player.settings;
     const num = (key, label, min, max) => `<label class="set-row"><span>${label}</span><input type="number" min="${min}" max="${max}" value="${s[key]}" onchange="setSettingNum('${key}',this.value,${min},${max})"></label>`;
     const chk = (key, label) => `<label class="set-row"><span>${label}</span><input type="checkbox" ${s[key] ? 'checked' : ''} onchange="setSettingBool('${key}',this.checked)"></label>`;
-    return `<div class="panel"><h4>💊 自動補給</h4>
+    const modes = Object.keys(DISPLAY_MODES).map(m =>
+        `<button class="${displayMode === m ? '' : 'secondary'}" onclick="setDisplayMode('${m}')">${DISPLAY_MODE_ICONS[m]} ${DISPLAY_MODES[m]}</button>`).join('');
+    return `<div class="panel"><h4>🖥️ 畫面尺寸</h4>
+            <div class="grid2">${modes}</div>
+            <small class="muted">這台裝置的顯示設定，不影響存檔。PC 16:9 時，狩獵固定在左邊外框，其他頁面顯示在右側。</small>
+        </div>
+        <div class="panel"><h4>💊 自動補給</h4>
             ${chk('potionOn', '自動喝治癒藥水')}${num('potionPct', 'HP 低於 % 喝水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
             ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}
