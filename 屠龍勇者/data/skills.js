@@ -7,7 +7,7 @@
 //   passive 被動：學會就生效；cond:'lowHp' 表示 HP 低於 50% 才生效
 // fx 欄位：ac（越大越硬）、hit、dmg、sp、mr、crit、dodge、reduce（減傷）、double（雙擊率）、
 //          absorb（傷害轉由 MP 承受比例）、counter（反擊率）、hpRegen、mpRegen、dmgSp（SP×倍率加到傷害）、
-//          spdMul（攻速提升比例）、haste（加速）、brave（勇敢）
+//          spdMul（攻速提升比例）、lifesteal（吸血比例）、haste（加速）、brave（勇敢）
 // undeadMul：對不死系倍率
 
 const COMMON_SKILLS = {
@@ -100,6 +100,27 @@ const SKILLS = {
         commonSkill('heal2', 35),
         { id: 'palBless',  name: '神聖祝福', lv: 50, mp: 20, type: 'buff', sec: 300, fx: { hpRegen: 10, dmg: 3 }, desc: '回血 +10／5 秒、傷害 +3' },
         { id: 'palJudge',  name: '審判之光', lv: 65, mp: 30, type: 'spell', dmg: [80, 140], spK: 3, undeadMul: 1.5, cd: 10, desc: '神聖魔法，對不死系 ×1.5' },
+    ],
+    angel: [
+        { id: 'holyBolt',    name: '聖光彈',     lv: 1,  mp: 3,  type: 'spell', dmg: [4, 9], spK: 1.1, desc: '基礎神聖魔法' },
+        commonSkill('heal1', 4),
+        { id: 'angelAegis',  name: '神聖護盾',   lv: 12, mp: 10, type: 'buff', sec: 600, fx: { ac: 4, mr: 10 }, desc: 'AC -4、MR +10（10 分鐘）' },
+        { id: 'angelWings',  name: '天使之翼',   lv: 20, mp: 15, type: 'buff', sec: 300, fx: { dodge: 0.1, spdMul: 0.1 }, desc: '閃避 +10%、攻速 +10%' },
+        commonSkill('heal2', 25),
+        { id: 'angelJudge',  name: '審判之光',   lv: 32, mp: 16, type: 'spell', dmg: [30, 52], spK: 2.2, undeadMul: 1.5, desc: '神聖魔法，對不死系再 ×1.5' },
+        { id: 'angelGrace',  name: '神恩',       lv: 45, type: 'passive', fx: { hpRegen: 6, mpRegen: 3 }, desc: '被動：回血 +6、回魔 +3（每 5 秒）' },
+        commonSkill('heal3', 50),
+        { id: 'angelWrath',  name: '天罰',       lv: 60, mp: 45, type: 'spell', dmg: [110, 170], spK: 3.5, cd: 6, desc: '降下天罰的強力魔法（冷卻 6 秒）' },
+        { id: 'angelSeraph', name: '熾天使降臨', lv: 75, mp: 40, type: 'buff', sec: 180, fx: { dmg: 8, sp: 6, ac: 5 }, desc: '傷害 +8、SP +6、AC -5（3 分鐘）' },
+    ],
+    demon: [
+        { id: 'demonThirst',    name: '血之渴望', lv: 1,  type: 'passive', fx: { lifesteal: 0.05 }, desc: '被動：造成傷害的 5% 轉為 HP' },
+        { id: 'demonSlash',     name: '暗影斬',   lv: 10, mp: 4,  type: 'strike', mult: 1.6, cd: 6, desc: '1.6 倍傷害一擊' },
+        { id: 'demonPact',      name: '深淵契約', lv: 20, mp: 8,  type: 'buff', sec: 300, fx: { dmg: 5, lifesteal: 0.05 }, desc: '傷害 +5、吸血 +5%' },
+        { id: 'demonFear',      name: '恐懼之眼', lv: 30, mp: 8,  type: 'strike', mult: 1, stun: 2500, cd: 14, desc: '攻擊並使敵人恐懼 2.5 秒（無法行動）' },
+        { id: 'demonBloodlust', name: '狂血',     lv: 40, type: 'passive', cond: 'lowHp', fx: { dmg: 10, spdMul: 0.15 }, desc: '被動：HP 低於 50% 時傷害 +10、攻速 +15%' },
+        { id: 'demonHellfire',  name: '地獄火',   lv: 50, mp: 15, type: 'strike', mult: 1.2, magic: { dmg: [40, 80], spK: 2 }, cd: 8, desc: '1.2 倍攻擊＋地獄火魔法傷害' },
+        { id: 'demonLord',      name: '魔王覺醒', lv: 70, mp: 20, type: 'buff', sec: 180, fx: { dmg: 12, lifesteal: 0.1, ac: -3 }, desc: '傷害 +12、吸血 +10%，但 AC +3' },
     ],
 };
 

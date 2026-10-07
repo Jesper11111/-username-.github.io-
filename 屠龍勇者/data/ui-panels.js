@@ -7,7 +7,7 @@ let lastLogRendered = 0;
 
 const TABS = [
     ['hunt', '⚔️', '狩獵'], ['map', '🗺️', '地圖'], ['char', '🧝', '角色'], ['bag', '🎒', '背包'],
-    ['skill', '✨', '技能'], ['town', '🏘️', '村莊'], ['set', '⚙️', '設定'],
+    ['skill', '✨', '技能'], ['quest', '📜', '任務'], ['town', '🏘️', '村莊'], ['set', '⚙️', '設定'],
 ];
 
 function enterGame() {
@@ -30,13 +30,13 @@ function switchTab(tab) {
 }
 
 function refreshUI() {
-    if (!player || !$('panel')) return;
+    if (!player || SIM_MODE || !$('panel')) return;
     renderStatus();
     renderPanel();
 }
 
 function renderPanel() {
-    const fn = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, town: renderTown, set: renderSettings }[currentTab];
+    const fn = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings }[currentTab];
     $('panel').innerHTML = fn();
     if (currentTab === 'hunt') { lastLogRendered = 0; updateHuntLive(); }
 }
@@ -91,7 +91,7 @@ function updateHuntLive() {
         else if (!hunt || hunt.state === 'search' || !hunt.mon) h = `<div class="mon-wait">🔍 尋找怪物中…</div>`;
         else {
             const m = hunt.mon;
-            const tags = [m.undead && '不死', m.large && '大型', m.dragon && '龍族', m.boss && '首領'].filter(Boolean).join('・');
+            const tags = [m.undead && '不死', m.demon && '惡魔', m.holy && '神聖', m.human && '人型', m.large && '大型', m.dragon && '龍族', m.questBoss && '任務首領', m.boss && !m.questBoss && '首領'].filter(Boolean).join('・');
             h = `<div class="mon-icon ${m.boss ? 'boss' : ''}">${m.icon}</div>
                 <div class="mon-info"><b>${m.name}</b> <small class="muted">Lv.${m.lv}${tags ? '・' + tags : ''}</small>
                 ${bar(m.hp, m.maxHp, 'hp')}</div>`;
@@ -216,12 +216,12 @@ function addStatBtn(k) { addStatPoint(k); saveGame(); refreshUI(); }
 
 // ───────── 背包 ─────────
 const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['other', '其他']];
-const CAT_ORDER = ['weapon', 'armor', 'potion', 'scroll', 'ammo', 'elixir', 'material'];
+const CAT_ORDER = ['quest', 'weapon', 'armor', 'potion', 'scroll', 'ammo', 'elixir', 'material'];
 
 function bagMatch(def) {
     if (bagFilter === 'all') return true;
     if (bagFilter === 'gear') return def.cat === 'weapon' || def.cat === 'armor';
-    if (bagFilter === 'other') return ['ammo', 'elixir', 'material'].includes(def.cat);
+    if (bagFilter === 'other') return ['ammo', 'elixir', 'material', 'quest'].includes(def.cat);
     return def.cat === bagFilter;
 }
 
@@ -362,6 +362,33 @@ function toggleSkill(id) {
     player.settings.skills[id] = player.settings.skills[id] === false;
     saveGame();
     renderPanel();
+}
+
+// ───────── 職業任務 ─────────
+function renderQuest() {
+    const st = CLASS_STORIES[player.cls], c = CLASSES[player.cls], list = questList(), s = questState();
+    let h = `<div class="panel story"><div class="loc">${c.icon} ${c.name}的故事</div><p>${st.story}</p>
+        <small class="muted">任務 NPC：${st.npc}（在任何村莊都找得到）</small>${questTitleEarned() ? `<p class="good">🏅 稱號：${st.title}</p>` : ''}</div>`;
+    list.forEach((q, i) => {
+        const head = `<div class="quest-head"><b>第 ${i + 1} 章　${q.title}</b><small class="muted">Lv.${q.lv}</small></div>`;
+        const reward = `<small class="muted">獎勵：${ITEMS[q.reward.item].name}、${fmt(q.reward.gold)} 金幣${q.reward.elixir ? `、萬能藥 ×${q.reward.elixir}` : ''}</small>`;
+        if (i < s.ch) { h += `<div class="quest-card done">${head}<p class="muted">${q.outro}</p></div>`; return; }
+        if (i > s.ch) { h += `<div class="quest-card locked">${head}<small class="muted">🔒 完成上一章後開放</small></div>`; return; }
+        let body = `<p>${st.npc}：${q.intro}</p><div class="quest-goal">🎯 ${questGoalText(q)}</div>${reward}`;
+        if (player.lv < q.lv) body += `<div class="quest-act"><span class="bad">需要 Lv.${q.lv}（目前 Lv.${player.lv}）</span></div>`;
+        else if (!s.active) body += `<div class="quest-act"><button onclick="acceptQuest()" ${inTown() ? '' : 'disabled'}>接受任務</button>${inTown() ? '' : '<small class="muted">回到村莊才能接任務</small>'}</div>`;
+        else {
+            const g = q.goal;
+            let prog;
+            if (g.type === 'boss') prog = s.bossDone ? '首領已討伐' : s.prog >= g.after ? `「${g.boss.name}」即將出現，繼續在${ZONE_BY_ID[g.zone].name}狩獵` : `擊倒魔物 ${s.prog}/${g.after}`;
+            else prog = `進度 ${questProgress(q)}/${g.n}`;
+            const pct = g.type === 'boss' ? (s.bossDone ? 100 : Math.min(99, s.prog / g.after * 99)) : questProgress(q) / g.n * 100;
+            body += `<div class="quest-act">${bar(pct, 100, 'exp', prog)}</div>`;
+            if (questReady(q)) body += `<div class="quest-act"><button onclick="turnInQuest()" ${inTown() ? '' : 'disabled'}>回報任務</button>${inTown() ? '' : '<small class="muted">回到村莊才能回報</small>'}</div>`;
+        }
+        h += `<div class="quest-card current">${head}${body}</div>`;
+    });
+    return h;
 }
 
 // ───────── 村莊 ─────────

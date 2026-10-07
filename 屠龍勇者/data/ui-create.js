@@ -18,7 +18,7 @@ function openCreate() {
 }
 
 function selectClass(cls) {
-    createState = { cls, stats: { ...CLASSES[cls].base }, name: createState ? createState.name : '' };
+    createState = { cls, stats: { ...CLASSES[cls].base }, name: $('create-name').value || (createState ? createState.name : '') };
     renderCreate();
 }
 
@@ -36,11 +36,12 @@ function adjustCreateStat(k, d) {
 
 function renderCreate() {
     if (!createState) createState = { cls: 'knight', stats: { ...CLASSES.knight.base }, name: '' };
+    if ($('create-name').value) createState.name = $('create-name').value;   // 重繪前保留已輸入的名字
     const c = CLASSES[createState.cls], left = createPointsLeft();
     $('create-classes').innerHTML = Object.keys(CLASSES).map(id =>
         `<button class="class-card ${id === createState.cls ? 'active' : ''}" onclick="selectClass('${id}')">
             <span class="class-icon">${CLASSES[id].icon}</span>${CLASSES[id].name}</button>`).join('');
-    $('create-desc').innerHTML = `<b>${c.icon} ${c.name}</b><p>${c.desc}</p>
+    $('create-desc').innerHTML = `<b>${c.icon} ${c.name}</b><p>${c.desc}</p><p class="story-text">${CLASS_STORIES[createState.cls].story}</p>
         <small class="muted">可用武器：${c.weapons.map(w => WEAPON_TYPES[w].name).join('、')}${c.shield ? '、盾牌' : '（不能用盾）'}</small>`;
     $('create-stats').innerHTML = STAT_KEYS.map(k => `
         <div class="stat-row">
@@ -60,7 +61,7 @@ function confirmCreate() {
     deleteSave();
     createPlayer(name, createState.cls, createState.stats);
     saveGame();
-    addLog(`歡迎來到說話之島，${name}！先去「地圖」傳送到說話之島狩獵吧。`, 'sys');
+    addLog(`歡迎來到說話之島，${name}！先去「地圖」傳送到說話之島狩獵吧。Lv.15 起可以在「📜 任務」接職業任務。`, 'sys');
     enterGame();
-    gameAlert('序章', `四大龍甦醒，亞丁大陸陷入恐懼。\n年輕的${CLASSES[createState.cls].name}${name}，從說話之島踏上屠龍之路吧！\n\n小提示：掛機會自動戰鬥、喝水、施法，記得帶足紅水與回家卷軸。`);
+    gameAlert('序章', `四大龍甦醒，亞丁大陸陷入恐懼。\n\n${CLASS_STORIES[createState.cls].story}\n\n小提示：掛機會自動戰鬥、喝水、施法，記得帶足紅水與回家卷軸。Lv.15 起到「📜 任務」接職業任務。`);
 }

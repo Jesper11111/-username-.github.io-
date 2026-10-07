@@ -8,20 +8,22 @@
 | 檔案 | 內容 |
 |---|---|
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
-| `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、`expToNext` |
-| `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（10 職業） |
+| `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
+| `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（12 職業，含 `slayer` 種族剋制） |
 | `data/skills.js` | `SKILLS[職業]` 技能／魔法、`COMMON_SKILLS`、`findSkill` |
 | `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
 | `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、傲慢之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
+| `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
-| `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入 |
+| `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt` |
+| `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
-| `data/ui-panels.js` | 主畫面 7 個分頁（狩獵／地圖／角色／背包／技能／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
+| `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／角色／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
@@ -30,15 +32,15 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → player → enchant → combat → town → save → ui → ui-create → ui-panels → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → pwa → main`
 
-- 上層資料檔（config～zones）只在「載入時」用到更前面的檔案。
+- 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
 - 新檔案依它「載入時」需要的東西插入；只在執行期用到的不影響順序。
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261007e`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -52,10 +54,13 @@
 - 能力值：力量／敏捷／體質／智力／精神／魅力。創角總點數 75，職業有最低值（`base`），單項上限 18。
 - 51 級起每升一級 +1 點（`statPoints`），單項上限 `STAT_CAP` 35；萬能藥每瓶 +1，最多 5 瓶。
 - 升級 HP／MP：職業 `hp/mp` 範圍 + 體質／精神加成（`(值-10)/2`）。升級時 HP／MP 全滿。
-- 10 職業：王族、騎士、法師、妖精、黑暗妖精、修羅、戰士、槍手、魔鬥士、聖騎士。
+- 12 職業：王族、騎士、法師、妖精、黑暗妖精、修羅、戰士、槍手、魔鬥士、聖騎士、天使、惡魔。
   差異在可用武器（`weapons`）、能否用盾、HP/MP 成長、MR、SP 成長（`spDiv`）、回魔係數、技能表。
   - 王族：魅力超過 10 每點金幣掉落 +3%。
   - 妖精／槍手：遠程，需要箭／子彈（`ammo`）。
+  - 天使：神聖魔法（聖光彈、審判之光、天罰）＋治癒，用魔杖／長矛／單手劍＋盾；對**惡魔與不死系**傷害 ×1.3（`slayer`），可用慎重藥水。
+  - 惡魔：被動吸血（`lifesteal`）、HP 低於 50% 傷害與攻速提升，用鐮刀（新武器種類 `scythe`，雙手）／鋼爪；對**人型與神聖系**傷害 ×1.3，可用勇敢藥水。
+  - 怪物種族標籤（`monsters.js` 的 `MONSTER_TAGS`）：`human` 人型、`demon` 惡魔、`holy` 神聖；不死系沿用 `undead`。剋制加成同時作用在物理與魔法傷害。
 
 ## 5. 能力計算（`calcStats`）
 
@@ -73,6 +78,7 @@
 | 負重上限 | (力量 + 體質) × 100 |
 | 爆擊 | 5% + 武器 + 增益（×1.5 傷害） |
 | 閃避 | (敏捷-12)×1% + 增益，上限 50% |
+| 吸血 | 武器／防具／技能 `lifesteal` 加總，造成傷害 × 比例轉為 HP（物理與魔法都算） |
 
 ## 6. 戰鬥（`combat.js`）
 
@@ -85,7 +91,8 @@
 - 玩家行動優先：治癒（HP < healPct）→ 增益（效果結束）→ 攻擊技能／魔法（最高級、MP 夠、冷卻好）→ 普攻。
 - 自動補給（`autoSupport`）：瞬移卷軸 → 治癒藥水（挑不浪費的那瓶，間隔 1 秒）→ 綠水 → 勇水類 → 藍水。
 - 自動回家：沒藥水、沒彈藥、負重超過設定 → 有回家卷軸就回村；沒卷軸只提示一次。
-- 死亡：10 級以上損失本級所需經驗 5%（不降級）；有復活卷軸則不損失；清除增益、HP／MP 剩 30%、回地圖所屬村莊。
+- 死亡：損失本級所需經驗的 `deathLossRate`（天堂原版：1～44 級 10%、45 級 9%、46 級 8%、47 級 7%、48 級 6%、49 級以上 5%；不降級，最低扣到本級 0）；有復活卷軸則不損失；清除增益、HP／MP 剩 30%、回地圖所屬村莊。
+- 狩獵經驗 = 怪物經驗 × `EXP_RATE`（目前 1，原版）× `huntExpRate`（65 級起遞減）。
 
 ## 7. 道具與衝裝
 
@@ -114,8 +121,21 @@
 
 ## 9. 經驗曲線
 
-`expToNext(lv) = 10 × lv^2.5 + 20`，50 級起再乘 `2^((lv−49)/10)`。怪物經驗 `lv² + 1`（首領 ×15～20，龍寫死）。
-模擬參考（初始裝備、不換裝）：各職業 1 小時約 Lv.11～16。
+**採用天堂 1 原版經驗表**（使用者 2026-10-08 提供；`EXP_RATE = 1` 完全原版，使用者選定不加倍率）：
+
+| 等級 | 升下一級所需經驗 |
+|---|---|
+| 1～5 | 125、175、200、250、546（查表） |
+| 6～44 | (等級+1)⁴ − 等級⁴（到下一級的總經驗剛好是 (等級+1)⁴；例：10 級 4,641、30 級 113,521、44 級 352,529） |
+| 45～48 | 729,360、1,508,416、3,495,263、9,912,189 |
+| 49 以上 | 每級 36,065,092 |
+
+- 65 級起狩獵經驗遞減：65～69 ×1/2、70～74 ×1/4、75～78 ×1/8、79 ×1/16、80～81 ×1/32、82～83 ×1/64、84～85 ×1/128、86 ×1/256、87 以上 ×1/512（原表到 87 級為止，之後沿用）。
+- 怪物經驗 `lv² + 1`（天堂公式；首領 ×10～20，龍寫死）。累計：到 49 級 19,745,853；到 65 級 596,787,325；到 88 級 1,426,284,441（與原表一致）。
+- 練功速度（單人、24 小時不停掛機）：實測 ×1 約 0.6 小時 Lv.10、2.9 小時 Lv.20、6.8 小時 Lv.30、12 小時 Lv.37；
+  估算 Lv.45 約 13 小時、Lv.49 約 34 小時、Lv.60 約 15 天、Lv.70 約 27 天、Lv.88 約 650 天。
+  四大龍與第 4 章任務（Lv.60）是**長期目標**；之後想加快只要改 `config.js` 的 `EXP_RATE`（×10 時 Lv.60 約 35 小時）。
+- 原表缺的 21、43 級依 (n+1)⁴ − n⁴ 規律補上（39,775、329,295）；原表 27 級總經驗 14656 為筆誤，應為 614,656。
 
 ## 10. 存檔欄位（`player`）
 
@@ -125,7 +145,7 @@ kills, deaths, settings, created`
 
 ## 11. 尚未實作（之後可做）
 
-離線收益、寵物／召喚（妖精、王族）、血盟、變身卷軸、更多地圖（龍之谷、遺忘之島…）、音效與怪物圖片。
+寵物／召喚（妖精、王族）、組隊經驗分配、死亡降級、血盟、變身卷軸、更多地圖（龍之谷、遺忘之島…）、音效與怪物圖片。
 
 ## 12. PWA（可安裝的 App 版）
 
@@ -139,3 +159,37 @@ kills, deaths, settings, created`
 - iPhone 主畫面版與 Safari 存檔分開，第一次從主畫面開且沒存檔時提醒一次（`dragonSlayer_pwa_hint`）。
 - 圖示由 PowerShell `System.Drawing` 產生（紅底金框「屠龍」二字），要換圖直接覆蓋 `images/` 同檔名即可。
 - 本機測試會在 localhost:8790 註冊 SW；測完可在 DevTools → Application → Service Workers 註銷，避免讀到舊快取。
+
+## 13. 職業故事與任務（`quests.js`）
+
+- 每個職業有一段背景故事與一位任務 NPC（`CLASS_STORIES`），創角畫面、序章對話框與「📜 任務」分頁都會顯示。
+- 每個職業 4 章任務（`CLASS_QUESTS`），依序解鎖：
+
+| 章 | 等級 | 類型 | 地點 | 獎勵 |
+|---|---|---|---|---|
+| 1 | 15 | 收集任務道具 ×10（掉率 30%；修羅是擊倒 100 隻） | 說話之島地監／古魯丁地監 1～3 樓 | 職業斗篷（修羅為腰帶）＋3,000 金幣 |
+| 2 | 30 | 擊倒 20 隻後引出任務首領並討伐 | 古魯丁地監 4～7 樓 | 職業武器＋10,000 金幣 |
+| 3 | 45 | 收集任務道具 ×8（掉率 20%） | 象牙塔／金字塔 | 職業飾品＋30,000 金幣 |
+| 4 | 60 | 擊倒 30 隻後引出任務首領並討伐 | 傲慢之塔（任一非首領樓層） | 職業傳說武器＋80,000 金幣＋萬能藥 1，獲得**職業稱號** |
+
+- 接任務、回報都要在村莊（任何村莊都找得到 NPC）；進度只在指定地圖累積。
+- 任務道具 `q_職業_章`（`cat: 'quest'`，不能賣、重量 0）由程式自動建立；回報時扣除。
+- 任務首領（`qBoss`）：第 2 章 Lv34、第 4 章 Lv62（約比安塔瑞斯弱一點）。任務首領出現優先於地圖一般怪與塔的守關首領；
+  藥水用完回城會讓首領重置，所以要帶足藥水。在 10 的倍數樓層（守關首領未擊敗時）不會累積任務進度，要選一般樓層。
+- 獎勵裝備都是職業限定（`classes`），定義在 `QUEST_REWARD_ITEMS`。
+- 存檔欄位 `player.quests = { ch 已完成章數, active 進行中, prog 擊倒數, bossDone }`；`questTitleEarned()` 為 true 時狀態列顯示職業稱號。
+- 模擬參考（Lv30／Lv60 中等裝備）：12 職業第 2 章約 5～23 分、第 4 章約 11～35 分，皆無死亡。
+- 新增職業時：`CLASSES`、`SKILLS`、`CLASS_STORIES`、`CLASS_QUESTS`（4 章）、`QUEST_REWARD_ITEMS` 都要補；藥水的 `classes` 清單也要加。
+
+## 14. 離線收益（`offline.js`）
+
+- 觸發：①「繼續冒險」讀檔時，離開時間 = 現在 − 存檔時間（`lastSaveAt`）；② 遊戲中主迴圈發現兩次 tick 間隔 ≥ 30 秒（分頁在背景被暫停、電腦休眠）。
+- 條件：在狩獵地圖且 `player.hunting` 為 true；村莊、步行中、龍穴都不結算。
+- 做法：`measureHunt` 把玩家狀態存成快照，用 `SIM_MODE` 快轉模擬 10 分鐘掛機（會自動喝水、施法、回家），量出經驗、金幣、擊殺與每種消耗品用量，結束後完整還原。
+  `SIM_MODE` 期間 `saveGame`、`refreshUI`、`showToast`、`openDialog` 都不動作，遊戲訊息也會還原。
+- 結算：有效時間 = min(離開時間, 12 小時) × 50%，再受補給限制（每種藥水／彈藥／瞬移卷軸夠撐多久取最短）；
+  依比例給經驗（會正常升級）、金幣、擊殺數，扣除對應的消耗品。
+- 結束狀態：補給撐完整段 → 繼續掛機；補給用完 → 有回家卷軸就回村，沒有就停在原地；模擬中陣亡 → 只結算到陣亡為止，照死亡規則扣經驗並回村。
+- 不給：道具掉落、任務進度（避免估算誤差影響稀有物品與劇情）。
+- 常數在 `config.js`：`OFFLINE_MIN_MS`（30 秒）、`OFFLINE_MAX_MS`（12 小時）、`OFFLINE_RATE`（50%）、`OFFLINE_SAMPLE_MS`（10 分鐘）。
+- 結算一次約 0.01～0.1 秒，結果以「🌙 離線收益」對話框顯示並寫入遊戲訊息。

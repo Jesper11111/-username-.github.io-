@@ -25,6 +25,7 @@ function renderStatus() {
         <div class="st-top">
             <b>${c.icon} ${esc(player.name)}</b>
             ${hasDragonTitle() ? '<span class="title-badge">屠龍勇者</span>' : ''}
+            ${questTitleEarned() ? `<span class="title-badge">${CLASS_STORIES[player.cls].title}</span>` : ''}
             <span class="muted">${c.name} Lv.${player.lv}</span>
             <span class="st-gold">💰 ${fmt(player.gold)}</span>
         </div>
@@ -37,6 +38,7 @@ function renderStatus() {
 }
 
 function showToast(msg, ms = 1800) {
+    if (SIM_MODE) return;
     const el = document.createElement('div');
     el.className = 'toast';
     el.textContent = msg;
@@ -46,6 +48,7 @@ function showToast(msg, ms = 1800) {
 
 // 通用對話框：buttons = [{ text, cls, onClick, keep }]；keep 為 true 時按了不關閉
 function openDialog(title, html, buttons) {
+    if (SIM_MODE) return;
     const layer = $('dialog-layer');
     layer.innerHTML = `<div class="dialog"><h3>${esc(title)}</h3><div class="dialog-body">${html}</div><div class="dialog-btns"></div></div>`;
     const box = layer.querySelector('.dialog-btns');

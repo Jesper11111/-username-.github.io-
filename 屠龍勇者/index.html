@@ -71,7 +71,7 @@
 
     /* 創角 */
     #screen-create { padding: 16px; gap: 10px; }
-    .class-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .class-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .class-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; background: var(--panel2); font-size: 13px; }
     .class-card.active { background: var(--accent); }
     .class-icon { font-size: 24px; }
@@ -96,7 +96,7 @@
     .bar.mp .bar-fill { background: linear-gradient(#5591e0, var(--mp)); }
     .bar.exp .bar-fill { background: var(--exp); }
     .bar.wt .bar-fill { background: #8a7a55; }
-    #tabs { display: grid; grid-template-columns: repeat(7, 1fr); background: #0006; border-bottom: 1px solid var(--line); }
+    #tabs { display: grid; grid-template-columns: repeat(8, 1fr); background: #0006; border-bottom: 1px solid var(--line); }
     .tab { background: none; border: 0; border-radius: 0; padding: 7px 0 5px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; align-items: center; }
     .tab span { font-size: 18px; }
     .tab.active { color: var(--gold); box-shadow: inset 0 -2px 0 var(--gold); }
@@ -166,6 +166,19 @@
     .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
     .set-row:last-of-type { border-bottom: 0; }
 
+    /* 職業任務 */
+    .story p, .story-text { line-height: 1.7; }
+    .story-text { color: #d8cfb8; font-size: 14px; border-left: 3px solid var(--accent); padding-left: 10px; border-radius: 0; }
+    .quest-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .quest-card.current { border-color: var(--gold); }
+    .quest-card.done { opacity: .75; }
+    .quest-card.locked { opacity: .45; }
+    .quest-card p { margin: 6px 0; line-height: 1.7; }
+    .quest-head { display: flex; justify-content: space-between; align-items: center; }
+    .quest-goal { color: var(--gold); margin: 6px 0 2px; }
+    .quest-act { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .quest-act .bar { flex: 1; min-width: 160px; }
+
     /* 對話框、提示 */
     #dialog-layer { position: fixed; inset: 0; background: #000b; display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
     #dialog-layer.active { display: flex; }
@@ -179,7 +192,7 @@
     #pwa-update { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 30; background: var(--gold); color: #2a1a05; font-weight: bold; border-radius: 20px; padding: 10px 18px; }
 
     @media (max-width: 420px) {
-        .class-grid { grid-template-columns: repeat(5, 1fr); }
+        .class-grid { grid-template-columns: repeat(4, 1fr); }
         .class-card { font-size: 11px; }
         .kv-grid { grid-template-columns: auto 1fr; }
         .stat-grid, .equip-grid { grid-template-columns: repeat(2, 1fr); }
@@ -231,21 +244,23 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261007c"></script>
-<script src="data/classes.js?v=20261007c"></script>
-<script src="data/skills.js?v=20261007c"></script>
-<script src="data/items.js?v=20261007c"></script>
-<script src="data/monsters.js?v=20261007c"></script>
-<script src="data/zones.js?v=20261007c"></script>
-<script src="data/player.js?v=20261007c"></script>
-<script src="data/enchant.js?v=20261007c"></script>
-<script src="data/combat.js?v=20261007c"></script>
-<script src="data/town.js?v=20261007c"></script>
-<script src="data/save.js?v=20261007c"></script>
-<script src="data/ui.js?v=20261007c"></script>
-<script src="data/ui-create.js?v=20261007c"></script>
-<script src="data/ui-panels.js?v=20261007c"></script>
-<script src="data/pwa.js?v=20261007c"></script>
-<script src="data/main.js?v=20261007c"></script>
+<script src="data/config.js?v=20261007e"></script>
+<script src="data/classes.js?v=20261007e"></script>
+<script src="data/skills.js?v=20261007e"></script>
+<script src="data/items.js?v=20261007e"></script>
+<script src="data/monsters.js?v=20261007e"></script>
+<script src="data/zones.js?v=20261007e"></script>
+<script src="data/quests.js?v=20261007e"></script>
+<script src="data/player.js?v=20261007e"></script>
+<script src="data/enchant.js?v=20261007e"></script>
+<script src="data/combat.js?v=20261007e"></script>
+<script src="data/town.js?v=20261007e"></script>
+<script src="data/save.js?v=20261007e"></script>
+<script src="data/offline.js?v=20261007e"></script>
+<script src="data/ui.js?v=20261007e"></script>
+<script src="data/ui-create.js?v=20261007e"></script>
+<script src="data/ui-panels.js?v=20261007e"></script>
+<script src="data/pwa.js?v=20261007e"></script>
+<script src="data/main.js?v=20261007e"></script>
 </body>
 </html>

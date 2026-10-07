@@ -155,8 +155,9 @@ function huntTick(dt) {
 
 function spawnMonster() {
     const z = currentZone();
-    let mon;
-    if (z.type === 'dragon') mon = makeMonster(z.boss);
+    let mon = z.type === 'dragon' ? null : questBossFor(z);   // 職業任務首領優先
+    if (mon) { /* 任務首領 */ }
+    else if (z.type === 'dragon') mon = makeMonster(z.boss);
     else if (z.type === 'tower') {
         const f = player.loc.floor;
         mon = makeTowerMonster(f, f % 10 === 0 && !player.towerCleared[f]);
@@ -216,6 +217,7 @@ function magicDamage(base, spK, st, undeadMul) {
     const mon = hunt.mon;
     let d = rand(base[0], base[1]) + Math.floor(st.sp * spK);
     if (mon.undead && undeadMul) d *= undeadMul;
+    d *= slayerMult(mon);
     d *= 1 - clamp(mon.mr, 0, 100) / 200;
     return Math.max(1, Math.round(d));
 }
@@ -224,6 +226,7 @@ function castSpell(k, st) {
     useSkillCost(k);
     const d = magicDamage(k.dmg, k.spK, st, k.undeadMul);
     hunt.mon.hp -= d;
+    lifeSteal(d, st);
     addLog(`🔮 ${k.name}！${hunt.mon.name}受到 ${d} 傷害`, 'magic');
 }
 
@@ -236,6 +239,7 @@ function doStrike(k, st) {
     if (k.magic) {
         const d = magicDamage(k.magic.dmg, k.magic.spK, st);
         hunt.mon.hp -= d;
+        lifeSteal(d, st);
         addLog(`⚡ ${k.name}的魔力造成 ${d} 傷害`, 'magic');
     }
     if (k.stun) { hunt.stunUntil = gameNow + k.stun; addLog(`${hunt.mon.name}被暈眩了`, 'magic'); }
@@ -252,6 +256,17 @@ function outOfAmmo() {
     if (player.settings.autoHome && useHomeScroll('彈藥用完')) return;
     stopHunt('⚠️ 彈藥用完，停止掛機');
     refreshUI();
+}
+
+// 職業剋制（天使：惡魔與不死系；惡魔：人型與神聖系）
+function slayerMult(mon) {
+    const s = CLASSES[player.cls].slayer;
+    return s && s.tags.some(t => mon[t]) ? s.mult : 1;
+}
+
+// 吸血：造成傷害的一定比例轉為 HP
+function lifeSteal(dmg, st) {
+    if (st.lifesteal > 0 && dmg > 0) player.hp = Math.min(st.maxHp, player.hp + Math.max(1, Math.floor(dmg * st.lifesteal)));
 }
 
 // 回傳 false 代表無法攻擊（沒彈藥）
@@ -276,6 +291,7 @@ function physicalAttack(st, mult, opt) {
         if (mon.undead && ((st.weapon && st.weapon.silver) || (ammoDef && ammoDef.silver))) d += rand(1, 10);
         if (mon.undead && opt.undeadMul) d *= opt.undeadMul;
         if (mon.dragon && st.weapon && st.weapon.dragon) d *= st.weapon.dragon;
+        d *= slayerMult(mon);
         d *= mult;
         if (chance(st.crit)) { d *= 1.5; crit = true; }
         total += Math.max(1, Math.round(d));
@@ -283,6 +299,7 @@ function physicalAttack(st, mult, opt) {
     const label = opt.label ? `「${opt.label}」` : '你';
     if (!hits) { addLog(`${label}沒有命中`, 'miss'); return true; }
     mon.hp -= total;
+    lifeSteal(total, st);
     if (st.weapon && st.weapon.drain) player.mp = Math.min(st.maxMp, player.mp + rand(st.weapon.drain[0], st.weapon.drain[1]));
     addLog(`${label}${hits > 1 ? '連擊' : '攻擊'}，${mon.name}受到 ${total} 傷害${crit ? '（爆擊！）' : ''}`, crit ? 'crit' : '');
     return true;
@@ -325,12 +342,15 @@ function onKill() {
     player.gold += gold;
     player.kills++;
     session.kills++;
-    session.exp += mon.exp;
+    // 狩獵經驗＝怪物經驗 × 倍率 × 高等級遞減（65 級起）
+    const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv)));
+    session.exp += exp;
     session.gold += gold;
     hunt.mon = null;
-    addLog(`☠️ 擊倒${mon.name}！經驗 +${fmt(mon.exp)}、金幣 +${fmt(gold)}`, 'win');
-    gainExp(mon.exp);
+    addLog(`☠️ 擊倒${mon.name}！經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'win');
+    gainExp(exp);
     rollDrops(mon, z);
+    questOnKill(mon, z);
 
     if (mon.towerFloor) {
         player.towerCleared[mon.towerFloor] = true;
@@ -386,11 +406,11 @@ function onDeath() {
     player.deaths++;
     let msg = `💀 你被${mon ? mon.name : '敵人'}擊倒了…`;
     if (consumeItem('reviveScroll')) msg += '復活卷軸生效，沒有損失經驗。';
-    else if (player.lv >= NEWBIE_PROTECT_LEVEL) {
-        const lose = Math.floor(expToNext(player.lv) * DEATH_EXP_LOSS);
+    else {
+        const lose = Math.floor(expToNext(player.lv) * deathLossRate(player.lv));
         player.exp = Math.max(0, player.exp - lose);
-        msg += `損失 ${fmt(lose)} 經驗。`;
-    } else msg += '（新手保護，沒有損失經驗）';
+        msg += `損失 ${fmt(lose)} 經驗（${Math.round(deathLossRate(player.lv) * 100)}%）。`;
+    }
     addLog(msg, 'dead');
     player.buffs = {};
     const st = calcStats();

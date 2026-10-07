@@ -98,15 +98,28 @@ const TOWER_THEMES = [
 const TOWER_BOSSES = ['巨大牛人', '黑暗女妖', '炎魔之影', '冰之女王', '巫妖王', '墮落的大天使', '混沌之主', '深淵領主', '死神', '冥法軍王'];
 const TOWER_BOSS_DROPS = [
     ['knightHelm', 'protectCloak'], ['knightShield', 'mrCloak'], ['holyMace', 'darkDagger'], ['iceQueenStaff', 'mrAmulet'], ['tsurugi', 'strAmulet'],
-    ['demonAxe', 'powerGloves'], ['magicSniper', 'titanBelt'], ['darkClaw', 'darkDual'], ['hasteBoots', 'elvenBow'], ['dkFlameSword', 'windBow'],
+    ['demonAxe', 'powerGloves'], ['magicSniper', 'titanBelt'], ['darkClaw', 'abyssScythe'], ['hasteBoots', 'elvenBow'], ['dkFlameSword', 'windBow'],
 ];
 const TOWER_ICONS = ['💀', '🦇', '🔥', '❄️', '☠️', '😇', '🌀', '🕳️', '⚰️', '👑'];
+
+// 種族標籤：human 人型、demon 惡魔、holy 神聖（天使、惡魔職業的剋制加成用）；不死系用模板的 undead
+const MONSTER_TAGS = {
+    goblin: ['human'], dwarf: ['human'], orc: ['human'], dwarfWarrior: ['human'], orcArcher: ['human'], gandiOrc: ['human'],
+    blackKnight: ['human'], ivoryMage: ['human'], hellhound: ['demon'], baphomet: ['demon'], demon: ['demon'],
+    sphinx: ['holy'], anubis: ['holy'], osiris: ['holy'],
+    // 傲慢之塔（依名稱）
+    '暗影刺客': ['human'], '石像鬼': ['demon'], '火焰之影': ['demon'], '炎魔之影': ['demon'], '冰之魔女': ['human'], '死靈法師': ['human'],
+    '墮落天使': ['holy'], '墮落的大天使': ['holy'], '地獄騎士': ['demon'], '混沌戰士': ['human'], '混沌法師': ['human'], '混沌之主': ['demon'],
+    '深淵魔物': ['demon'], '虛空行者': ['demon'], '深淵領主': ['demon'], '冥法親衛': ['human'], '冥法巫師': ['human'], '冥法軍王': ['human'],
+};
 
 function buildMonster(id, t) {
     const b = monBase(t.lv);
     const dm = t.dmgMul || 1, gm = t.goldMul || 1;
     const hp = t.hp || Math.round(b.hp * (t.hpMul || 1));
+    const tags = t.tags || MONSTER_TAGS[id] || MONSTER_TAGS[t.baseName || t.name] || [];
     return {
+        human: tags.includes('human'), demon: tags.includes('demon'), holy: tags.includes('holy'),
         id, name: t.name, icon: t.icon || '👾', lv: t.lv,
         hp, maxHp: hp,
         ac: t.ac != null ? t.ac : b.ac + (t.acAdd || 0),
@@ -128,7 +141,7 @@ function makeTowerMonster(floor, isBoss) {
     const lv = 44 + Math.round(floor * 0.45);
     if (isBoss) {
         return buildMonster('towerBoss' + floor, {
-            name: `${TOWER_BOSSES[g]}（${floor}F）`, icon: TOWER_ICONS[g], lv: lv + 3, boss: true, large: true, towerFloor: floor,
+            name: `${TOWER_BOSSES[g]}（${floor}F）`, baseName: TOWER_BOSSES[g], icon: TOWER_ICONS[g], lv: lv + 3, boss: true, large: true, towerFloor: floor,
             hpMul: 10, dmgMul: 1.5, acAdd: -10, expMul: 20, goldMul: 10,
             magic: { p: 0.25, dmg: [lv * 1.5, lv * 2.5].map(Math.round), name: '首領之怒' },
             drops: [{ id: 'towerSoul', p: 1, n: [3, 5] }, ...TOWER_BOSS_DROPS[g].map(id => ({ id, p: 0.12 })),

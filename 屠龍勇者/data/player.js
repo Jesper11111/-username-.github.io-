@@ -35,6 +35,7 @@ function createPlayer(name, cls, stats) {
         loc: { type: 'town', id: 'talking' }, hunting: false,
         towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {},
         kills: 0, deaths: 0,
+        quests: { ch: 0, active: false, prog: 0, bossDone: false },
         settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
         created: Date.now(),
     };
@@ -145,7 +146,7 @@ function learnedSkills() { return (SKILLS[player.cls] || []).filter(s => player.
 
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
-    'dmgSp', 'spdMul', 'hp', 'mp', 'haste', 'brave', ...STAT_KEYS];
+    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', ...STAT_KEYS];
 
 function addFx(acc, fx) {
     if (!fx) return;
@@ -163,7 +164,7 @@ function calcStats() {
         const it = p.equip[slot];
         if (!it) continue;
         const d = ITEMS[it.id];
-        if (d.cat === 'weapon') { weaponEnch = it.ench || 0; addFx(fx, { sp: d.sp }); continue; }
+        if (d.cat === 'weapon') { weaponEnch = it.ench || 0; addFx(fx, { sp: d.sp, lifesteal: d.lifesteal }); continue; }
         addFx(fx, d);
         if (d.safe >= 0) fx.ac = (fx.ac || 0) + (it.ench || 0);
     }
@@ -200,6 +201,7 @@ function calcStats() {
         double: (wt.double || 0) + (fx.double || 0),
         absorb: fx.absorb || 0,
         counter: fx.counter || 0,
+        lifesteal: fx.lifesteal || 0,
         hpRegen: 1 + Math.floor(p.lv / 8) + Math.max(0, s.con - 12) + (fx.hpRegen || 0),
         mpRegen: 1 + Math.floor(p.lv / 12) + Math.max(0, Math.floor((s.wis - 10) * c.mpRegenK)) + (fx.mpRegen || 0),
         weightMax: (s.str + s.con) * 100,

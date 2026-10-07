@@ -1,19 +1,22 @@
 // 屠龍勇者：存檔／讀檔／匯出匯入（依賴 config、player）
 // 存檔格式：{ schema, t, player }；改存檔結構時把 SAVE_SCHEMA +1，並在 migrateSave 補上轉換
 
+let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用）
+
 function hasSave() {
     try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
 }
 
 function saveGame() {
-    if (!player) return;
+    if (!player || SIM_MODE) return;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { /* 無痕模式等存不了，略過 */ }
 }
 
 function migrateSave(data) {
     const p = data.player;
     // 補齊新版才有的欄位
-    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0 };
+    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0,
+        quests: { ch: 0, active: false, prog: 0, bossDone: false } };
     for (const k in fresh) if (p[k] == null) p[k] = fresh[k];
     p.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), p.settings || {});
     // 移除已不存在的道具，避免舊存檔讓遊戲壞掉
@@ -40,6 +43,7 @@ function loadGame() {
 function applySaveData(data) {
     if (!data || !data.player || !CLASSES[data.player.cls]) return false;
     player = migrateSave(data);
+    lastSaveAt = data.t || Date.now();
     return true;
 }
 

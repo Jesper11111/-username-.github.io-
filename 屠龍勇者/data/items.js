@@ -14,6 +14,7 @@ const WEAPON_TYPES = {
     staff:   { name: '魔杖',   spd: 1000 },
     claw:    { name: '鋼爪',   spd: 750,  two: true },
     dual:    { name: '雙刀',   spd: 800,  two: true, double: 0.25 },
+    scythe:  { name: '鐮刀',   spd: 1050, two: true },
 };
 
 const SLOTS = {
@@ -77,6 +78,10 @@ const ITEMS = {
     claw:          { name: '鋼爪',     cat: 'weapon', type: 'claw', dmg: [7, 7], safe: 6, wt: 40, price: 600, tier: 1 },
     darkClaw:      { name: '暗黑鋼爪', cat: 'weapon', type: 'claw', dmg: [13, 13], crit: 0.05, safe: 6, wt: 45, sell: 15000 },
     dualBlade:     { name: '雙刀',     cat: 'weapon', type: 'dual', dmg: [6, 6], safe: 6, wt: 50, price: 600, tier: 1 },
+    // ── 鐮刀（惡魔）──
+    reaperScythe:  { name: '收割者鐮刀', cat: 'weapon', type: 'scythe', dmg: [8, 10], safe: 6, wt: 60, price: 150, tier: 1 },
+    boneScythe:    { name: '骨鐮',     cat: 'weapon', type: 'scythe', dmg: [13, 16], safe: 6, wt: 80, price: 2500, tier: 3 },
+    abyssScythe:   { name: '深淵鐮刀', cat: 'weapon', type: 'scythe', dmg: [18, 22], hit: 3, lifesteal: 0.03, safe: 6, wt: 90, sell: 30000, desc: '吸血 +3%' },
     darkDual:      { name: '暗黑雙刀', cat: 'weapon', type: 'dual', dmg: [12, 12], crit: 0.03, safe: 6, wt: 55, sell: 15000 },
 
     // ── 防具（ac 越大越好，顯示時 AC 越低越硬）──
@@ -120,9 +125,9 @@ const ITEMS = {
     whitePotion:   { name: '終極治癒藥水', short: '白水', cat: 'potion', heal: [75, 90], wt: 2, price: 160, tier: 3 },
     ancientPotion: { name: '古代終極治癒藥水', short: '古白', cat: 'potion', heal: [140, 170], wt: 3, price: 400, tier: 4 },
     greenPotion:   { name: '自我加速藥水', short: '綠水', cat: 'potion', buff: 'haste', sec: 300, wt: 2, price: 150, tier: 1 },
-    bravePotion:   { name: '勇敢藥水', cat: 'potion', buff: 'brave', sec: 300, classes: ['royal', 'knight', 'darkelf', 'shura', 'warrior', 'paladin'], wt: 2, price: 500, tier: 2 },
+    bravePotion:   { name: '勇敢藥水', cat: 'potion', buff: 'brave', sec: 300, classes: ['royal', 'knight', 'darkelf', 'shura', 'warrior', 'paladin', 'demon'], wt: 2, price: 500, tier: 2 },
     elvenWafer:    { name: '精靈餅乾', cat: 'potion', buff: 'brave', sec: 300, classes: ['elf', 'gunner'], wt: 2, price: 500, tier: 2 },
-    wisdomPotion:  { name: '慎重藥水', cat: 'potion', buff: 'wisdom', sec: 300, classes: ['mage', 'magicfighter'], wt: 2, price: 500, tier: 2 },
+    wisdomPotion:  { name: '慎重藥水', cat: 'potion', buff: 'wisdom', sec: 300, classes: ['mage', 'magicfighter', 'angel'], wt: 2, price: 500, tier: 2 },
     bluePotion:    { name: '藍色藥水', cat: 'potion', buff: 'blue', sec: 600, wt: 2, price: 300, tier: 2 },
 
     // ── 卷軸 ──
@@ -154,7 +159,7 @@ const ITEMS = {
     valakasScale:  { name: '火龍之鱗',       cat: 'material', wt: 10, sell: 50000 },
 };
 
-const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料' };
+const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料', quest: '任務道具' };
 
 // 鍛造配方：need 的道具要在背包中（未裝備），gold 為手續費
 const RECIPES = [
@@ -164,5 +169,5 @@ const RECIPES = [
     { out: 'dragonScaleMail', gold: 30000, need: { plateMail: 1, antharasScale: 2, fafurionScale: 2, lindviorScale: 2, valakasScale: 2 } },
 ];
 
-function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir'].includes(def.cat); }
+function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir', 'quest'].includes(def.cat); }
 function sellPriceOf(id) { const d = ITEMS[id]; return d.sell != null ? d.sell : Math.floor((d.price || 0) * 0.3); }

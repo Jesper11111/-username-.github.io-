@@ -79,4 +79,20 @@ const CLASSES = {
         hp: [12, 16], mp: [2, 4], startHp: 16, startMp: 4, mr: 15, spDiv: 10, mpRegenK: 0.6,
         weapons: ['sword', 'blunt'], shield: true, start: ['mace', 'leatherArmor', 'woodShield'],
     },
+    angel: {
+        name: '天使', icon: '😇',
+        desc: '失去羽翼墜落凡間的守護天使。神聖魔法兼具治癒與審判，對惡魔與不死系傷害 ×1.3。使用魔杖、長矛與單手劍。',
+        base: { str: 11, dex: 10, con: 11, int: 12, wis: 15, cha: 12 },
+        hp: [9, 12], mp: [4, 7], startHp: 13, startMp: 7, mr: 25, spDiv: 6, mpRegenK: 0.9,
+        weapons: ['staff', 'spear', 'sword'], shield: true, start: ['oakWand', 'leatherArmor', 'woodShield'],
+        slayer: { tags: ['undead', 'demon'], mult: 1.3, label: '惡魔與不死系' },
+    },
+    demon: {
+        name: '惡魔', icon: '😈',
+        desc: '被深淵放逐、以生命換取力量的叛逆者。攻擊會吸血、HP 越低越兇猛，對人型與神聖系傷害 ×1.3。使用鐮刀與鋼爪。',
+        base: { str: 15, dex: 13, con: 13, int: 11, wis: 8, cha: 7 },
+        hp: [11, 15], mp: [2, 4], startHp: 15, startMp: 3, mr: 5, spDiv: 8, mpRegenK: 0.4,
+        weapons: ['scythe', 'claw'], shield: false, start: ['reaperScythe', 'leatherArmor'],
+        slayer: { tags: ['human', 'holy'], mult: 1.3, label: '人型與神聖系' },
+    },
 };
