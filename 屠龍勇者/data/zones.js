@@ -10,6 +10,7 @@ const TOWNS = {
 const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 
 // type：field 野外／dungeon 地監／tower 魔塔／dragon 龍穴
+// 畫面（ui-scene.js）：野外一律用遺跡背景圖，tint 疊一層顏色區分地區；地監用 scene 指定格子主題（沒寫就是 dungeon）
 // town：回家卷軸、死亡時回到的村莊；fee：從村莊傳送過去的費用
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
@@ -29,11 +30,32 @@ const ZONES = [
         desc: '陰暗潮濕的地下城，不死系開始出沒。',
     },
     {
+        id: 'elvenForest', name: '妖精森林', icon: '🌲', type: 'field', lv: [10, 20], town: 'gludio', fee: 100,
+        mons: ['werewolf', 'forestBear', 'giantSpider', 'treant'], rare: { id: 'elderTreant', p: 0.006 },
+        drops: [{ id: 'elvenMail', p: 0.001 }, { id: 'cloak', p: 0.004 }, { id: 'leatherGloves', p: 0.005 }, { id: 'longBow', p: 0.002 },
+            { id: 'crystalWand', p: 0.001 }, { id: 'belt', p: 0.002 }, { id: 'silverArrow', p: 0.05, n: [5, 15] }],
+        desc: '世界樹守護的古老森林，遺跡間有樹精徘徊。',
+    },
+    {
         id: 'gludio1', name: '古魯丁地監 1～3 樓', icon: '⛏️', type: 'dungeon', lv: [15, 25], town: 'gludio', fee: 150,
         mons: ['gandiOrc', 'zombie', 'lycan', 'stoneGolem'],
         drops: [{ id: 'silverSword', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
             { id: 'leatherGloves', p: 0.005 }, { id: 'ironBoots', p: 0.002 }, { id: 'crystalWand', p: 0.001 }, { id: 'silverDagger', p: 0.002 }],
         desc: '中級冒險者的修練場。',
+    },
+    {
+        id: 'sleepingCave', name: '眠龍洞穴', icon: '🦇', type: 'dungeon', scene: 'cave', lv: [18, 28], town: 'gludio', fee: 200,
+        mons: ['lizardman', 'caveBat', 'darkElfScout', 'drake'], rare: { id: 'wakingDrake', p: 0.006 },
+        drops: [{ id: 'silverSword', p: 0.002 }, { id: 'ironHelm', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
+            { id: 'claw', p: 0.002 }, { id: 'dualBlade', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'silverBullet', p: 0.05, n: [5, 15] }],
+        desc: '傳說地龍在最深處沉睡，吵醒牠可就麻煩了。',
+    },
+    {
+        id: 'pirateIsle', name: '海賊島', icon: '🏴‍☠️', type: 'field', tint: 'rgba(40,110,160,0.18)', lv: [26, 38], town: 'giran', fee: 400,
+        mons: ['pirate', 'pirateGunner', 'giantCrab', 'drownedSailor'], rare: { id: 'pirateKing', p: 0.007 },
+        drops: [{ id: 'rifle', p: 0.002 }, { id: 'trident', p: 0.001 }, { id: 'tshirt', p: 0.002 }, { id: 'battleAxe', p: 0.002 },
+            { id: 'dexRing', p: 0.0004 }, { id: 'silverBullet', p: 0.05, n: [5, 15] }],
+        desc: '海賊盤踞的廢墟要塞，據說藏著海賊王的寶藏。',
     },
     {
         id: 'gludio2', name: '古魯丁地監 4～7 樓', icon: '🔥', type: 'dungeon', lv: [24, 36], town: 'gludio', fee: 300,
@@ -44,18 +66,53 @@ const ZONES = [
         desc: '最深處盤踞著巴風特。',
     },
     {
-        id: 'ivory', name: '象牙塔', icon: '🗼', type: 'dungeon', lv: [34, 46], town: 'giran', fee: 500,
+        id: 'ivory', name: '象牙塔', icon: '🗼', type: 'dungeon', scene: 'ivory', lv: [34, 46], town: 'giran', fee: 500,
         mons: ['hellhound', 'lamia', 'ivoryMage', 'ivoryGuard'], rare: { id: 'demon', p: 0.008 },
         drops: [{ id: 'manaWand', p: 0.001 }, { id: 'elvenMail', p: 0.001 }, { id: 'mrCloak', p: 0.001 }, { id: 'powerGloves', p: 0.0008 },
             { id: 'mrAmulet', p: 0.0008 }, { id: 'dexRing', p: 0.0005 }, { id: 'intRing', p: 0.0005 }, { id: 'darkDagger', p: 0.001 }],
         desc: '魔法師們的高塔，被惡魔佔據。',
     },
     {
-        id: 'pyramid', name: '金字塔', icon: '🔺', type: 'dungeon', lv: [44, 56], town: 'giran', fee: 700,
+        id: 'dragonValley', name: '龍之谷', icon: '🐉', type: 'field', tint: 'rgba(150,60,20,0.22)', lv: [36, 48], town: 'giran', fee: 600,
+        mons: ['dvLizard', 'cerberus', 'wyvernling', 'boneDragonKnight'], rare: { id: 'wyvern', p: 0.007 },
+        drops: [{ id: 'knightHelm', p: 0.0006 }, { id: 'plateMail', p: 0.001 }, { id: 'warHammer', p: 0.002 }, { id: 'magicHelm', p: 0.0006 },
+            { id: 'protectRing', p: 0.001 }, { id: 'strAmulet', p: 0.0004 }, { id: 'boneScythe', p: 0.001 }],
+        desc: '飛龍盤旋的焦土山谷，龍騎士的遺骸仍在守望。',
+    },
+    {
+        id: 'pyramid', name: '金字塔', icon: '🔺', type: 'dungeon', scene: 'pyramid', lv: [44, 56], town: 'giran', fee: 700,
         mons: ['mummy', 'sandScorpion', 'sphinx', 'anubis'], rare: { id: 'osiris', p: 0.008 },
         drops: [{ id: 'trident', p: 0.002 }, { id: 'darkClaw', p: 0.0008 }, { id: 'darkDual', p: 0.0008 }, { id: 'elvenBow', p: 0.0008 },
             { id: 'protectCloak', p: 0.001 }, { id: 'conRing', p: 0.0005 }, { id: 'titanBelt', p: 0.0005 }, { id: 'hasteBoots', p: 0.0005 }],
         desc: '沙漠中的古代陵墓，冥王歐西里斯沉睡於此。',
+    },
+    {
+        id: 'orenSnow', name: '歐瑞雪原', icon: '❄️', type: 'field', tint: 'rgba(225,238,255,0.38)', lv: [46, 58], town: 'aden', fee: 900,
+        mons: ['snowWolf', 'yeti', 'iceGolem', 'frostWitch'], rare: { id: 'iceGiantKing', p: 0.007 },
+        drops: [{ id: 'mrCloak', p: 0.001 }, { id: 'mrAmulet', p: 0.0008 }, { id: 'conRing', p: 0.0005 }, { id: 'intRing', p: 0.0005 },
+            { id: 'knightShield', p: 0.0006 }, { id: 'boneScythe', p: 0.002 }],
+        desc: '終年冰封的北方雪原，遺跡被白雪掩埋。',
+    },
+    {
+        id: 'fireCave', name: '火龍窟', icon: '🌋', type: 'dungeon', scene: 'dragon', lv: [54, 66], town: 'aden', fee: 1500,
+        mons: ['salamander', 'fireSpirit', 'lavaGolem', 'flameKnight'], rare: { id: 'ifrit', p: 0.007 },
+        drops: [{ id: 'demonAxe', p: 0.0004 }, { id: 'darkClaw', p: 0.0006 }, { id: 'darkDual', p: 0.0006 }, { id: 'hasteBoots', p: 0.0004 },
+            { id: 'titanBelt', p: 0.0004 }, { id: 'bWeaponScroll', p: 0.001 }],
+        desc: '熔岩翻騰的火山洞窟，炎之魔神伊弗利特的領域。',
+    },
+    {
+        id: 'forgottenIsle', name: '遺忘之島', icon: '🏚️', type: 'field', tint: 'rgba(70,30,110,0.30)', lv: [62, 76], town: 'aden', fee: 2500,
+        mons: ['ancientGiant', 'harpy', 'forgottenKnight', 'chimera'], rare: { id: 'forgottenKing', p: 0.007 },
+        drops: [{ id: 'tsurugi', p: 0.0003 }, { id: 'abyssScythe', p: 0.0003 }, { id: 'holyMace', p: 0.0004 }, { id: 'magicSniper', p: 0.0002 },
+            { id: 'elixir', p: 0.0004 }, { id: 'bArmorScroll', p: 0.002 }],
+        desc: '被時間遺忘的古文明廢墟，紫霧中徘徊著古代巨人。',
+    },
+    {
+        id: 'giantTomb', name: '古代巨人之墓', icon: '🪦', type: 'dungeon', scene: 'tomb', lv: [72, 88], town: 'aden', fee: 4000,
+        mons: ['giantSkeleton', 'tombGuardian', 'necromancer', 'boneDragon'], rare: { id: 'giantKingSpirit', p: 0.006 },
+        drops: [{ id: 'windBow', p: 0.0002 }, { id: 'dkFlameSword', p: 0.0002 }, { id: 'iceQueenStaff', p: 0.0002 }, { id: 'elixir', p: 0.0005 },
+            { id: 'bWeaponScroll', p: 0.002 }],
+        desc: '巨人王長眠的地下陵墓，骨龍守護著最深處。',
     },
     {
         id: 'tower', name: '魔塔', icon: '🏛️', type: 'tower', lv: [45, 90], town: 'aden', fee: 1000,

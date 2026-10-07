@@ -63,6 +63,86 @@ const MONSTERS = {
         magic: { p: 0.25, dmg: [120, 190], name: '冥界審判' },
         drops: [{ id: 'osirisSeal', p: 1, n: [1, 2] }, { id: 'darkClaw', p: 0.04 }, { id: 'darkDual', p: 0.04 }, { id: 'elvenBow', p: 0.05 }, { id: 'bWeaponScroll', p: 0.08 }, { id: 'bArmorScroll', p: 0.12 }, { id: 'elixir', p: 0.05 }],
     },
+    // 妖精森林
+    werewolf:       { name: '狼人',       icon: '🐺', lv: 11, spd: 1300 },
+    forestBear:     { name: '森林熊',     icon: '🐻', lv: 13, large: true, hpMul: 1.3, spd: 1700 },
+    giantSpider:    { name: '巨大蜘蛛',   icon: '🕷️', lv: 15, magic: { p: 0.15, dmg: [10, 18], name: '毒液' } },
+    treant:         { name: '樹精',       icon: '🌳', lv: 17, large: true, acAdd: -3, hpMul: 1.4, spd: 1900 },
+    elderTreant: {
+        name: '古老樹精', icon: '🌲', lv: 24, boss: true, large: true, hpMul: 10, dmgMul: 1.4, acAdd: -8, expMul: 12, goldMul: 8,
+        magic: { p: 0.2, dmg: [30, 50], name: '荊棘纏繞' },
+        drops: [{ id: 'treantHeart', p: 1, n: [1, 2] }, { id: 'elvenBow', p: 0.03 }, { id: 'crystalWand', p: 0.05 }, { id: 'bArmorScroll', p: 0.04 }],
+    },
+    // 眠龍洞穴
+    lizardman:      { name: '蜥蜴人',         icon: '🦎', lv: 19 },
+    caveBat:        { name: '吸血蝙蝠',       icon: '🦇', lv: 20, spd: 1100, hpMul: 0.8 },
+    darkElfScout:   { name: '黑暗妖精斥候',   icon: '🧝', lv: 22, acAdd: -3 },
+    drake:          { name: '幼龍',           icon: '🦖', lv: 25, large: true, hpMul: 1.2, magic: { p: 0.15, dmg: [18, 30], name: '小火球' } },
+    wakingDrake: {
+        name: '甦醒的地龍', icon: '🐊', lv: 33, boss: true, large: true, hpMul: 11, dmgMul: 1.5, acAdd: -10, expMul: 14, goldMul: 9,
+        magic: { p: 0.2, dmg: [45, 80], name: '岩石吐息' },
+        drops: [{ id: 'drakeFang', p: 1, n: [1, 2] }, { id: 'katana', p: 0.04 }, { id: 'bWeaponScroll', p: 0.04 }, { id: 'bArmorScroll', p: 0.06 }],
+    },
+    // 海賊島
+    pirate:         { name: '海賊',           icon: '🏴‍☠️', lv: 27 },
+    pirateGunner:   { name: '海賊火槍手',     icon: '🔫', lv: 29, hpMul: 0.9, dmgMul: 1.15 },
+    giantCrab:      { name: '巨蟹',           icon: '🦀', lv: 31, large: true, acAdd: -6, hpMul: 1.2, spd: 1800 },
+    drownedSailor:  { name: '溺死的水手',     icon: '🧟', lv: 34, undead: true, hpMul: 1.2 },
+    pirateKing: {
+        name: '海賊王・德雷克', icon: '☠️', lv: 43, boss: true, hpMul: 12, dmgMul: 1.6, acAdd: -10, expMul: 15, goldMul: 12,
+        magic: { p: 0.2, dmg: [60, 100], name: '砲擊' },
+        drops: [{ id: 'pirateTreasure', p: 1, n: [1, 2] }, { id: 'rifle', p: 0.06 }, { id: 'trident', p: 0.05 }, { id: 'hasteBoots', p: 0.015 }, { id: 'bWeaponScroll', p: 0.05 }],
+    },
+    // 龍之谷
+    dvLizard:       { name: '蜥蜴人戰士',     icon: '🦎', lv: 37, acAdd: -3 },
+    cerberus:       { name: '地獄三頭犬',     icon: '🐕', lv: 40, large: true, magic: { p: 0.2, dmg: [35, 60], name: '三重火焰' } },
+    wyvernling:     { name: '飛龍',           icon: '🐉', lv: 43, large: true, hpMul: 1.2, magic: { p: 0.15, dmg: [40, 70], name: '火焰吐息' } },
+    boneDragonKnight: { name: '骷髏龍騎士',   icon: '💀', lv: 46, undead: true, acAdd: -6 },
+    wyvern: {
+        name: '巨大飛龍', icon: '🐲', lv: 55, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
+        magic: { p: 0.25, dmg: [100, 170], name: '烈焰俯衝' },
+        drops: [{ id: 'wyvernWing', p: 1, n: [1, 2] }, { id: 'powerGloves', p: 0.05 }, { id: 'knightShield', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'elixir', p: 0.04 }],
+    },
+    // 歐瑞雪原
+    snowWolf:       { name: '冰原狼',         icon: '🐺', lv: 47, spd: 1200 },
+    yeti:           { name: '雪怪',           icon: '🦍', lv: 50, large: true, hpMul: 1.3 },
+    iceGolem:       { name: '冰之高崙',       icon: '🧊', lv: 53, large: true, acAdd: -8, hpMul: 1.3, spd: 1900 },
+    frostWitch:     { name: '冰之魔女',       icon: '🧙‍♀️', lv: 55, hpMul: 0.9, magic: { p: 0.3, dmg: [60, 100], name: '冰錐術' } },
+    iceGiantKing: {
+        name: '冰之巨人王', icon: '❄️', lv: 65, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -15, expMul: 15, goldMul: 10,
+        magic: { p: 0.25, dmg: [140, 220], name: '暴風雪' },
+        drops: [{ id: 'frostCrystal', p: 1, n: [1, 2] }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'mrCloak', p: 0.05 }, { id: 'conRing', p: 0.03 }, { id: 'elixir', p: 0.05 }],
+    },
+    // 火龍窟
+    salamander:     { name: '火蜥蜴',         icon: '🦎', lv: 56, magic: { p: 0.2, dmg: [50, 80], name: '火焰噴吐' } },
+    fireSpirit:     { name: '火之精靈',       icon: '🔥', lv: 59, hpMul: 0.9, magic: { p: 0.35, dmg: [60, 100], name: '火球術' } },
+    lavaGolem:      { name: '熔岩高崙',       icon: '🌋', lv: 62, large: true, acAdd: -10, hpMul: 1.4, spd: 1900 },
+    flameKnight:    { name: '火焰騎士',       icon: '⚔️', lv: 65, acAdd: -8 },
+    ifrit: {
+        name: '伊弗利特', icon: '👺', lv: 73, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -18, expMul: 15, goldMul: 10,
+        magic: { p: 0.3, dmg: [170, 260], name: '地獄烈焰' },
+        drops: [{ id: 'ifritFlame', p: 1, n: [1, 2] }, { id: 'demonAxe', p: 0.04 }, { id: 'dkFlameSword', p: 0.015 }, { id: 'titanBelt', p: 0.03 }, { id: 'elixir', p: 0.06 }],
+    },
+    // 遺忘之島
+    ancientGiant:   { name: '古代巨人',       icon: '🗿', lv: 63, large: true, hpMul: 1.5, spd: 1900 },
+    harpy:          { name: '鳥身女妖',       icon: '🦅', lv: 66, spd: 1200, magic: { p: 0.2, dmg: [60, 100], name: '風刃' } },
+    forgottenKnight: { name: '被遺忘的騎士',  icon: '🛡️', lv: 69, undead: true, acAdd: -10 },
+    chimera:        { name: '奇美拉',         icon: '🦁', lv: 73, large: true, hpMul: 1.3, magic: { p: 0.25, dmg: [80, 130], name: '三首吐息' } },
+    forgottenKing: {
+        name: '遺忘之王', icon: '👑', lv: 81, boss: true, undead: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -20, expMul: 15, goldMul: 10,
+        magic: { p: 0.3, dmg: [200, 300], name: '遺忘詛咒' },
+        drops: [{ id: 'forgottenRelic', p: 1, n: [1, 2] }, { id: 'tsurugi', p: 0.04 }, { id: 'windBow', p: 0.015 }, { id: 'magicSniper', p: 0.02 }, { id: 'elixir', p: 0.08 }],
+    },
+    // 古代巨人之墓
+    giantSkeleton:  { name: '巨人骷髏',       icon: '💀', lv: 74, undead: true, large: true, hpMul: 1.3 },
+    tombGuardian:   { name: '墓穴守護者',     icon: '🗿', lv: 78, acAdd: -12, hpMul: 1.2 },
+    necromancer:    { name: '亡靈術士',       icon: '🧙', lv: 81, undead: true, hpMul: 0.9, magic: { p: 0.35, dmg: [110, 170], name: '死亡之觸' } },
+    boneDragon:     { name: '古代骨龍',       icon: '🦴', lv: 85, undead: true, large: true, hpMul: 1.5, magic: { p: 0.2, dmg: [120, 190], name: '腐蝕吐息' } },
+    giantKingSpirit: {
+        name: '巨人王的亡魂', icon: '👻', lv: 92, boss: true, undead: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -25, expMul: 15, goldMul: 10,
+        magic: { p: 0.3, dmg: [240, 360], name: '亡魂哀嚎' },
+        drops: [{ id: 'giantSoul', p: 1, n: [1, 2] }, { id: 'windBow', p: 0.03 }, { id: 'dkFlameSword', p: 0.03 }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'elixir', p: 0.15 }],
+    },
     // 四大龍（數值寫死）
     antharas: {
         name: '地龍・安塔瑞斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
@@ -107,6 +187,8 @@ const MONSTER_TAGS = {
     goblin: ['human'], dwarf: ['human'], orc: ['human'], dwarfWarrior: ['human'], orcArcher: ['human'], gandiOrc: ['human'],
     blackKnight: ['human'], ivoryMage: ['human'], hellhound: ['demon'], baphomet: ['demon'], demon: ['demon'],
     sphinx: ['holy'], anubis: ['holy'], osiris: ['holy'],
+    darkElfScout: ['human'], pirate: ['human'], pirateGunner: ['human'], pirateKing: ['human'], frostWitch: ['human'], necromancer: ['human'],
+    cerberus: ['demon'], fireSpirit: ['demon'], flameKnight: ['demon'], ifrit: ['demon'], harpy: ['holy'],
     // 魔塔（依名稱）
     '暗影刺客': ['human'], '石像鬼': ['demon'], '火焰之影': ['demon'], '炎魔之影': ['demon'], '冰之魔女': ['human'], '死靈法師': ['human'],
     '墮落天使': ['holy'], '墮落的大天使': ['holy'], '地獄騎士': ['demon'], '混沌戰士': ['human'], '混沌法師': ['human'], '混沌之主': ['demon'],

@@ -4,6 +4,10 @@ let currentTab = 'hunt';
 let bagFilter = 'all';
 let townSub = 'shop';
 let lastLogRendered = 0;
+// 戰鬥訊息抽屜：預設收起，開關狀態記在這台裝置（不進存檔）
+const LOG_OPEN_KEY = 'dragonSlayer_logOpen';
+let logDrawerOpen = false;
+try { logDrawerOpen = localStorage.getItem(LOG_OPEN_KEY) === '1'; } catch (e) { }
 
 // 各分頁名稱（狩獵是預設主畫面；其他分頁從左右柱子抽屜或底部格子打開）
 const TABS = {
@@ -86,9 +90,21 @@ function huntViewHtml(title) {
         <div class="hunt-ctrl">
             <div class="btn-row scene-btns" id="hunt-btns"></div>
             <div id="hunt-session" class="session"></div>
-            <div id="hunt-log" class="log scene-log"></div>
+            <div id="log-drawer" class="log-drawer${logDrawerOpen ? ' open' : ''}">
+                <button class="log-handle" onclick="toggleLogDrawer()"><span class="log-title">📜 戰鬥訊息</span><span id="log-peek" class="log-peek"></span><span class="log-arrow">▲</span></button>
+                <div id="hunt-log" class="log scene-log"></div>
+            </div>
         </div>
     </div>`;
+}
+
+function toggleLogDrawer() {
+    logDrawerOpen = !logDrawerOpen;
+    try { localStorage.setItem(LOG_OPEN_KEY, logDrawerOpen ? '1' : '0'); } catch (e) { }
+    const d = $('log-drawer');
+    if (d) d.classList.toggle('open', logDrawerOpen);
+    const box = $('hunt-log');
+    if (box) box.scrollTop = box.scrollHeight;
 }
 
 function huntButtonsHtml() {
@@ -138,6 +154,9 @@ function updateHuntLive() {
         lastLogRendered = logSeq;
         logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
         logBox.scrollTop = logBox.scrollHeight;
+        // 收起時把手上顯示最新一行
+        const peek = $('log-peek'), last = gameLog[gameLog.length - 1];
+        if (peek) { peek.className = 'log-peek log-line ' + (last ? last.cls : ''); peek.textContent = last ? last.msg : ''; }
     }
 }
 

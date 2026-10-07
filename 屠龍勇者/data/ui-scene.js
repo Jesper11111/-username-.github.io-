@@ -6,19 +6,32 @@
 //   傷害數字：偵測怪物／玩家 HP 變化；MISS、爆擊、升級、掉寶：讀遊戲訊息的分類
 //   村莊：畫建築，點一下打開對應設施
 const TILE = 32;
-const MAP_W = 28, MAP_H = 28;
+const MAP_W = 28, MAP_H = 28;     // 格子地圖的大小；背景圖地圖用 SCENE_BGS 的 w/h（scene.mw/mh）
 const MAP_MON_COUNT = 6;
 const PLAYER_SPEED = 5.5;         // 每秒幾格
 const MON_WANDER_MS = [900, 2600];
 
 const SCENE_THEMES = {
     town:    { a: '#4b4033', b: '#463b2f', wall: '#2a231b', obst: ['🌳', '🪵', '🌳'], dens: 0.035 },
-    field:   { a: '#3c5a2a', b: '#365327', wall: '#1f3318', obst: ['🌲', '🌳', '🪨', '🌲'], dens: 0.09 },
+    field:   { a: '#3c5a2a', b: '#365327', wall: '#1f3318', obst: ['🌲', '🌳', '🪨', '🌲'], dens: 0.09, bg: 'ruins' },
     dungeon: { a: '#2f2c2a', b: '#2a2725', wall: '#151312', obst: ['🪨', '🕯️', '⛓️', '🪨'], dens: 0.08 },
+    cave:    { a: '#262c33', b: '#22282e', wall: '#0f1316', obst: ['🪨', '🕸️', '💎', '🪨'], dens: 0.09 },
+    tomb:    { a: '#2e3330', b: '#292e2b', wall: '#121513', obst: ['🪦', '⚰️', '🦴', '🕯️'], dens: 0.08 },
     ivory:   { a: '#3b3644', b: '#35303e', wall: '#1c1922', obst: ['🗿', '🕯️', '📚', '🪨'], dens: 0.07 },
     pyramid: { a: '#7a6441', b: '#715c3b', wall: '#4a3a24', obst: ['🌵', '🏺', '🪨', '🌵'], dens: 0.07 },
     tower:   { a: '#2b2339', b: '#271f34', wall: '#130f1c', obst: ['🕯️', '🪨', '💀', '🕯️'], dens: 0.07 },
     dragon:  { a: '#3b1b14', b: '#351812', wall: '#1a0a07', obst: ['🔥', '🪨', '🦴', '🔥'], dens: 0.06 },
+};
+// 背景圖地圖（野外）：整張圖鋪成 w×h 格；block 是擋路的牆（格子座標 [x0,y0,x1,y1] 含頭尾），start 角色出生格
+// ruins.jpg 1500×837，每格約 37.5×38 原圖像素
+const SCENE_BGS = {
+    ruins: {
+        src: 'images/maps/ruins.jpg', w: 40, h: 22, start: [20, 11],
+        block: [
+            [7, 8, 11, 11], [12, 10, 16, 13], [13, 4, 17, 7], [19, 3, 21, 4], [20, 5, 26, 8], [25, 1, 30, 8],
+            [25, 9, 31, 12], [30, 13, 34, 16], [20, 13, 23, 18], [19, 17, 22, 20], [24, 17, 26, 20], [36, 10, 38, 15],
+        ],
+    },
 };
 const TOWN_BUILDINGS = [
     { icon: '🏪', name: '商店',   x: 11, y: 12, act: () => openTownSub('shop') },
@@ -58,35 +71,38 @@ function themeFor() {
     const z = currentZone();
     if (z.type === 'dragon') return SCENE_THEMES.dragon;
     if (z.type === 'tower') return SCENE_THEMES.tower;
-    if (z.id === 'island') return SCENE_THEMES.field;
-    if (z.id === 'ivory') return SCENE_THEMES.ivory;
-    if (z.id === 'pyramid') return SCENE_THEMES.pyramid;
-    return SCENE_THEMES.dungeon;
+    if (z.type === 'field') return SCENE_THEMES.field;
+    return SCENE_THEMES[z.scene] || SCENE_THEMES.dungeon;
 }
 
 function buildScene() {
     const key = sceneKey(), theme = themeFor(), rnd = seededRand(hashStr(key));
     const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
     if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
+    const bg = theme.bg ? SCENE_BGS[theme.bg] : null;
+    if (bg) spriteImage(bg.src);
+    const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
+    const cx = bg ? bg.start[0] : Math.floor(mw / 2), cy = bg ? bg.start[1] : Math.floor(mh / 2);
     const grid = [];   // 0 地板、1 牆、2 障礙物（畫 emoji）、3 建築
-    for (let y = 0; y < MAP_H; y++) {
+    for (let y = 0; y < mh; y++) {
         grid.push([]);
-        for (let x = 0; x < MAP_W; x++) {
-            const edge = x === 0 || y === 0 || x === MAP_W - 1 || y === MAP_H - 1;
-            const nearCenter = Math.abs(x - MAP_W / 2) < 3 && Math.abs(y - MAP_H / 2) < 3;
-            grid[y].push(edge ? 1 : (!nearCenter && rnd() < theme.dens ? 2 : 0));
+        for (let x = 0; x < mw; x++) {
+            const edge = x === 0 || y === 0 || x === mw - 1 || y === mh - 1;
+            const nearCenter = Math.abs(x - cx) < 3 && Math.abs(y - cy) < 3;
+            grid[y].push(edge ? 1 : (!bg && !nearCenter && rnd() < theme.dens ? 2 : 0));
         }
     }
+    if (bg) for (const [x0, y0, x1, y1] of bg.block) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) grid[y][x] = 1;
     const deco = {};   // 障礙物用哪個 emoji
-    for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if (grid[y][x] === 2) deco[x + ',' + y] = theme.obst[Math.floor(rnd() * theme.obst.length)];
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (grid[y][x] === 2) deco[x + ',' + y] = theme.obst[Math.floor(rnd() * theme.obst.length)];
     const shade = [];  // 地板深淺
-    for (let y = 0; y < MAP_H; y++) { shade.push([]); for (let x = 0; x < MAP_W; x++) shade[y].push(rnd() < 0.5); }
+    for (let y = 0; y < mh; y++) { shade.push([]); for (let x = 0; x < mw; x++) shade[y].push(rnd() < 0.5); }
     if (player.loc.type === 'town') {
         for (const b of TOWN_BUILDINGS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
     }
-    const cx = Math.floor(MAP_W / 2), cy = Math.floor(MAP_H / 2);
+    const z = player.loc.type === 'zone' ? currentZone() : null;
     scene = {
-        key, theme, grid, deco, shade,
+        key, theme, grid, deco, shade, bg, mw, mh, tint: z && z.tint,
         pl: { x: cx, y: cy, rx: cx, ry: cy, path: [], dir: 'down', lunge: null, idleCd: 1500 },
         mons: [], engaged: null, floats: [], effects: [],
         lastSeq: logSeq, lastPlayerHp: player.hp, critNext: false, spawnCd: 0, w: 0, h: 0,
@@ -95,7 +111,7 @@ function buildScene() {
 }
 
 function freeTile(x, y) {
-    if (!scene || x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
+    if (!scene || x < 0 || y < 0 || x >= scene.mw || y >= scene.mh) return false;
     if (scene.grid[y][x] !== 0) return false;
     if (scene.pl.x === x && scene.pl.y === y) return false;
     return !scene.mons.some(m => m.x === x && m.y === y && !m.dead);
@@ -103,7 +119,7 @@ function freeTile(x, y) {
 
 // BFS：從 (sx,sy) 走到任一目標格旁邊（上下左右相鄰）的最短路徑
 function findPath(sx, sy, tx, ty, adjacent) {
-    const key = (x, y) => y * MAP_W + x;
+    const mw = scene.mw, key = (x, y) => y * mw + x;
     const prev = new Map([[key(sx, sy), -1]]);
     const q = [[sx, sy]];
     const goal = (x, y) => adjacent ? Math.abs(x - tx) + Math.abs(y - ty) === 1 : (x === tx && y === ty);
@@ -112,7 +128,7 @@ function findPath(sx, sy, tx, ty, adjacent) {
         if (goal(x, y)) {
             const path = [];
             let k = key(x, y);
-            while (k !== key(sx, sy)) { path.unshift([k % MAP_W, Math.floor(k / MAP_W)]); k = prev.get(k); }
+            while (k !== key(sx, sy)) { path.unshift([k % mw, Math.floor(k / mw)]); k = prev.get(k); }
             return path;
         }
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -120,13 +136,13 @@ function findPath(sx, sy, tx, ty, adjacent) {
             if (prev.has(nk) || !freeTileFor(nx, ny, tx, ty)) continue;
             prev.set(nk, key(x, y));
             q.push([nx, ny]);
-            if (prev.size > 900) return [];
+            if (prev.size > 1000) return [];
         }
     }
     return [];
 }
 function freeTileFor(x, y) {
-    if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
+    if (x < 0 || y < 0 || x >= scene.mw || y >= scene.mh) return false;
     return scene.grid[y][x] === 0 && !scene.mons.some(m => m.x === x && m.y === y && !m.dead);
 }
 
@@ -315,17 +331,25 @@ function sceneReadEvents() {
 // ───────── 繪圖 ─────────
 function sceneDraw(ctx, W, H) {
     const pl = scene.pl, th = scene.theme;
-    const camX = clamp(pl.rx * TILE + TILE / 2 - W / 2, 0, Math.max(0, MAP_W * TILE - W));
+    const mapW = scene.mw * TILE, mapH = scene.mh * TILE;
+    // 地圖比畫面小時置中（負的鏡頭位置）
+    const camX = mapW <= W ? (mapW - W) / 2 : clamp(pl.rx * TILE + TILE / 2 - W / 2, 0, mapW - W);
     // 很寬的畫面（PC 橫式外框）角色畫在偏下方，避開上方惡魔頭與角色資訊
     const focusY = W > H * 2 ? H * 0.62 : H / 2;
-    const camY = clamp(pl.ry * TILE + TILE / 2 - focusY, 0, Math.max(0, MAP_H * TILE - H));
+    const camY = mapH <= H ? (mapH - H) / 2 : clamp(pl.ry * TILE + TILE / 2 - focusY, 0, mapH - H);
     ctx.fillStyle = th.wall;
     ctx.fillRect(0, 0, W, H);
-    const x0 = Math.floor(camX / TILE), y0 = Math.floor(camY / TILE);
-    const x1 = Math.min(MAP_W - 1, Math.ceil((camX + W) / TILE)), y1 = Math.min(MAP_H - 1, Math.ceil((camY + H) / TILE));
+    const x0 = Math.max(0, Math.floor(camX / TILE)), y0 = Math.max(0, Math.floor(camY / TILE));
+    const x1 = Math.min(scene.mw - 1, Math.ceil((camX + W) / TILE)), y1 = Math.min(scene.mh - 1, Math.ceil((camY + H) / TILE));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    // 背景圖地圖：整張圖拉滿地圖範圍，再疊地區色調；圖還沒載入時退回畫格子
+    const bgImg = scene.bg && spriteImage(scene.bg.src);
+    if (bgImg) {
+        ctx.drawImage(bgImg, -camX, -camY, mapW, mapH);
+        if (scene.tint) { ctx.fillStyle = scene.tint; ctx.fillRect(-camX, -camY, mapW, mapH); }
+    }
+    if (!bgImg) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
         const g = scene.grid[y][x], sx = x * TILE - camX, sy = y * TILE - camY;
         if (g === 1) { ctx.fillStyle = th.wall; ctx.fillRect(sx, sy, TILE, TILE); continue; }
         ctx.fillStyle = scene.shade[y][x] ? th.a : th.b;
