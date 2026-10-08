@@ -64,6 +64,15 @@ const CLASSES = {
         base: { str: 10, dex: 16, con: 11, int: 10, wis: 10, cha: 9 },
         hp: [9, 12], mp: [2, 4], startHp: 13, startMp: 4, mr: 10, spDiv: 10, mpRegenK: 0.5,
         weapons: ['gun', 'bow'], shield: false, start: ['matchlock', 'leatherArmor'], ammo: 'bullet',
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/gunner-*.json 切出（黑衣和背景同色，用 "shape" 形狀去背）
+        sprite: {
+            drawH: 72, charH: 113,
+            walk:   { src: 'images/sprites/gunner-walk.png',   cellW: 108, cellH: 119, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
+            attack: { src: 'images/sprites/gunner-attack.png', cellW: 154, cellH: 129, frames: { down: 8, right: 8, up: 8 }, ms: 50 },
+            cast:   { src: 'images/sprites/gunner-cast.png',   cellW: 156, cellH: 142, frames: { down: 5, right: 6, up: 5 }, ms: 90 },
+            hit:    { src: 'images/sprites/gunner-hit.png',    cellW: 130, cellH: 120, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/gunner.jpg',
     },
     magicfighter: {
         name: '魔鬥士', icon: '⚡',

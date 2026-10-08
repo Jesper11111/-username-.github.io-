@@ -235,7 +235,8 @@ function sceneUpdate(dt) {
             let best = null, bd = 1e9;
             for (const m of scene.mons) { if (m.dead) continue; const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y); if (d < bd) { bd = d; best = m; } }
             if (best && bd > 1) pl.path = findPath(pl.x, pl.y, best.x, best.y, true).slice(0, 6);
-        } else {
+        } else if (inZone) {
+            // 野外停止掛機：原地附近隨機走動；村莊裡站著不動
             pl.idleCd -= dt;
             if (pl.idleCd <= 0) {
                 pl.idleCd = rand(1500, 4000);
