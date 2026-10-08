@@ -12,7 +12,7 @@ const PLAYER_SPEED = 5.5;         // 每秒幾格
 const MON_WANDER_MS = [900, 2600];
 
 const SCENE_THEMES = {
-    town:    { a: '#4b4033', b: '#463b2f', wall: '#2a231b', obst: ['🌳', '🪵', '🌳'], dens: 0.035 },
+    town:    { a: '#4b4033', b: '#463b2f', wall: '#2a231b', obst: ['🌳', '🪵', '🌳'], dens: 0.035, bg: 'village' },
     field:   { a: '#3c5a2a', b: '#365327', wall: '#1f3318', obst: ['🌲', '🌳', '🪨', '🌲'], dens: 0.09, bg: 'ruins' },
     dungeon: { a: '#2f2c2a', b: '#2a2725', wall: '#151312', obst: ['🪨', '🕯️', '⛓️', '🪨'], dens: 0.08 },
     cave:    { a: '#262c33', b: '#22282e', wall: '#0f1316', obst: ['🪨', '🕸️', '💎', '🪨'], dens: 0.09 },
@@ -32,15 +32,30 @@ const SCENE_BGS = {
             [25, 9, 31, 12], [30, 13, 34, 16], [20, 13, 23, 18], [19, 17, 22, 20], [24, 17, 26, 20], [36, 10, 38, 15],
         ],
     },
-};
-const TOWN_BUILDINGS = [
-    { icon: '🏪', name: '商店',   x: 11, y: 12, act: () => openTownSub('shop') },
-    { icon: '💰', name: '回收',   x: 14, y: 11, act: () => openTownSub('sell') },
-    { icon: '🛏️', name: '旅館',   x: 17, y: 12, act: () => openTownSub('inn') },
-    { icon: '📦', name: '倉庫',   x: 11, y: 16, act: () => openTownSub('storage') },
-    { icon: '⚒️', name: '鍛造',   x: 17, y: 16, act: () => openTownSub('craft') },
-    { icon: '🌀', name: '傳送師', x: 14, y: 17, act: () => switchTab('map') },
+    // 村莊：使用者提供的中世紀村莊俯視圖（1755×896，中間石板廣場＋噴泉），鋪成 30×15 格；使用者要求不放 NPC，
+    // 設施從「村莊設施」按鈕或底部格子打開（TOWN_NPCS／TOWN_HOUSES 只在沒有背景圖時使用）
+    village: {
+        src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10], block: [],
+    },};
+// 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
+const TOWN_NPCS = [
+    { role: '商店',   icon: '👩‍💼', x: 12, y: 12, act: () => openTownSub('shop'),
+      names: { talking: '艾琳', gludio: '雷文', giran: '薩拉', aden: '塞琳' } },
+    { role: '回收',   icon: '🧔', x: 16, y: 12, act: () => openTownSub('sell'),
+      names: { talking: '巴克', gludio: '菲茲', giran: '馬可', aden: '海克' } },
+    { role: '旅館',   icon: '👩‍🍳', x: 18, y: 13, act: () => openTownSub('inn'),
+      names: { talking: '莫莉', gludio: '蘿絲', giran: '貝拉', aden: '艾瑪' } },
+    { role: '倉庫',   icon: '👷', x: 10, y: 13, act: () => openTownSub('storage'), prop: '📦',
+      names: { talking: '杜克', gludio: '柏恩', giran: '歐文', aden: '葛雷' } },
+    { role: '鍛造',   icon: '🧑‍🏭', x: 17, y: 15, act: () => openTownSub('craft'), prop: '⚒️',
+      names: { talking: '葛蘭', gludio: '托爾', giran: '布洛克', aden: '巴恩' } },
+    { role: '傳送師', icon: '🧙‍♀️', x: 14, y: 16, act: () => switchTab('map'),
+      names: { talking: '露娜', gludio: '希雅', giran: '伊芙', aden: '星語者' } },
+    { role: '任務',   icon: '🧓', x: 11, y: 15, act: () => switchTab('quest'),
+      names: { talking: '賽恩長老', gludio: '亞瑟隊長', giran: '諾亞祭司', aden: '騎士團長' } },
 ];
+// 村莊房屋（格子座標 x, y, 寬, 高；整塊擋路），畫成石牆＋石板屋頂
+const TOWN_HOUSES = [[5, 9, 4, 3], [9, 6, 4, 3], [16, 6, 4, 3], [20, 9, 4, 3], [5, 17, 4, 3], [20, 17, 4, 3], [12, 20, 5, 3]];
 
 let scene = null;   // { key, grid, theme, pl:{x,y,rx,ry,path,dir,lunge}, mons:[], engaged, floats:[], ... }
 let sceneRaf = 0;
@@ -97,8 +112,11 @@ function buildScene() {
     for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (grid[y][x] === 2) deco[x + ',' + y] = theme.obst[Math.floor(rnd() * theme.obst.length)];
     const shade = [];  // 地板深淺
     for (let y = 0; y < mh; y++) { shade.push([]); for (let x = 0; x < mw; x++) shade[y].push(rnd() < 0.5); }
-    if (player.loc.type === 'town') {
-        for (const b of TOWN_BUILDINGS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
+    if (player.loc.type === 'town' && !bg) {   // 沒有背景圖時才用畫出來的房屋與 NPC
+        for (const b of TOWN_NPCS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
+        for (const [hx, hy, hw, hh] of TOWN_HOUSES) for (let y = hy; y < hy + hh; y++) for (let x = hx; x < hx + hw; x++) grid[y][x] = 4;
+        // 廣場（中心 9 格內）不放樹
+        for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (grid[y][x] === 2 && Math.hypot(x - cx, y - cy) < 9) grid[y][x] = 0;
     }
     const z = player.loc.type === 'zone' ? currentZone() : null;
     scene = {
@@ -348,12 +366,21 @@ function sceneDraw(ctx, W, H) {
     // 背景圖地圖：整張圖拉滿地圖範圍，再疊地區色調；圖還沒載入時退回畫格子
     const bgImg = scene.bg && spriteImage(scene.bg.src);
     if (bgImg) {
-        ctx.drawImage(bgImg, -camX, -camY, mapW, mapH);
+        const cr = scene.bg.crop;   // 只取原圖的一部分（裁掉黑邊）
+        if (cr) ctx.drawImage(bgImg, cr[0], cr[1], cr[2], cr[3], -camX, -camY, mapW, mapH);
+        else ctx.drawImage(bgImg, -camX, -camY, mapW, mapH);
         if (scene.tint) { ctx.fillStyle = scene.tint; ctx.fillRect(-camX, -camY, mapW, mapH); }
     }
     if (!bgImg) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
         const g = scene.grid[y][x], sx = x * TILE - camX, sy = y * TILE - camY;
         if (g === 1) { ctx.fillStyle = th.wall; ctx.fillRect(sx, sy, TILE, TILE); continue; }
+        if (player.loc.type === 'town') {
+            // 村莊：外圍草地、中間泥土廣場（不畫格線，看起來像地面）
+            const d = Math.hypot(x - MAP_W / 2, y - MAP_H / 2);
+            ctx.fillStyle = d < 6.5 ? (scene.shade[y][x] ? '#7a6548' : '#75614a') : d < 7.5 ? '#5f5a3c' : (scene.shade[y][x] ? '#3f5a2c' : '#3b5529');
+            ctx.fillRect(sx, sy, TILE + 1, TILE + 1);
+            continue;
+        }
         ctx.fillStyle = scene.shade[y][x] ? th.a : th.b;
         ctx.fillRect(sx, sy, TILE, TILE);
         ctx.strokeStyle = 'rgba(0,0,0,0.12)';
@@ -365,18 +392,16 @@ function sceneDraw(ctx, W, H) {
         const sx = x * TILE - camX + TILE / 2, sy = y * TILE - camY + TILE / 2;
         if (scene.grid[y][x] === 2) ctx.fillText(scene.deco[x + ',' + y], sx, sy);
     }
-    if (player.loc.type === 'town') {
-        for (const b of TOWN_BUILDINGS) {
-            const sx = b.x * TILE - camX + TILE / 2, sy = b.y * TILE - camY + TILE / 2;
-            ctx.fillStyle = 'rgba(0,0,0,0.35)';
-            ctx.beginPath(); ctx.ellipse(sx, sy + 14, 18, 6, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.font = '30px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-            ctx.fillText(b.icon, sx, sy);
-            drawLabel(ctx, b.name, sx, sy + 24, '#ffe7a8');
-        }
+    // 有背景圖的村莊：圖上已畫好房屋與 NPC，不另外畫；可點範圍來自 SCENE_BGS 的 hot
+    const inTownNow = player.loc.type === 'town' && !scene.bg;
+    if (player.loc.type === 'town' && scene.bg && scene.bg.hot) {
+        const kx = mapW / scene.bg.crop[2], ky = mapH / scene.bg.crop[3], ox = scene.bg.crop[0], oy = scene.bg.crop[1];
+        scene.npcRects = scene.bg.hot.map(h => ({ x0: (h.r[0] - ox) * kx, y0: (h.r[1] - oy) * ky, x1: (h.r[2] - ox) * kx, y1: (h.r[3] - oy) * ky, npc: { act: h.act } }));
     }
+    if (inTownNow) for (const h of TOWN_HOUSES) drawHouse(ctx, h, camX, camY);
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
+    if (inTownNow) scene.npcRects = [];
     const actorFont = '24px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
     const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
@@ -432,6 +457,15 @@ function sceneDraw(ctx, W, H) {
     };
     const actors = scene.mons.map(m => ({ y: m.ry, draw: () => drawMon(m) }));
     actors.push({ y: pl.ry + 0.01, draw: drawPlayer });
+    if (inTownNow) for (const n of TOWN_NPCS) actors.push({ y: n.y, draw: () => {
+        const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.ellipse(sx, sy + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.font = '28px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+        ctx.fillText(n.icon, sx, sy - 2);
+        if (n.prop) { ctx.font = '18px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.fillText(n.prop, sx - 20, sy + 6); }
+        labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - 26, camX, camY, n));
+    } });
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     labels.forEach(f => f());
     // 特效、飄字
@@ -462,6 +496,44 @@ function sceneDraw(ctx, W, H) {
         ctx.fillStyle = '#ffe7a8'; ctx.fillText(msg, W / 2, H - 22);
     }
     scene.cam = { x: camX, y: camY };
+}
+
+// 村莊房屋：石牆＋深色石板屋頂（屋頂佔上半、牆佔下半，有門窗）
+function drawHouse(ctx, [hx, hy, hw, hh], camX, camY) {
+    const x = hx * TILE - camX, y = hy * TILE - camY, w = hw * TILE, h = hh * TILE;
+    const roofH = h * 0.58, wallY = y + roofH;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(x + 6, y + h - 4, w, 8);
+    ctx.fillStyle = '#8a7a62'; ctx.fillRect(x + 4, wallY, w - 8, h - roofH);           // 牆
+    ctx.strokeStyle = 'rgba(40,30,20,0.5)'; ctx.lineWidth = 1;
+    for (let yy = wallY + 7; yy < y + h; yy += 7) { ctx.beginPath(); ctx.moveTo(x + 4, yy); ctx.lineTo(x + w - 4, yy); ctx.stroke(); }
+    ctx.fillStyle = '#3a2a1c'; ctx.fillRect(x + w / 2 - 7, y + h - 18, 14, 18);          // 門
+    ctx.fillStyle = '#e8c06a';
+    ctx.fillRect(x + 12, wallY + 6, 9, 8); ctx.fillRect(x + w - 21, wallY + 6, 9, 8);   // 窗（暖光）
+    ctx.fillStyle = '#4a5260';                                                          // 屋頂
+    ctx.beginPath(); ctx.moveTo(x, wallY + 2); ctx.lineTo(x + 10, y); ctx.lineTo(x + w - 10, y); ctx.lineTo(x + w, wallY + 2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(20,24,30,0.6)';
+    for (let yy = y + 6; yy < wallY; yy += 6) { ctx.beginPath(); ctx.moveTo(x + 3, yy); ctx.lineTo(x + w - 3, yy); ctx.stroke(); }
+    ctx.fillStyle = '#5b6474'; ctx.fillRect(x + 8, y - 2, w - 16, 4);                    // 屋脊
+    ctx.fillStyle = '#6b5e50'; ctx.fillRect(x + w - 22, y - 10, 8, 12);                  // 煙囪
+}
+
+// NPC 名牌：深藍圓角框＋金邊，名字（亮金）＋功能（灰），記下範圍給點擊用
+function drawNpcPlate(ctx, name, role, x, y, camX, camY, npc) {
+    ctx.font = 'bold 11px sans-serif';
+    const nw = ctx.measureText(name).width;
+    ctx.font = '9px sans-serif';
+    const rw = ctx.measureText(role).width;
+    const w = nw + rw + 16, h = 17, left = x - w / 2, top = y - h / 2;
+    ctx.fillStyle = 'rgba(16,24,40,0.88)';
+    ctx.strokeStyle = 'rgba(150,170,210,0.7)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(left, top, w, h, 4) : ctx.rect(left, top, w, h); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#ffe7a8'; ctx.fillText(name, left + 6, y + 1);
+    ctx.font = '9px sans-serif'; ctx.fillStyle = '#b8c0cc'; ctx.fillText(role, left + 10 + nw, y + 1);
+    ctx.textAlign = 'center';
+    if (scene.npcRects) scene.npcRects.push({ x0: left + camX, y0: top + camY, x1: left + w + camX, y1: top + h + camY, npc });
 }
 
 function drawLabel(ctx, text, x, y, color) {
@@ -502,7 +574,11 @@ function sceneClick(ev) {
     if (!scene || player.loc.type !== 'town') return;
     const cv = $('scene-canvas'), r = cv.getBoundingClientRect();
     const z = scene.zoom || 1;
-    const tx = Math.floor(((ev.clientX - r.left) / z + scene.cam.x) / TILE), ty = Math.floor(((ev.clientY - r.top) / z + scene.cam.y) / TILE);
-    const b = TOWN_BUILDINGS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
+    const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
+    const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
+    if (plate) { plate.npc.act(); return; }
+    if (scene.bg) return;   // 背景圖村莊只看 hot 範圍
+    const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
+    const b = TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
     if (b) b.act();
 }

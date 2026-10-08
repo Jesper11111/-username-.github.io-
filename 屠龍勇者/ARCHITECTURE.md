@@ -30,7 +30,7 @@
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪（第 18 節）；`maps/ruins.jpg` 野外地圖背景（第 17 節） |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
 | `tools/` | 開發工具（遊戲不載入）：`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
@@ -43,7 +43,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261008n`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261008t`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -271,7 +271,13 @@ kills, deaths, settings, created`
   - 野外停止掛機：原地附近隨機走動；村莊：站著不動（2026-10-08 使用者要求）。
 - 怪物：地圖上維持 6 隻（外觀依地點與玩家等級挑），每 0.9～2.6 秒隨機走一格；被打倒的淡出後在附近補新的。
 - 特效：怪物／玩家 HP 減少時飄白色／紅色傷害數字並前衝；HP 回復飄綠色；讀遊戲訊息分類補上 MISS、爆擊（黃色大字）、魔法光環、LEVEL UP、掉寶 🎁。
-- 村莊：商店、回收、旅館、倉庫、鍛造、傳送師 6 棟建築圍在角色旁邊，點一下打開對應設施（傳送師＝地圖）。
+- **村莊背景圖**（2026-10-08）：使用者提供的中世紀村莊俯視圖 `images/maps/village.webp`（1755×896，石板廣場＋噴泉、教堂、市集攤位、港口），鋪成 30×15 格，角色站在噴泉下方 [13,10]。
+  使用者要求**不放 NPC**：設施從「🏘️ 村莊設施」按鈕或底部格子打開，點地圖不會有反應。四個村莊共用這張圖。
+  （曾短暫使用天堂官方截圖，因著作權疑慮已換掉，同檔名覆蓋。程式仍支援 `crop` 裁切與 `hot` 可點範圍，之後換圖可用。）
+- 沒有背景圖時的備用村莊：中間泥土廣場、外圍草地，`TOWN_HOUSES` 房屋（`drawHouse` 用 canvas 畫，擋路）；
+  `TOWN_NPCS` 7 位 NPC 站在廣場上：商店、回收、旅館、倉庫、鍛造、傳送師（＝地圖）、任務（＝任務分頁），每村名字不同（`names[村莊id]`）。
+  頭上名牌 `drawNpcPlate`：深藍圓角框＋細邊，名字亮金色＋功能灰字；點名牌或 NPC 周圍 1 格打開對應設施（`scene.npcRects` 記名牌範圍）。
+  NPC 與角色一起依 y 排序畫。之後若有自己的村莊背景圖，可比照野外 `SCENE_BGS` 加一張，NPC 位置對到圖上。
 - 迴圈：`requestAnimationFrame`，只在狩獵畫面顯示時跑（`huntVisible()`），分頁隱藏時不更新；canvas 依 `devicePixelRatio` 調整解析度。
 
 ## 18. 人物模型與職業立繪
