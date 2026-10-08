@@ -87,6 +87,15 @@ const CLASSES = {
         base: { str: 14, dex: 10, con: 13, int: 8, wis: 13, cha: 10 },
         hp: [12, 16], mp: [2, 4], startHp: 16, startMp: 4, mr: 15, spDiv: 10, mpRegenK: 0.6,
         weapons: ['sword', 'blunt'], shield: true, start: ['mace', 'leatherArmor', 'woodShield'],
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/paladin-*.json 切出（新版格紋背景用 checker2；向上走路／攻擊混用舊版原圖，見 json 的 "alt"）
+        sprite: {
+            drawH: 72, charH: 113,
+            walk:   { src: 'images/sprites/paladin-walk.png',   cellW: 144, cellH: 126, frames: { down: 6, right: 6, up: 6 }, ms: 120 },
+            attack: { src: 'images/sprites/paladin-attack.png', cellW: 140, cellH: 143, frames: { down: 8, right: 8, up: 5 }, ms: 60 },
+            cast:   { src: 'images/sprites/paladin-cast.png',   cellW: 152, cellH: 161, frames: { down: 5, right: 5, up: 8 }, ms: 90 },
+            hit:    { src: 'images/sprites/paladin-hit.png',    cellW: 238, cellH: 131, frames: { down: 3, right: 2, up: 2 }, ms: 110 },
+        },
+        art: 'images/classes/paladin.jpg',
     },
     angel: {
         name: '天使', icon: '😇',
@@ -118,7 +127,7 @@ const CLASSES = {
             drawH: 72, charH: 113,
             // 四個動作都由 tools/cut-sprites.ps1 依 tools/sprite-src/demon-*.json 從原圖切出（2026-10-08 換新）
             walk:   { src: 'images/sprites/demon-walk.png',   cellW: 146, cellH: 124, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
-            attack: { src: 'images/sprites/demon-attack.png', cellW: 182, cellH: 144, frames: { down: 8, right: 8, up: 5 }, ms: 60 },
+            attack: { src: 'images/sprites/demon-attack.png', cellW: 184, cellH: 145, frames: { down: 8, right: 8, up: 5 }, ms: 60 },
             cast:   { src: 'images/sprites/demon-cast.png',   cellW: 130, cellH: 144, frames: { down: 6, right: 6, up: 5 }, ms: 80 },
             hit:    { src: 'images/sprites/demon-hit.png',    cellW: 194, cellH: 124, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
         },

@@ -1,0 +1,9 @@
+{
+  "sheet": "tools/sprite-src/paladin-hit-sheet.jpg", "out": "images/sprites/paladin-hit.png",
+  "charH": 113, "pad": 4, "tol": 34, "bg": "checker2", "checkerSize": 17,
+  "dirs": {
+    "down":  [[224, 131, 566, 318], [801, 131, 582, 318], [1393, 131, 565, 318]],
+    "right": [[224, 459, 566, 318], [801, 459, 582, 318]],
+    "up":    [[224, 787, 566, 317], [1393, 787, 565, 317, 0]]
+  }
+}

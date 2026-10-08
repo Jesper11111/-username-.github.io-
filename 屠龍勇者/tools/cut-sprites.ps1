@@ -25,6 +25,14 @@ public class CutFrame {
 }
 
 public static class SpriteCutter {
+    // dropEdge：碰到左右邊、且小於主體這個比例的塊去掉（預設 0.25）；darkBg：global 模式下平均亮度低於此值的暗灰一律當背景（預設 22）
+    public static double DropEdge = 0.25;
+    public static int DarkBg = 22;
+    // checker2：格紋每格大小（px），> 0 時格紋模式改用「交替」判斷
+    public static int CheckerSize = 0;
+    // checker2 的陰影修正（被壓暗的格紋當背景）；規格裡裁切框第 5 個數字填 0 可以對單一格關掉
+    public static bool ShadowFix = true;
+    public static int ShapeN = 0;
     static int[] Read(Bitmap b) {
         var d = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         var a = new int[b.Width * b.Height];
@@ -156,7 +164,7 @@ public static class SpriteCutter {
         if (global) {
             for (int i = 0; i < w * h; i++) {
                 int c = px[i], lum = (R(c) + G(c) + B(c)) / 3;
-                if ((lum < 75 && B(c) - R(c) > 8) || lum < 22) isBg[i] = true;
+                if ((lum < 75 && B(c) - R(c) > 8) || lum < DarkBg) isBg[i] = true;
             }
         }
         // 離背景幾格（最多算到 4；global 算到 16）
@@ -197,6 +205,76 @@ public static class SpriteCutter {
         return Finish(px, alpha, w, h);
     }
 
+    // checker2：以「方格」為單位判斷格紋（角色本身也有白色時用，例如聖騎士白披風）
+    // 1) 從亮度的左右／上下變化找出格紋週期與起點（週期在 CheckerSize ±0.6 內搜尋）
+    // 2) 每格算中性灰像素的亮度中位數與均勻度；均勻、且至少一個相鄰格也均勻而亮度差 > 25（一亮一暗交替）→ 背景格
+    //    白披風的相鄰格也是白的，不會交替，所以保留
+    // 3) 背景格內、亮度接近該格中位數的中性灰像素＝背景；碰到角色的邊緣格，用斜對角同色背景格的亮度判斷
+    // checker2：角色本身也有白色時（聖騎士白披風），格紋的灰白和披風分不開——改用形狀：
+    // 1) 有顏色、或比較暗（平均 < 120）的像素＝角色細節（金邊、盔甲、輪廓線）；格紋與披風都是中性亮灰白，不算
+    // 2) 細節膨脹 N 再侵蝕回來連成輪廓，從裁切框邊緣往內填「輪廓外」＝背景；再從背景往內吃非細節點最多 N px（修掉輪廓外殘留的方格）
+    // 3) 被輪廓包住的區域：同時有兩種格紋亮度（各佔 2 成以上）＝露出來的格紋，也當背景；只有一種亮度（披風）就留著
+    static void CheckerCells(int[] px, bool[] isBg, int w, int h, Func<int, int> lumOf, Func<int, bool> neutral) {
+        int N = ShapeN > 0 ? ShapeN : Math.Max(3, CheckerSize / 3);   // 輪廓連接半徑（格子很大時用 "shape" 指定）
+        var strong = new bool[w * h];
+        int S = CheckerSize;
+        // 週期交替：左右或上下「隔 1 格亮度差 > 12、隔 2 格亮度差 < 10」（只有格紋有這種規律，披風的明暗沒有）
+        Func<int, bool> periodic = i => {
+            int x = i % w, y = i / w, l = lumOf(px[i]);
+            Func<int, int, bool> ok = (dx, dy) => {
+                int x1 = x + dx, y1 = y + dy, x2 = x + 2 * dx, y2 = y + 2 * dy;
+                if (x2 < 0 || y2 < 0 || x2 >= w || y2 >= h) return false;
+                int a = px[y1 * w + x1], b = px[y2 * w + x2];
+                return neutral(a) && neutral(b) && Math.Abs(lumOf(a) - l) > 12 && Math.Abs(lumOf(b) - l) < 10;
+            };
+            return ok(S, 0) || ok(-S, 0) || ok(0, S) || ok(0, -S);
+        };
+        // 被陰影壓暗的格紋（中性灰、平均 50～160、有週期交替）不算角色細節
+        for (int i = 0; i < w * h; i++) {
+            int c = px[i], l = lumOf(c);
+            strong[i] = !neutral(c) || l < 120;
+            if (ShadowFix && strong[i] && neutral(c) && l >= 50 && l < 160 && periodic(i)) strong[i] = false;
+        }
+        var dil = Grow(strong, w, h, N);
+        var inv = new bool[w * h]; for (int i = 0; i < w * h; i++) inv[i] = !dil[i];
+        var outside = Grow(inv, w, h, N);
+        var q = new Queue<int>();
+        for (int i = 0; i < w * h; i++) {
+            int x = i % w, y = i / w;
+            if ((x == 0 || y == 0 || x == w - 1 || y == h - 1) && outside[i] && !strong[i]) { isBg[i] = true; q.Enqueue(i); }
+        }
+        while (q.Count > 0) {
+            int i = q.Dequeue(), x = i % w, y = i / w;
+            foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                if (j >= 0 && !isBg[j] && outside[j] && !strong[j]) { isBg[j] = true; q.Enqueue(j); }
+        }
+        var depth = new int[w * h];
+        for (int i = 0; i < w * h; i++) if (isBg[i]) q.Enqueue(i);
+        while (q.Count > 0) {
+            int i = q.Dequeue(), x = i % w, y = i / w;
+            if (depth[i] >= N) continue;
+            foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                if (j >= 0 && !isBg[j] && !strong[j]) { isBg[j] = true; depth[j] = depth[i] + 1; q.Enqueue(j); }
+        }
+        // 背景兩種格紋亮度：取背景像素亮度直方圖的兩個高峰
+        var hist = new int[256]; for (int i = 0; i < w * h; i++) if (isBg[i] && neutral(px[i])) hist[lumOf(px[i])]++;
+        int p1 = 0; for (int v = 0; v < 256; v++) if (hist[v] > hist[p1]) p1 = v;
+        int p2 = -1; for (int v = 0; v < 256; v++) if (Math.Abs(v - p1) > 25 && (p2 < 0 || hist[v] > hist[p2])) p2 = v;
+        var seen = new bool[w * h];
+        for (int s0 = 0; s0 < w * h; s0++) {
+            if (isBg[s0] || strong[s0] || seen[s0]) continue;
+            var list = new List<int>(); seen[s0] = true; q.Enqueue(s0);
+            while (q.Count > 0) {
+                int i = q.Dequeue(), x = i % w, y = i / w; list.Add(i);
+                foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                    if (j >= 0 && !isBg[j] && !strong[j] && !seen[j]) { seen[j] = true; q.Enqueue(j); }
+            }
+            if (p2 < 0 || list.Count < 20) continue;
+            int a = 0, b = 0; foreach (int i in list) { int l = lumOf(px[i]); if (Math.Abs(l - p1) <= 8) a++; else if (Math.Abs(l - p2) <= 8) b++; }
+            int per = 0; foreach (int i in list) if (periodic(i)) per++;
+            if (a > list.Count * 0.2 && b > list.Count * 0.2 && per > list.Count * 0.35) foreach (int i in list) isBg[i] = true;
+        }
+    }
     static CutFrame CutChecker(Bitmap sheet, int x0, int y0, int w, int h) {
         var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
         var px = Read(crop); crop.Dispose();
@@ -204,11 +282,13 @@ public static class SpriteCutter {
         var q = new Queue<int>();
         var near = new int[w * h];
         var bgCol = new int[w * h];   // 最近的背景格紋顏色（扣掉背景時用）
+        Func<int, int> lumOf = c => (R(c) + G(c) + B(c)) / 3;
+        Func<int, bool> neutral = c => Math.Max(R(c), Math.Max(G(c), B(c))) - Math.Min(R(c), Math.Min(G(c), B(c))) < 18;
+        if (CheckerSize > 0) CheckerCells(px, isBg, w, h, lumOf, neutral);
+        else for (int i = 0; i < w * h; i++) isBg[i] = lumOf(px[i]) > 165 && neutral(px[i]);
         for (int i = 0; i < w * h; i++) {
-            int c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
-            isBg[i] = (R(c) + G(c) + B(c)) / 3 > 165 && mx - mn < 24;
             near[i] = isBg[i] ? 0 : 99;
-            if (isBg[i]) { bgCol[i] = c; q.Enqueue(i); }
+            if (isBg[i]) { bgCol[i] = px[i]; q.Enqueue(i); }
         }
         while (q.Count > 0) {
             int i = q.Dequeue(), x = i % w, y = i / w, nd = near[i] + 1;
@@ -265,7 +345,7 @@ public static class SpriteCutter {
         for (int i = 0; i < w * h; i++) {
             if (alpha[i] == 0) continue;
             int c = comp[i];
-            bool keep = c == main || (sizes[c] > big * 0.008 && !(touch[c] && sizes[c] < big * 0.25));
+            bool keep = c == main || (sizes[c] > big * 0.008 && !(touch[c] && sizes[c] < big * DropEdge));
             if (keep) outPx[i] = (alpha[i] << 24) | (px[i] & 0xFFFFFF);
         }
         var f = new CutFrame();
@@ -300,13 +380,25 @@ public static class SpriteCutter {
 
 $cfg = Get-Content $Spec -Raw -Encoding UTF8 | ConvertFrom-Json
 $root = Split-Path (Split-Path (Resolve-Path $MyInvocation.MyCommand.Path).Path -Parent) -Parent   # 屠龍勇者/
-$sheetPath = if ([IO.Path]::IsPathRooted($cfg.sheet)) { $cfg.sheet } else { Join-Path $root $cfg.sheet }
-if (-not (Test-Path $sheetPath)) { throw "找不到原圖：$sheetPath" }
-$sheet = New-Object System.Drawing.Bitmap $sheetPath
-$tol = if ($cfg.tol) { [double]$cfg.tol } else { 34 }
-$checker = $cfg.bg -eq 'checker'
-$shape = if ($cfg.shape) { [int]$cfg.shape } else { 0 }   # 角色和背景同色時用形狀去背（膨脹半徑 px，例如魔鬥士的黑衣）
-$global = [bool]$cfg.global   # 被圍住的背景也去掉（角色與背景色差大時用，例如天使）
+# 去背設定：規格最上層是預設；"alt": { "名稱": { sheet, bg, global, ... } } 是其他來源，
+# 某一格寫成 { "r": [x,y,w,h], "src": "名稱" } 就改用那份原圖與設定（新舊兩版原圖各取乾淨的格子混用）
+$sheets = @{}
+function Get-Mode($o) {
+    $p = if ([IO.Path]::IsPathRooted($o.sheet)) { $o.sheet } else { Join-Path $root $o.sheet }
+    if (-not (Test-Path $p)) { throw "找不到原圖：$p" }
+    if (-not $sheets.ContainsKey($p)) { $sheets[$p] = New-Object System.Drawing.Bitmap $p }
+    return @{
+        sheet = $sheets[$p]
+        tol = if ($o.tol) { [double]$o.tol } else { 34 }
+        checker = $o.bg -eq 'checker' -or $o.bg -eq 'checker2'
+        checkerSize = if ($o.bg -eq 'checker2') { [int]$o.checkerSize } else { 0 }   # 角色也有白色時（聖騎士白披風）
+        shape = if ($o.shape) { [int]$o.shape } else { 0 }   # 角色和背景同色時用形狀去背（魔鬥士黑衣）；checker2 時是輪廓連接半徑
+        global = [bool]$o.global   # 被圍住的背景也去掉（角色與背景色差大時用，例如天使）
+        dropEdge = if ($o.dropEdge) { [double]$o.dropEdge } else { 0.25 }   # 教堂背景殘片等從格子邊伸進來的雜物
+        darkBg = if ($o.darkBg) { [int]$o.darkBg } else { 22 }
+    }
+}
+$baseMode = Get-Mode $cfg
 $pad = if ($cfg.pad) { [int]$cfg.pad } else { 4 }
 $dirs = 'down', 'right', 'up'
 $frames = @{}
@@ -314,7 +406,15 @@ $heights = @()
 foreach ($d in $dirs) {
     $frames[$d] = @()
     foreach ($r in $cfg.dirs.$d) {
-        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker, $global, $shape)
+        $m = $baseMode
+        if ($r -is [System.Management.Automation.PSCustomObject]) { $m = Get-Mode $cfg.alt.($r.src); $r = $r.r }
+        [SpriteCutter]::CheckerSize = $m.checkerSize
+        [SpriteCutter]::ShapeN = if ($m.checkerSize -gt 0) { $m.shape } else { 0 }
+        [SpriteCutter]::DropEdge = $m.dropEdge
+        [SpriteCutter]::DarkBg = $m.darkBg
+        [SpriteCutter]::ShadowFix = -not ($r.Count -ge 5 -and [int]$r[4] -eq 0)
+        $shape = if ($m.checkerSize -gt 0) { 0 } else { $m.shape }
+        $f = [SpriteCutter]::Cut($m.sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $m.tol, $m.checker, $m.global, $shape)
         $frames[$d] += $f
         if ($d -ne 'up') { $heights += ($f.Feet - $f.TopCenter) }   # 背面看不到頭頂角，身高只用正面與側面量
     }
@@ -368,4 +468,4 @@ if ($Preview) {
     $gp.Dispose(); $pv.Dispose()
 }
 foreach ($d in $dirs) { foreach ($f in $frames[$d]) { $f.Img.Dispose() } }
-$out.Dispose(); $sheet.Dispose()
+$out.Dispose(); foreach ($s in $sheets.Values) { $s.Dispose() }
