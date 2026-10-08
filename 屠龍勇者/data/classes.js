@@ -86,6 +86,15 @@ const CLASSES = {
         hp: [9, 12], mp: [4, 7], startHp: 13, startMp: 7, mr: 25, spDiv: 6, mpRegenK: 0.9,
         weapons: ['staff', 'spear', 'sword'], shield: true, start: ['oakWand', 'leatherArmor', 'woodShield'],
         slayer: { tags: ['undead', 'demon'], mult: 1.3, label: '惡魔與不死系' },
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/angel-*.json 切出（第 18 節）
+        sprite: {
+            drawH: 72, charH: 113,
+            walk:   { src: 'images/sprites/angel-walk.png',   cellW: 108, cellH: 148, frames: { down: 5, right: 5, up: 5 }, ms: 120 },
+            attack: { src: 'images/sprites/angel-attack.png', cellW: 204, cellH: 153, frames: { down: 8, right: 8, up: 8 }, ms: 60 },
+            cast:   { src: 'images/sprites/angel-cast.png',   cellW: 148, cellH: 149, frames: { down: 5, right: 5, up: 4 }, ms: 90 },
+            hit:    { src: 'images/sprites/angel-hit.png',    cellW: 192, cellH: 128, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/angel.jpg',
     },
     demon: {
         name: '惡魔', icon: '😈',

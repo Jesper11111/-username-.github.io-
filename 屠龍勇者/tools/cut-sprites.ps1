@@ -1,7 +1,7 @@
 ﻿# 屠龍勇者：把 AI 產生的「動作表」切成遊戲用的人物模型圖（ARCHITECTURE.md 第 18 節）
 # 用法：powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec 規格.json -Preview 預覽.png
 # 規格 JSON：
-# { "sheet": "原圖.jpg", "out": "images/sprites/demon-attack.png", "charH": 113, "pad": 4, "tol": 34, "bg": "checker"（可省略）,
+# { "sheet": "原圖.jpg", "out": "images/sprites/demon-attack.png", "charH": 113, "pad": 4, "tol": 34, "bg": "checker"（可省略）, "global": true（可省略）,
 #   "dirs": { "down": [[x,y,w,h], ...], "right": [...], "up": [...] } }
 #   每個 [x,y,w,h] 是原圖上一格的裁切框（依播放順序），列＝方向（down／right／up）
 # 做法：每格以裁切框四周的中位數當背景色，從邊緣往內「洪水填滿」相近顏色（不會吃掉角色身上的暗色），
@@ -48,7 +48,7 @@ public static class SpriteCutter {
     static bool Glow(int c) { return R(c) > 120 && R(c) > G(c) * 1.6; }
 
     // checker：背景是「畫出來的」灰白格紋（假透明）——亮且接近中性灰的像素都算背景（不用洪水填滿，角色身上的空隙也會去掉）
-    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker) {
+    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker, bool global) {
         if (checker) return CutChecker(sheet, x0, y0, w, h);
         var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
         var px = Read(crop); crop.Dispose();
@@ -73,12 +73,21 @@ public static class SpriteCutter {
             int i = q.Dequeue(), x = i % w, y = i / w;
             if (x > 0) push(i - 1, i); if (x < w - 1) push(i + 1, i); if (y > 0) push(i - w, i); if (y < h - 1) push(i + w, i);
         }
-        // 離背景幾格（最多算到 4）
+        // global：角色與背景色差很大時（例如天使白金 vs 深藍底），「暗且偏藍」的像素一律當背景——
+        // 被翅膀、格子邊圍住（洪水進不去）的背景、上亮下暗的漸層底、光暈外圍的暗邊都會去掉
+        if (global) {
+            for (int i = 0; i < w * h; i++) {
+                int c = px[i], lum = (R(c) + G(c) + B(c)) / 3;
+                if ((lum < 75 && B(c) - R(c) > 8) || lum < 22) isBg[i] = true;
+            }
+        }
+        // 離背景幾格（最多算到 4；global 算到 16）
+        int nearMax = global ? 16 : 4;
         var near = new int[w * h];
         for (int i = 0; i < w * h; i++) { near[i] = isBg[i] ? 0 : 99; if (isBg[i]) q.Enqueue(i); }
         while (q.Count > 0) {
             int i = q.Dequeue(), x = i % w, y = i / w, nd = near[i] + 1;
-            if (nd > 4) continue;
+            if (nd > nearMax) continue;
             foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
                 if (j >= 0 && near[j] > nd) { near[j] = nd; q.Enqueue(j); }
         }
@@ -90,8 +99,11 @@ public static class SpriteCutter {
             if (isBg[i]) continue;
             int c = px[i];
             double d = Dist(c, br, bg, bb), a = 1;
-            bool reddish = R(c) - G(c) > 12;
-            if (near[i] <= 4 && reddish) {
+            // 偏紅，或比背景亮（金色光環、光暈）都當成疊在背景上的光
+            bool reddish = R(c) - G(c) > 12 || (R(c) + G(c) + B(c)) - (br + bg + bb) > 24;
+            // global：離背景 16px 內、暗（平均 < 110）的暖色像素也當光暈（金光淡出到深藍底時混出的暗褐邊）
+            if (global && near[i] <= 16 && (R(c) + G(c) + B(c)) / 3 < 110 && R(c) + G(c) > B(c) * 2) reddish = true;
+            if (near[i] <= (global ? 16 : 4) && reddish) {
                 a = Math.Min(1, d / 110);
                 if (a > 0.02) {
                     int nr = (int)Math.Max(0, Math.Min(255, br + (R(c) - br) / a));
@@ -215,6 +227,7 @@ if (-not (Test-Path $sheetPath)) { throw "找不到原圖：$sheetPath" }
 $sheet = New-Object System.Drawing.Bitmap $sheetPath
 $tol = if ($cfg.tol) { [double]$cfg.tol } else { 34 }
 $checker = $cfg.bg -eq 'checker'
+$global = [bool]$cfg.global   # 被圍住的背景也去掉（角色與背景色差大時用，例如天使）
 $pad = if ($cfg.pad) { [int]$cfg.pad } else { 4 }
 $dirs = 'down', 'right', 'up'
 $frames = @{}
@@ -222,7 +235,7 @@ $heights = @()
 foreach ($d in $dirs) {
     $frames[$d] = @()
     foreach ($r in $cfg.dirs.$d) {
-        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker)
+        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker, $global)
         $frames[$d] += $f
         if ($d -ne 'up') { $heights += ($f.Feet - $f.TopCenter) }   # 背面看不到頭頂角，身高只用正面與側面量
     }
