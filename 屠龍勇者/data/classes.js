@@ -99,9 +99,10 @@ const CLASSES = {
         sprite: {
             drawH: 72, charH: 113,
             walk:   { src: 'images/sprites/demon-walk.png',   cellW: 84,  cellH: 128, frames: { down: 5, right: 5, up: 5 }, ms: 110 },
-            attack: { src: 'images/sprites/demon-attack.png', cellW: 144, cellH: 150, frames: { down: 8, right: 8, up: 6 }, ms: 60 },
-            cast:   { src: 'images/sprites/demon-cast.png',   cellW: 96,  cellH: 150, frames: { down: 6, right: 6, up: 6 }, ms: 80 },
-            hit:    { src: 'images/sprites/demon-hit.png',    cellW: 196, cellH: 150, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+            // 攻擊／施法／受傷由 tools/cut-sprites.ps1 依 tools/sprite-src/demon-*.json 從原圖切出（2026-10-08 換新）
+            attack: { src: 'images/sprites/demon-attack.png', cellW: 182, cellH: 144, frames: { down: 8, right: 8, up: 5 }, ms: 60 },
+            cast:   { src: 'images/sprites/demon-cast.png',   cellW: 130, cellH: 144, frames: { down: 6, right: 6, up: 5 }, ms: 80 },
+            hit:    { src: 'images/sprites/demon-hit.png',    cellW: 194, cellH: 124, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
         },
         art: 'images/classes/demon.jpg',
     },
