@@ -197,7 +197,7 @@ function describeSpell(s) {
     return parts.join("；");
 }
 
-// ---- 武學秘典碎片（第 35 節末）：下品來自奇遇／機緣（encounter.js）；中品＝凡界野外、上品＝靈界野外（rollSpellShardFieldDrops）----
+// ---- 武學秘典碎片（第 35 節末）：下品來自奇遇／機緣（encounter.js）；中品＝凡界＋靈界野外、上品＝靈界野外（rollSpellShardFieldDrops）----
 function spellShardName(grade) { return `${SPELL_GRADES[grade].name}武學秘典碎片`; }
 function getSpellShards(grade) { return player[SPELL_SHARD_KINDS[grade].key] || 0; }
 function addSpellShards(n, source, grade) {
@@ -213,20 +213,23 @@ function unlearnedShardSpells(grade) {
     grade = SPELL_SHARD_KINDS[grade] ? grade : SPELL_SHARD_GRADE;
     return spellList.filter(s => s.grade === grade && !isSpellLearned(s.id));
 }
-// 野外掉落（combat.js：rolls＝takeDropRolls 的掉寶次數；離線用收益次數，save.js）：所在野外是靈界分類＝上品，否則（凡界）＝中品
+// 野外掉落（combat.js：rolls＝takeDropRolls 的掉寶次數；離線用收益次數，save.js）：凡界野外＝中品；靈界野外＝上品＋中品（2026-10-07 使用者：「靈界也新增掉落中品武學碎片」）
 function rollSpellShardFieldDrops(rolls, silent) {
     const m = player.currentMap;
     if (!(rolls > 0) || !m || player.currentMapIsSafe) return '';
     const inLing = typeof isLingjieMapCategory === 'function' && isLingjieMapCategory(getMapCategoryIndex(m.name));
-    const grade = inLing ? 'high' : 'mid';
+    const grades = inLing ? ['high', 'mid'] : ['mid'];
     const cm = typeof getChallengeCraftMult === 'function' ? getChallengeCraftMult() : 1;   // 挑戰模式（第 70 節）：越 1 境 ×1.5、2 境 ×2、3 境以上 ×3
-    const exp = rolls * SPELL_SHARD_FIELD_DROP[grade] * cm;
-    let n = Math.floor(exp); if (Math.random() < exp - n) n++;
-    if (!(n > 0)) return '';
-    addSpellShards(n, null, grade);
-    const t = `${spellShardName(grade)}×${n}`;
-    if (!silent) addLog(`📜 妖獸身上掉出 ${t}（${getSpellShards(grade)} / ${SPELL_SHARD_NEED}）`, "level-up", false, "item");
-    return t;
+    const got = [];
+    grades.forEach(grade => {
+        const exp = rolls * SPELL_SHARD_FIELD_DROP[grade] * cm;
+        let n = Math.floor(exp); if (Math.random() < exp - n) n++;
+        if (!(n > 0)) return;
+        addSpellShards(n, null, grade);
+        got.push(`${spellShardName(grade)}×${n}`);
+        if (!silent) addLog(`📜 妖獸身上掉出 ${spellShardName(grade)}×${n}（${getSpellShards(grade)} / ${SPELL_SHARD_NEED}）`, "level-up", false, "item");
+    });
+    return got.join('、');
 }
 // 集滿 SPELL_SHARD_NEED 片：隨機習得一招尚未學會的該品仙法
 function synthesizeSpell(grade) {
