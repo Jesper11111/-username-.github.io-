@@ -48,7 +48,22 @@ public static class SpriteCutter {
     static bool Glow(int c) { return R(c) > 120 && R(c) > G(c) * 1.6; }
 
     // checker：背景是「畫出來的」灰白格紋（假透明）——亮且接近中性灰的像素都算背景（不用洪水填滿，角色身上的空隙也會去掉）
-    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker, bool global) {
+    // 膨脹：離任一 true 點 r 以內（棋盤距離）的點都設成 true
+    static bool[] Grow(bool[] src, int w, int h, int r) {
+        var dist = new int[w * h]; var q = new Queue<int>();
+        for (int i = 0; i < w * h; i++) { dist[i] = src[i] ? 0 : int.MaxValue; if (src[i]) q.Enqueue(i); }
+        while (q.Count > 0) {
+            int i = q.Dequeue(), x = i % w, y = i / w, nd = dist[i] + 1;
+            if (nd > r) continue;
+            for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+                int nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                int j = ny * w + nx; if (dist[j] > nd) { dist[j] = nd; q.Enqueue(j); }
+            }
+        }
+        var o = new bool[w * h]; for (int i = 0; i < w * h; i++) o[i] = dist[i] <= r; return o;
+    }
+
+    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker, bool global, int shape) {
         if (checker) return CutChecker(sheet, x0, y0, w, h);
         var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
         var px = Read(crop); crop.Dispose();
@@ -58,9 +73,71 @@ public static class SpriteCutter {
         for (int y = 3; y < h - 3; y += 2) foreach (int x in new[] { 3, w - 4 }) { int c = px[y * w + x]; rs.Add(R(c)); gs.Add(G(c)); bs.Add(B(c)); }
         rs.Sort(); gs.Sort(); bs.Sort();
         int br = rs[rs.Count / 2], bg = gs[gs.Count / 2], bb = bs[bs.Count / 2];
-        // 洪水填滿背景：要同時「接近背景色」（tol）且「跟來源鄰點差不多」（step，可以順著漸層走、碰到輪廓就停）
         var isBg = new bool[w * h];
         var q = new Queue<int>();
+        if (shape > 0) {
+            // shape：角色有一大片和背景同色（黑衣、黑髮），顏色分不開——改用形狀：
+            // 和背景明顯不同的點（輪廓線、皺褶、裝備）＝「確定是角色」，膨脹 shape px 再侵蝕回來（把相鄰細節連成輪廓），
+            // 從邊緣往內填「輪廓外」的點當背景；被輪廓包住的同色區域就留下來
+            var strong = new bool[w * h];
+            int bgLum = (br + bg + bb) / 3;
+            for (int i = 0; i < w * h; i++) {
+                int c = px[i];
+                if (Dist(c, br, bg, bb) < tol) continue;
+                // 地面陰影：比背景暗、色相和背景一樣、又平滑 → 不算角色細節（輪廓線那種明顯邊緣才算）
+                double d1 = (R(c) - G(c)) - (br - bg), d2 = (B(c) - G(c)) - (bb - bg);
+                bool darkSame = (R(c) + G(c) + B(c)) / 3 < bgLum && Math.Abs(d1) < 6 && Math.Abs(d2) < 6;
+                if (darkSame) {
+                    int x = i % w, y = i / w, gmax = 0;
+                    foreach (int j in new[] { x > 1 ? i - 2 : i, x < w - 2 ? i + 2 : i, y > 1 ? i - 2 * w : i, y < h - 2 ? i + 2 * w : i }) {
+                        int o = px[j]; gmax = Math.Max(gmax, Math.Abs(R(o) - R(c)) + Math.Abs(G(o) - G(c)) + Math.Abs(B(o) - B(c)));
+                    }
+                    if (gmax < 18) continue;
+                }
+                strong[i] = true;
+            }
+            var dil = Grow(strong, w, h, shape);
+            var inv = new bool[w * h]; for (int i = 0; i < w * h; i++) inv[i] = !dil[i];
+            var ero = Grow(inv, w, h, shape);   // 侵蝕＝反相後膨脹
+            for (int i = 0; i < w * h; i++) {
+                bool solid = !ero[i] || strong[i];
+                if (solid) continue;
+                int x = i % w, y = i / w;
+                if ((x == 0 || y == 0 || x == w - 1 || y == h - 1) && !isBg[i]) { isBg[i] = true; q.Enqueue(i); }
+            }
+            while (q.Count > 0) {
+                int i = q.Dequeue(), x = i % w, y = i / w;
+                foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                    if (j >= 0 && !isBg[j] && ero[j] && !strong[j]) { isBg[j] = true; q.Enqueue(j); }
+            }
+            // 輪廓修邊：膨脹再侵蝕會在凹處留下背景色的階梯方塊——從背景往內再吃「非細節點」，最多 shape px 深
+            var depth = new int[w * h];
+            for (int i = 0; i < w * h; i++) if (isBg[i]) q.Enqueue(i);
+            while (q.Count > 0) {
+                int i = q.Dequeue(), x = i % w, y = i / w;
+                if (depth[i] >= shape) continue;
+                foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                    if (j >= 0 && !isBg[j] && !strong[j]) { isBg[j] = true; depth[j] = depth[i] + 1; q.Enqueue(j); }
+            }
+            // 法術周圍的深色煙霧：平滑（周圍 2px 色差小）又不太亮的點，從背景往內吃，碰到輪廓線（不平滑）就停，最多 4×shape 深
+            var smooth = new bool[w * h];
+            for (int i = 0; i < w * h; i++) {
+                int x = i % w, y = i / w, c = px[i], gmax = 0;
+                if ((R(c) + G(c) + B(c)) / 3 > bgLum + 25) continue;
+                foreach (int j in new[] { x > 1 ? i - 2 : i, x < w - 2 ? i + 2 : i, y > 1 ? i - 2 * w : i, y < h - 2 ? i + 2 * w : i }) {
+                    int o = px[j]; gmax = Math.Max(gmax, Math.Abs(R(o) - R(c)) + Math.Abs(G(o) - G(c)) + Math.Abs(B(o) - B(c)));
+                }
+                smooth[i] = gmax < 12;
+            }
+            for (int i = 0; i < w * h; i++) { depth[i] = 0; if (isBg[i]) q.Enqueue(i); }
+            while (q.Count > 0) {
+                int i = q.Dequeue(), x = i % w, y = i / w;
+                if (depth[i] >= shape * 4) continue;
+                foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                    if (j >= 0 && !isBg[j] && smooth[j]) { isBg[j] = true; depth[j] = depth[i] + 1; q.Enqueue(j); }
+            }
+        } else {
+        // 洪水填滿背景：要同時「接近背景色」（tol）且「跟來源鄰點差不多」（step，可以順著漸層走、碰到輪廓就停）
         double step = tol * 0.45;
         Action<int, int> push = (i, from) => {
             if (isBg[i] || Dist(px[i], br, bg, bb) >= tol) return;
@@ -72,6 +149,7 @@ public static class SpriteCutter {
         while (q.Count > 0) {
             int i = q.Dequeue(), x = i % w, y = i / w;
             if (x > 0) push(i - 1, i); if (x < w - 1) push(i + 1, i); if (y > 0) push(i - w, i); if (y < h - 1) push(i + w, i);
+        }
         }
         // global：角色與背景色差很大時（例如天使白金 vs 深藍底），「暗且偏藍」的像素一律當背景——
         // 被翅膀、格子邊圍住（洪水進不去）的背景、上亮下暗的漸層底、光暈外圍的暗邊都會去掉
@@ -227,6 +305,7 @@ if (-not (Test-Path $sheetPath)) { throw "找不到原圖：$sheetPath" }
 $sheet = New-Object System.Drawing.Bitmap $sheetPath
 $tol = if ($cfg.tol) { [double]$cfg.tol } else { 34 }
 $checker = $cfg.bg -eq 'checker'
+$shape = if ($cfg.shape) { [int]$cfg.shape } else { 0 }   # 角色和背景同色時用形狀去背（膨脹半徑 px，例如魔鬥士的黑衣）
 $global = [bool]$cfg.global   # 被圍住的背景也去掉（角色與背景色差大時用，例如天使）
 $pad = if ($cfg.pad) { [int]$cfg.pad } else { 4 }
 $dirs = 'down', 'right', 'up'
@@ -235,7 +314,7 @@ $heights = @()
 foreach ($d in $dirs) {
     $frames[$d] = @()
     foreach ($r in $cfg.dirs.$d) {
-        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker, $global)
+        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker, $global, $shape)
         $frames[$d] += $f
         if ($d -ne 'up') { $heights += ($f.Feet - $f.TopCenter) }   # 背面看不到頭頂角，身高只用正面與側面量
     }

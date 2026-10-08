@@ -27,7 +27,8 @@ function consumableCounts() {
 // 快轉模擬一段掛機並回傳結果；結束後完全還原玩家狀態
 function measureHunt(sampleMs) {
     const snap = JSON.stringify(player);
-    const saved = { hunt, session, walkHome, gameNow, logLen: gameLog.length, logSeq };
+    // 遊戲訊息要整份備份：訊息滿 120 行時模擬會把舊訊息擠掉，只切回長度會留下模擬的訊息（編號比 logSeq 大，地圖每幀重讀 → 頭頂一直冒 LEVEL UP）
+    const saved = { hunt, session, walkHome, gameNow, log: gameLog.slice(), logSeq };
     const before = { exp: totalExpOf(player), gold: player.gold, kills: player.kills, deaths: player.deaths, items: consumableCounts() };
     SIM_MODE = true;
     hunt = null; walkHome = null;
@@ -58,7 +59,7 @@ function measureHunt(sampleMs) {
     } finally {
         player = JSON.parse(snap);
         hunt = saved.hunt; session = saved.session; walkHome = saved.walkHome; gameNow = saved.gameNow;
-        gameLog.length = saved.logLen; logSeq = saved.logSeq;
+        gameLog.length = 0; gameLog.push(...saved.log); logSeq = saved.logSeq;
         SIM_MODE = false;
     }
 }

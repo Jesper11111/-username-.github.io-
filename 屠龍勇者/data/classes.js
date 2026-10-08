@@ -71,6 +71,15 @@ const CLASSES = {
         base: { str: 13, dex: 11, con: 12, int: 13, wis: 10, cha: 8 },
         hp: [10, 13], mp: [3, 6], startHp: 14, startMp: 5, mr: 10, spDiv: 6, mpRegenK: 0.7,
         weapons: ['sword', 'staff', 'spear'], shield: true, start: ['shortSword', 'leatherArmor'],
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/magicfighter-*.json 切出（黑衣和背景同色，用 "shape" 形狀去背，第 18 節）
+        sprite: {
+            drawH: 72, charH: 113,
+            walk:   { src: 'images/sprites/magicfighter-walk.png',   cellW: 68,  cellH: 127, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
+            attack: { src: 'images/sprites/magicfighter-attack.png', cellW: 198, cellH: 142, frames: { down: 10, right: 9, up: 10 }, ms: 50 },
+            cast:   { src: 'images/sprites/magicfighter-cast.png',   cellW: 148, cellH: 147, frames: { down: 3, right: 5, up: 6 }, ms: 90 },
+            hit:    { src: 'images/sprites/magicfighter-hit.png',    cellW: 108, cellH: 128, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/magicfighter.jpg',
     },
     paladin: {
         name: '聖騎士', icon: '✝️',
