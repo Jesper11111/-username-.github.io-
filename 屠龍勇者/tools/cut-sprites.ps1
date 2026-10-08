@@ -1,7 +1,7 @@
 ﻿# 屠龍勇者：把 AI 產生的「動作表」切成遊戲用的人物模型圖（ARCHITECTURE.md 第 18 節）
 # 用法：powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec 規格.json -Preview 預覽.png
 # 規格 JSON：
-# { "sheet": "原圖.jpg", "out": "images/sprites/demon-attack.png", "charH": 113, "pad": 4, "tol": 34,
+# { "sheet": "原圖.jpg", "out": "images/sprites/demon-attack.png", "charH": 113, "pad": 4, "tol": 34, "bg": "checker"（可省略）,
 #   "dirs": { "down": [[x,y,w,h], ...], "right": [...], "up": [...] } }
 #   每個 [x,y,w,h] 是原圖上一格的裁切框（依播放順序），列＝方向（down／right／up）
 # 做法：每格以裁切框四周的中位數當背景色，從邊緣往內「洪水填滿」相近顏色（不會吃掉角色身上的暗色），
@@ -47,7 +47,9 @@ public static class SpriteCutter {
     static double Dist2(int c, int o) { return Dist(c, R(o), G(o), B(o)); }
     static bool Glow(int c) { return R(c) > 120 && R(c) > G(c) * 1.6; }
 
-    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol) {
+    // checker：背景是「畫出來的」灰白格紋（假透明）——亮且接近中性灰的像素都算背景（不用洪水填滿，角色身上的空隙也會去掉）
+    public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker) {
+        if (checker) return CutChecker(sheet, x0, y0, w, h);
         var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
         var px = Read(crop); crop.Dispose();
         // 背景色：四周（內縮 3px）中位數
@@ -102,6 +104,54 @@ public static class SpriteCutter {
             if (e < 14) a *= e / 14.0;
             alpha[i] = (byte)Math.Round(a * 255);
         }
+        return Finish(px, alpha, w, h);
+    }
+
+    static CutFrame CutChecker(Bitmap sheet, int x0, int y0, int w, int h) {
+        var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
+        var px = Read(crop); crop.Dispose();
+        var isBg = new bool[w * h];
+        var q = new Queue<int>();
+        var near = new int[w * h];
+        var bgCol = new int[w * h];   // 最近的背景格紋顏色（扣掉背景時用）
+        for (int i = 0; i < w * h; i++) {
+            int c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+            isBg[i] = (R(c) + G(c) + B(c)) / 3 > 165 && mx - mn < 24;
+            near[i] = isBg[i] ? 0 : 99;
+            if (isBg[i]) { bgCol[i] = c; q.Enqueue(i); }
+        }
+        while (q.Count > 0) {
+            int i = q.Dequeue(), x = i % w, y = i / w, nd = near[i] + 1;
+            if (nd > 8) continue;
+            foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                if (j >= 0 && near[j] > nd) { near[j] = nd; bgCol[j] = bgCol[i]; q.Enqueue(j); }
+        }
+        // 靠近背景（8px 內）的像素：透明度＝與背景的最大色差 ÷ 150，再把背景色扣掉還原顏色（火焰、翼緣的淡色光暈）
+        var alpha = new byte[w * h];
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            int i = y * w + x;
+            if (isBg[i]) continue;
+            int c = px[i]; double a = 1;
+            if (near[i] <= 8) {
+                int b = bgCol[i];
+                double md = Math.Max(Math.Abs(R(c) - R(b)), Math.Max(Math.Abs(G(c) - G(b)), Math.Abs(B(c) - B(b))));
+                a = Math.Min(1, md / 150);
+                if (a > 0.02 && a < 1) {
+                    int nr = (int)Math.Max(0, Math.Min(255, R(b) + (R(c) - R(b)) / a));
+                    int ng = (int)Math.Max(0, Math.Min(255, G(b) + (G(c) - G(b)) / a));
+                    int nb = (int)Math.Max(0, Math.Min(255, B(b) + (B(c) - B(b)) / a));
+                    px[i] = (nr << 16) | (ng << 8) | nb;
+                }
+            }
+            double e = Math.Min(Math.Min(x, w - 1 - x), Math.Min(y, h - 1 - y));
+            if (e < 14) a *= e / 14.0;
+            alpha[i] = (byte)Math.Round(a * 255);
+        }
+        return Finish(px, alpha, w, h);
+    }
+
+    static CutFrame Finish(int[] px, byte[] alpha, int w, int h) {
+        var q = new Queue<int>();
         // 連通塊：保留最大塊；碰到左右邊且不大的塊（隔壁格伸過來）、太小的碎點都去掉
         var comp = new int[w * h]; for (int i = 0; i < comp.Length; i++) comp[i] = -1;
         var sizes = new List<int>(); var touch = new List<bool>();
@@ -164,6 +214,7 @@ $sheetPath = if ([IO.Path]::IsPathRooted($cfg.sheet)) { $cfg.sheet } else { Join
 if (-not (Test-Path $sheetPath)) { throw "找不到原圖：$sheetPath" }
 $sheet = New-Object System.Drawing.Bitmap $sheetPath
 $tol = if ($cfg.tol) { [double]$cfg.tol } else { 34 }
+$checker = $cfg.bg -eq 'checker'
 $pad = if ($cfg.pad) { [int]$cfg.pad } else { 4 }
 $dirs = 'down', 'right', 'up'
 $frames = @{}
@@ -171,7 +222,7 @@ $heights = @()
 foreach ($d in $dirs) {
     $frames[$d] = @()
     foreach ($r in $cfg.dirs.$d) {
-        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol)
+        $f = [SpriteCutter]::Cut($sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $tol, $checker)
         $frames[$d] += $f
         if ($d -ne 'up') { $heights += ($f.Feet - $f.TopCenter) }   # 背面看不到頭頂角，身高只用正面與側面量
     }

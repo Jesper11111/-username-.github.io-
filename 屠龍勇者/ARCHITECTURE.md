@@ -43,7 +43,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261008e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261008f`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -289,18 +289,18 @@ kills, deaths, settings, created`
 
 | 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |
 |---|---|---|---|---|---|
-| 走路 | `images/sprites/demon-walk.png` | 84×128 | 5／5／5 | 110ms | 273KB |
+| 走路 | `images/sprites/demon-walk.png` | 146×124 | 6／6／6 | 110ms | 422KB |
 | 攻擊 | `images/sprites/demon-attack.png` | 182×144 | 8／8／5 | 60ms | 545KB |
 | 施法 | `images/sprites/demon-cast.png` | 130×144 | 6／6／5 | 80ms | 366KB |
 | 受傷 | `images/sprites/demon-hit.png` | 194×124 | 3／3／3 | 90ms | 226KB |
 | 立繪 | `images/classes/demon.jpg` | 960×536 | | | 123KB |
 
-- 2026-10-08 攻擊／施法／受傷換成使用者給的新版 3D 動作表（走路沿用舊版）。原圖放在 `tools/sprite-src/demon-*-sheet.jpg`，
+- 2026-10-08 四個動作全部換成使用者給的新版 3D 動作表（走路圖背景是畫出來的灰白格紋，用 `"bg": "checker"` 模式）。原圖放在 `tools/sprite-src/demon-*-sheet.jpg`，
   每格裁切框寫在同資料夾的 `demon-*.json`，用 **`tools/cut-sprites.ps1`** 產生（第 18.1 節）。挑格：
   - 攻擊：原圖每方向 2 列×4 格。「向上」第 3、7、8 格畫成正面（產圖錯誤）沒用，向上用 1、2、4、5、6 格。
   - 施法：「向上」第 1 格是正面，沒用，向上 5 格。
   - 受傷：3×3 格子照用。
-- 舊版素材（第一版）處理注意事項：走路表相鄰格的翅膀與劍互相重疊，用上下半不同的左右界線避開，翼尖會稍微變淡。
+  - 走路：每方向 6 格。原圖「向下」翅膀上緣與兩側被產圖切成平的，裁切框對齊那條線讓它落在淡出區；「向右」第 1 格左邊避開「向右」字樣，翼尖少一點。
 - 之後新素材建議：每格分開、中間留空、背景單色或透明，每格同尺寸、角色置中、腳底同一高度。
 
 ### 18.1 切圖工具 `tools/cut-sprites.ps1`
@@ -310,10 +310,11 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 ```
 
 - 規格 JSON：`sheet` 原圖、`out` 輸出 PNG、`charH`（113，與 classes.js 一致）、`tol` 背景容差（26）、`pad`、`dirs.down/right/up` 每格 `[x,y,w,h]`（照播放順序）。
-  可選 `bodyH` 直接指定原圖身高（不自動量）。
+  可選 `bodyH` 直接指定原圖身高（不自動量）；`"bg": "checker"`＝背景是畫出來的灰白格紋（假透明）。
 - 去背：每格以裁切框四周中位數當背景色，從邊緣「洪水填滿」——同時要接近背景色（亮度＋色相，色相加重）且與鄰點相近，
   所以會順著漸層走、碰到暗色盔甲就停。靠近背景的偏紅像素當成光暈：依色差給半透明並扣掉背景色還原顏色；裁切框邊 14px 淡出；
   碰到左右邊的小塊（隔壁格伸進來的劍、翅膀）與小碎點會去掉。
+  格紋模式：亮（平均 > 165）且接近中性灰（最大最小差 < 24）的像素一律當背景（角色身上的空隙也去掉）；背景 8px 內的像素以「與最近格紋色的最大色差 ÷ 150」當透明度並扣掉格紋色，火焰與翼緣變成半透明。
 - 對齊：腳底＝最大塊最下面；水平＝頭部中心；身高＝腳底到頭頂（只用向下、向右量，取中位數）→ 縮放到 `charH`。
   輸出所有格同尺寸、腳底貼齊格子底部；執行後印出 `cellW／cellH／格數`，照抄到 `classes.js` 的 `sprite`。
 - **注意**：腳本要存成 UTF-8 **含 BOM**（Windows PowerShell 5.1 沒 BOM 會把中文註解讀壞，C# 編譯失敗）。
