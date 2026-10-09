@@ -259,6 +259,7 @@ function fieldCombatRound() {
         rollSpellShardFieldDrops(rolls);        // 中品（凡界＋靈界）／上品（靈界）武學秘典碎片（spells.js，第 35 節；挑戰模式 ×1.5～×3）
         rollBlueprintChallengeDrops(rolls);     // 挑戰模式才有的野外鍛造圖紙（equipment.js，第 70 節）
         rollSpacetimeDrops(rolls);              // 時空秘境專屬掉落（map.js，第 78 節）
+        rollXianmoDrops(rolls);                 // 仙魔戰場專屬掉落（map.js，第 79 節）
         onLingjieKills(killedCount, raceKilled);   // 靈界任務榜進度（lingjie.js，第 74 節）
         gainKillProficiency(killedCount * rewardMult);   // 主修職業熟練度（profession.js）
         if (waveSummary) {

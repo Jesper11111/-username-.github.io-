@@ -326,6 +326,7 @@ async function enterXianmoBattlefield() {
         + `\n・敵人＝你所在境界的 10 階（你是${realms[player.realmIndex]} → ${nv2LevelLabel(item.nv2FixedL)}），強度同【${main ? main.name : '主要練功圖'}】${lo}～${hi} 倍`
         + `\n・敵人 ${getMapRespawnSeconds(item)} 秒就刷新，讓你自顧不暇；戰死照常折損壽元、遺失 10% 靈石，回到${respawnPlaceName()}`
         + `\n・經驗、靈石、聲望照【${main ? main.name : '主要練功圖'}】計算，沒有收益上限：殺得越快拿得越多`
+        + `\n・專屬掉落：${Math.max(XIANMO_DROPS.blueprintMinLevel, getBlueprintDropLevel())} 等鍛造圖紙、上品武學秘典碎片、絕學武學秘典碎片（極稀有）、尊者以上夥伴碎片（帝境、至高極稀有）`
         + `\n\n確定進入？`;
     if (!(await gameConfirm(msg))) return;
     selectMap(f.c, f.i, true);
@@ -388,6 +389,33 @@ function rollSpacetimeDrops(rolls, silent) {
     const t = parts.join('、');
     if (t && !silent) addLog(`🌀 時空秘境的妖獸遺落 ${t}！`, "level-up", false, "item");
     return t;
+}
+// 仙魔戰場專屬掉落（第 79 節；機率 config-maps.js 的 XIANMO_DROPS）：圖紙 Lv.2500 起、絕學碎片、尊者／帝境／至高夥伴碎片
+//   rolls＝掉寶次數（線上 combat.js 的 takeDropRolls、離線 save.js 的收益次數）；silent＝離線結算（不逐筆寫日誌，回傳彙總文字；夥伴碎片照常寫日誌）
+function isXianmoMap(item) {
+    item = item || player.currentMap;
+    return !!(item && item.xianmo && !(item === player.currentMap && player.currentMapIsSafe));
+}
+function rollXianmoDrops(rolls, silent) {
+    if (!(rolls > 0) || !isXianmoMap()) return '';
+    const D = XIANMO_DROPS, parts = [];
+    const count = p => { const e = rolls * p; let n = Math.floor(e); if (Math.random() < e - n) n++; return n; };
+    // 鍛造圖紙：自己能掉的最高檔，至少 2500 等（grantBlueprint 每張各擲一次，5000 等以下 ×2）
+    const lv = Math.max(D.blueprintMinLevel, getBlueprintDropLevel());
+    let bp = 0, tries = count(1);
+    for (let i = 0; i < tries; i++) { const t = grantBlueprint(D.blueprint, '仙魔戰場斬殺敵人，', lv); if (t) { bp++; if (!silent) addLog(t, "level-up", false, "item"); } }
+    if (bp) parts.push(`${lv} 等鍛造圖紙 ×${bp}`);
+    // 絕學武學秘典碎片（上品碎片走靈界野外原本的 rollSpellShardFieldDrops）
+    const us = count(D.ultimateShard);
+    if (us > 0) { addSpellShards(us, silent ? null : '仙魔戰場的敵人身上掉出', 'ultimate'); parts.push(`${spellShardName('ultimate')}×${us}`); }
+    // 夥伴碎片：每個評級各自擲（每次掉寶最多觸發一次），只掉該評級尚未結識的夥伴
+    D.partner.forEach(c => {
+        for (let i = count(c.p); i > 0; i--) {
+            const g = grantPartnerShards([c.tier], 1, c.amount, '仙魔戰場斬殺敵人');
+            if (g) parts.push(`${c.tier}【${g.p.name}】碎片×${g.n}`);
+        }
+    });
+    return parts.join('、');
 }
 function challengeStrengthText(item) {
     const main = getMainMapForRealm();

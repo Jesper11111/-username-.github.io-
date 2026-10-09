@@ -24,7 +24,9 @@ const SPELL_SHARD_GRADE = "low";
 const SPELL_SHARD_KINDS = {
     low:  { key: "spellShards",     from: "奇遇、機緣探索取得" },
     mid:  { key: "spellShardsMid",  from: "凡界（人界）、靈界野外妖獸掉落" },
-    high: { key: "spellShardsHigh", from: "靈界野外妖獸掉落" }
+    high: { key: "spellShardsHigh", from: "靈界野外妖獸掉落" },
+    // 絕學（2026-10-09 使用者：「仙魔戰場掉落絕學碎片」；map.js 的 rollXianmoDrops，掉率 config-maps.js 的 XIANMO_DROPS）
+    ultimate: { key: "spellShardsUltimate", from: "靈界・仙魔戰場妖獸掉落（極稀有）" }
 };
 // 野外掉落：每次掉寶（combat.js 的 takeDropRolls，每小時最多 1200 次；離線用收益次數）掉 1 片的機率
 //   中品 1/300 → 每小時約 4 片（約 25 小時合成一招）；上品 1/600 → 每小時約 2 片（約 50 小時一招）

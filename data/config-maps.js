@@ -126,6 +126,19 @@ const OFFLINE_COMBAT_RATE = 0.3;
 const MEDITATE_LOG_SECONDS = 30;
 // 野外一波全滅後，等多少秒刷新下一波（2026-09-28 由 5 秒改為 10 秒，減少戰鬥節奏與日誌量）
 const MONSTER_RESPAWN_SECONDS = 10;
+// 仙魔戰場專屬掉落（2026-10-09 使用者：「掉落 2500 等以上裝備製作圖、上品武學秘典碎片、絕學碎片、尊者以上碎片；帝境、至高掉落機率難」→ 選「很難」；map.js 的 rollXianmoDrops，第 79 節）
+//   每次掉寶的機率（combat.js 的 takeDropRolls，每小時最多 1200 次；離線用收益次數）：
+//   blueprint 圖紙（等級＝max(2500, 自己能掉的最高檔)；5000 等以下再 ×2 照 grantBlueprint）→ 每小時約 0.6～1.2 張
+//   ultimateShard 絕學武學秘典碎片 → 每小時約 0.2 片（100 片約 500 小時一招）；上品碎片用靈界野外原本的 1/600（約 50 小時一招，spells.js）
+//   partner 夥伴碎片：只掉該評級尚未結識的（不往上遞補）；尊者約 45 小時一位、帝境（300 片）約 750 小時、至高（500 片）約 3000 小時
+const XIANMO_DROPS = {
+    blueprintMinLevel: 2500, blueprint: 1 / 2000, ultimateShard: 1 / 6000,
+    partner: [
+        { tier: "尊者", p: 1 / 800,   amount: [1, 2] },
+        { tier: "帝境", p: 1 / 6000,  amount: [1, 3] },
+        { tier: "至高", p: 1 / 15000, amount: [1, 3] }
+    ]
+};
 // 地圖可用 respawnSec 自訂刷新秒數（時空秘境 3 秒：刷新期間的調息少，降低生存率；map.js 的 getMapRespawnSeconds）
 // 時空秘境（亂星海，2026-10-06 使用者指定；map.js 的 enterSpacetimeRealm／rollSpacetimeDrops）：
 //   maxRealm：仙人初境（索引 10）以下可進；str：妖獸強度＝自己境界 10 階的幾倍；craftMult：做裝通貨與中品武學秘典碎片掉率倍數（map.js 的 getChallengeCraftMult）
