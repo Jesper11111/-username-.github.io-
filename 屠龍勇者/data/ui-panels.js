@@ -119,6 +119,13 @@ function renderLogPop() {
 }
 
 function huntButtonsHtml() {
+    // PC 橫式外框：地圖、村莊、回家卷軸、步行回村都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與魔塔上下樓
+    if (isPcFrame()) {
+        if (inTown()) return '';
+        if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
+        const z = currentZone();
+        return z && z.type === 'tower' ? `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>` : '';
+    }
     if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
@@ -134,8 +141,13 @@ function huntButtonsHtml() {
 function updateHuntLive() {
     const btns = $('hunt-btns');
     if (btns) {
-        const sig = [inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
-        if (btns.dataset.sig !== sig) { btns.dataset.sig = sig; btns.innerHTML = huntButtonsHtml(); }
+        const sig = [isPcFrame(), inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
+        if (btns.dataset.sig !== sig) {
+            btns.dataset.sig = sig;
+            btns.innerHTML = huntButtonsHtml();
+            const ctrl = btns.closest('.hunt-ctrl');
+            if (ctrl) ctrl.classList.toggle('empty', !btns.innerHTML);
+        }
     }
     startScene();
     const buffs = $('hunt-buffs');
