@@ -145,25 +145,25 @@ const MONSTERS = {
     },
     // 四大龍（數值寫死）
     antharas: {
-        name: '地龍・安塔瑞斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
+        name: '地龍・格爾莫斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
         hp: 9000, ac: -50, hit: 70, dmg: [45, 95], spd: 1900, exp: 600000, gold: [20000, 30000], mr: 50,
         magic: { p: 0.25, dmg: [120, 200], name: '大地震動' },
         drops: [{ id: 'antharasScale', p: 1, n: [2, 3] }, { id: 'elixir', p: 0.3 }, { id: 'bWeaponScroll', p: 0.3 }, { id: 'bArmorScroll', p: 0.4 }, { id: 'knightShield', p: 0.2 }],
     },
     fafurion: {
-        name: '水龍・法利昂', icon: '🐉', lv: 72, boss: true, dragon: true, large: true,
+        name: '水龍・瑟拉恩', icon: '🐉', lv: 72, boss: true, dragon: true, large: true,
         hp: 14000, ac: -60, hit: 82, dmg: [55, 115], spd: 1800, exp: 1500000, gold: [30000, 45000], mr: 60,
         magic: { p: 0.3, dmg: [150, 250], name: '海嘯' },
         drops: [{ id: 'fafurionScale', p: 1, n: [2, 3] }, { id: 'iceQueenStaff', p: 0.15 }, { id: 'elixir', p: 0.35 }, { id: 'bWeaponScroll', p: 0.35 }, { id: 'bArmorScroll', p: 0.45 }],
     },
     lindvior: {
-        name: '風龍・林德拜爾', icon: '🐉', lv: 82, boss: true, dragon: true, large: true,
+        name: '風龍・維斯塔爾', icon: '🐉', lv: 82, boss: true, dragon: true, large: true,
         hp: 20000, ac: -70, hit: 95, dmg: [65, 130], spd: 1700, exp: 3500000, gold: [45000, 60000], mr: 65,
         magic: { p: 0.3, dmg: [180, 300], name: '暴風' },
         drops: [{ id: 'lindviorScale', p: 1, n: [2, 3] }, { id: 'windBow', p: 0.2 }, { id: 'magicSniper', p: 0.15 }, { id: 'elixir', p: 0.4 }, { id: 'bWeaponScroll', p: 0.4 }, { id: 'bArmorScroll', p: 0.5 }],
     },
     valakas: {
-        name: '火龍・巴拉卡斯', icon: '🔥', lv: 92, boss: true, dragon: true, large: true,
+        name: '火龍・莫爾加斯', icon: '🔥', lv: 92, boss: true, dragon: true, large: true,
         hp: 28000, ac: -80, hit: 108, dmg: [80, 160], spd: 1700, exp: 8000000, gold: [60000, 90000], mr: 70,
         magic: { p: 0.35, dmg: [220, 360], name: '煉獄火焰' },
         drops: [{ id: 'valakasScale', p: 1, n: [2, 3] }, { id: 'dkFlameSword', p: 0.2 }, { id: 'elixir', p: 0.5 }, { id: 'bWeaponScroll', p: 0.5 }, { id: 'bArmorScroll', p: 0.6 }],

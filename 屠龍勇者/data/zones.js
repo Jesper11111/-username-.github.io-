@@ -120,10 +120,10 @@ const ZONES = [
             { id: 'knightHelm', p: 0.0008 }, { id: 'knightShield', p: 0.0008 }, { id: 'holyMace', p: 0.0004 }, { id: 'tsurugi', p: 0.0002 }],
         desc: '共 100 層，每 10 層有守關首領，擊敗後才能往上 10 層。',
     },
-    { id: 'lairAntharas', name: '安塔瑞斯的巢穴', icon: '🐲', type: 'dragon', boss: 'antharas', reqLv: 60, town: 'aden', fee: 5000, cdH: 6, lv: [60, 99], desc: '大地之龍。' },
-    { id: 'lairFafurion', name: '法利昂的巢穴',   icon: '🌊', type: 'dragon', boss: 'fafurion', reqLv: 70, prev: 'antharas', town: 'aden', fee: 8000, cdH: 6, lv: [70, 99], desc: '水之龍。' },
-    { id: 'lairLindvior', name: '林德拜爾的巢穴', icon: '🌪️', type: 'dragon', boss: 'lindvior', reqLv: 80, prev: 'fafurion', town: 'aden', fee: 12000, cdH: 6, lv: [80, 99], desc: '風之龍。' },
-    { id: 'lairValakas',  name: '巴拉卡斯的巢穴', icon: '🌋', type: 'dragon', boss: 'valakas', reqLv: 88, prev: 'lindvior', town: 'aden', fee: 20000, cdH: 6, lv: [88, 99], desc: '火之龍，四大龍之首。' },
+    { id: 'lairAntharas', name: '格爾莫斯的巢穴', icon: '🐲', type: 'dragon', boss: 'antharas', reqLv: 60, town: 'aden', fee: 5000, cdH: 6, lv: [60, 99], desc: '大地之龍。' },
+    { id: 'lairFafurion', name: '瑟拉恩的巢穴',   icon: '🌊', type: 'dragon', boss: 'fafurion', reqLv: 70, prev: 'antharas', town: 'aden', fee: 8000, cdH: 6, lv: [70, 99], desc: '水之龍。' },
+    { id: 'lairLindvior', name: '維斯塔爾的巢穴', icon: '🌪️', type: 'dragon', boss: 'lindvior', reqLv: 80, prev: 'fafurion', town: 'aden', fee: 12000, cdH: 6, lv: [80, 99], desc: '風之龍。' },
+    { id: 'lairValakas',  name: '莫爾加斯的巢穴', icon: '🌋', type: 'dragon', boss: 'valakas', reqLv: 88, prev: 'lindvior', town: 'aden', fee: 20000, cdH: 6, lv: [88, 99], desc: '火之龍，四大龍之首。' },
 ];
 const ZONE_BY_ID = Object.fromEntries(ZONES.map(z => [z.id, z]));
 const DRAGON_IDS = ['antharas', 'fafurion', 'lindvior', 'valakas'];
