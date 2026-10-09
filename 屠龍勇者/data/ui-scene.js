@@ -8,7 +8,7 @@
 //   村莊：畫建築，點一下打開對應設施
 const TILE = 32;
 const MAP_W = 28, MAP_H = 28;     // 格子地圖的大小；背景圖地圖用 SCENE_BGS 的 w/h（scene.mw/mh）
-const MAP_MON_COUNT = 6;
+const MAP_MON_COUNT = 10;        // 怪群最多 6 隻，地圖上多放幾隻讓牠們有得綁
 const PLAYER_SPEED = 5.5;         // 每秒幾格
 const MON_WANDER_MS = [900, 2600];
 
@@ -178,12 +178,12 @@ function visualMonster() {
     if (!z || z.type === 'dragon') return null;
     if (z.type === 'tower') {
         const g = Math.min(9, Math.floor((player.loc.floor - 1) / 10));
-        return { icon: TOWER_ICONS[g], name: TOWER_THEMES[g][0] };
+        return { icon: TOWER_ICONS[g], name: TOWER_THEMES[g][0], mid: null };
     }
     let pool = z.mons.filter(id => MONSTERS[id].lv <= player.lv + 3);
     if (!pool.length) pool = [z.mons[0]];
     const id = pool[rand(0, pool.length - 1)];
-    return { icon: MONSTERS[id].icon, name: MONSTERS[id].name };
+    return { icon: MONSTERS[id].icon, name: MONSTERS[id].name, mid: id };
 }
 
 function spawnMapMon(near) {
@@ -193,7 +193,7 @@ function spawnMapMon(near) {
         const r = near ? rand(2, 4) : rand(3, 9);
         const x = scene.pl.x + rand(-r, r), y = scene.pl.y + rand(-r, r);
         if (freeTile(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2) {
-            const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
+            const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, mid: look.mid, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
             scene.mons.push(m);
             return m;
         }
@@ -270,8 +270,19 @@ function sceneUpdate(dt) {
             if (freeTileFor(pl.x + d[0], pl.y + d[1])) pl.path = [[pl.x + d[0], pl.y + d[1]]];
         }
     }
+    if (inZone && !pl.path.length) {
+        // 野外也能用方向鍵／WASD 手動走（之後幾秒不會被自動尋怪拉走）
+        const d = sceneKeyDir();
+        if (d) {
+            pl.dir = d[2];
+            if (freeTileFor(pl.x + d[0], pl.y + d[1])) pl.path = [[pl.x + d[0], pl.y + d[1]]];
+            scene.manualUntil = gameNow + MANUAL_HOLD_MS;
+        }
+    }
+    sceneTeleTick(dt);
     if (scene.moveMark) { scene.moveMark.t += dt; if (scene.moveMark.t > 700 || !pl.path.length) scene.moveMark = null; }
-    if (!pl.path.length) {
+    const manual = inZone && scene.manualUntil > gameNow;
+    if (!pl.path.length && !manual && !scene.dodging) {
         if (fighting && scene.engaged) {
             const e = scene.engaged;
             if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = findPath(pl.x, pl.y, e.x, e.y, true);
@@ -313,6 +324,30 @@ function sceneUpdate(dt) {
     if (pl.lunge) { pl.lunge.t += dt; if (pl.lunge.t > 180) pl.lunge = null; }
     if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
+}
+
+// ───────── 首領大招紅圈（hunt.tele）與自動閃避 ─────────
+const MANUAL_HOLD_MS = 2500;   // 手動移動後幾毫秒內不自動尋怪
+function sceneTeleTick(dt) {
+    const t = hunt && hunt.tele, pl = scene.pl;
+    if (!t || player.loc.type !== 'zone') { scene.tele = null; scene.dodging = false; return; }
+    if (!scene.tele || scene.tele.ref !== t) scene.tele = { ref: t, x: pl.x, y: pl.y, r: 1.5, react: rand(350, 900) };
+    const c = scene.tele;
+    const inside = Math.hypot(pl.rx - c.x, pl.ry - c.y) <= c.r;
+    t.dodged = !inside;          // 回報給 combat.js（時間到時用這個判斷有沒有閃開）
+    t.seenAt = gameNow;
+    if (!inside) { if (!pl.path.length) scene.dodging = false; return; }
+    if (!player.settings.autoDodge || scene.manualUntil > gameNow || scene.dodging) return;
+    c.react -= dt;               // 自動閃避有反應時間，偶爾會來不及
+    if (c.react > 0) return;
+    let best = null;
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const x = pl.x + dx, y = pl.y + dy;
+        if (Math.hypot(x - c.x, y - c.y) <= c.r + 0.4 || !freeTileFor(x, y)) continue;
+        const path = findPath(pl.x, pl.y, x, y, false);
+        if (path.length && (!best || path.length < best.length)) best = path;
+    }
+    if (best) { pl.path = best; scene.dodging = true; }
 }
 
 function addFloat(tx, ty, text, color, big) {
@@ -436,6 +471,17 @@ function sceneDraw(ctx, W, H) {
         scene.npcRects = scene.bg.hot.map(h => ({ x0: (h.r[0] - ox) * kx, y0: (h.r[1] - oy) * ky, x1: (h.r[2] - ox) * kx, y1: (h.r[3] - oy) * ky, npc: { act: h.act } }));
     }
     if (inTownNow) for (const h of TOWN_HOUSES) drawHouse(ctx, h, camX, camY);
+    // 首領大招紅圈：外圈閃爍、內圈隨蓄力時間長大，滿了就爆
+    if (scene.tele && scene.tele.ref) {
+        const c = scene.tele, t = c.ref, k = clamp((gameNow - t.start) / (t.until - t.start), 0, 1);
+        const cx = c.x * TILE - camX + TILE / 2, cy = c.y * TILE - camY + TILE / 2, R = (c.r + 0.5) * TILE;
+        ctx.fillStyle = `rgba(220,30,20,${0.18 + 0.1 * Math.sin(gameNow / 80)})`;
+        ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,60,30,0.35)';
+        ctx.beginPath(); ctx.ellipse(cx, cy, R * k, R * 0.75 * k, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ff3a1a'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.75, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1;
+    }
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
     if (inTownNow) scene.npcRects = [];
@@ -618,16 +664,43 @@ function startScene() {
 }
 
 function sceneClick(ev) {
-    if (!scene || player.loc.type !== 'town') return;
+    if (!scene) return;
     const cv = $('scene-canvas'), r = cv.getBoundingClientRect();
     const z = scene.zoom || 1;
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
+    if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { plate.npc.act(); return; }
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
     const b = !scene.bg && TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
     if (b) { b.act(); return; }
     sceneWalkTo(tx, ty);
+}
+
+// 野外點擊（ARPG 手動操作）：點怪＝改打牠／把牠拉進戰鬥（沒掛機會自動開始）；點地面＝走過去，之後 2.5 秒不自動尋怪
+function sceneZoneClick(wx, wy) {
+    if (walkHome) return;
+    let hit = null, bd = 0.85;
+    for (const m of scene.mons) {
+        if (m.dead) continue;
+        const d = Math.hypot(wx / TILE - (m.rx + 0.5), wy / TILE - (m.ry + 0.3));
+        if (d < bd) { bd = d; hit = m; }
+    }
+    if (hit) {
+        if (hit.inst) focusMob(hit.inst);
+        else {
+            const inst = pullMob(hit.mid);
+            if (!inst) { showToast('圍上來的怪太多了，先解決眼前的敵人'); return; }
+            hit.inst = inst; hit.icon = inst.icon; hit.name = inst.name; hit.lastHp = inst.hp;
+        }
+        scene.manualUntil = 0;
+        scene.effects.push({ x: hit.rx, y: hit.ry, t: 0, dur: 350, color: '#ffe7a8' });
+        updateHuntLive();
+        return;
+    }
+    const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
+    sceneWalkTo(tx, ty);
+    if (scene.pl.path.length) scene.manualUntil = gameNow + MANUAL_HOLD_MS + scene.pl.path.length * 1000 / PLAYER_SPEED;
 }
 
 // 村莊自由移動：點到可走的格子就走過去；點到牆／建築就走到最近的旁邊
@@ -654,13 +727,15 @@ function sceneKeyDir() { return sceneKeys.length ? SCENE_KEY_DIRS[sceneKeys[scen
 function sceneKeyName(ev) { return ev.key.length === 1 ? ev.key.toLowerCase() : ev.key; }
 document.addEventListener('keydown', ev => {
     const k = sceneKeyName(ev);
-    if (!SCENE_KEY_DIRS[k] || ev.ctrlKey || ev.metaKey || ev.altKey) return;
-    if (!scene || !player || player.loc.type !== 'town' || !huntVisible()) return;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (!scene || !player || !huntVisible() || walkHome) return;
+    if (!SCENE_KEY_DIRS[k] && !/^[1-4]$/.test(k)) return;
     const t = ev.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
     const dl = $('dialog-layer');
     if (dl && dl.classList.contains('active')) return;
     ev.preventDefault();
+    if (/^[1-4]$/.test(k)) { if (!ev.repeat) skillBarCast(+k - 1); return; }   // 技能快捷鍵
     if (!sceneKeys.includes(k)) sceneKeys.push(k);
     scene.pl.path = scene.pl.path.slice(0, 1);   // 改用鍵盤：取消點地圖的路線（走完這一格）
     scene.moveMark = null;
