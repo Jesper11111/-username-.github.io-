@@ -17,7 +17,8 @@
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
-| `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；地圖詞綴 `MAP_MODS`、`applyMapMods`、`mapBonus`、`mapModsPanelHtml`（第 23、24 節） |
+| `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
+| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
@@ -38,7 +39,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → craft → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → craft → maps → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -46,7 +47,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009r`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009s`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -556,20 +557,20 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - 介面：背包點裝備 →「🔮 改造」開 `openCraftDialog`（上方裝備詞綴、下方全部通貨與數量，不能用的變灰），點一顆就套用並重畫視窗；點通貨道具會切到背包裝備頁。
   圖鑑新增「通貨」分類，取得方式顯示掉落機率。
 
-## 24. 地圖詞綴（POE 異界地圖；`craft.js`；2026-10-09，版本 `20261009r`）
+## 24. 異界地圖 T1～T15（POE 式；`maps.js`；2026-10-09，版本 `20261009s`，存檔 schema 3）
 
-- 「地圖」頁上方「🌀 異界詞綴」可自由開關，存在 `player.mapMods`（陣列，舊存檔 `migrateSave` 補 `[]`）。套用到所有野外、地監、永夜之塔（龍穴不套用）。
-
-| id | 名稱 | 效果 | 獎勵 |
-|---|---|---|---|
-| tough | 💪 強壯 | 怪物 HP +40% | +15% |
-| savage | 🩸 兇猛 | 怪物傷害（含魔法）+30% | +20% |
-| swarm | 🐺 成群 | 怪群上限 +2、中途加入機率 ×2 | +15% |
-| elite | ⭐ 精英 | 每隻 15% 變「精英・名稱」：HP ×3、傷害 ×1.5、經驗 ×4、金幣 ×3、必掉隨機裝備（地圖上金圈＋金色名字） | +10% |
-| warded | 🔰 抗魔 | 怪物 MR +25 | +10% |
-| swift | 💨 迅捷 | 怪物攻速 +25% | +15% |
-| blight | 🥀 枯竭 | 你的自然回復 -40% | +10% |
-
-- 獎勵 `mapBonus()`＝開啟詞綴加成總和：經驗、金幣、所有掉落機率（含通貨、隨機裝備；必掉的 p≥1 不變）×(1＋加成)。
-- 怪物在 `addMob` 時套用 `applyMapMods`，所以快轉模擬（離線收益）也會反映。狩獵畫面標題顯示「🌀圖示 獎勵 +N%」。
-- 平衡（30 分鐘模擬，開強壯＋兇猛＋精英）：經驗 +15～50%，藥水消耗約 ×1.6～2，基本裝備容易陣亡——給裝備好的玩家拿來加速。
+- 取代第 23 節同日的「自由開關詞綴」（`player.mapMods` 已移除，`migrateSave` 刪掉）。地圖詞綴只在異界裡生效。
+- **地圖道具** `map1`～`map15`（`cat: 'map'`、不堆疊、`wt: 0`，載入時併入 `ITEMS`）：實體帶 `q`（magic 1～2 條／rare 3～4 條）、`mm` 詞綴、`nm` 名稱前綴。
+  階級對應地區 `mapZoneFor(t)`：野外＋地監依建議等級排序（14 個），T15 用最後一個（泰坦墓穴）且怪物 HP／傷害／經驗 ×1.4。
+- **地圖詞綴** `MAP_MODS`（8 種）：強壯 HP+40%、兇猛 傷害+30%、成群 怪群上限+2 且數量+50%、**大軍 數量+100%**、精英、抗魔、迅捷、枯竭；
+  獎勵加成 `mapBonusOf`（經驗、金幣、所有掉落機率）。
+- **開啟**：村莊「地圖」頁「🌀 異界裝置」或背包地圖「🌀 開啟」→ `openMap`，建立 `player.mapRun = { t, zone, mods, q, name, total, left, boss }`、傳送到該地區並開始掛機。
+  **怪物數量 `total` = 200～300 × `mapQtyOf`（1＋數量詞綴，最多 ×3）**。每擊殺一隻 `left--`（`mapOnKill`），怪群不會超過剩餘數量。
+  `left` 歸零後下一次尋怪出現「異界首領・名稱」（`makeMapBoss`：地區稀有首領 HP ×2，或最強怪 HP ×8；首領大招紅圈照常），打倒＝`completeMap`：
+  通關獎勵 1 張地圖（同階 55%／+1 35%／+2 10%）＋50% 再一張同階或低一階，然後回村。
+- **地圖消失**：中途回城（回家卷軸、步行、死亡、瞬移逃離龍穴等所有 `moveToTown`）→ `endMapRun`。地圖頁也可「放棄這張地圖」。
+- **掉落**：一般地圖每隻 0.4%（`MAP_DROP_P`，階級＝怪物等級對應的最高階 `mapTierForLv`）、異界裡 1.5%（同階 ±1）；品質 普通 50%／魔法 35%／稀有 15%。
+- **通貨改地圖**（`MAP_CURRENCY`）：點化（普通→魔法）、重鑄（重擲魔法）、晉升（魔法→稀有＋1 條）、混沌（重擲稀有 3～4 條）、剝離（移除 1 條）、
+  命運（普通→魔法 70%／稀有 30%）、神諭（稀有＋1 條，最多 6）；淬鍊石不能用在地圖。`craft.js` 的 `currencyCan`／`useCurrency` 依道具類型分流。
+- **離線**：快轉模擬照樣套用地圖詞綴；`applyOffline` 最多只會把剩下的怪打完（首領要上線打），結束訊息提示首領在等；離線中回城也會關閉地圖。
+- 介面：狩獵畫面左上 `#map-prog` 顯示「🌀 T5 剩 132/240 圖示 +45%」；背包新增「地圖」篩選；圖鑑新增「地圖」分類（取得方式、地區）。

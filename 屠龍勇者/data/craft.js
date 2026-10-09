@@ -1,4 +1,4 @@
-// 屠龍勇者：製作通貨（POE 式改造裝備）與地圖詞綴（ARCHITECTURE.md 第 23、24 節）（依賴 items、affix、player）
+// 屠龍勇者：製作通貨（POE 式改造裝備與異界地圖）（ARCHITECTURE.md 第 23 節）（依賴 items、affix、player；地圖部分見 maps.js）
 // ───────── 製作通貨 ─────────
 // 通貨是可堆疊道具（cat 'currency'，不佔負重），怪物掉落；在背包點裝備 →「🔮 改造」使用。
 // 傳說裝備只能用淬鍊石（重骰數值）；稀有最多 6 條詞綴（自然掉落 3～4 條）。
@@ -48,16 +48,25 @@ function rerollAffixValues(x) {
 }
 
 // 對裝備使用通貨；回傳錯誤訊息（成功回傳 ''）
+// 這顆通貨能不能用在這件道具上（裝備用 CURRENCY 的規則；異界地圖用 maps.js 的 MAP_CURRENCY）
+function currencyCan(cid, x) {
+    const d = ITEMS[x.id];
+    if (d.cat === 'map') return !!(MAP_CURRENCY[cid] && MAP_CURRENCY[cid].can(x));
+    if (d.cat !== 'weapon' && d.cat !== 'armor') return false;
+    if (x.q === 'legend' && cid !== 'curTemper') return false;
+    return CURRENCY[cid].can(x);
+}
+
 function useCurrency(cid, uid) {
     const c = CURRENCY[cid], x = findAnyInst(uid);
     if (!c || !x) return '找不到道具';
     const d = ITEMS[x.id];
-    if (d.cat !== 'weapon' && d.cat !== 'armor') return '只能用在武器、防具上';
+    if (d.cat !== 'weapon' && d.cat !== 'armor' && d.cat !== 'map') return '只能用在武器、防具、異界地圖上';
     if (x.q === 'legend' && cid !== 'curTemper') return '傳說裝備只能用淬鍊石';
-    if (!c.can(x)) return `${c.name}不能用在這件裝備上`;
+    if (!currencyCan(cid, x)) return `${c.name}不能用在這件道具上`;
     if (!consumeItem(cid)) return `沒有${c.name}`;
     const before = itemName(x);
-    c.use(x);
+    if (d.cat === 'map') MAP_CURRENCY[cid].use(x); else c.use(x);
     clampHpMp();
     addLog(`${c.icon} 使用${c.name}：${before} → ${itemName(x)}`, x.q === 'legend' ? 'boss' : 'rare');
     return '';
@@ -76,10 +85,11 @@ function openCraftDialog(uid) {
     const x = findAnyInst(uid);
     if (!x) return;
     const rows = CURRENCY_IDS.map(cid => {
-        const c = CURRENCY[cid], n = countItem(cid);
-        const ok = n > 0 && (x.q !== 'legend' || cid === 'curTemper') && c.can(x);
+        const c = CURRENCY[cid], n = countItem(cid), isMap = ITEMS[x.id].cat === 'map';
+        if (isMap && !MAP_CURRENCY[cid]) return '';
+        const ok = n > 0 && currencyCan(cid, x);
         return `<button class="craft-cur ${ok ? '' : 'off'}" onclick="craftUseBtn('${cid}',${uid})" ${ok ? '' : 'disabled'}>
-            <span class="cc-i">${c.icon}</span><span class="cc-n">${c.name} <b>×${fmt(n)}</b></span><small>${c.desc}</small></button>`;
+            <span class="cc-i">${c.icon}</span><span class="cc-n">${c.name} <b>×${fmt(n)}</b></span><small>${isMap ? MAP_CURRENCY[cid].desc : c.desc}</small></button>`;
     }).join('');
     openDialog('🔮 通貨改造', `<div class="craft-item">${itemDescHtml(x)}</div><div class="craft-list">${rows}</div>`,
         [{ text: '關閉', cls: 'secondary', onClick: () => refreshUI() }]);
@@ -90,59 +100,4 @@ function craftUseBtn(cid, uid) {
     if (err) { showToast(err); return; }
     saveGame();
     openCraftDialog(uid);   // 重畫視窗顯示新詞綴
-}
-
-// ───────── 地圖詞綴（POE 異界地圖）─────────
-// 在「地圖」頁開關，套用到所有野外、地監、永夜之塔（龍穴不套用）；越難獎勵越多：經驗、金幣、掉落機率 ×(1＋bonus)
-const MAP_MODS = {
-    tough:   { name: '強壯', icon: '💪', desc: '怪物 HP +40%', bonus: 0.15 },
-    savage:  { name: '兇猛', icon: '🩸', desc: '怪物傷害 +30%', bonus: 0.2 },
-    swarm:   { name: '成群', icon: '🐺', desc: '怪群上限 +2、加入機率 ×2', bonus: 0.15 },
-    elite:   { name: '精英', icon: '⭐', desc: '每隻 15% 機率變精英（HP ×3、傷害 ×1.5，經驗 ×4、必掉隨機裝備）', bonus: 0.1 },
-    warded:  { name: '抗魔', icon: '🔰', desc: '怪物 MR +25', bonus: 0.1 },
-    swift:   { name: '迅捷', icon: '💨', desc: '怪物攻速 +25%', bonus: 0.15 },
-    blight:  { name: '枯竭', icon: '🥀', desc: '你的自然回復 -40%', bonus: 0.1 },
-};
-function mapModsOn() {
-    const z = currentZone();
-    if (!z || z.type === 'dragon') return [];
-    return (player.mapMods || []).filter(k => MAP_MODS[k]);
-}
-function mapModOn(k) { return mapModsOn().includes(k); }
-function mapBonus() { return mapModsOn().reduce((a, k) => a + MAP_MODS[k].bonus, 0); }
-
-// 新出現的怪套用地圖詞綴（combat.js 的 addMob 呼叫）
-function applyMapMods(m) {
-    const on = mapModsOn();
-    if (!on.length) return m;
-    if (on.includes('elite') && !m.boss && !m.elite && chance(0.15)) {
-        m.elite = true; m.name = '精英・' + m.name;
-        m.hp = m.maxHp = Math.round(m.maxHp * 3);
-        m.dmg = m.dmg.map(d => Math.round(d * 1.5));
-        m.exp *= 4; m.gold = m.gold.map(g => g * 3);
-    }
-    if (on.includes('tough')) m.hp = m.maxHp = Math.round(m.maxHp * 1.4);
-    if (on.includes('savage')) { m.dmg = m.dmg.map(d => Math.round(d * 1.3)); if (m.magic) m.magic = { ...m.magic, dmg: m.magic.dmg.map(d => Math.round(d * 1.3)) }; }
-    if (on.includes('warded')) m.mr = (m.mr || 0) + 25;
-    if (on.includes('swift')) m.spd = Math.round(m.spd / 1.25);
-    return m;
-}
-
-function toggleMapMod(k) {
-    if (!MAP_MODS[k]) return;
-    const list = player.mapMods || (player.mapMods = []);
-    const i = list.indexOf(k);
-    if (i >= 0) list.splice(i, 1); else list.push(k);
-    saveGame();
-    renderPanel();
-}
-function mapModsPanelHtml() {
-    const list = player.mapMods || [];
-    const bonus = list.filter(k => MAP_MODS[k]).reduce((a, k) => a + MAP_MODS[k].bonus, 0);
-    return `<div class="panel map-mods"><h4>🌀 異界詞綴 <small class="${bonus ? 'warn' : 'muted'}">${bonus ? `難度提升・獎勵 +${Math.round(bonus * 100)}%` : '未啟用'}</small></h4>
-        <small class="muted">開啟後套用到所有野外、地監與永夜之塔（龍穴除外）。獎勵：經驗、金幣、掉落機率都 ×(1＋加成)。</small>
-        <div class="mod-grid">${Object.keys(MAP_MODS).map(k => {
-            const m = MAP_MODS[k], on = list.includes(k);
-            return `<button class="mod-chip ${on ? 'on' : ''}" onclick="toggleMapMod('${k}')"><b>${m.icon} ${m.name}</b><small>${m.desc}</small><span>+${Math.round(m.bonus * 100)}%</span></button>`;
-        }).join('')}</div></div>`;
 }
