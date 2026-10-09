@@ -44,7 +44,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009j`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -421,13 +421,16 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   欄杆尖刺那一帶只挖暗背景，帶紅色調的格紋也一併挖掉；輸出兩個檔：
   - `images/frame-pc.jpg`（約 270KB）：外框圖，窗口填暗色。
   - `images/frame-pc-mask.png`（約 31KB）：只有 alpha（外框 255、窗口 0，邊緣半透明）。
+- **瘦身版外框**（2026-10-09 使用者要求「邊框縮小」）：實際使用 `images/frame-pc-slim.jpg`／`frame-pc-slim-mask.png`，由原圖用 PIL 產生：
+  上方拱門（y 0～475，含惡魔頭、翅膀、符文拱）等比縮成 74% 高（0～350），下面接兩段柱子雕花（原 y 475～600 重複一次），y 600 以下不變。
+  地圖窗口上緣從 y≈140 提到 ≈108（`#panel` top 108），翅膀伸進地圖的長度也縮短約 1/4；地點、增益字也跟著上移。原圖 `frame-pc.jpg`／`frame-pc-mask.png` 保留備用。
 - 疊法：`#frame.pc` 不用九宮格；地圖（`#panel` z1）在下，`#frame-art`（z2，`pointer-events:none`）用 CSS `mask` 把外框圖蓋在地圖上
   → 惡魔頭、翅膀、骷髏會壓在地圖邊緣上，有立體感。HUD、法球、格子、視窗在 z3 以上。
 - 版面：遊戲區比例固定 2000:1116，`--s` = 寬 ÷ 2000，所有位置都是原圖座標 × `--s`（CSS 在 `index.html` 的 `#frame.pc` 規則）：
 
 | 元素 | 原圖位置 | 內容 |
 |---|---|---|
-| 地圖 `#panel` | x 92～1908，y 150～838（整個窗口） | 即時地圖（`ui-scene.js` 依寬度放大格子，`clamp(W/(32×28), 1, 1.3)`，約顯示 28 格寬；角色畫在偏下方） |
+| 地圖 `#panel` | x 92～1908，y 108～838（整個窗口） | 即時地圖（`ui-scene.js` 依寬度放大格子，`clamp(W/(32×28), 1, 1.3)`，約顯示 28 格寬；角色畫在偏下方） |
 | 地點、增益 | 窗口左上 | 地點名稱、增益剩餘時間 |
 | 掛機面板 `.hunt-ctrl` | 窗口左上（地點名稱下方） | **PC 不畫操作框**（2026-10-09 使用者要求；地圖、村莊、回家卷軸、步行回村都在底部格子，效率／補給也不顯示），只在魔塔顯示「⬇ 下樓／⬆ 上樓」、步行中顯示「取消步行」，沒按鈕時整塊隱藏（`.hunt-ctrl.empty`） |
 | 骷髏頭 `#skull-hunt` | x 950～1050、y 1010～1110（底部正中間） | 開始／停止掛機（第 15 節） |
