@@ -86,6 +86,7 @@ function huntViewHtml(title) {
             <canvas id="scene-canvas" onclick="sceneClick(event)"></canvas>
             <div class="scene-top">${title}</div>
             <div id="hunt-buffs" class="buffs scene-buffs"></div>
+            <div id="skill-bar" class="skill-bar"></div>
         </div>
         <div class="hunt-ctrl">
             <div class="btn-row scene-btns" id="hunt-btns"></div>
@@ -150,6 +151,7 @@ function updateHuntLive() {
         }
     }
     startScene();
+    renderSkillBar();
     const buffs = $('hunt-buffs');
     if (buffs) {
         const now = gameNow;
@@ -170,6 +172,40 @@ function updateHuntLive() {
         }
         ses.innerHTML = line + `<div>${supplies.join('　')}</div>`;
     } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
+}
+
+// ───────── 技能快捷列（野外地圖右下 4 格，鍵盤 1～4；ARCHITECTURE.md 第 17 節）─────────
+// 自動挑：攻擊技能（範圍／分散優先、等級高優先）最多 3 個＋治癒（沒有就增益）
+function skillBarSkills() {
+    const L = learnedSkills().filter(k => k.type !== 'passive');
+    const atk = L.filter(k => k.type === 'spell' || k.type === 'strike').reverse();
+    const pick = [...atk.filter(k => k.aoe || k.spread), ...atk.filter(k => !k.aoe && !k.spread)].slice(0, 3);
+    const heal = L.filter(k => k.type === 'heal').pop();
+    if (heal) pick.push(heal);
+    for (const k of L.filter(k => k.type === 'buff').reverse()) { if (pick.length >= 4) break; if (!pick.includes(k)) pick.push(k); }
+    return pick.slice(0, 4);
+}
+function renderSkillBar() {
+    const bar = $('skill-bar');
+    if (!bar) return;
+    if (inTown()) { if (bar.innerHTML) bar.innerHTML = ''; return; }
+    const list = skillBarSkills(), now = gameNow;
+    const html = list.map((k, i) => {
+        const cd = player.cds[k.id] > now ? Math.ceil((player.cds[k.id] - now) / 1000) : 0;
+        const pct = cd && k.cd ? Math.round((player.cds[k.id] - now) / (k.cd * 1000) * 100) : 0;
+        const tag = k.aoe ? '範圍' : k.spread ? '分散' : k.type === 'heal' ? '治癒' : k.type === 'buff' ? '增益' : '';
+        return `<button class="sk ${player.mp < k.mp ? 'nomp' : ''} ${cd ? 'cd' : ''}" style="--cd:${pct}%" onclick="skillBarCast(${i})" title="${esc(k.name)}（${k.mp} MP）${esc(k.desc || '')}">
+            <span class="sk-n">${esc(k.name.slice(0, 2))}</span>${tag ? `<span class="sk-t">${tag}</span>` : ''}<span class="sk-k">${i + 1}</span>${cd ? `<span class="sk-cd">${cd}</span>` : ''}</button>`;
+    }).join('');
+    if (bar.dataset.html !== html) { bar.dataset.html = html; bar.innerHTML = html; }
+}
+function skillBarCast(i) {
+    const k = skillBarSkills()[i];
+    if (!k) return;
+    const err = manualCast(k.id);
+    if (err) showToast(`${k.name}：${err}`, 1200);
+    renderStatus();
+    updateHuntLive();
 }
 
 function homeScrollBtn() { if (!useHomeScroll('')) showToast('沒有回家卷軸'); }
@@ -524,7 +560,7 @@ function renderSettings() {
         <div class="panel"><h4>💊 自動補給</h4>
             ${chk('potionOn', '自動喝治癒藥水')}${num('potionPct', 'HP 低於 % 喝水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
-            ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}
+            ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}
         </div>
         <div class="panel"><h4>🛡️ 安全</h4>
             ${chk('teleOn', '危險時自動使用瞬間移動卷軸')}${num('telePct', 'HP 低於 % 瞬移', 5, 90)}

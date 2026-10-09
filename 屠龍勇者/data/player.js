@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
     autoBrave: true,                  // 自動勇水／精靈餅乾／慎重藥水
     autoBlue: false,                  // 自動藍水
     autoHome: true, weightPct: 82,    // 沒藥水、沒彈藥或負重過高時自動回家
+    autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
     skills: {},                       // 技能 id → false 代表關閉自動施放
 };
 

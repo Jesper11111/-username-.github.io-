@@ -3,7 +3,7 @@
 // 多怪戰鬥（2026-10-09「中度 ARPG」）：hunt.mobs 是同時圍上來的怪（各自 atkCd 攻擊間隔、stunUntil 暈眩），
 // hunt.mon 是玩家正在打的目標（mobs 之一）；範圍技能（aoe）打全部、分散技能（spread）每一發打不同隻。
 // 戰鬥結果全部在這裡算（地圖 ui-scene.js 只負責畫），所以離線收益的快轉模擬照樣適用。
-let hunt = null;      // { state:'search'|'fight', timer, mon, mobs, pCd, joinCd, potCd, warned }
+let hunt = null;      // { state:'search'|'fight', timer, mon, mobs, pCd, joinCd, potCd, warned, tele }
 let session = null;   // 本次掛機統計 { start, kills, exp, gold }
 let walkHome = null;  // { until, town }
 
@@ -150,6 +150,9 @@ function huntTick(dt) {
         reapMobs();
         if (!fightAlive()) return;
     }
+    // 首領大招：蓄力時地上出現紅圈，時間到沒離開就吃重擊
+    bossSkillTick(dt);
+    if (!fightAlive()) return;
     // 每隻圍上來的怪各自計時攻擊
     for (const m of hunt.mobs.slice()) {
         if (m.hp <= 0 || !hunt.mobs.includes(m)) continue;
@@ -167,22 +170,116 @@ function huntTick(dt) {
         hunt.joinCd = MOB_JOIN_MS;
         if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && chance(MOB_JOIN_P)) {
             const add = makeZoneMob(currentZone());
-            if (add) { addMob(add); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
+            if (add) { addMob(weakenForPack(add, hunt.mobs.length + 1)); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
         }
     }
 }
 
 // ───────── 多怪戰鬥 ─────────
 const MOB_JOIN_MS = 3000;    // 每 3 秒檢查一次有沒有新的怪加入
-const MOB_JOIN_P = 0.07;     // 加入機率
+const MOB_JOIN_P = 0.15;     // 加入機率
 const MOB_SIDE_SLOW = 1.6;   // 非目標的怪出手間隔 ×1.6（圍著輪流進攻，避免多怪時傷害暴增）
-// 同時最多幾隻：龍穴 1、魔塔 2、其他 3
+// 同時最多幾隻：龍穴 1、魔塔 3、其他 6
 function packMax() {
     const z = currentZone();
-    return !z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 2 : 3;
+    return !z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 3 : 6;
 }
-// 一開始出現幾隻：1 隻 65%、2 隻 27%、3 隻 8%（受 packMax 限制）
-function packRoll() { const r = Math.random(); return Math.min(packMax(), r < 0.65 ? 1 : r < 0.92 ? 2 : 3); }
+// 一開始出現幾隻（受 packMax 限制）
+const PACK_WEIGHTS = [30, 25, 20, 12, 8, 5];   // 1～6 隻的權重
+function packRoll() {
+    let r = Math.random() * PACK_WEIGHTS.reduce((a, b) => a + b, 0), n = 1;
+    for (const w of PACK_WEIGHTS) { if (r < w) break; r -= w; n++; }
+    return Math.min(packMax(), n);
+}
+// 群越大每隻越弱：第 n 隻成群的怪 HP／經驗／金幣 ÷(1+0.2(n−1))、傷害 ÷(1+0.3(n−1))（6 隻：HP 約 50%、傷害 40%）
+function weakenForPack(m, n) {
+    if (n <= 1 || m.boss) return m;
+    const hk = 1 / (1 + 0.2 * (n - 1)), dk = 1 / (1 + 0.3 * (n - 1));
+    m.hp = m.maxHp = Math.max(1, Math.round(m.maxHp * hk));
+    m.exp = Math.max(1, Math.round(m.exp * hk));
+    m.gold = m.gold.map(g => Math.max(0, Math.round(g * hk)));
+    m.dmg = m.dmg.map(d => Math.max(1, Math.round(d * dk)));
+    if (m.magic) m.magic = { ...m.magic, dmg: m.magic.dmg.map(d => Math.max(1, Math.round(d * dk))) };
+    return m;
+}
+
+// ───────── 首領大招（地上紅圈預警）─────────
+// 首領／龍每 7～11 秒蓄力 1.6 秒，紅圈半徑 1.5 格（以蓄力開始時角色的位置為中心）；
+// 地圖畫面開著時由 ui-scene.js 判斷角色是否還在圈內（hunt.tele.dodged／seenAt）；
+// 畫面沒開（背景、離線模擬）就用機率：自動閃避開 60%、關 20%。
+const TELE_MS = 1600, TELE_CD = [7000, 11000], TELE_MUL = 2.5;
+function bossSkillTick(dt) {
+    const t = hunt.tele;
+    if (t) {
+        if (gameNow < t.until) return;
+        hunt.tele = null;
+        const m = t.mob;
+        if (!hunt.mobs.includes(m)) return;
+        const live = t.seenAt != null && t.seenAt >= t.until - 300;
+        const dodged = live ? !!t.dodged : chance(player.settings.autoDodge ? 0.6 : 0.2);
+        if (dodged) { addLog(`💨 你閃開了${m.name}的「${t.name}」！`, 'miss'); return; }
+        const st = calcStats();
+        let dmg = Math.round(rand(m.dmg[0], m.dmg[1]) * TELE_MUL) - st.reduce;
+        dmg = Math.max(1, dmg);
+        player.hp -= dmg;
+        addLog(`💥 ${m.name}的「${t.name}」命中！你受到 ${dmg} 傷害`, 'hurt');
+        if (player.hp <= 0) onDeath(m);
+        return;
+    }
+    for (const m of hunt.mobs) {
+        if (!m.boss && !m.dragon) continue;
+        if (m.teleCd == null) m.teleCd = rand(...TELE_CD) / 2;
+        m.teleCd -= dt;
+        if (m.teleCd > 0 || gameNow < m.stunUntil) continue;
+        m.teleCd = rand(...TELE_CD);
+        const name = m.dragon ? '龍之吐息' : '重擊';
+        hunt.tele = { mob: m, name, start: gameNow, until: gameNow + TELE_MS, dodged: null, seenAt: null };
+        addLog(`⚠️ ${m.name}正在蓄力「${name}」！快離開紅圈`, 'boss');
+        return;
+    }
+}
+
+// ───────── 玩家手動操作（只在畫面上即時遊玩時用；離線模擬不會呼叫）─────────
+// 點怪：在戰鬥中的怪 → 改打牠；地圖上還沒參戰的怪 → 拉進戰鬥（沒在掛機就順便開始掛機）。回傳戰鬥中的怪物物件。
+function focusMob(inst) {
+    if (hunt && hunt.mobs.includes(inst)) { hunt.mon = inst; return inst; }
+    return null;
+}
+function pullMob(mid) {
+    const z = currentZone();
+    if (!z || walkHome) return null;
+    if (!player.hunting) startHunt();
+    if (!hunt) return null;
+    if (hunt.state === 'fight' && (hunt.mobs.length >= packMax() || hunt.mobs.some(m => m.boss))) return null;
+    let mon = z.type === 'tower' ? makeTowerMonster(player.loc.floor, false) : mid && MONSTERS[mid] ? makeMonster(mid) : makeZoneMob(z);
+    if (!mon) return null;
+    if (hunt.state !== 'fight') {
+        hunt.mobs = []; hunt.mon = null; hunt.state = 'fight'; hunt.pCd = 200; hunt.joinCd = MOB_JOIN_MS; hunt.warned.home = false;
+        addMob(mon);
+        addLog(`⚔️ 你攻擊了${mon.name}（Lv.${mon.lv}）`, '');
+    } else {
+        addMob(weakenForPack(mon, hunt.mobs.length + 1));
+        addLog(`⚔️ 你引來了${mon.name}（Lv.${mon.lv}）`, '');
+    }
+    hunt.mon = mon;
+    return mon;
+}
+// 快捷鍵施放技能：戰鬥中立刻出手（重設普攻計時）；治癒、增益在戰鬥外也能用。回傳錯誤訊息（成功回傳 ''）
+function manualCast(id) {
+    const k = learnedSkills().find(s => s.id === id);
+    if (!k || k.type === 'passive') return '尚未學會';
+    if (player.cds[k.id] > gameNow) return `冷卻中（${Math.ceil((player.cds[k.id] - gameNow) / 1000)} 秒）`;
+    if (player.mp < k.mp) return 'MP 不足';
+    const st = calcStats();
+    if (k.type === 'heal') { castHeal(k, st); return ''; }
+    if (k.type === 'buff') { castBuff(k); return ''; }
+    if (!fightAlive()) return '沒有戰鬥目標';
+    if (k.type === 'spell') castSpell(k, st); else doStrike(k, st);
+    if (!fightAlive()) return '';
+    hunt.pCd = st.atkMs;
+    reapMobs();
+    return '';
+}
 
 function fightAlive() { return player.hunting && hunt && hunt.state === 'fight' && hunt.mon; }
 
@@ -204,7 +301,7 @@ function makeZoneMob(z) {
 
 // 離開戰鬥（瞬移、換樓層）：全部的怪都放掉
 function leaveFight(searchMs) {
-    hunt.mon = null; hunt.mobs = []; hunt.state = 'search'; hunt.timer = searchMs;
+    hunt.mon = null; hunt.mobs = []; hunt.tele = null; hunt.state = 'search'; hunt.timer = searchMs;
 }
 
 // 把 HP 歸零的怪結算掉；目標死了就換剩下 HP 最少的那隻
@@ -245,7 +342,8 @@ function spawnMonster() {
     mon.atkCd = mon.spd * 0.6;
     // 一般怪成群出現（首領、龍單獨出現）
     const n = mon.boss ? 1 : packRoll();
-    for (let i = 1; i < n; i++) addMob(makeZoneMob(z));
+    weakenForPack(mon, n);
+    for (let i = 1; i < n; i++) addMob(weakenForPack(makeZoneMob(z), n));
     if (mon.boss) addLog(`⚠️ ${mon.name}出現了！`, 'boss');
     else addLog(n > 1 ? `${hunt.mobs.map(m => `${m.name}（Lv.${m.lv}）`).join('、')} 一起圍了上來` : `${mon.name}（Lv.${mon.lv}）出現了`, n > 1 ? 'warn' : '');
 }
@@ -455,6 +553,7 @@ function onKill(mon) {
         return;
     }
     if (hunt.mon) { hunt.pCd = Math.min(hunt.pCd, 300); return; }   // 還有怪圍著：直接打下一隻
+    hunt.tele = null;
     hunt.state = 'search';
     hunt.timer = rand(600, 1600);
     checkAutoHome();

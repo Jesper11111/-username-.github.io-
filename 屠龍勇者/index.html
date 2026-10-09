@@ -184,6 +184,21 @@
     .slot.active { box-shadow: 0 0 0 2px var(--gold), 0 0 8px var(--gold); }
     .slot.empty { opacity: .35; }
     /* 底部骷髏頭（原圖 x 610～730、y 1870～1990）：開始／停止掛機，眼睛表示狀態 */
+    /* 技能快捷列（地圖右下）：冷卻用 conic 遮罩，MP 不足變暗 */
+    .skill-bar { position: absolute; right: 6px; bottom: 6px; display: flex; gap: 6px; z-index: 2; }
+    .skill-bar .sk {
+        position: relative; width: 44px; height: 44px; padding: 0; border-radius: 50%; overflow: hidden;
+        background: radial-gradient(#4a2f1e, #1c120c); border: 2px solid #b8893c; color: #ffe7a8; box-shadow: 0 0 6px #000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+    }
+    .skill-bar .sk::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+        background: conic-gradient(#000b var(--cd), #0000 0); }
+    .skill-bar .sk.nomp { filter: grayscale(.8) brightness(.6); }
+    .skill-bar .sk:active { transform: scale(.93); }
+    .sk-n { font-size: 12px; font-weight: bold; }
+    .sk-t { font-size: 8px; color: #ff9a3c; }
+    .sk-k { position: absolute; right: 4px; top: 1px; font-size: 8px; color: #c8b896; }
+    .sk-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; font-size: 15px; font-weight: bold; color: #fff; text-shadow: 0 0 3px #000; }
     .skull-hunt {
         position: absolute; left: calc(var(--s) * 610px); bottom: calc(var(--s) * 10px); width: calc(var(--s) * 120px); height: calc(var(--s) * 120px);
         padding: 0; border: 0; border-radius: 40%; background: transparent; z-index: 3; cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -255,6 +270,8 @@
     #frame.pc #slots { left: 0; top: 0; width: 100%; height: 100%; bottom: auto; pointer-events: none; }
     #frame.pc .slot { pointer-events: auto; font-size: calc(var(--s) * 34px); }
     #frame.pc .slot.round { border-radius: 50%; }
+    #frame.pc .skill-bar { right: calc(var(--s) * 250px); bottom: calc(var(--s) * 40px); gap: 10px; }
+    #frame.pc .skill-bar .sk { width: 52px; height: 52px; }
     #frame.pc .skull-hunt { left: calc(var(--s) * 950px); bottom: calc(var(--s) * 6px); width: calc(var(--s) * 100px); height: calc(var(--s) * 100px); }
     #frame.pc .skull-hunt .eye { top: 43%; width: 20%; height: 15%; }
     #frame.pc .skull-hunt .eye.l { left: 33%; }
@@ -489,26 +506,26 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009k"></script>
-<script src="data/classes.js?v=20261009k"></script>
-<script src="data/skills.js?v=20261009k"></script>
-<script src="data/items.js?v=20261009k"></script>
-<script src="data/monsters.js?v=20261009k"></script>
-<script src="data/zones.js?v=20261009k"></script>
-<script src="data/quests.js?v=20261009k"></script>
-<script src="data/player.js?v=20261009k"></script>
-<script src="data/enchant.js?v=20261009k"></script>
-<script src="data/combat.js?v=20261009k"></script>
-<script src="data/town.js?v=20261009k"></script>
-<script src="data/save.js?v=20261009k"></script>
-<script src="data/offline.js?v=20261009k"></script>
-<script src="data/ui.js?v=20261009k"></script>
-<script src="data/ui-create.js?v=20261009k"></script>
-<script src="data/ui-panels.js?v=20261009k"></script>
-<script src="data/codex.js?v=20261009k"></script>
-<script src="data/ui-frame.js?v=20261009k"></script>
-<script src="data/ui-scene.js?v=20261009k"></script>
-<script src="data/pwa.js?v=20261009k"></script>
-<script src="data/main.js?v=20261009k"></script>
+<script src="data/config.js?v=20261009l"></script>
+<script src="data/classes.js?v=20261009l"></script>
+<script src="data/skills.js?v=20261009l"></script>
+<script src="data/items.js?v=20261009l"></script>
+<script src="data/monsters.js?v=20261009l"></script>
+<script src="data/zones.js?v=20261009l"></script>
+<script src="data/quests.js?v=20261009l"></script>
+<script src="data/player.js?v=20261009l"></script>
+<script src="data/enchant.js?v=20261009l"></script>
+<script src="data/combat.js?v=20261009l"></script>
+<script src="data/town.js?v=20261009l"></script>
+<script src="data/save.js?v=20261009l"></script>
+<script src="data/offline.js?v=20261009l"></script>
+<script src="data/ui.js?v=20261009l"></script>
+<script src="data/ui-create.js?v=20261009l"></script>
+<script src="data/ui-panels.js?v=20261009l"></script>
+<script src="data/codex.js?v=20261009l"></script>
+<script src="data/ui-frame.js?v=20261009l"></script>
+<script src="data/ui-scene.js?v=20261009l"></script>
+<script src="data/pwa.js?v=20261009l"></script>
+<script src="data/main.js?v=20261009l"></script>
 </body>
 </html>
