@@ -1636,7 +1636,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DB`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DC`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -2477,6 +2477,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - **2026-10-09（版本 `20261005DA`）已完成 ①②③**：網站金鑰 `6LcvkectAAAAAAejw9MaS9J2GV566Xt9csqAGAfv`（專案 k5596101，網域 k559610142-art.github.io）填入 `LEADERBOARD_APP_CHECK_KEY`；**④⑤ 尚未做（還沒強制執行）**。
   - **改用 Fraud Defense（2026-10-09，版本 `20261005DB`）**：Firebase App Check 已不允許註冊舊版 reCAPTCHA（v3 密鑰）→ `LEADERBOARD_APP_CHECK_ENTERPRISE = true`，
     `lbAppCheckProvider()`（config-leaderboard.js，leaderboard.js 與 gm.html 共用）改回傳 `ReCaptchaEnterpriseProvider(金鑰)`；false 時回到 `ReCaptchaV3Provider`。主控台 App Check 選「Fraud Defense（舊稱 reCAPTCHA Enterprise）」填網站金鑰（不需要密鑰）。
+    舊版 v3 金鑰不能用於 Fraud Defense（主控台儲存報錯）→ 2026-10-09（版本 `20261005DC`）改用在 Google Cloud「Fraud Defense」新建的網站金鑰 `6Lfda-ctAAAAAIVlo3i_fvgnDIfMHcmhtJoteVrr`（類型「網路」，網域 k559610142-art.github.io）。
     本機（localhost）不在 reCAPTCHA 網域名單內，取不到 token 只會在 Console 出現 App Check 警告，未強制執行前不影響連線；強制執行後本機測試要改用 App Check 偵錯權杖。
 
 ## 43. 秘境入口與鎮魔塔（`config-secret-realms.js`、`secret-realm.js`；2026-09-28）
