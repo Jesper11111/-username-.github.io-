@@ -581,7 +581,7 @@ function sceneFrame(ts) {
     const W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const ctx = cv.getContext('2d');
-    // 畫面寬時放大格子（最多顯示約 20 格寬），PC 大地圖不會顯得太小
+    // 畫面寬時放大格子（約顯示 28 格寬、最多 1.3 倍；比例對齊天堂 M 參考圖）
     const z = clamp(W / (TILE * 28), 1, 1.3);
     scene.zoom = z;
     ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);

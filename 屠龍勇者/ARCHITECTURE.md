@@ -43,7 +43,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009c`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -270,6 +270,8 @@ kills, deaths, settings, created`
   所有 `type: 'field'` 地圖共用這張圖，用地圖的 `tint`（半透明顏色）區分：海賊島偏藍、龍之谷偏紅、歐瑞雪原蓋白霜、遺忘之島紫霧，說話之島與妖精森林原色。
   圖還沒載入時先畫野外格子。換圖或加新背景：在 `SCENE_BGS` 加一筆（src、格數、block、start），主題加 `bg`，並把圖加進 `sw.js` 預先快取清單。
   調整 `block` 時可在 Console 把 `scene.grid` 為 1 的格子塗紅疊在圖上對位。
+- **比例**（2026-10-09 對齊使用者的天堂 M 參考圖，人物約佔畫面高 12%）：人物圖 `drawH` 48px、emoji 職業圖示 40px、地圖怪 36px（首領／龍 54px），
+  `sceneFrame` 放大倍數 `clamp(W / (TILE × 28), 1, 1.3)`（PC 約看到 28 格寬）。
 - 角色：用職業圖示，一格一格上下左右移動（每秒 5.5 格），朝左走時圖示翻轉，移動中會上下晃。
   - 掛機尋怪中：BFS 尋路走到最近的地圖怪旁邊。
   - 開打（`hunt.mon` 出現）：把最近的地圖怪綁定成這隻戰鬥對象（沒有就在旁邊生一隻；龍穴直接出現在角色上方），顯示名稱、等級、血條，走到旁邊面對面。
@@ -294,7 +296,7 @@ kills, deaths, settings, created`
 
 - 在 `classes.js` 的職業資料加欄位即可，沒有就用職業圖示（emoji）：
   - `sprite: { drawH, charH, walk, attack, cast, hit }`：每個動作一張圖，**列＝方向（0 向下、1 向右、2 向上；向左＝向右水平鏡像）**，欄＝格數。
-    每個動作 `{ src, cellW, cellH, frames: { down, right, up }, ms }`（每格毫秒）。所有動作都把角色縮放成 `charH`（113px）身高、腳底貼格子底部，切換動作時大小與位置一致；地圖上依 `drawH`（72px）顯示。
+    每個動作 `{ src, cellW, cellH, frames: { down, right, up }, ms }`（每格毫秒）。所有動作都把角色縮放成 `charH`（113px）身高、腳底貼格子底部，切換動作時大小與位置一致；地圖上依 `drawH`（48px，2026-10-09 由 72 縮小，比例對齊使用者提供的天堂 M 參考圖：人物約佔畫面高 12%）顯示。
   - `art`：職業立繪（16:9 裁切顯示），出現在創角畫面的職業介紹與「人物狀態」頁頂端。
 - 動作觸發（`ui-scene.js` 的 `sceneReadEvents` → `playAnim`）：
   - 普攻、技能打到怪（怪物 HP 減少）或沒打中（MISS）→ **attack**
@@ -419,7 +421,7 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 
 | 元素 | 原圖位置 | 內容 |
 |---|---|---|
-| 地圖 `#panel` | x 92～1908，y 150～838（整個窗口） | 即時地圖（`ui-scene.js` 依寬度放大格子，最多約 20 格寬；角色畫在偏下方） |
+| 地圖 `#panel` | x 92～1908，y 150～838（整個窗口） | 即時地圖（`ui-scene.js` 依寬度放大格子，`clamp(W/(32×28), 1, 1.3)`，約顯示 28 格寬；角色畫在偏下方） |
 | 地點、增益 | 窗口左上 | 地點名稱、增益剩餘時間 |
 | 掛機面板 `.hunt-ctrl` | 窗口左下 | 骷髏頭提示、回家、步行、效率、精簡訊息 |
 | 骷髏頭 `#skull-hunt` | x 950～1050、y 1010～1110（底部正中間） | 開始／停止掛機（第 15 節） |
