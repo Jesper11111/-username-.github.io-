@@ -36,6 +36,7 @@ function renderStatus() {
         <div class="bar exp hud-exp"><div class="bar-fill" style="width:${expPct}%"></div><span>EXP ${expPct.toFixed(2)}%</span></div>`;
     renderSlots();
     renderSkull();
+    renderLogPop();
 }
 
 function setOrb(id, cur, max, label) {

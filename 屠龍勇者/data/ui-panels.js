@@ -90,30 +90,40 @@ function huntViewHtml(title) {
         <div class="hunt-ctrl">
             <div class="btn-row scene-btns" id="hunt-btns"></div>
             <div id="hunt-session" class="session"></div>
-            <div id="log-drawer" class="log-drawer${logDrawerOpen ? ' open' : ''}">
-                <button class="log-handle" onclick="toggleLogDrawer()"><span class="log-title">📜 戰鬥訊息</span><span id="log-peek" class="log-peek"></span><span class="log-arrow">▲</span></button>
-                <div id="hunt-log" class="log scene-log"></div>
-            </div>
         </div>
     </div>`;
 }
 
+// 戰鬥訊息抽屜：外框左下（紅球下方）骷髏頭是開關，抽屜 #log-pop 從下往上滑出（index.html 靜態元素，不隨分頁重畫）
 function toggleLogDrawer() {
     logDrawerOpen = !logDrawerOpen;
     try { localStorage.setItem(LOG_OPEN_KEY, logDrawerOpen ? '1' : '0'); } catch (e) { }
-    const d = $('log-drawer');
-    if (d) d.classList.toggle('open', logDrawerOpen);
-    const box = $('hunt-log');
-    if (box) box.scrollTop = box.scrollHeight;
+    lastLogRendered = 0;
+    renderLogPop();
+}
+function renderLogPop() {
+    const pop = $('log-pop'), btn = $('skull-log');
+    if (!pop || !player) return;
+    pop.classList.toggle('open', logDrawerOpen);
+    if (btn) btn.classList.toggle('open', logDrawerOpen);
+    // 狩獵畫面看得到時，抽屜貼在操作列（回家卷軸、步行回村）上方，不蓋住按鈕；其他分頁用 CSS 預設位置
+    const ctrl = document.querySelector('#panel .hunt-ctrl'), fr = $('frame');
+    if (logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
+        pop.style.bottom = Math.round(fr.getBoundingClientRect().bottom - ctrl.getBoundingClientRect().top + 4) + 'px';
+    } else pop.style.bottom = '';
+    const logBox = $('hunt-log');
+    if (!logDrawerOpen || !logBox || lastLogRendered === logSeq) return;
+    lastLogRendered = logSeq;
+    logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
+    logBox.scrollTop = logBox.scrollHeight;
 }
 
 function huntButtonsHtml() {
     if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
-    // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick），這裡只顯示提示
-    let h = `<span class="skull-tip ${player.hunting ? 'on' : ''}">${player.hunting ? '💀 掛機中・點下方骷髏頭停止' : '💀 點下方骷髏頭開始掛機'}</span>`;
-    h += `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
+    // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
+    let h = `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
     h += `<button class="secondary" onclick="walkHomeBtn()">🚶 步行回村</button>`;
     if (z && z.type === 'tower') {
         h += `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>`;
@@ -148,15 +158,6 @@ function updateHuntLive() {
         }
         ses.innerHTML = line + `<div>${supplies.join('　')}</div>`;
     } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
-    const logBox = $('hunt-log');
-    if (logBox && lastLogRendered !== logSeq) {
-        lastLogRendered = logSeq;
-        logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
-        logBox.scrollTop = logBox.scrollHeight;
-        // 收起時把手上顯示最新一行
-        const peek = $('log-peek'), last = gameLog[gameLog.length - 1];
-        if (peek) { peek.className = 'log-peek log-line ' + (last ? last.cls : ''); peek.textContent = last ? last.msg : ''; }
-    }
 }
 
 function homeScrollBtn() { if (!useHomeScroll('')) showToast('沒有回家卷軸'); }

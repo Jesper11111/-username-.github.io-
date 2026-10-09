@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '屠龍勇者';
-const GAME_VERSION = '20261009c';
+const GAME_VERSION = '20261009d';
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
 const SAVE_KEY = 'dragonSlayer_save_v2';
