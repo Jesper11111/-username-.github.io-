@@ -66,7 +66,7 @@ const CLASSES = {
         weapons: ['gun', 'bow'], shield: false, start: ['matchlock', 'leatherArmor'], ammo: 'bullet',
         // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/gunner-*.json 切出（黑衣和背景同色，用 "shape" 形狀去背）
         sprite: {
-            drawH: 72, charH: 113,
+            drawH: 48, charH: 113,
             walk:   { src: 'images/sprites/gunner-walk.png',   cellW: 108, cellH: 119, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
             attack: { src: 'images/sprites/gunner-attack.png', cellW: 154, cellH: 129, frames: { down: 8, right: 8, up: 8 }, ms: 50 },
             cast:   { src: 'images/sprites/gunner-cast.png',   cellW: 156, cellH: 142, frames: { down: 5, right: 6, up: 5 }, ms: 90 },
@@ -82,7 +82,7 @@ const CLASSES = {
         weapons: ['sword', 'staff', 'spear'], shield: true, start: ['shortSword', 'leatherArmor'],
         // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/magicfighter-*.json 切出（黑衣和背景同色，用 "shape" 形狀去背，第 18 節）
         sprite: {
-            drawH: 72, charH: 113,
+            drawH: 48, charH: 113,
             walk:   { src: 'images/sprites/magicfighter-walk.png',   cellW: 68,  cellH: 127, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
             attack: { src: 'images/sprites/magicfighter-attack.png', cellW: 198, cellH: 142, frames: { down: 10, right: 9, up: 10 }, ms: 50 },
             cast:   { src: 'images/sprites/magicfighter-cast.png',   cellW: 148, cellH: 147, frames: { down: 3, right: 5, up: 6 }, ms: 90 },
@@ -98,7 +98,7 @@ const CLASSES = {
         weapons: ['sword', 'blunt'], shield: true, start: ['mace', 'leatherArmor', 'woodShield'],
         // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/paladin-*.json 切出（新版格紋背景用 checker2；向上走路／攻擊混用舊版原圖，見 json 的 "alt"）
         sprite: {
-            drawH: 72, charH: 113,
+            drawH: 48, charH: 113,
             walk:   { src: 'images/sprites/paladin-walk.png',   cellW: 144, cellH: 126, frames: { down: 6, right: 6, up: 6 }, ms: 120 },
             attack: { src: 'images/sprites/paladin-attack.png', cellW: 140, cellH: 143, frames: { down: 8, right: 8, up: 5 }, ms: 60 },
             cast:   { src: 'images/sprites/paladin-cast.png',   cellW: 152, cellH: 161, frames: { down: 5, right: 5, up: 8 }, ms: 90 },
@@ -115,7 +115,7 @@ const CLASSES = {
         slayer: { tags: ['undead', 'demon'], mult: 1.3, label: '惡魔與不死系' },
         // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/angel-*.json 切出（第 18 節）
         sprite: {
-            drawH: 72, charH: 113,
+            drawH: 48, charH: 113,
             walk:   { src: 'images/sprites/angel-walk.png',   cellW: 108, cellH: 148, frames: { down: 5, right: 5, up: 5 }, ms: 120 },
             attack: { src: 'images/sprites/angel-attack.png', cellW: 204, cellH: 153, frames: { down: 8, right: 8, up: 8 }, ms: 60 },
             cast:   { src: 'images/sprites/angel-cast.png',   cellW: 148, cellH: 149, frames: { down: 5, right: 5, up: 4 }, ms: 90 },
@@ -133,7 +133,7 @@ const CLASSES = {
         // 人物模型（ui-scene.js）：每個動作一張圖，列＝方向（向下／向右／向上，向左＝向右鏡像），欄＝格數
         // charH：角色在格子內的身高（所有動作都縮放到 113px，切換動作時大小一致）；drawH：地圖上顯示的身高
         sprite: {
-            drawH: 72, charH: 113,
+            drawH: 48, charH: 113,
             // 四個動作都由 tools/cut-sprites.ps1 依 tools/sprite-src/demon-*.json 從原圖切出（2026-10-08 換新）
             walk:   { src: 'images/sprites/demon-walk.png',   cellW: 146, cellH: 124, frames: { down: 6, right: 6, up: 6 }, ms: 110 },
             attack: { src: 'images/sprites/demon-attack.png', cellW: 184, cellH: 145, frames: { down: 8, right: 8, up: 5 }, ms: 60 },

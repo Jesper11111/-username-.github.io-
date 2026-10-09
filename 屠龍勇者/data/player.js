@@ -17,6 +17,8 @@ const DEFAULT_SETTINGS = {
     autoBrave: true,                  // 自動勇水／精靈餅乾／慎重藥水
     autoBlue: false,                  // 自動藍水
     autoHome: true, weightPct: 82,    // 沒藥水、沒彈藥或負重過高時自動回家
+    autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
+    lootFilter: 1,                    // 戰利品過濾：0 全撿、1 普通自動賣、2 魔法以下自動賣、3 只撿傳說（affix.js）
     skills: {},                       // 技能 id → false 代表關閉自動施放
 };
 
@@ -36,7 +38,7 @@ function createPlayer(name, cls, stats) {
         towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {},
         kills: 0, deaths: 0,
         quests: { ch: 0, active: false, prog: 0, bossDone: false },
-        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null,
         created: Date.now(),
     };
     c.start.forEach(id => { const it = addItem(id, 1); equipItem(it.uid, true); });
@@ -91,7 +93,7 @@ function invWeight() {
 function itemName(inst) {
     const d = ITEMS[inst.id];
     const e = inst.ench ? (inst.ench > 0 ? '+' : '') + inst.ench + ' ' : '';
-    return e + d.name;
+    return e + qualityName(inst, d.name);   // 魔法／稀有／傳說品質的名稱（affix.js）
 }
 
 // ───────── 裝備 ─────────
@@ -168,6 +170,7 @@ function calcStats() {
         addFx(fx, d);
         if (d.safe >= 0) fx.ac = (fx.ac || 0) + (it.ench || 0);
     }
+    for (const slot of SLOT_KEYS) addFx(fx, affixFx(p.equip[slot]));   // 暗黑式詞綴（affix.js）
     for (const k in p.buffs) if (p.buffs[k].until > now) addFx(fx, buffFx(p.buffs[k]));
 
     const maxHp = p.baseHp + (fx.hp || 0);

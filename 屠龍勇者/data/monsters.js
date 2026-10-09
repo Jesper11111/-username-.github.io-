@@ -17,19 +17,19 @@ function monBase(lv) {
 // magic：{ p 機率, dmg, name } 魔法攻擊無視 AC，受 MR 減免
 // drops：{ id, p 機率, n:[min,max] }
 const MONSTERS = {
-    // 說話之島
+    // 低語海岸
     goblin:         { name: '哥布林',     icon: '👺', lv: 1 },
     dwarf:          { name: '侏儒',       icon: '🧔', lv: 2 },
     wolf:           { name: '狼',         icon: '🐺', lv: 3, spd: 1200 },
     orc:            { name: '妖魔',       icon: '👹', lv: 4 },
     floatingEye:    { name: '漂浮之眼',   icon: '👁️', lv: 5, magic: { p: 0.2, dmg: [4, 9], name: '凝視' } },
     skeleton:       { name: '骷髏',       icon: '💀', lv: 6, undead: true },
-    // 說話之島地監
+    // 低語墓窟
     dwarfWarrior:   { name: '侏儒戰士',   icon: '🧔', lv: 9 },
     orcArcher:      { name: '妖魔弓箭手', icon: '🏹', lv: 10 },
     skeletonArcher: { name: '骷髏弓箭手', icon: '💀', lv: 11, undead: true },
     ghoul:          { name: '食屍鬼',     icon: '🧟', lv: 13, undead: true, hpMul: 1.2 },
-    // 古魯丁地監
+    // 腐朽礦坑
     gandiOrc:       { name: '甘地妖魔',   icon: '👹', lv: 16 },
     zombie:         { name: '殭屍',       icon: '🧟', lv: 17, undead: true, hpMul: 1.3, spd: 1800 },
     lycan:          { name: '萊肯',       icon: '🐺', lv: 18, large: true, spd: 1200 },
@@ -43,17 +43,17 @@ const MONSTERS = {
         magic: { p: 0.2, dmg: [60, 100], name: '地獄之火' },
         drops: [{ id: 'baphometHorn', p: 1, n: [1, 2] }, { id: 'katana', p: 0.05 }, { id: 'bWeaponScroll', p: 0.05 }, { id: 'bArmorScroll', p: 0.08 }, { id: 'elixir', p: 0.03 }],
     },
-    // 象牙塔
+    // 暮光法師塔
     hellhound:      { name: '地獄犬',       icon: '🐕', lv: 36, large: true, magic: { p: 0.2, dmg: [30, 50], name: '火焰吐息' } },
     lamia:          { name: '蛇女',         icon: '🐍', lv: 38 },
-    ivoryMage:      { name: '象牙塔魔法師', icon: '🧙', lv: 40, hpMul: 0.9, magic: { p: 0.35, dmg: [35, 60], name: '火球術' } },
-    ivoryGuard:     { name: '象牙塔守衛',   icon: '🗿', lv: 42, large: true, acAdd: -8, hpMul: 1.3 },
+    ivoryMage:      { name: '墮落法師', icon: '🧙', lv: 40, hpMul: 0.9, magic: { p: 0.35, dmg: [35, 60], name: '火球術' } },
+    ivoryGuard:     { name: '法師塔守衛',   icon: '🗿', lv: 42, large: true, acAdd: -8, hpMul: 1.3 },
     demon: {
         name: '惡魔', icon: '😈', lv: 50, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
         magic: { p: 0.25, dmg: [90, 150], name: '黑暗之火' },
         drops: [{ id: 'demonHeart', p: 1, n: [1, 2] }, { id: 'demonAxe', p: 0.04 }, { id: 'manaWand', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'bArmorScroll', p: 0.1 }, { id: 'elixir', p: 0.04 }],
     },
-    // 金字塔
+    // 黃沙王陵
     mummy:          { name: '木乃伊',     icon: '🧟', lv: 44, undead: true, hpMul: 1.2 },
     sandScorpion:   { name: '沙漠巨蠍',   icon: '🦂', lv: 46, large: true },
     sphinx:         { name: '獅身人面獸', icon: '🦁', lv: 50, large: true, magic: { p: 0.2, dmg: [45, 75], name: '謎之咆哮' } },
@@ -63,7 +63,7 @@ const MONSTERS = {
         magic: { p: 0.25, dmg: [120, 190], name: '冥界審判' },
         drops: [{ id: 'osirisSeal', p: 1, n: [1, 2] }, { id: 'darkClaw', p: 0.04 }, { id: 'darkDual', p: 0.04 }, { id: 'elvenBow', p: 0.05 }, { id: 'bWeaponScroll', p: 0.08 }, { id: 'bArmorScroll', p: 0.12 }, { id: 'elixir', p: 0.05 }],
     },
-    // 妖精森林
+    // 迷霧古林
     werewolf:       { name: '狼人',       icon: '🐺', lv: 11, spd: 1300 },
     forestBear:     { name: '森林熊',     icon: '🐻', lv: 13, large: true, hpMul: 1.3, spd: 1700 },
     giantSpider:    { name: '巨大蜘蛛',   icon: '🕷️', lv: 15, magic: { p: 0.15, dmg: [10, 18], name: '毒液' } },
@@ -73,7 +73,7 @@ const MONSTERS = {
         magic: { p: 0.2, dmg: [30, 50], name: '荊棘纏繞' },
         drops: [{ id: 'treantHeart', p: 1, n: [1, 2] }, { id: 'elvenBow', p: 0.03 }, { id: 'crystalWand', p: 0.05 }, { id: 'bArmorScroll', p: 0.04 }],
     },
-    // 眠龍洞穴
+    // 沉眠龍窟
     lizardman:      { name: '蜥蜴人',         icon: '🦎', lv: 19 },
     caveBat:        { name: '吸血蝙蝠',       icon: '🦇', lv: 20, spd: 1100, hpMul: 0.8 },
     darkElfScout:   { name: '黑暗妖精斥候',   icon: '🧝', lv: 22, acAdd: -3 },
@@ -83,7 +83,7 @@ const MONSTERS = {
         magic: { p: 0.2, dmg: [45, 80], name: '岩石吐息' },
         drops: [{ id: 'drakeFang', p: 1, n: [1, 2] }, { id: 'katana', p: 0.04 }, { id: 'bWeaponScroll', p: 0.04 }, { id: 'bArmorScroll', p: 0.06 }],
     },
-    // 海賊島
+    // 沉船海灣
     pirate:         { name: '海賊',           icon: '🏴‍☠️', lv: 27 },
     pirateGunner:   { name: '海賊火槍手',     icon: '🔫', lv: 29, hpMul: 0.9, dmgMul: 1.15 },
     giantCrab:      { name: '巨蟹',           icon: '🦀', lv: 31, large: true, acAdd: -6, hpMul: 1.2, spd: 1800 },
@@ -93,7 +93,7 @@ const MONSTERS = {
         magic: { p: 0.2, dmg: [60, 100], name: '砲擊' },
         drops: [{ id: 'pirateTreasure', p: 1, n: [1, 2] }, { id: 'rifle', p: 0.06 }, { id: 'trident', p: 0.05 }, { id: 'hasteBoots', p: 0.015 }, { id: 'bWeaponScroll', p: 0.05 }],
     },
-    // 龍之谷
+    // 焦骨峽谷
     dvLizard:       { name: '蜥蜴人戰士',     icon: '🦎', lv: 37, acAdd: -3 },
     cerberus:       { name: '地獄三頭犬',     icon: '🐕', lv: 40, large: true, magic: { p: 0.2, dmg: [35, 60], name: '三重火焰' } },
     wyvernling:     { name: '飛龍',           icon: '🐉', lv: 43, large: true, hpMul: 1.2, magic: { p: 0.15, dmg: [40, 70], name: '火焰吐息' } },
@@ -103,7 +103,7 @@ const MONSTERS = {
         magic: { p: 0.25, dmg: [100, 170], name: '烈焰俯衝' },
         drops: [{ id: 'wyvernWing', p: 1, n: [1, 2] }, { id: 'powerGloves', p: 0.05 }, { id: 'knightShield', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'elixir', p: 0.04 }],
     },
-    // 歐瑞雪原
+    // 永凍荒原
     snowWolf:       { name: '冰原狼',         icon: '🐺', lv: 47, spd: 1200 },
     yeti:           { name: '雪怪',           icon: '🦍', lv: 50, large: true, hpMul: 1.3 },
     iceGolem:       { name: '冰之高崙',       icon: '🧊', lv: 53, large: true, acAdd: -8, hpMul: 1.3, spd: 1900 },
@@ -113,7 +113,7 @@ const MONSTERS = {
         magic: { p: 0.25, dmg: [140, 220], name: '暴風雪' },
         drops: [{ id: 'frostCrystal', p: 1, n: [1, 2] }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'mrCloak', p: 0.05 }, { id: 'conRing', p: 0.03 }, { id: 'elixir', p: 0.05 }],
     },
-    // 火龍窟
+    // 熔火煉獄
     salamander:     { name: '火蜥蜴',         icon: '🦎', lv: 56, magic: { p: 0.2, dmg: [50, 80], name: '火焰噴吐' } },
     fireSpirit:     { name: '火之精靈',       icon: '🔥', lv: 59, hpMul: 0.9, magic: { p: 0.35, dmg: [60, 100], name: '火球術' } },
     lavaGolem:      { name: '熔岩高崙',       icon: '🌋', lv: 62, large: true, acAdd: -10, hpMul: 1.4, spd: 1900 },
@@ -123,7 +123,7 @@ const MONSTERS = {
         magic: { p: 0.3, dmg: [170, 260], name: '地獄烈焰' },
         drops: [{ id: 'ifritFlame', p: 1, n: [1, 2] }, { id: 'demonAxe', p: 0.04 }, { id: 'dkFlameSword', p: 0.015 }, { id: 'titanBelt', p: 0.03 }, { id: 'elixir', p: 0.06 }],
     },
-    // 遺忘之島
+    // 紫霧遺跡
     ancientGiant:   { name: '古代巨人',       icon: '🗿', lv: 63, large: true, hpMul: 1.5, spd: 1900 },
     harpy:          { name: '鳥身女妖',       icon: '🦅', lv: 66, spd: 1200, magic: { p: 0.2, dmg: [60, 100], name: '風刃' } },
     forgottenKnight: { name: '被遺忘的騎士',  icon: '🛡️', lv: 69, undead: true, acAdd: -10 },
@@ -133,7 +133,7 @@ const MONSTERS = {
         magic: { p: 0.3, dmg: [200, 300], name: '遺忘詛咒' },
         drops: [{ id: 'forgottenRelic', p: 1, n: [1, 2] }, { id: 'tsurugi', p: 0.04 }, { id: 'windBow', p: 0.015 }, { id: 'magicSniper', p: 0.02 }, { id: 'elixir', p: 0.08 }],
     },
-    // 古代巨人之墓
+    // 泰坦墓穴
     giantSkeleton:  { name: '巨人骷髏',       icon: '💀', lv: 74, undead: true, large: true, hpMul: 1.3 },
     tombGuardian:   { name: '墓穴守護者',     icon: '🗿', lv: 78, acAdd: -12, hpMul: 1.2 },
     necromancer:    { name: '亡靈術士',       icon: '🧙', lv: 81, undead: true, hpMul: 0.9, magic: { p: 0.35, dmg: [110, 170], name: '死亡之觸' } },
@@ -145,32 +145,32 @@ const MONSTERS = {
     },
     // 四大龍（數值寫死）
     antharas: {
-        name: '地龍・安塔瑞斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
+        name: '地龍・格爾莫斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
         hp: 9000, ac: -50, hit: 70, dmg: [45, 95], spd: 1900, exp: 600000, gold: [20000, 30000], mr: 50,
         magic: { p: 0.25, dmg: [120, 200], name: '大地震動' },
         drops: [{ id: 'antharasScale', p: 1, n: [2, 3] }, { id: 'elixir', p: 0.3 }, { id: 'bWeaponScroll', p: 0.3 }, { id: 'bArmorScroll', p: 0.4 }, { id: 'knightShield', p: 0.2 }],
     },
     fafurion: {
-        name: '水龍・法利昂', icon: '🐉', lv: 72, boss: true, dragon: true, large: true,
+        name: '水龍・瑟拉恩', icon: '🐉', lv: 72, boss: true, dragon: true, large: true,
         hp: 14000, ac: -60, hit: 82, dmg: [55, 115], spd: 1800, exp: 1500000, gold: [30000, 45000], mr: 60,
         magic: { p: 0.3, dmg: [150, 250], name: '海嘯' },
         drops: [{ id: 'fafurionScale', p: 1, n: [2, 3] }, { id: 'iceQueenStaff', p: 0.15 }, { id: 'elixir', p: 0.35 }, { id: 'bWeaponScroll', p: 0.35 }, { id: 'bArmorScroll', p: 0.45 }],
     },
     lindvior: {
-        name: '風龍・林德拜爾', icon: '🐉', lv: 82, boss: true, dragon: true, large: true,
+        name: '風龍・維斯塔爾', icon: '🐉', lv: 82, boss: true, dragon: true, large: true,
         hp: 20000, ac: -70, hit: 95, dmg: [65, 130], spd: 1700, exp: 3500000, gold: [45000, 60000], mr: 65,
         magic: { p: 0.3, dmg: [180, 300], name: '暴風' },
         drops: [{ id: 'lindviorScale', p: 1, n: [2, 3] }, { id: 'windBow', p: 0.2 }, { id: 'magicSniper', p: 0.15 }, { id: 'elixir', p: 0.4 }, { id: 'bWeaponScroll', p: 0.4 }, { id: 'bArmorScroll', p: 0.5 }],
     },
     valakas: {
-        name: '火龍・巴拉卡斯', icon: '🔥', lv: 92, boss: true, dragon: true, large: true,
+        name: '火龍・莫爾加斯', icon: '🔥', lv: 92, boss: true, dragon: true, large: true,
         hp: 28000, ac: -80, hit: 108, dmg: [80, 160], spd: 1700, exp: 8000000, gold: [60000, 90000], mr: 70,
         magic: { p: 0.35, dmg: [220, 360], name: '煉獄火焰' },
         drops: [{ id: 'valakasScale', p: 1, n: [2, 3] }, { id: 'dkFlameSword', p: 0.2 }, { id: 'elixir', p: 0.5 }, { id: 'bWeaponScroll', p: 0.5 }, { id: 'bArmorScroll', p: 0.6 }],
     },
 };
 
-// 魔塔：每 10 層一個主題，10、20…100 樓有守關首領
+// 永夜之塔：每 10 層一個主題，10、20…100 樓有守關首領
 const TOWER_THEMES = [
     ['骷髏神射手', '死亡騎士的隨從'], ['石像鬼', '暗影刺客'], ['火焰之影', '熔岩高崙'], ['冰原狼人', '冰之魔女'], ['巫妖', '死靈法師'],
     ['墮落天使', '地獄騎士'], ['混沌戰士', '混沌法師'], ['深淵魔物', '虛空行者'], ['冥界守衛', '冥界死神'], ['冥法親衛', '冥法巫師'],
@@ -189,7 +189,7 @@ const MONSTER_TAGS = {
     sphinx: ['holy'], anubis: ['holy'], osiris: ['holy'],
     darkElfScout: ['human'], pirate: ['human'], pirateGunner: ['human'], pirateKing: ['human'], frostWitch: ['human'], necromancer: ['human'],
     cerberus: ['demon'], fireSpirit: ['demon'], flameKnight: ['demon'], ifrit: ['demon'], harpy: ['holy'],
-    // 魔塔（依名稱）
+    // 永夜之塔（依名稱）
     '暗影刺客': ['human'], '石像鬼': ['demon'], '火焰之影': ['demon'], '炎魔之影': ['demon'], '冰之魔女': ['human'], '死靈法師': ['human'],
     '墮落天使': ['holy'], '墮落的大天使': ['holy'], '地獄騎士': ['demon'], '混沌戰士': ['human'], '混沌法師': ['human'], '混沌之主': ['demon'],
     '深淵魔物': ['demon'], '虛空行者': ['demon'], '深淵領主': ['demon'], '冥法親衛': ['human'], '冥法巫師': ['human'], '冥法軍王': ['human'],

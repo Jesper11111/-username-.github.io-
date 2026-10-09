@@ -36,10 +36,11 @@
     button.secondary { background: var(--panel2); border-color: var(--line); }
     button.danger { background: #6b1f1f; }
     button.mini { padding: 4px 9px; font-size: 13px; }
-    input[type=number], input[type=text], textarea {
+    input[type=number], input[type=text], textarea, .set-row select {
         font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
     }
     input[type=number] { width: 70px; }
+    .set-row select { max-width: 62%; }
     input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent2); }
     textarea { width: 100%; height: 120px; font-size: 12px; word-break: break-all; }
     h4 { margin: 14px 0 8px; color: var(--gold); }
@@ -100,14 +101,15 @@
         border-image-width: calc(var(--s) * 715px) calc(var(--s) * 102px) calc(var(--s) * 655px) calc(var(--s) * 104px);
         border-image-repeat: stretch round;
     }
-    #hud-top {
-        position: absolute; top: calc(var(--s) * 336px); left: calc(var(--s) * 262px); right: calc(var(--s) * 262px);
-        text-align: center; font-size: 12px; line-height: 1.45; text-shadow: 0 1px 3px #000; pointer-events: none;
+    /* 金幣、AC、MR：經驗條正上方，左右分在等級兩側（手機原圖 y 1712～1744；PC y 870～904） */
+    .hud-stats {
+        position: absolute; left: calc(var(--s) * 390px); right: calc(var(--s) * 390px); bottom: calc(var(--s) * 258px); height: calc(var(--s) * 32px);
+        z-index: 3; display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none;
+        font-size: max(9px, calc(var(--s) * 22px)); font-weight: bold; color: #e8e0cc; white-space: nowrap;
     }
-    .hud-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hud-name span { color: var(--muted); }
-    .hud-stats { display: flex; justify-content: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .hud-stats span { padding: 0 5px; border-radius: 4px; background: #0c0806d9; text-shadow: 0 0 2px #000; line-height: 1.35; }
     .hud-stats .gold { color: var(--gold); }
+    .hud-stats .hud-lv-gap { width: calc(var(--s) * 120px); padding: 0; background: none; }
     #panel {
         position: absolute; top: calc(var(--s) * 445px); left: calc(var(--s) * 112px); right: calc(var(--s) * 110px);
         bottom: calc(var(--s) * 626px); overflow-y: auto; padding: 4px 6px 10px;
@@ -119,8 +121,22 @@
         display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; font-size: 12px; text-shadow: 0 1px 3px #000;
     }
     .hud-where { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hud-exp { height: 14px; background: #1a120cee; border: 1px solid #a07a45; }
-    .hud-exp span { line-height: 13px; font-size: 11px; }
+    /* 經驗條（手機原圖 x 380～962、y 1746～1762；PC 原圖 x 300～1700、y 907～925）與等級（欄杆中間裝飾） */
+    .exp-strip {
+        position: absolute; left: calc(var(--s) * 380px); right: calc(var(--s) * 380px); bottom: calc(var(--s) * 238px);
+        height: max(9px, calc(var(--s) * 18px)); z-index: 3; overflow: hidden; border-radius: 3px;
+        background: #0c0806e6; border: 1px solid #a07a45; box-shadow: 0 0 4px #000;
+    }
+    .exp-fill { height: 100%; width: 0; background: linear-gradient(#f3d77a, #c9962f); transition: width .3s; }
+    .exp-strip span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-size: max(8px, calc(var(--s) * 15px)); line-height: 1; color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000; white-space: nowrap; }
+    .lv-badge {
+        position: absolute; left: calc(var(--s) * 616px); width: calc(var(--s) * 110px); bottom: calc(var(--s) * 290px); height: calc(var(--s) * 50px);
+        z-index: 3; display: flex; align-items: center; justify-content: center; pointer-events: none;
+        font-weight: bold; font-size: max(10px, calc(var(--s) * 30px)); color: #ffe7a8; white-space: nowrap;
+        background: radial-gradient(ellipse, #1a0e08f0 55%, #1a0e0800 100%); border-radius: 50%;
+        text-shadow: 0 0 3px #000, 0 0 6px #d8a84a88;
+    }
     .pillar {
         position: absolute; top: calc(var(--s) * 715px); bottom: calc(var(--s) * 655px); width: calc(var(--s) * 104px);
         background: transparent; border: 0; border-radius: 0; padding: 0; z-index: 4;
@@ -168,6 +184,39 @@
     .slot b { position: absolute; right: 1px; bottom: 0; font-size: 9px; line-height: 1; text-shadow: 0 0 2px #000, 0 0 3px #000; }
     .slot.active { box-shadow: 0 0 0 2px var(--gold), 0 0 8px var(--gold); }
     .slot.empty { opacity: .35; }
+    /* 底部骷髏頭（原圖 x 610～730、y 1870～1990）：開始／停止掛機，眼睛表示狀態 */
+    /* 技能快捷列（地圖右下）：冷卻用 conic 遮罩，MP 不足變暗 */
+    .skill-bar { position: absolute; right: 6px; bottom: 6px; display: flex; gap: 6px; z-index: 2; }
+    .skill-bar .sk {
+        position: relative; width: 44px; height: 44px; padding: 0; border-radius: 50%; overflow: hidden;
+        background: radial-gradient(#4a2f1e, #1c120c); border: 2px solid #b8893c; color: #ffe7a8; box-shadow: 0 0 6px #000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+    }
+    .skill-bar .sk::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+        background: conic-gradient(#000b var(--cd), #0000 0); }
+    .skill-bar .sk.nomp { filter: grayscale(.8) brightness(.6); }
+    .skill-bar .sk:active { transform: scale(.93); }
+    .sk-n { font-size: 12px; font-weight: bold; }
+    .sk-t { font-size: 8px; color: #ff9a3c; }
+    .sk-k { position: absolute; right: 4px; top: 1px; font-size: 8px; color: #c8b896; }
+    .sk-cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; font-size: 15px; font-weight: bold; color: #fff; text-shadow: 0 0 3px #000; }
+    .skull-hunt {
+        position: absolute; left: calc(var(--s) * 610px); bottom: calc(var(--s) * 10px); width: calc(var(--s) * 120px); height: calc(var(--s) * 120px);
+        padding: 0; border: 0; border-radius: 40%; background: transparent; z-index: 3; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .skull-hunt:hover:not(.on) .eye { box-shadow: 0 0 calc(var(--s) * 6px) #ff4a2a55; }
+    .skull-hunt:active { transform: scale(.96); }
+    .skull-hunt .eye {
+        position: absolute; top: 46%; width: 22%; height: 17%; transform: translate(-50%, -50%); border-radius: 50%;
+        background: radial-gradient(#000 55%, #0000 75%); transition: background .3s, box-shadow .3s;
+    }
+    .skull-hunt .eye.l { left: 29%; }
+    .skull-hunt .eye.r { left: 71%; }
+    .skull-hunt.on .eye {
+        background: radial-gradient(#ffd0a0 0, #ff3a1a 22%, #c00 48%, #6000 72%);
+        box-shadow: 0 0 calc(var(--s) * 14px) calc(var(--s) * 3px) #ff1a0088; animation: skull-eye 1.6s ease-in-out infinite;
+    }
+    @keyframes skull-eye { 50% { filter: brightness(1.35); box-shadow: 0 0 calc(var(--s) * 22px) calc(var(--s) * 6px) #ff1a00aa; } }
     .title-badge { background: linear-gradient(90deg, #8a2d1f, #c8902c); color: #fff; font-size: 10px; padding: 0 5px; border-radius: 4px; margin-left: 4px; }
     .bar { position: relative; height: 18px; background: #0008; border-radius: 4px; overflow: hidden; font-size: 12px; border: 1px solid #0006; }
     .bar.thin { height: 4px; border: 0; }
@@ -196,29 +245,25 @@
     #frame.pc { border-image: none; background: #000; }
     #frame.pc #frame-art {
         display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-        background: url(images/frame-pc.jpg?v=1) center / 100% 100% no-repeat;
-        -webkit-mask: url(images/frame-pc-mask.png?v=1) center / 100% 100% no-repeat;
-        mask: url(images/frame-pc-mask.png?v=1) center / 100% 100% no-repeat;
+        /* frame-pc-slim：上方拱門縮到 74% 高（0～475 → 0～350），下接兩段柱子雕花，地圖多露出約 120px（第 19 節） */
+        background: url(images/frame-pc-slim.jpg?v=1) center / 100% 100% no-repeat;
+        -webkit-mask: url(images/frame-pc-slim-mask.png?v=1) center / 100% 100% no-repeat;
+        mask: url(images/frame-pc-slim-mask.png?v=1) center / 100% 100% no-repeat;
     }
     #frame.pc .pillar, #frame.pc .drawer { display: none; }
-    #frame.pc #panel { left: calc(var(--s) * 92px); right: calc(var(--s) * 92px); top: calc(var(--s) * 150px); bottom: calc(var(--s) * 278px); padding: 0; overflow: visible; z-index: auto; }
+    #frame.pc #panel { left: calc(var(--s) * 92px); right: calc(var(--s) * 92px); top: calc(var(--s) * 108px); bottom: calc(var(--s) * 278px); padding: 0; overflow: hidden; z-index: 1; }
     #frame.pc .hunt-view { position: relative; display: block; }
-    #frame.pc .scene-wrap { position: absolute; inset: 0; border: 0; border-radius: 0; z-index: 1; }
-    #frame.pc .scene-top { left: calc(var(--s) * 100px); top: calc(var(--s) * 220px); font-size: 14px; }
-    #frame.pc .scene-buffs { left: calc(var(--s) * 100px); top: calc(var(--s) * 255px); right: auto; width: calc(var(--s) * 500px); }
-    /* 掛機面板：橫放在 EXP 條下方、底部格子上方的欄杆那一排（原圖 x 330～1670、y 845～925；#panel 不設 z-index，面板才能蓋在外框上） */
-    #frame.pc .hunt-ctrl {
-        position: absolute; left: calc(var(--s) * 238px); top: calc(var(--s) * 695px); width: calc(var(--s) * 1340px); height: calc(var(--s) * 80px);
-        flex-direction: row; align-items: center; gap: 10px; box-sizing: border-box;
-        padding: 0 10px; background: #0b0807d9; border: 1px solid #5a4028; border-radius: 8px; z-index: 3;
-    }
-    #frame.pc .hunt-ctrl .scene-btns { flex: none; flex-wrap: nowrap; }
-    #frame.pc .hunt-ctrl .scene-btns button { padding: 4px 8px; white-space: nowrap; }
-    #frame.pc .hunt-view .session { flex: none; max-width: calc(var(--s) * 420px); font-size: 11px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #frame.pc .hunt-ctrl .log-drawer { flex: 1; min-width: 0; position: relative; }
-    #frame.pc .hunt-ctrl .log-drawer .scene-log { position: absolute; left: 0; right: 0; bottom: 100%; margin: 0 0 6px; background: #0b0807f2; }   /* 往上展開 */
-    #frame.pc #hud-top { top: calc(var(--s) * 272px); left: calc(var(--s) * 760px); right: calc(var(--s) * 760px); z-index: 3; font-size: 13px; }
-    #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; }
+    #frame.pc .scene-wrap { position: absolute; inset: 0; border: 0; border-radius: 0; }
+    #frame.pc .scene-top { left: calc(var(--s) * 100px); top: calc(var(--s) * 170px); font-size: 14px; }
+    #frame.pc .scene-buffs { left: calc(var(--s) * 100px); top: calc(var(--s) * 205px); right: auto; width: calc(var(--s) * 500px); }
+    /* PC：不畫操作框（功能都在底部格子），只剩永夜之塔上下樓／取消步行時浮在地圖左上（地點名稱下方） */
+    #frame.pc .hunt-ctrl { position: absolute; left: calc(var(--s) * 100px); top: calc(var(--s) * 300px); padding: 0; background: none; border: 0; z-index: 1; }
+    #frame.pc .hunt-ctrl.empty, #frame.pc #hunt-session { display: none; }
+    #frame.pc .hud-stats { left: calc(var(--s) * 320px); right: calc(var(--s) * 320px); bottom: calc(var(--s) * 212px); height: calc(var(--s) * 34px); }
+    #frame.pc .hud-lv-gap { width: calc(var(--s) * 140px); }
+    #frame.pc .exp-strip { left: calc(var(--s) * 300px); right: calc(var(--s) * 300px); bottom: calc(var(--s) * 191px); height: max(10px, calc(var(--s) * 18px)); }
+    #frame.pc .lv-badge { left: calc(var(--s) * 940px); width: calc(var(--s) * 120px); bottom: calc(var(--s) * 222px); height: calc(var(--s) * 46px); }
+    #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; justify-content: flex-start; }
     #frame.pc .orb { width: calc(var(--s) * 240px); height: calc(var(--s) * 240px); bottom: calc(var(--s) * 76px); }
     #frame.pc .orb.hp { left: calc(var(--s) * 60px); }
     #frame.pc .orb.mp { right: calc(var(--s) * 60px); }
@@ -226,6 +271,12 @@
     #frame.pc #slots { left: 0; top: 0; width: 100%; height: 100%; bottom: auto; pointer-events: none; }
     #frame.pc .slot { pointer-events: auto; font-size: calc(var(--s) * 34px); }
     #frame.pc .slot.round { border-radius: 50%; }
+    #frame.pc .skill-bar { right: calc(var(--s) * 250px); bottom: calc(var(--s) * 40px); gap: 10px; }
+    #frame.pc .skill-bar .sk { width: 52px; height: 52px; }
+    #frame.pc .skull-hunt { left: calc(var(--s) * 950px); bottom: calc(var(--s) * 6px); width: calc(var(--s) * 100px); height: calc(var(--s) * 100px); }
+    #frame.pc .skull-hunt .eye { top: 43%; width: 20%; height: 15%; }
+    #frame.pc .skull-hunt .eye.l { left: 33%; }
+    #frame.pc .skull-hunt .eye.r { left: 67%; }
     #frame.pc .slot b { font-size: 10px; }
     #frame.pc #overlay {
         display: block; position: absolute; z-index: 4; overflow-y: auto;
@@ -233,19 +284,29 @@
         padding: 10px 12px; background: #120e0bf2; border: 1px solid #8a6a3a; border-radius: 10px; box-shadow: 0 0 24px #000;
     }
     #frame.pc #overlay.hidden { display: none; }
-    .hunt-view .scene-log { flex: none; height: 76px; font-size: 12px; line-height: 1.4; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); }
-    /* 戰鬥訊息抽屜：預設收起，只露出把手＋最新一行 */
-    .log-drawer { display: flex; flex-direction: column; }
-    .log-handle { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px; font-size: 12px; text-align: left;
-        background: #0007; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
-    .log-handle .log-title { flex: none; color: var(--gold); }
-    .log-handle .log-peek { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .log-handle .log-arrow { flex: none; transition: transform .2s; }
-    .log-drawer.open .log-arrow { transform: rotate(180deg); }
-    .log-drawer.open .log-peek { visibility: hidden; }
-    .log-drawer .scene-log { overflow: hidden; height: 0; padding-top: 0; padding-bottom: 0; border-width: 0; margin-top: 0; transition: height .2s, margin-top .2s; }
-    .log-drawer.open .scene-log { overflow-y: auto; height: 76px; padding-top: 4px; padding-bottom: 4px; border-width: 1px; margin-top: 4px; }
-    #frame.pc .log-drawer.open .scene-log { height: calc(var(--s) * 200px); min-height: 80px; }
+    /* 戰鬥訊息抽屜：左下骷髏頭（原圖 x 15～120、y 1870～1985）開關，抽屜蓋在地圖下緣、從下往上滑出 */
+    .skull-log {
+        position: absolute; left: calc(var(--s) * 15px); bottom: calc(var(--s) * 15px); width: calc(var(--s) * 105px); height: calc(var(--s) * 115px);
+        padding: 0; border: 0; border-radius: 40%; background: transparent; z-index: 3; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .skull-log span {
+        position: absolute; right: -4px; bottom: 0; font-size: 12px; line-height: 1; padding: 2px; border-radius: 4px;
+        background: #000b; border: 1px solid #5a4028; transition: box-shadow .2s, border-color .2s;
+    }
+    .skull-log:active { transform: scale(.96); }
+    .skull-log.open span { border-color: var(--gold); box-shadow: 0 0 6px var(--gold); }
+    .log-pop {
+        position: absolute; left: calc(var(--s) * 124px); right: calc(var(--s) * 124px); bottom: calc(var(--s) * 636px);
+        height: calc(var(--s) * 430px); min-height: 110px; z-index: 4; display: flex; flex-direction: column;
+        background: #0b0807eb; border: 1px solid #7a5530; border-radius: 8px 8px 0 0; box-shadow: 0 -4px 16px #000c;
+        transform: translateY(16px); opacity: 0; visibility: hidden; transition: transform .2s, opacity .2s, visibility .2s;
+    }
+    .log-pop.open { transform: none; opacity: 1; visibility: visible; }
+    .log-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; font-size: 12px; color: var(--gold); border-bottom: 1px solid #3a2a1e; }
+    .log-pop-head button { padding: 1px 8px; }
+    .log-pop .log { flex: 1; height: auto; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.4; padding: 4px 8px; margin: 0; border: 0; background: transparent; }
+    #frame.pc .skull-log { left: calc(var(--s) * 5px); bottom: calc(var(--s) * 6px); width: calc(var(--s) * 95px); height: calc(var(--s) * 100px); }
+    #frame.pc .log-pop { left: calc(var(--s) * 92px); right: auto; width: calc(var(--s) * 760px); bottom: calc(var(--s) * 290px); height: calc(var(--s) * 330px); }
     /* 狩獵（舊） */
     .mon-card { display: flex; align-items: center; gap: 12px; min-height: 76px; }
     .mon-icon { font-size: 44px; width: 56px; text-align: center; animation: bob 1.6s ease-in-out infinite; }
@@ -302,10 +363,70 @@
     .list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; border-radius: 8px; }
     .list-row.locked { opacity: .5; }
     .list-row > div:first-child { min-width: 0; }
+    /* 裝備圖鑑（codex.js）：品質顏色、上方詳細、下方清單 */
+    .g-normal { color: #e8e0cc; } .g-high { color: #7fd36a; } .g-rare { color: #5fa8ff; } .g-hero { color: #c07bff; } .g-legend { color: #ff9a3c; }
+    .codex-top { padding-bottom: 6px; }
+    .codex-top .chips { margin-bottom: 6px; gap: 4px; }
+    .codex-top .chip-btn { padding: 4px 10px; font-size: 12px; }
+    .codex-filter { display: flex; gap: 6px; }
+    .codex-filter input { flex: 1; min-width: 0; padding: 6px 8px; background: #0008; color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+    .codex-filter select { padding: 6px; background: #0008; color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+    .codex-box { position: sticky; top: 0; z-index: 2; margin-bottom: 6px; box-shadow: 0 6px 12px #000c; background: radial-gradient(ellipse at 20% 30%, #2a2030, #120e0b 70%); border-color: #7a5530; }
+    .codex-pop { position: relative; line-height: 1.5; }
+    .codex-close { position: absolute; top: 0; right: 0; z-index: 1; padding: 2px 9px; font-size: 13px; }
+    .codex-pop .codex-detail { padding-right: 34px; }
+    .codex-detail { display: flex; gap: 12px; align-items: center; }
+    .codex-art { flex: none; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 36px;
+        border: 1px solid currentColor; border-radius: 10px; background: radial-gradient(#ffffff14, #0000 70%); box-shadow: inset 0 0 14px #000, 0 0 10px currentColor; }
+    .codex-art.g-normal { box-shadow: inset 0 0 14px #000; }
+    .codex-name { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+    .codex-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; margin-top: 3px; }
+    .codex-grade { padding: 1px 8px; border: 1px solid currentColor; border-radius: 4px; background: #0006; }
+    .codex-cls { font-size: 12px; color: var(--warn); margin-top: 3px; }
+    .codex-sec { margin: 8px 0 4px; padding: 3px 8px; font-size: 13px; color: var(--gold); background: linear-gradient(90deg, #3a2a1e, #0000); border-left: 2px solid var(--gold); }
+    .codex-stats { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 10px; font-size: 12px; padding: 0 8px; }
+    .codex-desc { margin-top: 8px; font-size: 12px; color: #d8cfa8; padding: 0 8px; }
+    .codex-src { font-size: 12px; line-height: 1.6; padding: 0 8px; }
+    .codex-head, .codex-row { display: grid; grid-template-columns: 30px 1fr 44px 76px; gap: 6px; align-items: center; }
+    .codex-head { font-size: 11px; color: var(--muted); padding: 0 8px 4px; border-bottom: 1px solid var(--line); }
+    .codex-list { display: grid; gap: 3px; margin-top: 4px; }
+    .codex-row { padding: 5px 8px; text-align: left; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+    .codex-row.active { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 8px #d8a84a55; background: #3a2a1e; }
+    .codex-row:not(.owned) .codex-ico { filter: grayscale(.6) brightness(.8); }
+    .codex-ico { font-size: 18px; text-align: center; }
+    .codex-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .codex-row > span:last-child { font-size: 11px; }
+    .codex-foot { font-size: 12px; text-align: center; margin: 8px 0 4px; }
     .item-row { display: flex; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); text-align: left; }
     .qty-btns { display: flex; gap: 4px; flex-shrink: 0; }
     .ench-hi { color: var(--ench); font-weight: bold; }
     .rare-item { color: var(--rare); }
+    /* 通貨改造視窗、地圖詞綴 */
+    /* 裝備比較（背包裝備 vs 裝備中） */
+    .cmp-box { margin-top: 10px; padding: 8px 10px; background: #0006; border: 1px solid #7a5530; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+    .cmp-box > b { color: var(--gold); }
+    .cmp-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12px; }
+    .cmp-tbl th { text-align: left; color: var(--muted); font-weight: normal; border-bottom: 1px solid var(--line); padding: 2px 4px; }
+    .cmp-tbl td { padding: 2px 4px; border-bottom: 1px dashed #3a2a1e; white-space: nowrap; }
+    .cmp-tbl td:first-child { white-space: normal; }
+    .cmp-old summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .cmp-old { font-size: 12px; }
+    .craft-item { padding: 8px 10px; margin-bottom: 8px; background: #0006; border: 1px solid var(--line); border-radius: 8px; }
+    .craft-list { display: grid; gap: 5px; }
+    .craft-cur { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 6px; text-align: left; padding: 6px 8px; background: var(--panel2); border: 1px solid #7a5530; }
+    .craft-cur .cc-i { grid-row: span 2; font-size: 20px; align-self: center; }
+    .craft-cur .cc-n { font-weight: bold; color: #ffe7a8; } .craft-cur .cc-n b { color: var(--muted); font-weight: normal; }
+    .craft-cur small { color: var(--muted); font-size: 11px; }
+    .craft-cur.off { opacity: .45; }
+    .map-prog { margin-left: 6px; color: #ff9a6a; font-size: 12px; text-shadow: 0 0 3px #000; }
+    .map-run { padding: 8px 10px; margin-bottom: 8px; background: #3a1712; border: 1px solid #c0392b; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+    .map-mods h4 small { margin-left: 6px; font-weight: normal; }
+    .mod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .mod-chip { position: relative; display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 6px 8px; background: var(--panel2); border: 1px solid var(--line); }
+    .mod-chip small { color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .mod-chip span { position: absolute; right: 6px; top: 5px; font-size: 11px; color: var(--good); }
+    .mod-chip.on { border-color: #c0392b; background: #3a1712; box-shadow: 0 0 8px #c0392b88 inset; }
+    .q-magic { color: #6aa8ff; } .q-rare { color: #ffd84a; } .q-legend { color: #ff8c2a; font-weight: bold; text-shadow: 0 0 6px #ff6a0066; }
     .cursed { color: var(--bad); }
     .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
     .set-row:last-of-type { border-bottom: 0; }
@@ -349,7 +470,7 @@
     <section id="screen-title" class="screen">
         <div class="logo">🐉</div>
         <h1>屠龍勇者</h1>
-        <div class="subtitle">四大龍甦醒，亞丁大陸等待勇者</div>
+        <div class="subtitle">四大龍甦醒，黑暗大陸等待勇者</div>
         <div class="title-btns">
             <button id="btn-continue" onclick="continueGame()">📜 繼續冒險</button>
             <button class="secondary" onclick="openCreate()">⚔️ 建立新角色</button>
@@ -381,12 +502,15 @@
         <!-- 外框（images/frame.jpg 九宮格），位置見 ARCHITECTURE.md 第 15 節 -->
         <div id="stage">
         <div id="frame">
-            <div id="hud-top"></div>
             <main id="panel"></main>
             <!-- PC 橫式外框：外框圖蓋在地圖上（窗口用遮罩挖空）；其他分頁開在 #overlay 視窗 -->
             <div id="frame-art"></div>
             <div id="overlay" class="hidden"></div>
             <div id="hud-bottom"></div>
+            <!-- 經驗條：欄杆下緣與底部格子之間的石條；等級：欄杆正中間的裝飾（ARCHITECTURE.md 第 15、19 節） -->
+            <div id="exp-strip" class="exp-strip"><div class="exp-fill"></div><span></span></div>
+            <div id="lv-badge" class="lv-badge"></div>
+            <div id="hud-stats" class="hud-stats"></div>
             <button id="pillar-left" class="pillar left" onclick="toggleDrawer('left')" aria-label="角色選單"></button>
             <button id="pillar-right" class="pillar right" onclick="toggleDrawer('right')" aria-label="系統選單"></button>
             <div id="drawer-left" class="drawer left"></div>
@@ -394,6 +518,11 @@
             <button id="orb-hp" class="orb hp" onclick="orbHpClick()" aria-label="HP，點一下喝治癒藥水"><div class="orb-empty"></div><span></span></button>
             <button id="orb-mp" class="orb mp" onclick="orbMpClick()" aria-label="MP，點一下喝藍色藥水"><div class="orb-empty"></div><span></span></button>
             <div id="slots"></div>
+            <!-- 底部中間骷髏頭＝開始／停止掛機：眼睛黑＝沒在掛機、紅光＝掛機中（ARCHITECTURE.md 第 15 節） -->
+            <!-- 左下（紅球下方）骷髏頭＝戰鬥訊息抽屜開關；抽屜從下往上滑出 -->
+            <button id="skull-log" class="skull-log" onclick="toggleLogDrawer()" title="戰鬥訊息" aria-label="戰鬥訊息"><span>📜</span></button>
+            <div id="log-pop" class="log-pop"><div class="log-pop-head"><span>📜 戰鬥訊息</span><button class="mini secondary" onclick="toggleLogDrawer()">✕</button></div><div id="hunt-log" class="log"></div></div>
+            <button id="skull-hunt" class="skull-hunt" onclick="skullHuntClick()" aria-label="開始掛機"><i class="eye l"></i><i class="eye r"></i></button>
         </div>
         <!-- PC 16:9 版面的右側欄（其他分頁顯示在這裡） -->
         <aside id="side" class="hidden"></aside>
@@ -405,25 +534,29 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009b"></script>
-<script src="data/classes.js?v=20261009b"></script>
-<script src="data/skills.js?v=20261009b"></script>
-<script src="data/items.js?v=20261009b"></script>
-<script src="data/monsters.js?v=20261009b"></script>
-<script src="data/zones.js?v=20261009b"></script>
-<script src="data/quests.js?v=20261009b"></script>
-<script src="data/player.js?v=20261009b"></script>
-<script src="data/enchant.js?v=20261009b"></script>
-<script src="data/combat.js?v=20261009b"></script>
-<script src="data/town.js?v=20261009b"></script>
-<script src="data/save.js?v=20261009b"></script>
-<script src="data/offline.js?v=20261009b"></script>
-<script src="data/ui.js?v=20261009b"></script>
-<script src="data/ui-create.js?v=20261009b"></script>
-<script src="data/ui-panels.js?v=20261009b"></script>
-<script src="data/ui-frame.js?v=20261009b"></script>
-<script src="data/ui-scene.js?v=20261009b"></script>
-<script src="data/pwa.js?v=20261009b"></script>
-<script src="data/main.js?v=20261009b"></script>
+<script src="data/config.js?v=20261009u"></script>
+<script src="data/classes.js?v=20261009u"></script>
+<script src="data/skills.js?v=20261009u"></script>
+<script src="data/items.js?v=20261009u"></script>
+<script src="data/monsters.js?v=20261009u"></script>
+<script src="data/zones.js?v=20261009u"></script>
+<script src="data/quests.js?v=20261009u"></script>
+<script src="data/player.js?v=20261009u"></script>
+<script src="data/enchant.js?v=20261009u"></script>
+<script src="data/affix.js?v=20261009u"></script>
+<script src="data/craft.js?v=20261009u"></script>
+<script src="data/maps.js?v=20261009u"></script>
+<script src="data/combat.js?v=20261009u"></script>
+<script src="data/town.js?v=20261009u"></script>
+<script src="data/save.js?v=20261009u"></script>
+<script src="data/offline.js?v=20261009u"></script>
+<script src="data/ui.js?v=20261009u"></script>
+<script src="data/ui-create.js?v=20261009u"></script>
+<script src="data/ui-panels.js?v=20261009u"></script>
+<script src="data/codex.js?v=20261009u"></script>
+<script src="data/ui-frame.js?v=20261009u"></script>
+<script src="data/ui-scene.js?v=20261009u"></script>
+<script src="data/pwa.js?v=20261009u"></script>
+<script src="data/main.js?v=20261009u"></script>
 </body>
 </html>

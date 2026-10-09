@@ -74,9 +74,9 @@ function renderPanel() {
 function renderHunt() {
     if (inTown()) {
         const t = currentTown();
-        return huntViewHtml(`${t.icon} ${t.name}<small>　點建築打開設施</small>`);
+        return huntViewHtml(`${t.icon} ${t.name}<small>　點地圖走路・方向鍵／WASD 移動</small>`);
     }
-    return huntViewHtml(`📍 ${zoneTitle()}`);
+    return huntViewHtml(`📍 ${zoneTitle()}<small id="map-prog" class="map-prog"></small>`);
 }
 
 // 中間的即時地圖（ui-scene.js 畫在 canvas 上）＋下方操作列、補給、精簡訊息
@@ -86,35 +86,52 @@ function huntViewHtml(title) {
             <canvas id="scene-canvas" onclick="sceneClick(event)"></canvas>
             <div class="scene-top">${title}</div>
             <div id="hunt-buffs" class="buffs scene-buffs"></div>
+            <div id="skill-bar" class="skill-bar"></div>
         </div>
         <div class="hunt-ctrl">
             <div class="btn-row scene-btns" id="hunt-btns"></div>
             <div id="hunt-session" class="session"></div>
-            <div id="log-drawer" class="log-drawer${logDrawerOpen ? ' open' : ''}">
-                <button class="log-handle" onclick="toggleLogDrawer()"><span class="log-title">📜 戰鬥訊息</span><span id="log-peek" class="log-peek"></span><span class="log-arrow">▲</span></button>
-                <div id="hunt-log" class="log scene-log"></div>
-            </div>
         </div>
     </div>`;
 }
 
+// 戰鬥訊息抽屜：外框左下（紅球下方）骷髏頭是開關，抽屜 #log-pop 從下往上滑出（index.html 靜態元素，不隨分頁重畫）
 function toggleLogDrawer() {
     logDrawerOpen = !logDrawerOpen;
     try { localStorage.setItem(LOG_OPEN_KEY, logDrawerOpen ? '1' : '0'); } catch (e) { }
-    const d = $('log-drawer');
-    if (d) d.classList.toggle('open', logDrawerOpen);
-    const box = $('hunt-log');
-    if (box) box.scrollTop = box.scrollHeight;
+    lastLogRendered = 0;
+    renderLogPop();
+}
+function renderLogPop() {
+    const pop = $('log-pop'), btn = $('skull-log');
+    if (!pop || !player) return;
+    pop.classList.toggle('open', logDrawerOpen);
+    if (btn) btn.classList.toggle('open', logDrawerOpen);
+    // 狩獵畫面看得到時，抽屜貼在操作列（回家卷軸、步行回村）上方，不蓋住按鈕；其他分頁用 CSS 預設位置
+    const ctrl = document.querySelector('#panel .hunt-ctrl'), fr = $('frame');
+    if (logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
+        pop.style.bottom = Math.round(fr.getBoundingClientRect().bottom - ctrl.getBoundingClientRect().top + 4) + 'px';
+    } else pop.style.bottom = '';
+    const logBox = $('hunt-log');
+    if (!logDrawerOpen || !logBox || lastLogRendered === logSeq) return;
+    lastLogRendered = logSeq;
+    logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
+    logBox.scrollTop = logBox.scrollHeight;
 }
 
 function huntButtonsHtml() {
+    // PC 橫式外框：地圖、村莊、回家卷軸、步行回村都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與永夜之塔上下樓
+    if (isPcFrame()) {
+        if (inTown()) return '';
+        if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
+        const z = currentZone();
+        return z && z.type === 'tower' ? `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>` : '';
+    }
     if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
-    let h = player.hunting
-        ? `<button class="danger" onclick="stopHuntBtn()">⏸ 停止掛機</button>`
-        : `<button onclick="startHuntBtn()">▶ 開始掛機</button>`;
-    h += `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
+    // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
+    let h = `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
     h += `<button class="secondary" onclick="walkHomeBtn()">🚶 步行回村</button>`;
     if (z && z.type === 'tower') {
         h += `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>`;
@@ -125,10 +142,18 @@ function huntButtonsHtml() {
 function updateHuntLive() {
     const btns = $('hunt-btns');
     if (btns) {
-        const sig = [inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
-        if (btns.dataset.sig !== sig) { btns.dataset.sig = sig; btns.innerHTML = huntButtonsHtml(); }
+        const sig = [isPcFrame(), inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
+        if (btns.dataset.sig !== sig) {
+            btns.dataset.sig = sig;
+            btns.innerHTML = huntButtonsHtml();
+            const ctrl = btns.closest('.hunt-ctrl');
+            if (ctrl) ctrl.classList.toggle('empty', !btns.innerHTML);
+        }
     }
     startScene();
+    renderSkillBar();
+    const mp = $('map-prog');
+    if (mp) { const t = mapProgressText(); if (mp.textContent !== t) mp.textContent = t; }
     const buffs = $('hunt-buffs');
     if (buffs) {
         const now = gameNow;
@@ -149,19 +174,42 @@ function updateHuntLive() {
         }
         ses.innerHTML = line + `<div>${supplies.join('　')}</div>`;
     } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
-    const logBox = $('hunt-log');
-    if (logBox && lastLogRendered !== logSeq) {
-        lastLogRendered = logSeq;
-        logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
-        logBox.scrollTop = logBox.scrollHeight;
-        // 收起時把手上顯示最新一行
-        const peek = $('log-peek'), last = gameLog[gameLog.length - 1];
-        if (peek) { peek.className = 'log-peek log-line ' + (last ? last.cls : ''); peek.textContent = last ? last.msg : ''; }
-    }
 }
 
-function startHuntBtn() { startHunt(); updateHuntLive(); }
-function stopHuntBtn() { stopHunt('⏸ 停止掛機'); updateHuntLive(); }
+// ───────── 技能快捷列（野外地圖右下 4 格，鍵盤 1～4；ARCHITECTURE.md 第 17 節）─────────
+// 自動挑：攻擊技能（範圍／分散優先、等級高優先）最多 3 個＋治癒（沒有就增益）
+function skillBarSkills() {
+    const L = learnedSkills().filter(k => k.type !== 'passive');
+    const atk = L.filter(k => k.type === 'spell' || k.type === 'strike').reverse();
+    const pick = [...atk.filter(k => k.aoe || k.spread), ...atk.filter(k => !k.aoe && !k.spread)].slice(0, 3);
+    const heal = L.filter(k => k.type === 'heal').pop();
+    if (heal) pick.push(heal);
+    for (const k of L.filter(k => k.type === 'buff').reverse()) { if (pick.length >= 4) break; if (!pick.includes(k)) pick.push(k); }
+    return pick.slice(0, 4);
+}
+function renderSkillBar() {
+    const bar = $('skill-bar');
+    if (!bar) return;
+    if (inTown()) { if (bar.innerHTML) bar.innerHTML = ''; return; }
+    const list = skillBarSkills(), now = gameNow;
+    const html = list.map((k, i) => {
+        const cd = player.cds[k.id] > now ? Math.ceil((player.cds[k.id] - now) / 1000) : 0;
+        const pct = cd && k.cd ? Math.round((player.cds[k.id] - now) / (k.cd * 1000) * 100) : 0;
+        const tag = k.aoe ? '範圍' : k.spread ? '分散' : k.type === 'heal' ? '治癒' : k.type === 'buff' ? '增益' : '';
+        return `<button class="sk ${player.mp < k.mp ? 'nomp' : ''} ${cd ? 'cd' : ''}" style="--cd:${pct}%" onclick="skillBarCast(${i})" title="${esc(k.name)}（${k.mp} MP）${esc(k.desc || '')}">
+            <span class="sk-n">${esc(k.name.slice(0, 2))}</span>${tag ? `<span class="sk-t">${tag}</span>` : ''}<span class="sk-k">${i + 1}</span>${cd ? `<span class="sk-cd">${cd}</span>` : ''}</button>`;
+    }).join('');
+    if (bar.dataset.html !== html) { bar.dataset.html = html; bar.innerHTML = html; }
+}
+function skillBarCast(i) {
+    const k = skillBarSkills()[i];
+    if (!k) return;
+    const err = manualCast(k.id);
+    if (err) showToast(`${k.name}：${err}`, 1200);
+    renderStatus();
+    updateHuntLive();
+}
+
 function homeScrollBtn() { if (!useHomeScroll('')) showToast('沒有回家卷軸'); }
 function walkHomeBtn() { startWalkHome(); updateHuntLive(); }
 function cancelWalkBtn() { cancelWalk(); updateHuntLive(); }
@@ -177,6 +225,7 @@ function renderMap() {
             ${t.icon} ${t.name}<br><small>${here ? '目前位置' : '傳送 💰' + fmt(townTravelFee(id))}</small></button>`;
     }).join('') + `</div>`;
 
+    h += mapDevicePanelHtml();
     h += `<h4>⚔️ 狩獵地點</h4>`;
     for (const z of ZONES) {
         const why = zoneBlockReason(z);
@@ -242,7 +291,7 @@ function renderChar() {
     const dragons = DRAGON_IDS.map(id => `${player.dragons[id] ? '✅' : '⬜'} ${MONSTERS[id].name}`).join('<br>');
     h += `<div class="panel"><h4>冒險紀錄</h4><div class="kv-grid">
         <span>擊殺數</span><b>${fmt(player.kills)}</b><span>死亡數</span><b>${player.deaths}</b>
-        <span>魔塔</span><b>可到 ${player.towerMax}F</b></div>
+        <span>永夜之塔</span><b>可到 ${player.towerMax}F</b></div>
         <p class="dragon-list">${dragons}</p>${hasDragonTitle() ? '<p class="good">👑 稱號：屠龍勇者</p>' : ''}</div>`;
     return h;
 }
@@ -250,13 +299,13 @@ function renderChar() {
 function addStatBtn(k) { addStatPoint(k); saveGame(); refreshUI(); }
 
 // ───────── 背包 ─────────
-const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['other', '其他']];
-const CAT_ORDER = ['quest', 'weapon', 'armor', 'potion', 'scroll', 'ammo', 'elixir', 'material'];
+const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['map', '地圖'], ['other', '其他']];
+const CAT_ORDER = ['quest', 'map', 'weapon', 'armor', 'potion', 'scroll', 'currency', 'ammo', 'elixir', 'material'];
 
 function bagMatch(def) {
     if (bagFilter === 'all') return true;
     if (bagFilter === 'gear') return def.cat === 'weapon' || def.cat === 'armor';
-    if (bagFilter === 'other') return ['ammo', 'elixir', 'material', 'quest'].includes(def.cat);
+    if (bagFilter === 'other') return ['ammo', 'elixir', 'material', 'quest', 'currency'].includes(def.cat);
     return def.cat === bagFilter;
 }
 
@@ -264,6 +313,7 @@ function itemClass(inst) {
     const d = ITEMS[inst.id];
     if (d.safe >= 0 && (inst.ench || 0) > d.safe) return 'ench-hi';
     if ((inst.ench || 0) < 0) return 'cursed';
+    if (inst.q) return QUALITY[inst.q].cls;
     if (d.cat === 'elixir' || ((d.cat === 'weapon' || d.cat === 'armor') && !d.price) || (d.cat === 'scroll' && d.bless === 1)) return 'rare-item';
     return '';
 }
@@ -287,6 +337,7 @@ function renderBag() {
 function setBagFilter(f) { bagFilter = f; renderPanel(); }
 
 function itemDescHtml(inst) {
+    if (ITEMS[inst.id].cat === 'map') return mapDescHtml(inst);   // 異界地圖（maps.js）
     const d = ITEMS[inst.id], L = [], ench = inst.ench || 0;
     let kind = CAT_NAMES[d.cat];
     if (d.cat === 'weapon') kind = WEAPON_TYPES[d.type].name + (WEAPON_TYPES[d.type].two ? '（雙手）' : '');
@@ -319,8 +370,66 @@ function itemDescHtml(inst) {
     if (d.cat === 'ammo') L.push(`傷害 +${d.dmg}${d.silver ? '，對不死系額外傷害' : ''}`);
     if (d.classes) L.push(`限定：${d.classes.map(c => CLASSES[c].name).join('、')}`);
     if (d.desc) L.push(d.desc);
-    L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(sellPriceOf(inst.id))}</small>`);
+    if (inst.q) {   // 暗黑式詞綴
+        L.push(`<b class="${QUALITY[inst.q].cls}">${QUALITY[inst.q].name}品質</b><small class="muted">（物品等級 ${inst.il || 1}）</small>`);
+        for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);
+    }
+    L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(instSellPrice(inst))}</small>`);
     return L.join('<br>');
+}
+
+// ───────── 裝備比較（背包裝備 vs 裝備中）─────────
+// 模擬「換上這件」後的 calcStats，和目前比較；戒指兩格都比；雙手武器會把盾卸下、盾會把雙手武器卸下（同 equipItem）
+const COMPARE_ROWS = [
+    ['avgS', '平均傷害（小型）', 1], ['avgL', '平均傷害（大型）', 1], ['atkMs', '攻擊間隔（秒）', -1, v => (v / 1000).toFixed(2)],
+    ['hit', '命中', 1], ['crit', '爆擊', 1, v => Math.round(v * 100) + '%'], ['ac', 'AC（越低越好）', -1], ['mr', 'MR', 1],
+    ['maxHp', 'HP 上限', 1], ['maxMp', 'MP 上限', 1], ['sp', 'SP', 1], ['reduce', '減傷', 1], ['dodge', '閃避', 1, v => Math.round(v * 100) + '%'],
+    ['lifesteal', '吸血', 1, v => Math.round(v * 100) + '%'], ['hpRegen', '回血', 1], ['mpRegen', '回魔', 1],
+    ['str', '力量', 1], ['dex', '敏捷', 1], ['con', '體質', 1], ['int', '智力', 1], ['wis', '精神', 1], ['weightMax', '負重上限', 1],
+];
+function compareStats() {
+    const st = calcStats(), w = st.weapon;
+    return { ...st, avgS: (w ? (1 + w.dmg[0]) / 2 : 1.5) + st.dmgBonus, avgL: (w ? (1 + w.dmg[1]) / 2 : 1.5) + st.dmgBonus };
+}
+// 把 inst 放進 slot 後算能力，算完還原（不改任何存檔資料）
+function statsWithEquip(inst, slot) {
+    const saved = { ...player.equip }, def = ITEMS[inst.id];
+    try {
+        if (slot === 'weapon' && WEAPON_TYPES[def.type].two) delete player.equip.shield;
+        if (slot === 'shield' && player.equip.weapon && WEAPON_TYPES[ITEMS[player.equip.weapon.id].type].two) delete player.equip.weapon;
+        player.equip[slot] = inst;
+        return compareStats();
+    } finally { player.equip = saved; }
+}
+function compareHtml(inst) {
+    const def = ITEMS[inst.id];
+    if (def.cat !== 'weapon' && def.cat !== 'armor') return '';
+    const err = canEquip(def);
+    if (err) return `<div class="cmp-box"><b>⚖️ 與裝備中比較</b><div class="bad">${esc(err)}，無法裝備</div></div>`;
+    const slots = def.cat === 'weapon' ? ['weapon'] : def.slot === 'ring' ? ['ring1', 'ring2'] : [def.slot];
+    const cur = compareStats();
+    return slots.map(slot => {
+        const old = player.equip[slot], next = statsWithEquip(inst, slot);
+        const extra = [];
+        if (slot === 'weapon' && WEAPON_TYPES[def.type].two && player.equip.shield) extra.push(`會卸下盾牌 ${itemName(player.equip.shield)}`);
+        if (slot === 'shield' && player.equip.weapon && WEAPON_TYPES[ITEMS[player.equip.weapon.id].type].two) extra.push(`會卸下雙手武器 ${itemName(player.equip.weapon)}`);
+        let better = 0, worse = 0;
+        const rows = COMPARE_ROWS.map(([k, label, dir, f]) => {
+            const a = cur[k] || 0, b = next[k] || 0, d = b - a;
+            if (Math.abs(d) < 1e-9) return '';
+            const good = d * dir > 0; good ? better++ : worse++;
+            const show = f || (v => Number.isInteger(v) ? fmt(v) : v.toFixed(1));
+            const ds = f ? (d > 0 ? '+' : '−') + f(Math.abs(d)) : (d > 0 ? '+' : '−') + show(Math.abs(d));
+            return `<tr><td>${label}</td><td>${show(a)}</td><td>${show(b)}</td><td class="${good ? 'good' : 'bad'}">${good ? '▲' : '▼'} ${ds}</td></tr>`;
+        }).join('');
+        const verdict = !rows ? '<span class="muted">能力沒有變化</span>' : `<span class="good">▲ ${better} 項變好</span>　<span class="bad">▼ ${worse} 項變差</span>`;
+        return `<div class="cmp-box"><b>⚖️ 與裝備中比較${slots.length > 1 ? `（${slot === 'ring1' ? '戒指 1' : '戒指 2'}）` : ''}</b>
+            <div class="cmp-cur">目前：${old ? `<span class="${itemClass(old)}">${esc(itemName(old))}</span>` : '<span class="muted">（空）</span>'}</div>
+            ${extra.map(t => `<div class="warn">⚠️ ${esc(t)}</div>`).join('')}
+            <div>${verdict}</div>
+            ${rows ? `<table class="cmp-tbl"><tr><th>項目</th><th>目前</th><th>換上後</th><th>差異</th></tr>${rows}</table>` : ''}
+            ${old ? `<details class="cmp-old"><summary>查看裝備中的詳細</summary>${itemDescHtml(old)}</details>` : ''}</div>`;
+    }).join('');
 }
 
 function openItemDialog(uid) {
@@ -331,14 +440,20 @@ function openItemDialog(uid) {
         btns.push(slot
             ? { text: '卸下', onClick: () => { unequipSlot(slot); saveGame(); refreshUI(); } }
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
+        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
     }
+    if (d.cat === 'map') {
+        if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
+        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
+    }
+    if (d.cat === 'currency') btns.push({ text: '選擇裝備', onClick: () => { bagFilter = 'gear'; switchTab('bag'); showToast('點一件裝備 →「🔮 改造」使用通貨'); } });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
     if (d.cat === 'elixir') btns.push({ text: '使用', onClick: () => openElixirDialog() });
     if (!slot) btns.push({ text: '丟棄', cls: 'danger', onClick: () => gameConfirm('丟棄道具', `確定丟棄 ${itemName(inst)}${inst.n > 1 ? ' ×' + inst.n : ''}？丟掉就找不回來了。`, () => { removeInst(uid); saveGame(); refreshUI(); }, '丟棄') });
     btns.push({ text: '關閉', cls: 'secondary' });
-    openDialog(itemName(inst) + (inst.n > 1 ? ` ×${fmt(inst.n)}` : ''), itemDescHtml(inst), btns);
+    openDialog(itemName(inst) + (inst.n > 1 ? ` ×${fmt(inst.n)}` : ''), itemDescHtml(inst) + (slot ? '' : compareHtml(inst)), btns);
 }
 
 function openEnchantPicker(scrollUid) {
@@ -463,10 +578,27 @@ function shortDesc(d) {
 
 function shopInfo(id) { openDialog(ITEMS[id].name, itemDescHtml({ id, n: 1, ench: 0 }), [{ text: '關閉', cls: 'secondary' }]); }
 
+// 一鍵賣出：背包裡品質低於 level 的一般貨裝備（沒強化、不含稀有基底的普通品質；規則同戰利品過濾）
+function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level) && !(x.ench > 0)); }
+function bulkSellBtn(level) {
+    const list = bulkSellList(level);
+    if (!list.length) { showToast('沒有符合的裝備'); return; }
+    const total = list.reduce((a, x) => a + instSellPrice(x) * x.n, 0);
+    gameConfirm('一鍵賣出', `賣出 ${list.length} 件${level >= 2 ? '普通與魔法' : '普通'}裝備，共 💰${fmt(total)}？\n（已強化的裝備不會賣）`, () => {
+        for (const x of list) removeInst(x.uid);
+        player.gold += total;
+        showToast(`賣出 ${list.length} 件（+${fmt(total)}）`);
+        saveGame(); refreshUI();
+    }, '賣出');
+}
+
 function renderSell() {
-    const list = sortedInv(player.inv).filter(x => sellPriceOf(x.id) > 0);
-    return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small></div><div class="list">` + (list.map(x =>
-        `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(sellPriceOf(x.id))}</small></div>
+    const list = sortedInv(player.inv).filter(x => instSellPrice(x) > 0);
+    const n1 = bulkSellList(1).length, n2 = bulkSellList(2).length;
+    return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small>
+        <div class="btn-row"><button class="secondary" onclick="bulkSellBtn(1)" ${n1 ? '' : 'disabled'}>🪙 賣出普通裝備（${n1}）</button>
+        <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div></div><div class="list">` + (list.map(x =>
+        `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
         <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
         || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
 }
@@ -474,7 +606,7 @@ function renderSell() {
 function sellBtn(uid, all) {
     const it = findInv(uid);
     if (!it) return;
-    const valuable = (it.ench || 0) > 0 || sellPriceOf(it.id) >= 5000;
+    const valuable = (it.ench || 0) > 0 || !!it.q || instSellPrice(it) >= 5000;
     if (valuable) gameConfirm('確認賣出', `確定賣出 ${itemName(it)}${all && it.n > 1 ? ' ×' + it.n : ''}？`, () => sellItem(uid, all), '賣出');
     else sellItem(uid, all);
 }
@@ -514,7 +646,12 @@ function renderSettings() {
         <div class="panel"><h4>💊 自動補給</h4>
             ${chk('potionOn', '自動喝治癒藥水')}${num('potionPct', 'HP 低於 % 喝水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
-            ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}
+            ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}
+        </div>
+        <div class="panel"><h4>🎒 戰利品過濾</h4>
+            <label class="set-row"><span>撿到裝備時</span><select onchange="setSettingNum('lootFilter',this.value,0,3)">
+                ${LOOT_FILTERS.map((n, i) => `<option value="${i}" ${s.lootFilter === i ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+            <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、屠龍劍這類商店沒賣的稀有裝備一律保留。</small>
         </div>
         <div class="panel"><h4>🛡️ 安全</h4>
             ${chk('teleOn', '危險時自動使用瞬間移動卷軸')}${num('telePct', 'HP 低於 % 瞬移', 5, 90)}

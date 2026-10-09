@@ -80,6 +80,9 @@ function applyOffline(awayMs) {
         const canLast = countItem(id) / (s.used[id] / s.ms);
         if (canLast < eff) { eff = canLast; end = 'supply'; }
     }
+    // 異界地圖：最多只能把剩下的怪打完（首領要上線打）
+    const mapLeft = inMapRun() ? player.mapRun.left : Infinity;
+    if (s.kills > 0 && mapLeft < Infinity && mapLeft / (s.kills / s.ms) < eff) { eff = Math.max(0, mapLeft / (s.kills / s.ms)); end = 'map'; }
     // 模擬中就陣亡或回村：有效時間超過模擬長度時，照模擬結果結束
     if ((s.died || s.ended) && eff >= s.ms) { eff = s.ms; end = s.died ? 'died' : 'home'; }
 
@@ -94,6 +97,7 @@ function applyOffline(awayMs) {
     player.gold += gold;
     player.kills += kills;
     gainExp(exp);
+    if (inMapRun()) player.mapRun.left = Math.max(0, player.mapRun.left - kills);
 
     let endText = `仍在${zoneTitle()}掛機中`;
     if (end === 'died') {
@@ -116,6 +120,8 @@ function applyOffline(awayMs) {
         if (consumeItem('homeScroll')) { player.loc = { type: 'town', id: z.town }; endText = `補給用完，使用回家卷軸回到${TOWNS[z.town].name}`; }
         else endText = '補給用完，停止掛機（沒有回家卷軸，留在原地）';
     }
+    if (end === 'map') endText = `異界的怪物已清空，異界首領正在等你（${zoneTitle()}）`;
+    if (player.loc.type === 'town') endMapRun('離線時離開異界');
     hunt = null;
     session = null;
     const st = calcStats();

@@ -9,7 +9,7 @@ const FRAME_MAX_W = 560;          // 電腦上的最大寬度
 const FRAME_MIN_RATIO = 0.62;     // 寬度不超過高度 × 0.62，避免矮螢幕上內容區太小
 
 const DRAWERS = {
-    left:  [['char', '🧝', '人物狀態'], ['skill', '✨', '技能'], ['quest', '📜', '任務']],
+    left:  [['char', '🧝', '人物狀態'], ['skill', '✨', '技能'], ['quest', '📜', '任務'], ['codex', '📖', '裝備圖鑑']],
     right: [['map', '🗺️', '地圖'], ['set', '⚙️', '設定']],
 };
 
@@ -39,17 +39,33 @@ const PC_SLOTS = [
     { icon: '💧', name: '藍色藥水', count: () => countItem('bluePotion'), use: () => quickPotion('bluePotion'), ...PC_SQ(6) },
     { icon: '📜', name: '回家卷軸', count: () => countItem('homeScroll'), use: () => homeScrollBtn(), ...PC_SQ(7) },
     { icon: '🌀', name: '瞬間移動卷軸', count: () => countItem('teleScroll'), use: quickTele, ...PC_SQ(8) },
-    { icon: () => player.hunting ? '⏸' : '▶', name: '開始／停止掛機', use: toggleHuntSlot, ...PC_SQ(9) },
-    { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(10) },
-    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(11) },
+    { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(9) },
+    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(10) },
+    { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(11) },
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
 ];
 function isPcFrame() { return displayMode === 'pc'; }
 function currentSlotDefs() { return isPcFrame() ? PC_SLOTS : SLOT_DEFS; }
-function toggleHuntSlot() {
+// 底部中間骷髏頭＝開始／停止掛機（原本的「▶ 開始掛機」按鈕搬到這裡）；眼睛黑＝沒在掛機、發紅光＝掛機中
+function skullHuntClick() {
+    if (!player) return;
     if (!currentZone()) { showToast('先從地圖前往狩獵地點'); return; }
-    if (player.hunting) stopHunt('⏸ 停止掛機'); else startHunt();
+    if (player.hunting) { stopHunt('⏸ 停止掛機'); showToast('⏸ 停止掛機'); }
+    else { startHunt(); if (player.hunting) showToast('▶ 開始掛機'); }
+    renderStatus();
+    if (huntVisible()) updateHuntLive();
+}
+function renderSkull() {
+    const b = $('skull-hunt');
+    if (!b || !player) return;
+    const on = !!player.hunting;
+    if (b.classList.contains('on') === on && b.dataset.init) return;
+    b.dataset.init = '1';
+    b.classList.toggle('on', on);
+    const label = on ? '掛機中（點骷髏頭停止）' : '開始掛機（點骷髏頭）';
+    b.title = label;
+    b.setAttribute('aria-label', label);
 }
 
 // ───────── 畫面尺寸（設定 →「🖥️ 畫面尺寸」；存在這台裝置，不進角色存檔）─────────
@@ -193,7 +209,7 @@ function quickTele() {
     if (!consumeItem('teleScroll')) { showToast('沒有瞬間移動卷軸'); return; }
     if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
     addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
-    if (hunt) { hunt.mon = null; hunt.state = 'search'; hunt.timer = 1500; }
+    if (hunt) leaveFight(1500);
 }
 
 function orbHpClick() { quickHeal(); renderStatus(); }

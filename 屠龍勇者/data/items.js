@@ -152,7 +152,7 @@ const ITEMS = {
     baphometHorn:  { name: '巴風特之角',     cat: 'material', wt: 5, sell: 3000 },
     demonHeart:    { name: '惡魔之心',       cat: 'material', wt: 5, sell: 5000 },
     osirisSeal:    { name: '歐西里斯的封印', cat: 'material', wt: 5, sell: 6000 },
-    towerSoul:     { name: '魔塔之魂',       cat: 'material', wt: 1, sell: 2000 },
+    towerSoul:     { name: '永夜之魂',       cat: 'material', wt: 1, sell: 2000 },
     treantHeart:   { name: '古樹之心',       cat: 'material', wt: 5, sell: 1500 },
     drakeFang:     { name: '地龍之牙',       cat: 'material', wt: 5, sell: 2500 },
     pirateTreasure: { name: '海賊的寶箱',    cat: 'material', wt: 5, sell: 4000 },
@@ -167,7 +167,7 @@ const ITEMS = {
     valakasScale:  { name: '火龍之鱗',       cat: 'material', wt: 10, sell: 50000 },
 };
 
-const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料', quest: '任務道具' };
+const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料', quest: '任務道具', currency: '通貨' };
 
 // 鍛造配方：need 的道具要在背包中（未裝備），gold 為手續費
 const RECIPES = [
@@ -177,5 +177,5 @@ const RECIPES = [
     { out: 'dragonScaleMail', gold: 30000, need: { plateMail: 1, antharasScale: 2, fafurionScale: 2, lindviorScale: 2, valakasScale: 2 } },
 ];
 
-function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir', 'quest'].includes(def.cat); }
+function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir', 'quest', 'currency'].includes(def.cat); }
 function sellPriceOf(id) { const d = ITEMS[id]; return d.sell != null ? d.sell : Math.floor((d.price || 0) * 0.3); }

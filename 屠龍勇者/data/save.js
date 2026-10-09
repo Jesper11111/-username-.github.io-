@@ -15,7 +15,7 @@ function saveGame() {
 function migrateSave(data) {
     const p = data.player;
     // 補齊新版才有的欄位
-    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0,
+    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0, mapRun: null,
         quests: { ch: 0, active: false, prog: 0, bossDone: false } };
     for (const k in fresh) if (p[k] == null) p[k] = fresh[k];
     p.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), p.settings || {});
@@ -24,6 +24,13 @@ function migrateSave(data) {
     p.inv = (p.inv || []).filter(valid);
     p.storage = p.storage.filter(valid);
     for (const k in p.equip) if (!valid(p.equip[k])) delete p.equip[k];
+    // schema 3：異界地圖（舊的自由開關詞綴 mapMods 移除）
+    delete p.mapMods;
+    if (p.mapRun && (!ZONE_BY_ID[p.mapRun.zone] || !Array.isArray(p.mapRun.mods))) p.mapRun = null;
+    if (p.mapRun) p.mapRun.mods = p.mapRun.mods.filter(k => MAP_MODS[k]);
+    // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
+    const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => AFFIXES[a.k]); };
+    [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
     if (p.loc.type === 'zone' && !ZONE_BY_ID[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     if (p.loc.type === 'town' && !TOWNS[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     return p;
