@@ -55,15 +55,15 @@ function codexIds() {
     return codexIdsCache;
 }
 
-// 取得方式：商店、怪物掉落、魔塔首領、一般怪物、鍛造、職業任務
+// 取得方式：商店、怪物掉落、永夜之塔首領、一般怪物、鍛造、職業任務
 let codexSrcCache = null;
 function codexSources(id) {
     if (!codexSrcCache) {
         const S = codexSrcCache = {};
         const add = (k, s) => { (S[k] = S[k] || []).push(s); };
         for (const m in MONSTERS) for (const dr of MONSTERS[m].drops || []) add(dr.id, '掉落：' + MONSTERS[m].name);
-        add('towerSoul', '掉落：魔塔每 10 層首領');
-        TOWER_BOSS_DROPS.forEach((ids, g) => ids.forEach(i => add(i, `掉落：魔塔 ${g * 10 + 10}F 首領`)));
+        add('towerSoul', '掉落：永夜之塔每 10 層首領');
+        TOWER_BOSS_DROPS.forEach((ids, g) => ids.forEach(i => add(i, `掉落：永夜之塔 ${g * 10 + 10}F 首領`)));
         for (const dr of COMMON_DROPS) add(dr.id, '掉落：一般怪物' + (dr.minLv ? `（Lv.${dr.minLv} 以上地圖）` : ''));
         for (const r of RECIPES) add(r.out, '鍛造：' + Object.keys(r.need).map(k => `${ITEMS[k].name}×${r.need[k]}`).join('、') + `＋💰${fmt(r.gold)}`);
         for (const c in CLASS_QUESTS) CLASS_QUESTS[c].forEach(q => { if (q.reward && q.reward.item) add(q.reward.item, `任務：${CLASSES[c].name}「${q.title}」`); });
@@ -74,7 +74,7 @@ function codexSources(id) {
         list.push(`商店：${t ? t.name : '村莊'}起販售（💰${fmt(d.price)}）`);
     }
     // 暗黑式隨機裝備掉落（affix.js 的 randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定）
-    // 只列真的掉得出來的（需要的怪物等級不超過遊戲裡最高等的怪，魔塔 100F 首領約 Lv.92）
+    // 只列真的掉得出來的（需要的怪物等級不超過遊戲裡最高等的怪，永夜之塔 100F 首領約 Lv.92）
     const needLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
     const topLv = Math.max(makeTowerMonster(100, true).lv, ...Object.values(MONSTERS).map(m => m.lv));
     if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);

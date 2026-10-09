@@ -69,7 +69,7 @@ function changeFloor(delta) {
     if (f < 1 || f > player.towerMax) { showToast(f > player.towerMax ? `需先擊敗 ${player.towerMax}F 的守關首領` : '已經是最底層'); return; }
     player.loc.floor = f;
     if (hunt) leaveFight(800);
-    addLog(`🏛️ 移動到魔塔 ${f}F`, 'sys');
+    addLog(`🏛️ 移動到永夜之塔 ${f}F`, 'sys');
 }
 
 // ───────── 藥水 ─────────
@@ -179,7 +179,7 @@ function huntTick(dt) {
 const MOB_JOIN_MS = 3000;    // 每 3 秒檢查一次有沒有新的怪加入
 const MOB_JOIN_P = 0.15;     // 加入機率
 const MOB_SIDE_SLOW = 1.6;   // 非目標的怪出手間隔 ×1.6（圍著輪流進攻，避免多怪時傷害暴增）
-// 同時最多幾隻：龍穴 1、魔塔 3、其他 6
+// 同時最多幾隻：龍穴 1、永夜之塔 3、其他 6
 function packMax() {
     const z = currentZone();
     return !z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 3 : 6;
@@ -538,7 +538,7 @@ function onKill(mon) {
     if (mon.towerFloor) {
         player.towerCleared[mon.towerFloor] = true;
         const next = Math.min(100, mon.towerFloor + 10);
-        if (next > player.towerMax) { player.towerMax = next; addLog(`🏛️ 解鎖魔塔 ${next}F！`, 'rare'); }
+        if (next > player.towerMax) { player.towerMax = next; addLog(`🏛️ 解鎖永夜之塔 ${next}F！`, 'rare'); }
     }
     if (mon.dragon) {
         const first = !player.dragons[mon.id];
