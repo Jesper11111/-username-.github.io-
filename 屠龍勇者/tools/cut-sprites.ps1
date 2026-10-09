@@ -39,6 +39,47 @@ public static class SpriteCutter {
     public static bool Labels = false;
     // shadowLeft：3D 渲染的長影子往左拖在地上（修羅）——下方 40%、頭部（紅髮）中心左邊 20px 以外，暗於背景的中性灰一律當背景
     public static bool ShadowLeft = false;
+    // sharpen：輸出圖（已縮放）做反銳利化遮罩，amount 約 0.6～1.2（原圖人物太小被放大時用，修羅）
+    // trim：再從透明處往內吃掉 N 圈「暗、偏中性、接近背景」的邊緣點（形狀去背殘留的暗色雜邊）
+    public static void PostProcess(Bitmap b, double amount, int trim, int bgLum) {
+        int w = b.Width, h = b.Height;
+        var px = Read(b);
+        for (int pass = 0; pass < trim; pass++) {
+            var kill = new List<int>();
+            for (int y = 1; y < h - 1; y++) for (int x = 1; x < w - 1; x++) {
+                int i = y * w + x, c = px[i];
+                if (((c >> 24) & 255) == 0) continue;
+                bool edge = false;
+                foreach (int j in new[] { i - 1, i + 1, i - w, i + w }) if (((px[j] >> 24) & 255) < 40) { edge = true; break; }
+                if (!edge) continue;
+                int lum = (R(c) + G(c) + B(c)) / 3, mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+                if (lum < bgLum + 18 && mx - mn < 22) kill.Add(i);
+            }
+            foreach (int i in kill) px[i] = 0;
+        }
+        if (amount > 0) {
+            var o = (int[])px.Clone();
+            for (int y = 1; y < h - 1; y++) for (int x = 1; x < w - 1; x++) {
+                int i = y * w + x, c = px[i], a = (c >> 24) & 255;
+                if (a == 0) continue;
+                double sr = 0, sg = 0, sb = 0, sw = 0;
+                for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+                    int j = i + dy * w + dx, cj = px[j], aj = (cj >> 24) & 255;
+                    if (aj == 0) continue;
+                    double k = (dx == 0 && dy == 0 ? 4 : (dx == 0 || dy == 0 ? 2 : 1)) * aj / 255.0;
+                    sr += R(cj) * k; sg += G(cj) * k; sb += B(cj) * k; sw += k;
+                }
+                if (sw <= 0) continue;
+                int nr = (int)Math.Max(0, Math.Min(255, R(c) + amount * (R(c) - sr / sw)));
+                int ng = (int)Math.Max(0, Math.Min(255, G(c) + amount * (G(c) - sg / sw)));
+                int nb = (int)Math.Max(0, Math.Min(255, B(c) + amount * (B(c) - sb / sw)));
+                o[i] = (a << 24) | (nr << 16) | (ng << 8) | nb;
+            }
+            px = o;
+        }
+        var d = b.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+        Marshal.Copy(px, 0, d.Scan0, px.Length); b.UnlockBits(d);
+    }
     static int[] Read(Bitmap b) {
         var d = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         var a = new int[b.Width * b.Height];
@@ -77,8 +118,86 @@ public static class SpriteCutter {
         var o = new bool[w * h]; for (int i = 0; i < w * h; i++) o[i] = dist[i] <= r; return o;
     }
 
+    // matte：深色漸層底＋深色角色（修羅）——每一列用整列像素的中位數當該列背景色，
+    // 依色差給柔和透明度（< lo 透明、> hi 不透明），再從邊緣往內填「透明度 < 一半」的點，被輪廓包住的內部一律不透明（盔甲不會破洞）
+    public static bool Matte = false;
+    static CutFrame CutMatte(Bitmap sheet, int x0, int y0, int w, int h, double lo, double hi) {
+        var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
+        var px = Read(crop); crop.Dispose();
+        var rowBg = new int[h * 3];
+        for (int y = 0; y < h; y++) {
+            var rs = new List<int>(); var gs = new List<int>(); var bs = new List<int>();
+            // 整列（上下各 2 列）的中位數：人物＋影子佔不到一半寬，中位數就是背景
+            for (int yy = Math.Max(0, y - 2); yy <= Math.Min(h - 1, y + 2); yy++)
+                for (int x = 0; x < w; x += 2) { int c = px[yy * w + x]; rs.Add(R(c)); gs.Add(G(c)); bs.Add(B(c)); }
+            rs.Sort(); gs.Sort(); bs.Sort();
+            rowBg[y * 3] = rs[rs.Count / 2]; rowBg[y * 3 + 1] = gs[gs.Count / 2]; rowBg[y * 3 + 2] = bs[bs.Count / 2];
+        }
+        var af = new double[w * h];
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            int i = y * w + x;
+            double d = Dist(px[i], rowBg[y * 3], rowBg[y * 3 + 1], rowBg[y * 3 + 2]);
+            af[i] = Math.Max(0, Math.Min(1, (d - lo) / (hi - lo)));
+        }
+        // 長影子：比背景暗的中性灰（同 shadowLeft 規則）透明度歸零
+        if (ShadowLeft) {
+            var isBg = new bool[w * h];
+            ShadowRules(px, isBg, w, h, (rowBg[(h / 2) * 3] + rowBg[(h / 2) * 3 + 1] + rowBg[(h / 2) * 3 + 2]) / 3);
+            for (int i = 0; i < w * h; i++) if (isBg[i]) af[i] = 0;
+        }
+        // 從邊緣往內填 af < 0.5 的點＝外部；其餘（輪廓內）不透明
+        var outside = new bool[w * h]; var q = new Queue<int>();
+        for (int x = 0; x < w; x++) foreach (int i in new[] { x, (h - 1) * w + x }) if (af[i] < 0.5 && !outside[i]) { outside[i] = true; q.Enqueue(i); }
+        for (int y = 0; y < h; y++) foreach (int i in new[] { y * w, y * w + w - 1 }) if (af[i] < 0.5 && !outside[i]) { outside[i] = true; q.Enqueue(i); }
+        while (q.Count > 0) {
+            int i = q.Dequeue(), x = i % w, y = i / w;
+            foreach (int j in new[] { x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1 })
+                if (j >= 0 && !outside[j] && af[j] < 0.5) { outside[j] = true; q.Enqueue(j); }
+        }
+        var alpha = new byte[w * h];
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+            int i = y * w + x;
+            double a = outside[i] ? af[i] : 1;
+            // 半透明的邊緣點：扣掉背景色還原顏色，避免灰邊
+            if (a > 0.02 && a < 1) {
+                int br = rowBg[y * 3], bg = rowBg[y * 3 + 1], bb = rowBg[y * 3 + 2], c = px[i];
+                int nr = (int)Math.Max(0, Math.Min(255, br + (R(c) - br) / a));
+                int ng = (int)Math.Max(0, Math.Min(255, bg + (G(c) - bg) / a));
+                int nb = (int)Math.Max(0, Math.Min(255, bb + (B(c) - bb) / a));
+                px[i] = (nr << 16) | (ng << 8) | nb;
+            }
+            double e = Math.Min(Math.Min(x, w - 1 - x), Math.Min(y, h - 1 - y));
+            if (e < 6) a *= e / 6.0;
+            alpha[i] = (byte)Math.Round(a * 255);
+        }
+        return Finish(px, alpha, w, h);
+    }
+
+    // shadowLeft 的兩條規則（Cut 與 CutMatte 共用）
+    static void ShadowRules(int[] px, bool[] isBg, int w, int h, int bgL) {
+        var hx = new List<int>();
+        for (int y = 0; y < h * 3 / 10; y++) for (int x = 0; x < w; x++) { int c = px[y * w + x]; if (R(c) - G(c) > 45) hx.Add(x); }
+        if (hx.Count == 0) return;
+        hx.Sort(); int headX = hx[hx.Count / 2];
+        for (int y = h * 6 / 10; y < h; y++) for (int x = 0; x < headX - 20; x++) {
+            int c = px[y * w + x], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+            if ((R(c) + G(c) + B(c)) / 3 < bgL + 4 && mx - mn < 14) isBg[y * w + x] = true;
+        }
+        // 腳邊與刀下的殘影：下方 45%、整個寬度，暗、中性灰又平滑（周圍 2px 色差小；盔甲有紋理不算）
+        for (int y = h * 55 / 100; y < h; y++) for (int x = 0; x < w; x++) {
+            int i = y * w + x, c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+            if ((R(c) + G(c) + B(c)) / 3 >= bgL + 4 || mx - mn >= 14) continue;
+            int gmax = 0;
+            foreach (int j in new[] { x > 1 ? i - 2 : i, x < w - 2 ? i + 2 : i, y > 1 ? i - 2 * w : i, y < h - 2 ? i + 2 * w : i }) {
+                int o = px[j]; gmax = Math.Max(gmax, Math.Abs(R(o) - R(c)) + Math.Abs(G(o) - G(c)) + Math.Abs(B(o) - B(c)));
+            }
+            if (gmax < 16) isBg[i] = true;
+        }
+    }
+
     public static CutFrame Cut(Bitmap sheet, int x0, int y0, int w, int h, double tol, bool checker, bool global, int shape) {
         if (checker) return CutChecker(sheet, x0, y0, w, h);
+        if (Matte) return CutMatte(sheet, x0, y0, w, h, tol * 0.35, tol);
         var crop = sheet.Clone(new Rectangle(x0, y0, w, h), PixelFormat.Format32bppArgb);
         var px = Read(crop); crop.Dispose();
         // 背景色：四周（內縮 3px）中位數
@@ -176,27 +295,7 @@ public static class SpriteCutter {
             if (x > 0) push(i - 1, i); if (x < w - 1) push(i + 1, i); if (y > 0) push(i - w, i); if (y < h - 1) push(i + w, i);
         }
         }
-        if (ShadowLeft) {
-            var hx = new List<int>();
-            for (int y = 0; y < h * 3 / 10; y++) for (int x = 0; x < w; x++) { int c = px[y * w + x]; if (R(c) - G(c) > 45) hx.Add(x); }
-            if (hx.Count > 0) {
-                hx.Sort(); int headX = hx[hx.Count / 2], bgL = (br + bg + bb) / 3;
-                for (int y = h * 6 / 10; y < h; y++) for (int x = 0; x < headX - 20; x++) {
-                    int c = px[y * w + x], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
-                    if ((R(c) + G(c) + B(c)) / 3 < bgL + 4 && mx - mn < 14) isBg[y * w + x] = true;
-                }
-                // 腳邊殘影：下方 45%、頭部中心右邊 30px 以內，暗、中性灰又平滑（周圍 2px 色差小；盔甲有紋理不算）
-                for (int y = h * 55 / 100; y < h; y++) for (int x = 0; x < Math.Min(w, headX + 30); x++) {
-                    int i = y * w + x, c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
-                    if ((R(c) + G(c) + B(c)) / 3 >= bgL + 4 || mx - mn >= 14) continue;
-                    int gmax = 0;
-                    foreach (int j in new[] { x > 1 ? i - 2 : i, x < w - 2 ? i + 2 : i, y > 1 ? i - 2 * w : i, y < h - 2 ? i + 2 * w : i }) {
-                        int o = px[j]; gmax = Math.Max(gmax, Math.Abs(R(o) - R(c)) + Math.Abs(G(o) - G(c)) + Math.Abs(B(o) - B(c)));
-                    }
-                    if (gmax < 16) isBg[i] = true;
-                }
-            }
-        }
+        if (ShadowLeft) ShadowRules(px, isBg, w, h, (br + bg + bb) / 3);
         if (Flat) {
             for (int i = 0; i < w * h; i++) {
                 int c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
@@ -443,6 +542,7 @@ function Get-Mode($o) {
         flat = [bool]$o.flat       # 純色灰底：被圍住的背景與陰影也去掉（妖精）
         labels = [bool]$o.labels   # 抹掉格子右下角的金色編號
         shadowLeft = [bool]$o.shadowLeft   # 去掉往左拖的地面長影子（修羅）
+        matte = [bool]$o.matte             # 深色漸層底＋深色角色：每列背景色＋柔和透明度＋輪廓內填滿（修羅）
     }
 }
 $baseMode = Get-Mode $cfg
@@ -462,6 +562,7 @@ foreach ($d in $dirs) {
         [SpriteCutter]::Flat = $m.flat
         [SpriteCutter]::Labels = $m.labels
         [SpriteCutter]::ShadowLeft = $m.shadowLeft
+        [SpriteCutter]::Matte = $m.matte
         [SpriteCutter]::ShadowFix = -not ($r.Count -ge 5 -and [int]$r[4] -eq 0)
         $shape = if ($m.checkerSize -gt 0) { 0 } else { $m.shape }
         $f = [SpriteCutter]::Cut($m.sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $m.tol, $m.checker, $m.global, $shape)
@@ -502,6 +603,11 @@ for ($row = 0; $row -lt 3; $row++) {
     }
 }
 $g.Dispose()
+# 選項 "sharpen"（0.6～1.2）、"trim"（圈數）：縮放後銳化、修掉暗色雜邊；背景亮度用第一格原圖左上角
+if ($cfg.sharpen -or $cfg.trim) {
+    $c0 = $baseMode.sheet.GetPixel([int]$cfg.dirs.down[0][0] + 2, [int]$cfg.dirs.down[0][1] + 2)
+    [SpriteCutter]::PostProcess($out, [double]$cfg.sharpen, [int]$cfg.trim, [int](($c0.R + $c0.G + $c0.B) / 3))
+}
 $outPath = Join-Path $root $cfg.out
 $out.Save($outPath, [System.Drawing.Imaging.ImageFormat]::Png)
 "{0}: cellW {1} cellH {2}  frames down {3} right {4} up {5}  bodyH {6} scale {7:N3}  {8} KB" -f $cfg.out, $cellW, $cellH, $frames.down.Count, $frames.right.Count, $frames.up.Count, $bodyH, $k, [int]((Get-Item $outPath).Length / 1024)

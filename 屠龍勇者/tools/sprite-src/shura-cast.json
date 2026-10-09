@@ -1,6 +1,6 @@
 {
   "sheet": "tools/sprite-src/shura-sheet.jpg", "out": "images/sprites/shura-cast.png",
-  "charH": 113, "pad": 4, "tol": 14, "shape": 5, "shadowLeft": true, "bodyH": 87,
+  "charH": 113, "pad": 4, "tol": 14, "shape": 5, "shadowLeft": true, "sharpen": 0.8, "bodyH": 87,
   "dirs": {
     "down":  [[118, 996, 177, 107], [295, 996, 165, 107], [460, 996, 146, 107], [850, 996, 160, 107]],
     "right": [[118, 996, 177, 107], [295, 996, 165, 107], [460, 996, 146, 107], [850, 996, 160, 107]],
