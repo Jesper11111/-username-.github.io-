@@ -3,13 +3,50 @@
 
 let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用）
 
+// ───────── 多角色欄位（ARCHITECTURE.md 第 25 節）─────────
+// 欄位 0 沿用舊 key（舊存檔不用轉換），其他欄位 key 加 _s 編號；最後玩的欄位記在 SLOT_KEY
+let currentSlot = 0;
+try { currentSlot = clamp(parseInt(localStorage.getItem(SLOT_KEY), 10) || 0, 0, MAX_SLOTS - 1); } catch (e) {}
+
+function slotKey(i) { return i ? SAVE_KEY + '_s' + i : SAVE_KEY; }
+function slotHasSave(i) {
+    try { return !!localStorage.getItem(slotKey(i)); } catch (e) { return false; }
+}
+function setCurrentSlot(i) {
+    currentSlot = i;
+    try { localStorage.setItem(SLOT_KEY, String(i)); } catch (e) {}
+}
+function firstEmptySlot() {
+    for (let i = 0; i < MAX_SLOTS; i++) if (!slotHasSave(i)) return i;
+    return -1;
+}
+
+// 人物選單卡片用：讀出某欄位的角色概要（暫時換掉 player 算 calcStats，算完還原）
+function readSlotSummary(i) {
+    try {
+        const raw = localStorage.getItem(slotKey(i));
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.player || !CLASSES[data.player.cls]) return { broken: true };
+        const p = migrateSave(data), keep = player;
+        let st;
+        try { player = p; st = calcStats(); } finally { player = keep; }
+        const loc = p.loc.type === 'town' ? TOWNS[p.loc.id].name : ZONE_BY_ID[p.loc.id].name;
+        return { name: p.name, cls: p.cls, lv: p.lv, exp: p.exp, hp: p.hp, mp: p.mp, maxHp: st.maxHp, maxMp: st.maxMp,
+            gold: p.gold, loc, hunting: p.hunting && p.loc.type === 'zone', t: data.t || 0 };
+    } catch (e) {
+        return { broken: true };
+    }
+}
+
 function hasSave() {
-    try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+    for (let i = 0; i < MAX_SLOTS; i++) if (slotHasSave(i)) return true;
+    return false;
 }
 
 function saveGame() {
     if (!player || SIM_MODE) return;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { /* 無痕模式等存不了，略過 */ }
+    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { /* 無痕模式等存不了，略過 */ }
 }
 
 function migrateSave(data) {
@@ -38,7 +75,7 @@ function migrateSave(data) {
 
 function loadGame() {
     try {
-        const raw = localStorage.getItem(SAVE_KEY);
+        const raw = localStorage.getItem(slotKey(currentSlot));
         if (!raw) return false;
         return applySaveData(JSON.parse(raw));
     } catch (e) {
@@ -54,8 +91,8 @@ function applySaveData(data) {
     return true;
 }
 
-function deleteSave() {
-    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+function deleteSave(i = currentSlot) {
+    try { localStorage.removeItem(slotKey(i)); } catch (e) {}
 }
 
 function exportSaveText() {

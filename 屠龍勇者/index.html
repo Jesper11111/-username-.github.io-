@@ -70,6 +70,46 @@
     .title-btns { display: flex; flex-direction: column; gap: 10px; width: 240px; }
     .title-btns button { padding: 13px; font-size: 17px; }
 
+    /* 人物選單（多角色欄位，ARCHITECTURE.md 第 25 節） */
+    #app:has(#screen-select.active) { max-width: 1100px; }
+    #screen-select { padding: 16px; gap: 10px; }
+    .select-head { display: flex; align-items: baseline; justify-content: space-between; }
+    .select-foot { position: sticky; bottom: 0; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); background: linear-gradient(#0000, var(--bg) 30%); z-index: 2; }
+    .char-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px; background: #14131a; border: 2px solid #3b3a48; border-radius: 10px; box-shadow: inset 0 0 18px #000; }
+    .char-card {
+        position: relative; display: block; aspect-ratio: 9 / 16; max-height: 70vh; padding: 0; overflow: hidden; text-align: left;
+        background: #1b1a24; border: 1px solid #2a2936; border-radius: 4px; color: #fff; font-weight: normal;
+        text-shadow: 0 1px 2px #000, 0 0 4px #000;
+    }
+    .char-card.sel { border-color: #9fd8c8; box-shadow: 0 0 0 1px #9fd8c8, 0 0 14px #9fd8c866 inset; }
+    .char-card.sel::after { content: ''; position: absolute; inset: 0; background: #7fc0b022; pointer-events: none; }
+    .char-face { position: absolute; inset: 0; }
+    .char-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+    .char-emoji { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 72px; background: radial-gradient(circle at 50% 45%, #3a3550, #15141c 70%); }
+    .char-top, .char-bottom { position: absolute; left: 0; right: 0; padding: 6px 8px; }
+    .char-top { top: 0; background: linear-gradient(#000d, #0008 70%, #0000); padding-bottom: 18px; }
+    .char-bottom { bottom: 0; background: linear-gradient(#0000, #000a 25%, #000e); padding-top: 18px; }
+    .char-name { font-size: 20px; color: #fff; }
+    .char-card.sel .char-name { color: #f3e36a; }
+    .char-cls { font-size: 17px; margin: 1px 0 3px; }
+    .char-row, .char-bar { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; }
+    .char-row i, .char-bar i { font-style: normal; color: #7fa8ff; }
+    .char-bar { position: relative; margin-top: 3px; padding-bottom: 4px; }
+    .char-bar > div { position: absolute; left: 0; bottom: 0; height: 5px; border-radius: 2px; }
+    .char-bar::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; border-radius: 2px; background: #2b2f4a; }
+    .char-bar i, .char-bar b { position: relative; }
+    .char-bar.hp > div { background: linear-gradient(90deg, #e07a2a, #f3c24a); }
+    .char-bar.mp > div { background: linear-gradient(90deg, #3a8ee0, #6ec6f6); }
+    .char-loc { font-size: 12px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .char-card.empty, .char-card.broken { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--muted); font-size: 15px; border-style: dashed; border-color: #3b3a48; }
+    .char-card.empty:hover { color: var(--gold); border-color: var(--gold); }
+    .char-card small { font-size: 11px; color: #6c6a7a; }
+    .char-plus { font-size: 40px; line-height: 1; }
+    @media (max-width: 760px) {
+        .char-grid { grid-template-columns: repeat(2, 1fr); }
+        .char-name { font-size: 17px; } .char-cls, .char-row, .char-bar { font-size: 14px; }
+    }
+
     /* 創角 */
     #screen-create { padding: 16px; gap: 10px; }
     .class-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -473,10 +513,23 @@
         <div class="subtitle">四大龍甦醒，黑暗大陸等待勇者</div>
         <div class="title-btns">
             <button id="btn-continue" onclick="continueGame()">📜 繼續冒險</button>
-            <button class="secondary" onclick="openCreate()">⚔️ 建立新角色</button>
+            <button id="btn-select" class="secondary" onclick="openCharSelect()">👥 人物選單</button>
+            <button id="btn-new" class="secondary" onclick="openCreate()">⚔️ 建立新角色</button>
             <button class="secondary" onclick="openInstallGuide()">📲 安裝到主畫面</button>
         </div>
         <small id="version" class="muted"></small>
+    </section>
+
+    <!-- 人物選單：多角色欄位（ARCHITECTURE.md 第 25 節） -->
+    <section id="screen-select" class="screen">
+        <div class="select-head"><div class="loc">👥 人物選單</div><small id="select-count" class="muted"></small></div>
+        <div id="char-grid" class="char-grid"></div>
+        <small id="select-hint" class="muted"></small>
+        <div class="btn-row select-foot">
+            <button class="secondary" onclick="showTitle()">返回</button>
+            <button id="btn-delchar" class="danger" onclick="deleteSelectedChar()">🗑 刪除</button>
+            <button id="btn-play" onclick="playSelected()" style="flex:1">▶ 進入遊戲</button>
+        </div>
     </section>
 
     <!-- 創角 -->
@@ -492,7 +545,7 @@
             <input id="create-name" type="text" maxlength="12" placeholder="角色名稱" style="width:100%">
         </div>
         <div class="btn-row">
-            <button class="secondary" onclick="showTitle()">返回</button>
+            <button class="secondary" onclick="createBack()">返回</button>
             <button onclick="confirmCreate()" style="flex:1">✅ 建立角色</button>
         </div>
     </section>
@@ -534,29 +587,29 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009u"></script>
-<script src="data/classes.js?v=20261009u"></script>
-<script src="data/skills.js?v=20261009u"></script>
-<script src="data/items.js?v=20261009u"></script>
-<script src="data/monsters.js?v=20261009u"></script>
-<script src="data/zones.js?v=20261009u"></script>
-<script src="data/quests.js?v=20261009u"></script>
-<script src="data/player.js?v=20261009u"></script>
-<script src="data/enchant.js?v=20261009u"></script>
-<script src="data/affix.js?v=20261009u"></script>
-<script src="data/craft.js?v=20261009u"></script>
-<script src="data/maps.js?v=20261009u"></script>
-<script src="data/combat.js?v=20261009u"></script>
-<script src="data/town.js?v=20261009u"></script>
-<script src="data/save.js?v=20261009u"></script>
-<script src="data/offline.js?v=20261009u"></script>
-<script src="data/ui.js?v=20261009u"></script>
-<script src="data/ui-create.js?v=20261009u"></script>
-<script src="data/ui-panels.js?v=20261009u"></script>
-<script src="data/codex.js?v=20261009u"></script>
-<script src="data/ui-frame.js?v=20261009u"></script>
-<script src="data/ui-scene.js?v=20261009u"></script>
-<script src="data/pwa.js?v=20261009u"></script>
-<script src="data/main.js?v=20261009u"></script>
+<script src="data/config.js?v=20261009v"></script>
+<script src="data/classes.js?v=20261009v"></script>
+<script src="data/skills.js?v=20261009v"></script>
+<script src="data/items.js?v=20261009v"></script>
+<script src="data/monsters.js?v=20261009v"></script>
+<script src="data/zones.js?v=20261009v"></script>
+<script src="data/quests.js?v=20261009v"></script>
+<script src="data/player.js?v=20261009v"></script>
+<script src="data/enchant.js?v=20261009v"></script>
+<script src="data/affix.js?v=20261009v"></script>
+<script src="data/craft.js?v=20261009v"></script>
+<script src="data/maps.js?v=20261009v"></script>
+<script src="data/combat.js?v=20261009v"></script>
+<script src="data/town.js?v=20261009v"></script>
+<script src="data/save.js?v=20261009v"></script>
+<script src="data/offline.js?v=20261009v"></script>
+<script src="data/ui.js?v=20261009v"></script>
+<script src="data/ui-create.js?v=20261009v"></script>
+<script src="data/ui-panels.js?v=20261009v"></script>
+<script src="data/codex.js?v=20261009v"></script>
+<script src="data/ui-frame.js?v=20261009v"></script>
+<script src="data/ui-scene.js?v=20261009v"></script>
+<script src="data/pwa.js?v=20261009v"></script>
+<script src="data/main.js?v=20261009v"></script>
 </body>
 </html>

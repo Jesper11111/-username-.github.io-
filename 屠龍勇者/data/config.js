@@ -1,9 +1,11 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '屠龍勇者';
-const GAME_VERSION = '20261009u';
+const GAME_VERSION = '20261009v';
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
-const SAVE_KEY = 'dragonSlayer_save_v2';
+const SAVE_KEY = 'dragonSlayer_save_v2';   // 欄位 0；其他欄位是 SAVE_KEY + '_s' + 編號（save.js slotKey）
+const SLOT_KEY = 'dragonSlayer_slot';      // 最後玩的角色欄位
+const MAX_SLOTS = 8;                       // 角色欄位數（人物選單）
 const SAVE_SCHEMA = 3;   // 3：異界地圖（道具 map1～15 帶 q／mm／nm、player.mapRun）   // 2：裝備實體可帶 q／af／il／nm（暗黑式詞綴，affix.js）
 
 const TICK_MS = 100;              // 主迴圈間隔

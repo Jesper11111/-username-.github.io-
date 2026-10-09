@@ -1,20 +1,122 @@
-// 屠龍勇者：標題畫面與創角（依賴 ui、classes、player、save）
+// 屠龍勇者：標題畫面、人物選單（多角色欄位）、創角（依賴 ui、classes、player、save）
 let createState = null;
+let createSlot = 0;   // 新角色要放進哪個欄位
+let selSlot = 0;      // 人物選單目前選中的欄位
 
 function showTitle() {
     $('version').textContent = 'v' + GAME_VERSION;
-    $('btn-continue').classList.toggle('hidden', !hasSave());
+    const any = hasSave();
+    if (any && !slotHasSave(currentSlot)) setCurrentSlot(nextFilledSlot());
+    const sum = any ? readSlotSummary(currentSlot) : null;
+    $('btn-continue').classList.toggle('hidden', !any);
+    $('btn-continue').innerHTML = '📜 繼續冒險' + (sum && !sum.broken ? `<br><small>${esc(sum.name)}・${CLASSES[sum.cls].name} Lv.${sum.lv}</small>` : '');
+    $('btn-select').classList.toggle('hidden', !any);
+    $('btn-new').classList.toggle('hidden', any);
     showScreen('title');
 }
 
-function openCreate() {
-    if (hasSave()) {
-        gameConfirm('建立新角色', '目前只有一個存檔位置，建立新角色會覆蓋舊角色，確定嗎？', () => { createState = null; renderCreate(); showScreen('create'); }, '覆蓋並建立');
-        return;
+function nextFilledSlot() {
+    for (let i = 0; i < MAX_SLOTS; i++) if (slotHasSave(i)) return i;
+    return 0;
+}
+
+// ───────── 人物選單（ARCHITECTURE.md 第 25 節）─────────
+// 遊戲中開啟會先存檔、離開目前角色；其他角色若在掛機，下次進入時照常結算離線收益
+function openCharSelect() {
+    if (player) {
+        saveGame();
+        hunt = null; session = null; walkHome = null;
+        player = null;
     }
+    selSlot = slotHasSave(currentSlot) ? currentSlot : nextFilledSlot();
+    renderCharSelect();
+    showScreen('select');
+}
+
+function agoText(t) {
+    const m = Math.floor((Date.now() - t) / 60000);
+    if (!t || m < 1) return '剛剛';
+    if (m < 60) return `${m} 分鐘前`;
+    if (m < 1440) return `${Math.floor(m / 60)} 小時前`;
+    return `${Math.floor(m / 1440)} 天前`;
+}
+
+function charCardHtml(i, s) {
+    if (!s) return `<button class="char-card empty" onclick="openCreate(${i})"><span class="char-plus">＋</span>建立新角色<small>欄位 ${i + 1}</small></button>`;
+    if (s.broken) return `<button class="char-card broken ${i === selSlot ? 'sel' : ''}" onclick="pickSlot(${i})"><span class="char-plus">⚠️</span>存檔損毀<small>欄位 ${i + 1}</small></button>`;
+    const c = CLASSES[s.cls];
+    const next = s.lv >= MAX_LEVEL ? 'MAX' : fmt(expToNext(s.lv) - s.exp);
+    const pct = (a, b) => b > 0 ? clamp(a / b * 100, 0, 100) : 0;
+    const face = c.art
+        ? `<img src="${c.art}?v=${GAME_VERSION}" alt="${c.name}" loading="lazy">`
+        : `<span class="char-emoji">${c.icon}</span>`;
+    return `<button class="char-card ${i === selSlot ? 'sel' : ''}" onclick="pickSlot(${i})" ondblclick="playSlot(${i})">
+        <div class="char-face">${face}</div>
+        <div class="char-top">
+            <div class="char-name">${esc(s.name)}</div>
+            <div class="char-cls">${c.name}</div>
+            <div class="char-row"><i>Lv</i><b>${s.lv}</b></div>
+            <div class="char-row"><i>Next</i><b>${next}</b></div>
+        </div>
+        <div class="char-bottom">
+            <div class="char-bar hp"><div style="width:${pct(s.hp, s.maxHp)}%"></div><i>HP</i><b>${fmt(Math.max(0, s.hp))}/${fmt(s.maxHp)}</b></div>
+            <div class="char-bar mp"><div style="width:${pct(s.mp, s.maxMp)}%"></div><i>MP</i><b>${fmt(Math.max(0, s.mp))}/${fmt(s.maxMp)}</b></div>
+            <div class="char-loc">${s.hunting ? '⚔️' : '📍'} ${s.loc}</div>
+            <div class="char-loc muted">💰 ${fmt(s.gold)}・${agoText(s.t)}</div>
+        </div>
+    </button>`;
+}
+
+function renderCharSelect() {
+    const sums = [];
+    for (let i = 0; i < MAX_SLOTS; i++) sums.push(readSlotSummary(i));
+    const used = sums.filter(Boolean).length;
+    $('select-count').textContent = `${used} / ${MAX_SLOTS}`;
+    // 已有角色全部列出，空欄位只顯示第一個（＋建立新角色）
+    const empty = sums.indexOf(null);
+    $('char-grid').innerHTML = sums.map((s, i) => s || i === empty ? charCardHtml(i, s) : '').join('');
+    const s = sums[selSlot];
+    $('btn-play').disabled = !s || !!s.broken;
+    $('btn-delchar').disabled = !s;
+    $('select-hint').textContent = s && !s.broken ? `選中：${s.name}（${CLASSES[s.cls].name} Lv.${s.lv}）` : '點選角色卡片，或點空欄位建立新角色';
+}
+
+function pickSlot(i) { selSlot = i; renderCharSelect(); }
+
+function playSlot(i) {
+    if (!slotHasSave(i)) return;
+    setCurrentSlot(i);
+    continueGame();
+}
+
+function playSelected() { playSlot(selSlot); }
+
+function deleteSelectedChar() {
+    const s = readSlotSummary(selSlot);
+    if (!s) return;
+    const who = s.broken ? `欄位 ${selSlot + 1} 的損毀存檔` : `「${s.name}」（${CLASSES[s.cls].name} Lv.${s.lv}）`;
+    gameConfirm('刪除角色', `${who}與所有道具會永久刪除，無法復原！確定刪除？`, () => {
+        deleteSave(selSlot);
+        if (!hasSave()) { showTitle(); return; }
+        selSlot = nextFilledSlot();
+        renderCharSelect();
+        showToast('已刪除角色');
+    }, '永久刪除');
+}
+
+function openCreate(slot) {
+    const i = slot != null ? slot : (slotHasSave(0) ? firstEmptySlot() : 0);
+    if (i < 0) { showToast(`角色欄位已滿（${MAX_SLOTS} 個），請先刪除一個角色`); return; }
+    createSlot = i;
     createState = null;
+    $('create-name').value = '';
     renderCreate();
     showScreen('create');
+}
+
+function createBack() {
+    if (hasSave()) openCharSelect();
+    else showTitle();
 }
 
 function selectClass(cls) {
@@ -59,7 +161,9 @@ function confirmCreate() {
     createState.name = name;
     if (!name) { showToast('請輸入角色名稱'); return; }
     if (createPointsLeft() > 0) { showToast('能力點數還沒分配完'); return; }
-    deleteSave();
+    if (slotHasSave(createSlot)) { showToast('這個欄位已經有角色，請選空欄位'); return; }
+    setCurrentSlot(createSlot);
+    resetSessionState();
     createPlayer(name, createState.cls, createState.stats);
     saveGame();
     addLog(`歡迎來到低語海岸，${name}！先去「地圖」傳送到低語海岸狩獵吧。Lv.15 起可以在「📜 任務」接職業任務。`, 'sys');

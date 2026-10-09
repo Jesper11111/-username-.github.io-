@@ -29,9 +29,17 @@ function gameTick() {
     if (saveAcc >= AUTOSAVE_MS) { saveAcc = 0; saveGame(); }
 }
 
-function continueGame() {
-    if (!loadGame()) { showToast('讀取存檔失敗'); return; }
+// 換角色（人物選單）時清掉上一個角色的戰鬥、地圖畫面、遊戲訊息
+function resetSessionState() {
     hunt = null; session = null; walkHome = null;
+    scene = null;
+    gameLog.length = 0;
+}
+
+function continueGame() {
+    if (!slotHasSave(currentSlot)) setCurrentSlot(nextFilledSlot());
+    if (!loadGame()) { showToast('讀取存檔失敗'); return; }
+    resetSessionState();
     addLog(`歡迎回來，${player.name}！`, 'sys');
     const away = Date.now() - lastSaveAt;
     const report = away >= OFFLINE_MIN_MS ? applyOffline(away) : null;

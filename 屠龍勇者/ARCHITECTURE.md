@@ -22,10 +22,10 @@
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
-| `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt` |
+| `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
-| `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
+| `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
@@ -47,11 +47,11 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009u`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009v`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
-- **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
+- **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）；多角色欄位見第 25 節。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
 - `onclick="…"` 字串只呼叫頂層函式並傳字面值，不直接寫 `player`（與修仙的混淆建置規則一致）。
 - **時間**：增益、冷卻、喝水間隔、步行、掛機統計用 `gameNow`（遊戲時鐘，主迴圈每次 +dt，最多補 1 秒）；
@@ -580,3 +580,21 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   命運（普通→魔法 70%／稀有 30%）、神諭（稀有＋1 條，最多 6）；淬鍊石不能用在地圖。`craft.js` 的 `currencyCan`／`useCurrency` 依道具類型分流。
 - **離線**：快轉模擬照樣套用地圖詞綴；`applyOffline` 最多只會把剩下的怪打完（首領要上線打），結束訊息提示首領在等；離線中回城也會關閉地圖。
 - 介面：狩獵畫面左上 `#map-prog` 顯示「🌀 T5 剩 132/240 圖示 +45%」；背包新增「地圖」篩選；圖鑑新增「地圖」分類（取得方式、地區）。
+
+## 25. 人物選單與多角色欄位（2026-10-09，版本 `20261009v`）
+
+- 使用者要求：參考 RPG Maker 隊伍狀態畫面做「人物選單」，讓玩家同時養多個職業、各自存檔。
+- **欄位**：`MAX_SLOTS` 8 個（`config.js`）。欄位 0 沿用舊 key `dragonSlayer_save_v2`（舊存檔直接出現在第 1 格，**不用轉換、schema 不變**），
+  欄位 i 的 key 是 `dragonSlayer_save_v2_s{i}`（`slotKey`）。最後玩的欄位記在 `dragonSlayer_slot`（`SLOT_KEY`），`currentSlot` 載入 save.js 時讀出。
+  `saveGame`／`loadGame`／`deleteSave(i)` 都依 `currentSlot`；`hasSave()`＝任一欄位有存檔。匯出／匯入只作用在目前角色。
+- **標題畫面**：有存檔時顯示「📜 繼續冒險（名字・職業 Lv）」（最後玩的角色）＋「👥 人物選單」；完全沒存檔才顯示「⚔️ 建立新角色」。
+- **人物選單** `#screen-select`（`ui-create.js` 的 `openCharSelect`／`renderCharSelect`）：
+  卡片 `charCardHtml`：職業立繪（`art`，沒有就大 emoji）鋪滿 9:16 卡片，上方名字、職業、Lv、Next（升級還差的經驗），下方 HP／MP 條、地點（⚔️＝離開時在掛機）、金幣、上次遊玩時間。
+  已有角色全部列出，空欄位只顯示第一個「＋ 建立新角色」；點卡片選取（`pickSlot`，選中發青光、名字變黃），雙擊或「▶ 進入遊戲」進入（`playSlot`），「🗑 刪除」刪除選中的角色。
+  寬螢幕 4 欄、760px 以下 2 欄；底部按鈕列 `position: sticky` 固定在下方。
+- 卡片資料 `readSlotSummary(i)`：讀出存檔跑 `migrateSave`，暫時把 `player` 換成該角色算 `calcStats`（HP／MP 上限）再還原；解析失敗顯示「⚠️ 存檔損毀」，只能刪除。
+- **遊戲中切換**：設定 →「💾 存檔」→「👥 人物選單（切換角色）」：先存檔、清掉 `player`，再開選單。
+  進入角色走 `continueGame` → `resetSessionState()`（`main.js`：清 `hunt／session／walkHome`、地圖畫面 `scene`、遊戲訊息 `gameLog`），避免上一個角色的戰鬥或畫面殘留。
+- **離線收益照常**：每個角色存檔有自己的時間 `t`，切走時若在掛機，下次進入就依離開時間結算（最多 12 小時、50%），等於其他角色在背景掛機。
+- 創角：`openCreate(slot)` 指定欄位（沒給就用第一個空欄位，滿了提示先刪除）；`confirmCreate` 不再刪舊存檔，寫進 `createSlot`。創角「返回」回人物選單（沒存檔回標題）。
+- 設定裡「刪除角色」只刪目前角色，還有其他角色時回人物選單。

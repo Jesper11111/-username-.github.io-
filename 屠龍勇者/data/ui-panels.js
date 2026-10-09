@@ -668,6 +668,7 @@ function renderSettings() {
                 <button class="secondary" onclick="openImport()">匯入存檔</button>
             </div>
             <div class="btn-row">
+                <button onclick="openCharSelect()">👥 人物選單（切換角色）</button>
                 <button class="secondary" onclick="backToTitle()">回標題畫面</button>
                 <button class="danger" onclick="confirmDeleteChar()">刪除角色</button>
             </div>
@@ -707,10 +708,10 @@ function backToTitle() {
 }
 
 function confirmDeleteChar() {
-    gameConfirm('刪除角色', '角色與所有道具會永久刪除，無法復原！\n建議先「匯出存檔」備份。確定刪除？', () => {
+    gameConfirm('刪除角色', `「${player.name}」與所有道具會永久刪除，無法復原！（其他角色不受影響）\n建議先「匯出存檔」備份。確定刪除？`, () => {
         deleteSave();
         hunt = null; session = null; walkHome = null;
         player = null;
-        showTitle();
+        if (hasSave()) openCharSelect(); else showTitle();
     }, '永久刪除');
 }
