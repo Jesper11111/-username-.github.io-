@@ -85,6 +85,7 @@ function formatMailRewards(r) {
     const parts = MAIL_REWARD_FIELDS.filter(f => mbAmount(r[f.key])).map(f => `${f.icon} ${f.label} ${mbAmount(r[f.key]).toWan()}`);
     Object.entries(r.blueprints || {}).forEach(([k, n]) => { if (mbAmount(n)) parts.push(`📜 ${k.replace('_', '・')} 等圖紙 ×${mbAmount(n)}`); });
     Object.entries(r.servants || {}).forEach(([q, n]) => { if (mbAmount(n)) parts.push(`👤 ${q}僕從 ×${mbAmount(n)}`); });
+    mbGearEntries(r).forEach(([lv, n]) => parts.push(`🔴 Lv.${lv} 先天・太古裝備（部位隨機）×${n}`));
     // 先天資質（aptitude：{ root: { group, id?, elems? }, physique: id }）
     const apt = r.aptitude || {};
     const rd = apt.root && describeRoot(apt.root), pd = apt.physique && describePhysique(apt.physique);
@@ -97,10 +98,17 @@ function formatMailRewards(r) {
 function countMailServants(r) {
     return Object.values((r && r.servants) || {}).reduce((a, n) => a + mbAmount(n), 0);
 }
-// 領取前檢查：僕從要有空位
+// 先天・太古裝備 rewards.gear = { "5000": 件數 }（只認 MAIL_PRIMAL_GEAR_LEVELS 的等級；單封最多 20 件防手誤）→ [[等級, 件數]]
+function mbGearEntries(r) {
+    return Object.entries((r && r.gear) || {}).map(([lv, n]) => [Number(lv), Math.min(20, mbAmount(n))])
+        .filter(([lv, n]) => n && MAIL_PRIMAL_GEAR_LEVELS.includes(lv));
+}
+// 領取前檢查：僕從、背包裝備要有空位
 function checkMailRewardSpace(r) {
     const n = countMailServants(r);
     if (n && (player.servants || []).length + n > MAX_SERVANTS) return `僕從小屋空位不足（需要 ${n} 個，上限 ${MAX_SERVANTS} 名），請先解僱一些僕從再領取。`;
+    const g = mbGearEntries(r).reduce((a, [, k]) => a + k, 0);
+    if (g && player.equipInventory.length + g > MAX_EQUIP_INVENTORY) return `背包裝備空位不足（需要 ${g} 格，目前 ${player.equipInventory.length} / ${MAX_EQUIP_INVENTORY}），請先清出空位再領取。`;
     return '';
 }
 // personal＝寄給個人的信（GM 權限只認個人信；全服信、兌換碼、奇遇都不會改 GM）
@@ -121,6 +129,15 @@ function grantMailRewards(r, personal) {
         if (!quality) return;
         for (let i = 0; i < mbAmount(n); i++) player.servants.push(createMailServant(quality));
     });
+    mbGearEntries(r).forEach(([lv, n]) => {
+        for (let i = 0; i < n; i++) {
+            const eq = createPrimalPlatinumGear(lv);
+            if (!eq) continue;
+            player.equipInventory.push(eq);
+            addLog(`🔴 太古神兵現世！仙府賜予【${getEquipDisplayName(eq)}】（Lv.${lv}）！`, "reincarnate");
+        }
+    });
+    if (mbGearEntries(r).length && typeof checkTitleUnlocks === 'function') checkTitleUnlocks();
     // 先天資質：已測過的跳出比較讓玩家選；還沒測的存起來，測試時直接採用（aptitude.js）
     if (r.aptitude) setTimeout(() => offerAptitudeGift(r.aptitude), 300);
 }

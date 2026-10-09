@@ -321,13 +321,14 @@ function nv2EstimateIdleCombat() {
 //   每波開打時算一次自己的每隻回合數（nv2EstimateIdleCombat 的 hits），超過 NV2.rewardSpeedCap 倍的部分，每隻收益按比例打折
 // observed（選填）：最近幾波實際的「每隻回合數」（combat.js 的 getObservedRoundsPerKill）。2026-10-05 修正：單體估算沒算群攻技能、靈寵、夥伴，
 //   強力配置實戰比估算快 3～6 倍，收益超過上限（玩家「糊道友」實測 40 倍）→ 取估算與實測較快的一個
-function nv2RewardSpeedAdj(map, observed) {
+// cap（選填）：上限倍數，預設 NV2.rewardSpeedCap；時空秘境 3（map.js 的 getRewardSpeedCap，第 78 節）
+function nv2RewardSpeedAdj(map, observed, cap) {
     const n = NV2.waveAvg, gap = IDLE_WAVE_GAP_TICKS;
     let mine = nv2EstimateIdleCombat().hits;
     if (observed > 0) mine = Math.min(mine, observed);
     const typ = nv2TypRoundsPerKill(map);
     const speed = (gap + n * typ) / (gap + n * mine);   // 相對一般玩家的每小時收益倍數
-    return Math.min(1, NV2.rewardSpeedCap / speed);
+    return Math.min(1, (cap || NV2.rewardSpeedCap) / speed);
 }
 // 「每波」遭遇機率的補償：舊制設計每波 6＋3 秒，新制一般玩家每波 = 刷新間隔 + 每波隻數 × 每隻回合數
 function nv2WaveChanceMult(map) {

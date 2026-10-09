@@ -293,12 +293,12 @@
         <div class="card">
             <h2>🛠️ 手動開一隻</h2>
             <label>Boss <select id="wb-boss"></select></label>
-            <label>總血量 <input type="number" id="wb-hp" value="4000" min="1"> 萬</label>
+            <label>總血量 <input type="number" id="wb-hp" value="40000" min="1"> 萬</label>
             <label>持續 <input type="number" id="wb-hours" value="24" min="1" max="168"> 小時</label>
             <label>開始時間 <input type="datetime-local" id="wb-start">（留空＝立即；以這台電腦的時間為準）</label>
             <button id="wb-open">⚔️ 開啟</button>
             <button id="wb-end" class="danger">⏹ 結束目前這隻</button>
-            <p class="note">開啟會立刻取代目前這隻（目前這隻記為「上一隻」，參加者仍可在結束 24 小時後領獎）。填了開始時間＝預約：玩家先看到「尚未開放（還有多久）」，時間到才能挑戰。單次傷害上限＝總血量 1%。</p>
+            <p class="note">開啟會立刻取代目前這隻（目前這隻記為「上一隻」，參加者仍可在結束 24 小時後領獎）。填了開始時間＝預約：玩家先看到「尚未開放（還有多久）」，時間到才能挑戰。單次傷害上限固定 1000 萬（不看總血量）。</p>
         </div>
         <div class="card">
             <h2>🔍 傷害紀錄審核 <select id="wb-which"><option value="cur">目前這隻</option><option value="prev">上一隻</option></select></h2>
@@ -306,7 +306,27 @@
                 <thead><tr><th>道號</th><th>境界</th><th>次數</th><th>⭐有效</th><th>累計傷害</th><th>可疑</th><th>uid</th><th>操作</th></tr></thead>
                 <tbody id="wb-rows"><tr><td colspan="8" class="note">登入管理者後才能查看。</td></tr></tbody>
             </table></div>
-            <p class="note">可疑：低境界（煉虛以下）卻打滿上限、兩次挑戰間隔紀錄小於 60 秒（不該發生）、每次都打滿且境界偏低。封鎖＝寫入黑名單（不能再挑戰、不能領獎），並刪除這筆傷害紀錄（Boss 已扣的血不會補回）。</p>
+            <p class="note">可疑：單次 ≥ 900 萬（接近上限，超過模擬極限約 829 萬）、大乘以下單次 ≥ 600 萬（大乘極限頂配約 553 萬）、兩次挑戰間隔紀錄小於 60 秒（不該發生）。⭐有效＝撐滿 30 回合的次數。封鎖＝寫入黑名單（不能再挑戰、不能領獎），並刪除這筆傷害紀錄（Boss 已扣的血不會補回）。</p>
+        </div>
+        <div class="card">
+            <h2>🎁 名次獎勵：先天・太古裝備（部位隨機）</h2>
+            <p class="note">對象＝上方「傷害紀錄審核」選的那隻（目前這隻／上一隻）的全部參加者，名次依累計傷害（相同並列）。建議先封鎖可疑帳號再寄。</p>
+            <div class="tablewrap"><table>
+                <thead><tr><th>名次從</th><th>到（0＝其餘全部）</th><th>裝備等級</th><th>件數</th><th></th></tr></thead>
+                <tbody id="wbg-tiers"></tbody>
+            </table></div>
+            <button id="wbg-add">＋ 新增一段</button> <button id="wbg-reset">↺ 預設分段</button>
+            <div class="row" style="margin-top:8px;">
+                <label>標題 <input id="wbg-title" style="width:220px" value="世界 Boss 名次獎勵"></label>
+                <label>內文 <input id="wbg-body" style="width:360px" value="道友於世界 Boss 一役戰功卓著，特賜太古神兵一件！"></label>
+            </div>
+            <div class="tablewrap" style="margin-top:8px;"><table>
+                <thead><tr><th>名次</th><th>道號</th><th>累計傷害</th><th>獎勵</th></tr></thead>
+                <tbody id="wbg-preview"><tr><td colspan="4" class="note">登入管理者後才能查看。</td></tr></tbody>
+            </table></div>
+            <button id="wbg-send">📮 寄出名次獎勵</button>
+            <p class="note">每人一封個人信（仙府信箱，24 小時內要領，逾時自動刪除）。裝備：同等級圖紙鍛造的橙裝 → 太古（詞條全天級取上限、多 1 條、四維 ×1.2）→ 白金先天道器（+0、多 1 條、種族特效、傳奇威能）。
+                玩家要更新到新版遊戲才領得到（舊版會提示重新整理，信件保留）。同一隻寄過會提醒，避免重複寄。</p>
         </div>
     </section>
 
@@ -335,19 +355,19 @@
     </div>
 </main>
 
-<script src="data/config-realms.js?v=20261005CR"></script>
+<script src="data/config-realms.js?v=20261005CU"></script>
 <!-- 數值重做新制（2026-09-28 上線）：戰力上限、一般玩家倍率、守城妖潮強度都用新制算法（config-numeric.js／numeric.js 只宣告常數與函式） -->
-<script src="data/config-numeric.js?v=20261005CR"></script>
-<script src="data/numeric.js?v=20261005CR"></script>
-<script src="data/config-leaderboard.js?v=20261005CR"></script>
-<script src="data/config-mailbox.js?v=20261005CR"></script>
+<script src="data/config-numeric.js?v=20261005CU"></script>
+<script src="data/numeric.js?v=20261005CU"></script>
+<script src="data/config-leaderboard.js?v=20261005CU"></script>
+<script src="data/config-mailbox.js?v=20261005CU"></script>
 <!-- 發放獎勵的先天資質選單（config-aptitude.js 只有常數） -->
-<script src="data/config-aptitude.js?v=20261005CR"></script>
+<script src="data/config-aptitude.js?v=20261005CU"></script>
 <!-- 守城審核：該波妖潮強度 defenseWaveAtk（config-defense.js）需要 bounty.js 的 getBountyRefSectMult（只宣告常數與函式，不會執行遊戲邏輯） -->
-<script src="data/config-bounty.js?v=20261005CR"></script>
-<script src="data/bounty.js?v=20261005CR"></script>
-<script src="data/config-defense.js?v=20261005CR"></script>
-<script src="data/config-world-boss.js?v=20261005CR"></script>
+<script src="data/config-bounty.js?v=20261005CU"></script>
+<script src="data/bounty.js?v=20261005CU"></script>
+<script src="data/config-defense.js?v=20261005CU"></script>
+<script src="data/config-world-boss.js?v=20261005CU"></script>
 <script>
 // ================== 設定（與 tools/firestore.rules 保持一致）==================
 // 新制戰力上限（與 tools/firestore.rules 相同）：400 ＋ 境界 × 40；理論最高約佔 40～46%
@@ -896,6 +916,7 @@ function rwFormat(r) {
     const parts = MAIL_REWARD_FIELDS.filter(f => Number(r[f.key]) > 0).map(f => `${f.icon}${f.label} ${fmt(Number(r[f.key]))}`);
     Object.entries(r.blueprints || {}).forEach(([k, v]) => parts.push(`📜${k.replace('_', '・')}等圖紙×${v}`));
     Object.entries(r.servants || {}).forEach(([q, v]) => parts.push(`👤${q}僕從×${v}`));
+    Object.entries(r.gear || {}).forEach(([lv, v]) => parts.push(`🔴Lv.${lv}先天・太古裝備×${v}`));
     const apt = r.aptitude || {};
     if (apt.root && rwRootName(apt.root)) parts.push(`⛩️靈根【${rwRootName(apt.root)}】`);
     if (apt.physique && rwPhysName(apt.physique)) parts.push(`⛩️體質【${rwPhysName(apt.physique)}】`);
@@ -1089,16 +1110,16 @@ async function reloadWboss() {
     } catch (e) { log('讀取世界 Boss 失敗：' + e.message + '（規則可能尚未發布新版）', 'err'); return; }
     const st = wbSt, now = Date.now();
     $('wb-state').innerHTML = !st ? '目前沒有世界 Boss（每週六 20:00 玩家第一次打開時自動建立）。' : `
-        <b>${esc((WB_BOSSES[(st.bossIdx || 0) % WB_BOSSES.length] || {}).name || '')}</b>（bid ${esc(st.bid)}）｜血量 ${fmt(st.hp)} / ${fmt(st.maxHp)}（${(st.hp / Math.max(1, st.maxHp) * 100).toFixed(1)}%）｜單次上限 ${fmt(st.cap)}<br>
+        <b>${esc((WB_BOSSES[(st.bossIdx || 0) % WB_BOSSES.length] || {}).name || '')}</b>（bid ${esc(st.bid)}）｜血量 ${fmt(st.hp)} / ${fmt(st.maxHp)}（${(st.hp / Math.max(1, st.maxHp) * 100).toFixed(1)}%）｜單次上限 ${fmt(WB.cap)}<br>
         ${wbDt(st.startAt)} ～ ${wbDt(st.endAt)}｜${st.killedAt ? `💀 ${wbDt(st.killedAt)} 被擊敗（最後一擊：${esc(st.lastName)}）` : now < wbMsOf(st.startAt) ? '⏳ 預約中（尚未開始）' : now < wbMsOf(st.endAt) ? '⚔️ 進行中' : '⌛ 已結束'}<br>
         上一隻：${st.prev ? `bid ${esc(st.prev.bid)}、血量 ${fmt(st.prev.maxHp)}、${st.prev.killed ? '被擊敗' : '未擊敗'}、${wbDt(st.prev.endAt)} 結束` : '無'}`;
-    const cap = $('wb-which').value === 'prev' ? Math.floor(((st && st.prev && st.prev.maxHp) || 0) / 100) : (st ? st.cap : 0);
+    // 可疑門檻（2026-10-09 上限改固定 1000 萬後）：模擬 30 回合極限頂配 混沌道祖 最高約 829 萬、大乘約 553 萬（ARCHITECTURE.md 第 75 節）
     wbRows.forEach(r => {
         const f = [];
-        if ((r.realm || 0) <= 6 && (r.hist || []).some(h => h.d >= cap)) f.push('低境界打滿上限');
+        if ((r.hist || []).some(h => h.d >= WB.cap * 0.9)) f.push('單次 ≥ 900 萬');
+        if ((r.hist || []).some(h => (h.r != null ? h.r : r.realm || 0) <= 8 && h.d >= 6000000)) f.push('大乘以下單次 ≥ 600 萬');
         const h = (r.hist || []).map(x => x.t).sort((a, b) => a - b);
         for (let i = 1; i < h.length; i++) if (h[i] - h[i - 1] < WB.gapSec * 1000) { f.push('間隔過短'); break; }
-        if (r.n >= 3 && r.eff === r.n && (r.realm || 0) <= 8) f.push('每次都打滿');
         r._flags = f;
     });
     wbRows.sort((a, b) => (b._flags.length - a._flags.length) || (b.total - a.total));
@@ -1106,7 +1127,62 @@ async function reloadWboss() {
         <td>${r._flags.map(x => `<span class="flag red">${x}</span>`).join(' ') || '—'}</td><td class="uid">${esc(r.id)}</td>
         <td class="rowbtns"><button class="danger" onclick="wbBan('${esc(r.id)}')">封鎖</button><button onclick="wbDel('${esc(r.id)}')">刪除紀錄</button></td></tr>`).join('')
         : '<tr><td colspan="8" class="note">沒有紀錄。</td></tr>';
+    wbgRender();
 }
+// ---- 名次獎勵：先天・太古裝備（2026-10-09；遊戲端 mailbox.js 的 rewards.gear → gear.js 的 createPrimalPlatinumGear）----
+let wbgTiers = WB_GIFT_TIERS.map(t => Object.assign({}, t));
+// 參加者依累計傷害排名（相同並列，同遊戲的 wbRankOf），每人對到第一個符合的分段
+function wbgPlan() {
+    const list = wbRows.filter(r => (r.n || 0) > 0).slice().sort((a, b) => (b.total || 0) - (a.total || 0));
+    return list.map(r => {
+        const rank = list.filter(x => (x.total || 0) > (r.total || 0)).length + 1;
+        const t = wbgTiers.find(t => rank >= t.from && (!t.to || rank <= t.to) && t.n > 0);
+        return { r, rank, gear: t ? { [t.level]: t.n } : null };
+    });
+}
+const wbgText = g => g ? Object.entries(g).map(([lv, n]) => `🔴 Lv.${lv} 先天・太古裝備 ×${n}`).join('、') : '—（不在任何分段）';
+function wbgRender() {
+    $('wbg-tiers').innerHTML = wbgTiers.map((t, i) => `<tr>
+        <td><input type="number" min="1" style="width:60px" value="${t.from}" data-wbg="${i}" data-k="from"></td>
+        <td><input type="number" min="0" style="width:60px" value="${t.to}" data-wbg="${i}" data-k="to"></td>
+        <td><select data-wbg="${i}" data-k="level">${MAIL_PRIMAL_GEAR_LEVELS.map(l => `<option value="${l}"${l === t.level ? ' selected' : ''}>Lv.${l}</option>`).join('')}</select></td>
+        <td><input type="number" min="0" max="20" style="width:50px" value="${t.n}" data-wbg="${i}" data-k="n"></td>
+        <td><button data-wbg-del="${i}">刪除</button></td></tr>`).join('');
+    document.querySelectorAll('[data-wbg]').forEach(el => el.onchange = () => {
+        const t = wbgTiers[+el.dataset.wbg], v = Math.floor(Number(el.value) || 0);
+        t[el.dataset.k] = el.dataset.k === 'n' ? Math.max(0, Math.min(20, v)) : Math.max(el.dataset.k === 'to' ? 0 : 1, v);
+        wbgRender();
+    });
+    document.querySelectorAll('[data-wbg-del]').forEach(b => b.onclick = () => { wbgTiers.splice(+b.dataset.wbgDel, 1); wbgRender(); });
+    const plan = wbgPlan();
+    $('wbg-preview').innerHTML = plan.length ? plan.map(p => `<tr><td>${p.rank}</td><td>${esc(p.r.name)}</td><td>${fmt(p.r.total)}</td><td>${wbgText(p.gear)}</td></tr>`).join('')
+        : '<tr><td colspan="4" class="note">這隻沒有參加者。</td></tr>';
+}
+$('wbg-add').onclick = () => { const last = wbgTiers[wbgTiers.length - 1]; wbgTiers.push({ from: last ? (last.to || last.from) + 1 : 1, to: 0, level: 1500, n: 1 }); wbgRender(); };
+$('wbg-reset').onclick = () => { wbgTiers = WB_GIFT_TIERS.map(t => Object.assign({}, t)); wbgRender(); };
+$('wbg-send').onclick = async () => {
+    if (!isAdmin) return log('需要管理者權限', 'err');
+    const plan = wbgPlan().filter(p => p.gear);
+    if (!plan.length) return alert('沒有要寄的對象。');
+    const bid = plan[0].r._bid, key = 'wbGiftSent_' + bid;
+    let sent = null; try { sent = localStorage.getItem(key); } catch (e) {}
+    if (sent && !confirm(`這隻 Boss（bid ${bid}）已在 ${sent} 寄過名次獎勵，確定要再寄一次？`)) return;
+    const title = $('wbg-title').value.trim() || '世界 Boss 名次獎勵', body = $('wbg-body').value.trim();
+    const total = plan.reduce((a, p) => a + Object.values(p.gear).reduce((x, y) => x + y, 0), 0);
+    if (!confirm(`寄出名次獎勵給 ${plan.length} 位參加者（共 ${total} 件先天・太古裝備）？\n第 1 名：${plan[0].r.name}（${wbgText(plan[0].gear)}）\n信件 ${MAIL_LIFETIME_HOURS} 小時內要領，逾時自動刪除。`)) return;
+    const exp = firebase.firestore.Timestamp.fromMillis(Date.now() + MAIL_LIFETIME_HOURS * 3600000);
+    let ok = 0;
+    for (const p of plan) {
+        try {
+            await db.collection(MAIL_COLLECTION).add({ to: p.r.id, title, body: `${body}（第 ${p.rank} 名）`, rewards: { gear: p.gear }, v: 4, expiresAt: exp, createdBy: user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            ok++;
+        } catch (e) { log(`寄給 ${p.r.name} 失敗：${e.message}`, 'err'); }
+    }
+    try { localStorage.setItem(key, new Date().toLocaleString('zh-TW', { hour12: false })); } catch (e) {}
+    log(`世界 Boss 名次獎勵：已寄出 ${ok} / ${plan.length} 封`, ok === plan.length ? 'ok' : 'err');
+    if (typeof reloadRewards === 'function') reloadRewards();
+};
+wbgRender();
 window.wbBan = id => {
     const r = wbRows.find(x => x.id === id); if (!r) return;
     if (!confirm(`封鎖「${r.name}」？\n不能再挑戰世界 Boss、不能領獎（也會擋下戰力榜、寄售、留言），並刪除這筆傷害紀錄。`)) return;
@@ -1136,10 +1212,10 @@ $('wb-open').onclick = async () => {
     if (!(start > 0)) return alert('開始時間格式不對。');
     if (start < Date.now() - 60000) return alert('開始時間已經過了，請留空（立即）或填之後的時間。');
     const whenTxt = startIn ? `${new Date(start).toLocaleString('zh-TW', { hour12: false })} 開始` : '立即開始';
-    if (!confirm(`開啟【${WB_BOSSES[+$('wb-boss').value].name}】？\n${whenTxt}、持續 ${hours} 小時\n總血量 ${fmt(hp)}、單次上限 ${fmt(Math.floor(hp / 100))}`)) return;
+    if (!confirm(`開啟【${WB_BOSSES[+$('wb-boss').value].name}】？\n${whenTxt}、持續 ${hours} 小時\n總血量 ${fmt(hp)}、單次上限 ${fmt(WB.cap)}`)) return;
     try {
         const ref = db.collection(WB_STATE_COLLECTION).doc('state'), old = (await ref.get()).data() || null, now = Date.now();
-        await ref.set({ bid: 'gm' + now, bossIdx: +$('wb-boss').value, maxHp: hp, hp, cap: Math.floor(hp / 100),
+        await ref.set({ bid: 'gm' + now, bossIdx: +$('wb-boss').value, maxHp: hp, hp, cap: WB.cap,
             startAt: firebase.firestore.Timestamp.fromMillis(start), endAt: firebase.firestore.Timestamp.fromMillis(start + hours * 3600000),
             killedAt: null, lastUid: '', lastName: '',
             prev: old ? { bid: old.bid, maxHp: old.maxHp, killed: !!old.killedAt, endAt: old.endAt, lastUid: old.lastUid || '' } : null });

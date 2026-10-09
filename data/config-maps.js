@@ -124,7 +124,8 @@ const MONSTER_RESPAWN_SECONDS = 10;
 //   掉率使用者未指定，先用這組：圖紙 1/3000（再經 5000 等以下 ×2 → 每小時約 0.8 張）、靈石每種每小時約 1 顆、星允鐵約 12 顆、異火碎片約 4.5 片
 // 2026-10-06 使用者：「時空秘境內不會掉落任何靈石；相反每秒扣 1 萬靈石才足以支撐開啟時空秘境的能量消耗」
 //   upkeepPerSec：每秒消耗的靈石（線上 combat.js 每秒、離線／背景 save.js 按秒數）；付不起就被送回復活點（宗門）；擊殺靈石為 0（combat.js 的 rollKillCoins）
-const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3, upkeepPerSec: 10000,
+// rewardSpeedCap：線上每小時收益（經驗、聲望、熟練度）的速度上限＝主要地圖一般玩家的幾倍（一般地圖 NV2.rewardSpeedCap 1；2026-10-09 使用者回報經驗異常後選 3 倍，map.js 的 getRewardSpeedCap）
+const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3, upkeepPerSec: 10000, rewardSpeedCap: 3,
     blueprintMaxLevel: 3000, blueprint: 1 / 3000, lingStone: 1 / 1200, starIron: 1 / 200, fireShard: 1 / 400 };
 // 離線／背景依實力估算戰鬥效率用（save.js 的 estimateIdleCombat）：一波平均隻數（1～5 隻）、波與波之間的秒數（刷新＋生成 1 秒）
 const IDLE_WAVE_AVG_MONSTERS = 3;

@@ -276,8 +276,9 @@ service cloud.firestore {
     }
 
     // ==================== 世界 Boss（2026-10-04，ARCHITECTURE.md 第 75 節；data/config-world-boss.js、world-boss.js）====================
-    // 數字與 config-world-boss.js 的 WB 一致（改一邊要一起改）：每天 3 次、間隔 60 秒、單次上限＝floor(總血量／100)、
-    // 開放時段＝週六 12:00 UTC 起 24 小時（startAt 毫秒 % 604800000 == 216000000）、第一隻 4000 萬、血量下限 400 萬／上限 4 兆、結束 24 小時後領獎。
+    // 數字與 config-world-boss.js 的 WB 一致（改一邊要一起改）：每天 3 次、間隔 60 秒、單次上限固定 10000000（2026-10-09 起；原為總血量 1%）、
+    // 開放時段＝週六 12:00 UTC 起 24 小時（startAt 毫秒 % 604800000 == 216000000）、第一隻 4 億（10/9 前 4000 萬）、血量下限 400 萬／上限 4 兆、結束 24 小時後領獎。
+    // ⭐有效挑戰（eff）＝玩家端回報撐滿 30 回合，規則只限制每次 +0 或 +1（沒有數值獎勵）。
     // wboss/state：目前的 Boss。玩家可以 ① 第一次建立 ② 上一隻結束後換成本週這隻（時段、血量推算由規則檢查）③ 挑戰時扣血（與自己的傷害紀錄同一筆交易）
     match /wboss/{docId} {
       allow get: if request.auth != null;
@@ -297,11 +298,11 @@ service cloud.firestore {
           && d.bid == string(d.startAt.toMillis());
       }
       function wbHpOk(d) {
-        return d.maxHp is int && d.hp == d.maxHp && d.cap is int && d.cap * 100 <= d.maxHp && (d.cap + 1) * 100 > d.maxHp;
+        return d.maxHp is int && d.hp == d.maxHp && d.cap == 10000000;
       }
       function wbCreateOk() {
         let d = request.resource.data;
-        return wbKeysOk(d) && wbWindowOk(d) && wbHpOk(d) && d.maxHp == 40000000 && d.prev == null;
+        return wbKeysOk(d) && wbWindowOk(d) && wbHpOk(d) && d.maxHp == 400000000 && d.prev == null;
       }
       // 換隻：上一隻已結束；被打死 → 血量 ×2（上限 4 兆），沒打死 → ÷2 取整（下限 400 萬）
       function wbRolloverOk() {
@@ -354,21 +355,19 @@ service cloud.firestore {
         return (st.hp - dd > 0 && after.hp == st.hp - dd) || (st.hp - dd <= 0 && after.hp == 0);
       }
       function wbRunCreateOk(bid) {
-        let st = wbSt();
         let d = request.resource.data;
         return wbRunCommon(bid) && d.n == 1 && d.dayN == 1
-          && d.total >= 0 && d.total <= st.cap
-          && ((d.total == st.cap && d.eff == 1) || (d.total < st.cap && d.eff == 0))
+          && d.total >= 0 && d.total <= 10000000
+          && (d.eff == 0 || d.eff == 1)
           && wbHpAfterOk(d.total);
       }
       function wbRunUpdateOk(bid) {
-        let st = wbSt();
         let o = resource.data;
         let d = request.resource.data;
         let dd = d.total - o.total;
         return wbRunCommon(bid) && d.n == o.n + 1 && request.time >= o.lastAt + duration.value(60, 's')
-          && dd >= 0 && dd <= st.cap
-          && ((dd == st.cap && d.eff == o.eff + 1) || (dd < st.cap && d.eff == o.eff))
+          && dd >= 0 && dd <= 10000000
+          && (d.eff == o.eff || d.eff == o.eff + 1)
           && ((d.day == o.day && d.dayN == o.dayN + 1 && d.dayN <= 3) || (d.day != o.day && d.dayN == 1))
           && wbHpAfterOk(dd);
       }

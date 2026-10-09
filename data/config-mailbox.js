@@ -16,7 +16,7 @@ const MAIL_REFRESH_MS = 2 * 60 * 60 * 1000;   // 2026-10-04 由 30 分鐘改 2 �
 // 獎勵格式版本：GM 寄出時寫進信件／兌換碼的 v；遊戲只領 v ≤ 本值的，比較新的會提示「請重新整理遊戲」而不建立領取紀錄
 //   （2026-09-28 事故：玩家用還沒支援「先天資質」的舊版遊戲領了資質信，領取紀錄建立了卻沒有效果，那封信也不能再領）
 //   1 = 數量／圖紙／僕從；2 = 加上先天資質。新增獎勵種類時 +1
-const MAIL_SCHEMA_VERSION = 3;   // 3＝可寄 GM 權限（rewards.gm，2026-10-04）   // 遊戲在線時每 2 小時檢查一次信箱（打開信箱時也會檢查）
+const MAIL_SCHEMA_VERSION = 4;   // 3＝可寄 GM 權限（rewards.gm，2026-10-04）；4＝先天・太古裝備（rewards.gear，2026-10-09）
 
 // 獎勵：rewards = { coins: 1000000, butianStones: 5, …, blueprints: { "劍_1500": 1 }, servants: { "傳說": 1 } }
 // 數量型：field = 加到 player 的欄位（星允鐵直接加數量，不套「尋鐵」加成）
@@ -36,6 +36,16 @@ const MAIL_SERVANT_QUALITIES = ["一般", "優秀", "稀有", "史詩", "傳說"
 // 圖紙的部位與等級（同 config-equipment.js 的可鍛造部位與 BLUEPRINT_LEVELS；gm.html 沒有載入該檔，改那邊時這裡要一起改）
 const MAIL_BLUEPRINT_SLOTS = ["劍", "刀", "扇", "弓", "笛", "筆", "頭", "內衣", "盔甲", "手套", "長靴", "披風", "腰帶", "項鍊", "戒指", "耳環", "腰牌"];
 const MAIL_BLUEPRINT_LEVELS = [1500, 2500, 3500, 5000, 6500, 8000, 10000];
+// 先天（白金）・太古裝備，部位隨機（2026-10-09 世界 Boss 名次獎勵）：rewards.gear = { "5000": 件數, ... }，key＝裝備等級
+//   遊戲端 gear.js 的 createPrimalPlatinumGear：同等級圖紙鍛造的橙裝 → 太古（詞條全天級取上限、多 1 條、四維 ×1.2）→ 進化白金（+0、多 1 條、種族特效、傳奇威能）
+const MAIL_PRIMAL_GEAR_LEVELS = [1500, 2500, 3500, 5000];
+// GM 後台「世界 Boss 名次獎勵」的預設分段（名次依累計傷害，相同並列；to 為 0＝其餘全部參加者）
+const WB_GIFT_TIERS = [
+    { from: 1, to: 1, level: 5000, n: 1 },
+    { from: 2, to: 3, level: 3500, n: 1 },
+    { from: 4, to: 10, level: 2500, n: 1 },
+    { from: 11, to: 0, level: 1500, n: 1 }
+];
 // GM 後台的一鍵預設（2026-09-28 使用者指定：100 萬靈石＋傳說僕從一名）
 const MAIL_PRESETS = [
     { label: "🎁 100 萬靈石＋傳說僕從一名", title: "仙府賀禮", body: "感謝道友一路相伴，特贈薄禮，願仙途順遂！", rewards: { coins: 1000000, servants: { "傳說": 1 } } }

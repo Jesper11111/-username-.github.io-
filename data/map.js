@@ -283,6 +283,10 @@ function getMainMapForRealm() {
     const f = pace && findMapByName(pace.map);
     return f ? maps[f.c].items[f.i] : null;
 }
+// 收益速度上限（numeric.js 的 nv2RewardSpeedAdj）：時空秘境 SPACETIME_REALM.rewardSpeedCap 倍，其他地圖 NV2.rewardSpeedCap（第 78 節）
+function getRewardSpeedCap() {
+    return isSpacetimeMap() ? SPACETIME_REALM.rewardSpeedCap : NV2.rewardSpeedCap;
+}
 // 擊殺收益用的地圖：挑戰模式＝自己境界的主要地圖，否則＝所在地圖
 function getRewardMap() {
     return isChallengeMap() || isSpacetimeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;   // 時空秘境同樣照主要地圖（第 78 節）

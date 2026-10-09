@@ -116,8 +116,12 @@ function combatTick() {
         let ms = getMapMonsterStats(player.currentMap);
         resetGearWave();   // 首擊、先手盾以「每波」計算（gear.js）
         resetMonsterSkillWave();   // 怪物技能的破甲計時（monster.js）
-        waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0 };
-        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap(), getObservedRoundsPerKill()) : 1;   // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）
+        // 新制收益速度上限：每波算一次（numeric.js）；挑戰模式以主要地圖的一般玩家為準（第 70 節）；時空秘境上限 3 倍（getRewardSpeedCap，第 78 節）
+        // 2026-10-09 修正「第一波經驗比較多、後面固定」：這張圖還沒有實測速度時，估算常比實戰慢很多（第一波不打折）→
+        //   先用最保守的「1 回合殺一隻」，波末有了實測再補發差額（waveSummary.provisional，見下方敵方全滅處）
+        const obs = getObservedRoundsPerKill();
+        waveSummary = { kills: 0, exp: 0, coins: 0, rep: 0, rounds: 0, rawExp: 0, rawCoins: 0, rawRep: 0, provisional: NUMERIC_V2 && !(obs > 0) };
+        waveRewardAdj = NUMERIC_V2 ? nv2RewardSpeedAdj(getRewardMap(), obs > 0 ? obs : 1, getRewardSpeedCap()) : 1;
         // 依這張圖的出沒組合抽圖鑑（config-monsters.js 的 FIELD_MONSTER_POOLS），再套型態（皮厚／敏捷／猛攻／術法／均衡，monster.js；第 66 節）
         for (let i = 0; i < count; i++) {
             let look = pickFieldMonster(player.currentMap);
@@ -262,6 +266,7 @@ function fieldCombatRound() {
             waveSummary.exp += gainedExp;
             waveSummary.coins += coinsEarned;
             waveSummary.rep += repEarned;
+            waveSummary.rawExp += expEarned; waveSummary.rawCoins += coinsEarned; waveSummary.rawRep += repEarned;   // 補發差額用（已含 rewardMult）
         }
         // 斬殺修士：善惡值變化，敵對陣營另給功德（merit.js 的 onCultivatorKilled）
         slainCultivators.forEach(e => {
@@ -300,6 +305,16 @@ function fieldCombatRound() {
         if (waveSummary && waveSummary.kills > 0) {
             let s = waveSummary;
             recordObservedRoundsPerKill(s.rounds / s.kills);   // 收益速度上限用實測速度（numeric.js 的 nv2RewardSpeedAdj）
+            // 第一波（沒有實測）先用最保守的折扣，現在有實測了：照實際速度補發差額，每波收益一致（2026-10-09）
+            if (s.provisional && waveRewardAdj > 0) {
+                const f = nv2RewardSpeedAdj(getRewardMap(), getObservedRoundsPerKill(), getRewardSpeedCap()) / waveRewardAdj - 1;
+                if (f > 1e-6) {
+                    s.exp += gainExp(s.rawExp * f) || 0;
+                    const c = Math.floor(s.rawCoins * f), r = Math.round(s.rawRep * f);
+                    player.coins += c; s.coins += c;
+                    player.reputation = (player.reputation || 0) + r; s.rep += r;
+                }
+            }
             let expText = (player.pendingTribulation && s.exp === 0) ? "修為已滿(待渡劫)" : `${Math.floor(s.exp).toWan()} 經驗`;
             addLog(`⚔️ ${s.rounds} 回合擊退 ${s.kills} 名敵手，獲得 ${expText}、${s.coins.toWan()} 靈石、${s.rep.toWan()} 聲望。`, "combat", true);
         }

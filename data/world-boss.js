@@ -1,5 +1,6 @@
 // 世界 Boss（ARCHITECTURE.md 第 75 節；設定 config-world-boss.js，雲端規則 tools/firestore.rules，GM 後台 gm.html）
-// 全服共用 wboss/state 一條血；每人每天 WB.dailyMax 次、每次 WB.rounds 回合，傷害（畫面數字的整數）送雲端累加，單次最多 cap（總血量 1%）。
+// 全服共用 wboss/state 一條血；每人每天 WB.dailyMax 次、每次 WB.rounds 回合，傷害（畫面數字的整數）送雲端累加，單次最多 WB.cap（固定 1000 萬；2026-10-09 前是總血量 1%）。
+// ⭐有效挑戰＝撐滿 WB.rounds 回合沒倒下（10/9 前是打滿上限）。
 // 防作弊靠雲端規則：次數、間隔、上限、封鎖帳號、延後領獎都由規則檢查（改本機存檔繞不過）；傷害本身在玩家端計算，所以上限是關鍵——作弊最多跟強者並列。
 // 被判定存檔異常（integrity.js 的 isSaveFlagged）的玩家不能參加，但單機遊玩不受影響。世界 Boss 不改玩家的數值，只發獎勵。
 // 讀取額度：開視窗讀 wboss/state＋自己的紀錄＋前 20 名（WB.cacheMs 內不重讀排行榜）。
@@ -22,7 +23,8 @@ function wbWindowStart(now) { const w = wbWeekMs(); return now - (((now - WB.wee
 function wbDayIdx(ms) { return Math.floor((ms + 8 * 3600 * 1000) / 86400000); }   // 台灣時間的日序（規則同樣算）
 function wbBossDef(st) { return WB_BOSSES[((st && st.bossIdx) || 0) % WB_BOSSES.length]; }
 function wbIsActive(st, now) { now = now || Date.now(); return !!st && now >= wbMs(st.startAt) && now < wbMs(st.endAt) && st.hp > 0; }
-function wbCap(maxHp) { return Math.floor(maxHp / 100); }
+// 單次上限一律用 WB.cap（規則也寫死）；雲端 state.cap 只是紀錄，10/9 前建立的那隻存的是舊的 1%，不要讀它
+function wbCap() { return WB.cap; }
 function wbTodayLeft(mine) {
     if (!mine || mine.day !== wbDayIdx(Date.now())) return WB.dailyMax;
     return Math.max(0, WB.dailyMax - (mine.dayN || 0));
@@ -50,7 +52,7 @@ async function wbRollover(db) {
         if (old) maxHp = old.killedAt ? Math.min(WB.maxHp, old.maxHp * 2) : Math.max(WB.minHp, Math.floor(old.maxHp / 2));
         tx.set(ref, {
             bid: String(start), bossIdx: Math.floor(start / wbWeekMs()) % WB_BOSSES.length,
-            maxHp, hp: maxHp, cap: wbCap(maxHp), startAt: wbTs(start), endAt: wbTs(start + WB.durationMs),
+            maxHp, hp: maxHp, cap: wbCap(), startAt: wbTs(start), endAt: wbTs(start + WB.durationMs),
             killedAt: null, lastUid: '', lastName: '',
             prev: old ? { bid: old.bid, maxHp: old.maxHp, killed: !!old.killedAt, endAt: old.endAt, lastUid: old.lastUid || '' } : null
         });
@@ -143,7 +145,7 @@ function renderWorldBoss() {
             <div>有效挑戰 <b>⭐${wbMine ? wbMine.eff : 0}</b></div>
             <div>名次 <b>${myRank ? (myRank <= WB.topN ? '第 ' + myRank + ' 名' : WB.topN + ' 名外') : '—'}</b></div>
         </div>
-        <p class="lb-note">單次傷害上限 ${fmtNum(st.cap)}（總血量 1%）；打滿上限記一次 ⭐有效挑戰。</p>
+        <p class="lb-note">單次傷害上限 ${fmtNum(wbCap())}；撐滿 ${WB.rounds} 回合沒倒下記一次 ⭐有效挑戰。</p>
         <button class="sys-btn wb-go" ${canFight ? '' : 'disabled'} onclick="startWorldBossFight()">⚔️ 挑戰（${WB.rounds} 回合）${!active ? '' : left <= 0 ? '・今日次數已用完' : gapLeft > 0 ? `・${Math.ceil(gapLeft / 1000)} 秒後` : ''}</button>
         ${wbClaimable ? `<button class="sys-btn wb-claim" onclick="claimWorldBossReward()">🎁 領取世界 Boss 獎勵${wbClaimable.killed ? '（Boss 已被擊敗 ×' + WB.killMult + '）' : ''}</button>` : ''}
         <div class="panel-title" style="margin-top:12px;">🏆 傷害排行（前 ${WB.topN} 名）</div>
@@ -159,7 +161,7 @@ function wbRulesHtml() {
     return `<details class="wb-rules"><summary>📜 規則與獎勵</summary>
         <p>・每週六 20:00～週日 20:00 開放（GM 也可能臨時開放），全服共用一條血量。</p>
         <p>・每天 ${WB.dailyMax} 次、每次 ${WB.rounds} 回合或倒下為止，兩次至少間隔 ${WB.gapSec} 秒；倒下不扣壽元。Boss 強度跟著你的境界調整。</p>
-        <p>・單次傷害最多算總血量 1%，打滿記一次 ⭐有效挑戰。排名依累計傷害（相同並列）。</p>
+        <p>・單次傷害最多算 ${fmtNum(wbCap())}；撐滿 ${WB.rounds} 回合沒倒下記一次 ⭐有效挑戰。排名依累計傷害（相同並列）。</p>
         <p>・參加獎（打過就有）：💎 每小時收入 ×${r.coinsH} 靈石、🌀 洗煉石 ${r.refine}、🌠 星允鐵 ${r.iron}、${formatCraftGain(r.craft)}；Boss 被打死全服 ×${WB.killMult}。</p>
         <p>・外觀稱號：第 1 名【誅天第一】、前 10 名【誅魔先鋒】、最後一擊【斬魔一擊】。</p>
         <p>・Boss 結束 24 小時後才能領獎（管理者審核期間）；存檔驗證異常或被封鎖的帳號不能參加與領獎。</p></details>`;
@@ -188,7 +190,7 @@ async function startWorldBossFight() {
     const phys = getPhysAttack(), mag = getMagAttack();
     const aura = combineAuras(B.auras);
     wbFight = {
-        B, bid: st.bid, cap: st.cap, round: 0, over: false, speed: 1, tid: 0, aura, dealt: 0,
+        B, bid: st.bid, cap: wbCap(), round: 0, over: false, speed: 1, tid: 0, aura, dealt: 0,
         e: { atk: b.atk * auraSelfAtkMult(aura), attrs: auraSelfAttrs(b.attrs, aura), st: newStatus(), max: st.maxHp / combatScale() },
         p: { atk: Math.max(phys, mag) * ZHENMO_PLAYER_SKILL_MULT * auraPlayerAtkMult(aura), hp: getMaxHp(), max: getMaxHp(), attrs: auraPlayerAttrs(getPlayerCombatAttrs(), aura), st: newStatus(), dmgType: mag > phys ? 'mag' : undefined },
         eType: ['demon', 'heart'].includes(B.race) ? 'mag' : undefined
@@ -362,12 +364,13 @@ function wbSetSpeed(s) {
     document.querySelectorAll('#world-boss-scene .wb-speed button[data-s]').forEach(b => b.classList.toggle('on', +b.dataset.s === s));
 }
 function setWorldBossSpeed(s) { wbSetSpeed(s); }
+function wbSurvived(f) { return f.round >= WB.rounds && f.p.hp > 0; }   // ⭐有效挑戰：撐滿回合沒倒下
 function wbScore(f) { return Math.max(0, Math.round(f.dealt * combatScale())); }   // 畫面數字的整數
 function wbUpdateBars() {
     const f = wbFight; if (!f) return;
     const dealt = wbScore(f), $ = id => document.getElementById(id);
     $('wb-fight-dmg-fill').style.width = `${Math.min(100, dealt / Math.max(1, f.cap) * 100)}%`;
-    $('wb-fight-dmg').textContent = `本次傷害 ${fmtNum(Math.min(dealt, f.cap))} / 上限 ${fmtNum(f.cap)}${dealt >= f.cap ? ' ⭐' : ''}`;
+    $('wb-fight-dmg').textContent = `本次傷害 ${fmtNum(Math.min(dealt, f.cap))} / 上限 ${fmtNum(f.cap)}${wbSurvived(f) ? ' ⭐' : ''}`;
     const hp = f.shownHp != null && !f.over ? f.shownHp : f.p.hp;   // Boss 反擊演出前先顯示扣血前的氣血（wbRound）
     $('wb-fight-me-fill').style.width = `${Math.max(0, hp / f.p.max) * 100}%`;
     $('wb-fight-me-hp').textContent = `${fmtCombat(Math.max(0, hp))} / ${fmtCombat(f.p.max)}`;
@@ -399,15 +402,15 @@ async function wbEndFight(reason) {
     clearTimeout(f.tid);
     wbOpStop();
     wbUpdateBars();
-    const raw = wbScore(f), d = Math.min(raw, f.cap);
+    const raw = wbScore(f), d = Math.min(raw, f.cap), star = wbSurvived(f);
     const endBody = document.getElementById('wb-fight-end-body');
     endBody.innerHTML = `<div class="big">${reason}</div><p>本次傷害 ${fmtNum(raw)}${raw > f.cap ? `（計入上限 ${fmtNum(f.cap)}）` : ''}</p><p class="zm-note">傳送戰果中……</p>`;
     document.getElementById('wb-fight-end').classList.add('on');
     let msg;
     try {
-        const r = await wbSubmit(f.bid, d);
-        msg = `<p class="zm-reward">✅ 已計入：${fmtNum(d)}${d >= f.cap ? '（⭐有效挑戰）' : ''}${r.killed ? '<br>💀 你給了 Boss 最後一擊！' : ''}</p>`;
-        addLog(`⚔️ 世界 Boss【${f.B.name}】：造成 ${fmtNum(d)} 傷害${d >= f.cap ? '（⭐有效挑戰）' : ''}${r.killed ? '，給了最後一擊！' : ''}`, 'level-up', true, 'item');
+        const r = await wbSubmit(f.bid, d, star);
+        msg = `<p class="zm-reward">✅ 已計入：${fmtNum(d)}${star ? '（⭐有效挑戰）' : ''}${r.killed ? '<br>💀 你給了 Boss 最後一擊！' : ''}</p>`;
+        addLog(`⚔️ 世界 Boss【${f.B.name}】：造成 ${fmtNum(d)} 傷害${star ? '（⭐有效挑戰）' : ''}${r.killed ? '，給了最後一擊！' : ''}`, 'level-up', true, 'item');
     } catch (e) {
         console.warn('世界 Boss 戰果送出失敗：', e);
         const m = String(e && e.message || '');
@@ -418,7 +421,7 @@ async function wbEndFight(reason) {
     endBody.innerHTML = `<div class="big">${reason}</div><p>本次傷害 ${fmtNum(raw)}${raw > f.cap ? `（計入上限 ${fmtNum(f.cap)}）` : ''}</p>${msg}`;
     wbTopAt = 0;   // 下次開視窗重讀排行
 }
-async function wbSubmit(bid, d) {
+async function wbSubmit(bid, d, star) {
     const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
     const sref = db.collection(WB_STATE_COLLECTION).doc('state'), mref = wbRunRef(db, bid, uid);
     let killed = false;
@@ -432,11 +435,11 @@ async function wbSubmit(bid, d) {
         const day = wbDayIdx(now);
         if (old && old.day === day && old.dayN >= WB.dailyMax) throw new Error('daily');
         if (old && now - wbMs(old.lastAt) < WB.gapSec * 1000) throw new Error('gap');
-        const dd = Math.min(d, st.cap);
+        const dd = Math.min(d, wbCap());
         const hist = ((old && old.hist) || []).slice(-5).concat([{ d: dd, t: now, r: player.realmIndex }]);
         tx.set(mref, {
             uid, name: sanitizePlayerName(player.name) || '無名修士', realm: player.realmIndex, stage: player.stage || 1,
-            total: (old ? old.total : 0) + dd, eff: (old ? old.eff : 0) + (dd === st.cap ? 1 : 0), n: (old ? old.n : 0) + 1,
+            total: (old ? old.total : 0) + dd, eff: (old ? old.eff : 0) + (star ? 1 : 0), n: (old ? old.n : 0) + 1,
             day, dayN: old && old.day === day ? old.dayN + 1 : 1, lastAt: firebase.firestore.FieldValue.serverTimestamp(), hist
         });
         if (dd > 0) {   // 傷害 0 時 Boss 不更新（規則：扣血必須讓血量變少）
