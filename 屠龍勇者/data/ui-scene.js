@@ -500,11 +500,12 @@ function sceneDraw(ctx, W, H) {
         if (m.inst && !m.dead) {
             const tgt = m === scene.engaged;
             const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 44 : 30);
+            if (m.inst.elite) { ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(sx, sy + 11, 16, 6, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
             if (tgt) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 20 : 14, big ? 6 : 5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
             labels.push(() => {
                 ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
                 ctx.fillStyle = tgt ? '#d64036' : '#b0702c'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
-                if (tgt) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : '#e8e0cc');
+                if (tgt || m.inst.elite) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : m.inst.elite ? '#ffd34d' : '#e8e0cc');
             });
         }
     };

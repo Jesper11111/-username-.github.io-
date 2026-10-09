@@ -17,6 +17,7 @@
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
+| `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；地圖詞綴 `MAP_MODS`、`applyMapMods`、`mapBonus`、`mapModsPanelHtml`（第 23、24 節） |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
@@ -37,7 +38,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → craft → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -45,7 +46,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009q`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009r`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -534,3 +535,41 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - 世界名「亞丁大陸」→「黑暗大陸」（標題副標、序章）。「亞丁王國」（王族職業故事）維持。
 - 四大龍（同日第二批）：地龍 安塔瑞斯→**格爾莫斯**、水龍 法利昂→**瑟拉恩**、風龍 林德拜爾→**維斯塔爾**、火龍 巴拉卡斯→**莫爾加斯**；
   巢穴名稱、職業故事、任務、稱號訊息一併替換。怪物 id（antharas 等）、龍鱗道具名（地龍之鱗等）不變。
+
+## 23. 製作通貨（POE 式改造；`craft.js`；2026-10-09，版本 `20261009r`）
+
+- 8 種通貨，`cat: 'currency'`、可堆疊、不佔負重（`wt: 0`），載入時併入 `ITEMS`（所以 craft.js 要在 items 之後載入）；回收價依稀有度。
+
+| id | 名稱 | 效果 | 掉落權重 |
+|---|---|---|---|
+| curAug | 🔹 點化石 | 普通 → 魔法（1～2 條） | 40 |
+| curAlt | 🔄 重鑄石 | 重擲魔法裝備全部詞綴 | 30 |
+| curTemper | ⚖️ 淬鍊石 | 種類不變、重擲數值（傳說也能用，傳說詞綴保持 ×2） | 12 |
+| curRegal | 👑 晉升石 | 魔法 → 稀有，保留原詞綴再加 1 條 | 8 |
+| curChaos | 🌀 混沌石 | 重擲稀有裝備全部詞綴（3～4 條） | 6 |
+| curAnnul | ✂️ 剝離石 | 隨機移除 1 條（不含傳說詞綴；魔法剝光變回普通） | 2.5 |
+| curChance | 🎲 命運石 | 普通 → 隨機品質（魔法 75%／稀有 21%／傳說 4%） | 1.2 |
+| curOracle | ✨ 神諭石 | 稀有再加 1 條（最多 6 條） | 0.3 |
+
+- 掉落：每隻怪 3%（`CURRENCY_DROP_P`）、首領 60%（`CURRENCY_BOSS_P`，1～3 顆），依權重 `rollCurrency`。實測約每 100 隻 3 顆。
+- 物品等級 `craftIl`：有 `il` 用 `il`，商店／任務裝沒有就用玩家等級。傳說裝備只能用淬鍊石。
+- 介面：背包點裝備 →「🔮 改造」開 `openCraftDialog`（上方裝備詞綴、下方全部通貨與數量，不能用的變灰），點一顆就套用並重畫視窗；點通貨道具會切到背包裝備頁。
+  圖鑑新增「通貨」分類，取得方式顯示掉落機率。
+
+## 24. 地圖詞綴（POE 異界地圖；`craft.js`；2026-10-09，版本 `20261009r`）
+
+- 「地圖」頁上方「🌀 異界詞綴」可自由開關，存在 `player.mapMods`（陣列，舊存檔 `migrateSave` 補 `[]`）。套用到所有野外、地監、永夜之塔（龍穴不套用）。
+
+| id | 名稱 | 效果 | 獎勵 |
+|---|---|---|---|
+| tough | 💪 強壯 | 怪物 HP +40% | +15% |
+| savage | 🩸 兇猛 | 怪物傷害（含魔法）+30% | +20% |
+| swarm | 🐺 成群 | 怪群上限 +2、中途加入機率 ×2 | +15% |
+| elite | ⭐ 精英 | 每隻 15% 變「精英・名稱」：HP ×3、傷害 ×1.5、經驗 ×4、金幣 ×3、必掉隨機裝備（地圖上金圈＋金色名字） | +10% |
+| warded | 🔰 抗魔 | 怪物 MR +25 | +10% |
+| swift | 💨 迅捷 | 怪物攻速 +25% | +15% |
+| blight | 🥀 枯竭 | 你的自然回復 -40% | +10% |
+
+- 獎勵 `mapBonus()`＝開啟詞綴加成總和：經驗、金幣、所有掉落機率（含通貨、隨機裝備；必掉的 p≥1 不變）×(1＋加成)。
+- 怪物在 `addMob` 時套用 `applyMapMods`，所以快轉模擬（離線收益）也會反映。狩獵畫面標題顯示「🌀圖示 獎勵 +N%」。
+- 平衡（30 分鐘模擬，開強壯＋兇猛＋精英）：經驗 +15～50%，藥水消耗約 ×1.6～2，基本裝備容易陣亡——給裝備好的玩家拿來加速。
