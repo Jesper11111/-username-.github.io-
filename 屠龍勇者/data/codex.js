@@ -74,7 +74,10 @@ function codexSources(id) {
         list.push(`商店：${t ? t.name : '村莊'}起販售（💰${fmt(d.price)}）`);
     }
     // 暗黑式隨機裝備掉落（affix.js 的 randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定）
-    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes) list.push(`掉落：隨機裝備（Lv.${Math.max(1, Math.ceil(sellPriceOf(id) / 600))} 以上的怪物，至少魔法品質）`);
+    // 只列真的掉得出來的（需要的怪物等級不超過遊戲裡最高等的怪，魔塔 100F 首領約 Lv.92）
+    const needLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
+    const topLv = Math.max(makeTowerMonster(100, true).lv, ...Object.values(MONSTERS).map(m => m.lv));
+    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);
     return list.concat([...new Set(codexSrcCache[id] || [])]);
 }
 
@@ -154,7 +157,6 @@ function renderCodex() {
                 ${CODEX_GRADES.map(g => `<option value="${g.id}" ${codexGrade === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}</select>
         </div>
     </div>`;
-    h += `<div class="panel codex-box" id="codex-detail" ${codexSel ? '' : 'hidden'}>${codexSel ? codexDetailHtml(codexSel) : ''}</div>`;
     h += `<div class="codex-head"><span></span><span>名稱</span><span>品質</span><span>種類</span></div>`;
     h += `<div class="codex-list" id="codex-list">` + (list.map(id => {
         const d = ITEMS[id], g = codexGradeOf(id);
@@ -175,21 +177,20 @@ function setCodexQuery(q) {
     const inp = $('codex-q');   // 重畫後把游標放回搜尋框
     if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
+// 點清單：彈出介紹頁（全螢幕對話框，內容可上下捲動；2026-10-09 使用者要求，原本嵌在清單上方會被切掉一半）
 function selectCodex(id) {
     codexSel = id;
-    const box = $('codex-detail');
-    if (box) { box.innerHTML = codexDetailHtml(id); box.hidden = false; }
     document.querySelectorAll('.codex-row.active').forEach(b => b.classList.remove('active'));
     const row = document.querySelector(`.codex-row[onclick="selectCodex('${id}')"]`);
     if (row) row.classList.add('active');
+    openDialog('📖 裝備介紹', `<div class="codex-pop">${codexDetailHtml(id)}</div>`, [{ text: '關閉', cls: 'secondary', onClick: clearCodexSel }]);
 }
-// 介紹右上角 ✕：收起介紹，回到只看清單
-function closeCodexDetail() {
+function clearCodexSel() {
     codexSel = null;
-    const box = $('codex-detail');
-    if (box) { box.hidden = true; box.innerHTML = ''; }
     document.querySelectorAll('.codex-row.active').forEach(b => b.classList.remove('active'));
 }
+// 介紹右上角 ✕
+function closeCodexDetail() { closeDialog(); clearCodexSel(); }
 
 TABS.codex = ['📖', '裝備圖鑑'];
 PANEL_FNS.codex = renderCodex;
