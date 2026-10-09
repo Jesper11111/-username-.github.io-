@@ -13,6 +13,8 @@ const CODE_CLAIMS_COLLECTION = "codeClaims";
 //   過期的信：玩家的遊戲讀到就順手刪除（tools/firestore.rules 允許刪除「寄給自己或全服、已過期」的信），GM 後台開「發放獎勵」時也會刪
 const MAIL_LIFETIME_HOURS = 24;
 const MAIL_REFRESH_MS = 2 * 60 * 60 * 1000;   // 2026-10-04 由 30 分鐘改 2 小時（Firebase 讀取額度用完）；打開信箱時照樣會讀
+const MAIL_STARTUP_CACHE_MS = 30 * 60 * 1000;   // 2026-10-09 節省讀取額度：上次讀信在 30 分鐘內、而且當時沒有待領的信 → 重新整理／重開遊戲不再讀信（打開信箱照樣讀）
+const MAIL_CACHE_KEY = 'xiuxian_mail_cache';     // localStorage：{ uid, at, pending, checked: [已確認還沒領的信 id] }
 // 獎勵格式版本：GM 寄出時寫進信件／兌換碼的 v；遊戲只領 v ≤ 本值的，比較新的會提示「請重新整理遊戲」而不建立領取紀錄
 //   （2026-09-28 事故：玩家用還沒支援「先天資質」的舊版遊戲領了資質信，領取紀錄建立了卻沒有效果，那封信也不能再領）
 //   1 = 數量／圖紙／僕從；2 = 加上先天資質。新增獎勵種類時 +1

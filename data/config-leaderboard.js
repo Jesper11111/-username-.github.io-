@@ -48,10 +48,11 @@ const LEADERBOARD_TIMEOUT_MS = 8 * 1000;               // 開榜單時上傳／�
 const MSGBOARD_COLLECTION = "board";              // 留言（自動 id）：{ uid, name, realm, stage, text, createdAt }
 const MSGBOARD_LIMIT_COLLECTION = "boardLimit";   // 每人最後留言時間（文件 id = uid），規則用它限制每 60 秒一則
 const MSGBOARD_MUTED_COLLECTION = "muted";        // GM 禁言名單（文件 id = uid）
+const MSGBOARD_FEED_COLLECTION = "boardFeed";     // 留言板彙整（2026-10-09 節省讀取額度）：boardFeed/latest = { msgs: [最新 MSGBOARD_SHOW_N 則] }，打開留言板只讀這 1 份
+const MSGBOARD_FEED_DOC = "latest";
 const MSGBOARD_SHOW_N = 30;                       // 打開時讀最新幾則（規則限制單次最多 50；2026-10-04 使用者要求 30）
 // 留言 8 小時後自動刪除（2026-10-04 使用者要求；規則同樣寫死 28800 秒）：遊戲只讀 8 小時內的留言；過期的由玩家端偶爾順手刪除、GM 後台開留言板分頁時清掉
 const MSGBOARD_LIFETIME_HOURS = 8;
-const MSGBOARD_CLEANUP_GAP_MS = 30 * 60 * 1000;   // 玩家端清過期留言的間隔（每次最多刪 10 則）
 const MSGBOARD_MAX_LEN = 100;                     // 每則字數上限（規則同樣限制，改這裡要一起改規則）
 const MSGBOARD_COOLDOWN_SEC = 60;                 // 每人留言間隔（規則同樣限制）
 // ---- 寄售拍賣（market.js，大道石碑「🏪 寄售」分頁，ARCHITECTURE.md 第 58 節；2026-09-28 使用者選定規則）----
