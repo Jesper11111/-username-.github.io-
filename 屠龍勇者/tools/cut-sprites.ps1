@@ -37,6 +37,8 @@ public static class SpriteCutter {
     public static bool Flat = false;
     // labels：格子右下角有金色編號數字（AI 動作表常見）——裁切框右下 50×34 內的金色點先塗成背景色
     public static bool Labels = false;
+    // shadowLeft：3D 渲染的長影子往左拖在地上（修羅）——下方 40%、頭部（紅髮）中心左邊 20px 以外，暗於背景的中性灰一律當背景
+    public static bool ShadowLeft = false;
     static int[] Read(Bitmap b) {
         var d = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         var a = new int[b.Width * b.Height];
@@ -173,6 +175,27 @@ public static class SpriteCutter {
             int i = q.Dequeue(), x = i % w, y = i / w;
             if (x > 0) push(i - 1, i); if (x < w - 1) push(i + 1, i); if (y > 0) push(i - w, i); if (y < h - 1) push(i + w, i);
         }
+        }
+        if (ShadowLeft) {
+            var hx = new List<int>();
+            for (int y = 0; y < h * 3 / 10; y++) for (int x = 0; x < w; x++) { int c = px[y * w + x]; if (R(c) - G(c) > 45) hx.Add(x); }
+            if (hx.Count > 0) {
+                hx.Sort(); int headX = hx[hx.Count / 2], bgL = (br + bg + bb) / 3;
+                for (int y = h * 6 / 10; y < h; y++) for (int x = 0; x < headX - 20; x++) {
+                    int c = px[y * w + x], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+                    if ((R(c) + G(c) + B(c)) / 3 < bgL + 4 && mx - mn < 14) isBg[y * w + x] = true;
+                }
+                // 腳邊殘影：下方 45%、頭部中心右邊 30px 以內，暗、中性灰又平滑（周圍 2px 色差小；盔甲有紋理不算）
+                for (int y = h * 55 / 100; y < h; y++) for (int x = 0; x < Math.Min(w, headX + 30); x++) {
+                    int i = y * w + x, c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+                    if ((R(c) + G(c) + B(c)) / 3 >= bgL + 4 || mx - mn >= 14) continue;
+                    int gmax = 0;
+                    foreach (int j in new[] { x > 1 ? i - 2 : i, x < w - 2 ? i + 2 : i, y > 1 ? i - 2 * w : i, y < h - 2 ? i + 2 * w : i }) {
+                        int o = px[j]; gmax = Math.Max(gmax, Math.Abs(R(o) - R(c)) + Math.Abs(G(o) - G(c)) + Math.Abs(B(o) - B(c)));
+                    }
+                    if (gmax < 16) isBg[i] = true;
+                }
+            }
         }
         if (Flat) {
             for (int i = 0; i < w * h; i++) {
@@ -419,6 +442,7 @@ function Get-Mode($o) {
         darkBg = if ($o.darkBg) { [int]$o.darkBg } else { 22 }
         flat = [bool]$o.flat       # 純色灰底：被圍住的背景與陰影也去掉（妖精）
         labels = [bool]$o.labels   # 抹掉格子右下角的金色編號
+        shadowLeft = [bool]$o.shadowLeft   # 去掉往左拖的地面長影子（修羅）
     }
 }
 $baseMode = Get-Mode $cfg
@@ -437,6 +461,7 @@ foreach ($d in $dirs) {
         [SpriteCutter]::DarkBg = $m.darkBg
         [SpriteCutter]::Flat = $m.flat
         [SpriteCutter]::Labels = $m.labels
+        [SpriteCutter]::ShadowLeft = $m.shadowLeft
         [SpriteCutter]::ShadowFix = -not ($r.Count -ge 5 -and [int]$r[4] -eq 0)
         $shape = if ($m.checkerSize -gt 0) { 0 } else { $m.shape }
         $f = [SpriteCutter]::Cut($m.sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $m.tol, $m.checker, $m.global, $shape)

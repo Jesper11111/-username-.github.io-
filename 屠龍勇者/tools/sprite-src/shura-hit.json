@@ -1,0 +1,9 @@
+{
+  "sheet": "tools/sprite-src/shura-sheet.jpg", "out": "images/sprites/shura-hit.png",
+  "charH": 113, "pad": 4, "tol": 14, "shape": 5, "shadowLeft": true, "bodyH": 87,
+  "dirs": {
+    "down":  [[118, 616, 177, 96], [295, 616, 150, 96], [445, 616, 157, 96]],
+    "right": [[118, 728, 177, 94], [295, 728, 150, 94], [445, 728, 157, 94]],
+    "up":    [[118, 728, 177, 94], [295, 728, 150, 94], [445, 728, 157, 94]]
+  }
+}

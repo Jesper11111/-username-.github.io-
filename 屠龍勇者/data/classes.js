@@ -68,6 +68,15 @@ const CLASSES = {
         base: { str: 15, dex: 14, con: 12, int: 8, wis: 9, cha: 8 },
         hp: [11, 15], mp: [1, 3], startHp: 15, startMp: 2, mr: 5, spDiv: 12, mpRegenK: 0.4,
         weapons: ['claw', 'dual'], shield: false, start: ['claw', 'leatherArmor'],
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/shura-*.json 切出（深色盔甲＋深灰底用 "shape"，長影子用 "shadowLeft"，第 18 節）
+        sprite: {
+            drawH: 48, charH: 113,
+            walk:   { src: 'images/sprites/shura-walk.png',   cellW: 158, cellH: 125, frames: { down: 8, right: 8, up: 2 }, ms: 110 },
+            attack: { src: 'images/sprites/shura-attack.png', cellW: 282, cellH: 125, frames: { down: 9, right: 9, up: 9 }, ms: 55 },
+            cast:   { src: 'images/sprites/shura-cast.png',   cellW: 214, cellH: 116, frames: { down: 4, right: 4, up: 4 }, ms: 110 },
+            hit:    { src: 'images/sprites/shura-hit.png',    cellW: 164, cellH: 114, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/shura.jpg',
     },
     warrior: {
         name: '戰士', icon: '🪓',
