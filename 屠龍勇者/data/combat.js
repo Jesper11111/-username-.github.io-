@@ -1,6 +1,9 @@
-// 屠龍勇者：自動掛機戰鬥（依賴 player、items、skills、monsters、zones）
+// 屠龍勇者：自動掛機戰鬥（依賴 player、items、skills、monsters、zones）（ARCHITECTURE.md 第 6 節）
 // 執行期狀態（不存檔；重新整理後若 player.hunting 為 true 會自動繼續掛機）
-let hunt = null;      // { state:'search'|'fight', timer, mon, pCd, mCd, stunUntil, potCd, warned }
+// 多怪戰鬥（2026-10-09「中度 ARPG」）：hunt.mobs 是同時圍上來的怪（各自 atkCd 攻擊間隔、stunUntil 暈眩），
+// hunt.mon 是玩家正在打的目標（mobs 之一）；範圍技能（aoe）打全部、分散技能（spread）每一發打不同隻。
+// 戰鬥結果全部在這裡算（地圖 ui-scene.js 只負責畫），所以離線收益的快轉模擬照樣適用。
+let hunt = null;      // { state:'search'|'fight', timer, mon, mobs, pCd, joinCd, potCd, warned }
 let session = null;   // 本次掛機統計 { start, kills, exp, gold }
 let walkHome = null;  // { until, town }
 
@@ -15,7 +18,7 @@ function startHunt() {
     if (!currentZone()) { showToast('請先傳送到狩獵地點'); return; }
     if (walkHome) { showToast('正在步行回村'); return; }
     player.hunting = true;
-    hunt = { state: 'search', timer: 600, mon: null, pCd: 0, mCd: 0, stunUntil: 0, potCd: 0, warned: {} };
+    hunt = { state: 'search', timer: 600, mon: null, mobs: [], pCd: 0, joinCd: 0, potCd: 0, warned: {} };
     if (!session) session = { start: gameNow, kills: 0, exp: 0, gold: 0 };
     addLog(`▶ 開始在${zoneTitle()}掛機`, 'sys');
 }
@@ -65,7 +68,7 @@ function changeFloor(delta) {
     const f = player.loc.floor + delta;
     if (f < 1 || f > player.towerMax) { showToast(f > player.towerMax ? `需先擊敗 ${player.towerMax}F 的守關首領` : '已經是最底層'); return; }
     player.loc.floor = f;
-    if (hunt) { hunt.mon = null; hunt.state = 'search'; hunt.timer = 800; }
+    if (hunt) leaveFight(800);
     addLog(`🏛️ 移動到魔塔 ${f}F`, 'sys');
 }
 
@@ -109,7 +112,7 @@ function autoSupport(st) {
         consumeItem('teleScroll');
         if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
         addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
-        hunt.mon = null; hunt.state = 'search'; hunt.timer = 1500;
+        leaveFight(1500);
         return;
     }
     if (now < hunt.potCd) return;
@@ -140,17 +143,83 @@ function huntTick(dt) {
     autoSupport(st);
     if (!player.hunting || !hunt || hunt.state !== 'fight') return;
     hunt.pCd -= dt;
-    hunt.mCd -= dt;
     if (hunt.pCd <= 0) {
         hunt.pCd = st.atkMs;
         playerAction(st);
-        if (!player.hunting || !hunt || !hunt.mon) return;
-        if (hunt.mon.hp <= 0) { onKill(); return; }
+        if (!fightAlive()) return;
+        reapMobs();
+        if (!fightAlive()) return;
     }
-    if (hunt.mCd <= 0) {
-        hunt.mCd = hunt.mon.spd;
-        if (gameNow >= hunt.stunUntil) monsterAttack(calcStats());
+    // 每隻圍上來的怪各自計時攻擊
+    for (const m of hunt.mobs.slice()) {
+        if (m.hp <= 0 || !hunt.mobs.includes(m)) continue;
+        m.atkCd -= dt;
+        if (m.atkCd > 0) continue;
+        m.atkCd = m === hunt.mon ? m.spd : m.spd * MOB_SIDE_SLOW;
+        if (gameNow >= m.stunUntil) monsterAttack(calcStats(), m);
+        if (!fightAlive()) return;
     }
+    reapMobs();
+    if (!fightAlive()) return;
+    // 打到一半，附近的怪可能被吸引過來加入戰鬥
+    hunt.joinCd -= dt;
+    if (hunt.joinCd <= 0) {
+        hunt.joinCd = MOB_JOIN_MS;
+        if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && chance(MOB_JOIN_P)) {
+            const add = makeZoneMob(currentZone());
+            if (add) { addMob(add); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
+        }
+    }
+}
+
+// ───────── 多怪戰鬥 ─────────
+const MOB_JOIN_MS = 3000;    // 每 3 秒檢查一次有沒有新的怪加入
+const MOB_JOIN_P = 0.07;     // 加入機率
+const MOB_SIDE_SLOW = 1.6;   // 非目標的怪出手間隔 ×1.6（圍著輪流進攻，避免多怪時傷害暴增）
+// 同時最多幾隻：龍穴 1、魔塔 2、其他 3
+function packMax() {
+    const z = currentZone();
+    return !z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 2 : 3;
+}
+// 一開始出現幾隻：1 隻 65%、2 隻 27%、3 隻 8%（受 packMax 限制）
+function packRoll() { const r = Math.random(); return Math.min(packMax(), r < 0.65 ? 1 : r < 0.92 ? 2 : 3); }
+
+function fightAlive() { return player.hunting && hunt && hunt.state === 'fight' && hunt.mon; }
+
+function addMob(mon) {
+    mon.atkCd = mon.spd * (0.5 + Math.random() * 0.5);
+    mon.stunUntil = 0;
+    hunt.mobs.push(mon);
+    if (!hunt.mon) hunt.mon = mon;
+}
+
+// 地區的一般怪（不含稀有、任務首領）
+function makeZoneMob(z) {
+    if (!z || z.type === 'dragon') return null;
+    if (z.type === 'tower') return makeTowerMonster(player.loc.floor, false);
+    let pool = z.mons.filter(id => MONSTERS[id].lv <= player.lv + 3);
+    if (!pool.length) pool = [z.mons.reduce((a, b) => MONSTERS[a].lv <= MONSTERS[b].lv ? a : b)];
+    return makeMonster(pool[rand(0, pool.length - 1)]);
+}
+
+// 離開戰鬥（瞬移、換樓層）：全部的怪都放掉
+function leaveFight(searchMs) {
+    hunt.mon = null; hunt.mobs = []; hunt.state = 'search'; hunt.timer = searchMs;
+}
+
+// 把 HP 歸零的怪結算掉；目標死了就換剩下 HP 最少的那隻
+function reapMobs() {
+    for (const m of hunt.mobs.slice()) {
+        if (m.hp > 0) continue;
+        onKill(m);
+        if (!player.hunting || !hunt || hunt.state !== 'fight') return;
+    }
+}
+
+// 範圍／分散攻擊的對象：目標排第一，其他依 HP 由少到多
+function mobTargets() {
+    const rest = hunt.mobs.filter(m => m !== hunt.mon && m.hp > 0).sort((a, b) => a.hp - b.hp);
+    return [hunt.mon, ...rest];
 }
 
 function spawnMonster() {
@@ -164,17 +233,21 @@ function spawnMonster() {
     } else if (z.rare && chance(z.rare.p)) mon = makeMonster(z.rare.id);
     else {
         // 只出現不超過「玩家等級 +3」的怪；全都太強就出最弱的
-        let pool = z.mons.filter(id => MONSTERS[id].lv <= player.lv + 3);
-        if (!pool.length) pool = [z.mons.reduce((a, b) => MONSTERS[a].lv <= MONSTERS[b].lv ? a : b)];
-        mon = makeMonster(pool[rand(0, pool.length - 1)]);
+        mon = makeZoneMob(z);
     }
-    hunt.mon = mon;
+    hunt.mon = null;
+    hunt.mobs = [];
     hunt.state = 'fight';
     hunt.pCd = 300;
-    hunt.mCd = mon.spd * 0.6;
-    hunt.stunUntil = 0;
+    hunt.joinCd = MOB_JOIN_MS;
     hunt.warned.home = false;
-    addLog(mon.boss ? `⚠️ ${mon.name}出現了！` : `${mon.name}（Lv.${mon.lv}）出現了`, mon.boss ? 'boss' : '');
+    addMob(mon);
+    mon.atkCd = mon.spd * 0.6;
+    // 一般怪成群出現（首領、龍單獨出現）
+    const n = mon.boss ? 1 : packRoll();
+    for (let i = 1; i < n; i++) addMob(makeZoneMob(z));
+    if (mon.boss) addLog(`⚠️ ${mon.name}出現了！`, 'boss');
+    else addLog(n > 1 ? `${hunt.mobs.map(m => `${m.name}（Lv.${m.lv}）`).join('、')} 一起圍了上來` : `${mon.name}（Lv.${mon.lv}）出現了`, n > 1 ? 'warn' : '');
 }
 
 // 玩家行動優先順序：治癒 → 增益 → 攻擊技能／魔法 → 普攻
@@ -213,8 +286,7 @@ function castBuff(k) {
     addLog(`✨ 施放「${k.name}」`, 'heal');
 }
 
-function magicDamage(base, spK, st, undeadMul) {
-    const mon = hunt.mon;
+function magicDamage(base, spK, st, undeadMul, mon = hunt.mon) {
     let d = rand(base[0], base[1]) + Math.floor(st.sp * spK);
     if (mon.undead && undeadMul) d *= undeadMul;
     d *= slayerMult(mon);
@@ -224,32 +296,45 @@ function magicDamage(base, spK, st, undeadMul) {
 
 function castSpell(k, st) {
     useSkillCost(k);
-    const d = magicDamage(k.dmg, k.spK, st, k.undeadMul);
-    hunt.mon.hp -= d;
-    lifeSteal(d, st);
-    addLog(`🔮 ${k.name}！${hunt.mon.name}受到 ${d} 傷害`, 'magic');
+    // 範圍魔法：打全部圍上來的怪
+    const targets = k.aoe ? mobTargets() : [hunt.mon];
+    const parts = targets.map(m => {
+        const d = magicDamage(k.dmg, k.spK, st, k.undeadMul, m);
+        m.hp -= d;
+        lifeSteal(d, st);
+        return `${m.name} ${d}`;
+    });
+    addLog(targets.length > 1 ? `🔮 ${k.name}（範圍）！${parts.join('、')} 傷害` : `🔮 ${k.name}！${hunt.mon.name}受到 ${parts[0].split(' ').pop()} 傷害`, 'magic');
 }
 
 function doStrike(k, st) {
     useSkillCost(k);
+    const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name };
+    const targets = mobTargets();
+    const hit = k.aoe ? targets : [hunt.mon];
+    if (k.aoe && targets.length > 1) addLog(`💥 ${k.name}（範圍）`, 'magic');
     for (let i = 0; i < (k.hits || 1); i++) {
-        if (!physicalAttack(st, k.mult, { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name })) break;
+        // 分散：每一發打不同的怪；範圍：每一發打全部
+        const list = k.spread ? [targets[i % targets.length]] : hit;
+        for (const m of list) if (!physicalAttack(st, k.mult, opt, m)) return;
+        if (!hunt || !hunt.mon) return;
     }
-    if (!hunt || !hunt.mon) return;
     if (k.magic) {
-        const d = magicDamage(k.magic.dmg, k.magic.spK, st);
-        hunt.mon.hp -= d;
-        lifeSteal(d, st);
-        addLog(`⚡ ${k.name}的魔力造成 ${d} 傷害`, 'magic');
+        for (const m of hit) {
+            const d = magicDamage(k.magic.dmg, k.magic.spK, st, 0, m);
+            m.hp -= d;
+            lifeSteal(d, st);
+            addLog(`⚡ ${k.name}的魔力，${m.name}受到 ${d} 傷害`, 'magic');
+        }
     }
-    if (k.stun) { hunt.stunUntil = gameNow + k.stun; addLog(`${hunt.mon.name}被暈眩了`, 'magic'); }
+    if (k.stun) for (const m of hit) { m.stunUntil = gameNow + k.stun; addLog(`${m.name}被暈眩了`, 'magic'); }
 }
 
-function pickAmmo(type) {
+function pickAmmo(type, mon = hunt.mon) {
     const list = player.inv.filter(x => ITEMS[x.id].cat === 'ammo' && ITEMS[x.id].ammo === type);
     if (!list.length) return null;
     // 打不死系優先用銀製彈藥
-    return (hunt.mon.undead && list.find(x => ITEMS[x.id].silver)) || list.find(x => !ITEMS[x.id].silver) || list[0];
+    return (mon.undead && list.find(x => ITEMS[x.id].silver)) || list.find(x => !ITEMS[x.id].silver) || list[0];
 }
 
 function outOfAmmo() {
@@ -270,11 +355,10 @@ function lifeSteal(dmg, st) {
 }
 
 // 回傳 false 代表無法攻擊（沒彈藥）
-function physicalAttack(st, mult, opt) {
-    const mon = hunt.mon;
+function physicalAttack(st, mult, opt, mon = hunt.mon) {
     let ammoDef = null;
     if (st.ranged) {
-        const ammo = pickAmmo(st.weaponType.ammo);
+        const ammo = pickAmmo(st.weaponType.ammo, mon);
         if (!ammo) { outOfAmmo(); return false; }
         ammoDef = ITEMS[ammo.id];
         consumeItem(ammo.id);
@@ -305,8 +389,7 @@ function physicalAttack(st, mult, opt) {
     return true;
 }
 
-function monsterAttack(st) {
-    const mon = hunt.mon;
+function monsterAttack(st, mon) {
     const magic = mon.magic && chance(mon.magic.p);
     let dmg;
     if (magic) {
@@ -326,17 +409,18 @@ function monsterAttack(st) {
     }
     player.hp -= dmg;
     addLog(magic ? `${mon.name}施放「${mon.magic.name}」，你受到 ${dmg} 傷害` : `${mon.name}攻擊，你受到 ${dmg} 傷害`, 'hurt');
-    if (player.hp <= 0) { onDeath(); return; }
+    if (player.hp <= 0) { onDeath(mon); return; }
     if (st.counter && dmg > 0 && chance(st.counter)) {
         mon.hp -= dmg;
         addLog(`🛡️ 反擊！${mon.name}受到 ${dmg} 傷害`, 'crit');
-        if (mon.hp <= 0) onKill();
+        if (mon.hp <= 0) onKill(mon);
     }
 }
 
 // ───────── 結果 ─────────
-function onKill() {
-    const mon = hunt.mon, z = currentZone(), st = calcStats();
+function onKill(mon) {
+    if (!hunt.mobs.includes(mon)) return;   // 已經結算過
+    const z = currentZone(), st = calcStats();
     let gold = rand(mon.gold[0], mon.gold[1]);
     if (player.cls === 'royal') gold = Math.round(gold * (1 + Math.max(0, st.cha - 10) * 0.03));
     player.gold += gold;
@@ -346,7 +430,8 @@ function onKill() {
     const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv)));
     session.exp += exp;
     session.gold += gold;
-    hunt.mon = null;
+    hunt.mobs = hunt.mobs.filter(m => m !== mon);
+    if (hunt.mon === mon) hunt.mon = hunt.mobs.slice().sort((a, b) => a.hp - b.hp)[0] || null;
     addLog(`☠️ 擊倒${mon.name}！經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'win');
     gainExp(exp);
     rollDrops(mon, z);
@@ -369,6 +454,7 @@ function onKill() {
         moveToTown(z.town);
         return;
     }
+    if (hunt.mon) { hunt.pCd = Math.min(hunt.pCd, 300); return; }   // 還有怪圍著：直接打下一隻
     hunt.state = 'search';
     hunt.timer = rand(600, 1600);
     checkAutoHome();
@@ -401,8 +487,8 @@ function checkAutoHome() {
     if (reasons.length) useHomeScroll(reasons.join('、'));
 }
 
-function onDeath() {
-    const z = currentZone(), mon = hunt && hunt.mon;
+function onDeath(killer) {
+    const z = currentZone(), mon = killer || (hunt && hunt.mon);
     player.deaths++;
     let msg = `💀 你被${mon ? mon.name : '敵人'}擊倒了…`;
     if (consumeItem('reviveScroll')) msg += '復活卷軸生效，沒有損失經驗。';
