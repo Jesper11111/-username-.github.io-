@@ -16,6 +16,7 @@
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
+| `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
@@ -36,7 +37,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -44,7 +45,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009l`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009m`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -490,6 +491,20 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   基礎屬性（兩欄）、說明、**取得方式**；下方清單（圖示、名稱、品質、種類；未擁有的圖示變灰）；底部「共 N 件（全部、已擁有）」。
 - 取得方式 `codexSources`（第一次查詢時建表）：商店（依 `tier` 對到村莊）、`MONSTERS[*].drops`、`TOWER_BOSS_DROPS`（魔塔每 10 層首領）、
   `COMMON_DROPS`（一般怪物）、`RECIPES`（鍛造材料＋手續費）、`CLASS_QUESTS[*].reward.item`（職業任務）。都沒有就顯示「尚無取得管道」
-  （目前：精靈鍊甲、力量／敏捷／智力戒指）。
+  （加入暗黑式隨機裝備掉落後，非職業限定的武器／防具都會多一行「掉落：隨機裝備」）。
 - 「已擁有」即時計算背包＋倉庫＋裝備中，**不另存收集進度、不改存檔結構**。
 - 之後可做：製作清單（鍛造配方一覽、材料是否足夠）、收集進度與獎勵（需要存檔欄位）。
+
+## 21. 暗黑式刷寶：品質與隨機詞綴（`affix.js`；2026-10-09，版本 `20261009m`，存檔 schema 2）
+
+- 道具實體新增欄位（只有怪物掉落的武器／防具會有；商店、鍛造、任務獎勵都是普通）：
+  `q` 品質（`magic` 魔法藍／`rare` 稀有黃／`legend` 傳說橘）、`af` 詞綴 `[{k, v, lg?}]`、`il` 物品等級（掉落怪物等級）、`nm` 名稱前綴。
+  `SAVE_SCHEMA` 2；`migrateSave` 把不認得的品質／詞綴清掉（舊存檔沒有這些欄位，直接當普通裝備）。
+- 品質機率 `rollQuality`：一般怪指定掉落 普通 60%／魔法 28%／稀有 10%／傳說 2%；首領 魔法 55%／稀有 35%／傳說 10%；
+  隨機裝備（至少魔法）魔法 75%／稀有 21%／傳說 4%。詞綴條數：魔法 1～2、稀有 3～4、傳說 4＋1 條傳說詞綴（數值 ×2～2.5，名稱「傳說・死神 長劍」）。
+- 詞綴 `AFFIXES`（19 種，數值上限隨物品等級成長）：五維、命中、傷害、爆擊%、攻速%、吸血%、HP、MP、AC、MR、回血、回魔、SP、減傷、閃避%；
+  `slots` 限制可出現的部位（例如攻速只在武器／手套、AC 只在防具）。`calcStats` 把已裝備道具的 `affixFx` 加進 fx。
+- 名稱 `qualityName`：魔法＝第一條詞綴的前綴（「銳利的長劍」）、稀有＝「「血月」長劍」、傳說＝「傳說・稱號 名稱」；`itemClass` 顯示品質顏色。
+- **隨機裝備掉落**：每隻一般怪 1.5%（`RANDOM_EQUIP_P`）、首領 50% 掉一件 `randomEquipFor(怪物等級)`（回收價 ≤ 等級 × 600、非職業限定的武器／防具），至少魔法品質。
+- 售價 `instSellPrice`：基本回收價（至少 50）× 品質倍率（魔法 1.5、稀有 3、傳說 8）＋ 詞綴數 × 物品等級 × 10。有品質的道具賣出前會確認。
+- 衝裝、倉庫、丟棄都保留整個實體，詞綴不會消失。離線收益不給掉落（快轉模擬結束會還原角色），所以不影響。

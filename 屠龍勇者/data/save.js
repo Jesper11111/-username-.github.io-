@@ -24,6 +24,9 @@ function migrateSave(data) {
     p.inv = (p.inv || []).filter(valid);
     p.storage = p.storage.filter(valid);
     for (const k in p.equip) if (!valid(p.equip[k])) delete p.equip[k];
+    // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
+    const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => AFFIXES[a.k]); };
+    [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
     if (p.loc.type === 'zone' && !ZONE_BY_ID[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     if (p.loc.type === 'town' && !TOWNS[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     return p;

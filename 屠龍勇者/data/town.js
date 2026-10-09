@@ -74,7 +74,7 @@ function sellItem(uid, all) {
     const it = findInv(uid);
     if (!it) return;
     const n = all ? it.n : 1;
-    const price = sellPriceOf(it.id) * n;
+    const price = instSellPrice(it) * n;
     it.n -= n;
     if (it.n <= 0) removeInst(uid);
     player.gold += price;

@@ -310,6 +310,7 @@ function itemClass(inst) {
     const d = ITEMS[inst.id];
     if (d.safe >= 0 && (inst.ench || 0) > d.safe) return 'ench-hi';
     if ((inst.ench || 0) < 0) return 'cursed';
+    if (inst.q) return QUALITY[inst.q].cls;
     if (d.cat === 'elixir' || ((d.cat === 'weapon' || d.cat === 'armor') && !d.price) || (d.cat === 'scroll' && d.bless === 1)) return 'rare-item';
     return '';
 }
@@ -365,7 +366,11 @@ function itemDescHtml(inst) {
     if (d.cat === 'ammo') L.push(`傷害 +${d.dmg}${d.silver ? '，對不死系額外傷害' : ''}`);
     if (d.classes) L.push(`限定：${d.classes.map(c => CLASSES[c].name).join('、')}`);
     if (d.desc) L.push(d.desc);
-    L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(sellPriceOf(inst.id))}</small>`);
+    if (inst.q) {   // 暗黑式詞綴
+        L.push(`<b class="${QUALITY[inst.q].cls}">${QUALITY[inst.q].name}品質</b><small class="muted">（物品等級 ${inst.il || 1}）</small>`);
+        for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);
+    }
+    L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(instSellPrice(inst))}</small>`);
     return L.join('<br>');
 }
 
@@ -510,9 +515,9 @@ function shortDesc(d) {
 function shopInfo(id) { openDialog(ITEMS[id].name, itemDescHtml({ id, n: 1, ench: 0 }), [{ text: '關閉', cls: 'secondary' }]); }
 
 function renderSell() {
-    const list = sortedInv(player.inv).filter(x => sellPriceOf(x.id) > 0);
+    const list = sortedInv(player.inv).filter(x => instSellPrice(x) > 0);
     return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small></div><div class="list">` + (list.map(x =>
-        `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(sellPriceOf(x.id))}</small></div>
+        `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
         <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
         || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
 }
@@ -520,7 +525,7 @@ function renderSell() {
 function sellBtn(uid, all) {
     const it = findInv(uid);
     if (!it) return;
-    const valuable = (it.ench || 0) > 0 || sellPriceOf(it.id) >= 5000;
+    const valuable = (it.ench || 0) > 0 || !!it.q || instSellPrice(it) >= 5000;
     if (valuable) gameConfirm('確認賣出', `確定賣出 ${itemName(it)}${all && it.n > 1 ? ' ×' + it.n : ''}？`, () => sellItem(uid, all), '賣出');
     else sellItem(uid, all);
 }
