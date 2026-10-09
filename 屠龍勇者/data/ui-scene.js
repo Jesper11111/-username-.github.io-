@@ -418,7 +418,7 @@ function sceneDraw(ctx, W, H) {
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
     if (inTownNow) scene.npcRects = [];
-    const actorFont = '24px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+    const actorFont = '36px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
     const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
         if (m.lunge) { const k = Math.sin(m.lunge.t / 180 * Math.PI) * 8; sx += m.lunge.dx * k; sy += m.lunge.dy * k; }
@@ -426,11 +426,11 @@ function sceneDraw(ctx, W, H) {
         const big = m.inst && (m.inst.boss || m.inst.dragon);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 16 : 11, 4, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.font = big ? '38px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
-        ctx.fillText(m.icon, sx, sy - (big ? 6 : 0));
+        ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
+        ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
         ctx.globalAlpha = 1;
         if (m === scene.engaged && m.inst) {
-            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 34 : 22);
+            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 44 : 30);
             labels.push(() => {
                 ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
                 ctx.fillStyle = '#d64036'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
@@ -463,10 +463,11 @@ function sceneDraw(ctx, W, H) {
             ctx.restore();
             labelY = py + 14 - sp.drawH - 6;
         } else {
-            ctx.font = '26px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+            ctx.font = '40px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
             ctx.save();
             if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
-            ctx.fillText(CLASSES[player.cls].icon, px, py - 2 + bob);
+            ctx.fillText(CLASSES[player.cls].icon, px, py - 6 + bob);
+            labelY = py - 32;
             ctx.restore();
         }
         labels.push(() => drawLabel(ctx, player.name, px, labelY, '#9fe0ff'));
@@ -580,8 +581,8 @@ function sceneFrame(ts) {
     const W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     const ctx = cv.getContext('2d');
-    // 畫面寬時放大格子（最多顯示約 20 格寬），PC 大地圖不會顯得太小
-    const z = clamp(W / (TILE * 20), 1, 2.2);
+    // 畫面寬時放大格子（約顯示 28 格寬、最多 1.3 倍；比例對齊天堂 M 參考圖）
+    const z = clamp(W / (TILE * 28), 1, 1.3);
     scene.zoom = z;
     ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
     if (!document.hidden) { sceneUpdate(dt); sceneDraw(ctx, W / z, H / z); }
