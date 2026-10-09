@@ -378,6 +378,60 @@ function itemDescHtml(inst) {
     return L.join('<br>');
 }
 
+// ───────── 裝備比較（背包裝備 vs 裝備中）─────────
+// 模擬「換上這件」後的 calcStats，和目前比較；戒指兩格都比；雙手武器會把盾卸下、盾會把雙手武器卸下（同 equipItem）
+const COMPARE_ROWS = [
+    ['avgS', '平均傷害（小型）', 1], ['avgL', '平均傷害（大型）', 1], ['atkMs', '攻擊間隔（秒）', -1, v => (v / 1000).toFixed(2)],
+    ['hit', '命中', 1], ['crit', '爆擊', 1, v => Math.round(v * 100) + '%'], ['ac', 'AC（越低越好）', -1], ['mr', 'MR', 1],
+    ['maxHp', 'HP 上限', 1], ['maxMp', 'MP 上限', 1], ['sp', 'SP', 1], ['reduce', '減傷', 1], ['dodge', '閃避', 1, v => Math.round(v * 100) + '%'],
+    ['lifesteal', '吸血', 1, v => Math.round(v * 100) + '%'], ['hpRegen', '回血', 1], ['mpRegen', '回魔', 1],
+    ['str', '力量', 1], ['dex', '敏捷', 1], ['con', '體質', 1], ['int', '智力', 1], ['wis', '精神', 1], ['weightMax', '負重上限', 1],
+];
+function compareStats() {
+    const st = calcStats(), w = st.weapon;
+    return { ...st, avgS: (w ? (1 + w.dmg[0]) / 2 : 1.5) + st.dmgBonus, avgL: (w ? (1 + w.dmg[1]) / 2 : 1.5) + st.dmgBonus };
+}
+// 把 inst 放進 slot 後算能力，算完還原（不改任何存檔資料）
+function statsWithEquip(inst, slot) {
+    const saved = { ...player.equip }, def = ITEMS[inst.id];
+    try {
+        if (slot === 'weapon' && WEAPON_TYPES[def.type].two) delete player.equip.shield;
+        if (slot === 'shield' && player.equip.weapon && WEAPON_TYPES[ITEMS[player.equip.weapon.id].type].two) delete player.equip.weapon;
+        player.equip[slot] = inst;
+        return compareStats();
+    } finally { player.equip = saved; }
+}
+function compareHtml(inst) {
+    const def = ITEMS[inst.id];
+    if (def.cat !== 'weapon' && def.cat !== 'armor') return '';
+    const err = canEquip(def);
+    if (err) return `<div class="cmp-box"><b>⚖️ 與裝備中比較</b><div class="bad">${esc(err)}，無法裝備</div></div>`;
+    const slots = def.cat === 'weapon' ? ['weapon'] : def.slot === 'ring' ? ['ring1', 'ring2'] : [def.slot];
+    const cur = compareStats();
+    return slots.map(slot => {
+        const old = player.equip[slot], next = statsWithEquip(inst, slot);
+        const extra = [];
+        if (slot === 'weapon' && WEAPON_TYPES[def.type].two && player.equip.shield) extra.push(`會卸下盾牌 ${itemName(player.equip.shield)}`);
+        if (slot === 'shield' && player.equip.weapon && WEAPON_TYPES[ITEMS[player.equip.weapon.id].type].two) extra.push(`會卸下雙手武器 ${itemName(player.equip.weapon)}`);
+        let better = 0, worse = 0;
+        const rows = COMPARE_ROWS.map(([k, label, dir, f]) => {
+            const a = cur[k] || 0, b = next[k] || 0, d = b - a;
+            if (Math.abs(d) < 1e-9) return '';
+            const good = d * dir > 0; good ? better++ : worse++;
+            const show = f || (v => Number.isInteger(v) ? fmt(v) : v.toFixed(1));
+            const ds = f ? (d > 0 ? '+' : '−') + f(Math.abs(d)) : (d > 0 ? '+' : '−') + show(Math.abs(d));
+            return `<tr><td>${label}</td><td>${show(a)}</td><td>${show(b)}</td><td class="${good ? 'good' : 'bad'}">${good ? '▲' : '▼'} ${ds}</td></tr>`;
+        }).join('');
+        const verdict = !rows ? '<span class="muted">能力沒有變化</span>' : `<span class="good">▲ ${better} 項變好</span>　<span class="bad">▼ ${worse} 項變差</span>`;
+        return `<div class="cmp-box"><b>⚖️ 與裝備中比較${slots.length > 1 ? `（${slot === 'ring1' ? '戒指 1' : '戒指 2'}）` : ''}</b>
+            <div class="cmp-cur">目前：${old ? `<span class="${itemClass(old)}">${esc(itemName(old))}</span>` : '<span class="muted">（空）</span>'}</div>
+            ${extra.map(t => `<div class="warn">⚠️ ${esc(t)}</div>`).join('')}
+            <div>${verdict}</div>
+            ${rows ? `<table class="cmp-tbl"><tr><th>項目</th><th>目前</th><th>換上後</th><th>差異</th></tr>${rows}</table>` : ''}
+            ${old ? `<details class="cmp-old"><summary>查看裝備中的詳細</summary>${itemDescHtml(old)}</details>` : ''}</div>`;
+    }).join('');
+}
+
 function openItemDialog(uid) {
     const inst = findAnyInst(uid);
     if (!inst) return;
@@ -399,7 +453,7 @@ function openItemDialog(uid) {
     if (d.cat === 'elixir') btns.push({ text: '使用', onClick: () => openElixirDialog() });
     if (!slot) btns.push({ text: '丟棄', cls: 'danger', onClick: () => gameConfirm('丟棄道具', `確定丟棄 ${itemName(inst)}${inst.n > 1 ? ' ×' + inst.n : ''}？丟掉就找不回來了。`, () => { removeInst(uid); saveGame(); refreshUI(); }, '丟棄') });
     btns.push({ text: '關閉', cls: 'secondary' });
-    openDialog(itemName(inst) + (inst.n > 1 ? ` ×${fmt(inst.n)}` : ''), itemDescHtml(inst), btns);
+    openDialog(itemName(inst) + (inst.n > 1 ? ` ×${fmt(inst.n)}` : ''), itemDescHtml(inst) + (slot ? '' : compareHtml(inst)), btns);
 }
 
 function openEnchantPicker(scrollUid) {
