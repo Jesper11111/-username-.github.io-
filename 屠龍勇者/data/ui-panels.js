@@ -362,6 +362,13 @@ function itemDescHtml(inst) {
         STAT_KEYS.forEach(k => { if (d[k]) L.push(`${STAT_NAMES[k]} +${d[k]}`); });
         if (d.hp) L.push(`HP +${d.hp}`);
         if (d.reduce) L.push(`減傷 ${d.reduce}`);
+        if (d.hit) L.push(`命中 +${d.hit}`);
+        if (d.dmg) L.push(`傷害 +${d.dmg}`);
+        if (d.crit) L.push(`爆擊 +${Math.round(d.crit * 100)}%`);
+        if (d.dodge) L.push(`閃避 +${Math.round(d.dodge * 100)}%`);
+        if (d.lifesteal) L.push(`吸血 +${Math.round(d.lifesteal * 100)}%`);
+        if (d.hpRegen) L.push(`回血 +${d.hpRegen}`);
+        if (d.mpRegen) L.push(`回魔 +${d.mpRegen}`);
         if (d.haste) L.push('加速效果');
     }
     if (d.cat === 'weapon' || d.cat === 'armor') L.push(d.safe >= 0 ? `安定值 +${d.safe}` : '不可強化');

@@ -91,7 +91,7 @@ function codexSources(id) {
     if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);
     if (d.res) {   // 共鳴武器：異界首領（resonance.js）
         const minT = [1, 6, 11, 15][d.res.tier - 1];
-        list.push(`掉落：T${minT} 以上異界首領 ${Math.round(RES_MAP_BOSS_P * 100)}%（隨機一把共鳴武器）`);
+        list.push(`掉落：T${minT} 以上異界首領 ${Math.round(RES_MAP_BOSS_P * 100)}%（隨機一件共鳴裝備）`);
     }
     return list.concat([...new Set(codexSrcCache[id] || [])]);
 }
@@ -128,6 +128,11 @@ function codexDetailHtml(id) {
     if (d.mr) L.push(['MR', '+' + d.mr]);
     if (d.sp) L.push(['SP', '+' + d.sp]);
     if (d.cat === 'armor' && d.hit) L.push(['命中', '+' + d.hit]);
+    if (d.cat === 'armor' && d.dmg) L.push(['傷害', '+' + d.dmg]);
+    if (d.cat === 'armor' && d.crit) L.push(['爆擊', `+${Math.round(d.crit * 100)}%`]);
+    if (d.dodge) L.push(['閃避', `+${Math.round(d.dodge * 100)}%`]);
+    if (d.hpRegen) L.push(['回血', '+' + d.hpRegen]);
+    if (d.mpRegen) L.push(['回魔', '+' + d.mpRegen]);
     STAT_KEYS.forEach(k => { if (d[k]) L.push([STAT_NAMES[k], '+' + d[k]]); });
     if (d.hp) L.push(['HP', '+' + d.hp]);
     if (d.reduce) L.push(['減傷', d.reduce]);

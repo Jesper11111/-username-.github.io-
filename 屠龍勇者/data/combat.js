@@ -150,7 +150,7 @@ function huntTick(dt) {
         if (!fightAlive()) return;
         reapMobs();
         if (!fightAlive()) return;
-        // 共鳴武器：這次攻擊觸發的共鳴技能（resonance.js）
+        // 共鳴裝備：這次攻擊觸發的共鳴技能（resonance.js）
         if (resonanceFlush(st)) { if (!fightAlive()) return; reapMobs(); if (!fightAlive()) return; }
     }
     // 首領大招：蓄力時地上出現紅圈，時間到沒離開就吃重擊
@@ -167,6 +167,8 @@ function huntTick(dt) {
     }
     reapMobs();
     if (!fightAlive()) return;
+    // 共鳴防具受擊觸發的反擊（resonance.js）
+    if (resonanceFlush(calcStats())) { if (!fightAlive()) return; reapMobs(); if (!fightAlive()) return; }
     // 打到一半，附近的怪可能被吸引過來加入戰鬥
     hunt.joinCd -= dt;
     if (hunt.joinCd <= 0) {
@@ -227,6 +229,7 @@ function bossSkillTick(dt) {
         player.hp -= dmg;
         addLog(`💥 ${m.name}的「${t.name}」命中！你受到 ${dmg} 傷害`, 'hurt');
         if (player.hp <= 0) onDeath(m);
+        else resonanceOnHurt(st);
         return;
     }
     for (const m of hunt.mobs) {
@@ -356,7 +359,7 @@ function spawnMonster() {
     else addLog(n > 1 ? `${hunt.mobs.map(m => `${m.name}（Lv.${m.lv}）`).join('、')} 一起圍了上來` : `${mon.name}（Lv.${mon.lv}）出現了`, n > 1 ? 'warn' : '');
 }
 
-// 玩家行動優先順序：治癒 → 增益 → 共鳴武器（冷卻型）→ 攻擊技能／魔法 → 普攻
+// 玩家行動優先順序：治癒 → 增益 → 共鳴裝備（冷卻型）→ 攻擊技能／魔法 → 普攻
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = learnedSkills().filter(k => k.type !== 'passive' && s.skills[k.id] !== false);
@@ -520,6 +523,7 @@ function monsterAttack(st, mon) {
     player.hp -= dmg;
     addLog(magic ? `${mon.name}施放「${mon.magic.name}」，你受到 ${dmg} 傷害` : `${mon.name}攻擊，你受到 ${dmg} 傷害`, 'hurt');
     if (player.hp <= 0) { onDeath(mon); return; }
+    if (dmg > 0) resonanceOnHurt(st);   // 共鳴防具：受擊／危急觸發（resonance.js）
     if (st.counter && dmg > 0 && chance(st.counter)) {
         mon.hp -= dmg;
         addLog(`🛡️ 反擊！${mon.name}受到 ${dmg} 傷害`, 'crit');
@@ -607,7 +611,7 @@ function rollDrops(mon, z) {
     if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
     // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉
     rollMapDrop(mon, qm);   // 異界地圖掉落（maps.js）
-    // 異界首領：依地圖階級掉共鳴武器（resonance.js）
+    // 異界首領：依地圖階級掉共鳴裝備（resonance.js）
     if (mon.mapBoss && player.mapRun && chance(RES_MAP_BOSS_P * qm)) {
         const max = resMaxTierForMap(player.mapRun.t), pool = Object.keys(RESONANCE).filter(id => RESONANCE[id].tier <= max);
         give(pool[rand(0, pool.length - 1)], null, null);

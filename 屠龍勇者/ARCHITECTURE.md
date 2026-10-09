@@ -15,7 +15,7 @@
 | `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
-| `data/resonance.js` | **共鳴武器**：`RESONANCE`（31 把武器的專屬技能，寫進 `ITEMS[id].res`）、新武器 `RESONANCE_NEW_ITEMS`、首領／龍掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27 節） |
+| `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
@@ -49,7 +49,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010e`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -745,3 +745,27 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   狩獵畫面增益列最後顯示 `resonanceChip`（冷卻倒數／觸發機率／共鳴值 n/N，✦＝職業共鳴中）。
 - 模擬（Lv.50、腐朽礦坑・深層、各武器配對應職業、3 分鐘 ×2）：每把每分鐘觸發約 3～12 次，全部都能正常放出。
 - 存檔不需轉換：`player.resCharge` 沒有就從 0 開始。離線收益的快轉模擬直接沿用（共鳴照常觸發）。
+
+## 28. 共鳴防具與飾品（2026-10-10，版本 `20261010e`；`resonance.js`）
+
+- 使用者：「傳說裝備不應該只有武器，防具、飾品也需要」。共鳴系統從「只看武器」改成**所有裝備部位**：`resItemIds()` 依 `SLOT_KEYS` 列出身上每件有 `res` 的裝備，**可同時穿多件**，各自計算。
+  - 冷卻：每件各自 `player.cds['res_' + 裝備id]`（第 27 節原本的 `player.cds.res` 已不用）。
+  - 共鳴值：`player.resCharge = { 裝備id: n }`（舊版 `{ id, n }` 由 `resChargeMap()` 讀到就重置）。
+  - 排隊：`hunt.resPending` 改成陣列，同一次行動可觸發多件；`resonanceFlush` 依序放出（已卸下的略過）。
+  - `cls` 可省略（防具多半人人適用，沒有職業共鳴加成）。
+- **新增兩種觸發**（防具用）：
+  - `hurt` 受擊觸發：`monsterAttack` 造成傷害且沒死、首領大招命中後呼叫 `resonanceOnHurt(st)`，擲 `p` 機率。
+  - `lowhp` 危急觸發：受傷後 HP 低於 `pct` 且冷卻 `cd` 秒已過才觸發（保命用；自動喝水把 HP 維持在設定以上時不會觸發）。
+  - 受擊觸發的治療／增益**立刻生效**；反擊類（strike／spell）排隊，等怪物攻擊結算完由 `huntTick` 再呼叫一次 `resonanceFlush` 放出。
+- **23 件**（既有 7 件加特效＋新 16 件，`RESONANCE_ARMOR_ITEMS`）：
+
+| 階 | 裝備（部位・觸發） | 取得 |
+|---|---|---|
+| 稀有 | 騎士頭盔（頭・受擊）、保護者斗篷（斗篷・危急）、力量手套（手套・攻擊）、**狼王牙項鍊**（項鍊・爆發）、**海賊王的戒指**（戒指・攻擊） | 既有掉落；狼王牙＝古老樹精 5%、海賊王戒指＝海賊王 5% |
+| 英雄 | 速度之靴（受擊）、抗魔斗篷（受擊）、泰坦腰帶（危急）、**寒冰之盾**（受擊反擊）、**飛龍頭盔**（爆發）、**炎魔手套**（攻擊） | 冰之巨人王／巨大飛龍／伊弗利特各 5% |
+| 傳說 | 龍鱗鎧（受擊）、**大賢者頭冠**（冷卻）、**不死鳥之鎧**（危急）、**夜影斗篷**（受擊）、**巨人王腰帶**（爆發）、**天使之戒**（受擊回血）、**惡魔之戒**（攻擊）、**深淵之眼**（爆發） | 遺忘之王、巨人王的亡魂、歐西里斯、惡魔、永夜之塔 60F／80F 首領（12%） |
+| 神話 | **大地守護者之盾**（受擊反擊）、**潮汐之心**（冷卻回血）、**風神之靴**（受擊）、**火龍之心**（攻擊） | 四大龍各 6%，或鍛造：基底防具＋龍鱗×4＋高階材料＋💰60,000 |
+
+- 新防具的基礎屬性可以有 `hit`／`dmg`／`crit`／`dodge`／`lifesteal`／`hpRegen`／`mpRegen`（`calcStats` 的 `addFx` 本來就收），道具說明與圖鑑已補上這些欄位的顯示。
+- 異界首領的共鳴掉落池（第 27 節）自動包含防具，訊息改成「共鳴裝備」。
+- 模擬（Lv.50 腐朽礦坑・深層、3 分鐘 ×2）：受擊／攻擊觸發每分鐘約 4～7 次、爆發型約 1.5～3 次、冷卻型 2～3 次；危急觸發在關掉自動喝水時確認會在低血量發動（守護 +68、浴火重生 +304）。
