@@ -31,6 +31,7 @@ function stopHunt(msg) {
 }
 
 function moveToTown(townId) {
+    endMapRun('離開異界');   // 異界地圖：回城（卷軸、步行、死亡）地圖就消失（maps.js）
     player.hunting = false;
     hunt = null;
     walkHome = null;
@@ -168,7 +169,7 @@ function huntTick(dt) {
     hunt.joinCd -= dt;
     if (hunt.joinCd <= 0) {
         hunt.joinCd = MOB_JOIN_MS;
-        if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && chance(MOB_JOIN_P * (mapModOn('swarm') ? 2 : 1))) {
+        if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && !(inMapRun() && player.mapRun.left <= hunt.mobs.length) && chance(MOB_JOIN_P * (mapModOn('swarm') ? 2 : 1))) {
             const add = makeZoneMob(currentZone());
             if (add) { addMob(weakenForPack(add, hunt.mobs.length + 1)); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
         }
@@ -295,6 +296,7 @@ function addMob(mon) {
 function makeZoneMob(z) {
     if (!z || z.type === 'dragon') return null;
     if (z.type === 'tower') return makeTowerMonster(player.loc.floor, false);
+    if (inMapRun()) return makeMonster(z.mons[rand(0, z.mons.length - 1)]);   // 異界：整個地區的怪都會出現
     let pool = z.mons.filter(id => MONSTERS[id].lv <= player.lv + 3);
     if (!pool.length) pool = [z.mons.reduce((a, b) => MONSTERS[a].lv <= MONSTERS[b].lv ? a : b)];
     return makeMonster(pool[rand(0, pool.length - 1)]);
@@ -322,7 +324,9 @@ function mobTargets() {
 
 function spawnMonster() {
     const z = currentZone();
-    let mon = z.type === 'dragon' ? null : questBossFor(z);   // 職業任務首領優先
+    // 異界地圖：怪物清空後出現異界首領
+    const mapBossUp = inMapRun() && player.mapRun.left <= 0;
+    let mon = mapBossUp ? makeMapBoss() : z.type === 'dragon' ? null : questBossFor(z);   // 職業任務首領優先
     if (mon) { /* 任務首領 */ }
     else if (z.type === 'dragon') mon = makeMonster(z.boss);
     else if (z.type === 'tower') {
@@ -342,7 +346,8 @@ function spawnMonster() {
     addMob(mon);
     mon.atkCd = mon.spd * 0.6;
     // 一般怪成群出現（首領、龍單獨出現）
-    const n = mon.boss ? 1 : packRoll();
+    const n = mon.boss ? 1 : Math.min(packRoll(), inMapRun() ? Math.max(1, player.mapRun.left) : 99);
+    if (mapBossUp) { player.mapRun.boss = true; addLog(`👹 ${mon.name}現身了！`, 'boss'); }
     weakenForPack(mon, n);
     for (let i = 1; i < n; i++) addMob(weakenForPack(makeZoneMob(z), n));
     if (mon.boss) addLog(`⚠️ ${mon.name}出現了！`, 'boss');
@@ -536,6 +541,7 @@ function onKill(mon) {
     gainExp(exp);
     rollDrops(mon, z);
     questOnKill(mon, z);
+    if (mapOnKill(mon)) return;   // 異界：計數；打倒異界首領＝通關、回村
 
     if (mon.towerFloor) {
         player.towerCleared[mon.towerFloor] = true;
@@ -594,6 +600,7 @@ function rollDrops(mon, z) {
     // 製作通貨（craft.js）：一般怪 3%、首領 60%
     if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
     // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉
+    rollMapDrop(mon, qm);   // 異界地圖掉落（maps.js）
     if (mon.elite || chance((mon.boss ? 0.5 : RANDOM_EQUIP_P) * qm)) {
         const id = randomEquipFor(mon.lv);
         if (id) give(id, null, rollQuality(mon.boss, true));

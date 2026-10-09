@@ -76,8 +76,7 @@ function renderHunt() {
         const t = currentTown();
         return huntViewHtml(`${t.icon} ${t.name}<small>　點地圖走路・方向鍵／WASD 移動</small>`);
     }
-    const mods = mapModsOn();
-    return huntViewHtml(`📍 ${zoneTitle()}${mods.length ? `<small class="warn">　🌀${mods.map(k => MAP_MODS[k].icon).join('')} 獎勵 +${Math.round(mapBonus() * 100)}%</small>` : ''}`);
+    return huntViewHtml(`📍 ${zoneTitle()}<small id="map-prog" class="map-prog"></small>`);
 }
 
 // 中間的即時地圖（ui-scene.js 畫在 canvas 上）＋下方操作列、補給、精簡訊息
@@ -153,6 +152,8 @@ function updateHuntLive() {
     }
     startScene();
     renderSkillBar();
+    const mp = $('map-prog');
+    if (mp) { const t = mapProgressText(); if (mp.textContent !== t) mp.textContent = t; }
     const buffs = $('hunt-buffs');
     if (buffs) {
         const now = gameNow;
@@ -224,7 +225,7 @@ function renderMap() {
             ${t.icon} ${t.name}<br><small>${here ? '目前位置' : '傳送 💰' + fmt(townTravelFee(id))}</small></button>`;
     }).join('') + `</div>`;
 
-    h += mapModsPanelHtml();
+    h += mapDevicePanelHtml();
     h += `<h4>⚔️ 狩獵地點</h4>`;
     for (const z of ZONES) {
         const why = zoneBlockReason(z);
@@ -298,8 +299,8 @@ function renderChar() {
 function addStatBtn(k) { addStatPoint(k); saveGame(); refreshUI(); }
 
 // ───────── 背包 ─────────
-const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['other', '其他']];
-const CAT_ORDER = ['quest', 'weapon', 'armor', 'potion', 'scroll', 'currency', 'ammo', 'elixir', 'material'];
+const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['map', '地圖'], ['other', '其他']];
+const CAT_ORDER = ['quest', 'map', 'weapon', 'armor', 'potion', 'scroll', 'currency', 'ammo', 'elixir', 'material'];
 
 function bagMatch(def) {
     if (bagFilter === 'all') return true;
@@ -336,6 +337,7 @@ function renderBag() {
 function setBagFilter(f) { bagFilter = f; renderPanel(); }
 
 function itemDescHtml(inst) {
+    if (ITEMS[inst.id].cat === 'map') return mapDescHtml(inst);   // 異界地圖（maps.js）
     const d = ITEMS[inst.id], L = [], ench = inst.ench || 0;
     let kind = CAT_NAMES[d.cat];
     if (d.cat === 'weapon') kind = WEAPON_TYPES[d.type].name + (WEAPON_TYPES[d.type].two ? '（雙手）' : '');
@@ -384,6 +386,10 @@ function openItemDialog(uid) {
         btns.push(slot
             ? { text: '卸下', onClick: () => { unequipSlot(slot); saveGame(); refreshUI(); } }
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
+        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
+    }
+    if (d.cat === 'map') {
+        if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
         btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
     }
     if (d.cat === 'currency') btns.push({ text: '選擇裝備', onClick: () => { bagFilter = 'gear'; switchTab('bag'); showToast('點一件裝備 →「🔮 改造」使用通貨'); } });

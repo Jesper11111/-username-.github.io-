@@ -38,7 +38,7 @@ function createPlayer(name, cls, stats) {
         towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {},
         kills: 0, deaths: 0,
         quests: { ch: 0, active: false, prog: 0, bossDone: false },
-        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapMods: [],
+        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null,
         created: Date.now(),
     };
     c.start.forEach(id => { const it = addItem(id, 1); equipItem(it.uid, true); });
