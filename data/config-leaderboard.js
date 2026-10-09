@@ -25,7 +25,7 @@ const LEADERBOARD_RANKS_REMOVED = true;   // 現在只代表死守天南城榜�
 // Firebase App Check（2026-10-04，保護 Firebase 額度：只有從本網站正常開啟的遊戲能連雲端，用程式直接呼叫的流量被拒）：
 //   填入 reCAPTCHA v3 的「網站金鑰」（site key，公開的，可以放程式裡；密鑰 secret key 只填在 Firebase 主控台）後啟用；空字串＝不啟用。
 //   遊戲（leaderboard.js 的 initLeaderboardBackend）與 gm.html 都會用。主控台要先觀察「已驗證」比例接近 100% 才按「強制執行」（ARCHITECTURE.md 第 42 節）
-const LEADERBOARD_APP_CHECK_KEY = "6LcvkectAAAAAAejw9MaS9J2GV566Xt9csqAGAfv";   // 2026-10-09 啟用（尚未強制執行）
+const LEADERBOARD_APP_CHECK_KEY = "6Lfda-ctAAAAAIVlo3i_fvgnDIfMHcmhtJoteVrr";   // 2026-10-09 啟用（尚未強制執行）
 // 2026-10-09：Firebase 已不允許註冊舊版 reCAPTCHA（v3），改用 Fraud Defense（舊稱 reCAPTCHA Enterprise）→ ReCaptchaEnterpriseProvider；false＝舊版 ReCaptchaV3Provider
 const LEADERBOARD_APP_CHECK_ENTERPRISE = true;
 // App Check 驗證方式（遊戲 leaderboard.js 與 gm.html 共用）
