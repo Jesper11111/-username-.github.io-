@@ -35,6 +35,7 @@ function renderStatus() {
     $('hud-bottom').innerHTML = `<div class="hud-where">${where}</div>
         <div class="bar exp hud-exp"><div class="bar-fill" style="width:${expPct}%"></div><span>EXP ${expPct.toFixed(2)}%</span></div>`;
     renderSlots();
+    renderSkull();
 }
 
 function setOrb(id, cur, max, label) {
