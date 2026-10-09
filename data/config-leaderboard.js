@@ -26,6 +26,14 @@ const LEADERBOARD_RANKS_REMOVED = true;   // 現在只代表死守天南城榜�
 //   填入 reCAPTCHA v3 的「網站金鑰」（site key，公開的，可以放程式裡；密鑰 secret key 只填在 Firebase 主控台）後啟用；空字串＝不啟用。
 //   遊戲（leaderboard.js 的 initLeaderboardBackend）與 gm.html 都會用。主控台要先觀察「已驗證」比例接近 100% 才按「強制執行」（ARCHITECTURE.md 第 42 節）
 const LEADERBOARD_APP_CHECK_KEY = "6LcvkectAAAAAAejw9MaS9J2GV566Xt9csqAGAfv";   // 2026-10-09 啟用（尚未強制執行）
+// 2026-10-09：Firebase 已不允許註冊舊版 reCAPTCHA（v3），改用 Fraud Defense（舊稱 reCAPTCHA Enterprise）→ ReCaptchaEnterpriseProvider；false＝舊版 ReCaptchaV3Provider
+const LEADERBOARD_APP_CHECK_ENTERPRISE = true;
+// App Check 驗證方式（遊戲 leaderboard.js 與 gm.html 共用）
+function lbAppCheckProvider() {
+    return LEADERBOARD_APP_CHECK_ENTERPRISE
+        ? new firebase.appCheck.ReCaptchaEnterpriseProvider(LEADERBOARD_APP_CHECK_KEY)
+        : new firebase.appCheck.ReCaptchaV3Provider(LEADERBOARD_APP_CHECK_KEY);
+}
 const LEADERBOARD_SDK_BASE = "https://www.gstatic.com/firebasejs/10.14.1";   // compat 版，傳統 <script> 可直接用全域 firebase
 const LEADERBOARD_COLLECTION = "leaderboard";          // 每位玩家一筆，文件 id = 匿名登入的 uid
 const LEADERBOARD_BANNED_COLLECTION = "banned";        // GM 黑名單（gm.html），文件 id = 被封鎖的 uid；規則擋下其上傳
