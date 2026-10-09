@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
     autoBlue: false,                  // 自動藍水
     autoHome: true, weightPct: 82,    // 沒藥水、沒彈藥或負重過高時自動回家
     autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
+    lootFilter: 1,                    // 戰利品過濾：0 全撿、1 普通自動賣、2 魔法以下自動賣、3 只撿傳說（affix.js）
     skills: {},                       // 技能 id → false 代表關閉自動施放
 };
 

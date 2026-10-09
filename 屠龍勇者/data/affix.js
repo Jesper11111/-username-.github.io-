@@ -107,6 +107,19 @@ function instSellPrice(inst) {
     return Math.max(base, 50) * QUALITY[inst.q].sell + (inst.af ? inst.af.length * (inst.il || 1) * 10 : 0);
 }
 
+// ───────── 戰利品過濾（設定 lootFilter）─────────
+// 品質等級：普通 0、魔法 1、稀有 2、傳說 3；低於設定的「一般貨」撿到時直接自動賣掉換金幣（不佔負重）。
+// 只過濾商店也有賣的基底（有 price）；武士刀、屠龍劍這類稀有基底（商店沒賣）不論品質一律保留。
+const QUALITY_RANK = { magic: 1, rare: 2, legend: 3 };
+const LOOT_FILTERS = ['全部撿起', '普通裝備自動賣出', '魔法以下自動賣出', '只撿傳說（稀有以下自動賣出）'];
+function qualityRank(inst) { return inst.q ? QUALITY_RANK[inst.q] : 0; }
+function lootFiltered(inst, level) {
+    const d = ITEMS[inst.id];
+    if (!level || (d.cat !== 'weapon' && d.cat !== 'armor')) return false;
+    if (!d.price) return false;                       // 稀有基底一律保留
+    return qualityRank(inst) < level;
+}
+
 // 依怪物等級挑一件隨機裝備（隨機裝備掉落用）：回收價不超過 怪物等級 × 600 的武器／防具
 function randomEquipFor(lv) {
     const cap = Math.max(300, lv * 600);

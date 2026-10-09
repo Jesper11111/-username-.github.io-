@@ -565,10 +565,19 @@ function rollDrops(mon, z) {
     const give = (id, nRange, q) => {
         const d = ITEMS[id];
         const n = nRange ? rand(nRange[0], nRange[1]) : 1;
+        const gear = d.cat === 'weapon' || d.cat === 'armor';
+        // 裝備先擲品質；被戰利品過濾擋下的直接自動賣掉（不進背包、不佔負重）
+        const rolled = gear ? applyAffixes({ uid: 0, id, n: 1, ench: 0 }, q === undefined ? rollQuality(mon.boss, false) : q, mon.lv) : null;
+        if (rolled && lootFiltered(rolled, player.settings.lootFilter)) {
+            const g = instSellPrice(rolled) * n;
+            player.gold += g;
+            if (session) session.gold += g;
+            addLog(`🪙 自動賣出 ${rolled.q ? `【${QUALITY[rolled.q].name}】` : ''}${itemName(rolled)}（+${fmt(g)}）`, 'loot');
+            return;
+        }
         if (invWeight() + d.wt * n > st.weightMax) { addLog(`⚠️ 負重已滿，${d.name}撿不起來`, 'warn'); return; }
         const inst = addItem(id, n);
-        const gear = d.cat === 'weapon' || d.cat === 'armor';
-        if (gear && inst) applyAffixes(inst, q === undefined ? rollQuality(mon.boss, false) : q, mon.lv);
+        if (rolled && inst) for (const k of ['q', 'af', 'il', 'nm']) if (rolled[k] != null) inst[k] = rolled[k];
         const rare = ['weapon', 'armor', 'elixir'].includes(d.cat) || (d.cat === 'scroll' && d.bless === 1) || d.scroll === 'enchant';
         const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
         addLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name}${n > 1 ? ' ×' + n : ''}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
