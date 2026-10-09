@@ -23,6 +23,7 @@
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、創角（選職業、配點、取名） |
+| `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
@@ -35,7 +36,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → player → enchant → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
@@ -43,7 +44,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009f`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -443,3 +444,18 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 | 右 2 圓鈕（中心 x 1520、1616） | 🗺️ 地圖、⚙️ 設定 |
 
 - 分頁格子再按一次＝關閉視窗。PC 外框沒有柱子抽屜（功能都在底部按鈕）。切回其他畫面尺寸時自動回到直式外框與 6 格。
+
+## 20. 裝備圖鑑（`codex.js`；2026-10-09，版本 `20261009f`）
+
+- 入口：手機左柱抽屜「📖 裝備圖鑑」；PC 底部 12 方格的最後一格 📖。分頁 id `codex`（`codex.js` 載入時寫進 `TABS`、`PANEL_FNS`，所以必須在 ui-panels 之後載入）。
+- 內容：`ITEMS` 裡除了任務收集品（`cat: 'quest'`）以外的全部道具（含職業任務獎勵裝備），目前 156 件。
+  - 分類 `CODEX_CATS`：全部／武器／防具（頭盔、盔甲、盾、內衣、斗篷、手套、長靴）／飾品（項鍊、戒指、腰帶）／消耗品（藥水、卷軸、彈藥、萬能藥）／材料。
+  - 品質 `codexGradeOf`：商店有賣（有 `price`）＝**一般**（白）；其他依回收價 `sell`：< 1 萬 **高級**（綠）、< 3 萬 **稀有**（藍）、< 8 萬 **英雄**（紫）、其餘 **傳說**（橘）。顏色 class `g-normal／g-high／g-rare／g-hero／g-legend`。
+  - 排序：分類 → 品質 → 價值。搜尋比對名稱或種類，可再篩品質。
+- 版面：上方分類籤＋搜尋＋品質下拉；中間詳細框（`position: sticky`，捲清單時固定在上方）：圖示、名稱、品質、種類、已擁有數量、限定職業、
+  基礎屬性（兩欄）、說明、**取得方式**；下方清單（圖示、名稱、品質、種類；未擁有的圖示變灰）；底部「共 N 件（全部、已擁有）」。
+- 取得方式 `codexSources`（第一次查詢時建表）：商店（依 `tier` 對到村莊）、`MONSTERS[*].drops`、`TOWER_BOSS_DROPS`（魔塔每 10 層首領）、
+  `COMMON_DROPS`（一般怪物）、`RECIPES`（鍛造材料＋手續費）、`CLASS_QUESTS[*].reward.item`（職業任務）。都沒有就顯示「尚無取得管道」
+  （目前：精靈鍊甲、力量／敏捷／智力戒指）。
+- 「已擁有」即時計算背包＋倉庫＋裝備中，**不另存收集進度、不改存檔結構**。
+- 之後可做：製作清單（鍛造配方一覽、材料是否足夠）、收集進度與獎勵（需要存檔欄位）。
