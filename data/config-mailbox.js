@@ -36,15 +36,20 @@ const MAIL_SERVANT_QUALITIES = ["一般", "優秀", "稀有", "史詩", "傳說"
 // 圖紙的部位與等級（同 config-equipment.js 的可鍛造部位與 BLUEPRINT_LEVELS；gm.html 沒有載入該檔，改那邊時這裡要一起改）
 const MAIL_BLUEPRINT_SLOTS = ["劍", "刀", "扇", "弓", "笛", "筆", "頭", "內衣", "盔甲", "手套", "長靴", "披風", "腰帶", "項鍊", "戒指", "耳環", "腰牌"];
 const MAIL_BLUEPRINT_LEVELS = [1500, 2500, 3500, 5000, 6500, 8000, 10000];
-// 先天（白金）・太古裝備，部位隨機（2026-10-09 世界 Boss 名次獎勵）：rewards.gear = { "5000": 件數, ... }，key＝裝備等級
-//   遊戲端 gear.js 的 createPrimalPlatinumGear：同等級圖紙鍛造的橙裝 → 太古（詞條全天級取上限、多 1 條、四維 ×1.2）→ 進化白金（+0、多 1 條、種族特效、傳奇威能）
+// 先天（白金）裝備，部位隨機（2026-10-09 世界 Boss 名次獎勵）：rewards.gear = { "5000_2": 件數, ... }，key＝裝備等級_種類（2 太古、1 遠古、0 一般先天；只寫等級＝太古）
+//   遊戲端 gear.js 的 createPrimalPlatinumGear(level, ancient)：同等級圖紙鍛造的橙裝 → 太古／遠古（同 GEAR_ANCIENT）→ 進化白金（+0、多 1 條、種族特效、傳奇威能）
 const MAIL_PRIMAL_GEAR_LEVELS = [1500, 2500, 3500, 5000];
-// GM 後台「世界 Boss 名次獎勵」的預設分段（名次依累計傷害，相同並列；to 為 0＝其餘全部參加者）
+const MAIL_PRIMAL_GEAR_KINDS = [
+    { a: 2, name: "先天・太古", icon: "🔴" },
+    { a: 1, name: "先天・遠古", icon: "🟡" },
+    { a: 0, name: "先天", icon: "⚪" }
+];
+// GM 後台「世界 Boss 名次獎勵」的預設分段（名次依累計傷害，相同並列；to 為 0＝其餘全部參加者；a＝種類同上）
 const WB_GIFT_TIERS = [
-    { from: 1, to: 1, level: 5000, n: 1 },
-    { from: 2, to: 3, level: 3500, n: 1 },
-    { from: 4, to: 10, level: 2500, n: 1 },
-    { from: 11, to: 0, level: 1500, n: 1 }
+    { from: 1, to: 1, level: 5000, a: 2, n: 1 },
+    { from: 2, to: 3, level: 3500, a: 2, n: 1 },
+    { from: 4, to: 10, level: 2500, a: 2, n: 1 },
+    { from: 11, to: 0, level: 1500, a: 2, n: 1 }
 ];
 // GM 後台的一鍵預設（2026-09-28 使用者指定：100 萬靈石＋傳說僕從一名）
 const MAIL_PRESETS = [

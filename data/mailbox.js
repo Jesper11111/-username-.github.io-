@@ -85,7 +85,7 @@ function formatMailRewards(r) {
     const parts = MAIL_REWARD_FIELDS.filter(f => mbAmount(r[f.key])).map(f => `${f.icon} ${f.label} ${mbAmount(r[f.key]).toWan()}`);
     Object.entries(r.blueprints || {}).forEach(([k, n]) => { if (mbAmount(n)) parts.push(`📜 ${k.replace('_', '・')} 等圖紙 ×${mbAmount(n)}`); });
     Object.entries(r.servants || {}).forEach(([q, n]) => { if (mbAmount(n)) parts.push(`👤 ${q}僕從 ×${mbAmount(n)}`); });
-    mbGearEntries(r).forEach(([lv, n]) => parts.push(`🔴 Lv.${lv} 先天・太古裝備（部位隨機）×${n}`));
+    mbGearEntries(r).forEach(([lv, a, n]) => { const k = mbGearKind(a); parts.push(`${k.icon} Lv.${lv} ${k.name}裝備（部位隨機）×${n}`); });
     // 先天資質（aptitude：{ root: { group, id?, elems? }, physique: id }）
     const apt = r.aptitude || {};
     const rd = apt.root && describeRoot(apt.root), pd = apt.physique && describePhysique(apt.physique);
@@ -98,16 +98,20 @@ function formatMailRewards(r) {
 function countMailServants(r) {
     return Object.values((r && r.servants) || {}).reduce((a, n) => a + mbAmount(n), 0);
 }
-// 先天・太古裝備 rewards.gear = { "5000": 件數 }（只認 MAIL_PRIMAL_GEAR_LEVELS 的等級；單封最多 20 件防手誤）→ [[等級, 件數]]
+// 先天裝備 rewards.gear = { "5000_2": 件數 }（key＝等級_種類，2 太古／1 遠古／0 一般先天，只寫等級＝太古；
+//   只認 MAIL_PRIMAL_GEAR_LEVELS 的等級與 MAIL_PRIMAL_GEAR_KINDS 的種類；每項最多 20 件防手誤）→ [[等級, 種類, 件數]]
+function mbGearKind(a) { return MAIL_PRIMAL_GEAR_KINDS.find(k => k.a === a) || MAIL_PRIMAL_GEAR_KINDS[0]; }
 function mbGearEntries(r) {
-    return Object.entries((r && r.gear) || {}).map(([lv, n]) => [Number(lv), Math.min(20, mbAmount(n))])
-        .filter(([lv, n]) => n && MAIL_PRIMAL_GEAR_LEVELS.includes(lv));
+    return Object.entries((r && r.gear) || {}).map(([key, n]) => {
+        const [lv, a] = String(key).split('_');
+        return [Number(lv), a == null ? 2 : Number(a), Math.min(20, mbAmount(n))];
+    }).filter(([lv, a, n]) => n && MAIL_PRIMAL_GEAR_LEVELS.includes(lv) && MAIL_PRIMAL_GEAR_KINDS.some(k => k.a === a));
 }
 // 領取前檢查：僕從、背包裝備要有空位
 function checkMailRewardSpace(r) {
     const n = countMailServants(r);
     if (n && (player.servants || []).length + n > MAX_SERVANTS) return `僕從小屋空位不足（需要 ${n} 個，上限 ${MAX_SERVANTS} 名），請先解僱一些僕從再領取。`;
-    const g = mbGearEntries(r).reduce((a, [, k]) => a + k, 0);
+    const g = mbGearEntries(r).reduce((s, [, , k]) => s + k, 0);
     if (g && player.equipInventory.length + g > MAX_EQUIP_INVENTORY) return `背包裝備空位不足（需要 ${g} 格，目前 ${player.equipInventory.length} / ${MAX_EQUIP_INVENTORY}），請先清出空位再領取。`;
     return '';
 }
@@ -129,12 +133,12 @@ function grantMailRewards(r, personal) {
         if (!quality) return;
         for (let i = 0; i < mbAmount(n); i++) player.servants.push(createMailServant(quality));
     });
-    mbGearEntries(r).forEach(([lv, n]) => {
+    mbGearEntries(r).forEach(([lv, a, n]) => {
         for (let i = 0; i < n; i++) {
-            const eq = createPrimalPlatinumGear(lv);
+            const eq = createPrimalPlatinumGear(lv, a);
             if (!eq) continue;
             player.equipInventory.push(eq);
-            addLog(`🔴 太古神兵現世！仙府賜予【${getEquipDisplayName(eq)}】（Lv.${lv}）！`, "reincarnate");
+            addLog(`${a === 2 ? '🔴 太古神兵現世！' : a === 1 ? '🟡 遠古遺寶出土！' : '✨ '}仙府賜予【${getEquipDisplayName(eq)}】（Lv.${lv}）！`, "reincarnate");
         }
     });
     if (mbGearEntries(r).length && typeof checkTitleUnlocks === 'function') checkTitleUnlocks();

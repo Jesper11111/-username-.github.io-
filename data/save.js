@@ -126,13 +126,18 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         // 新制：離線／背景也消耗丹藥（背包優先、不夠再以靈石自動購買）；丹藥不夠時只算撐得住的那一段
         let potion = NUMERIC_V2 ? settleIdlePotions(est, offlineSeconds, isOffline, combatTicks * coinPerTick) : null;
         if (potion && potion.f < 1) combatTicks = Math.floor(combatTicks * potion.f);
-        expEarned = combatTicks * (rewardMap.expRate * 15);
+        // 時空秘境（2026-10-09 使用者：「離線也改成三倍」）：est.rateMult 是跟「時空秘境裡的一般玩家」比、最多 1；
+        //   改跟主要地圖的一般玩家比、最多 getRewardSpeedCap() 3 倍（同線上 nv2RewardSpeedAdj）。只乘在經驗、聲望、熟練度，掉落仍用 combatTicks（不跟著變 3 倍）
+        const stRewardMult = (NUMERIC_V2 && isSpacetimeMap() && est.rateMult > 0 && est.hits > 0)
+            ? Math.max(1, Math.min(getRewardSpeedCap(), (IDLE_WAVE_GAP_TICKS + NV2.waveAvg * nv2TypRoundsPerKill(rewardMap)) / (IDLE_WAVE_GAP_TICKS + NV2.waveAvg * est.hits)) / est.rateMult)
+            : 1;
+        expEarned = combatTicks * stRewardMult * (rewardMap.expRate * 15);
         coinsEarned = combatTicks * coinPerTick;
 
         let gained = gainExp(expEarned) || 0;
         player.coins += coinsEarned;
         if (potion && potion.cost) player.coins = Math.max(0, player.coins - potion.cost);   // 自動購買丹藥的花費（收入入帳後再扣）
-        gainKillProficiency(combatTicks * PROF_OFFLINE_RATE);   // 主修職業熟練度（離線打折，profession.js）
+        gainKillProficiency(combatTicks * stRewardMult * PROF_OFFLINE_RATE);   // 主修職業熟練度（離線打折，profession.js）
         // 情緣任務（2026-09-29 使用者要求離線也能完成）：野外擊殺與隊伍夥伴的並肩擊殺也累計（partner.js 的 onPartnerFieldKills）。
         // combatTicks 是「收益次數」（新制含每隻收益補償 getKillRewardMult），換回實際擊殺數，與線上同樣速度
         let partnerKills = Math.floor(combatTicks / (NUMERIC_V2 ? getKillRewardMult() : 1));
@@ -151,7 +156,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
         let repMax = REPUTATION_MAX_BY_MAP_CATEGORY[getMapCategoryIndex(rewardMap.name)] || 1;
-        let repEarned = Math.floor(combatTicks * ((repMax + 1) / 2) * (isOffline ? OFFLINE_REPUTATION_RATE_OFFLINE : OFFLINE_REPUTATION_RATE));
+        let repEarned = Math.floor(combatTicks * stRewardMult * ((repMax + 1) / 2) * (isOffline ? OFFLINE_REPUTATION_RATE_OFFLINE : OFFLINE_REPUTATION_RATE));
         player.reputation = (player.reputation || 0) + repEarned;
 
         // 離線拯救僕從機率發放

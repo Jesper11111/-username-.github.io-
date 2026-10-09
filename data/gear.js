@@ -91,9 +91,10 @@ function rollGearAncient(eq, def) {
     BASE_STAT_KEYS.forEach(k => { if (eq.stats[k]) eq.stats[k] = Math.floor(eq.stats[k] * A.statMult); });
     eq.subs = rollGearSubs(eq.quality, !!GEAR_CHANNELS[def.channel].external, (GEAR_SUB_COUNT[eq.quality] || 0) + A.extraSubs, null, def.category, eq.level, gearRollOpts(eq));
 }
-// 先天（白金）・太古裝備，部位隨機（仙府信箱 rewards.gear，2026-10-09 世界 Boss 名次獎勵）：
-//   同等級圖紙鍛造的橙裝 → 強制太古（同 rollGearAncient）→ 進化白金（同 enhance.js 的 evolveEquip，但不扣材料、強化維持 +0）。放進背包前由呼叫端檢查空位
-function createPrimalPlatinumGear(level) {
+// 先天（白金）裝備，部位隨機（仙府信箱 rewards.gear，2026-10-09 世界 Boss 名次獎勵）：ancient 2 太古（預設）／1 遠古／0 一般先天
+//   同等級圖紙鍛造的橙裝 → 指定遠古／太古（同 rollGearAncient）→ 進化白金（同 enhance.js 的 evolveEquip，但不扣材料、強化維持 +0）。放進背包前由呼叫端檢查空位
+function createPrimalPlatinumGear(level, ancient) {
+    if (ancient == null) ancient = 2;
     const slots = Object.keys(equipTypes).filter(n => !NON_FORGEABLE_SLOTS.includes(n));
     let def = null;
     for (let i = 0; i < 20 && !def; i++) def = pickGearDef(slots[Math.floor(Math.random() * slots.length)], getCraftChannel(level));
@@ -101,9 +102,9 @@ function createPrimalPlatinumGear(level) {
     const orange = equipQualities.find(q => q.name === GEAR_ANCIENT_QUALITY);
     const base = level * EQUIP_LEVEL_STAT_MULT * orange.mult;
     const eq = createGearEquip(def, orange, base, level, true);
-    const external = !!GEAR_CHANNELS[def.channel].external, A = GEAR_ANCIENT[2];
-    eq.stats = buildGearStats(def, orange, base);   // createGearEquip 可能已擲出遠古，重來
-    eq.ancient = 2;
+    const external = !!GEAR_CHANNELS[def.channel].external, A = GEAR_ANCIENT[ancient] || { statMult: 1, extraSubs: 0 };
+    eq.stats = buildGearStats(def, orange, base);   // createGearEquip 可能已隨機擲出遠古／太古，照指定的重來
+    if (GEAR_ANCIENT[ancient]) eq.ancient = ancient; else delete eq.ancient;
     BASE_STAT_KEYS.forEach(k => { if (eq.stats[k]) eq.stats[k] = Math.floor(eq.stats[k] * A.statMult); });
     eq.subs = rollGearSubs(orange.name, external, (GEAR_SUB_COUNT[orange.name] || 0) + A.extraSubs, null, def.category, level, gearRollOpts(eq));
     const ratio = getEvolveStatRatio();
