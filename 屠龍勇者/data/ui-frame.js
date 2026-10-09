@@ -209,7 +209,7 @@ function quickTele() {
     if (!consumeItem('teleScroll')) { showToast('沒有瞬間移動卷軸'); return; }
     if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
     addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
-    if (hunt) { hunt.mon = null; hunt.state = 'search'; hunt.timer = 1500; }
+    if (hunt) leaveFight(1500);
 }
 
 function orbHpClick() { quickHeal(); renderStatus(); }

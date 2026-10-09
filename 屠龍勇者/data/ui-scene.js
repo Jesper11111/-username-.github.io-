@@ -2,7 +2,8 @@
 // 俯視 RPG 地圖：角色在格子地圖上「上下左右」一格一格走，自己去找怪；怪物在地圖上遊走。
 // 只是「看得到的那一層」：戰鬥邏輯仍由 combat.js 決定（尋怪時間、命中、傷害都不變，離線收益也不受影響）。
 //   尋怪中 → 角色用 BFS 走向最近的怪
-//   開打（hunt.mon 出現）→ 把最近的地圖怪綁定成這隻戰鬥對象，角色走到牠旁邊面對面
+//   開打（hunt.mobs）→ 每隻圍上來的戰鬥怪都綁定一隻地圖怪（m.inst）；目標（hunt.mon）＝scene.engaged，角色走到牠旁邊，
+//   其他圍上來的怪自己走到角色旁邊；每隻都顯示血條與傷害數字，範圍技能在所有圍上來的怪身上爆特效
 //   傷害數字：偵測怪物／玩家 HP 變化；MISS、爆擊、升級、掉寶：讀遊戲訊息的分類
 //   村莊：畫建築，點一下打開對應設施
 const TILE = 32;
@@ -210,38 +211,48 @@ function sceneUpdate(dt) {
         if (scene.spawnCd <= 0 && scene.mons.filter(m => !m.dead).length < MAP_MON_COUNT) { spawnMapMon(false); scene.spawnCd = 1200; }
     }
 
-    // 綁定戰鬥中的怪
-    if (fighting && (!scene.engaged || scene.engaged.inst !== hunt.mon)) {
+    // 綁定戰鬥中的怪：hunt.mobs 每隻對應一隻地圖怪
+    const mobs = fighting ? hunt.mobs : [];
+    for (const m of scene.mons) {
+        if (!m.inst || m.dead || mobs.includes(m.inst)) continue;
+        if (m.inst.hp <= 0) { m.dead = true; m.dying = 600; }   // 被打倒 → 淡出
+        else m.inst = null;                                      // 脫離戰鬥（瞬移等）→ 放回遊走
+    }
+    for (const inst of mobs) {
+        if (scene.mons.some(m => m.inst === inst && !m.dead)) continue;
         let best = null, bd = 1e9;
         for (const m of scene.mons) {
             if (m.dead || m.inst) continue;
             const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y);
             if (d < bd) { bd = d; best = m; }
         }
-        if (!best || bd > 6) best = spawnMapMon(true) || best;
+        if (!best || bd > (inst === hunt.mon ? 6 : 4)) best = spawnMapMon(true) || best;
         if (!best) {   // 龍穴：龍出現在角色上方
             best = { x: pl.x, y: Math.max(1, pl.y - 2), rx: pl.x, ry: Math.max(1, pl.y - 2), cd: 1e9, dying: 0 };
             scene.mons.push(best);
         }
-        best.inst = hunt.mon;
-        best.icon = hunt.mon.icon;
-        best.name = hunt.mon.name;
-        best.lastHp = hunt.mon.hp;
-        scene.engaged = best;
-        pl.path = [];
+        best.inst = inst;
+        best.icon = inst.icon;
+        best.name = inst.name;
+        best.lastHp = inst.hp;
+        if (inst === hunt.mon) pl.path = [];
     }
-    // 戰鬥對象死亡 → 淡出
-    if (scene.engaged && (!fighting || scene.engaged.inst !== hunt.mon)) {
-        if (scene.engaged.inst && scene.engaged.inst.hp <= 0) { scene.engaged.dead = true; scene.engaged.dying = 600; }
-        else scene.engaged.inst = null;
-        scene.engaged = null;
-    }
+    const target = fighting ? scene.mons.find(m => m.inst === hunt.mon && !m.dead) || null : null;
+    if (target !== scene.engaged) { scene.engaged = target; if (target) pl.path = []; }
 
     // 怪物遊走、死亡淡出
     for (const m of scene.mons) {
         if (m.dead) { m.dying -= dt; continue; }
         if (m === scene.engaged) continue;
         m.cd -= dt;
+        if (m.inst) {   // 圍上來的怪：一格一格走到角色旁邊
+            if (m.cd > 0) continue;
+            m.cd = 300;
+            if (Math.abs(pl.x - m.x) + Math.abs(pl.y - m.y) <= 1) continue;
+            const step = findPath(m.x, m.y, pl.x, pl.y, true)[0];   // 尋路繞過牆
+            if (step && freeTile(step[0], step[1])) { m.x = step[0]; m.y = step[1]; }
+            continue;
+        }
         if (m.cd <= 0) {
             m.cd = rand(...MON_WANDER_MS);
             const [dx, dy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][rand(0, 3)];
@@ -331,7 +342,12 @@ function sceneReadEvents() {
             if (l.msg.includes('沒有命中') && e) { addFloat(e.rx, e.ry, 'MISS', '#9a9a9a'); missNow = true; }
             else addFloat(pl.rx, pl.ry, 'MISS', '#9a9a9a');
         }
-        if (l.cls === 'magic' && e) { scene.effects.push({ x: e.rx, y: e.ry, t: 0, dur: 400, color: '#b48cff' }); if (l.msg.startsWith('🔮')) castNow = true; }
+        if (l.cls === 'magic' && e) {
+            // 範圍技能：所有圍上來的怪身上都爆特效
+            const list = l.msg.includes('（範圍）') ? scene.mons.filter(m => m.inst && !m.dead) : [e];
+            for (const m of list) scene.effects.push({ x: m.rx, y: m.ry, t: 0, dur: l.msg.includes('（範圍）') ? 550 : 400, color: l.msg.startsWith('💥') ? '#ffb347' : '#b48cff' });
+            if (l.msg.startsWith('🔮')) castNow = true;
+        }
         if (l.cls === 'heal' && l.msg.startsWith('✨')) {
             castNow = true;
             if (l.msg.startsWith('✨ 施放')) scene.effects.push({ x: pl.rx, y: pl.ry, t: 0, dur: 500, color: '#8fd0ff' });
@@ -342,21 +358,26 @@ function sceneReadEvents() {
     // 記住讀過的最大編號（不能只用 logSeq：編號若倒退，同一批訊息會每幀重讀）
     scene.lastSeq = gameLog.reduce((m, l) => Math.max(m, l.seq), Math.max(scene.lastSeq, logSeq));
     let dealt = false;
-    if (e && e.inst) {
-        const hp = Math.max(0, e.inst.hp);
-        if (hp < e.lastHp) {
-            addFloat(e.rx, e.ry, '-' + fmt(e.lastHp - hp), scene.critNext ? '#ffd34d' : '#ffffff', scene.critNext);
-            scene.critNext = false;
+    // 每隻圍上來的怪：HP 減少就飄傷害數字（爆擊黃色大字只算在目標身上）
+    for (const m of scene.mons) {
+        if (!m.inst || m.lastHp == null) continue;
+        const hp = Math.max(0, m.inst.hp);
+        if (hp < m.lastHp) {
+            const big = m === e && scene.critNext;
+            addFloat(m.rx, m.ry, '-' + fmt(m.lastHp - hp), big ? '#ffd34d' : '#ffffff', big);
+            if (m === e) { scene.critNext = false; if (!CLASSES[player.cls].sprite) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 }; }
             dealt = true;
-            if (!CLASSES[player.cls].sprite) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 };
         }
-        e.lastHp = hp;
+        m.lastHp = hp;
     }
     if (castNow) playAnim('cast');
     else if (dealt || missNow) playAnim('attack');
     if (player.hp < scene.lastPlayerHp) {
         addFloat(pl.rx, pl.ry, '-' + fmt(scene.lastPlayerHp - player.hp), '#ff6b5b');
-        if (e) e.lunge = { dx: pl.x - e.x, dy: pl.y - e.y, t: 0 };
+        // 隨機一隻貼在旁邊的怪做出攻擊動作
+        const near = scene.mons.filter(m => m.inst && !m.dead && Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) <= 1);
+        const a = near.length ? near[rand(0, near.length - 1)] : e;
+        if (a) a.lunge = { dx: pl.x - a.x, dy: pl.y - a.y, t: 0 };
         playAnim('hit');
     } else if (player.hp > scene.lastPlayerHp + 1 && scene.lastPlayerHp > 0) {
         addFloat(pl.rx, pl.ry, '+' + fmt(player.hp - scene.lastPlayerHp), '#7fe07a');
@@ -429,12 +450,15 @@ function sceneDraw(ctx, W, H) {
         ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
         ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
         ctx.globalAlpha = 1;
-        if (m === scene.engaged && m.inst) {
+        // 圍上來的怪都有血條；名字只標在目標（避免擠在一起），目標腳下加紅圈
+        if (m.inst && !m.dead) {
+            const tgt = m === scene.engaged;
             const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 44 : 30);
+            if (tgt) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 20 : 14, big ? 6 : 5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
             labels.push(() => {
                 ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
-                ctx.fillStyle = '#d64036'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
-                drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : '#e8e0cc');
+                ctx.fillStyle = tgt ? '#d64036' : '#b0702c'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
+                if (tgt) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : '#e8e0cc');
             });
         }
     };
