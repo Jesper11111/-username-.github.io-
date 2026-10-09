@@ -238,7 +238,9 @@ const townScenes = {
             { id: "lj-mingjie",  label: "冥界", mapName: "冥界",     pin: true, showLabel: true, rect: [150, 385, 70, 70], action: "goToMapByName('冥界')" },       // (185, 420)
             { id: "lj-xianjie",  label: "仙界戰場", mapName: "仙界戰場", pin: true, showLabel: true, rect: [470, 165, 70, 70], action: "goToMapByName('仙界戰場')" },   // (505, 200)
             { id: "lj-wanjie",   label: "萬界戰場", mapName: "萬界戰場", pin: true, showLabel: true, rect: [655, 135, 70, 70], action: "goToMapByName('萬界戰場')" },   // (690, 170)
-            { id: "lj-hundun",   label: "混沌初界", mapName: "混沌初界", pin: true, showLabel: true, rect: [795, 200, 70, 70], action: "goToMapByName('混沌初界')" }    // (830, 235)
+            { id: "lj-hundun",   label: "混沌初界", mapName: "混沌初界", pin: true, showLabel: true, rect: [795, 200, 70, 70], action: "goToMapByName('混沌初界')" },   // (830, 235)
+            // 仙魔戰場（2026-10-09，第 79 節）：圖上「風元大陸」直書字的正下方山區 (118, 325)；先跳說明確認（map.js 的 enterXianmoBattlefield）
+            { id: "lj-xianmo",   label: "仙魔戰場", mapName: "仙魔戰場", pin: true, showLabel: true, rect: [83, 290, 70, 70], action: "enterXianmoBattlefield()" }
         ],
         figures: [],
         extraButton: { label: "↩ 返回人界（需五行傳送陣靈石）", action: "leaveLingjieToWorldMap()" }   // 2026-10-04：身在靈界要付一套靈石才能回人界（lingjie.js）

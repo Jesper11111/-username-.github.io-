@@ -75,7 +75,16 @@ const maps = [
     { category: "五、諸天至高戰場 (頂級戰場·極難)", isSafe: false, items: [
         { name: "仙界戰場", expRate: 15000, nv2Str: [80, 120], minL: 13, diff: 300000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 13.5, nv2MinStat: 180, suit: [13, 13] },   // 974 萬
         { name: "萬界戰場", expRate: 25000, nv2Str: [120, 160], minL: 14, diff: 500000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 14.5, nv2MinStat: 180, suit: [14, 14] },   // 974 萬
-        { name: "混沌初界", expRate: 50000, nv2Str: [160, 200], minL: 15, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] }   // 974 萬
+        { name: "混沌初界", expRate: 50000, nv2Str: [160, 200], minL: 15, diff: 1000000000000, coins: 8400, minRealm: 10, minStat: 10000, isTopBattle: true, nv2L: 15.5, nv2MinStat: 180, suit: [15, 15] },   // 974 萬
+        // 仙魔戰場（2026-10-09 使用者：「靈界地圖的風元大陸新增仙魔戰場；從仙人初境開始對應到混沌道祖；敵人每個境界 10 階，強度跟適合地圖設定一樣；刷怪時間一秒；沒有設定經驗上限」）：
+        //   只能從靈界地圖「風元大陸」紅點進入（hidden，map.js 的 enterXianmoBattlefield）；hardMinRealm＝仙人初境以下不能進、也不能用挑戰模式越級
+        //   妖獸＝玩家自己境界（仙人初境～混沌道祖）的 10 階，強度＝該境界主要練功圖（config-realms.js 的 realmPacing）的 nv2Str（getter，例：天仙→九天仙域 10～15 倍、真仙→不死山 40～50 倍）
+        //   經驗、靈石、聲望照主要練功圖（rewardAsMain，map.js 的 getRewardMap）；rewardSpeedCap Infinity＝不設收益速度上限（線上 nv2RewardSpeedAdj、離線 save.js 都一樣）
+        { name: "仙魔戰場", expRate: 3, diff: 1, coins: 0, hidden: true, xianmo: true, minRealm: 10, hardMinRealm: 10, respawnSec: 1, rewardAsMain: true, rewardSpeedCap: Infinity,
+          get nv2L() { return typeof player !== 'undefined' && player ? Math.min(Math.max(player.realmIndex || 0, 10), 15) : 10; },
+          get nv2FixedL() { return this.nv2L + 0.9; },
+          get suit() { return [this.nv2L, this.nv2L]; },
+          get nv2Str() { const m = typeof getMainMapForRealm === 'function' && typeof player !== 'undefined' && player ? getMainMapForRealm() : null; return m && m.nv2Str ? m.nv2Str : [10, 15]; } }
     ]},
     // 無邊海（2026-10-03 使用者要求：第三區雷鳴大陸之後 7 張圖搬來這裡；世界地圖「無邊海」區塊開這一區）
     // ⚠️ 加在最後（索引 6），不插在第三區後面：分類索引被 monsterAttrsByMapCategory／REPUTATION_MAX_BY_MAP_CATEGORY／PROF_MAP_MULT／LIFESPAN_DANGER_MULT／DARK_MAP_CATEGORIES 等使用，

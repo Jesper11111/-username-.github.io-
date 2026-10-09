@@ -175,6 +175,9 @@ function isGM() { return !!(player && player.gm === true); }
 function getMapEntryBlock(cIndex, iIndex) {
     if (isGM()) return null;
     const targetMap = maps[cIndex].items[iIndex];
+    // 硬性境界門檻（仙魔戰場：仙人初境起，不能用挑戰模式越級，第 79 節）
+    if (typeof targetMap.hardMinRealm === 'number' && player.realmIndex < targetMap.hardMinRealm)
+        return { msg: `【${targetMap.name}】只有${realms[targetMap.hardMinRealm]}以上的修士才能進入。`, short: `🔒${realms[targetMap.hardMinRealm]}` };
     // 境界上限（時空秘境：仙人初境以下，第 78 節）
     if (typeof targetMap.maxRealm === 'number' && player.realmIndex > targetMap.maxRealm)
         return { msg: `【${targetMap.name}】只有${realms[targetMap.maxRealm]}以下的修士才能進入。`, short: `🔒${realms[targetMap.maxRealm]}以下` };
@@ -284,12 +287,17 @@ function getMainMapForRealm() {
     return f ? maps[f.c].items[f.i] : null;
 }
 // 收益速度上限（numeric.js 的 nv2RewardSpeedAdj）：時空秘境 SPACETIME_REALM.rewardSpeedCap 倍，其他地圖 NV2.rewardSpeedCap（第 78 節）
+//   地圖可自訂 rewardSpeedCap（仙魔戰場 Infinity＝不設上限，第 79 節）
 function getRewardSpeedCap() {
-    return isSpacetimeMap() ? SPACETIME_REALM.rewardSpeedCap : NV2.rewardSpeedCap;
+    if (isSpacetimeMap()) return SPACETIME_REALM.rewardSpeedCap;
+    const m = player.currentMap;
+    return m && !player.currentMapIsSafe && typeof m.rewardSpeedCap === 'number' ? m.rewardSpeedCap : NV2.rewardSpeedCap;
 }
 // 擊殺收益用的地圖：挑戰模式＝自己境界的主要地圖，否則＝所在地圖
+//   時空秘境（第 78 節）與 rewardAsMain 的地圖（仙魔戰場，第 79 節）同樣照主要地圖
 function getRewardMap() {
-    return isChallengeMap() || isSpacetimeMap() ? (getMainMapForRealm() || player.currentMap) : player.currentMap;   // 時空秘境同樣照主要地圖（第 78 節）
+    const m = player.currentMap, asMain = !!(m && m.rewardAsMain && !player.currentMapIsSafe);
+    return isChallengeMap() || isSpacetimeMap() || asMain ? (getMainMapForRealm() || player.currentMap) : player.currentMap;
 }
 
 // ==================== 時空秘境（亂星海，第 78 節；2026-10-06 使用者指定）====================
@@ -302,6 +310,25 @@ function isSpacetimeMap(item) {
 function getMapRespawnSeconds(item) {
     item = item || player.currentMap;
     return item && typeof item.respawnSec === 'number' ? item.respawnSec : MONSTER_RESPAWN_SECONDS;
+}
+// ==================== 仙魔戰場（靈界・風元大陸，第 79 節；2026-10-09 使用者指定）====================
+// 靈界地圖「風元大陸」紅點 → 說明確認 → 進入；妖獸＝自己境界 10 階 × 主要練功圖的強度、刷新 1 秒、經驗沒有上限（config-maps.js）
+async function enterXianmoBattlefield() {
+    const f = findMapByName('仙魔戰場');
+    if (!f) return;
+    const item = maps[f.c].items[f.i];
+    if (player.currentMap === item && !player.currentMapIsSafe) { showToast('⚔️ 你已身在仙魔戰場'); return; }
+    const block = getMapEntryBlock(f.c, f.i);
+    if (block) { gameAlert(block.msg); return; }
+    const main = getMainMapForRealm(), [lo, hi] = item.nv2Str;
+    const msg = `⚔️ 風元大陸・仙魔戰場\n`
+        + `\n・${realms[item.hardMinRealm]}～${realms[15]}皆可進入`
+        + `\n・敵人＝你所在境界的 10 階（你是${realms[player.realmIndex]} → ${nv2LevelLabel(item.nv2FixedL)}），強度同【${main ? main.name : '主要練功圖'}】${lo}～${hi} 倍`
+        + `\n・敵人 ${getMapRespawnSeconds(item)} 秒就刷新，讓你自顧不暇；戰死照常折損壽元、遺失 10% 靈石，回到${respawnPlaceName()}`
+        + `\n・經驗、靈石、聲望照【${main ? main.name : '主要練功圖'}】計算，沒有收益上限：殺得越快拿得越多`
+        + `\n\n確定進入？`;
+    if (!(await gameConfirm(msg))) return;
+    selectMap(f.c, f.i, true);
 }
 function SPACETIME_REALM_STR() { const f = findMapByName(SPACETIME_REALM.name); const m = f && maps[f.c].items[f.i]; return m && m.nv2Str ? m.nv2Str[0] : 30; }
 // 圖紙等級：blueprintMaxLevel（3000）以內最高的一檔（2500 等）

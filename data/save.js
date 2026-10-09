@@ -128,7 +128,8 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (potion && potion.f < 1) combatTicks = Math.floor(combatTicks * potion.f);
         // 時空秘境（2026-10-09 使用者：「離線也改成三倍」）：est.rateMult 是跟「時空秘境裡的一般玩家」比、最多 1；
         //   改跟主要地圖的一般玩家比、最多 getRewardSpeedCap() 3 倍（同線上 nv2RewardSpeedAdj）。只乘在經驗、聲望、熟練度，掉落仍用 combatTicks（不跟著變 3 倍）
-        const stRewardMult = (NUMERIC_V2 && isSpacetimeMap() && est.rateMult > 0 && est.hits > 0)
+        //   仙魔戰場（第 79 節）上限 Infinity，同一套算法、不封頂
+        const stRewardMult = (NUMERIC_V2 && getRewardSpeedCap() > NV2.rewardSpeedCap && est.rateMult > 0 && est.hits > 0)
             ? Math.max(1, Math.min(getRewardSpeedCap(), (IDLE_WAVE_GAP_TICKS + NV2.waveAvg * nv2TypRoundsPerKill(rewardMap)) / (IDLE_WAVE_GAP_TICKS + NV2.waveAvg * est.hits)) / est.rateMult)
             : 1;
         expEarned = combatTicks * stRewardMult * (rewardMap.expRate * 15);

@@ -91,5 +91,6 @@ const FIELD_MONSTER_POOLS = {
     // 五、諸天至高戰場
     "仙界戰場": [["dragon", 3], ["phoenix", 2], ["ghostGen", 2], ["bloodCult", 2], ["fox", 1]],
     "萬界戰場": [["tiger", 2], ["qilin", 2], ["yaksha", 2], ["puppet", 2], ["wraith", 2]],
-    "混沌初界": [["dragon", 2], ["fox", 2], ["zombie", 2], ["sorcerer", 2], ["turtle", 2]]
+    "混沌初界": [["dragon", 2], ["fox", 2], ["zombie", 2], ["sorcerer", 2], ["turtle", 2]],
+    "仙魔戰場": [["dragon", 2], ["phoenix", 2], ["qilin", 2], ["bloodCult", 2], ["sorcerer", 2], ["puppet", 2]]   // 2026-10-09 第 79 節：仙獸與魔修各半
 };
