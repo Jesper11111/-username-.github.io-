@@ -100,14 +100,15 @@
         border-image-width: calc(var(--s) * 715px) calc(var(--s) * 102px) calc(var(--s) * 655px) calc(var(--s) * 104px);
         border-image-repeat: stretch round;
     }
-    #hud-top {
-        position: absolute; top: calc(var(--s) * 336px); left: calc(var(--s) * 262px); right: calc(var(--s) * 262px);
-        text-align: center; font-size: 12px; line-height: 1.45; text-shadow: 0 1px 3px #000; pointer-events: none;
+    /* 金幣、AC、MR：經驗條正上方，左右分在等級兩側（手機原圖 y 1712～1744；PC y 870～904） */
+    .hud-stats {
+        position: absolute; left: calc(var(--s) * 390px); right: calc(var(--s) * 390px); bottom: calc(var(--s) * 258px); height: calc(var(--s) * 32px);
+        z-index: 3; display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none;
+        font-size: max(9px, calc(var(--s) * 22px)); font-weight: bold; color: #e8e0cc; white-space: nowrap;
     }
-    .hud-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hud-name span { color: var(--muted); }
-    .hud-stats { display: flex; justify-content: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .hud-stats span { padding: 0 5px; border-radius: 4px; background: #0c0806d9; text-shadow: 0 0 2px #000; line-height: 1.35; }
     .hud-stats .gold { color: var(--gold); }
+    .hud-stats .hud-lv-gap { width: calc(var(--s) * 120px); padding: 0; background: none; }
     #panel {
         position: absolute; top: calc(var(--s) * 445px); left: calc(var(--s) * 112px); right: calc(var(--s) * 110px);
         bottom: calc(var(--s) * 626px); overflow-y: auto; padding: 4px 6px 10px;
@@ -241,7 +242,8 @@
     /* PC：不畫操作框（功能都在底部格子），只剩魔塔上下樓／取消步行時浮在地圖左上（地點名稱下方） */
     #frame.pc .hunt-ctrl { position: absolute; left: calc(var(--s) * 100px); top: calc(var(--s) * 300px); padding: 0; background: none; border: 0; z-index: 1; }
     #frame.pc .hunt-ctrl.empty, #frame.pc #hunt-session { display: none; }
-    #frame.pc #hud-top { top: calc(var(--s) * 272px); left: calc(var(--s) * 760px); right: calc(var(--s) * 760px); z-index: 3; font-size: 13px; }
+    #frame.pc .hud-stats { left: calc(var(--s) * 320px); right: calc(var(--s) * 320px); bottom: calc(var(--s) * 212px); height: calc(var(--s) * 34px); }
+    #frame.pc .hud-lv-gap { width: calc(var(--s) * 140px); }
     #frame.pc .exp-strip { left: calc(var(--s) * 300px); right: calc(var(--s) * 300px); bottom: calc(var(--s) * 191px); height: max(10px, calc(var(--s) * 18px)); }
     #frame.pc .lv-badge { left: calc(var(--s) * 940px); width: calc(var(--s) * 120px); bottom: calc(var(--s) * 222px); height: calc(var(--s) * 46px); }
     #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; justify-content: flex-start; }
@@ -454,7 +456,6 @@
         <!-- 外框（images/frame.jpg 九宮格），位置見 ARCHITECTURE.md 第 15 節 -->
         <div id="stage">
         <div id="frame">
-            <div id="hud-top"></div>
             <main id="panel"></main>
             <!-- PC 橫式外框：外框圖蓋在地圖上（窗口用遮罩挖空）；其他分頁開在 #overlay 視窗 -->
             <div id="frame-art"></div>
@@ -463,6 +464,7 @@
             <!-- 經驗條：欄杆下緣與底部格子之間的石條；等級：欄杆正中間的裝飾（ARCHITECTURE.md 第 15、19 節） -->
             <div id="exp-strip" class="exp-strip"><div class="exp-fill"></div><span></span></div>
             <div id="lv-badge" class="lv-badge"></div>
+            <div id="hud-stats" class="hud-stats"></div>
             <button id="pillar-left" class="pillar left" onclick="toggleDrawer('left')" aria-label="角色選單"></button>
             <button id="pillar-right" class="pillar right" onclick="toggleDrawer('right')" aria-label="系統選單"></button>
             <div id="drawer-left" class="drawer left"></div>
@@ -486,26 +488,26 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009h"></script>
-<script src="data/classes.js?v=20261009h"></script>
-<script src="data/skills.js?v=20261009h"></script>
-<script src="data/items.js?v=20261009h"></script>
-<script src="data/monsters.js?v=20261009h"></script>
-<script src="data/zones.js?v=20261009h"></script>
-<script src="data/quests.js?v=20261009h"></script>
-<script src="data/player.js?v=20261009h"></script>
-<script src="data/enchant.js?v=20261009h"></script>
-<script src="data/combat.js?v=20261009h"></script>
-<script src="data/town.js?v=20261009h"></script>
-<script src="data/save.js?v=20261009h"></script>
-<script src="data/offline.js?v=20261009h"></script>
-<script src="data/ui.js?v=20261009h"></script>
-<script src="data/ui-create.js?v=20261009h"></script>
-<script src="data/ui-panels.js?v=20261009h"></script>
-<script src="data/codex.js?v=20261009h"></script>
-<script src="data/ui-frame.js?v=20261009h"></script>
-<script src="data/ui-scene.js?v=20261009h"></script>
-<script src="data/pwa.js?v=20261009h"></script>
-<script src="data/main.js?v=20261009h"></script>
+<script src="data/config.js?v=20261009i"></script>
+<script src="data/classes.js?v=20261009i"></script>
+<script src="data/skills.js?v=20261009i"></script>
+<script src="data/items.js?v=20261009i"></script>
+<script src="data/monsters.js?v=20261009i"></script>
+<script src="data/zones.js?v=20261009i"></script>
+<script src="data/quests.js?v=20261009i"></script>
+<script src="data/player.js?v=20261009i"></script>
+<script src="data/enchant.js?v=20261009i"></script>
+<script src="data/combat.js?v=20261009i"></script>
+<script src="data/town.js?v=20261009i"></script>
+<script src="data/save.js?v=20261009i"></script>
+<script src="data/offline.js?v=20261009i"></script>
+<script src="data/ui.js?v=20261009i"></script>
+<script src="data/ui-create.js?v=20261009i"></script>
+<script src="data/ui-panels.js?v=20261009i"></script>
+<script src="data/codex.js?v=20261009i"></script>
+<script src="data/ui-frame.js?v=20261009i"></script>
+<script src="data/ui-scene.js?v=20261009i"></script>
+<script src="data/pwa.js?v=20261009i"></script>
+<script src="data/main.js?v=20261009i"></script>
 </body>
 </html>
