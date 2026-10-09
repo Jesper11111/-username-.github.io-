@@ -15,7 +15,7 @@ function saveGame() {
 function migrateSave(data) {
     const p = data.player;
     // 補齊新版才有的欄位
-    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0,
+    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0, mapMods: [],
         quests: { ch: 0, active: false, prog: 0, bossDone: false } };
     for (const k in fresh) if (p[k] == null) p[k] = fresh[k];
     p.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), p.settings || {});

@@ -2,7 +2,7 @@
 // 列出遊戲裡所有道具（任務收集品除外）：分類、品質、能力值、取得方式（商店／怪物掉落／鍛造／職業任務），
 // 「已擁有」看背包＋裝備＋倉庫，不另存進度（不改存檔結構）。
 const CODEX_CATS = [
-    ['all', '全部'], ['weapon', '武器'], ['armor', '防具'], ['acc', '飾品'], ['use', '消耗品'], ['material', '材料'],
+    ['all', '全部'], ['weapon', '武器'], ['armor', '防具'], ['acc', '飾品'], ['use', '消耗品'], ['currency', '通貨'], ['material', '材料'],
 ];
 const CODEX_ACC_SLOTS = ['amulet', 'ring', 'belt'];
 // 品質：商店買得到＝一般；其他依回收價分級
@@ -23,6 +23,7 @@ function codexGroup(d) {
     if (d.cat === 'weapon') return 'weapon';
     if (d.cat === 'armor') return CODEX_ACC_SLOTS.includes(d.slot) ? 'acc' : 'armor';
     if (d.cat === 'material') return 'material';
+    if (d.cat === 'currency') return 'currency';
     return 'use';
 }
 function codexGradeOf(id) {
@@ -31,9 +32,11 @@ function codexGradeOf(id) {
     const v = d.sell || 0;
     return CODEX_GRADES[v < 10000 ? 1 : v < 30000 ? 2 : v < 80000 ? 3 : 4];
 }
+function codexIdOf(d) { return Object.keys(ITEMS).find(k => ITEMS[k] === d); }
 function codexIcon(d) {
     if (d.cat === 'weapon') return CODEX_WEAPON_ICONS[d.type] || '⚔️';
     if (d.cat === 'armor') return CODEX_SLOT_ICONS[d.slot] || '🛡️';
+    if (d.cat === 'currency') return CURRENCY[codexIdOf(d)].icon;
     return CODEX_CAT_ICONS[d.cat] || '📦';
 }
 function codexKind(d) {
@@ -41,7 +44,7 @@ function codexKind(d) {
     if (d.cat === 'armor') return SLOTS[d.slot === 'ring' ? 'ring1' : d.slot];
     return CAT_NAMES[d.cat];
 }
-const CODEX_ORDER = ['weapon', 'armor', 'acc', 'use', 'material'];
+const CODEX_ORDER = ['weapon', 'armor', 'acc', 'use', 'currency', 'material'];
 
 // 全部道具 id（第一次打開時建立，依分類→品質→名稱排序）
 let codexIdsCache = null;
@@ -69,6 +72,7 @@ function codexSources(id) {
         for (const c in CLASS_QUESTS) CLASS_QUESTS[c].forEach(q => { if (q.reward && q.reward.item) add(q.reward.item, `任務：${CLASSES[c].name}「${q.title}」`); });
     }
     const d = ITEMS[id], list = [];
+    if (d.cat === 'currency') list.push(`掉落：所有怪物 ${Math.round(CURRENCY_DROP_P * 100)}%（首領 ${Math.round(CURRENCY_BOSS_P * 100)}%，${CURRENCY[id].w < 3 ? '稀有' : '常見'}）`);
     if (d.price) {
         const t = Object.values(TOWNS).find(t => t.tier === d.tier);
         list.push(`商店：${t ? t.name : '村莊'}起販售（💰${fmt(d.price)}）`);

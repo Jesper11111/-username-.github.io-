@@ -167,7 +167,7 @@ const ITEMS = {
     valakasScale:  { name: '火龍之鱗',       cat: 'material', wt: 10, sell: 50000 },
 };
 
-const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料', quest: '任務道具' };
+const CAT_NAMES = { weapon: '武器', armor: '防具', potion: '藥水', scroll: '卷軸', ammo: '彈藥', elixir: '萬能藥', material: '材料', quest: '任務道具', currency: '通貨' };
 
 // 鍛造配方：need 的道具要在背包中（未裝備），gold 為手續費
 const RECIPES = [
@@ -177,5 +177,5 @@ const RECIPES = [
     { out: 'dragonScaleMail', gold: 30000, need: { plateMail: 1, antharasScale: 2, fafurionScale: 2, lindviorScale: 2, valakasScale: 2 } },
 ];
 
-function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir', 'quest'].includes(def.cat); }
+function isStackable(def) { return ['potion', 'scroll', 'ammo', 'material', 'elixir', 'quest', 'currency'].includes(def.cat); }
 function sellPriceOf(id) { const d = ITEMS[id]; return d.sell != null ? d.sell : Math.floor((d.price || 0) * 0.3); }

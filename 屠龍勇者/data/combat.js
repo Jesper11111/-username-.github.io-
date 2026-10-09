@@ -168,7 +168,7 @@ function huntTick(dt) {
     hunt.joinCd -= dt;
     if (hunt.joinCd <= 0) {
         hunt.joinCd = MOB_JOIN_MS;
-        if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && chance(MOB_JOIN_P)) {
+        if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && chance(MOB_JOIN_P * (mapModOn('swarm') ? 2 : 1))) {
             const add = makeZoneMob(currentZone());
             if (add) { addMob(weakenForPack(add, hunt.mobs.length + 1)); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
         }
@@ -182,7 +182,7 @@ const MOB_SIDE_SLOW = 1.6;   // 非目標的怪出手間隔 ×1.6（圍著輪流
 // 同時最多幾隻：龍穴 1、永夜之塔 3、其他 6
 function packMax() {
     const z = currentZone();
-    return !z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 3 : 6;
+    return (!z || z.type === 'dragon' ? 1 : z.type === 'tower' ? 3 : 6) + (z && z.type !== 'dragon' && mapModOn('swarm') ? 2 : 0);
 }
 // 一開始出現幾隻（受 packMax 限制）
 const PACK_WEIGHTS = [30, 25, 20, 12, 8, 5];   // 1～6 隻的權重
@@ -284,6 +284,7 @@ function manualCast(id) {
 function fightAlive() { return player.hunting && hunt && hunt.state === 'fight' && hunt.mon; }
 
 function addMob(mon) {
+    applyMapMods(mon);   // 地圖詞綴（craft.js）
     mon.atkCd = mon.spd * (0.5 + Math.random() * 0.5);
     mon.stunUntil = 0;
     hunt.mobs.push(mon);
@@ -519,13 +520,14 @@ function monsterAttack(st, mon) {
 function onKill(mon) {
     if (!hunt.mobs.includes(mon)) return;   // 已經結算過
     const z = currentZone(), st = calcStats();
-    let gold = rand(mon.gold[0], mon.gold[1]);
+    const mb = 1 + mapBonus();   // 地圖詞綴獎勵加成
+    let gold = Math.round(rand(mon.gold[0], mon.gold[1]) * mb);
     if (player.cls === 'royal') gold = Math.round(gold * (1 + Math.max(0, st.cha - 10) * 0.03));
     player.gold += gold;
     player.kills++;
     session.kills++;
     // 狩獵經驗＝怪物經驗 × 倍率 × 高等級遞減（65 級起）
-    const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv)));
+    const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv) * mb));
     session.exp += exp;
     session.gold += gold;
     hunt.mobs = hunt.mobs.filter(m => m !== mon);
@@ -582,14 +584,17 @@ function rollDrops(mon, z) {
         const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
         addLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name}${n > 1 ? ' ×' + n : ''}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
     };
+    const qm = 1 + mapBonus();   // 地圖詞綴：掉落機率加成
     for (const dr of COMMON_DROPS) {
         if ((dr.minLv && mon.lv < dr.minLv) || (dr.maxLv && mon.lv > dr.maxLv)) continue;
-        if (chance(dr.p)) give(dr.id, dr.n);
+        if (chance(dr.p * qm)) give(dr.id, dr.n);
     }
-    if (!mon.boss || mon.towerFloor) for (const dr of (z.drops || [])) if (chance(dr.p)) give(dr.id, dr.n);
-    for (const dr of mon.drops) if (chance(dr.p)) give(dr.id, dr.n);
-    // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%
-    if (chance(mon.boss ? 0.5 : RANDOM_EQUIP_P)) {
+    if (!mon.boss || mon.towerFloor) for (const dr of (z.drops || [])) if (chance(dr.p * qm)) give(dr.id, dr.n);
+    for (const dr of mon.drops) if (chance(dr.p * (dr.p >= 1 ? 1 : qm))) give(dr.id, dr.n);
+    // 製作通貨（craft.js）：一般怪 3%、首領 60%
+    if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
+    // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉
+    if (mon.elite || chance((mon.boss ? 0.5 : RANDOM_EQUIP_P) * qm)) {
         const id = randomEquipFor(mon.lv);
         if (id) give(id, null, rollQuality(mon.boss, true));
     }
@@ -628,9 +633,9 @@ function onDeath(killer) {
 function regenTick() {
     const st = calcStats();
     if (invWeight() > st.weightMax * WEIGHT_NO_REGEN) return;
-    const mul = player.loc.type === 'town' ? 3 : 1;
-    player.hp = Math.min(st.maxHp, player.hp + st.hpRegen * mul);
-    player.mp = Math.min(st.maxMp, player.mp + st.mpRegen * mul);
+    const mul = player.loc.type === 'town' ? 3 : mapModOn('blight') ? 0.6 : 1;   // 地圖詞綴「枯竭」回復 -40%
+    player.hp = Math.min(st.maxHp, player.hp + Math.round(st.hpRegen * mul));
+    player.mp = Math.min(st.maxMp, player.mp + Math.round(st.mpRegen * mul));
 }
 
 function walkTick() {

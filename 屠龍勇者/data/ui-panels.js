@@ -76,7 +76,8 @@ function renderHunt() {
         const t = currentTown();
         return huntViewHtml(`${t.icon} ${t.name}<small>　點地圖走路・方向鍵／WASD 移動</small>`);
     }
-    return huntViewHtml(`📍 ${zoneTitle()}`);
+    const mods = mapModsOn();
+    return huntViewHtml(`📍 ${zoneTitle()}${mods.length ? `<small class="warn">　🌀${mods.map(k => MAP_MODS[k].icon).join('')} 獎勵 +${Math.round(mapBonus() * 100)}%</small>` : ''}`);
 }
 
 // 中間的即時地圖（ui-scene.js 畫在 canvas 上）＋下方操作列、補給、精簡訊息
@@ -223,6 +224,7 @@ function renderMap() {
             ${t.icon} ${t.name}<br><small>${here ? '目前位置' : '傳送 💰' + fmt(townTravelFee(id))}</small></button>`;
     }).join('') + `</div>`;
 
+    h += mapModsPanelHtml();
     h += `<h4>⚔️ 狩獵地點</h4>`;
     for (const z of ZONES) {
         const why = zoneBlockReason(z);
@@ -297,12 +299,12 @@ function addStatBtn(k) { addStatPoint(k); saveGame(); refreshUI(); }
 
 // ───────── 背包 ─────────
 const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['other', '其他']];
-const CAT_ORDER = ['quest', 'weapon', 'armor', 'potion', 'scroll', 'ammo', 'elixir', 'material'];
+const CAT_ORDER = ['quest', 'weapon', 'armor', 'potion', 'scroll', 'currency', 'ammo', 'elixir', 'material'];
 
 function bagMatch(def) {
     if (bagFilter === 'all') return true;
     if (bagFilter === 'gear') return def.cat === 'weapon' || def.cat === 'armor';
-    if (bagFilter === 'other') return ['ammo', 'elixir', 'material', 'quest'].includes(def.cat);
+    if (bagFilter === 'other') return ['ammo', 'elixir', 'material', 'quest', 'currency'].includes(def.cat);
     return def.cat === bagFilter;
 }
 
@@ -382,7 +384,9 @@ function openItemDialog(uid) {
         btns.push(slot
             ? { text: '卸下', onClick: () => { unequipSlot(slot); saveGame(); refreshUI(); } }
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
+        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
     }
+    if (d.cat === 'currency') btns.push({ text: '選擇裝備', onClick: () => { bagFilter = 'gear'; switchTab('bag'); showToast('點一件裝備 →「🔮 改造」使用通貨'); } });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
