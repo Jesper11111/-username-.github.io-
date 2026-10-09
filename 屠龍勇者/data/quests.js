@@ -14,7 +14,7 @@ const CLASS_STORIES = {
     },
     knight: {
         npc: '紅騎士團長甘特', title: '紅騎士團長',
-        story: '你出身騎士世家，父親是紅騎士團的副團長，在對抗地龍安塔瑞斯的戰役中戰死。你帶著父親留下的長劍來到低語海岸，立誓成為能守護一切的騎士。',
+        story: '你出身騎士世家，父親是紅騎士團的副團長，在對抗地龍格爾莫斯的戰役中戰死。你帶著父親留下的長劍來到低語海岸，立誓成為能守護一切的騎士。',
     },
     mage: {
         npc: '法師塔賢者塔拉斯', title: '大賢者',
@@ -34,7 +34,7 @@ const CLASS_STORIES = {
     },
     warrior: {
         npc: '戰士公會長巴魯德', title: '泰坦戰神',
-        story: '你曾是北方部落最強的戰士。火龍巴拉卡斯的龍息將部落化為焦土，只有你在灰燼中活了下來。你扛起父親的巨斧南下，只為了一件事——親手斬下火龍的頭顱。',
+        story: '你曾是北方部落最強的戰士。火龍莫爾加斯的龍息將部落化為焦土，只有你在灰燼中活了下來。你扛起父親的巨斧南下，只為了一件事——親手斬下火龍的頭顱。',
     },
     gunner: {
         npc: '矮人工匠哈克', title: '神射手',
@@ -61,7 +61,7 @@ const CLASS_STORIES = {
 // ───────── 任務首領模板 ─────────
 const QUEST_BOSS_BASE = {
     2: { lv: 34, hpMul: 8, dmgMul: 1.4, acAdd: -8, expMul: 10, goldMul: 5 },
-    4: { lv: 62, hpMul: 7, dmgMul: 1.15, acAdd: -6, expMul: 12, goldMul: 6 },   // 比第一隻龍（安塔瑞斯）稍弱
+    4: { lv: 62, hpMul: 7, dmgMul: 1.15, acAdd: -6, expMul: 12, goldMul: 6 },   // 比第一隻龍（格爾莫斯）稍弱
 };
 function qBoss(ch, name, icon, extra) {
     return { name, icon, boss: true, large: true, ...QUEST_BOSS_BASE[ch], ...(extra || {}) };
@@ -89,7 +89,7 @@ const CLASS_QUESTS = {
           reward: { item: 'royalAmulet', gold: 30000 } },
         { lv: 60, title: '王座之戰',
           goal: { type: 'boss', zone: 'tower', after: 30, boss: qBoss(4, '篡位者・黑暗之王', '👑', { tags: ['human'], magic: QB_MAGIC_4 }) },
-          intro: '「篡位者據守永夜之塔，他手中握著與安塔瑞斯締結的契約。擊敗他，王國才能團結起來對抗巨龍。」',
+          intro: '「篡位者據守永夜之塔，他手中握著與格爾莫斯締結的契約。擊敗他，王國才能團結起來對抗巨龍。」',
           outro: '篡位者的契約化為灰燼。你登上王座，向全亞丁宣告：「下一個，就是巨龍。」',
           reward: { item: 'royalKingSword', gold: 80000, elixir: 1 } },
     ],
@@ -106,7 +106,7 @@ const CLASS_QUESTS = {
           reward: { item: 'knightSword', gold: 10000 } },
         { lv: 45, title: '父親的遺志',
           goal: { type: 'collect', zone: 'pyramid', itemName: '父親的戰記殘頁', n: 8, p: 0.2 },
-          intro: '「你父親戰死前把戰記藏在黃沙王陵，裡面記載了安塔瑞斯的弱點。把殘頁找回來。」',
+          intro: '「你父親戰死前把戰記藏在黃沙王陵，裡面記載了格爾莫斯的弱點。把殘頁找回來。」',
           outro: '戰記最後一頁寫著：「地龍的鱗甲在心臟附近最薄。我的孩子，替我完成這件事。」',
           reward: { item: 'knightRing', gold: 30000 } },
         { lv: 60, title: '騎士的誓約',
@@ -221,8 +221,8 @@ const CLASS_QUESTS = {
           reward: { item: 'warAmulet', gold: 30000 } },
         { lv: 60, title: '火之先鋒',
           goal: { type: 'boss', zone: 'tower', after: 30, boss: qBoss(4, '炎魔將軍', '🔥', { tags: ['demon'], magic: { p: 0.3, dmg: [100, 160], name: '炎魔之息' } }) },
-          intro: '「巴拉卡斯的先鋒炎魔將軍出現在永夜之塔——正是當年燒毀你部落的那一隻。」',
-          outro: '炎魔將軍化為灰燼。下一個，就是巴拉卡斯本人。',
+          intro: '「莫爾加斯的先鋒炎魔將軍出現在永夜之塔——正是當年燒毀你部落的那一隻。」',
+          outro: '炎魔將軍化為灰燼。下一個，就是莫爾加斯本人。',
           reward: { item: 'warTitanAxe', gold: 80000, elixir: 1 } },
     ],
     gunner: [

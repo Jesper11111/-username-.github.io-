@@ -547,7 +547,7 @@ function onKill(mon) {
         addLog(`🐉 成功討伐${mon.name}！`, 'boss');
         if (first && hasDragonTitle()) {
             addLog('👑 四大龍全數討伐，獲得稱號「屠龍勇者」！', 'boss');
-            gameAlert('👑 屠龍勇者', `${player.name}討伐了安塔瑞斯、法利昂、林德拜爾、巴拉卡斯，\n從此被世人稱為「屠龍勇者」！`);
+            gameAlert('👑 屠龍勇者', `${player.name}討伐了格爾莫斯、瑟拉恩、維斯塔爾、莫爾加斯，\n從此被世人稱為「屠龍勇者」！`);
         }
         moveToTown(z.town);
         return;
