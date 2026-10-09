@@ -18,16 +18,12 @@ function bar(cur, max, cls, label) {
 
 // 外框 HUD：上方角色資訊、紅藍法球（HP／MP）、下方地點與經驗條、底部格子數量（ui-frame.js）
 function renderStatus() {
-    if (!player || SIM_MODE || !$('hud-top')) return;
-    const st = calcStats(), c = CLASSES[player.cls];
+    if (!player || SIM_MODE || !$('hud-stats')) return;
+    const st = calcStats();
     const expPct = player.lv >= MAX_LEVEL ? 100 : player.exp / expToNext(player.lv) * 100;
-    const wp = invWeight() / st.weightMax * 100;
-    const badges = (hasDragonTitle() ? '<span class="title-badge">屠龍勇者</span>' : '') +
-        (questTitleEarned() ? `<span class="title-badge">${CLASS_STORIES[player.cls].title}</span>` : '');
-    $('hud-top').innerHTML = `
-        <div class="hud-name">${c.icon} <b>${esc(player.name)}</b> <span>${c.name} Lv.${player.lv}</span>${badges}</div>
-        <div class="hud-stats"><span class="gold">💰${fmt(player.gold)}</span><span>AC ${st.ac}</span><span>MR ${st.mr}</span>
-            <span class="${wp >= 82 ? 'bad' : wp >= 50 ? 'warn' : ''}">負重${Math.floor(wp)}%</span></div>`;
+    // 上方人物狀態（名稱、職業、負重）已移除（2026-10-09 使用者要求）；金幣、AC、MR 顯示在經驗條上方 #hud-stats
+    const hs = $('hud-stats');
+    if (hs) hs.innerHTML = `<span class="gold">💰${fmt(player.gold)}</span><span class="hud-lv-gap"></span><span>AC ${st.ac}</span><span>MR ${st.mr}</span>`;
     setOrb('orb-hp', player.hp, st.maxHp, 'HP');
     setOrb('orb-mp', player.mp, st.maxMp, 'MP');
     const where = player.loc.type === 'town' ? `${TOWNS[player.loc.id].icon} ${TOWNS[player.loc.id].name}`
