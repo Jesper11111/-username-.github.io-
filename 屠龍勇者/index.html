@@ -119,8 +119,22 @@
         display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; font-size: 12px; text-shadow: 0 1px 3px #000;
     }
     .hud-where { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hud-exp { height: 14px; background: #1a120cee; border: 1px solid #a07a45; }
-    .hud-exp span { line-height: 13px; font-size: 11px; }
+    /* 經驗條（手機原圖 x 380～962、y 1746～1762；PC 原圖 x 300～1700、y 907～925）與等級（欄杆中間裝飾） */
+    .exp-strip {
+        position: absolute; left: calc(var(--s) * 380px); right: calc(var(--s) * 380px); bottom: calc(var(--s) * 238px);
+        height: max(9px, calc(var(--s) * 18px)); z-index: 3; overflow: hidden; border-radius: 3px;
+        background: #0c0806e6; border: 1px solid #a07a45; box-shadow: 0 0 4px #000;
+    }
+    .exp-fill { height: 100%; width: 0; background: linear-gradient(#f3d77a, #c9962f); transition: width .3s; }
+    .exp-strip span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-size: max(8px, calc(var(--s) * 15px)); line-height: 1; color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000; white-space: nowrap; }
+    .lv-badge {
+        position: absolute; left: calc(var(--s) * 616px); width: calc(var(--s) * 110px); bottom: calc(var(--s) * 290px); height: calc(var(--s) * 50px);
+        z-index: 3; display: flex; align-items: center; justify-content: center; pointer-events: none;
+        font-weight: bold; font-size: max(10px, calc(var(--s) * 30px)); color: #ffe7a8; white-space: nowrap;
+        background: radial-gradient(ellipse, #1a0e08f0 55%, #1a0e0800 100%); border-radius: 50%;
+        text-shadow: 0 0 3px #000, 0 0 6px #d8a84a88;
+    }
     .pillar {
         position: absolute; top: calc(var(--s) * 715px); bottom: calc(var(--s) * 655px); width: calc(var(--s) * 104px);
         background: transparent; border: 0; border-radius: 0; padding: 0; z-index: 4;
@@ -228,7 +242,9 @@
     #frame.pc .hunt-ctrl { position: absolute; left: calc(var(--s) * 100px); top: calc(var(--s) * 300px); padding: 0; background: none; border: 0; z-index: 1; }
     #frame.pc .hunt-ctrl.empty, #frame.pc #hunt-session { display: none; }
     #frame.pc #hud-top { top: calc(var(--s) * 272px); left: calc(var(--s) * 760px); right: calc(var(--s) * 760px); z-index: 3; font-size: 13px; }
-    #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; }
+    #frame.pc .exp-strip { left: calc(var(--s) * 300px); right: calc(var(--s) * 300px); bottom: calc(var(--s) * 191px); height: max(10px, calc(var(--s) * 18px)); }
+    #frame.pc .lv-badge { left: calc(var(--s) * 940px); width: calc(var(--s) * 120px); bottom: calc(var(--s) * 222px); height: calc(var(--s) * 46px); }
+    #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; justify-content: flex-start; }
     #frame.pc .orb { width: calc(var(--s) * 240px); height: calc(var(--s) * 240px); bottom: calc(var(--s) * 76px); }
     #frame.pc .orb.hp { left: calc(var(--s) * 60px); }
     #frame.pc .orb.mp { right: calc(var(--s) * 60px); }
@@ -444,6 +460,9 @@
             <div id="frame-art"></div>
             <div id="overlay" class="hidden"></div>
             <div id="hud-bottom"></div>
+            <!-- 經驗條：欄杆下緣與底部格子之間的石條；等級：欄杆正中間的裝飾（ARCHITECTURE.md 第 15、19 節） -->
+            <div id="exp-strip" class="exp-strip"><div class="exp-fill"></div><span></span></div>
+            <div id="lv-badge" class="lv-badge"></div>
             <button id="pillar-left" class="pillar left" onclick="toggleDrawer('left')" aria-label="角色選單"></button>
             <button id="pillar-right" class="pillar right" onclick="toggleDrawer('right')" aria-label="系統選單"></button>
             <div id="drawer-left" class="drawer left"></div>
@@ -467,26 +486,26 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009g"></script>
-<script src="data/classes.js?v=20261009g"></script>
-<script src="data/skills.js?v=20261009g"></script>
-<script src="data/items.js?v=20261009g"></script>
-<script src="data/monsters.js?v=20261009g"></script>
-<script src="data/zones.js?v=20261009g"></script>
-<script src="data/quests.js?v=20261009g"></script>
-<script src="data/player.js?v=20261009g"></script>
-<script src="data/enchant.js?v=20261009g"></script>
-<script src="data/combat.js?v=20261009g"></script>
-<script src="data/town.js?v=20261009g"></script>
-<script src="data/save.js?v=20261009g"></script>
-<script src="data/offline.js?v=20261009g"></script>
-<script src="data/ui.js?v=20261009g"></script>
-<script src="data/ui-create.js?v=20261009g"></script>
-<script src="data/ui-panels.js?v=20261009g"></script>
-<script src="data/codex.js?v=20261009g"></script>
-<script src="data/ui-frame.js?v=20261009g"></script>
-<script src="data/ui-scene.js?v=20261009g"></script>
-<script src="data/pwa.js?v=20261009g"></script>
-<script src="data/main.js?v=20261009g"></script>
+<script src="data/config.js?v=20261009h"></script>
+<script src="data/classes.js?v=20261009h"></script>
+<script src="data/skills.js?v=20261009h"></script>
+<script src="data/items.js?v=20261009h"></script>
+<script src="data/monsters.js?v=20261009h"></script>
+<script src="data/zones.js?v=20261009h"></script>
+<script src="data/quests.js?v=20261009h"></script>
+<script src="data/player.js?v=20261009h"></script>
+<script src="data/enchant.js?v=20261009h"></script>
+<script src="data/combat.js?v=20261009h"></script>
+<script src="data/town.js?v=20261009h"></script>
+<script src="data/save.js?v=20261009h"></script>
+<script src="data/offline.js?v=20261009h"></script>
+<script src="data/ui.js?v=20261009h"></script>
+<script src="data/ui-create.js?v=20261009h"></script>
+<script src="data/ui-panels.js?v=20261009h"></script>
+<script src="data/codex.js?v=20261009h"></script>
+<script src="data/ui-frame.js?v=20261009h"></script>
+<script src="data/ui-scene.js?v=20261009h"></script>
+<script src="data/pwa.js?v=20261009h"></script>
+<script src="data/main.js?v=20261009h"></script>
 </body>
 </html>

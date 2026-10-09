@@ -44,7 +44,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009h`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -225,7 +225,9 @@ kills, deaths, settings, created`
 |---|---|---|
 | `#hud-top` | y≈336，x 262～1080（惡魔下巴下方） | 名稱、職業 Lv、稱號、金幣、AC、MR、負重 |
 | `#panel` | x 112～1232，y 445 ～ 底部往上 626 | 目前分頁內容（預設狩獵）；非狩獵分頁有標題列與「返回狩獵」 |
-| `#hud-bottom` | 兩骷髏之間、欄杆上方 | 地點／掛機狀態、EXP 條 |
+| `#hud-bottom` | 兩骷髏之間、欄杆上方 | 地點／掛機狀態 |
+| 經驗條 `#exp-strip` | x 380～962、y 1746～1762（欄杆下緣與底部格子之間的石條） | EXP 百分比（2026-10-09 從 `#hud-bottom` 搬來） |
+| 等級 `#lv-badge` | 中心約 (671, 1685)（欄杆正中間的裝飾） | 目前等級「Lv.N」 |
 | 左柱 `#pillar-left` | x 0～104，柱子符文段 | 點擊滑出抽屜：人物狀態、技能、任務 |
 | 右柱 `#pillar-right` | x 1240～1342 | 點擊滑出抽屜：地圖、設定 |
 | 紅球 `#orb-hp` | 中心 (230, 1740)，直徑 296 | HP；上方變暗＝損失比例；點一下喝治癒藥水 |
@@ -431,7 +433,9 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 | 骷髏頭 `#skull-hunt` | x 950～1050、y 1010～1110（底部正中間） | 開始／停止掛機（第 15 節） |
 | 骷髏頭 `#skull-log` | x 5～100、y 1010～1110（左下、紅球下方） | 戰鬥訊息抽屜開關；抽屜 `#log-pop` 在窗口左下（第 17 節） |
 | `#hud-top` | 惡魔下巴下方（x 760～1240） | 名稱、職業 Lv、金幣、AC、MR、負重 |
-| `#hud-bottom` | 窗口下方中間 | 地點／掛機狀態、EXP 條 |
+| `#hud-bottom` | 窗口下方中間（靠上對齊，避開地圖的「停止掛機中」） | 地點／掛機狀態 |
+| 經驗條 `#exp-strip` | x 300～1700、y 907～925（欄杆與底部按鈕之間） | EXP 百分比 |
+| 等級 `#lv-badge` | x 940～1060、y 848～894（欄杆正中間裝飾） | 目前等級「Lv.N」 |
 | 紅球／藍球 | 中心 (180, 920)／(1820, 920)，直徑 240 | HP／MP（點擊喝水） |
 | 分頁視窗 `#overlay` | x 1120～1880，y 300～816 | 目前分頁（人物狀態、背包…），右上「✖ 關閉」回到只看地圖 |
 

@@ -32,8 +32,15 @@ function renderStatus() {
     setOrb('orb-mp', player.mp, st.maxMp, 'MP');
     const where = player.loc.type === 'town' ? `${TOWNS[player.loc.id].icon} ${TOWNS[player.loc.id].name}`
         : `📍 ${zoneTitle()}${walkHome ? '・步行回村中' : player.hunting ? '・<span class="good">掛機中</span>' : '・停止'}`;
-    $('hud-bottom').innerHTML = `<div class="hud-where">${where}</div>
-        <div class="bar exp hud-exp"><div class="bar-fill" style="width:${expPct}%"></div><span>EXP ${expPct.toFixed(2)}%</span></div>`;
+    $('hud-bottom').innerHTML = `<div class="hud-where">${where}</div>`;
+    // 經驗條在欄杆下方的石條、等級在欄杆中間（index.html 的 #exp-strip／#lv-badge）
+    const strip = $('exp-strip');
+    if (strip) {
+        strip.firstElementChild.style.width = expPct + '%';
+        strip.lastElementChild.textContent = `EXP ${expPct.toFixed(2)}%`;
+    }
+    const lv = $('lv-badge');
+    if (lv) lv.textContent = 'Lv.' + player.lv;
     renderSlots();
     renderSkull();
     renderLogPop();
