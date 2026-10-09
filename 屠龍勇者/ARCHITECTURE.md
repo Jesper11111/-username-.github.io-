@@ -44,7 +44,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009g`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -452,7 +452,7 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   - 分類 `CODEX_CATS`：全部／武器／防具（頭盔、盔甲、盾、內衣、斗篷、手套、長靴）／飾品（項鍊、戒指、腰帶）／消耗品（藥水、卷軸、彈藥、萬能藥）／材料。
   - 品質 `codexGradeOf`：商店有賣（有 `price`）＝**一般**（白）；其他依回收價 `sell`：< 1 萬 **高級**（綠）、< 3 萬 **稀有**（藍）、< 8 萬 **英雄**（紫）、其餘 **傳說**（橘）。顏色 class `g-normal／g-high／g-rare／g-hero／g-legend`。
   - 排序：分類 → 品質 → 價值。搜尋比對名稱或種類，可再篩品質。
-- 版面：上方分類籤＋搜尋＋品質下拉；中間詳細框（`position: sticky`，捲清單時固定在上方）：圖示、名稱、品質、種類、已擁有數量、限定職業、
+- 版面：上方分類籤＋搜尋＋品質下拉；中間詳細框（`position: sticky`，捲清單時固定在上方；**預設不顯示，點清單 `selectCodex` 才打開，右上 ✕ `closeCodexDetail` 收起**，2026-10-09 使用者要求）：圖示、名稱、品質、種類、已擁有數量、限定職業、
   基礎屬性（兩欄）、說明、**取得方式**；下方清單（圖示、名稱、品質、種類；未擁有的圖示變灰）；底部「共 N 件（全部、已擁有）」。
 - 取得方式 `codexSources`（第一次查詢時建表）：商店（依 `tier` 對到村莊）、`MONSTERS[*].drops`、`TOWER_BOSS_DROPS`（魔塔每 10 層首領）、
   `COMMON_DROPS`（一般怪物）、`RECIPES`（鍛造材料＋手續費）、`CLASS_QUESTS[*].reward.item`（職業任務）。都沒有就顯示「尚無取得管道」

@@ -122,7 +122,8 @@ function codexDetailHtml(id) {
     L.push(['重量', d.wt]);
     L.push(['回收價', '💰' + fmt(sellPriceOf(id))]);
     const src = codexSources(id);
-    return `<div class="codex-detail">
+    return `<button class="codex-close mini secondary" onclick="closeCodexDetail()" aria-label="關閉介紹">✕</button>
+    <div class="codex-detail">
         <div class="codex-art ${g.cls}">${codexIcon(d)}</div>
         <div class="codex-info">
             <div class="codex-name ${g.cls}">${esc(d.name)}</div>
@@ -140,7 +141,8 @@ function codexDetailHtml(id) {
 
 function renderCodex() {
     const list = codexList();
-    if (!codexSel || !ITEMS[codexSel]) codexSel = list[0] || codexIds()[0];
+    // 不自動選第一件：點清單才打開介紹（2026-10-09 使用者要求）
+    if (codexSel && !list.includes(codexSel)) codexSel = null;
     const total = codexIds().length, owned = codexIds().filter(id => codexOwned(id) > 0).length;
     let h = `<div class="panel codex-top">
         <div class="chips">${CODEX_CATS.map(([id, n]) => `<button class="chip-btn ${codexCat === id ? 'active' : ''}" onclick="setCodexCat('${id}')">${n}</button>`).join('')}</div>
@@ -150,7 +152,7 @@ function renderCodex() {
                 ${CODEX_GRADES.map(g => `<option value="${g.id}" ${codexGrade === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}</select>
         </div>
     </div>`;
-    h += `<div class="panel codex-box" id="codex-detail">${codexSel ? codexDetailHtml(codexSel) : ''}</div>`;
+    h += `<div class="panel codex-box" id="codex-detail" ${codexSel ? '' : 'hidden'}>${codexSel ? codexDetailHtml(codexSel) : ''}</div>`;
     h += `<div class="codex-head"><span></span><span>名稱</span><span>品質</span><span>種類</span></div>`;
     h += `<div class="codex-list" id="codex-list">` + (list.map(id => {
         const d = ITEMS[id], g = codexGradeOf(id);
@@ -174,10 +176,17 @@ function setCodexQuery(q) {
 function selectCodex(id) {
     codexSel = id;
     const box = $('codex-detail');
-    if (box) box.innerHTML = codexDetailHtml(id);
+    if (box) { box.innerHTML = codexDetailHtml(id); box.hidden = false; }
     document.querySelectorAll('.codex-row.active').forEach(b => b.classList.remove('active'));
     const row = document.querySelector(`.codex-row[onclick="selectCodex('${id}')"]`);
     if (row) row.classList.add('active');
+}
+// 介紹右上角 ✕：收起介紹，回到只看清單
+function closeCodexDetail() {
+    codexSel = null;
+    const box = $('codex-detail');
+    if (box) { box.hidden = true; box.innerHTML = ''; }
+    document.querySelectorAll('.codex-row.active').forEach(b => b.classList.remove('active'));
 }
 
 TABS.codex = ['📖', '裝備圖鑑'];
