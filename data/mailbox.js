@@ -8,19 +8,43 @@ let mbLoading = false;
 let mbError = "";
 let mbLastRefresh = 0;
 let mbDeletedIds = new Set();   // 這次開遊戲已嘗試刪除的過期信（每封只試一次）
-let mbCheckedIds = new Set();   // 這次開遊戲已到雲端確認過「還沒領」的信（2026-10-04 節省 Firebase 讀取額度：不再每 30 分鐘重讀一次領取紀錄）
+let mbCheckedIds = new Set();   // 已到雲端確認過「還沒領」的信（2026-10-04 節省 Firebase 讀取額度；2026-10-09 起存在 localStorage，重新整理也不必重查）
+let mbUid = null;
+
+// 讀信快取（localStorage，MAIL_CACHE_KEY）：只記「什麼時候讀過、當時有幾封待領、哪些信確認過還沒領」，不存信件內容（獎勵一律以雲端為準）
+function mbReadCache(uid) {
+    try {
+        const c = JSON.parse(localStorage.getItem(MAIL_CACHE_KEY) || 'null');
+        return c && c.uid === uid && Array.isArray(c.checked) ? c : null;
+    } catch (e) { return null; }
+}
+function mbSaveCache() {
+    if (!mbUid || !mbLastRefresh) return;
+    try {
+        localStorage.setItem(MAIL_CACHE_KEY, JSON.stringify({ uid: mbUid, at: mbLastRefresh, pending: mbMails.length, checked: [...mbCheckedIds].slice(-200) }));
+    } catch (e) { /* 無痕視窗等存不了就算了 */ }
+}
 
 function isMailboxAvailable() {
     return isLeaderboardConfigured();
 }
 
 // ---- 讀信 ----
+// force：true＝一定讀；'startup'＝開遊戲第一次（MAIL_STARTUP_CACHE_MS 內讀過且沒有待領的信就略過）；false＝打開信箱（3 分鐘內讀過就不重讀）
 async function refreshMailbox(force) {
     if (!isMailboxAvailable() || !gameStarted || gameOver || saveLoadFailed) return;
-    if (mbLoading || (!force && Date.now() - mbLastRefresh < 60000)) return;
+    if (mbLoading || (!force && Date.now() - mbLastRefresh < LEADERBOARD_AUTO_REFRESH_MS)) return;
     mbLoading = true; mbError = "";
     try {
         const { db, uid } = await lbWithTimeout(initLeaderboardBackend());
+        if (mbUid !== uid) {
+            mbUid = uid;
+            const c = mbReadCache(uid);
+            if (c) {
+                c.checked.forEach(id => mbCheckedIds.add(id));
+                if (force === 'startup' && c.pending === 0 && Date.now() - c.at >= 0 && Date.now() - c.at < MAIL_STARTUP_CACHE_MS) { mbLastRefresh = c.at; return; }
+            }
+        }
         const snap = await lbWithTimeout(db.collection(MAIL_COLLECTION).where('to', 'in', ['all', uid]).get());
         const now = Date.now(), claimed = new Set(player.mailClaimed || []);
         const all = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
@@ -41,6 +65,7 @@ async function refreshMailbox(force) {
         if (fresh.length && mbLastRefresh) addLog(`📮 仙府信箱收到 ${fresh.length} 封新信！（右上 ⚙️ 設定 →「📮 仙府信箱」領取）`, "system");
         else if (fresh.length) addLog(`📮 仙府信箱有 ${mbMails.length} 封信待領取（右上 ⚙️ 設定 →「📮 仙府信箱」）`, "system");
         mbLastRefresh = Date.now();
+        mbSaveCache();
     } catch (e) {
         mbError = e && e.code === 'permission-denied' ? '信箱尚未開放（伺服器設定更新中）' : (lbIsQuota(e) || await lbProbeQuota()) ? LB_QUOTA_MSG : '連線失敗，請稍後再試';
         console.warn("仙府信箱讀取失敗：", e);
@@ -68,7 +93,7 @@ function markMailClaimed(id) {
 }
 function startMailboxSync() {
     if (!isMailboxAvailable()) return;
-    setTimeout(() => refreshMailbox(true), LEADERBOARD_FIRST_UPLOAD_DELAY_MS + 5000);
+    setTimeout(() => refreshMailbox('startup'), LEADERBOARD_FIRST_UPLOAD_DELAY_MS + 5000);
     // 分頁在背景（切到其他分頁、App 縮小）時不定時讀信，回到前景再補讀（節省 Firebase 讀取額度）
     setInterval(() => { if (!document.hidden) refreshMailbox(true); }, MAIL_REFRESH_MS);
     document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - mbLastRefresh >= MAIL_REFRESH_MS) refreshMailbox(true); });
@@ -180,6 +205,7 @@ async function claimMail(id) {
     grantMailRewards(m.rewards, m.to !== 'all');
     markMailClaimed(id);
     mbMails = mbMails.filter(x => x.id !== id);
+    mbSaveCache();
     addLog(`📮 領取信件【${m.title || '仙府來信'}】：${formatMailRewards(m.rewards)}`, "level-up", false, "item");
     saveLocal();
     updateUI();

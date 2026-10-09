@@ -130,7 +130,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
   golden-core.js      丹田／金丹／元嬰：累積、凝結、加成、凝元丹、化神靈果（第 54 節）；凝聚元神後加成消失
   yuanshen.js         元神（第 65 節）：天元神／地元神資格、元嬰化神法（凝聚）、偏好屬性傷害、化神訣殘本掉落、元神視窗
   mailbox.js          仙府信箱與兌換碼：讀信、領取、兌換、獎勵發放（第 56 節；設定 config-mailbox.js，GM 端在 gm.html）
-  msgboard.js         修仙留言板：大道石碑第三個分頁，讀最新 50 則、留言（每 60 秒一則）、刪自己的留言、髒話過濾（第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*）
+  msgboard.js         修仙留言板：大道石碑第三個分頁，讀彙整文件 boardFeed/latest（最新 30 則，1 次讀取）、留言（每 60 秒一則）、刪自己的留言、髒話過濾（第 57 節；設定在 config-leaderboard.js 的 MSGBOARD_*）
   economy.js          賺錢管道（第 61 節）：H＝境界每小時練功收入、坊市回收（天星城收購商）、商隊收益與每日趟數、洞府產業（靈田／礦脈）、懸賞賞金
   encounter.js        奇遇・異界空間（第 63 節）：切換地圖觸發（秘密路線／累計次數／空間裂縫／每週三界戰場）、封存入口 #enc-fab、全螢幕異界 #enc-scene，
                       內含虛天殿（闖關）、血色禁地（戰棋）、三界戰場（千人淘汰）＋機緣：強者現身、靈獸競速、古洞尋寶、丹爐試火、機緣任務（支線）；全部包在 IIFE `Encounter` 內，對外只有 onEncounterMapChange／initEncounters／openEncounterList
@@ -1636,7 +1636,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CY`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005CZ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3337,6 +3337,9 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **先天裝備（太古／遠古／一般先天）也能寄**（2026-10-09，版本 `20261005CV`，`MAIL_SCHEMA_VERSION` 4）：`rewards.gear = { "5000_2": 件數 }`，key＝等級_種類（`MAIL_PRIMAL_GEAR_KINDS`：2 先天・太古、1 先天・遠古、0 一般先天；
   只寫等級＝太古），等級只認 `MAIL_PRIMAL_GEAR_LEVELS`（1500／2500／3500／5000），不認得的等級／種類忽略，每項最多 20 件（`mbGearEntries`）；
   部位隨機，由 gear.js 的 `createPrimalPlatinumGear(level, ancient)` 產生（第 67 節）。`checkMailRewardSpace` 多檢查背包裝備空位（`MAX_EQUIP_INVENTORY`）。目前只有 gm.html 世界 Boss 分頁的「名次獎勵」會寄（第 75 節），一般寄信表單沒有這個欄位。
+- **讀信快取**（2026-10-09，版本 `20261005CZ`，節省讀取額度）：localStorage `MAIL_CACHE_KEY`（`xiuxian_mail_cache`）＝`{ uid, at, pending, checked }`，**不存信件內容**（獎勵一律以雲端為準）。
+  - `mbCheckedIds`（確認過還沒領的信）跨重新整理保留，不再每次開遊戲重查領取紀錄。
+  - 開遊戲第一次讀信 `refreshMailbox('startup')`：上次讀信在 `MAIL_STARTUP_CACHE_MS`（30 分鐘）內、而且當時沒有待領的信 → 略過（玩家狂按重新整理不再每次讀信）。打開信箱（`refreshMailbox(false)`）3 分鐘（`LEADERBOARD_AUTO_REFRESH_MS`）內讀過不重讀，按「🔄 重新整理」照樣讀。
 - **GM 權限也能寄**（2026-10-04，版本 `20261005AV`）：`rewards.gm`（true 授予／false 撤銷），只限寄給指定 uid 的信，見第 74 節「GM 測試人物」。
 - **先天資質也能寄**（2026-09-28，版本 `20260929x`，使用者要求）：`rewards.aptitude = { root: { group, id? 或 elems? }, physique: id }`。
   - GM：「⛩️ 先天靈根」選單列出全部 48 種（有 pick 的組逐一列、五行組合的組列出所有組合：天 5、雙 10、三 10、四 5、五 1），「⛩️ 先天體質」列出 24 種；gm.html 因此多載入 `config-aptitude.js`（只有常數）。
@@ -3380,6 +3383,18 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - **留言 8 小時後自動刪除**（2026-10-04，版本 `20261005AG`，使用者要求）：`MSGBOARD_LIFETIME_HOURS` 8。`fetchMsgBoard` 只讀 8 小時內的留言（`where createdAt > 現在−8h`＋同欄位排序，不需另建索引）；
   每位玩家每 `MSGBOARD_CLEANUP_GAP_MS`（30 分鐘）最多順手刪 10 則過期留言；規則 `board` 的 delete 增加「超過 28800 秒的留言任何登入者都能刪」（**要發布新版規則才生效**）；
   gm.html 開「💬 留言板」分頁時自動刪除過期留言。驗證：模擬器規則 6 項、遊戲接模擬器（9 小時前 3 則被隱藏並刪除、1 小時前的保留）。
+
+- **留言板彙整文件＋信箱快取（2026-10-09，版本 `20261005CZ`，使用者：「網路儲存空間讀取數一直爆滿」→ 選「改程式減少讀取＋留言板改單一彙整文件，不付費」）**：
+  - **彙整文件** `boardFeed/latest = { msgs: [{ id, uid, name, realm, stage, text, createdAt }] }`（新的在前，最多 `MSGBOARD_SHOW_N` 30 則；config-leaderboard.js 的 `MSGBOARD_FEED_COLLECTION`／`MSGBOARD_FEED_DOC`）。
+    打開留言板 `fetchMsgBoard` 只讀這 1 份文件（原本 30 次），顯示時濾掉 8 小時前的；文件不存在或規則還沒發布（permission-denied）時退回舊的 `board` 集合查詢。
+  - **留言** `postBoardMessage`：一筆交易（`runTransaction`，多 1 次讀取）寫 `board/{id}`＋`boardLimit/{uid}`＋彙整文件；彙整裡的 `createdAt` 用 `gameNow()` 的用戶端時間（陣列裡不能放 serverTimestamp）。
+    交易被拒（規則未發布、冷卻、禁言）就改用舊的批次寫入再試一次。送出後直接把自己的留言放到列表最上面，不再重讀。
+  - **刪自己的留言** `deleteBoardMessage`：同一筆交易刪 `board/{id}` 並把彙整文件裡那一則拿掉；被拒時只刪留言。
+  - **省掉的讀取**：玩家端「每 30 分鐘順手清 10 則過期留言」移除（`MSGBOARD_CLEANUP_GAP_MS` 刪除，過期留言由 gm.html 開分頁時清）；禁言狀態 `mbBoardMuted` 不再一打開就查，只在留言被拒時查 1 次。
+  - **規則**（tools/firestore.rules 的 `boardFeed`、`feedEntryOk`）：所有人可 get；玩家新增時 msgs 長度＝舊的 +1（滿 30 維持 30）、`msgs[1:]` 必須照抄舊的前段、`msgs[0]` 必須和同一交易建立的 `board/{id}`（`getAfter`，`createdAt == request.time`）內容一致且是自己、時間誤差 ≤ 10 分鐘；
+    玩家刪除時只能拿掉 1 則自己的；GM 任意改寫。**要到 Firebase 主控台貼上發布才生效**，未發布前遊戲自動用舊做法。模擬器實測 14 項（新增、冷卻、竄改內容／刪舊留言／改別人的／時間偏差、滿 30 則捲動、刪自己的、刪別人的、禁言）全部符合。
+  - **gm.html**：`reloadBoardMsgs()`（開「💬 留言板」、刪除、禁言後都會跑）用讀到的 200 則重建彙整文件（不多讀），所以 GM 刪的留言也會從玩家畫面消失；舊版遊戲（快取未更新）只寫 `board` 的留言也會在這時補進彙整。
+  - **信箱**（第 56 節）見該節「讀信快取」。
 
 ## 58. 寄售拍賣＋主頁「留言板」入口（`market.js`；2026-09-28，版本 `20260930b`）
 - **Firebase 讀取額度用完後的節省措施**（2026-10-04，版本 `20261005Z`；使用者 Firebase 主控台：讀取 14 萬／日、免費 5 萬，寫入 1,785、刪除 575 都很低）：

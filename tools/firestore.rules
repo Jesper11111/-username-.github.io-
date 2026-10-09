@@ -138,6 +138,35 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && getAfter(/databases/$(database)/documents/boardLimit/$(request.auth.uid)).data.lastAt == request.time;
     }
+    // 留言板彙整（2026-10-09，節省讀取額度）：boardFeed/latest = { msgs: [最新 30 則，新的在前] }，玩家打開留言板只讀這 1 份文件
+    // 每則 = { id, uid, name, realm, stage, text, createdAt }；GM 可任意改寫（刪除留言後重建）；isAdmin() 放最後（它要多讀 1 次 admins）
+    // 玩家新增：同一交易建立 board/{id}（上面的規則把關內容、禁言、60 秒冷卻），msgs[0] 必須和那則留言一致，其餘照抄舊的前 29 則
+    // 玩家刪除：只能拿掉自己的一則，其餘不變
+    function feedEntryOk(e) {
+      let m = getAfter(/databases/$(database)/documents/board/$(e.id)).data;
+      return e.keys().hasOnly(['id', 'uid', 'name', 'realm', 'stage', 'text', 'createdAt'])
+        && e.uid == request.auth.uid && m.uid == e.uid && m.name == e.name && m.realm == e.realm
+        && m.stage == e.stage && m.text == e.text && m.createdAt == request.time
+        && e.createdAt is timestamp
+        && e.createdAt > request.time - duration.value(600, 's') && e.createdAt < request.time + duration.value(600, 's');
+    }
+    match /boardFeed/{fid} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow delete: if isAdmin();
+      allow create: if (fid == 'latest' && request.auth != null
+        && request.resource.data.keys().hasOnly(['msgs']) && request.resource.data.msgs is list
+        && request.resource.data.msgs.size() == 1 && feedEntryOk(request.resource.data.msgs[0])) || isAdmin();
+      allow update: if (fid == 'latest' && request.auth != null
+        && request.resource.data.keys().hasOnly(['msgs']) && request.resource.data.msgs is list
+        && ((request.resource.data.msgs.size() == (resource.data.msgs.size() < 30 ? resource.data.msgs.size() + 1 : 30)
+             && request.resource.data.msgs[1:] == resource.data.msgs[0:request.resource.data.msgs.size() - 1]
+             && feedEntryOk(request.resource.data.msgs[0]))
+          || (request.resource.data.msgs.size() == resource.data.msgs.size() - 1
+             && request.resource.data.msgs.removeAll(resource.data.msgs).size() == 0
+             && resource.data.msgs.removeAll(request.resource.data.msgs).size() == 1
+             && resource.data.msgs.removeAll(request.resource.data.msgs)[0].uid == request.auth.uid))) || isAdmin();
+    }
     // 每人最後留言時間：只能寫自己的；更新時距上次必須超過 60 秒
     match /boardLimit/{uid} {
       allow get: if (request.auth != null && request.auth.uid == uid) || isAdmin();
