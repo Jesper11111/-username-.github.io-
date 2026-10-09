@@ -22,6 +22,15 @@ const CLASSES = {
         base: { str: 16, dex: 12, con: 14, int: 8, wis: 9, cha: 12 },
         hp: [14, 18], mp: [0, 1], startHp: 18, startMp: 1, mr: 0, spDiv: 12, mpRegenK: 0.3,
         weapons: ['sword', 'twohand', 'axe', 'spear', 'blunt'], shield: true, start: ['longSword', 'leatherArmor', 'woodShield'],
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/knight-*.json 切出（純灰底 "flat"，第 18 節）
+        sprite: {
+            drawH: 48, charH: 113,
+            walk:   { src: 'images/sprites/knight-walk.png',   cellW: 134, cellH: 122, frames: { down: 8, right: 8, up: 6 }, ms: 110 },
+            attack: { src: 'images/sprites/knight-attack.png', cellW: 194, cellH: 136, frames: { down: 3, right: 3, up: 3 }, ms: 110 },
+            cast:   { src: 'images/sprites/knight-cast.png',   cellW: 156, cellH: 136, frames: { down: 3, right: 3, up: 3 }, ms: 140 },
+            hit:    { src: 'images/sprites/knight-hit.png',    cellW: 148, cellH: 125, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+        },
+        art: 'images/classes/knight.jpg',
     },
     mage: {
         name: '法師', icon: '🔮',
