@@ -74,7 +74,7 @@ function renderPanel() {
 function renderHunt() {
     if (inTown()) {
         const t = currentTown();
-        return huntViewHtml(`${t.icon} ${t.name}<small>　點建築打開設施</small>`);
+        return huntViewHtml(`${t.icon} ${t.name}<small>　點地圖走路・方向鍵／WASD 移動</small>`);
     }
     return huntViewHtml(`📍 ${zoneTitle()}`);
 }
