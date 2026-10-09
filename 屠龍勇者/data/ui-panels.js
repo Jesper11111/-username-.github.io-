@@ -514,9 +514,26 @@ function shortDesc(d) {
 
 function shopInfo(id) { openDialog(ITEMS[id].name, itemDescHtml({ id, n: 1, ench: 0 }), [{ text: '關閉', cls: 'secondary' }]); }
 
+// 一鍵賣出：背包裡品質低於 level 的一般貨裝備（沒強化、不含稀有基底的普通品質；規則同戰利品過濾）
+function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level) && !(x.ench > 0)); }
+function bulkSellBtn(level) {
+    const list = bulkSellList(level);
+    if (!list.length) { showToast('沒有符合的裝備'); return; }
+    const total = list.reduce((a, x) => a + instSellPrice(x) * x.n, 0);
+    gameConfirm('一鍵賣出', `賣出 ${list.length} 件${level >= 2 ? '普通與魔法' : '普通'}裝備，共 💰${fmt(total)}？\n（已強化的裝備不會賣）`, () => {
+        for (const x of list) removeInst(x.uid);
+        player.gold += total;
+        showToast(`賣出 ${list.length} 件（+${fmt(total)}）`);
+        saveGame(); refreshUI();
+    }, '賣出');
+}
+
 function renderSell() {
     const list = sortedInv(player.inv).filter(x => instSellPrice(x) > 0);
-    return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small></div><div class="list">` + (list.map(x =>
+    const n1 = bulkSellList(1).length, n2 = bulkSellList(2).length;
+    return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small>
+        <div class="btn-row"><button class="secondary" onclick="bulkSellBtn(1)" ${n1 ? '' : 'disabled'}>🪙 賣出普通裝備（${n1}）</button>
+        <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div></div><div class="list">` + (list.map(x =>
         `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
         <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
         || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
@@ -566,6 +583,11 @@ function renderSettings() {
             ${chk('potionOn', '自動喝治癒藥水')}${num('potionPct', 'HP 低於 % 喝水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
             ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}
+        </div>
+        <div class="panel"><h4>🎒 戰利品過濾</h4>
+            <label class="set-row"><span>撿到裝備時</span><select onchange="setSettingNum('lootFilter',this.value,0,3)">
+                ${LOOT_FILTERS.map((n, i) => `<option value="${i}" ${s.lootFilter === i ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+            <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、屠龍劍這類商店沒賣的稀有裝備一律保留。</small>
         </div>
         <div class="panel"><h4>🛡️ 安全</h4>
             ${chk('teleOn', '危險時自動使用瞬間移動卷軸')}${num('telePct', 'HP 低於 % 瞬移', 5, 90)}

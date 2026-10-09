@@ -45,7 +45,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009p`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009q`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -507,6 +507,10 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - 名稱 `qualityName`：魔法＝第一條詞綴的前綴（「銳利的長劍」）、稀有＝「「血月」長劍」、傳說＝「傳說・稱號 名稱」；`itemClass` 顯示品質顏色。
 - **隨機裝備掉落**：每隻一般怪 1.5%（`RANDOM_EQUIP_P`）、首領 50% 掉一件 `randomEquipFor(怪物等級)`（回收價 ≤ 等級 × 600、非職業限定的武器／防具），至少魔法品質。
 - 售價 `instSellPrice`：基本回收價（至少 50）× 品質倍率（魔法 1.5、稀有 3、傳說 8）＋ 詞綴數 × 物品等級 × 10。有品質的道具賣出前會確認。
+- **戰利品過濾**（2026-10-09）：設定 `lootFilter`（預設 1）：0 全部撿起、1 普通裝備自動賣出、2 魔法以下自動賣出、3 只撿傳說。
+  `rollDrops` 的 `give` 先擲品質（`applyAffixes` 在暫存物件上），`lootFiltered` 判定要擋就直接 `instSellPrice` 換金幣（記入本次掛機金幣、訊息 🪙），不進背包、不佔負重。
+  只過濾商店有賣的基底（有 `price`）；武士刀、屠龍劍等稀有基底不論品質一律保留。
+  村莊「回收」頁有「賣出普通裝備」「賣出魔法以下」一鍵賣出（`bulkSellBtn`，同樣規則，已強化的不賣，會先確認總價）。
 - 衝裝、倉庫、丟棄都保留整個實體，詞綴不會消失。離線收益不給掉落（快轉模擬結束會還原角色），所以不影響。
 
 ## 22. 地名改為暗黑風格、亞丁大陸改名黑暗大陸（2026-10-09，版本 `20261009o`）
