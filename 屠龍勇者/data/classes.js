@@ -36,6 +36,15 @@ const CLASSES = {
         base: { str: 11, dex: 12, con: 12, int: 12, wis: 12, cha: 9 },
         hp: [9, 12], mp: [3, 6], startHp: 15, startMp: 6, mr: 25, spDiv: 8, mpRegenK: 0.7,
         weapons: ['bow', 'sword', 'dagger', 'spear'], shield: true, start: ['shortBow', 'leatherArmor'], ammo: 'arrow',
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/elf-*.json 切出（純灰底用 "flat"、抹掉格子編號 "labels"，第 18 節）
+        sprite: {
+            drawH: 48, charH: 113,
+            walk:   { src: 'images/sprites/elf-walk.png',   cellW: 98,  cellH: 116, frames: { down: 3, right: 2, up: 3 }, ms: 150 },
+            attack: { src: 'images/sprites/elf-attack.png', cellW: 146, cellH: 127, frames: { down: 6, right: 5, up: 4 }, ms: 60 },
+            cast:   { src: 'images/sprites/elf-cast.png',   cellW: 206, cellH: 152, frames: { down: 5, right: 4, up: 4 }, ms: 90 },
+            hit:    { src: 'images/sprites/elf-hit.png',    cellW: 116, cellH: 121, frames: { down: 3, right: 3, up: 2 }, ms: 90 },
+        },
+        art: 'images/classes/elf.jpg',
     },
     darkelf: {
         name: '黑暗妖精', icon: '🗡️',

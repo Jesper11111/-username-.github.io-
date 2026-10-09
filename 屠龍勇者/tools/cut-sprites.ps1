@@ -33,6 +33,10 @@ public static class SpriteCutter {
     // checker2 的陰影修正（被壓暗的格紋當背景）；規格裡裁切框第 5 個數字填 0 可以對單一格關掉
     public static bool ShadowFix = true;
     public static int ShapeN = 0;
+    // flat：背景是單一純色灰（妖精）——接近背景色又是中性灰的點一律當背景（被弓弦、手臂圍住的背景、地面陰影都去掉）
+    public static bool Flat = false;
+    // labels：格子右下角有金色編號數字（AI 動作表常見）——裁切框右下 50×34 內的金色點先塗成背景色
+    public static bool Labels = false;
     static int[] Read(Bitmap b) {
         var d = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         var a = new int[b.Width * b.Height];
@@ -83,6 +87,17 @@ public static class SpriteCutter {
         int br = rs[rs.Count / 2], bg = gs[gs.Count / 2], bb = bs[bs.Count / 2];
         var isBg = new bool[w * h];
         var q = new Queue<int>();
+        if (Labels) {
+            // 金色數字（偏黃、亮）＋外圍 3px（字的暗色描邊）塗成背景色
+            var lab = new bool[w * h];
+            for (int y = Math.Max(0, h - 34); y < h; y++) for (int x = Math.Max(0, w - 50); x < w; x++) {
+                int c = px[y * w + x];
+                if (R(c) > 150 && G(c) > 110 && R(c) - B(c) > 60) lab[y * w + x] = true;
+            }
+            var labG = Grow(lab, w, h, 3);
+            int bgc = (255 << 24) | (br << 16) | (bg << 8) | bb;
+            for (int i = 0; i < w * h; i++) if (labG[i] && (i % w) >= w - 53 && (i / w) >= h - 37) px[i] = bgc;
+        }
         if (shape > 0) {
             // shape：角色有一大片和背景同色（黑衣、黑髮），顏色分不開——改用形狀：
             // 和背景明顯不同的點（輪廓線、皺褶、裝備）＝「確定是角色」，膨脹 shape px 再侵蝕回來（把相鄰細節連成輪廓），
@@ -158,6 +173,12 @@ public static class SpriteCutter {
             int i = q.Dequeue(), x = i % w, y = i / w;
             if (x > 0) push(i - 1, i); if (x < w - 1) push(i + 1, i); if (y > 0) push(i - w, i); if (y < h - 1) push(i + w, i);
         }
+        }
+        if (Flat) {
+            for (int i = 0; i < w * h; i++) {
+                int c = px[i], mx = Math.Max(R(c), Math.Max(G(c), B(c))), mn = Math.Min(R(c), Math.Min(G(c), B(c)));
+                if (mx - mn < 12 && Dist(c, br, bg, bb) < tol) isBg[i] = true;
+            }
         }
         // global：角色與背景色差很大時（例如天使白金 vs 深藍底），「暗且偏藍」的像素一律當背景——
         // 被翅膀、格子邊圍住（洪水進不去）的背景、上亮下暗的漸層底、光暈外圍的暗邊都會去掉
@@ -396,6 +417,8 @@ function Get-Mode($o) {
         global = [bool]$o.global   # 被圍住的背景也去掉（角色與背景色差大時用，例如天使）
         dropEdge = if ($o.dropEdge) { [double]$o.dropEdge } else { 0.25 }   # 教堂背景殘片等從格子邊伸進來的雜物
         darkBg = if ($o.darkBg) { [int]$o.darkBg } else { 22 }
+        flat = [bool]$o.flat       # 純色灰底：被圍住的背景與陰影也去掉（妖精）
+        labels = [bool]$o.labels   # 抹掉格子右下角的金色編號
     }
 }
 $baseMode = Get-Mode $cfg
@@ -412,6 +435,8 @@ foreach ($d in $dirs) {
         [SpriteCutter]::ShapeN = if ($m.checkerSize -gt 0) { $m.shape } else { 0 }
         [SpriteCutter]::DropEdge = $m.dropEdge
         [SpriteCutter]::DarkBg = $m.darkBg
+        [SpriteCutter]::Flat = $m.flat
+        [SpriteCutter]::Labels = $m.labels
         [SpriteCutter]::ShadowFix = -not ($r.Count -ge 5 -and [int]$r[4] -eq 0)
         $shape = if ($m.checkerSize -gt 0) { 0 } else { $m.shape }
         $f = [SpriteCutter]::Cut($m.sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $m.tol, $m.checker, $m.global, $shape)

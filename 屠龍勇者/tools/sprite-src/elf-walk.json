@@ -1,0 +1,9 @@
+{
+  "sheet": "tools/sprite-src/elf-sheet.jpg", "out": "images/sprites/elf-walk.png",
+  "charH": 113, "pad": 4, "tol": 26, "flat": true, "labels": true,
+  "dirs": {
+    "down":  [[260, 310, 95, 119], [145, 439, 107, 118], [260, 439, 95, 118]],
+    "right": [[363, 310, 84, 119], [363, 439, 84, 118]],
+    "up":    [[554, 310, 103, 119], [455, 439, 91, 118], [554, 439, 103, 118]]
+  }
+}
