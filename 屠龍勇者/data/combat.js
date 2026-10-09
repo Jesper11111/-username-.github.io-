@@ -561,13 +561,17 @@ function onKill(mon) {
 
 function rollDrops(mon, z) {
     const st = calcStats();
-    const give = (id, nRange) => {
+    // q：武器／防具的品質（undefined＝依怪物擲；null＝普通）；暗黑式詞綴見 affix.js
+    const give = (id, nRange, q) => {
         const d = ITEMS[id];
         const n = nRange ? rand(nRange[0], nRange[1]) : 1;
         if (invWeight() + d.wt * n > st.weightMax) { addLog(`⚠️ 負重已滿，${d.name}撿不起來`, 'warn'); return; }
-        addItem(id, n);
+        const inst = addItem(id, n);
+        const gear = d.cat === 'weapon' || d.cat === 'armor';
+        if (gear && inst) applyAffixes(inst, q === undefined ? rollQuality(mon.boss, false) : q, mon.lv);
         const rare = ['weapon', 'armor', 'elixir'].includes(d.cat) || (d.cat === 'scroll' && d.bless === 1) || d.scroll === 'enchant';
-        addLog(`🎁 獲得 ${d.name}${n > 1 ? ' ×' + n : ''}`, rare ? 'rare' : 'loot');
+        const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
+        addLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name}${n > 1 ? ' ×' + n : ''}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
     };
     for (const dr of COMMON_DROPS) {
         if ((dr.minLv && mon.lv < dr.minLv) || (dr.maxLv && mon.lv > dr.maxLv)) continue;
@@ -575,7 +579,13 @@ function rollDrops(mon, z) {
     }
     if (!mon.boss || mon.towerFloor) for (const dr of (z.drops || [])) if (chance(dr.p)) give(dr.id, dr.n);
     for (const dr of mon.drops) if (chance(dr.p)) give(dr.id, dr.n);
+    // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%
+    if (chance(mon.boss ? 0.5 : RANDOM_EQUIP_P)) {
+        const id = randomEquipFor(mon.lv);
+        if (id) give(id, null, rollQuality(mon.boss, true));
+    }
 }
+const RANDOM_EQUIP_P = 0.015;
 
 function checkAutoHome() {
     const s = player.settings;

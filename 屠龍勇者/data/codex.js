@@ -73,6 +73,8 @@ function codexSources(id) {
         const t = Object.values(TOWNS).find(t => t.tier === d.tier);
         list.push(`商店：${t ? t.name : '村莊'}起販售（💰${fmt(d.price)}）`);
     }
+    // 暗黑式隨機裝備掉落（affix.js 的 randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定）
+    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes) list.push(`掉落：隨機裝備（Lv.${Math.max(1, Math.ceil(sellPriceOf(id) / 600))} 以上的怪物，至少魔法品質）`);
     return list.concat([...new Set(codexSrcCache[id] || [])]);
 }
 

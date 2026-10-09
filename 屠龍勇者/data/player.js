@@ -92,7 +92,7 @@ function invWeight() {
 function itemName(inst) {
     const d = ITEMS[inst.id];
     const e = inst.ench ? (inst.ench > 0 ? '+' : '') + inst.ench + ' ' : '';
-    return e + d.name;
+    return e + qualityName(inst, d.name);   // 魔法／稀有／傳說品質的名稱（affix.js）
 }
 
 // ───────── 裝備 ─────────
@@ -169,6 +169,7 @@ function calcStats() {
         addFx(fx, d);
         if (d.safe >= 0) fx.ac = (fx.ac || 0) + (it.ench || 0);
     }
+    for (const slot of SLOT_KEYS) addFx(fx, affixFx(p.equip[slot]));   // 暗黑式詞綴（affix.js）
     for (const k in p.buffs) if (p.buffs[k].until > now) addFx(fx, buffFx(p.buffs[k]));
 
     const maxHp = p.baseHp + (fx.hp || 0);
