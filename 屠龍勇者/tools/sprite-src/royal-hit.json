@@ -1,0 +1,9 @@
+{
+  "sheet": "tools/sprite-src/royal-sheet.jpg", "out": "images/sprites/royal-hit.png",
+  "charH": 113, "pad": 4, "tol": 30, "flat": true, "bodyH": 129,
+  "dirs": {
+    "down":  [[236, 652, 204, 138], [449, 652, 203, 138]],
+    "right": [{ "r": [236, 800, 204, 140], "flip": true }, [449, 800, 203, 140]],
+    "up":    [[236, 950, 204, 138], [449, 950, 203, 138]]
+  }
+}

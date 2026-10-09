@@ -160,7 +160,7 @@ function updateHuntLive() {
         buffs.innerHTML = Object.keys(player.buffs).filter(k => player.buffs[k].until > now).map(k => {
             const b = player.buffs[k], sec = Math.ceil((b.until - now) / 1000);
             return `<span class="chip">${esc(buffName(b))} ${sec >= 60 ? Math.ceil(sec / 60) + '分' : sec + '秒'}</span>`;
-        }).join('');
+        }).join('') + resonanceChip();   // 共鳴武器狀態（resonance.js）
     }
     const ses = $('hunt-session');
     if (ses && !inTown()) {
@@ -370,6 +370,7 @@ function itemDescHtml(inst) {
     if (d.cat === 'ammo') L.push(`傷害 +${d.dmg}${d.silver ? '，對不死系額外傷害' : ''}`);
     if (d.classes) L.push(`限定：${d.classes.map(c => CLASSES[c].name).join('、')}`);
     if (d.desc) L.push(d.desc);
+    if (d.res) L.push(resonanceHtml(d));   // 共鳴武器（resonance.js）
     if (inst.q) {   // 暗黑式詞綴
         L.push(`<b class="${QUALITY[inst.q].cls}">${QUALITY[inst.q].name}品質</b><small class="muted">（物品等級 ${inst.il || 1}）</small>`);
         for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);

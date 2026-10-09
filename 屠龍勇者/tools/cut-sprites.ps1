@@ -554,7 +554,9 @@ foreach ($d in $dirs) {
     $frames[$d] = @()
     foreach ($r in $cfg.dirs.$d) {
         $m = $baseMode
-        if ($r -is [System.Management.Automation.PSCustomObject]) { $m = Get-Mode $cfg.alt.($r.src); $r = $r.r }
+        # 每格也可寫成 { "r": [...], "src": "alt 名稱", "flip": true }：src 改用其他原圖；flip 左右鏡像（原圖方向畫反的格子，王族攻擊）
+        $flip = $false
+        if ($r -is [System.Management.Automation.PSCustomObject]) { if ($r.src) { $m = Get-Mode $cfg.alt.($r.src) }; $flip = [bool]$r.flip; $r = $r.r }
         [SpriteCutter]::CheckerSize = $m.checkerSize
         [SpriteCutter]::ShapeN = if ($m.checkerSize -gt 0) { $m.shape } else { 0 }
         [SpriteCutter]::DropEdge = $m.dropEdge
@@ -566,6 +568,7 @@ foreach ($d in $dirs) {
         [SpriteCutter]::ShadowFix = -not ($r.Count -ge 5 -and [int]$r[4] -eq 0)
         $shape = if ($m.checkerSize -gt 0) { 0 } else { $m.shape }
         $f = [SpriteCutter]::Cut($m.sheet, [int]$r[0], [int]$r[1], [int]$r[2], [int]$r[3], $m.tol, $m.checker, $m.global, $shape)
+        if ($flip) { $f.Img.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX); $f.AnchorX = $f.Img.Width - 1 - $f.AnchorX }
         $frames[$d] += $f
         if ($d -ne 'up') { $heights += ($f.Feet - $f.TopCenter) }   # 背面看不到頭頂角，身高只用正面與側面量
     }

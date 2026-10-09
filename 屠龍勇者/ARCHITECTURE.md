@@ -15,6 +15,7 @@
 | `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
+| `data/resonance.js` | **共鳴武器**：`RESONANCE`（31 把武器的專屬技能，寫進 `ITEMS[id].res`）、新武器 `RESONANCE_NEW_ITEMS`、首領／龍掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27 節） |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
@@ -39,15 +40,16 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → player → enchant → affix → craft → maps → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
+- resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
 - 新檔案依它「載入時」需要的東西插入；只在執行期用到的不影響順序。
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010d`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -347,7 +349,7 @@ kills, deaths, settings, created`
   - 動作播完回到 **walk**：移動時輪播，停下來用中間那格當站立。有人物模型時不再用「前衝」位移。
 - 畫的順序：角色與怪物依 y 由上往下畫（下面的蓋在上面的前面），名字與血條最後統一畫在最上層。
 - 地圖建立時先載入該職業所有動作圖（`spriteImage`）；圖也加進 `sw.js` 安裝時預先快取的清單。
-- 目前已有：**惡魔**、**天使**、**魔鬥士**、**聖騎士**、**槍手**、**妖精**、**黑暗妖精**、**修羅**、**騎士**（沒有某個動作時 `playAnim` 直接略過）
+- 目前已有：**惡魔**、**天使**、**魔鬥士**、**聖騎士**、**槍手**、**妖精**、**黑暗妖精**、**修羅**、**騎士**、**王族**（沒有某個動作時 `playAnim` 直接略過）
 
 | 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |
 |---|---|---|---|---|---|
@@ -488,6 +490,21 @@ kills, deaths, settings, created`
 - 這張方向正確（下＝正面、右＝側面、上＝背面），照原圖順序用：走路 兩列 × 下 4／右 4／上 3；攻擊、受傷、施法各方向 3 格。
 - 裁切框取相鄰人物的中點，並避開每段左邊的直排「向下／向右／向上」字（x 190～225、800～837、1410～1465）。
 - 量到的身高因羽飾、舉劍不同，攻擊／受傷／施法用 `"bodyH": 175`（和走路同縮放 0.646）。攻擊只有 3 格，每格 110ms。
+
+**王族**（2026-10-10，版本 `20261010d`；同一張原圖 `tools/sprite-src/royal-sheet.jpg`（2000×1116），深灰漸層格子＋淡格線，規格 `royal-*.json` 用 `"tol": 30, "flat": true`）
+
+| 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |
+|---|---|---|---|---|---|
+| 走路 | `images/sprites/royal-walk.png` | 114×121 | 6／5／6 | 110ms | 287KB |
+| 攻擊 | `images/sprites/royal-attack.png` | 134×114 | 8／8／8 | 60ms | 430KB |
+| 施法 | `images/sprites/royal-cast.png` | 208×115 | 8／6／6 | 90ms | 507KB |
+| 受傷 | `images/sprites/royal-hit.png` | 172×117 | 2／2／2 | 130ms | 129KB |
+| 立繪 | `images/classes/royal.jpg` | 960×536（原圖 2000×1116 縮小） | | | 145KB |
+
+- 格子（內縮 3px）：上半 y 96～249／252～403／407～557，走路 x 148 起 6 格（每格約 126）、攻擊 x 962 起 8 格；下半 y 649～793／797～943／947～1091，受傷 x 233～443、446～655，施法第 1 列同攻擊 8 格、第 2～3 列 6 格寬格（x 962～1965）。
+- 走路「向右」第 1 格（原圖 7）其實是正面，沒用。右下角的灰色小編號會被「碰到邊緣的小塊」規則自動去掉。
+- **原圖方向畫反**：攻擊「向右」第 1～5、8 格與受傷「向右」第 1 格是朝左，切圖工具新增 `"flip": true`（每格寫成 `{ "r": [...], "flip": true }`）左右鏡像。
+- 攻擊／受傷／施法用 `"bodyH": 129`（和走路同縮放 0.876）。受傷每方向只有 2 格，每格 130ms。
 ### 18.1 切圖工具 `tools/cut-sprites.ps1`
 
 ```
@@ -507,7 +524,7 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   `"bg": "checker2", "checkerSize": 格子px`＝格紋背景、角色本身也有白色（聖騎士白披風）：有顏色或平均 < 120 的點＝角色細節（被陰影壓暗、
   有「隔 1 格差很多、隔 2 格一樣」週期的中性灰除外），膨脹 checkerSize/3 再侵蝕連成輪廓、從邊緣往內填＝背景；被輪廓包住的區域若同時有兩種格紋亮度且多數點有週期性＝露出的格紋。
   格子很大時（攻擊 107px）用 `"shape"` 指定輪廓連接半徑，不然預設 checkerSize/3 太大。
-  每一格可寫成 `{ "r": [x,y,w,h], "src": "名稱" }`，改用 `"alt"` 裡同名的原圖與去背設定（新舊原圖混用）。
+  每一格可寫成 `{ "r": [x,y,w,h], "src": "名稱", "flip": true }`：`src` 改用 `"alt"` 裡同名的原圖與去背設定（新舊原圖混用）；`flip` 把這格左右鏡像（原圖方向畫反時）。
   單一格可在裁切框加第 5 個數字 `0` 關掉陰影修正（陰影擋住披風下緣時，關掉才不會讓背景流進披風）。
   `"flat": true`＝背景是單一純色灰：洪水填滿後，再把「接近背景色（tol 內）且中性灰（RGB 最大最小差 < 12）」的點一律當背景，
   去掉被弓弦、手臂圍住的背景與地面陰影（角色顏色鮮豔時用，妖精）。
@@ -674,3 +691,57 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - **離線收益照常**：每個角色存檔有自己的時間 `t`，切走時若在掛機，下次進入就依離開時間結算（最多 12 小時、50%），等於其他角色在背景掛機。
 - 創角：`openCreate(slot)` 指定欄位（沒給就用第一個空欄位，滿了提示先刪除）；`confirmCreate` 不再刪舊存檔，寫進 `createSlot`。創角「返回」回人物選單（沒存檔回標題）。
 - 設定裡「刪除角色」只刪目前角色，還有其他角色時回人物選單。
+
+## 26. 職業技能擴充（2026-10-10，版本 `20261010b`）
+
+- 使用者反映「每職業只有 5 招太少」：每個職業補到 10～12 招（法師 16 招）。**只用既有效果欄位**（`strike` 的 mult／hits／aoe／spread／stun／ignoreAc／magic／undeadMul、`spell`、`buff`、`passive`），戰鬥程式沒改。
+- 陣列依學會等級排序（`playerAction` 取「最後一個可用的攻擊技能」＝最高級；高級技能冷卻中時自動改用低級的）。前期多數職業加了 Lv.5～8 的小技能（1.3～1.6 倍、冷卻 5～6 秒、MP 2～4），後期加 Lv.80～85 的終極技。
+- 新增招式：
+
+| 職業 | 新招（等級） |
+|---|---|
+| 王族 | 王者之劍 15、王者光環（被動）48、高級治癒術 62、王命 85 |
+| 騎士 | 猛擊 5、衝鋒斬 22、不屈意志（被動，低血）38、騎士誓約 52、盾擊 66、聖劍裁決 85 |
+| 法師 | 魔法屏障 52、魔力精通（被動）66、煉獄 78 |
+| 妖精 | 精靈之箭 8、精靈祝福（被動）30、暴風神射 52、穿透之箭 70、箭雨 82 |
+| 黑暗妖精 | 背刺 5、劇毒之刃 20、暗影之軀（被動）40、暗影風暴 52、暗影鎧甲 70、夜魘 85 |
+| 修羅 | 爆裂掌 5、金剛體 18、旋風腿 33、血戰（被動，低血）48、羅剎拳 62、阿修羅 85 |
+| 戰士 | 重擊 5、躍擊 18、鋼鐵之軀（被動）32、旋風斬 48、處決 62、大地崩裂 85 |
+| 槍手 | 快速射擊 5、閃光彈 28、穩定姿態（被動）42、穿甲彈 58、火箭砲 72、子彈時間 85 |
+| 魔鬥士 | 魔刃 5、火焰斬 28、魔力凝聚（被動）42、雷霆風暴 60、魔劍化身 72、天崩 85 |
+| 聖騎士 | 聖光打擊 8、虔誠光環（被動）40、正義之怒 58、高級治癒術 70、神聖審判 82 |
+| 天使 | 神聖射線 54、聖域 85 |
+| 惡魔 | 魔化皮膚（被動）25、生命汲取 58、末日 85 |
+
+- 被動的 `fx.hp` 不會生效（`calcStats` 先算 maxHp 才加被動），被動只用 ac／reduce／hit／mr／dodge／crit／sp／regen／lifesteal 等。
+- 平衡（各職業 Lv15／35，新手裝＋對應地圖，5 分鐘×6 次平均）：經驗約 +0～20%（雜訊約 ±15%），死亡與藥水用量持平；Lv60 新手裝必死，數字只供參考。
+- 存檔不受影響（技能由等級決定；`settings.skills` 只記關閉的技能 id）。
+
+## 27. 共鳴武器（2026-10-10，版本 `20261010c`；`resonance.js`）
+
+- 使用者決定：稀有武器各綁一招**專屬技能**，裝備時才能用；觸發方式**混合**；職業對上效果 ×1.3；首領、龍、異界、鍛造都能取得；20～30 把、強度分級。
+- 資料：`RESONANCE[武器id] = { tier, cls, trigger, …效果 }`，載入時寫進 `ITEMS[id].res`。效果 `kind` 沿用職業技能格式：
+  `strike`（mult／hits／aoe／spread／stun／ignoreAc／magic／undeadMul）、`spell`（dmg／spK／aoe／undeadMul）、`heal`（heal／spK）、`buff`（fx／sec）。
+- **三種觸發**（`RES_TRIGGER_NAMES`）：
+  - `cd` 冷卻施放：`playerAction` 在治癒、增益之後、職業攻擊技能之前檢查 `resonanceReady()`，冷卻存在 `player.cds.res`。
+  - `proc` 攻擊觸發：`physicalAttack` 命中後、`castSpell` 施放後呼叫 `resonanceOnHit()`，擲 `p` 機率。
+  - `charge` 共鳴爆發：同上每次 +1，存在 `player.resCharge = { id, n }`（換武器重算），滿 `n` 點爆發。
+  - proc／charge 觸發後先排進 `hunt.resPending`，等這次行動與 `reapMobs` 結算完，`huntTick` 再呼叫 `resonanceFlush` 放出來（避免在攻擊迴圈裡巢狀出手、打到已死的怪）。
+  - 共鳴技能本身的攻擊（技能 id `res_…`，`opt.res`）不會再觸發共鳴。
+- `castResonance`：轉成技能物件交給 `doStrike`／`castSpell`／`castHeal`／`castBuff`，**不耗 MP**，名稱「共鳴・xxx」（地圖動作、訊息分類照舊）。
+  `res.cls` 職業使用時傷害、治療 ×`RES_CLASS_BONUS`（1.3），增益時間 ×1.3。增益存 `player.buffs[res_武器id]`，`findSkill` 查不到時用 `findResonanceSkill` 取名稱與 fx。
+- **31 把**（`tier` 1 稀有／2 英雄／3 傳說／4 神話，`RES_TIERS` 顏色 `res-1～4`）：
+
+| 階 | 武器（觸發） | 取得 |
+|---|---|---|
+| 稀有 | 瑟魯基之劍（proc）、聖光之錘（proc）、暗黑鋼爪（proc）、暗黑雙刀（proc）、瑪那魔杖（charge）、**海賊王的火砲**（cd） | 既有掉落／鍛造；火砲＝海賊王・德雷克 5% |
+| 英雄 | 魔導狙擊槍（cd）、冰之女王魔杖（cd）、深淵鐮刀（charge）、惡魔之斧（proc）、**飛龍之矛**（proc）、**伊弗利特之爪**（proc） | 既有掉落；飛龍之矛＝巨大飛龍 5%、伊弗利特之爪＝伊弗利特 5% |
+| 傳說 | 屠龍劍（charge）、死亡騎士的烈炎之劍（proc）、風之弓（proc）＋12 把職業第 4 章任務武器（每職業一把，cd／proc／charge 各有） | 既有來源 |
+| 神話 | **大地裂斧**（charge）、**潮汐之杖**（cd）、**颶風之弓**（proc）、**熾焰魔劍**（proc） | 四大龍各 6%，或鍛造：基底武器＋該龍之鱗×5＋高階材料×2～4＋💰80,000 |
+
+- **異界首領**：`RES_MAP_BOSS_P` 10%（× 地圖獎勵加成）掉一把隨機共鳴武器，階級上限 `resMaxTierForMap`：T1～5 稀有、T6～10 英雄、T11～14 傳說、T15 神話。
+- 共鳴武器不會出現在暗黑式隨機裝備掉落（`randomEquipFor` 排除 `res`），戰利品過濾也不會賣掉（沒有商店價）。
+- 介面：道具說明與圖鑑多一個「🌟 共鳴」框（`resonanceHtml`：名稱、觸發方式、效果、職業共鳴）；圖鑑清單名稱前加 🌟、取得方式多列異界首領；
+  狩獵畫面增益列最後顯示 `resonanceChip`（冷卻倒數／觸發機率／共鳴值 n/N，✦＝職業共鳴中）。
+- 模擬（Lv.50、腐朽礦坑・深層、各武器配對應職業、3 分鐘 ×2）：每把每分鐘觸發約 3～12 次，全部都能正常放出。
+- 存檔不需轉換：`player.resCharge` 沒有就從 0 開始。離線收益的快轉模擬直接沿用（共鳴照常觸發）。

@@ -110,6 +110,15 @@
         .char-name { font-size: 17px; } .char-cls, .char-row, .char-bar { font-size: 14px; }
     }
 
+    /* 共鳴武器（ARCHITECTURE.md 第 27 節） */
+    .res-box { margin: 6px 0; padding: 6px 8px; border-radius: 6px; border: 1px solid; background: #00000040; line-height: 1.5; }
+    .res-box small { font-size: 11px; }
+    .res-1 { color: #7fc8ff; border-color: #3d6f99; }
+    .res-2 { color: #c99bff; border-color: #6a4a99; }
+    .res-3 { color: #ffb257; border-color: #99652a; }
+    .res-4 { color: #ff6b6b; border-color: #a33a3a; text-shadow: 0 0 6px #ff3b3b66; }
+    .res-chip { border: 1px solid; background: #00000066; }
+
     /* 創角 */
     #screen-create { padding: 16px; gap: 10px; }
     .class-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -587,29 +596,30 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261010a"></script>
-<script src="data/classes.js?v=20261010a"></script>
-<script src="data/skills.js?v=20261010a"></script>
-<script src="data/items.js?v=20261010a"></script>
-<script src="data/monsters.js?v=20261010a"></script>
-<script src="data/zones.js?v=20261010a"></script>
-<script src="data/quests.js?v=20261010a"></script>
-<script src="data/player.js?v=20261010a"></script>
-<script src="data/enchant.js?v=20261010a"></script>
-<script src="data/affix.js?v=20261010a"></script>
-<script src="data/craft.js?v=20261010a"></script>
-<script src="data/maps.js?v=20261010a"></script>
-<script src="data/combat.js?v=20261010a"></script>
-<script src="data/town.js?v=20261010a"></script>
-<script src="data/save.js?v=20261010a"></script>
-<script src="data/offline.js?v=20261010a"></script>
-<script src="data/ui.js?v=20261010a"></script>
-<script src="data/ui-create.js?v=20261010a"></script>
-<script src="data/ui-panels.js?v=20261010a"></script>
-<script src="data/codex.js?v=20261010a"></script>
-<script src="data/ui-frame.js?v=20261010a"></script>
-<script src="data/ui-scene.js?v=20261010a"></script>
-<script src="data/pwa.js?v=20261010a"></script>
-<script src="data/main.js?v=20261010a"></script>
+<script src="data/config.js?v=20261010d"></script>
+<script src="data/classes.js?v=20261010d"></script>
+<script src="data/skills.js?v=20261010d"></script>
+<script src="data/items.js?v=20261010d"></script>
+<script src="data/monsters.js?v=20261010d"></script>
+<script src="data/zones.js?v=20261010d"></script>
+<script src="data/quests.js?v=20261010d"></script>
+<script src="data/resonance.js?v=20261010d"></script>
+<script src="data/player.js?v=20261010d"></script>
+<script src="data/enchant.js?v=20261010d"></script>
+<script src="data/affix.js?v=20261010d"></script>
+<script src="data/craft.js?v=20261010d"></script>
+<script src="data/maps.js?v=20261010d"></script>
+<script src="data/combat.js?v=20261010d"></script>
+<script src="data/town.js?v=20261010d"></script>
+<script src="data/save.js?v=20261010d"></script>
+<script src="data/offline.js?v=20261010d"></script>
+<script src="data/ui.js?v=20261010d"></script>
+<script src="data/ui-create.js?v=20261010d"></script>
+<script src="data/ui-panels.js?v=20261010d"></script>
+<script src="data/codex.js?v=20261010d"></script>
+<script src="data/ui-frame.js?v=20261010d"></script>
+<script src="data/ui-scene.js?v=20261010d"></script>
+<script src="data/pwa.js?v=20261010d"></script>
+<script src="data/main.js?v=20261010d"></script>
 </body>
 </html>

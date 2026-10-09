@@ -150,6 +150,8 @@ function huntTick(dt) {
         if (!fightAlive()) return;
         reapMobs();
         if (!fightAlive()) return;
+        // 共鳴武器：這次攻擊觸發的共鳴技能（resonance.js）
+        if (resonanceFlush(st)) { if (!fightAlive()) return; reapMobs(); if (!fightAlive()) return; }
     }
     // 首領大招：蓄力時地上出現紅圈，時間到沒離開就吃重擊
     bossSkillTick(dt);
@@ -354,7 +356,7 @@ function spawnMonster() {
     else addLog(n > 1 ? `${hunt.mobs.map(m => `${m.name}（Lv.${m.lv}）`).join('、')} 一起圍了上來` : `${mon.name}（Lv.${mon.lv}）出現了`, n > 1 ? 'warn' : '');
 }
 
-// 玩家行動優先順序：治癒 → 增益 → 攻擊技能／魔法 → 普攻
+// 玩家行動優先順序：治癒 → 增益 → 共鳴武器（冷卻型）→ 攻擊技能／魔法 → 普攻
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = learnedSkills().filter(k => k.type !== 'passive' && s.skills[k.id] !== false);
@@ -366,6 +368,8 @@ function playerAction(st) {
     for (const k of skills) {
         if (k.type === 'buff' && ready(k) && !buffActive(k.group || k.id)) return castBuff(k);
     }
+    const rid = resonanceReady();
+    if (rid) return castResonance(rid, st);
     const atk = skills.filter(k => (k.type === 'spell' || k.type === 'strike') && ready(k)).pop();
     if (atk) return atk.type === 'spell' ? castSpell(atk, st) : doStrike(atk, st);
     physicalAttack(st, 1, {});
@@ -409,11 +413,12 @@ function castSpell(k, st) {
         return `${m.name} ${d}`;
     });
     addLog(targets.length > 1 ? `🔮 ${k.name}（範圍）！${parts.join('、')} 傷害` : `🔮 ${k.name}！${hunt.mon.name}受到 ${parts[0].split(' ').pop()} 傷害`, 'magic');
+    if (!k.id.startsWith('res_')) resonanceOnHit();   // 攻擊魔法也算一次命中（法師拿共鳴魔杖）
 }
 
 function doStrike(k, st) {
     useSkillCost(k);
-    const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name };
+    const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name, res: k.id.startsWith('res_') };
     const targets = mobTargets();
     const hit = k.aoe ? targets : [hunt.mon];
     if (k.aoe && targets.length > 1) addLog(`💥 ${k.name}（範圍）`, 'magic');
@@ -489,6 +494,7 @@ function physicalAttack(st, mult, opt, mon = hunt.mon) {
     mon.hp -= total;
     lifeSteal(total, st);
     if (st.weapon && st.weapon.drain) player.mp = Math.min(st.maxMp, player.mp + rand(st.weapon.drain[0], st.weapon.drain[1]));
+    if (!opt.res) resonanceOnHit();   // 共鳴武器：觸發／累積共鳴值（共鳴技能本身的攻擊不算）
     addLog(`${label}${hits > 1 ? '連擊' : '攻擊'}，${mon.name}受到 ${total} 傷害${crit ? '（爆擊！）' : ''}`, crit ? 'crit' : '');
     return true;
 }
@@ -601,6 +607,11 @@ function rollDrops(mon, z) {
     if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
     // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉
     rollMapDrop(mon, qm);   // 異界地圖掉落（maps.js）
+    // 異界首領：依地圖階級掉共鳴武器（resonance.js）
+    if (mon.mapBoss && player.mapRun && chance(RES_MAP_BOSS_P * qm)) {
+        const max = resMaxTierForMap(player.mapRun.t), pool = Object.keys(RESONANCE).filter(id => RESONANCE[id].tier <= max);
+        give(pool[rand(0, pool.length - 1)], null, null);
+    }
     if (mon.elite || chance((mon.boss ? 0.5 : RANDOM_EQUIP_P) * qm)) {
         const id = randomEquipFor(mon.lv);
         if (id) give(id, null, rollQuality(mon.boss, true));

@@ -15,6 +15,15 @@ const CLASSES = {
         base: { str: 13, dex: 10, con: 10, int: 10, wis: 11, cha: 13 },
         hp: [9, 13], mp: [2, 4], startHp: 14, startMp: 4, mr: 10, spDiv: 8, mpRegenK: 0.5,
         weapons: ['dagger', 'sword', 'bow'], shield: true, start: ['shortSword', 'leatherArmor', 'woodShield'],
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/royal-*.json 切出（"flat"；原圖朝左的格子用 "flip" 鏡像，第 18 節）
+        sprite: {
+            drawH: 48, charH: 113,
+            walk:   { src: 'images/sprites/royal-walk.png',   cellW: 114, cellH: 121, frames: { down: 6, right: 5, up: 6 }, ms: 110 },
+            attack: { src: 'images/sprites/royal-attack.png', cellW: 134, cellH: 114, frames: { down: 8, right: 8, up: 8 }, ms: 60 },
+            cast:   { src: 'images/sprites/royal-cast.png',   cellW: 208, cellH: 115, frames: { down: 8, right: 6, up: 6 }, ms: 90 },
+            hit:    { src: 'images/sprites/royal-hit.png',    cellW: 172, cellH: 117, frames: { down: 2, right: 2, up: 2 }, ms: 130 },
+        },
+        art: 'images/classes/royal.jpg',
     },
     knight: {
         name: '騎士', icon: '🛡️',

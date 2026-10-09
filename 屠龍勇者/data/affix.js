@@ -125,7 +125,7 @@ function randomEquipFor(lv) {
     const cap = Math.max(300, lv * 600);
     const pool = Object.keys(ITEMS).filter(id => {
         const d = ITEMS[id];
-        return (d.cat === 'weapon' || d.cat === 'armor') && !d.classes && sellPriceOf(id) <= cap;
+        return (d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res && sellPriceOf(id) <= cap;   // 共鳴武器只從指定來源取得
     });
     return pool.length ? pool[rand(0, pool.length - 1)] : null;
 }

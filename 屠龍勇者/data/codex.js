@@ -88,7 +88,11 @@ function codexSources(id) {
     // 只列真的掉得出來的（需要的怪物等級不超過遊戲裡最高等的怪，永夜之塔 100F 首領約 Lv.92）
     const needLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
     const topLv = Math.max(makeTowerMonster(100, true).lv, ...Object.values(MONSTERS).map(m => m.lv));
-    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);
+    if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);
+    if (d.res) {   // 共鳴武器：異界首領（resonance.js）
+        const minT = [1, 6, 11, 15][d.res.tier - 1];
+        list.push(`掉落：T${minT} 以上異界首領 ${Math.round(RES_MAP_BOSS_P * 100)}%（隨機一把共鳴武器）`);
+    }
     return list.concat([...new Set(codexSrcCache[id] || [])]);
 }
 
@@ -152,6 +156,7 @@ function codexDetailHtml(id) {
     <div class="codex-sec">基礎屬性</div>
     <div class="codex-stats">${L.map(([k, v]) => `<span class="muted">${k}</span><span>${v}</span>`).join('')}</div>
     ${d.desc ? `<div class="codex-desc">${esc(d.desc)}</div>` : ''}
+    ${d.res ? `<div class="codex-sec">共鳴技能</div>${resonanceHtml(d)}` : ''}
     <div class="codex-sec">取得方式</div>
     <div class="codex-src">${src.length ? src.map(s => `<div>・${esc(s)}</div>`).join('') : '<div class="muted">尚無取得管道</div>'}</div>`;
 }
@@ -173,7 +178,7 @@ function renderCodex() {
     h += `<div class="codex-list" id="codex-list">` + (list.map(id => {
         const d = ITEMS[id], g = codexGradeOf(id);
         return `<button class="codex-row ${id === codexSel ? 'active' : ''} ${codexOwned(id) ? 'owned' : ''}" onclick="selectCodex('${id}')">
-            <span class="codex-ico ${g.cls}">${codexIcon(d)}</span><span class="codex-n ${g.cls}">${esc(d.name)}</span>
+            <span class="codex-ico ${g.cls}">${codexIcon(d)}</span><span class="codex-n ${g.cls}">${d.res ? '🌟' : ''}${esc(d.name)}</span>
             <span class="${g.cls}">${g.name}</span><span class="muted">${codexKind(d)}</span></button>`;
     }).join('') || '<p class="muted">找不到符合的道具</p>') + `</div>`;
     h += `<div class="codex-foot muted">共 ${list.length} 件（全部 ${total} 件，已擁有 ${owned} 件）</div>`;
