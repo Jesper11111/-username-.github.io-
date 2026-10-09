@@ -35,7 +35,12 @@ const SCENE_BGS = {
     // 村莊：使用者提供的中世紀村莊俯視圖（1755×896，中間石板廣場＋噴泉），鋪成 30×15 格；使用者要求不放 NPC，
     // 設施從「村莊設施」按鈕或底部格子打開（TOWN_NPCS／TOWN_HOUSES 只在沒有背景圖時使用）
     village: {
-        src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10], block: [],
+        src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10],
+        // 擋路（格子 x0,y0,x1,y1；每格約原圖 58×60 px）：房屋、教堂、噴泉、攤位、水面、下方樹叢
+        block: [
+            [0, 0, 6, 1], [7, 0, 12, 5], [14, 1, 21, 5], [21, 0, 29, 3], [22, 4, 29, 8], [1, 4, 6, 8],
+            [3, 10, 10, 13], [20, 8, 26, 10], [12, 7, 14, 8], [15, 5, 18, 7], [7, 8, 10, 9], [13, 13, 16, 14], [27, 9, 29, 14],
+        ],
     },};
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
@@ -261,6 +266,11 @@ function sceneUpdate(dt) {
                 const [dx, dy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][rand(0, 3)];
                 if (freeTileFor(pl.x + dx, pl.y + dy)) pl.path = [[pl.x + dx, pl.y + dy]];
             }
+        } else if (!inZone && townKeys.length) {
+            // 村莊：按住方向鍵／WASD 一格一格走（擋住就只轉向）
+            const [dx, dy] = TOWN_KEY_DIR[townKeys[townKeys.length - 1]];
+            if (freeTileFor(pl.x + dx, pl.y + dy)) pl.path = [[pl.x + dx, pl.y + dy]];
+            else pl.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
         }
     }
     if (pl.path.length) {
@@ -466,6 +476,14 @@ function sceneDraw(ctx, W, H) {
         if (n.prop) { ctx.font = '18px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.fillText(n.prop, sx - 20, sy + 6); }
         labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - 26, camX, camY, n));
     } });
+    // 村莊點擊移動的目的地標記（走到就消失）
+    const mk = scene.moveMark;
+    if (mk && pl.path.length) {
+        const sx = mk.x * TILE - camX + TILE / 2, sy = mk.y * TILE - camY + TILE / 2 + 8, k = (gameNow % 900) / 900;
+        ctx.strokeStyle = '#ffe7a8'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9 - k * 0.6;
+        ctx.beginPath(); ctx.ellipse(sx, sy, 6 + k * 8, 3 + k * 4, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 1;
+    } else scene.moveMark = null;
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     labels.forEach(f => f());
     // 特效、飄字
@@ -577,8 +595,34 @@ function sceneClick(ev) {
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { plate.npc.act(); return; }
-    if (scene.bg) return;   // 背景圖村莊只看 hot 範圍
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
-    const b = TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
-    if (b) b.act();
+    if (!scene.bg) {
+        const b = TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
+        if (b) { b.act(); return; }
+    }
+    // 點地面：走過去（點到擋路的地方就走到旁邊）
+    if (tx < 0 || ty < 0 || tx >= scene.mw || ty >= scene.mh) return;
+    const pl = scene.pl;
+    const free = scene.grid[ty][tx] === 0;
+    const path = free ? findPath(pl.x, pl.y, tx, ty, false) : findPath(pl.x, pl.y, tx, ty, true);
+    if (path.length) { pl.path = path; const end = path[path.length - 1]; scene.moveMark = { x: end[0], y: end[1] }; }
 }
+
+// 村莊鍵盤移動：方向鍵／WASD（輸入框打字、對話框開著、不在村莊狩獵畫面時不作用）
+const TOWN_KEY_DIR = {
+    ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+    w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0], W: [0, -1], S: [0, 1], A: [-1, 0], D: [1, 0],
+};
+let townKeys = [];
+document.addEventListener('keydown', ev => {
+    if (!TOWN_KEY_DIR[ev.key] || !scene || !player || player.loc.type !== 'town' || !huntVisible()) return;
+    const t = ev.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if ($('dialog-layer') && $('dialog-layer').classList.contains('active')) return;
+    ev.preventDefault();
+    if (!townKeys.includes(ev.key)) townKeys.push(ev.key);
+    scene.moveMark = null;
+    if (scene.pl.path.length > 1) scene.pl.path = scene.pl.path.slice(0, 1);   // 正在點擊移動：走完這一格就改用鍵盤
+});
+document.addEventListener('keyup', ev => { townKeys = townKeys.filter(k => k !== ev.key && k.toLowerCase() !== ev.key.toLowerCase()); });
+window.addEventListener('blur', () => { townKeys = []; });
