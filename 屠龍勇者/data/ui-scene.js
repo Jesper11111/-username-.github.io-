@@ -34,8 +34,12 @@ const SCENE_BGS = {
     },
     // 村莊：使用者提供的中世紀村莊俯視圖（1755×896，中間石板廣場＋噴泉），鋪成 30×15 格；使用者要求不放 NPC，
     // 設施從「村莊設施」按鈕或底部格子打開（TOWN_NPCS／TOWN_HOUSES 只在沒有背景圖時使用）
+    // walk：可以走的範圍（其他格子都擋住）＝廣場、往南的泥土路、石橋、教堂旁北路、往港口的東側草地；
+    // block 再擋掉 walk 裡面的噴泉、市集攤位、推車
     village: {
-        src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10], block: [],
+        src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10],
+        walk: [[8, 6, 19, 10], [10, 10, 20, 11], [16, 12, 21, 13], [12, 2, 14, 5], [19, 7, 22, 9]],
+        block: [[12, 7, 14, 8], [8, 8, 10, 9], [15, 6, 17, 6], [17, 7, 18, 7], [17, 9, 18, 9]],
     },};
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
@@ -107,6 +111,9 @@ function buildScene() {
             grid[y].push(edge ? 1 : (!bg && !nearCenter && rnd() < theme.dens ? 2 : 0));
         }
     }
+    if (bg && bg.walk) for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+        if (!bg.walk.some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1)) grid[y][x] = 1;
+    }
     if (bg) for (const [x0, y0, x1, y1] of bg.block) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) grid[y][x] = 1;
     const deco = {};   // 障礙物用哪個 emoji
     for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (grid[y][x] === 2) deco[x + ',' + y] = theme.obst[Math.floor(rnd() * theme.obst.length)];
@@ -124,7 +131,7 @@ function buildScene() {
         pl: { x: cx, y: cy, rx: cx, ry: cy, path: [], dir: 'down', lunge: null, idleCd: 1500 },
         mons: [], engaged: null, floats: [], effects: [],
         lastSeq: logSeq, lastPlayerHp: player.hp, critNext: false, spawnCd: 0, w: 0, h: 0,
-        cam: { x: cx * TILE, y: cy * TILE },
+        cam: { x: cx * TILE, y: cy * TILE }, moveMark: null,
     };
 }
 
@@ -244,6 +251,15 @@ function sceneUpdate(dt) {
     scene.mons = scene.mons.filter(m => !(m.dead && m.dying <= 0));
 
     // 角色移動
+    if (!inZone && !pl.path.length) {
+        // 村莊：玩家自由控制（方向鍵／WASD 按住連走；點地圖走過去，見 sceneClick）
+        const d = sceneKeyDir();
+        if (d) {
+            pl.dir = d[2];
+            if (freeTileFor(pl.x + d[0], pl.y + d[1])) pl.path = [[pl.x + d[0], pl.y + d[1]]];
+        }
+    }
+    if (scene.moveMark) { scene.moveMark.t += dt; if (scene.moveMark.t > 700 || !pl.path.length) scene.moveMark = null; }
     if (!pl.path.length) {
         if (fighting && scene.engaged) {
             const e = scene.engaged;
@@ -469,6 +485,12 @@ function sceneDraw(ctx, W, H) {
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     labels.forEach(f => f());
     // 特效、飄字
+    if (scene.moveMark) {   // 點地圖移動的目的地標記
+        const mk = scene.moveMark, sx = mk.x * TILE - camX + TILE / 2, sy = mk.y * TILE - camY + TILE / 2 + 8, k = Math.min(1, mk.t / 700);
+        ctx.strokeStyle = '#ffe7a8'; ctx.globalAlpha = 1 - k * 0.7; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(sx, sy, 12 - k * 5, 5 - k * 2, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 1;
+    }
     for (const e of scene.effects) {
         const sx = e.x * TILE - camX + TILE / 2, sy = e.y * TILE - camY + TILE / 2, k = e.t / e.dur;
         ctx.strokeStyle = e.color; ctx.globalAlpha = 1 - k; ctx.lineWidth = 3;
@@ -577,8 +599,49 @@ function sceneClick(ev) {
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { plate.npc.act(); return; }
-    if (scene.bg) return;   // 背景圖村莊只看 hot 範圍
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
-    const b = TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
-    if (b) b.act();
+    const b = !scene.bg && TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
+    if (b) { b.act(); return; }
+    sceneWalkTo(tx, ty);
 }
+
+// 村莊自由移動：點到可走的格子就走過去；點到牆／建築就走到最近的旁邊
+function sceneWalkTo(tx, ty) {
+    const pl = scene.pl;
+    if (tx < 0 || ty < 0 || tx >= scene.mw || ty >= scene.mh || (tx === pl.x && ty === pl.y)) return;
+    // 正在兩格之間走：從下一格起算，避免倒退
+    const sx = pl.path.length ? pl.path[0][0] : pl.x, sy = pl.path.length ? pl.path[0][1] : pl.y;
+    let path = freeTileFor(tx, ty) ? findPath(sx, sy, tx, ty, false) : [];
+    if (!path.length) path = findPath(sx, sy, tx, ty, true);
+    if (!path.length && !(sx === tx && sy === ty)) return;
+    pl.path = (pl.path.length ? [pl.path[0]] : []).concat(path);
+    const end = pl.path[pl.path.length - 1] || [sx, sy];
+    scene.moveMark = { x: end[0], y: end[1], t: 0 };
+}
+
+// 方向鍵／WASD：按住的最後一個方向
+const sceneKeys = [];
+const SCENE_KEY_DIRS = {
+    ArrowUp: [0, -1, 'up'], ArrowDown: [0, 1, 'down'], ArrowLeft: [-1, 0, 'left'], ArrowRight: [1, 0, 'right'],
+    w: [0, -1, 'up'], s: [0, 1, 'down'], a: [-1, 0, 'left'], d: [1, 0, 'right'],
+};
+function sceneKeyDir() { return sceneKeys.length ? SCENE_KEY_DIRS[sceneKeys[sceneKeys.length - 1]] : null; }
+function sceneKeyName(ev) { return ev.key.length === 1 ? ev.key.toLowerCase() : ev.key; }
+document.addEventListener('keydown', ev => {
+    const k = sceneKeyName(ev);
+    if (!SCENE_KEY_DIRS[k] || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (!scene || !player || player.loc.type !== 'town' || !huntVisible()) return;
+    const t = ev.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    const dl = $('dialog-layer');
+    if (dl && dl.classList.contains('active')) return;
+    ev.preventDefault();
+    if (!sceneKeys.includes(k)) sceneKeys.push(k);
+    scene.pl.path = scene.pl.path.slice(0, 1);   // 改用鍵盤：取消點地圖的路線（走完這一格）
+    scene.moveMark = null;
+});
+document.addEventListener('keyup', ev => {
+    const i = sceneKeys.indexOf(sceneKeyName(ev));
+    if (i >= 0) sceneKeys.splice(i, 1);
+});
+window.addEventListener('blur', () => { sceneKeys.length = 0; });
