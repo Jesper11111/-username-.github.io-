@@ -120,7 +120,7 @@ function renderLogPop() {
 }
 
 function huntButtonsHtml() {
-    // PC 橫式外框：地圖、村莊、回家卷軸、步行回村都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與魔塔上下樓
+    // PC 橫式外框：地圖、村莊、回家卷軸、步行回村都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與永夜之塔上下樓
     if (isPcFrame()) {
         if (inTown()) return '';
         if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
@@ -288,7 +288,7 @@ function renderChar() {
     const dragons = DRAGON_IDS.map(id => `${player.dragons[id] ? '✅' : '⬜'} ${MONSTERS[id].name}`).join('<br>');
     h += `<div class="panel"><h4>冒險紀錄</h4><div class="kv-grid">
         <span>擊殺數</span><b>${fmt(player.kills)}</b><span>死亡數</span><b>${player.deaths}</b>
-        <span>魔塔</span><b>可到 ${player.towerMax}F</b></div>
+        <span>永夜之塔</span><b>可到 ${player.towerMax}F</b></div>
         <p class="dragon-list">${dragons}</p>${hasDragonTitle() ? '<p class="good">👑 稱號：屠龍勇者</p>' : ''}</div>`;
     return h;
 }

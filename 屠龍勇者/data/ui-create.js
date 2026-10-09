@@ -62,7 +62,7 @@ function confirmCreate() {
     deleteSave();
     createPlayer(name, createState.cls, createState.stats);
     saveGame();
-    addLog(`歡迎來到說話之島，${name}！先去「地圖」傳送到說話之島狩獵吧。Lv.15 起可以在「📜 任務」接職業任務。`, 'sys');
+    addLog(`歡迎來到低語海岸，${name}！先去「地圖」傳送到低語海岸狩獵吧。Lv.15 起可以在「📜 任務」接職業任務。`, 'sys');
     enterGame();
-    gameAlert('序章', `四大龍甦醒，亞丁大陸陷入恐懼。\n\n${CLASS_STORIES[createState.cls].story}\n\n小提示：掛機會自動戰鬥、喝水、施法，記得帶足紅水與回家卷軸。Lv.15 起到「📜 任務」接職業任務。`);
+    gameAlert('序章', `四大龍甦醒，黑暗大陸陷入恐懼。\n\n${CLASS_STORIES[createState.cls].story}\n\n小提示：掛機會自動戰鬥、喝水、施法，記得帶足紅水與回家卷軸。Lv.15 起到「📜 任務」接職業任務。`);
 }
