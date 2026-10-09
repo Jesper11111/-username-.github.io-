@@ -224,10 +224,9 @@
     #frame.pc .scene-wrap { position: absolute; inset: 0; border: 0; border-radius: 0; }
     #frame.pc .scene-top { left: calc(var(--s) * 100px); top: calc(var(--s) * 220px); font-size: 14px; }
     #frame.pc .scene-buffs { left: calc(var(--s) * 100px); top: calc(var(--s) * 255px); right: auto; width: calc(var(--s) * 500px); }
-    #frame.pc .hunt-ctrl {
-        position: absolute; left: calc(var(--s) * 52px); bottom: calc(var(--s) * 14px); width: calc(var(--s) * 560px);
-        padding: 6px 8px; background: #0b0807d9; border: 1px solid #5a4028; border-radius: 8px; z-index: 1;
-    }
+    /* PC：不畫操作框（功能都在底部格子），只剩魔塔上下樓／取消步行時浮在地圖左上（地點名稱下方） */
+    #frame.pc .hunt-ctrl { position: absolute; left: calc(var(--s) * 100px); top: calc(var(--s) * 300px); padding: 0; background: none; border: 0; z-index: 1; }
+    #frame.pc .hunt-ctrl.empty, #frame.pc #hunt-session { display: none; }
     #frame.pc #hud-top { top: calc(var(--s) * 272px); left: calc(var(--s) * 760px); right: calc(var(--s) * 760px); z-index: 3; font-size: 13px; }
     #frame.pc #hud-bottom { left: calc(var(--s) * 720px); right: calc(var(--s) * 720px); bottom: calc(var(--s) * 300px); height: calc(var(--s) * 70px); z-index: 3; }
     #frame.pc .orb { width: calc(var(--s) * 240px); height: calc(var(--s) * 240px); bottom: calc(var(--s) * 76px); }
@@ -435,25 +434,25 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009d"></script>
-<script src="data/classes.js?v=20261009d"></script>
-<script src="data/skills.js?v=20261009d"></script>
-<script src="data/items.js?v=20261009d"></script>
-<script src="data/monsters.js?v=20261009d"></script>
-<script src="data/zones.js?v=20261009d"></script>
-<script src="data/quests.js?v=20261009d"></script>
-<script src="data/player.js?v=20261009d"></script>
-<script src="data/enchant.js?v=20261009d"></script>
-<script src="data/combat.js?v=20261009d"></script>
-<script src="data/town.js?v=20261009d"></script>
-<script src="data/save.js?v=20261009d"></script>
-<script src="data/offline.js?v=20261009d"></script>
-<script src="data/ui.js?v=20261009d"></script>
-<script src="data/ui-create.js?v=20261009d"></script>
-<script src="data/ui-panels.js?v=20261009d"></script>
-<script src="data/ui-frame.js?v=20261009d"></script>
-<script src="data/ui-scene.js?v=20261009d"></script>
-<script src="data/pwa.js?v=20261009d"></script>
-<script src="data/main.js?v=20261009d"></script>
+<script src="data/config.js?v=20261009e"></script>
+<script src="data/classes.js?v=20261009e"></script>
+<script src="data/skills.js?v=20261009e"></script>
+<script src="data/items.js?v=20261009e"></script>
+<script src="data/monsters.js?v=20261009e"></script>
+<script src="data/zones.js?v=20261009e"></script>
+<script src="data/quests.js?v=20261009e"></script>
+<script src="data/player.js?v=20261009e"></script>
+<script src="data/enchant.js?v=20261009e"></script>
+<script src="data/combat.js?v=20261009e"></script>
+<script src="data/town.js?v=20261009e"></script>
+<script src="data/save.js?v=20261009e"></script>
+<script src="data/offline.js?v=20261009e"></script>
+<script src="data/ui.js?v=20261009e"></script>
+<script src="data/ui-create.js?v=20261009e"></script>
+<script src="data/ui-panels.js?v=20261009e"></script>
+<script src="data/ui-frame.js?v=20261009e"></script>
+<script src="data/ui-scene.js?v=20261009e"></script>
+<script src="data/pwa.js?v=20261009e"></script>
+<script src="data/main.js?v=20261009e"></script>
 </body>
 </html>

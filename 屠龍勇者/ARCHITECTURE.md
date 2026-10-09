@@ -43,7 +43,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261009e`）。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
@@ -426,7 +426,7 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 |---|---|---|
 | 地圖 `#panel` | x 92～1908，y 150～838（整個窗口） | 即時地圖（`ui-scene.js` 依寬度放大格子，`clamp(W/(32×28), 1, 1.3)`，約顯示 28 格寬；角色畫在偏下方） |
 | 地點、增益 | 窗口左上 | 地點名稱、增益剩餘時間 |
-| 掛機面板 `.hunt-ctrl` | 窗口左下 | 回家、步行、效率、補給 |
+| 掛機面板 `.hunt-ctrl` | 窗口左上（地點名稱下方） | **PC 不畫操作框**（2026-10-09 使用者要求；地圖、村莊、回家卷軸、步行回村都在底部格子，效率／補給也不顯示），只在魔塔顯示「⬇ 下樓／⬆ 上樓」、步行中顯示「取消步行」，沒按鈕時整塊隱藏（`.hunt-ctrl.empty`） |
 | 骷髏頭 `#skull-hunt` | x 950～1050、y 1010～1110（底部正中間） | 開始／停止掛機（第 15 節） |
 | 骷髏頭 `#skull-log` | x 5～100、y 1010～1110（左下、紅球下方） | 戰鬥訊息抽屜開關；抽屜 `#log-pop` 在窗口左下（第 17 節） |
 | `#hud-top` | 惡魔下巴下方（x 760～1240） | 名稱、職業 Lv、金幣、AC、MR、負重 |
