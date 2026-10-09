@@ -371,8 +371,9 @@
     .codex-filter input { flex: 1; min-width: 0; padding: 6px 8px; background: #0008; color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
     .codex-filter select { padding: 6px; background: #0008; color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
     .codex-box { position: sticky; top: 0; z-index: 2; margin-bottom: 6px; box-shadow: 0 6px 12px #000c; background: radial-gradient(ellipse at 20% 30%, #2a2030, #120e0b 70%); border-color: #7a5530; }
-    .codex-box[hidden] { display: none; }
-    .codex-close { position: absolute; top: 8px; right: 8px; z-index: 1; padding: 2px 9px; font-size: 13px; }
+    .codex-pop { position: relative; line-height: 1.5; }
+    .codex-close { position: absolute; top: 0; right: 0; z-index: 1; padding: 2px 9px; font-size: 13px; }
+    .codex-pop .codex-detail { padding-right: 34px; }
     .codex-detail { display: flex; gap: 12px; align-items: center; }
     .codex-art { flex: none; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 36px;
         border: 1px solid currentColor; border-radius: 10px; background: radial-gradient(#ffffff14, #0000 70%); box-shadow: inset 0 0 14px #000, 0 0 10px currentColor; }
@@ -507,27 +508,27 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261009m"></script>
-<script src="data/classes.js?v=20261009m"></script>
-<script src="data/skills.js?v=20261009m"></script>
-<script src="data/items.js?v=20261009m"></script>
-<script src="data/monsters.js?v=20261009m"></script>
-<script src="data/zones.js?v=20261009m"></script>
-<script src="data/quests.js?v=20261009m"></script>
-<script src="data/player.js?v=20261009m"></script>
-<script src="data/enchant.js?v=20261009m"></script>
-<script src="data/affix.js?v=20261009m"></script>
-<script src="data/combat.js?v=20261009m"></script>
-<script src="data/town.js?v=20261009m"></script>
-<script src="data/save.js?v=20261009m"></script>
-<script src="data/offline.js?v=20261009m"></script>
-<script src="data/ui.js?v=20261009m"></script>
-<script src="data/ui-create.js?v=20261009m"></script>
-<script src="data/ui-panels.js?v=20261009m"></script>
-<script src="data/codex.js?v=20261009m"></script>
-<script src="data/ui-frame.js?v=20261009m"></script>
-<script src="data/ui-scene.js?v=20261009m"></script>
-<script src="data/pwa.js?v=20261009m"></script>
-<script src="data/main.js?v=20261009m"></script>
+<script src="data/config.js?v=20261009n"></script>
+<script src="data/classes.js?v=20261009n"></script>
+<script src="data/skills.js?v=20261009n"></script>
+<script src="data/items.js?v=20261009n"></script>
+<script src="data/monsters.js?v=20261009n"></script>
+<script src="data/zones.js?v=20261009n"></script>
+<script src="data/quests.js?v=20261009n"></script>
+<script src="data/player.js?v=20261009n"></script>
+<script src="data/enchant.js?v=20261009n"></script>
+<script src="data/affix.js?v=20261009n"></script>
+<script src="data/combat.js?v=20261009n"></script>
+<script src="data/town.js?v=20261009n"></script>
+<script src="data/save.js?v=20261009n"></script>
+<script src="data/offline.js?v=20261009n"></script>
+<script src="data/ui.js?v=20261009n"></script>
+<script src="data/ui-create.js?v=20261009n"></script>
+<script src="data/ui-panels.js?v=20261009n"></script>
+<script src="data/codex.js?v=20261009n"></script>
+<script src="data/ui-frame.js?v=20261009n"></script>
+<script src="data/ui-scene.js?v=20261009n"></script>
+<script src="data/pwa.js?v=20261009n"></script>
+<script src="data/main.js?v=20261009n"></script>
 </body>
 </html>
