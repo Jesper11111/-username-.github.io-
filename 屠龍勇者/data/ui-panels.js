@@ -111,9 +111,8 @@ function huntButtonsHtml() {
     if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
-    let h = player.hunting
-        ? `<button class="danger" onclick="stopHuntBtn()">⏸ 停止掛機</button>`
-        : `<button onclick="startHuntBtn()">▶ 開始掛機</button>`;
+    // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick），這裡只顯示提示
+    let h = `<span class="skull-tip ${player.hunting ? 'on' : ''}">${player.hunting ? '💀 掛機中・點下方骷髏頭停止' : '💀 點下方骷髏頭開始掛機'}</span>`;
     h += `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
     h += `<button class="secondary" onclick="walkHomeBtn()">🚶 步行回村</button>`;
     if (z && z.type === 'tower') {
@@ -160,8 +159,6 @@ function updateHuntLive() {
     }
 }
 
-function startHuntBtn() { startHunt(); updateHuntLive(); }
-function stopHuntBtn() { stopHunt('⏸ 停止掛機'); updateHuntLive(); }
 function homeScrollBtn() { if (!useHomeScroll('')) showToast('沒有回家卷軸'); }
 function walkHomeBtn() { startWalkHome(); updateHuntLive(); }
 function cancelWalkBtn() { cancelWalk(); updateHuntLive(); }
