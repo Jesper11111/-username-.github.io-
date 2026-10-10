@@ -52,6 +52,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showTitle();
     setInterval(gameTick, TICK_MS);
     initPwa();
+    initCloud();
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
 window.addEventListener('pagehide', saveGame);

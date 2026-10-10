@@ -1,6 +1,6 @@
 # 屠龍勇者：架構文件
 
-以「天堂 1」為藍本的**自動掛機 RPG**（單機，存檔在瀏覽器）。與「凡塵修仙傳」同一個 repo，放在子資料夾 `屠龍勇者/`，
+以「天堂 1」為藍本的**自動掛機 RPG**（單機，存檔在瀏覽器；可選擇登入帳號把存檔同步到雲端，第 29 節）。與「凡塵修仙傳」同一個 repo，放在子資料夾 `屠龍勇者/`，
 網址 `<網站>/屠龍勇者/`。兩者完全獨立，不共用程式。修改前先讀本文件對應章節，修改後同步更新。
 
 ## 1. 專案結構
@@ -24,6 +24,7 @@
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
 | `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
+| `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
@@ -36,11 +37,11 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔資料表與 RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -49,7 +50,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010f`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -769,3 +770,37 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - 新防具的基礎屬性可以有 `hit`／`dmg`／`crit`／`dodge`／`lifesteal`／`hpRegen`／`mpRegen`（`calcStats` 的 `addFx` 本來就收），道具說明與圖鑑已補上這些欄位的顯示。
 - 異界首領的共鳴掉落池（第 27 節）自動包含防具，訊息改成「共鳴裝備」。
 - 模擬（Lv.50 腐朽礦坑・深層、3 分鐘 ×2）：受擊／攻擊觸發每分鐘約 4～7 次、爆發型約 1.5～3 次、冷卻型 2～3 次；危急觸發在關掉自動喝水時確認會在低血量發動（守護 +68、浴火重生 +304）。
+
+## 29. 帳號登入與雲端存檔（2026-10-10，版本 `20261010f`；`cloud.js`、`tools/supabase.sql`）
+
+- 使用者要求：往多人連線發展的第一步，先做「帳號登入＋雲端存檔」，後端用 **Supabase 免費方案**（與修仙的 Firebase 分開，不吃修仙的額度）。
+- **開關**：`cloud.js` 頂端 `CLOUD_SUPABASE_URL`、`CLOUD_SUPABASE_KEY`（Project URL 與 publishable／anon key，本來就公開）。任一個空字串＝完全不啟用：不載入 SDK、不連網、標題畫面沒有「☁️」按鈕、設定分頁沒有雲端區塊。
+  `CLOUD_GOOGLE`＝顯示「使用 Google 登入」（要先在 Supabase 主控台 Authentication → Providers 設定 Google）。
+- **SDK**：`@supabase/supabase-js` UMD 版（`CLOUD_SDK_URL`，jsDelivr 固定版本），`initCloud`（main.js 啟動時呼叫）動態載入；登入狀態由 SDK 存在 `dragonSlayer_auth`。sw.js 不攔外部網域，離線時雲端功能失效但遊戲照常。
+- **資料表** `dragon_saves`（`tools/supabase.sql`）：主鍵 (user_id, slot)，欄位 `client_t`（存檔的 t）、`name/cls/lv`（方便主控台查看）、`data`（整份存檔 jsonb）、`updated_at`（伺服器時間，trigger 自動寫）。
+  RLS：登入者只能讀寫刪自己的列；anon 完全沒有權限。2026-10-10 在本機 PostgreSQL 16（模擬 auth schema）實測：可重複執行、別人的列看不到改不了、slot 超出範圍被擋、條件式更新衝突時 0 列。
+- **本機仍是主要存檔**：`saveGame` 照舊寫 localStorage，成功後 `cloudMarkDirty(欄位)`；`cloudAutoPush` 每 15 秒檢查，同一批最多每 `CLOUD_PUSH_MS`（60 秒）上傳一次。
+  回標題（`backToTitle`）、開人物選單、切到背景（visibilitychange）、設定的「☁️ 立即上傳」會立刻上傳。`deleteSave` 呼叫 `cloudDeleteSlot` 一併刪雲端；失敗時記在 `dragonSlayer_cloud_del`，下次同步再刪。
+- **防覆蓋（多裝置）**：`cloudKnown[欄位]`＝上次看到的雲端 `client_t`。上傳用「`update … where slot=? and client_t=上次看到的`」，0 列＝別台裝置已經更新過 → 進度衝突，該欄位暫停上傳；
+  遊戲中的角色跳「☁️ 進度衝突」對話框：「用雲端的進度」（`cloudUseCloudSlot`，下載後重新進入角色，照常算離線收益）／「用這台的進度」（`cloudUseLocalSlot`，upsert 強制覆蓋）。雲端沒有這欄時用 insert，主鍵重複同樣視為衝突。
+- **登入時合併**（`cloudSync`）：用角色的 `created|cls` 辨認同一角色。
+  - 同一角色：取 `t` 較新的一邊（本機較新 → 上傳；雲端較新 → 下載）。
+  - 只有一邊有的角色都保留；本機欄位被雲端佔走時放到空欄位；加起來超過 8 個時不合併、提示先刪角色。
+  - `dragonSlayer_cloud_owner` 記這台裝置的角色屬於哪個帳號：換成**別的帳號**登入時，不把本機角色傳進新帳號，改成只載入該帳號的雲端角色。
+  - 遊戲中的角色（啟動時自動恢復登入、玩家已經進遊戲）固定以本機為準，不被覆蓋；若雲端同角色更新 → 走衝突對話框。
+  - 改寫本機前把原本全部欄位備份到 `dragonSlayer_cloud_bak`（只留最近一次，之後可做還原介面）。
+- **登出**：只能在標題畫面（「☁️ 雲端帳號」→ 登出）。先上傳；上傳失敗會警告。確定後**移除這台裝置的所有角色**（已在雲端，下次登入自動下載；也先備份到 `dragonSlayer_cloud_bak`），再登入別的帳號就不會混到。
+- **介面**：標題畫面 `#btn-cloud`（未登入「☁️ 登入／註冊」，已登入顯示 Email 與同步狀態 `cloudStatusText`）；登入對話框 Email＋密碼，「登入」／「註冊新帳號」，錯誤訊息翻成中文（`cloudErrText`）。
+  設定分頁「☁️ 雲端存檔」區塊（`cloudSettingsHtml`）：已登入顯示狀態與「立即上傳」，未登入「回標題畫面登入」。
+- **Supabase 開通步驟**（使用者在主控台操作）：
+  1. supabase.com 註冊 → New project（地區建議 Northeast Asia (Tokyo)，資料庫密碼自己保存）。
+  2. SQL Editor → 貼上 `tools/supabase.sql` 整份 → Run。
+  3. Authentication → Sign In / Providers → Email：**關閉「Confirm email」**。Supabase 內建寄信服務每小時只能寄很少封，而且只寄給專案成員，玩家收不到確認信；之後要寄信（驗證、忘記密碼）需設定自訂 SMTP。
+  4. Authentication → URL Configuration：Site URL 填 `https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`（之後做 Google 登入／忘記密碼才用到）。
+  5. Project Settings → API（或 Data API）：把 Project URL 與 publishable key（或 anon key）給 Claude 填進 `cloud.js`，換版本號發佈。
+- **還沒做（下一步）**：忘記密碼（需自訂 SMTP）、Google 登入、存檔歷程與合理性檢查（抓改檔，例如每次上傳記等級／金幣變化）、GM 封鎖帳號、從 `dragonSlayer_cloud_bak` 還原的介面。
+  **防作弊限制**：存檔仍由玩家端產生，登入只讓每份存檔有主人、方便事後查核與封鎖，不能阻止改檔。
+- **驗證**（2026-10-10）：Playwright＋假 Supabase（Node 端共用資料）實測：未設定時無按鈕、單機正常；訪客兩角色註冊後上傳；另一台有自己的角色登入同帳號 → 合併成 3 個不覆蓋；
+  密碼太短、密碼錯誤的提示；兩台同玩一角色 → 後上傳的一方出現衝突，兩種選擇都正確；刪角色雲端同步刪除；登出清空本機；換新帳號登入不會拿到舊帳號角色；重新整理自動恢復登入。
+  真實 SDK（2.117.2）載入、建立 client 正常，連不上伺服器時顯示「連不上雲端伺服器」。Console 無錯誤。
+

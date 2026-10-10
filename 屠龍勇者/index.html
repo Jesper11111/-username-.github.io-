@@ -36,7 +36,7 @@
     button.secondary { background: var(--panel2); border-color: var(--line); }
     button.danger { background: #6b1f1f; }
     button.mini { padding: 4px 9px; font-size: 13px; }
-    input[type=number], input[type=text], textarea, .set-row select {
+    input[type=number], input[type=text], input[type=password], textarea, .set-row select {
         font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
     }
     input[type=number] { width: 70px; }
@@ -511,6 +511,12 @@
         .kv-grid { grid-template-columns: auto 1fr; }
         .stat-grid, .equip-grid { grid-template-columns: repeat(2, 1fr); }
     }
+
+    /* 帳號登入／雲端存檔（cloud.js，ARCHITECTURE.md 第 29 節） */
+    .cloud-field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+    .cloud-field input { width: 100%; box-sizing: border-box; }
+    .cloud-msg { min-height: 1.4em; font-size: 14px; color: var(--gold); }
+    .cloud-msg.bad { color: #ff8a7a; }
 </style>
 </head>
 <body>
@@ -524,6 +530,7 @@
             <button id="btn-continue" onclick="continueGame()">📜 繼續冒險</button>
             <button id="btn-select" class="secondary" onclick="openCharSelect()">👥 人物選單</button>
             <button id="btn-new" class="secondary" onclick="openCreate()">⚔️ 建立新角色</button>
+            <button id="btn-cloud" class="secondary hidden" onclick="openCloudDialog()">☁️ 登入／註冊</button>
             <button class="secondary" onclick="openInstallGuide()">📲 安裝到主畫面</button>
         </div>
         <small id="version" class="muted"></small>
@@ -596,30 +603,31 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261010e"></script>
-<script src="data/classes.js?v=20261010e"></script>
-<script src="data/skills.js?v=20261010e"></script>
-<script src="data/items.js?v=20261010e"></script>
-<script src="data/monsters.js?v=20261010e"></script>
-<script src="data/zones.js?v=20261010e"></script>
-<script src="data/quests.js?v=20261010e"></script>
-<script src="data/resonance.js?v=20261010e"></script>
-<script src="data/player.js?v=20261010e"></script>
-<script src="data/enchant.js?v=20261010e"></script>
-<script src="data/affix.js?v=20261010e"></script>
-<script src="data/craft.js?v=20261010e"></script>
-<script src="data/maps.js?v=20261010e"></script>
-<script src="data/combat.js?v=20261010e"></script>
-<script src="data/town.js?v=20261010e"></script>
-<script src="data/save.js?v=20261010e"></script>
-<script src="data/offline.js?v=20261010e"></script>
-<script src="data/ui.js?v=20261010e"></script>
-<script src="data/ui-create.js?v=20261010e"></script>
-<script src="data/ui-panels.js?v=20261010e"></script>
-<script src="data/codex.js?v=20261010e"></script>
-<script src="data/ui-frame.js?v=20261010e"></script>
-<script src="data/ui-scene.js?v=20261010e"></script>
-<script src="data/pwa.js?v=20261010e"></script>
-<script src="data/main.js?v=20261010e"></script>
+<script src="data/config.js?v=20261010f"></script>
+<script src="data/classes.js?v=20261010f"></script>
+<script src="data/skills.js?v=20261010f"></script>
+<script src="data/items.js?v=20261010f"></script>
+<script src="data/monsters.js?v=20261010f"></script>
+<script src="data/zones.js?v=20261010f"></script>
+<script src="data/quests.js?v=20261010f"></script>
+<script src="data/resonance.js?v=20261010f"></script>
+<script src="data/player.js?v=20261010f"></script>
+<script src="data/enchant.js?v=20261010f"></script>
+<script src="data/affix.js?v=20261010f"></script>
+<script src="data/craft.js?v=20261010f"></script>
+<script src="data/maps.js?v=20261010f"></script>
+<script src="data/combat.js?v=20261010f"></script>
+<script src="data/town.js?v=20261010f"></script>
+<script src="data/save.js?v=20261010f"></script>
+<script src="data/cloud.js?v=20261010f"></script>
+<script src="data/offline.js?v=20261010f"></script>
+<script src="data/ui.js?v=20261010f"></script>
+<script src="data/ui-create.js?v=20261010f"></script>
+<script src="data/ui-panels.js?v=20261010f"></script>
+<script src="data/codex.js?v=20261010f"></script>
+<script src="data/ui-frame.js?v=20261010f"></script>
+<script src="data/ui-scene.js?v=20261010f"></script>
+<script src="data/pwa.js?v=20261010f"></script>
+<script src="data/main.js?v=20261010f"></script>
 </body>
 </html>

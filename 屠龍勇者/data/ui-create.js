@@ -12,6 +12,7 @@ function showTitle() {
     $('btn-continue').innerHTML = '📜 繼續冒險' + (sum && !sum.broken ? `<br><small>${esc(sum.name)}・${CLASSES[sum.cls].name} Lv.${sum.lv}</small>` : '');
     $('btn-select').classList.toggle('hidden', !any);
     $('btn-new').classList.toggle('hidden', any);
+    renderCloudEntry();
     showScreen('title');
 }
 
@@ -25,6 +26,7 @@ function nextFilledSlot() {
 function openCharSelect() {
     if (player) {
         saveGame();
+        cloudFlush(true);
         hunt = null; session = null; walkHome = null;
         player = null;
     }
