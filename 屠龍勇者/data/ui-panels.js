@@ -669,6 +669,7 @@ function renderSettings() {
             <div class="btn-row"><button onclick="openInstallGuide()">📲 安裝到主畫面</button></div>
             <small class="muted">安裝後有自己的圖示、全螢幕開啟，沒網路也能玩。</small>
         </div>
+        ${cloudSettingsHtml()}
         <div class="panel"><h4>💾 存檔</h4>
             <div class="btn-row">
                 <button onclick="manualSave()">手動存檔</button>
@@ -710,6 +711,7 @@ function doImport() {
 
 function backToTitle() {
     saveGame();
+    cloudFlush(true);
     hunt = null; session = null; walkHome = null;
     player = null;
     showTitle();

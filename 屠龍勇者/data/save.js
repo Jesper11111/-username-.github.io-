@@ -46,7 +46,8 @@ function hasSave() {
 
 function saveGame() {
     if (!player || SIM_MODE) return;
-    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { /* 無痕模式等存不了，略過 */ }
+    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
+    cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳
 }
 
 function migrateSave(data) {
@@ -92,7 +93,9 @@ function applySaveData(data) {
 }
 
 function deleteSave(i = currentSlot) {
-    try { localStorage.removeItem(slotKey(i)); } catch (e) {}
+    let raw = null;
+    try { raw = localStorage.getItem(slotKey(i)); localStorage.removeItem(slotKey(i)); } catch (e) {}
+    cloudDeleteSlot(i, raw);   // 登入雲端時也刪雲端那筆
 }
 
 function exportSaveText() {
