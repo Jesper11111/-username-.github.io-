@@ -28,6 +28,7 @@
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
+| `data/raid.js` | **團隊副本**：`RAIDS`（6 個副本）、團戰模擬 `raidSimulate`、獎勵 `raidApplyReward`／`raidClaim`、隊伍大廳（Supabase `raid_rooms`／`raid_members`）、重播畫面；載入時把 `raid` 加進 `TABS`／`PANEL_FNS`（第 30 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
@@ -37,11 +38,11 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔資料表與 RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -50,7 +51,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010g`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -187,11 +188,11 @@
 
 `name, cls, lv, exp, gold, stats, statPoints, elixirs, baseHp, baseMp, hp, mp, inv, equip, storage, nextUid,
 buffs{key:{src,id,until}}, cds{技能id:到期}, loc{type,id,floor}, hunting, towerMax, towerCleared, dragons, dragonCd,
-kills, deaths, settings, created`
+kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過獎勵的場次]`（後兩個是團隊副本，第 30 節；舊存檔沒有也沒關係）
 
 ## 11. 尚未實作（之後可做）
 
-寵物／召喚（妖精、王族）、組隊經驗分配、死亡降級、血盟、變身卷軸、新地圖的職業任務與材料配方、更多野外背景圖、音效與怪物圖片。
+寵物／召喚（妖精、王族）、死亡降級、血盟、變身卷軸、新地圖的職業任務與材料配方、更多野外背景圖、音效與怪物圖片。
 
 ## 12. PWA（可安裝的 App 版）
 
@@ -789,6 +790,8 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
   - `dragonSlayer_cloud_owner` 記這台裝置的角色屬於哪個帳號：換成**別的帳號**登入時，不把本機角色傳進新帳號，改成只載入該帳號的雲端角色。
   - 遊戲中的角色（啟動時自動恢復登入、玩家已經進遊戲）固定以本機為準，不被覆蓋；若雲端同角色更新 → 走衝突對話框。
   - 改寫本機前把原本全部欄位備份到 `dragonSlayer_cloud_bak`（只留最近一次，之後可做還原介面）。
+  - `dragonSlayer_cloud_seen`＝上次同步時雲端有哪些角色：本機有、雲端沒有、但上次還在 → 是在別台裝置刪掉的，這台也移除（不會又被傳回雲端）。刪角色、登出時一併更新。
+  - 不是正在玩的角色上傳時遇到衝突（例如重新整理時舊頁面的上傳比較晚到）→ 0.5 秒後自動重新同步一次（每分鐘最多一次），同一角色取較新的一邊。
 - **登出**：只能在標題畫面（「☁️ 雲端帳號」→ 登出）。先上傳；上傳失敗會警告。確定後**移除這台裝置的所有角色**（已在雲端，下次登入自動下載；也先備份到 `dragonSlayer_cloud_bak`），再登入別的帳號就不會混到。
 - **介面**：標題畫面 `#btn-cloud`（未登入「☁️ 登入／註冊」，已登入顯示 Email 與同步狀態 `cloudStatusText`）；登入對話框 Email＋密碼，「登入」／「註冊新帳號」，錯誤訊息翻成中文（`cloudErrText`）。
   設定分頁「☁️ 雲端存檔」區塊（`cloudSettingsHtml`）：已登入顯示狀態與「立即上傳」，未登入「回標題畫面登入」。
@@ -803,4 +806,53 @@ powershell -ExecutionPolicy Bypass -File tools\cut-sprites.ps1 -Spec tools\sprit
 - **驗證**（2026-10-10）：Playwright＋假 Supabase（Node 端共用資料）實測：未設定時無按鈕、單機正常；訪客兩角色註冊後上傳；另一台有自己的角色登入同帳號 → 合併成 3 個不覆蓋；
   密碼太短、密碼錯誤的提示；兩台同玩一角色 → 後上傳的一方出現衝突，兩種選擇都正確；刪角色雲端同步刪除；登出清空本機；換新帳號登入不會拿到舊帳號角色；重新整理自動恢復登入。
   真實 SDK（2.117.2）載入、建立 client 正常，連不上伺服器時顯示「連不上雲端伺服器」。Console 無錯誤。
+
+## 30. 團隊副本（2026-10-10，版本 `20261010g`；`raid.js`、`tools/supabase.sql` 後半）
+
+- 使用者要求：目標是「多人掛機 RPG（輕度 MMO）」，第一個多人玩法＝**和朋友組隊打龍，像副本一樣最多 8 人組好隊再開始**。
+- **需要雲端**：`isCloudConfigured()` 且已登入才能用；沒開通時右側抽屜仍有「🐉 團隊副本」分頁，但只顯示尚未開通，村莊頁不顯示入口按鈕。
+- **入口**：右柱抽屜「🐉 團隊副本」（`DRAWERS.right`）、村莊頁上方按鈕（開通後才顯示）。
+- **副本** `RAIDS`：
+
+| id | 首領 | 需求 Lv | 冷卻 | HP 倍率 | 傷害倍率 | 獎勵倍率 |
+|---|---|---|---|---|---|---|
+| drake | 甦醒的地龍（Lv33） | 25 | 2 小時 | 1.6 | 1.0 | 3 |
+| wyvern | 巨大飛龍（Lv55） | 45 | 3 小時 | 1.1 | 0.85 | 3 |
+| antharas | 地龍・格爾莫斯 | 55 | 6 小時 | 1.5 | 1.0 | 1 |
+| fafurion | 水龍・瑟拉恩 | 65 | 6 小時 | 1.3 | 0.9 | 1 |
+| lindvior | 風龍・維斯塔爾 | 75 | 6 小時 | 1.0 | 0.8 | 1 |
+| valakas | 火龍・莫爾加斯 | 85 | 6 小時 | 0.9 | 0.7 | 1 |
+
+  首領 HP 再乘 `raidPartyHp(n) = 0.6 + 0.4n`（1 人 ×1、8 人 ×3.8）。冷卻 `player.raidCd[id]`（真實時間，**只有勝利才進冷卻**），與單人龍穴的 `dragonCd` 分開。
+- **流程**：
+  1. 建立隊伍 `raidCreate`：`raid_rooms` 一列（6 碼房號 `code`，字元不含 0/O/1/I；重複就換）＋隊長自己的 `raid_members`。
+  2. 加入：輸入房號 `raidJoinCode`（大小寫都可以）或公開列表 `raidLoadList`（2 小時內、同版本、招募中，最多 20 隊）。**遊戲版本 `version` 必須相同**。隊長可切換公開／不公開、請人出隊。
+  3. 準備 `raidToggleReady`：要在村莊；上傳整份角色快照 `snap`（倉庫拿掉）與 `ready_round = room.round`。準備後換裝要重新準備才會反映。
+  4. 開始 `raidStart`（隊長，全員準備好）：讀最新快照 → **在隊長的瀏覽器跑 `raidSimulate`** → `update status='fighting', result=…`（伺服器 trigger 寫 `started_at`）。
+  5. 每個人（包含隊長）`raidRefresh` 看到結果就**立刻領獎** `raidClaim`，然後依 `started_at` 播放重播（`RAID_REPLAY_SPEED` 2 倍速，所有人看到同一刻；可「⏩ 直接看結果」）。
+  6. 隊長「🔁 同一隊再打一場」`raidAgain`：`status='open'`、`round+1`、清掉結果 → 大家要重新準備（冷卻中的人準備不了）。離開／解散：隊長離開＝`status='closed'`，其他人下次更新就被送回首頁。
+- **大廳更新**：`RAID_POLL_MS` 3 秒輪詢（分頁在背景時暫停），沒有用 Realtime（較簡單、免費方案夠用）。房號記在 `dragonSlayer_raid_room`，重新整理或重新登入（`cloudOnSignedIn` → `raidResume`）後回到隊伍、補領離線期間打完的獎勵。
+- **團戰模擬** `raidSimulate(def, list)`（全程 `SIM_MODE`，結束完整還原 player／hunt／session／gameNow／遊戲訊息）：
+  - 每個隊員是快照的複本（`migrateSave`），清掉增益與冷卻、HP／MP 補滿，關掉瞬移與自動回家；共用同一隻首領物件 `hunt.mon`。
+  - 每 100ms 輪流把 `player`、`hunt` 換成各隊員，直接呼叫 combat.js 的 `autoSupport`（喝水）、`playerAction`（技能／魔法／普攻）、`resonanceFlush`、`regenTick`，所以職業、裝備、共鳴、藥水規則都和單人一樣。
+  - **補師**：有治癒魔法的職業，隊友 HP < 50% 且自己不危險時，改補最危險的隊友（`raidAllyHeal`）。
+  - **首領**：每 8 秒依「最大 HP × 職業權重 `RAID_TANK`」隨機挑目標（騎士、聖騎士、戰士 ×3；法師 ×0.5），普攻用 `monsterAttack`（隊員的閃避、AC、MR、減傷、魔法護盾、反擊都照算）。
+    每 9～13 秒蓄力 1.6 秒放**全體吐息**（首領魔法傷害 ×1.4，受 MR、減傷影響），每人依「首領大招自動閃避」設定 60%／20% 躲開。4 分鐘後狂暴（傷害 ×1.5、攻速 ×1.33），6 分鐘打不倒＝失敗。
+  - 隊員倒下就退出戰鬥（**團隊副本死亡不扣經驗**），全員倒下＝失敗。
+  - 結果 `{ v, raid, n, win, ms, boss, members[{uid,name,cls,lv,maxHp,dmg,heal,died,used}], frames[[t, 首領HP, 各隊員HP…] 每 0.5 秒], events[[t, 訊息, 樣式]] }`，3 人約 15KB。
+- **獎勵** `raidApplyReward`（各自在自己的瀏覽器套用到「參加的角色」；正在玩別的角色時直接改那個欄位的存檔 `raidClaim`）：
+  - 不論輸贏：扣掉戰鬥中用掉的藥水、彈藥（`used`；復活卷軸不算）。
+  - 勝利：經驗＝首領經驗 × 獎勵倍率 × `raidShare(n)`（`(1+0.25(n−1))/n`：人越多總量越多、每人越少）× 高等級遞減；金幣同理；
+    掉落每人各自擲一次 `rollDrops(boss)`（含通貨、隨機裝備）；四大龍算一次討伐（`player.dragons`，可解鎖下一個單人龍穴與「屠龍勇者」稱號）。
+  - `player.raidRuns` 記最近 30 場的 `房間id:round`，同一場不會領兩次。
+- **資料表**（`tools/supabase.sql`；本機 PostgreSQL 16 實測）：
+  - `raid_rooms`：所有登入者可讀（列表、用房號找）；只有隊長能新增／修改／刪除；trigger 鎖住 `id／leader／code／created_at`，`member_count` 只能由 trigger 改，切到 fighting 時寫 `started_at`；
+    **建立新隊伍時順便刪掉 2 天前的舊隊伍**（連同隊員、戰鬥結果，免費方案 500MB 不會被塞滿）。
+  - `raid_members`：只有同隊的人看得到（`raid_is_member` security definer，避免 policy 遞迴）；只能新增／修改自己那列（不能改 room_id／user_id）；自己或隊長可以刪。
+    trigger：隊伍不是 open 時拒絕加入（`room closed`），滿 8 人拒絕（`room full`，鎖住隊伍列避免同時加入超過）。
+- **防作弊限制**：快照由隊員自己上傳、模擬在隊長瀏覽器，改過存檔的人照樣能帶進副本；獎勵也是各自套用到本機存檔。給朋友一起玩足夠，之後要防作弊可以把模擬搬到 Supabase Edge Function（伺服器讀雲端存檔來模擬）。
+- **平衡**（商店最好的武器＋4、防具＋4、各 200 瓶治癒藥水，騎士／妖精／法師／黑妖／王族／戰士／天使／槍手依序組隊；每格 6 場）：
+  需求等級時 2 人大多失敗、**4 人：地龍、飛龍、格爾莫斯、瑟拉恩、維斯塔爾全勝，莫爾加斯約一半**；8 人全部全勝，戰鬥約 3～4 分鐘（重播 1.5～2 分鐘）。
+- **驗證**：Playwright＋假 Supabase（Node 端共用資料，模擬 trigger）三台裝置：建隊、房號加入（小寫也可）、公開列表加入、沒準備時不能開始、全員準備、開戰、
+  三人同步重播與結果、三人都拿到經驗金幣並扣藥水、重複整理不會重領、再打一場要重新準備（冷卻中準備不了）、請出隊員、解散隊伍；Console 無錯誤。
 
