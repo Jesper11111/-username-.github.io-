@@ -14,6 +14,7 @@ const CLOUD_AUTH_KEY = 'dragonSlayer_auth';         // 登入狀態（SDK 自己
 const CLOUD_OWNER_KEY = 'dragonSlayer_cloud_owner'; // 這台裝置的角色屬於哪個帳號（uid）
 const CLOUD_DEL_KEY = 'dragonSlayer_cloud_del';     // 還沒成功刪除雲端的角色（created 清單）
 const CLOUD_BAK_KEY = 'dragonSlayer_cloud_bak';     // 同步改寫本機存檔前的備份（只留最近一次）
+const CLOUD_SEEN_KEY = 'dragonSlayer_cloud_seen';   // 上次同步時雲端有哪些角色（雲端不見了＝在別台裝置刪掉）
 const CLOUD_PUSH_MS = 60 * 1000;     // 兩次上傳至少間隔（同一角色）
 const CLOUD_TIMEOUT_MS = 10 * 1000;
 
@@ -97,6 +98,7 @@ async function cloudOnSignedIn(u, silent) {
     renderCloudEntry();
     const r = await cloudSync();
     if (!silent && r) showToast(r);
+    raidResume();   // 團隊副本：回到原本的隊伍、補領離線時打完的獎勵（raid.js）
 }
 
 // ───────── 登入後合併：本機角色與雲端角色 ─────────
@@ -145,8 +147,9 @@ async function cloudSync() {
             final[i] = c ? { data: c.data, t: c.t, id: c.id, raw: local[i] && local[i].id === c.id && local[i].t === c.t ? local[i].raw : null } : null;
         }
         const upload = new Set(), conflicts = [];
-        let added = 0, newer = 0, lost = 0;
+        let added = 0, newer = 0, lost = 0, gone = 0;
         const sameOwner = !owner || owner === uid;
+        const seen = owner === uid ? JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]') : [];
         for (let i = 0; i < MAX_SLOTS; i++) {
             const L = local[i];
             if (!L) continue;
@@ -165,6 +168,8 @@ async function cloudSync() {
             const j = final.findIndex(f => f && f.id === L.id);
             if (j >= 0) {
                 if (L.t > final[j].t) { final[j] = { data: L.data, t: L.t, id: L.id, raw: L.raw }; upload.add(j); newer++; }
+            } else if (seen.includes(L.id)) {
+                gone++;   // 上次同步時雲端還有、現在沒了：在別台裝置刪掉的，這台也移除（改寫前會備份）
             } else {
                 const k = !final[i] ? i : final.indexOf(null);
                 if (k < 0) { lost++; continue; }
@@ -195,6 +200,7 @@ async function cloudSync() {
             }
         }
         cloudLs(CLOUD_OWNER_KEY, uid);
+        cloudLs(CLOUD_SEEN_KEY, JSON.stringify(final.filter(Boolean).map(f => f.id)));
         cloudConflict = {};
         cloudDirty = upload;
         await cloudFlush(true);
@@ -209,6 +215,7 @@ async function cloudSync() {
         if (added) msg.push(`上傳 ${added} 個角色`);
         if (newer) msg.push(`更新 ${newer} 個角色`);
         if (down) msg.push(`下載 ${down} 個角色`);
+        if (gone) msg.push(`移除 ${gone} 個已在別台刪除的角色`);
         return '☁️ 已同步' + (msg.length ? '：' + msg.join('、') : '');
     } catch (e) {
         cloudError = cloudErrText(e);
@@ -296,14 +303,18 @@ async function cloudPushSlot(i, overwrite) {
     return true;
 }
 
+let cloudAutoFixAt = 0;
 function cloudOnConflict(i) {
     cloudConflict[i] = true;
     cloudError = '雲端有其他裝置的新進度';
-    if (player && i === currentSlot) {
-        openDialog('☁️ 進度衝突', `<p>「${esc(player.name)}」在<b>另一台裝置</b>有比較新的雲端進度（可能同時在兩台裝置玩）。</p>
-            <p>請選擇要保留哪一邊，另一邊的進度會被覆蓋。</p>`,
-            [{ text: '用雲端的進度', onClick: cloudUseCloudSlot }, { text: '用這台的進度', cls: 'secondary', onClick: cloudUseLocalSlot }]);
+    // 不是正在玩的角色：重新同步一次（同一角色取較新的一邊），例如重新整理時舊頁面的上傳比新頁面晚到
+    if (!(player && i === currentSlot)) {
+        if (Date.now() - cloudAutoFixAt > 60 * 1000) { cloudAutoFixAt = Date.now(); setTimeout(() => cloudSync(), 500); }
+        return false;
     }
+    openDialog('☁️ 進度衝突', `<p>「${esc(player.name)}」在<b>另一台裝置</b>有比較新的雲端進度（可能同時在兩台裝置玩）。</p>
+        <p>請選擇要保留哪一邊，另一邊的進度會被覆蓋。</p>`,
+        [{ text: '用雲端的進度', onClick: cloudUseCloudSlot }, { text: '用這台的進度', cls: 'secondary', onClick: cloudUseLocalSlot }]);
     return false;
 }
 
@@ -342,6 +353,7 @@ function cloudDeleteSlot(i, raw) {
     let id = '';
     try { id = cloudCharId(JSON.parse(raw)); } catch (e) { }
     cloudKnown[i] = null;
+    cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
     cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i)).then(r => { if (r.error) throw r.error; }).catch(e => {
         console.warn('雲端刪除失敗', e);
         const list = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
@@ -464,6 +476,7 @@ async function cloudDoSignOut() {
     try { await cloudTimeout(cloudSb.auth.signOut()); } catch (e) { console.warn('登出失敗', e); }
     for (let i = 0; i < MAX_SLOTS; i++) cloudLs(slotKey(i), null);
     cloudLs(CLOUD_OWNER_KEY, null);
+    cloudLs(CLOUD_SEEN_KEY, null);
     cloudUser = null;
     cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();

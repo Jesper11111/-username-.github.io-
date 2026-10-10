@@ -10,7 +10,7 @@ const FRAME_MIN_RATIO = 0.62;     // 寬度不超過高度 × 0.62，避免矮�
 
 const DRAWERS = {
     left:  [['char', '🧝', '人物狀態'], ['skill', '✨', '技能'], ['quest', '📜', '任務'], ['codex', '📖', '裝備圖鑑']],
-    right: [['map', '🗺️', '地圖'], ['set', '⚙️', '設定']],
+    right: [['map', '🗺️', '地圖'], ['raid', '🐉', '團隊副本'], ['set', '⚙️', '設定']],
 };
 
 const SLOT_DEFS = [

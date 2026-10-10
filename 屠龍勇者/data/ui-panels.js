@@ -559,7 +559,8 @@ function renderTown() {
             <button class="secondary" onclick="walkHomeBtn();switchTab('hunt')">🚶 步行回村</button></div></div>`;
     }
     const t = currentTown();
-    let h = `<div class="panel"><div class="loc">${t.icon} ${t.name}</div><small class="muted">村莊等級 ${t.tier}：越大的城鎮賣的東西越多。</small></div>`;
+    let h = `<div class="panel"><div class="loc">${t.icon} ${t.name}</div><small class="muted">村莊等級 ${t.tier}：越大的城鎮賣的東西越多。</small>
+        ${isCloudConfigured() ? `<div class="btn-row"><button class="secondary" onclick="switchTab('raid')">🐉 團隊副本（和朋友組隊打龍）</button></div>` : ''}</div>`;
     h += `<div class="chips">${TOWN_SUBS.map(([id, n]) => `<button class="chip-btn ${townSub === id ? 'active' : ''}" onclick="setTownSub('${id}')">${n}</button>`).join('')}</div>`;
     return h + ({ shop: renderShop, sell: renderSell, storage: renderStorage, craft: renderCraft, inn: renderInn }[townSub])();
 }
