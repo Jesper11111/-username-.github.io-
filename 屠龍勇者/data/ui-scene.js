@@ -52,9 +52,24 @@ const SCENE_BGS = {
         block: [],
         npcs: [{ role: '旅館', x: 11, y: 8 }, { role: '商店', x: 9, y: 11 }, { role: '倉庫', x: 14, y: 7 }, { role: '鍛造', x: 19, y: 8 }, { role: '回收', x: 22, y: 11 }],
     },
+    // 暗金城：使用者提供的雨夜哥德城市廣場（2000×1116 → 1755×979 darkgold.webp），30×17 格；圖上已畫好人物，
+    // npcs 的 painted 表示直接用圖上的人（不另外畫圖示），h＝名牌在腳底格上方幾格（對到頭頂）
+    darkgold: {
+        src: 'images/maps/darkgold.webp', w: 30, h: 17, start: [12, 15],
+        walk: [[2, 13, 28, 15], [13, 11, 19, 12]],
+        block: [[15, 13, 18, 14]],
+        npcs: [
+            { role: '商店', x: 1, y: 14, painted: true, h: 1.9 },     // 左邊攤位坐著的兜帽商人
+            { role: '倉庫', x: 5, y: 15, painted: true, h: 3 },       // 左前方黑甲騎士
+            { role: '傳送師', x: 8, y: 15, painted: true, h: 2.8 },   // 兜帽劍士
+            { role: '旅館', x: 20, y: 15, painted: true, h: 2.6 },    // 右邊修士
+            { role: '回收', x: 24, y: 15, painted: true, h: 2.8 },    // 右邊兜帽女子
+            { role: '鍛造', x: 27, y: 15, painted: true, h: 2.7 },    // 右下打鐵匠
+        ],
+    },
 };
 // 各村莊用哪張背景圖（沒寫的用低語港 village）
-const TOWN_BG = { gludio: 'ash' };
+const TOWN_BG = { gludio: 'ash', giran: 'darkgold' };
 
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
@@ -92,7 +107,7 @@ function openTownSub(sub) { townSub = sub; switchTab('town'); }
 // 目前村莊要畫的 NPC：有背景圖的村莊用 SCENE_BGS 的 npcs（只換位置，名字、功能沿用 TOWN_NPCS），沒有背景圖用 TOWN_NPCS
 function townNpcList(bg) {
     if (!bg) return TOWN_NPCS;
-    return (bg.npcs || []).map(n => ({ ...TOWN_NPCS.find(t => t.role === n.role), x: n.x, y: n.y }));
+    return (bg.npcs || []).map(n => ({ ...TOWN_NPCS.find(t => t.role === n.role), ...n }));
 }
 
 // ───────── 地圖產生 ─────────
@@ -568,6 +583,7 @@ function sceneDraw(ctx, W, H) {
     actors.push({ y: pl.ry + 0.01, draw: drawPlayer });
     if (player.loc.type === 'town') for (const n of townNpcList(scene.bg)) actors.push({ y: n.y, draw: () => {
         const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
+        if (n.painted) { labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - n.h * TILE, camX, camY, n)); return; }   // 圖上已畫好的人：只加名牌
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
         ctx.font = '28px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
@@ -702,7 +718,7 @@ function sceneClick(ev) {
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { plate.npc.act(); return; }
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
-    const b = townNpcList(scene.bg).find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
+    const b = townNpcList(scene.bg).find(b => Math.abs(b.x - tx) <= 1 && ty <= b.y + 1 && ty >= b.y - (b.painted ? Math.ceil(b.h) : 1));   // 圖上的人：點身體也算
     if (b) { b.act(); return; }
     sceneWalkTo(tx, ty);
 }
