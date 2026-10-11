@@ -218,7 +218,7 @@ function renderCreate() {
     if ($('create-name').value) createState.name = $('create-name').value;   // 重繪前保留已輸入的名字
     const c = CLASSES[createState.cls], left = createPointsLeft();
     renderStage();
-    $('create-desc').innerHTML = (c.art ? `<img class="class-art" src="${c.art}?v=${GAME_VERSION}" alt="${c.name}">` : '') +
+    $('create-desc').innerHTML =   // 立繪已移到上方舞台（全身像走出來），這裡只留介紹
         `<b>${c.icon} ${c.name}</b><p>${c.desc}</p><p class="story-text">${CLASS_STORIES[createState.cls].story}</p>
         <small class="muted">可用武器：${c.weapons.map(w => WEAPON_TYPES[w].name).join('、')}${c.shield ? '、盾牌' : '（不能用盾）'}</small>`;
     $('create-stats').innerHTML = STAT_KEYS.map(k => `
