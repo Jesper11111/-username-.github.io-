@@ -45,11 +45,11 @@ const PC_SLOTS = [
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
     // 多人功能（2026-10-10，底部格子已滿，放在地圖左側；第 32 節）
-    { icon: '👹', name: '世界首領', tab: 'wb', x: 104, y: 168, w: 58, h: 58, round: true, side: true },
-    { icon: '🏆', name: '排行榜', tab: 'rank', x: 104, y: 234, w: 58, h: 58, round: true, side: true },
-    { icon: '🐉', name: '團隊副本', tab: 'raid', x: 104, y: 300, w: 58, h: 58, round: true, side: true },
-    { icon: '💬', name: '聊天', tab: 'chat', x: 104, y: 366, w: 58, h: 58, round: true, side: true },
-    { icon: '🏰', name: '血盟', tab: 'clan', x: 104, y: 432, w: 58, h: 58, round: true, side: true },
+    { icon: '👹', name: '世界首領', tab: 'wb', x: 104, y: 38, w: 58, h: 58, round: true, side: true },
+    { icon: '🏆', name: '排行榜', tab: 'rank', x: 104, y: 104, w: 58, h: 58, round: true, side: true },
+    { icon: '🐉', name: '團隊副本', tab: 'raid', x: 104, y: 170, w: 58, h: 58, round: true, side: true },
+    { icon: '💬', name: '聊天', tab: 'chat', x: 104, y: 236, w: 58, h: 58, round: true, side: true },
+    { icon: '🏰', name: '血盟', tab: 'clan', x: 104, y: 302, w: 58, h: 58, round: true, side: true },
 ];
 function isPcFrame() { return displayMode === 'pc'; }
 function currentSlotDefs() { return isPcFrame() ? PC_SLOTS : SLOT_DEFS; }
