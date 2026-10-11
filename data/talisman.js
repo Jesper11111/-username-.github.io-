@@ -53,6 +53,40 @@ function ensureSockets(eq) {
     return eq;
 }
 
+// ---- 打洞器（config-talisman.js 的 PUNCH_TOOL／SOCKET_PUNCH_MAX）----
+// 能不能打：橙色或白金、不是神器、孔數未滿（沒有孔的舊橙裝也可以）
+function canPunchEquip(eq) {
+    if (!eq) return false;
+    const category = eq.category || equipTypes[eq.name];
+    return (eq.quality === SOCKET_QUALITY || eq.quality === PLATINUM_QUALITY.name) && category !== "artifact"
+        && (Array.isArray(eq.sockets) ? eq.sockets.length : 0) < SOCKET_PUNCH_MAX;
+}
+// 符寶坊「打洞」：用掉 1 個打洞器，選中的裝備多 1 個空孔
+function punchSocket() {
+    const sel = document.getElementById('punch-target');
+    const id = sel && sel.value;
+    const eq = Object.values(player.equipment).find(e => e && String(e.id) === id) || player.equipInventory.find(e => String(e.id) === id);
+    if (!eq) { gameAlert('請先選擇要打孔的裝備。'); return; }
+    if ((player.punchTools || 0) <= 0) { gameAlert(`沒有${PUNCH_TOOL.name}（野外妖獸稀有掉落）。`); return; }
+    if (!canPunchEquip(eq)) { gameAlert(`這件裝備已經 ${SOCKET_PUNCH_MAX} 孔（或不能打孔），無法再使用${PUNCH_TOOL.name}。`); return; }
+    player.punchTools--;
+    eq.sockets = (Array.isArray(eq.sockets) ? eq.sockets : []).concat([null]);
+    addLog(`${PUNCH_TOOL.icon} 用${PUNCH_TOOL.name}替【${getEquipDisplayName(eq)}】打出新孔位，現在 ${eq.sockets.length} 孔。`, "equip");
+    saveLocal();
+    renderTalismanWorkshop();
+    updateUI();
+}
+// 野外掉落（combat.js：rolls＝takeDropRolls 的掉寶次數；save.js 離線／背景：收益次數）；silent＝離線結算（回傳彙總文字）
+function rollPunchToolDrops(rolls, silent) {
+    if (!(rolls > 0) || !player.currentMap || player.currentMapIsSafe) return '';
+    const exp = rolls * PUNCH_TOOL.fieldChance;
+    let n = Math.floor(exp); if (Math.random() < exp - n) n++;
+    if (!(n > 0)) return '';
+    player.punchTools = (player.punchTools || 0) + n;
+    if (!silent) addLog(`${PUNCH_TOOL.icon} 妖獸遺骸中翻出稀有的【${PUNCH_TOOL.name}】×${n}！（持有 ${player.punchTools}，可到符寶坊替橙裝以上的裝備打孔）`, "level-up", false, "item");
+    return `${PUNCH_TOOL.icon}${PUNCH_TOOL.name}×${n}`;
+}
+
 // 裝備上所有符寶的數值加總（stats.js 的 getEquipBonus 會加進去）
 function getSocketStats(eq) {
     let stats = {};
@@ -147,11 +181,32 @@ function renderTalismanWorkshop() {
         <h3 style="color: #c084fc; margin: 18px 0 6px;">⚗️ 合成（同種類升一品，一定成功）</h3>
         ${renderTalismanMerge()}
 
+        <h3 style="color: #c084fc; margin: 18px 0 6px;">${PUNCH_TOOL.icon} ${PUNCH_TOOL.name}（持有 ${(player.punchTools || 0).toWan()}）</h3>
+        ${renderPunchCard()}
+
         <h3 style="color: #c084fc; margin: 18px 0 6px;">💠 鑲嵌（橙色裝備 ${SOCKET_MIN}~${SOCKET_MAX} 孔）</h3>
         <p style="color: #9ca3af; font-size: 0.8em;">※ 已鑲嵌的符寶可以打掉換新，但舊符寶會碎裂消失；毀棄裝備時符寶一併消失。</p>
         ${equipCards.length
             ? `<div class="grid-container">${equipCards.join("")}</div>`
             : `<p style="color: #6b7280;">目前沒有可鑲嵌的橙色裝備（鍛造閣、千寶閣、靈寶閣可取得）。</p>`}`;
+}
+
+// 打洞器卡片：可打孔的裝備（穿戴中在前）下拉選單＋「打洞」
+function renderPunchCard() {
+    const worn = Object.values(player.equipment).filter(canPunchEquip), bag = player.equipInventory.filter(canPunchEquip);
+    const opts = worn.map(eq => [eq, true]).concat(bag.map(eq => [eq, false])).map(([eq, w]) =>
+        `<option value="${eq.id}">${w ? '【穿戴中】' : ''}${stripTalismanTags(getEquipDisplayName(eq))}（${eq.quality}・${Array.isArray(eq.sockets) ? eq.sockets.length : 0} 孔）</option>`).join("");
+    const have = (player.punchTools || 0) > 0;
+    return `
+        <div class="card" style="max-width: 460px; margin: 0 auto;">
+            <p style="font-size: 0.8em; color: #9ca3af; margin: 4px 0;">替橙色／白金裝備多開 1 個空孔，最多 ${SOCKET_PUNCH_MAX} 孔，滿了就不能再用；神器不能打孔。${PUNCH_TOOL.name}只在野外妖獸身上稀有掉落。</p>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px;">
+                <select id="punch-target" ${opts ? '' : 'disabled'} style="flex: 1; min-width: 0; background: #0b0f19; color: #fff; padding: 4px; border-radius: 6px; border: 1px solid var(--panel-border); font-size: 0.78em;">
+                    ${opts || '<option>（沒有可打孔的裝備）</option>'}
+                </select>
+                <button class="sys-btn" style="width: auto; padding: 4px 10px;" ${opts && have ? '' : 'disabled'} onclick="punchSocket()">${PUNCH_TOOL.icon} 打洞</button>
+            </div>
+        </div>`;
 }
 
 function renderSocketCard(eq, isEquipped, ownedOptions) {

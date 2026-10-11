@@ -94,6 +94,16 @@ function renderBag() {
             </div>`);
     }
 
+    // 打洞器（talisman.js，第 28 節）：到符寶坊使用
+    if ((player.punchTools || 0) > 0) {
+        hasItems = true;
+        parts.push(`
+            <div class="card" style="border-color: var(--accent);">
+                <h3 style="color: var(--accent);">${PUNCH_TOOL.icon} ${PUNCH_TOOL.name} <span style="font-size:0.8em;">(x${player.punchTools.toWan()})</span></h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">到宗門「🔮 符寶坊」替橙色／白金裝備多開 1 個空孔，最多 ${SOCKET_PUNCH_MAX} 孔。</p>
+            </div>`);
+    }
+
     // 五行傳送陣靈石（lingjie.js，第 74 節）：不是貨幣的靈石，是放在背包的道具；每種一張卡片
     const LS_ICON = { "金": "🟡", "木": "🟢", "水": "🔵", "火": "🔴", "土": "🟤" };
     LINGJIE_STONE_KEYS.forEach(k => {
