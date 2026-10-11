@@ -33,13 +33,15 @@ const SCENE_BGS = {
             [25, 9, 31, 12], [30, 13, 34, 16], [20, 13, 23, 18], [19, 17, 22, 20], [24, 17, 26, 20], [36, 10, 38, 15],
         ],
     },
-    // 村莊：使用者提供的中世紀村莊俯視圖（1755×896，中間石板廣場＋噴泉），鋪成 30×15 格；使用者要求不放 NPC，
-    // 設施從「村莊設施」按鈕或底部格子打開（TOWN_NPCS／TOWN_HOUSES 只在沒有背景圖時使用）
+    // 村莊：使用者提供的中世紀村莊俯視圖（1755×896，中間石板廣場＋噴泉），鋪成 30×15 格；
+    // npcs：使用者 2026-10-11 規劃的商人位置（旅館＝左邊房子前、商店＝紅白攤位南邊、倉庫＝噴泉南邊、鍛造＝右下茅草屋前），點 NPC 或名牌打開設施
+    // （TOWN_HOUSES 只在沒有背景圖時使用）
     // walk：可以走的範圍（其他格子都擋住）＝廣場、往南的泥土路、石橋、教堂旁北路、往港口的東側草地；
     // block 再擋掉 walk 裡面的噴泉、市集攤位、推車
     village: {
         src: 'images/maps/village.webp', w: 30, h: 15, start: [13, 10],
-        walk: [[8, 6, 19, 10], [10, 10, 20, 11], [16, 12, 21, 13], [12, 2, 14, 5], [19, 7, 22, 9]],
+        walk: [[8, 6, 19, 10], [10, 10, 20, 11], [16, 12, 21, 13], [12, 2, 14, 5], [19, 7, 22, 9], [5, 7, 7, 8], [21, 11, 23, 11]],
+        npcs: [{ role: '旅館', x: 5, y: 8 }, { role: '商店', x: 8, y: 10 }, { role: '倉庫', x: 12, y: 9 }, { role: '鍛造', x: 23, y: 11 }],
         block: [[12, 7, 14, 8], [8, 8, 10, 9], [15, 6, 17, 6], [17, 7, 18, 7], [17, 9, 18, 9]],
     },};
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
@@ -74,6 +76,12 @@ function spriteImage(src) {
 }
 
 function openTownSub(sub) { townSub = sub; switchTab('town'); }
+
+// 目前村莊要畫的 NPC：有背景圖的村莊用 SCENE_BGS 的 npcs（只換位置，名字、功能沿用 TOWN_NPCS），沒有背景圖用 TOWN_NPCS
+function townNpcList(bg) {
+    if (!bg) return TOWN_NPCS;
+    return (bg.npcs || []).map(n => ({ ...TOWN_NPCS.find(t => t.role === n.role), x: n.x, y: n.y }));
+}
 
 // ───────── 地圖產生 ─────────
 function seededRand(seed) {
@@ -120,6 +128,7 @@ function buildScene() {
     for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (grid[y][x] === 2) deco[x + ',' + y] = theme.obst[Math.floor(rnd() * theme.obst.length)];
     const shade = [];  // 地板深淺
     for (let y = 0; y < mh; y++) { shade.push([]); for (let x = 0; x < mw; x++) shade[y].push(rnd() < 0.5); }
+    if (player.loc.type === 'town' && bg) for (const b of townNpcList(bg)) grid[b.y][b.x] = 3;   // NPC 站的格子不能走
     if (player.loc.type === 'town' && !bg) {   // 沒有背景圖時才用畫出來的房屋與 NPC
         for (const b of TOWN_NPCS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
         for (const [hx, hy, hw, hh] of TOWN_HOUSES) for (let y = hy; y < hy + hh; y++) for (let x = hx; x < hx + hw; x++) grid[y][x] = 4;
@@ -484,7 +493,7 @@ function sceneDraw(ctx, W, H) {
     }
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
-    if (inTownNow) scene.npcRects = [];
+    if (player.loc.type === 'town') scene.npcRects = [];
     const actorFont = '36px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
     const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
@@ -545,7 +554,7 @@ function sceneDraw(ctx, W, H) {
     };
     const actors = scene.mons.map(m => ({ y: m.ry, draw: () => drawMon(m) }));
     actors.push({ y: pl.ry + 0.01, draw: drawPlayer });
-    if (inTownNow) for (const n of TOWN_NPCS) actors.push({ y: n.y, draw: () => {
+    if (player.loc.type === 'town') for (const n of townNpcList(scene.bg)) actors.push({ y: n.y, draw: () => {
         const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
@@ -681,7 +690,7 @@ function sceneClick(ev) {
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { plate.npc.act(); return; }
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
-    const b = !scene.bg && TOWN_NPCS.find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
+    const b = townNpcList(scene.bg).find(b => Math.abs(b.x - tx) <= 1 && Math.abs(b.y - ty) <= 1);
     if (b) { b.act(); return; }
     sceneWalkTo(tx, ty);
 }
