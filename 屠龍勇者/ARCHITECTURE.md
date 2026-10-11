@@ -57,7 +57,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261011c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261011d`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -624,6 +624,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **瘦身版外框**（2026-10-09 使用者要求「邊框縮小」）：實際使用 `images/frame-pc-slim.jpg`／`frame-pc-slim-mask.png`，由原圖用 PIL 產生：
   上方拱門（y 0～475，含惡魔頭、翅膀、符文拱）等比縮成 74% 高（0～350），下面接兩段柱子雕花（原 y 475～600 重複一次），y 600 以下不變。
   地圖窗口上緣從 y≈140 提到 ≈108（`#panel` top 108），翅膀伸進地圖的長度也縮短約 1/4；地點、增益字也跟著上移。原圖 `frame-pc.jpg`／`frame-pc-mask.png` 保留備用。
+- **拿掉上排框架**（2026-10-11 使用者要求，版本 `20261011d`）：實際使用 `images/frame-pc-notop.jpg`／`frame-pc-notop-mask.png`，由瘦身版用 PIL 產生：
+  y < 360 的拱門（惡魔頭、翅膀、符文拱、上方骷髏角）整段透明，左右柱子（x 0～110、1890～2000）把 y 360～600 那段往上重複貼到頂。
+  地圖 `#panel` 改成 `top: 0`；地點 `.scene-top` 上移到 y 40、增益 y 75、`.hunt-ctrl` y 170；左側 5 顆圓鈕（`PC_SLOTS` side）上移到 y 38／104／170／236／302。
+  瘦身版與原圖檔案保留備用（換回去：`index.html` 的 `#frame-art` 背景／遮罩與 `#panel` top）。
 - 疊法：`#frame.pc` 不用九宮格；地圖（`#panel` z1）在下，`#frame-art`（z2，`pointer-events:none`）用 CSS `mask` 把外框圖蓋在地圖上
   → 惡魔頭、翅膀、骷髏會壓在地圖邊緣上，有立體感。HUD、法球、格子、視窗在 z3 以上。
 - 版面：遊戲區比例固定 2000:1116，`--s` = 寬 ÷ 2000，所有位置都是原圖座標 × `--s`（CSS 在 `index.html` 的 `#frame.pc` 規則）：
@@ -967,7 +971,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **入口**：右柱抽屜「💬 聊天」（`DRAWERS.right`）；需要雲端且已登入。
 - **聊天框**（2026-10-10，版本 `20261010k`，使用者反映「PC 版沒有聊天框」）：左下角的戰鬥訊息框 `#log-pop`（骷髏頭開關）改成兩個分頁「📜 戰鬥訊息／💬 聊天」（`setLogPopTab`，記在 `dragonSlayer_logTab`），PC 與手機共用。
   聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會每 4 秒抓新訊息。
-- **PC 入口**：底部 12 格已滿，`PC_SLOTS` 在地圖左側加三顆圓鈕（`side: true`，有深色圓底）：🐉 團隊副本（y 300）、💬 聊天（y 366）、🏰 血盟（y 432），x 104，寬高 58（原圖座標）。
+- **PC 入口**：底部 12 格已滿，`PC_SLOTS` 在地圖左側加三顆圓鈕（`side: true`，有深色圓底）：🐉 團隊副本（y 170）、💬 聊天（y 236）、🏰 血盟（y 302；2026-10-11 拿掉上排框架後整排上移 130），x 104，寬高 58（原圖座標）。
 - **規則（伺服器）** `dragon_chat`：每則 1～100 字（控制字元換成空白、前後空白去掉）、每人 3 秒一則（trigger `too fast`）、伺服器時間；
   每次發言有 5% 機率順手刪掉 3 天前的訊息。RLS：世界頻道所有登入者可讀；隊伍頻道只有隊員（`raid_is_member`）可讀可寫；
   只能用自己的 user_id 發言；被封鎖（`dragon_bans`）或禁言中（`dragon_mutes.until > now()`）不能發言；只有管理者能刪除。
@@ -997,7 +1001,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 34. 排行榜（2026-10-10，版本 `20261010l`；`rank.js`、`tools/supabase.sql` 排行榜段）
 
-- 使用者要求：B 計畫的「排行榜」。入口：手機右柱抽屜「🏆 排行榜」、PC 地圖左側最上面 🏆（`PC_SLOTS` side，y 234）。
+- 使用者要求：B 計畫的「排行榜」。入口：手機右柱抽屜「🏆 排行榜」、PC 地圖左側最上面 🏆（`PC_SLOTS` side，y 104）。
 - **資料來源**：伺服器函式 `dragon_leaderboard(p_kind, p_cls, p_limit)`（security definer）直接從 `dragon_saves` 的存檔計算，玩家不用另外上傳；被封鎖（`dragon_bans`）的帳號排除。
   回傳前 `p_limit`（最多 100）名＋呼叫者自己的角色（`is_me`），**不回傳 user_id**；只有登入者能呼叫。每個角色（帳號×欄位）一列，角色旁顯示所屬血盟。
   - `level`：總經驗（`dragon_total_exp`），可用 `p_cls` 篩選職業。
@@ -1012,7 +1016,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 35. 世界首領（2026-10-10，版本 `20261010m`；`wb.js`、`tools/supabase.sql` 世界首領段）
 
-- 使用者要求：B 計畫的「世界首領」。入口：手機右柱抽屜「👹 世界首領」、PC 地圖左側最上面 👹（`PC_SLOTS` side，y 168）。
+- 使用者要求：B 計畫的「世界首領」。入口：手機右柱抽屜「👹 世界首領」、PC 地圖左側最上面 👹（`PC_SLOTS` side，y 38，第 19 節）。
 - **伺服器**（`dragon_wb`、`dragon_wb_hits`、`dragon_wb_claims`，玩家不能直接讀寫，全部經過函式）：
   - `wb_current()`：回傳目前首領、自己今天剩幾次、對這隻造成的傷害、參戰人數；沒有首領或上一隻結束（打倒或 48 小時到）滿 30 分鐘時建立下一隻（advisory lock 防重複）。
     輪替 drake 遠古地龍・格蘭卡 🐲 → balrog 炎魔・巴洛格 🔥 → frost 冰霜巨龍・希琳 🐉 → lich 不死君王・莫德 💀 → roc 風暴巨鷹・奧拉 🦅。
