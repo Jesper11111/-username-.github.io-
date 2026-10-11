@@ -238,7 +238,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
 | 24 | `tribulation.js` | `getTribulationChance`/`getTribulationHardPenalty`(合體期起勝算扣除量)/`formatChance`/`triggerTribulation`/`tribulationTick`/`resolvePlayerFall`/`endTribulation` | `player`、`config-tribulation.js`、`config-merit.js`(破障丹)、`player.breakPills`、`shopItems`(丹藥加成)、`sectData`(技能加成)、`stats.js`、`elements.js`、`combat.js`(playerAttackTurn)、`beast-combat.js`、`lifespan.js`、`leveling.js`(advanceRealm) | `combat.js`(渡劫中接管 tick)、`ui.js`(按鈕顯示勝算)、HTML 渡劫按鈕 |
 | 25 | `sect.js` | `checkSectJoined`/`openSectModal`/`renderSects`/`joinSect` | `sectData`、`player.sect`/`sectSkills` | 幾乎所有「需拜入宗門才能使用」的彈窗（shop/servant/field/beast/lingbao-shop/library/forge/alchemy）都會先呼叫 `checkSectJoined()` |
 | 26 | `shop.js` | `openShopModal`/`renderShop`/`renderShopCard`/`getShopQty`/`setShopQty`/`setShopQtyMax`/`updateShopTotal`/`buyShopItem` | `shopItems`、`player`、`sect.js`(checkSectJoined) | HTML 按鈕、`bag.js` 顯示已購買道具 |
-| 27 | `bag.js` | `openBagModal`/`hasEquipInventorySpace`(背包上限檢查，鍛造/千寶閣/靈寶閣/卸下裝備共用)/`renderBag`/`useItemFromBag`/`deleteItemFromBag`/`deleteEquipFromInventory`/`bulkDeleteEquipment`、裝備鎖定 `isEquipLocked`/`toggleEquipLock`/`formatLockButton`/`canRemoveEquip`（第 9 節）、裝備過濾 `BAG_EQUIP_FILTERS`/`bagEquipFilter`/`setBagEquipFilter`（太古／遠古／套裝，第 9 節）（卡片另有強化／分解按鈕、頂端暫存區與星允鐵，enhance.js） | `shopItems`、`player.bag`、`player.equipInventory`、`enhance.js`(locateEquip/refreshEquipViews) | `equipment.js`(equipItem 後呼叫 renderBag；裝備卡片鎖定鈕)、`enhance.js`(分解／暫存區毀棄前呼叫 canRemoveEquip、一鍵分解略過鎖定) |
+| 27 | `bag.js` | `openBagModal`/`hasEquipInventorySpace`(背包上限檢查，鍛造/千寶閣/靈寶閣/卸下裝備共用)/`renderBag`/`useItemFromBag`/`deleteItemFromBag`/`deleteEquipFromInventory`/`bulkDeleteEquipment`、裝備鎖定 `isEquipLocked`/`toggleEquipLock`/`formatLockButton`/`canRemoveEquip`（第 9 節）、裝備過濾 `BAG_EQUIP_FILTERS`/`bagEquipFilter`/`setBagEquipFilter`/`renderBagFilterRow`（太古／遠古／套裝，第 9 節）（卡片另有強化／分解按鈕、頂端暫存區與星允鐵，enhance.js） | `shopItems`、`player.bag`、`player.equipInventory`、`enhance.js`(locateEquip/refreshEquipViews) | `equipment.js`(equipItem 後呼叫 renderBag；裝備卡片鎖定鈕)、`enhance.js`(分解／暫存區毀棄前呼叫 canRemoveEquip、一鍵分解略過鎖定) |
 | 28 | `equipment.js` | `EQUIP_CATEGORY_NAMES`(部位分類中文名)、`formatEquipLevel`/`getForgeLevelCap`/`renderForgeLevelSelect`(裝備等級，第 29 節)、`initForgeSelect`/`openEquipmentModal`/`renderLingbaoUI`(注意：命名沿用舊碼，實際是角色裝備列表)/`openWuxingInfo`/`equipItem`/`unequipItem`/`openForgeModal`/`forgeEquipment`/`forgeOneEquipment`(從該等級的可製作清單抽一種，gear.js)、常數 `FORGE_COST`（已移到 config-equipment.js）；舊的 `generateEquipStats` 已移除，改用 gear.js 的 `buildGearStats` | `equipTypes`、`wuxingElements`、`wuxingArrayEffects`、`equipQualities`、`lingbaoShopItems`(說明視窗列固定屬性裝備)、`player.equipment`、`player.equipInventory`、`ui.js`(resolveBatchCount) | `bag.js`(equipItem)、`sect.js`(forge 需拜入宗門) |
 | 29a | `artifact.js` | `getArtifactItem`/`getArtifactSkill`/`getEquippedArtifactSkill`/`formatQualityLabel`(七彩 → 造化神器・七彩、白金 → 白金・先天道器)/`getEquipCardClass`(七彩外框)/`formatArtifactSkill`(卡片顯示)/`artifactSkillTurn`(戰鬥中觸發)/`castProcSkill`(依機率自動發動的技能，神器與職業技能共用)/`migrateArtifactIds`(舊神器補 `lingbaoId`、品質改七彩) | `artifactSkills`/`lingbaoShopItems`、`equipTypes`、`player.equipment`/`equipInventory`、`elements.js`(resolveHit)、`stats.js`(攻擊力)、靈寵減傷計時 `petShieldRate/Timer` | `combat.js`/`tribulation.js`/`bounty.js`(出手後呼叫)、`bag.js`/`equipment.js`(卡片)、`save.js`(applySaveData) |
 | 29 | `lingbao-shop.js` | `openLingbaoShopModal`/`renderLingbaoShopUI`(神器卡片列出專屬技能與價格)/`isArtifactItem`/`getLingbaoCost(item)`(單件價格，神器另計)/`buyLingbaoItem(itemId)`(裝備另存 `lingbaoId`) | `lingbaoShopItems`、`lingbaoTierCosts`、`ARTIFACT_COST_COINS`、`player.sectSkills`/`lingbaoSold`/`coins`/`reputation`/`equipInventory`/`learnedSkills`、`bag.js`(hasEquipInventorySpace) | HTML 按鈕（僅在「宗門」顯示） |
@@ -576,7 +576,7 @@ combatTick() 每秒執行 [combat.js]
 
 ### 背包裝備過濾（2026-10-11，版本 `20261005DM`，使用者：「背包新增過濾選項 太古、遠古、套裝」）
 - bag.js：`BAG_EQUIP_FILTERS`（全部／🔴 太古＝`eq.ancient === 2`／🟡 遠古＝`eq.ancient === 1`（含先天・太古／遠古）／🧩 套裝＝`getGearDef(eq).set` 且品質在 `GEAR_SET_MIN_QUALITY`（紫色以上，套裝效果才生效））、
-  `bagEquipFilter`（目前選的，不存檔）、`setBagEquipFilter(k)`。renderBag 在背包裝備清單上方顯示一排按鈕（附件數），只影響清單顯示，**不影響**一鍵刪除／分解；沒有符合時顯示提示。
+  `bagEquipFilter`（目前選的，不存檔）、`setBagEquipFilter(k)`、`renderBagFilterRow()`。按鈕列（附件數）放在「🗑️ 一鍵刪除／分解裝備」區塊裡、保留屬性那一列下面（2026-10-11 版本 `20261005DN`，使用者：「按鈕做在一鍵刪除那裏」；原本在裝備清單上方），只影響裝備清單顯示，**不影響**一鍵刪除／分解；沒有符合時顯示提示。
 - 驗證（本機）：太古、遠古、紫色套裝、藍色套裝、一般各一件 → 全部 5／太古 1／遠古 1／套裝 1（藍色不算）；切回全部 5；Console 無錯誤。
 
 ## 10. 活動系統（每日任務 / 千寶閣 / 待實作項目）
@@ -1649,7 +1649,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DM`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DN`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
