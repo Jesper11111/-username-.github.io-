@@ -44,6 +44,17 @@ const BAG_EQUIP_FILTERS = {
     gearSet: { label: "🧩 套裝", test: eq => { const d = getGearDef(eq); return !!(d && d.set && GEAR_SET_MIN_QUALITY.includes(eq.quality)); } }
 };
 let bagEquipFilter = 'all';
+// 過濾按鈕列：放在「一鍵刪除／分解」區塊裡（2026-10-11 使用者：「按鈕做在一鍵刪除那裏」）；附件數，只影響下面的裝備清單顯示
+function renderBagFilterRow() {
+    const inv = player.equipInventory || [];
+    return `<div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin: 6px 0;">
+        <span style="font-size: 0.85em; color: #9ca3af;">🔍 顯示：</span>
+        ${Object.keys(BAG_EQUIP_FILTERS).map(k => {
+            const n = inv.filter(BAG_EQUIP_FILTERS[k].test).length;
+            return `<button class="sys-btn" style="width: auto; padding: 4px 10px;${k === bagEquipFilter ? ' border-color: var(--accent); color: var(--accent);' : ''}" onclick="setBagEquipFilter('${k}')">${BAG_EQUIP_FILTERS[k].label}（${n}）</button>`;
+        }).join('')}
+    </div>`;
+}
 function setBagEquipFilter(k) {
     bagEquipFilter = BAG_EQUIP_FILTERS[k] ? k : 'all';
     renderBag();
@@ -72,7 +83,7 @@ function renderBag() {
             "bulkDeleteEquipment",
             `※ 只作用於背包內未鎖定的裝備（數量不含鎖定），已穿戴、🔒 鎖定、勾選「保留屬性」的不受影響。分解白～紫得碎鐵（每 ${SHARDS_PER_IRON} 個合成 1 顆星允鐵），橙色得星允鐵 ×${DECOMPOSE_IRON["橙色"]}`,
             `<button class="sys-btn" onclick="bulkDecomposeEquipment()">分解勾選品級</button>`,
-            renderKeepElementRow('bulk-keep-element')
+            renderKeepElementRow('bulk-keep-element') + renderBagFilterRow()
         ));
     }
 
@@ -172,12 +183,6 @@ function renderBag() {
         hasItems = true;
         // 裝備過濾（2026-10-11 使用者：「背包新增過濾選項 太古、遠古、套裝」）：只影響下面的裝備清單，不影響一鍵刪除／分解
         const shown = player.equipInventory.filter(eq => BAG_EQUIP_FILTERS[bagEquipFilter].test(eq));
-        parts.push(`<div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;">
-            ${Object.keys(BAG_EQUIP_FILTERS).map(k => {
-                const n = k === 'all' ? equipCount : player.equipInventory.filter(BAG_EQUIP_FILTERS[k].test).length;
-                return `<button class="sys-btn" style="width: auto; padding: 4px 10px;${k === bagEquipFilter ? ' border-color: var(--accent); color: var(--accent);' : ''}" onclick="setBagEquipFilter('${k}')">${BAG_EQUIP_FILTERS[k].label}（${n}）</button>`;
-            }).join('')}
-        </div>`);
         if (!shown.length) parts.push(`<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 10px;">背包裡沒有符合「${BAG_EQUIP_FILTERS[bagEquipFilter].label}」的裝備。</div>`);
         shown.forEach(eq => {
             let locked = isEquipLocked(eq);
