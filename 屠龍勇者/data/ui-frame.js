@@ -32,16 +32,15 @@ const PC_SLOTS = [
     { icon: '✨', name: '技能',     tab: 'skill', x: 447, y: 933, w: 66, h: 66, round: true },
     { icon: '📜', name: '任務',     tab: 'quest', ...PC_SQ(0) },
     { icon: '🎒', name: '背包',     tab: 'bag',   ...PC_SQ(1) },
-    { icon: '🏘️', name: '村莊',     tab: 'town',  ...PC_SQ(2) },
-    { icon: '🧪', name: '治癒藥水', count: () => healPotionCount(), use: quickHeal, ...PC_SQ(3) },
-    { icon: '💨', name: '自我加速藥水', count: () => countItem('greenPotion'), use: () => quickPotion('greenPotion'), ...PC_SQ(4) },
-    { icon: '⚡', name: '勇敢藥水類', count: () => { const id = braveItemFor(player.cls); return id ? countItem(id) : 0; }, use: () => { const id = braveItemFor(player.cls); if (id) quickPotion(id); }, ...PC_SQ(5) },
-    { icon: '💧', name: '藍色藥水', count: () => countItem('bluePotion'), use: () => quickPotion('bluePotion'), ...PC_SQ(6) },
-    { icon: '📜', name: '回家卷軸', count: () => countItem('homeScroll'), use: () => homeScrollBtn(), ...PC_SQ(7) },
-    { icon: '🌀', name: '瞬間移動卷軸', count: () => countItem('teleScroll'), use: quickTele, ...PC_SQ(8) },
-    { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(9) },
-    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(10) },
-    { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(11) },
+    { icon: '🧪', name: '治癒藥水', count: () => healPotionCount(), use: quickHeal, ...PC_SQ(2) },
+    { icon: '💨', name: '自我加速藥水', count: () => countItem('greenPotion'), use: () => quickPotion('greenPotion'), ...PC_SQ(3) },
+    { icon: '⚡', name: '勇敢藥水類', count: () => { const id = braveItemFor(player.cls); return id ? countItem(id) : 0; }, use: () => { const id = braveItemFor(player.cls); if (id) quickPotion(id); }, ...PC_SQ(4) },
+    { icon: '💧', name: '藍色藥水', count: () => countItem('bluePotion'), use: () => quickPotion('bluePotion'), ...PC_SQ(5) },
+    { icon: '📜', name: '回家卷軸', count: () => countItem('homeScroll'), use: () => homeScrollBtn(), ...PC_SQ(6) },
+    { icon: '🌀', name: '瞬間移動卷軸', count: () => countItem('teleScroll'), use: quickTele, ...PC_SQ(7) },
+    { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(8) },
+    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(9) },
+    { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(10) },
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
     // 多人功能（2026-10-10，底部格子已滿，放在地圖左側；第 32 節）
@@ -50,6 +49,7 @@ const PC_SLOTS = [
     { icon: '🐉', name: '團隊副本', tab: 'raid', x: 104, y: 170, w: 58, h: 58, round: true, side: true },
     { icon: '💬', name: '聊天', tab: 'chat', x: 104, y: 236, w: 58, h: 58, round: true, side: true },
     { icon: '🏰', name: '血盟', tab: 'clan', x: 104, y: 302, w: 58, h: 58, round: true, side: true },
+    { icon: '🏪', name: '交易所', tab: 'market', x: 104, y: 368, w: 58, h: 58, round: true, side: true },
 ];
 function isPcFrame() { return displayMode === 'pc'; }
 function currentSlotDefs() { return isPcFrame() ? PC_SLOTS : SLOT_DEFS; }
