@@ -36,6 +36,19 @@ function canRemoveEquip(loc) {
     return true;
 }
 
+// 背包裝備過濾（renderBag）：太古＝eq.ancient 2、遠古＝eq.ancient 1（含先天・太古／遠古）、套裝＝屬於套裝且紫色以上（套裝效果生效的品質，config-sets.js）
+const BAG_EQUIP_FILTERS = {
+    all:     { label: "全部",     test: () => true },
+    taigu:   { label: "🔴 太古", test: eq => eq.ancient === 2 },
+    yuangu:  { label: "🟡 遠古", test: eq => eq.ancient === 1 },
+    gearSet: { label: "🧩 套裝", test: eq => { const d = getGearDef(eq); return !!(d && d.set && GEAR_SET_MIN_QUALITY.includes(eq.quality)); } }
+};
+let bagEquipFilter = 'all';
+function setBagEquipFilter(k) {
+    bagEquipFilter = BAG_EQUIP_FILTERS[k] ? k : 'all';
+    renderBag();
+}
+
 // ⚠️ 背包裝備數量沒有上限，比照 renderServants() 先組好整段 HTML 再一次寫入，避免裝備多時卡住
 function renderBag() {
     const container = document.getElementById('bag-list-container');
@@ -157,7 +170,16 @@ function renderBag() {
 
     if (player.equipInventory && player.equipInventory.length > 0) {
         hasItems = true;
-        player.equipInventory.forEach(eq => {
+        // 裝備過濾（2026-10-11 使用者：「背包新增過濾選項 太古、遠古、套裝」）：只影響下面的裝備清單，不影響一鍵刪除／分解
+        const shown = player.equipInventory.filter(eq => BAG_EQUIP_FILTERS[bagEquipFilter].test(eq));
+        parts.push(`<div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;">
+            ${Object.keys(BAG_EQUIP_FILTERS).map(k => {
+                const n = k === 'all' ? equipCount : player.equipInventory.filter(BAG_EQUIP_FILTERS[k].test).length;
+                return `<button class="sys-btn" style="width: auto; padding: 4px 10px;${k === bagEquipFilter ? ' border-color: var(--accent); color: var(--accent);' : ''}" onclick="setBagEquipFilter('${k}')">${BAG_EQUIP_FILTERS[k].label}（${n}）</button>`;
+            }).join('')}
+        </div>`);
+        if (!shown.length) parts.push(`<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 10px;">背包裡沒有符合「${BAG_EQUIP_FILTERS[bagEquipFilter].label}」的裝備。</div>`);
+        shown.forEach(eq => {
             let locked = isEquipLocked(eq);
             parts.push(`
                 <div class="${getEquipCardClass(eq)}" style="border-color: var(--equip-color);">
