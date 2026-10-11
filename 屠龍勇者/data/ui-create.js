@@ -111,6 +111,7 @@ function openCreate(slot) {
     if (i < 0) { showToast(`角色欄位已滿（${MAX_SLOTS} 個），請先刪除一個角色`); return; }
     createSlot = i;
     createState = null;
+    stageCls = null;
     $('create-name').value = '';
     renderCreate();
     showScreen('create');
@@ -138,10 +139,55 @@ function adjustCreateStat(k, d) {
     renderCreate();
 }
 
+// 創角舞台（ARCHITECTURE.md 第 18 節）：十二職業合照 all.jpg 上，選中的職業用去背圖 stage/職業.webp 疊在原位置「走出來」，其他人變暗
+// 數值是角色在原圖（2000×1493）的範圍 [左, 上, 右, 下]；陣列順序＝由後往前（後面的蓋在前面，點擊優先）
+const CLASS_STAGE = {
+    demon: [644, 149, 1220, 707], warrior: [1326, 247, 1681, 770], shura: [1128, 345, 1336, 765], angel: [175, 172, 683, 762],
+    paladin: [615, 353, 824, 791], elf: [38, 466, 355, 1158], gunner: [675, 642, 973, 1241], magicfighter: [1027, 669, 1331, 1178],
+    darkelf: [1693, 607, 1970, 1216], royal: [1460, 560, 1758, 1242], knight: [329, 638, 726, 1317], mage: [1231, 915, 1651, 1360],
+};
+const STAGE_W = 2000, STAGE_H = 1493;
+const STAGE_BACK = ['demon', 'warrior', 'shura', 'angel', 'paladin'];   // 後排：下半身被擋住，不畫腳下光圈、光暈縮小
+let stageCls = null;
+
+function stagePos(b, shrink = 0) {
+    const w = b[2] - b[0], h = b[3] - b[1];
+    return `left:${(b[0] + w * shrink) / STAGE_W * 100}%;top:${(b[1] + h * shrink) / STAGE_H * 100}%;width:${w * (1 - 2 * shrink) / STAGE_W * 100}%;height:${h * (1 - 2 * shrink) / STAGE_H * 100}%`;
+}
+
+function renderStage() {
+    const el = $('class-stage');
+    if (!el) return;
+    const cls = createState.cls, c = CLASSES[cls], b = CLASS_STAGE[cls];
+    if (!el.dataset.ready) {
+        el.dataset.ready = '1';
+        el.innerHTML = `<img class="stage-bg" src="images/classes/all.jpg?v=2" alt="十二職業">
+            <div class="stage-glow" id="stage-glow"></div>
+            <img class="stage-hero" id="stage-hero" alt="">
+            ${Object.keys(CLASS_STAGE).map(id => `<button class="stage-hit" style="${stagePos(CLASS_STAGE[id], 0.12)}" onclick="selectClass('${id}')" aria-label="${CLASSES[id].name}"></button>`).join('')}
+            <div class="stage-title"><small>選擇英雄職業</small><b id="stage-name"></b><span id="stage-desc"></span></div>`;
+    }
+    if (stageCls === cls) return;
+    stageCls = cls;
+    $('stage-name').textContent = c.name;
+    $('stage-desc').textContent = c.desc.split('。')[0] + '。';
+    if (!b) { $('stage-hero').style.display = 'none'; return; }
+    const hero = $('stage-hero'), glow = $('stage-glow');
+    hero.style.cssText = stagePos(b);
+    hero.src = `images/classes/stage/${cls}.webp?v=1`;
+    // 腳下光圈：寬度取角色寬的 0.8，放在角色底部
+    const w = (b[2] - b[0]) * 0.8;
+    const back = STAGE_BACK.includes(cls);
+    hero.classList.toggle('back', back);
+    glow.style.cssText = back ? 'display:none' : `left:${(b[0] + b[2] - w) / 2 / STAGE_W * 100}%;top:${(b[3] - 40) / STAGE_H * 100}%;width:${w / STAGE_W * 100}%;height:${80 / STAGE_H * 100}%`;
+    for (const x of [hero, glow]) { x.classList.remove('step'); void x.offsetWidth; x.classList.add('step'); }
+}
+
 function renderCreate() {
     if (!createState) createState = { cls: 'knight', stats: { ...CLASSES.knight.base }, name: '' };
     if ($('create-name').value) createState.name = $('create-name').value;   // 重繪前保留已輸入的名字
     const c = CLASSES[createState.cls], left = createPointsLeft();
+    renderStage();
     $('create-classes').innerHTML = Object.keys(CLASSES).map(id =>
         `<button class="class-card ${id === createState.cls ? 'active' : ''}" onclick="selectClass('${id}')">
             <span class="class-icon">${CLASSES[id].icon}</span>${CLASSES[id].name}</button>`).join('');
