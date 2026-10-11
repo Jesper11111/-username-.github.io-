@@ -43,7 +43,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪與十二職業合照 `all.jpg`（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 與創角舞台去背圖 `classes/stage/`（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
@@ -57,7 +57,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261010q`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261011a`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -543,9 +543,18 @@ kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過
 - 四份都用 `"bodyH": 135`（縮放 0.837）。攻擊用 `"glow": "warm", "holes": 120`（金色刀光淡出、去掉刀光圍住的灰底）；
   怒吼再加 `"glowSat": 8, "glowSmooth": 26`（火焰外圍的淡紅霧也當光暈，不留暗紅硬邊）。
 
-**十二職業合照**（2026-10-10，版本 `20261010q`）：`images/classes/all.jpg`（1400×1045，392KB），顯示在創角畫面 `#screen-create` 職業按鈕上方（`<img class="class-group">`，`?v=1`，也在 `sw.js` 預先快取）。
-使用者提供兩張合照各少一個職業（一張缺修羅、一張缺法師），以缺修羅那張為底，用 PIL 把另一張的修羅（臉中心 1360,490）縮成 0.85 倍、貼在惡魔與王族之間（臉中心 1215,488），
-多邊形遮罩羽化 14px，惡魔手爪、王族、槍手和槍畫成前景遮罩蓋回去，看起來修羅站在他們後面。要換圖直接覆蓋檔案並把 `?v=` 加一。
+**創角舞台：十二職業合照**（2026-10-11，版本 `20261011a`；`ui-create.js` 的 `CLASS_STAGE`／`renderStage`，CSS `.class-stage`）
+- 背景 `images/classes/all.jpg?v=2`（1400×1045）：使用者提供的 12 人合照（原圖 `tools/sprite-src/all-classes.jpg`，2000×1493），
+  重複的標籤（妖精 3 個、王族 2 個、黑暗妖精 2 個）用 OpenCV inpaint 擦掉，各留腳下那個；原圖缺「魔鬥士」標籤，用 Noto Sans TC Light 補在他右側（`tools/stage/clean.py`）。
+- 選中的職業「走出來」（參考使用者給的 GOD 血冠創角畫面）：合照整張變暗（`brightness(.38)`），選中的職業用去背圖 `images/classes/stage/職業.webp?v=1`
+  （原圖 0.7 倍，每張 13～30KB）疊在原位置，以腳底為中心放大 1.13 倍＋金色光暈，0.55 秒動畫；前排加腳下光圈 `.stage-glow`。
+  後排 `STAGE_BACK`（惡魔、戰士、修羅、天使、聖騎士）下半身被擋住：只放大 1.08、光暈縮小、不畫光圈。上方顯示「選擇英雄職業／職業名／介紹第一句」。
+- 點合照上的人也能選職業：每個職業一個透明按鈕 `.stage-hit`（範圍內縮 12%，`CLASS_STAGE` 由後往前排，前排蓋在上面優先）。
+  只有換職業時才重播動畫（`stageCls`），加減能力值不會。下方職業按鈕與單職業立繪照舊。
+- 去背圖產生方式：Segment Anything（`sam_vit_b`，pip `segment-anything`＋CPU 版 torch）對每個職業給框＋正向點（頭、身體、翅膀）＋反向點（旁邊的人），
+  天使、惡魔身體和翅膀分開切再聯集（`tools/stage/seg.py`）；`tools/stage/post.py` 依前後順序（法師、騎士、王族、黑暗妖精、魔鬥士、槍手、妖精、聖騎士、天使、修羅、戰士、惡魔）
+  把重疊的點分給前面的人、去小碎塊、羽化 1.2px，用擦掉全部標籤的版本當顏色來源；戰士只留到 y 770（下面被王族擋住）。
+  `CLASS_STAGE` 的數字＝去背圖在原圖的範圍（`post.py` 印出的 meta）。所有圖都在 `sw.js` 預先快取。
 
 ### 18.1 切圖工具 `tools/cut-sprites.ps1`
 
