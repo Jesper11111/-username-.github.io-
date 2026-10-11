@@ -67,9 +67,24 @@ const SCENE_BGS = {
             { role: '鍛造', x: 27, y: 15, painted: true, h: 2.7 },    // 右下打鐵匠
         ],
     },
+    // 永夜王都：使用者提供的長條全景雨夜王都（2000×553 aden.webp），鋪成 61×17 格＝比畫面寬的「大型地圖」，PC、手機都會左右捲動；
+    // 左邊市集大街、中間國王雕像廣場、右邊鐵匠區；NPC 用圖上畫好的人物（painted）
+    aden: {
+        src: 'images/maps/aden.webp', w: 61, h: 17, start: [24, 14],
+        walk: [[4, 14, 48, 15], [9, 12, 30, 13], [31, 13, 36, 15], [40, 14, 58, 15]],
+        block: [[36, 12, 41, 14]],
+        npcs: [
+            { role: '倉庫', x: 3, y: 15, painted: true, h: 4.6 },     // 最左邊的鎧甲衛兵
+            { role: '商店', x: 9, y: 14, painted: true, h: 2.6 },     // 市集攤位前的兜帽商人
+            { role: '旅館', x: 16, y: 14, painted: true, h: 2.7 },    // 大街中間的修士
+            { role: '傳送師', x: 44, y: 14, painted: true, h: 3.2 },  // 雕像旁的兜帽術士
+            { role: '回收', x: 49, y: 14, painted: true, h: 2.8 },    // 鐵匠區的工匠
+            { role: '鍛造', x: 56, y: 15, painted: true, h: 4.2 },    // 右下打鐵匠
+        ],
+    },
 };
 // 各村莊用哪張背景圖（沒寫的用低語港 village）
-const TOWN_BG = { gludio: 'ash', giran: 'darkgold' };
+const TOWN_BG = { gludio: 'ash', giran: 'darkgold', aden: 'aden' };
 
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
