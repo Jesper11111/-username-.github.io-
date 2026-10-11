@@ -161,6 +161,12 @@ function stagePos(b, shrink = 0) {
     return `left:${(b[0] + w * shrink) / STAGE_W * 100}%;top:${(b[1] + h * shrink) / STAGE_H * 100}%;width:${w * (1 - 2 * shrink) / STAGE_W * 100}%;height:${h * (1 - 2 * shrink) / STAGE_H * 100}%`;
 }
 
+// 舞台左右箭頭：照 CLASSES 順序切換職業
+function stageStep(d) {
+    const ids = Object.keys(CLASSES), i = ids.indexOf(createState.cls);
+    selectClass(ids[(i + d + ids.length) % ids.length]);
+}
+
 function renderStage() {
     const el = $('class-stage');
     if (!el) return;
@@ -172,7 +178,9 @@ function renderStage() {
             <div class="stage-glow" id="stage-glow"></div>
             <img class="stage-front" id="stage-front" alt="">
             ${Object.keys(CLASS_STAGE).map(id => `<button class="stage-hit" style="${stagePos(CLASS_STAGE[id], 0.12)}" onclick="selectClass('${id}')" aria-label="${CLASSES[id].name}"></button>`).join('')}
-            <div class="stage-title"><small>選擇英雄職業</small><b id="stage-name"></b><span id="stage-desc"></span></div>`;
+            <button class="stage-arrow l" onclick="stageStep(-1)" aria-label="上一個職業">‹</button>
+            <button class="stage-arrow r" onclick="stageStep(1)" aria-label="下一個職業">›</button>
+            <div class="stage-title"><small>選擇英雄職業・點人物或左右切換</small><b id="stage-name"></b><span id="stage-desc"></span></div>`;
         for (const id in CLASS_FRONT) new Image().src = `images/classes/hero/${id}.webp?v=1`;   // 預先載入，切換時不會閃
     }
     if (stageCls === cls) return;
@@ -210,9 +218,6 @@ function renderCreate() {
     if ($('create-name').value) createState.name = $('create-name').value;   // 重繪前保留已輸入的名字
     const c = CLASSES[createState.cls], left = createPointsLeft();
     renderStage();
-    $('create-classes').innerHTML = Object.keys(CLASSES).map(id =>
-        `<button class="class-card ${id === createState.cls ? 'active' : ''}" onclick="selectClass('${id}')">
-            <span class="class-icon">${CLASSES[id].icon}</span>${CLASSES[id].name}</button>`).join('');
     $('create-desc').innerHTML = (c.art ? `<img class="class-art" src="${c.art}?v=${GAME_VERSION}" alt="${c.name}">` : '') +
         `<b>${c.icon} ${c.name}</b><p>${c.desc}</p><p class="story-text">${CLASS_STORIES[createState.cls].story}</p>
         <small class="muted">可用武器：${c.weapons.map(w => WEAPON_TYPES[w].name).join('、')}${c.shield ? '、盾牌' : '（不能用盾）'}</small>`;
