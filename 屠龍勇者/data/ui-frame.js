@@ -15,7 +15,6 @@ const DRAWERS = {
 
 const SLOT_DEFS = [
     { icon: '🎒', name: '背包',         tab: 'bag' },
-    { icon: '🏘️', name: '村莊',         tab: 'town' },
     { icon: '🧪', name: '治癒藥水',     count: () => healPotionCount(), use: quickHeal },
     { icon: '💨', name: '自我加速藥水', count: () => countItem('greenPotion'), use: () => quickPotion('greenPotion') },
     { icon: '📜', name: '回家卷軸',     count: () => countItem('homeScroll'), use: () => homeScrollBtn() },

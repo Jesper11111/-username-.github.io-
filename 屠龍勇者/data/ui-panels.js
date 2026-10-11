@@ -128,7 +128,7 @@ function huntButtonsHtml() {
         const z = currentZone();
         return z && z.type === 'tower' ? `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>` : '';
     }
-    if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button><button class="secondary" onclick="switchTab('town')">🏘️ 村莊設施</button>`;
+    if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button>`;   // 村莊設施改由地圖上的商人 NPC 打開（2026-10-11）
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
     // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
