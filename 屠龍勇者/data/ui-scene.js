@@ -43,7 +43,19 @@ const SCENE_BGS = {
         walk: [[8, 6, 19, 10], [10, 10, 20, 11], [16, 12, 21, 13], [12, 2, 14, 5], [19, 7, 22, 9], [5, 7, 7, 8], [21, 11, 23, 11]],
         npcs: [{ role: '旅館', x: 5, y: 8 }, { role: '商店', x: 8, y: 10 }, { role: '倉庫', x: 12, y: 9 }, { role: '鍛造', x: 23, y: 11 }, { role: '回收', x: 16, y: 7 }],
         block: [[12, 7, 14, 8], [8, 8, 10, 9], [15, 6, 17, 6], [17, 7, 18, 7], [17, 9, 18, 9]],
-    },};
+    },
+    // 灰燼村：使用者提供的焚毀村落圖（2000×1116 → 1755×979 ash.webp），鋪成 30×17 格；中間泥濘大路往南展開成空地，兩側是燒毀的房子
+    // 商人位置由 Claude 先排（使用者可再給配置圖調整）
+    ash: {
+        src: 'images/maps/ash.webp', w: 30, h: 17, start: [16, 12],
+        walk: [[13, 3, 17, 6], [11, 6, 19, 9], [8, 9, 24, 15]],
+        block: [],
+        npcs: [{ role: '旅館', x: 11, y: 8 }, { role: '商店', x: 9, y: 11 }, { role: '倉庫', x: 14, y: 7 }, { role: '鍛造', x: 19, y: 8 }, { role: '回收', x: 22, y: 11 }],
+    },
+};
+// 各村莊用哪張背景圖（沒寫的用低語港 village）
+const TOWN_BG = { gludio: 'ash' };
+
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
     { role: '商店',   icon: '👩‍💼', x: 12, y: 12, act: () => openTownSub('shop'),
@@ -95,7 +107,7 @@ function sceneKey() {
 }
 
 function themeFor() {
-    if (player.loc.type === 'town') return SCENE_THEMES.town;
+    if (player.loc.type === 'town') return { ...SCENE_THEMES.town, bg: TOWN_BG[player.loc.id] || 'village' };
     const z = currentZone();
     if (z.type === 'dragon') return SCENE_THEMES.dragon;
     if (z.type === 'tower') return SCENE_THEMES.tower;
