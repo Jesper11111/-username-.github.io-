@@ -38,6 +38,7 @@ let player = {
     // 裝備系統（第 37 節）
     starIron: 0,                 // 星允鐵：強化／進化用（enhance.js）
     refineStones: 0,             // 洗煉石：洗煉裝備詞條用（enhance.js，第 67 節 D2）
+    punchTools: 0,               // 打洞器：符寶坊替橙裝以上多開 1 孔（talisman.js，第 28 節）
     craftCur: { tianji: 0, hunyuan: 0, poxu: 0, zaohua: 0 },
     lingStones: { "金": 0, "木": 0, "水": 0, "火": 0, "土": 0 },   // 五行傳送陣靈石：進出靈界各要一套（lingjie.js，第 74 節）
     inLingjie: false,
