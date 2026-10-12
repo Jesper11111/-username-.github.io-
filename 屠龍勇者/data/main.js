@@ -7,8 +7,8 @@ function gameTick() {
     const gap = now - lastTick;
     const dt = Math.min(1000, gap);   // 一般情況最多補 1 秒
     lastTick = now;
+    gameNow += gap;   // 遊戲時鐘跟著真實時間走（分頁在背景也算），不然會越來越落後，載入別台裝置的存檔時冷卻／增益會變成好幾小時
     if (offlineHold) return;   // 向伺服器結算離線收益中（vault.js）
-    gameNow += dt;
     if (!player) return;
     // 分頁在背景被瀏覽器暫停太久（或電腦休眠）：用離線收益補上這段時間（要登入、扣鑽石）
     if (gap >= OFFLINE_MIN_MS && offlineEligible()) { offlineSettle(gap); return; }

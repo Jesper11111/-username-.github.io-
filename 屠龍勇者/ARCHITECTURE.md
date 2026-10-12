@@ -66,7 +66,9 @@
 - **存檔 key** 用 `dragonSlayer_` 前綴（與修仙同網域，localStorage 共用）；多角色欄位見第 25 節。改存檔結構時 `SAVE_SCHEMA +1` 並在 `migrateSave` 補轉換。
 - 不用原生 `alert/confirm`，用 `gameAlert/gameConfirm/showToast`。
 - `onclick="…"` 字串只呼叫頂層函式並傳字面值，不直接寫 `player`（與修仙的混淆建置規則一致）。
-- **時間**：增益、冷卻、喝水間隔、步行、掛機統計用 `gameNow`（遊戲時鐘，主迴圈每次 +dt，最多補 1 秒）；
+- **時間**：增益、冷卻、喝水間隔、步行、掛機統計用 `gameNow`（遊戲時鐘）。主迴圈每次加上**真實經過的時間** `gap`（2026-10-12 起，版本 `20261012x`；戰鬥、回血仍用最多 1 秒的 `dt`）。
+  以前只加 dt，手機切到背景後 gameNow 會落後真實時間好幾小時，載入別台裝置的雲端存檔時冷卻／增益變成幾千秒（暗影斬冷卻 6946 秒）。
+  另外 `player.js` 的 `clockSanity()`（`cleanBuffs` 每次呼叫）把 `player.cds` 夾在技能／共鳴原本的冷卻內（查不到用 180 秒），`player.buffs` 夾在道具／技能的 `sec` 內（查不到用 600 秒），舊存檔也會自動修好；
   只有龍穴冷卻等「真實時間」用 `Date.now()`。模擬測試時手動 `gameNow += 100; huntTick(100)` 即可快轉。
 - 本機測試：`屠龍勇者/.claude/launch.json` 的 `dragon`（port 8790，與修仙不同 origin，存檔互不影響）。
 

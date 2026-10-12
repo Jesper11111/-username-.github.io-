@@ -142,7 +142,24 @@ function buffName(b) { return b.src === 'skill' ? (findSkill(b.id) || {}).name :
 function cleanBuffs() {
     const now = gameNow;
     for (const k in player.buffs) if (player.buffs[k].until <= now) delete player.buffs[k];
+    clockSanity();
 }
+
+// 冷卻／增益剩餘時間不可能超過原本的長度：別台裝置（或舊版時鐘落後）存的時間戳比現在的 gameNow 快很多時，夾回上限（2026-10-12 暗影斬冷卻 6946 秒）
+function clockSanity() {
+    const now = gameNow, p = player;
+    for (const id in p.cds) {
+        const r = id.startsWith('res_') && RESONANCE[id.slice(4)], k = !r && learnedSkillById(id);
+        const max = ((r ? r.cd : k ? k.cd : 0) || 180) * 1000;
+        if (p.cds[id] - now > max) p.cds[id] = now + max;
+    }
+    for (const key in p.buffs) {
+        const b = p.buffs[key], d = b.src === 'item' ? ITEMS[b.id] : learnedSkillById(b.id);
+        const max = ((d && d.sec) || 600) * 1000;
+        if (b.until - now > max) b.until = now + max;
+    }
+}
+function learnedSkillById(id) { return (SKILLS[player.cls] || []).find(s => s.id === id) || null; }
 
 function learnedSkills() { return (SKILLS[player.cls] || []).filter(s => player.lv >= s.lv); }
 
