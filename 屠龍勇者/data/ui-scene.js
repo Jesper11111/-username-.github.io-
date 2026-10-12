@@ -195,6 +195,11 @@ function spriteImage(src) {
 }
 
 function openTownSub(sub) { townSub = sub; switchTab('town'); }
+// 點 NPC：打開這位 NPC 專用的對話框（只有他的功能，標題顯示名字）
+function npcOpen(n) {
+    n.act();
+    if (n.role && currentTab === 'town') { townNpcNow = { name: (n.names && n.names[player.loc.id]) || n.role, role: n.role }; renderTabs(); renderPanel(); }
+}
 
 // 目前村莊要畫的 NPC：有背景圖的村莊用 SCENE_BGS 的 npcs（只換位置，名字、功能沿用 TOWN_NPCS），沒有背景圖用 TOWN_NPCS
 function townNpcList(bg) {
@@ -856,10 +861,10 @@ function sceneClick(ev) {
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
     if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
-    if (plate) { plate.npc.act(); return; }
+    if (plate) { npcOpen(plate.npc); return; }
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
     const b = townNpcList(scene.bg).find(b => Math.abs(b.x - tx) <= 1 && ty <= b.y + 1 && ty >= b.y - (b.painted ? Math.ceil(b.h) : 1));   // 圖上的人：點身體也算
-    if (b) { b.act(); return; }
+    if (b) { npcOpen(b); return; }
     sceneWalkTo(tx, ty);
 }
 

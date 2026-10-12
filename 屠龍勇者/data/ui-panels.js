@@ -27,6 +27,7 @@ function enterGame() {
 function renderTabs() { renderFrameNav(); }
 
 function switchTab(tab) {
+    if (tab !== 'town') townNpcNow = null;   // NPC 對話框只在從 NPC 打開時（ui-scene.js npcOpen）
     currentTab = tab;
     closeDrawers();
     renderTabs();
@@ -41,7 +42,8 @@ const PANEL_FNS = { hunt: renderHunt, map: renderMap, char: renderChar, bag: ren
 
 function panelHead(tab, withBack) {
     const back = isSideLayout() ? '✖ 關閉' : '✖ 返回狩獵';
-    return `<div class="panel-head"><b>${TABS[tab][0]} ${TABS[tab][1]}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">${back}</button>` : ''}</div>`;
+    const title = tab === 'town' && townNpcNow ? `💬 ${esc(townNpcNow.name)}<small class="muted">（${townNpcNow.role}）</small>` : `${TABS[tab][0]} ${TABS[tab][1]}`;
+    return `<div class="panel-head"><b>${title}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">${back}</button>` : ''}</div>`;
 }
 
 function refreshUI() {
@@ -552,6 +554,13 @@ function renderQuest() {
 }
 
 // ───────── 村莊 ─────────
+// NPC 對話框的招呼語
+const NPC_LINES = { shop: '歡迎光臨！武器、藥水、卷軸應有盡有，慢慢挑。', sell: '有用不到的東西嗎？我全部收購。', storage: '要寄放什麼東西嗎？角色倉庫和帳號共用倉庫都在這裡。',
+    craft: '帶齊材料來，我幫你打造最好的裝備。', inn: '旅途辛苦了，住一晚好好休息吧。' };
+// 商店分類（renderShop）：武器裝備（含彈藥）、藥水、卷軸，其他類別放「其他」
+const SHOP_CATS = [['gear', '⚔️ 武器裝備', ['weapon', 'armor', 'ammo']], ['potion', '🧪 藥水', ['potion', 'elixir']], ['scroll', '📜 卷軸', ['scroll']]];
+let townNpcNow = null, shopCat = 'gear';
+function setShopCat(c) { shopCat = c; renderPanel(); }
 const TOWN_SUBS = [['shop', '🏪 商店'], ['sell', '💰 回收'], ['storage', '📦 倉庫'], ['craft', '🔨 鍛造'], ['inn', '🛏️ 旅館']];
 
 function renderTown() {
@@ -559,6 +568,10 @@ function renderTown() {
         return `<div class="panel notice">目前在${zoneTitle()}，回到村莊才能使用商店、倉庫等設施。
             <div class="btn-row"><button onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>
             <button class="secondary" onclick="walkHomeBtn();switchTab('hunt')">🚶 步行回村</button></div></div>`;
+    }
+    if (townNpcNow) {   // NPC 專用對話框：只顯示這位 NPC 的功能（2026-10-12 使用者要求）
+        const say = NPC_LINES[townSub] || '';
+        return `<div class="panel npc-say">「${say}」</div>` + ({ shop: renderShop, sell: renderSell, storage: renderStorage, craft: renderCraft, inn: renderInn }[townSub])();
     }
     const t = currentTown();
     let h = `<div class="panel"><div class="loc">${t.icon} ${t.name}</div><small class="muted">村莊等級 ${t.tier}：越大的城鎮賣的東西越多。</small>
@@ -570,7 +583,12 @@ function renderTown() {
 function setTownSub(s) { townSub = s; renderPanel(); }
 
 function renderShop() {
-    return `<div class="list">` + shopItemIds().map(id => {
+    const ids = shopItemIds(), known = SHOP_CATS.flatMap(c => c[2]);
+    const cats = SHOP_CATS.concat(ids.some(id => !known.includes(ITEMS[id].cat)) ? [['other', '📦 其他', null]] : []);
+    if (!cats.some(c => c[0] === shopCat)) shopCat = 'gear';
+    const cur = cats.find(c => c[0] === shopCat);
+    const list = ids.filter(id => cur[2] ? cur[2].includes(ITEMS[id].cat) : !known.includes(ITEMS[id].cat));
+    return `<div class="chips">${cats.map(c => `<button class="chip-btn ${shopCat === c[0] ? 'active' : ''}" onclick="setShopCat('${c[0]}')">${c[1]}</button>`).join('')}</div><div class="list">` + (list.length ? '' : '<p class="muted">這裡沒有賣這類商品</p>') + list.map(id => {
         const d = ITEMS[id];
         const usable = !d.classes || d.classes.includes(player.cls);
         const qty = isStackable(d) ? [1, 10, 100] : [1];
