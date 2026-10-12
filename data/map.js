@@ -287,7 +287,7 @@ function getMainMapForRealm() {
     return f ? maps[f.c].items[f.i] : null;
 }
 // 收益速度上限（numeric.js 的 nv2RewardSpeedAdj）：時空秘境 SPACETIME_REALM.rewardSpeedCap 倍，其他地圖 NV2.rewardSpeedCap（第 78 節）
-//   地圖可自訂 rewardSpeedCap（仙魔戰場 Infinity＝不設上限，第 79 節）
+//   地圖可自訂 rewardSpeedCap（仙魔戰場 3，2026-10-12 前為 Infinity＝不設上限，第 79 節）
 function getRewardSpeedCap() {
     if (isSpacetimeMap()) return SPACETIME_REALM.rewardSpeedCap;
     const m = player.currentMap;
@@ -312,7 +312,7 @@ function getMapRespawnSeconds(item) {
     return item && typeof item.respawnSec === 'number' ? item.respawnSec : MONSTER_RESPAWN_SECONDS;
 }
 // ==================== 仙魔戰場（靈界・風元大陸，第 79 節；2026-10-09 使用者指定）====================
-// 靈界地圖「風元大陸」紅點 → 說明確認 → 進入；妖獸＝自己境界 10 階 × 主要練功圖的強度、刷新 1 秒、經驗沒有上限（config-maps.js）
+// 靈界地圖「風元大陸」紅點 → 說明確認 → 進入；妖獸＝自己境界 10 階 × 主要練功圖的強度 × XIANMO_STR_MULT、刷新 1 秒、收益最多主要練功圖一般玩家的 3 倍（config-maps.js）
 async function enterXianmoBattlefield() {
     const f = findMapByName('仙魔戰場');
     if (!f) return;
@@ -323,9 +323,9 @@ async function enterXianmoBattlefield() {
     const main = getMainMapForRealm(), [lo, hi] = item.nv2Str;
     const msg = `⚔️ 風元大陸・仙魔戰場\n`
         + `\n・${realms[item.hardMinRealm]}～${realms[15]}皆可進入`
-        + `\n・敵人＝你所在境界的 10 階（你是${realms[player.realmIndex]} → ${nv2LevelLabel(item.nv2FixedL)}），強度同【${main ? main.name : '主要練功圖'}】${lo}～${hi} 倍`
+        + `\n・敵人＝你所在境界的 10 階（你是${realms[player.realmIndex]} → ${nv2LevelLabel(item.nv2FixedL)}），強度是【${main ? main.name : '主要練功圖'}】的 ${XIANMO_STR_MULT} 倍：${lo}～${hi} 倍`
         + `\n・敵人 ${getMapRespawnSeconds(item)} 秒就刷新，讓你自顧不暇；戰死照常折損壽元、遺失 10% 靈石，回到${respawnPlaceName()}`
-        + `\n・經驗、靈石、聲望照【${main ? main.name : '主要練功圖'}】計算，沒有收益上限：殺得越快拿得越多`
+        + `\n・經驗、靈石、聲望照【${main ? main.name : '主要練功圖'}】計算，最多是一般修士在那裡的 ${item.rewardSpeedCap} 倍`
         + `\n・專屬掉落：${Math.max(XIANMO_DROPS.blueprintMinLevel, getBlueprintDropLevel())} 等鍛造圖紙、上品武學秘典碎片、絕學武學秘典碎片（極稀有）、尊者以上夥伴碎片（帝境、至高極稀有）`
         + `\n\n確定進入？`;
     if (!(await gameConfirm(msg))) return;
