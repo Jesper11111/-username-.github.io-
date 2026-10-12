@@ -1,10 +1,15 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '屠龍勇者';
-const GAME_VERSION = '20261012h';
+const GAME_VERSION = '20261012i';
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
 const SAVE_KEY = 'dragonSlayer_save_v2';   // 欄位 0；其他欄位是 SAVE_KEY + '_s' + 編號（save.js slotKey）
 const SLOT_KEY = 'dragonSlayer_slot';      // 最後玩的角色欄位
+// 洗白（刪檔，ARCHITECTURE.md 第 37 節）：id 空字串＝不啟動。正式上線時改成新的 id（例如 'launch1'）＋ at（洗白當下的毫秒時間），
+// 玩家打開遊戲時 save.js 會刪掉這台裝置的舊角色（保留登入狀態），cloud.js 也會忽略 at 之前的雲端存檔；伺服器資料用 tools/wipe.sql 清
+const WIPE = { id: '', at: 0 };
+// 封測提示：標題畫面顯示（空字串＝不顯示）
+const TEST_NOTICE = '🧪 封測中：正式上線時會刪除所有角色與資料（帳號保留）';
 const MAX_SLOTS = 8;                       // 角色欄位數（人物選單）
 const SAVE_SCHEMA = 3;   // 3：異界地圖（道具 map1～15 帶 q／mm／nm、player.mapRun）   // 2：裝備實體可帶 q／af／il／nm（暗黑式詞綴，affix.js）
 

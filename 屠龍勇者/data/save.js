@@ -5,6 +5,21 @@ let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用�
 
 // ───────── 多角色欄位（ARCHITECTURE.md 第 25 節）─────────
 // 欄位 0 沿用舊 key（舊存檔不用轉換），其他欄位 key 加 _s 編號；最後玩的欄位記在 SLOT_KEY
+// 洗白：WIPE.id 和這台裝置記的不一樣 → 刪掉所有 dragonSlayer_ 開頭的資料（登入狀態、訊息框開關除外）
+const WIPE_KEY = 'dragonSlayer_wipe';
+(function wipeCheck() {
+    if (!WIPE.id) return;
+    try {
+        if (localStorage.getItem(WIPE_KEY) === WIPE.id) return;
+        const keep = k => k.startsWith('dragonSlayer_auth') || k === 'dragonSlayer_logOpen';
+        const del = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('dragonSlayer_') && !keep(k)) del.push(k); }
+        del.forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(WIPE_KEY, WIPE.id);
+        if (del.some(k => k.startsWith(SAVE_KEY))) window.__wiped = true;   // 標題畫面提示一次
+    } catch (e) {}
+})();
+
 let currentSlot = 0;
 try { currentSlot = clamp(parseInt(localStorage.getItem(SLOT_KEY), 10) || 0, 0, MAX_SLOTS - 1); } catch (e) {}
 
