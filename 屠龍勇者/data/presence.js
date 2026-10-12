@@ -8,7 +8,7 @@ const PRES_MAX = 40;           // 畫面上最多畫幾個其他玩家
 const PRES_SEND_MS = 350;      // 位置更新間隔
 let presCh = null, presTown = null, presKey = '', presOthers = {}, presLastSent = 0, presLastPos = '', presJoining = false;
 
-function presEnabled() { return isCloudConfigured() && cloudLoggedIn() && !cloudBan && player && !SIM_MODE; }
+function presEnabled() { return isCloudConfigured() && cloudLoggedIn() && cloudUser && cloudSb && cloudSb.channel && !cloudBan && player && !SIM_MODE; }
 
 // 主迴圈每 250ms 呼叫（ui.js renderStatus）：依目前位置加入／離開頻道、送出位置
 function presTick() {

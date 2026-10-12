@@ -248,7 +248,7 @@ kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過
 
 ## 14. 離線收益（`offline.js`）
 
-- **2026-10-12 起要登入、扣鑽石、只有最後離線的角色**（第 38 節 `offlineSettle`）：沒登入沒有離線收益；`applyOffline(awayMs, paidMs)` 的 paidMs 是伺服器 `offline_claim` 用鑽石換到的可結算時間。
+- **2026-10-12 起要登入、只有最後離線的角色**（版本 `20261012t` 起**不再扣鑽石**，改由遊戲端讀自己 `dragon_saves` 最新 updated_at 的欄位判斷）（第 38 節 `offlineSettle`）：沒登入沒有離線收益；`applyOffline(awayMs, paidMs)` 的 paidMs 是伺服器 `offline_claim` 用鑽石換到的可結算時間。
 - 觸發：①「繼續冒險」讀檔時，離開時間 = 現在 − 存檔時間（`lastSaveAt`）；② 遊戲中主迴圈發現兩次 tick 間隔 ≥ 30 秒（分頁在背景被暫停、電腦休眠）。
 - 條件：在狩獵地圖且 `player.hunting` 為 true；村莊、步行中、龍穴都不結算。
 - 做法：`measureHunt` 把玩家狀態存成快照，用 `SIM_MODE` 快轉模擬 10 分鐘掛機（會自動喝水、施法、回家），量出經驗、金幣、擊殺與每種消耗品用量，結束後完整還原。
@@ -1122,6 +1122,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   2026-10-12（版本 `20261012s`）換成使用者第二版封面（只有「黑暗大陸」標題字，`cover.jpg?v=2`）；App 圖示 `icon-192／512`、`apple-touch-icon`、`icon-maskable-512`（中間 80% 放圖、外圍黑）改用封面上半正方形（標題＋人物），`?v=2`。
   圖上已有「黑暗大陸／角色扮演遊戲」字樣，所以拿掉原本的 🐉、標題字與副標題（保留隱藏的 `<h1 class="sr-only">`）；按鈕、封測提示疊在下方，次要按鈕半透明。
 
+- PC（橫向、寬 ≥ 700px）標題畫面：按鈕改成小顆橫排放在封面最下方（`@media (orientation: landscape) and (min-width: 700px)`），封測提示縮小，不擋封面（版本 `20261012t`）。
+
 ## 37. 洗白（刪檔）與封測提示（2026-10-12，版本 `20261012i`；`config.js` 的 `WIPE`／`TEST_NOTICE`、`save.js` 開頭 `wipeCheck`、`tools/wipe.sql`）
 
 - **目前狀態：未啟動**（`WIPE = { id: '', at: 0 }`），只在標題畫面顯示封測提示 `TEST_NOTICE`（`#test-notice`，`showTitle` 設定；空字串＝不顯示）。
@@ -1143,6 +1145,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 介面下方金幣旁顯示鑽石 `💎`（`renderStatus` 的 `#hud-stats .dia`；登入且讀到 `diaCount` 才顯示）。
 - **鑽石**：`dia_status()` 回傳鑽石並發每日登入 +5（台北時間換日）；`dia_drop('mob'|'boss')` 一般怪 +1（每天最多 10）、首領／龍 +3（每天最多 15）——遊戲端擲骰（`diaRoll`，`onKill` 呼叫，一般怪 0.1%，`mon.boss`／`mon.dragon` 必給），離線模擬不掉；
   `dia_grant(user, n, reason)` 管理者發放／扣除（gm.html 玩家分頁「💎 發放」），`dia_admin_list()` 管理頁讀全部鑽石。目前鑽石 `diaCount` 顯示在共用倉庫頁。
+- **（2026-10-12 版本 `20261012t` 起停用）** 離線掛機不再消耗鑽石，`offlineSettle` 改成讀自己的 `dragon_saves`（order by updated_at desc limit 1）判斷是不是最後的角色，伺服器函式保留不用。
 - **離線掛機** `offline_claim(slot, away_ms)`：①這個欄位必須是帳號「最後上傳存檔」的那個（`dragon_saves.updated_at` 最新），否則 `not_last`；
   ②可結算時間＝min(離開時間, 12 小時, 上次結算到現在的真實時間, 鑽石×30 分鐘)；③扣 ceil(時間/30 分鐘) 顆（每小時 2 顆），記 `off_at`。不到 30 秒回 `too_short`／`no_diamond`。
   遊戲端 `offlineSettle`（`continueGame` 與主迴圈發現分頁被暫停時）：不在掛機狀態不結算也不扣；沒登入只提示；結算中 `offlineHold` 暫停主迴圈；報告多一行「消耗鑽石」。
