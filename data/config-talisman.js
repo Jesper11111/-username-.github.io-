@@ -5,6 +5,11 @@
 const SOCKET_QUALITY = "橙色";   // 只有這個品質的裝備會開孔
 const SOCKET_MIN = 1;            // 每件隨機孔數 SOCKET_MIN ~ SOCKET_MAX
 const SOCKET_MAX = 3;
+// 打洞器（2026-10-10 使用者：「新增道具打洞器，可以把裝備打洞，3 孔就不能再使用」→ 選野外稀有掉落、橙裝以上）：
+//   符寶坊用 1 個替橙色／白金裝備多開 1 個空孔，最多 SOCKET_PUNCH_MAX 孔（神器不行；舊的無孔橙裝也能打）；player.punchTools＝持有數
+//   掉落：每次野外掉寶（combat.js 的 takeDropRolls，每小時最多 1200 次；離線用收益次數）fieldChance → 掛滿約 10 小時 1 個
+const SOCKET_PUNCH_MAX = 3;
+const PUNCH_TOOL = { name: "打洞器", icon: "🔨", fieldChance: 1 / 12000 };
 
 // 符寶種類：四維為固定點數，戰鬥屬性為 %（與裝備加總後一樣受 config-elements.js 的上限限制）
 const talismanTypes = [

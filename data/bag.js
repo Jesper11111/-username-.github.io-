@@ -36,6 +36,30 @@ function canRemoveEquip(loc) {
     return true;
 }
 
+// 背包裝備過濾（renderBag）：太古＝eq.ancient 2、遠古＝eq.ancient 1（含先天・太古／遠古）、套裝＝屬於套裝且紫色以上（套裝效果生效的品質，config-sets.js）
+const BAG_EQUIP_FILTERS = {
+    all:     { label: "全部",     test: () => true },
+    taigu:   { label: "🔴 太古", test: eq => eq.ancient === 2 },
+    yuangu:  { label: "🟡 遠古", test: eq => eq.ancient === 1 },
+    gearSet: { label: "🧩 套裝", test: eq => { const d = getGearDef(eq); return !!(d && d.set && GEAR_SET_MIN_QUALITY.includes(eq.quality)); } }
+};
+let bagEquipFilter = 'all';
+// 過濾按鈕列：放在「一鍵刪除／分解」區塊裡（2026-10-11 使用者：「按鈕做在一鍵刪除那裏」）；附件數，只影響下面的裝備清單顯示
+function renderBagFilterRow() {
+    const inv = player.equipInventory || [];
+    return `<div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin: 6px 0;">
+        <span style="font-size: 0.85em; color: #9ca3af;">🔍 顯示：</span>
+        ${Object.keys(BAG_EQUIP_FILTERS).map(k => {
+            const n = inv.filter(BAG_EQUIP_FILTERS[k].test).length;
+            return `<button class="sys-btn" style="width: auto; padding: 4px 10px;${k === bagEquipFilter ? ' border-color: var(--accent); color: var(--accent);' : ''}" onclick="setBagEquipFilter('${k}')">${BAG_EQUIP_FILTERS[k].label}（${n}）</button>`;
+        }).join('')}
+    </div>`;
+}
+function setBagEquipFilter(k) {
+    bagEquipFilter = BAG_EQUIP_FILTERS[k] ? k : 'all';
+    renderBag();
+}
+
 // ⚠️ 背包裝備數量沒有上限，比照 renderServants() 先組好整段 HTML 再一次寫入，避免裝備多時卡住
 function renderBag() {
     const container = document.getElementById('bag-list-container');
@@ -59,7 +83,7 @@ function renderBag() {
             "bulkDeleteEquipment",
             `※ 只作用於背包內未鎖定的裝備（數量不含鎖定），已穿戴、🔒 鎖定、勾選「保留屬性」的不受影響。分解白～紫得碎鐵（每 ${SHARDS_PER_IRON} 個合成 1 顆星允鐵），橙色得星允鐵 ×${DECOMPOSE_IRON["橙色"]}`,
             `<button class="sys-btn" onclick="bulkDecomposeEquipment()">分解勾選品級</button>`,
-            renderKeepElementRow('bulk-keep-element')
+            renderKeepElementRow('bulk-keep-element') + renderBagFilterRow()
         ));
     }
 
@@ -91,6 +115,16 @@ function renderBag() {
             <div class="card" style="border-color: var(--accent);">
                 <h3 style="color: var(--accent);">🌠 星允鐵 <span style="font-size:0.8em;">(x${(player.starIron || 0).toWan()})</span></h3>
                 <p style="font-size: 0.85em; color: #9ca3af;">強化裝備的寶物。🔩 碎鐵 ${(player.ironShards || 0).toWan()} / ${SHARDS_PER_IRON}（滿了自動熔鑄 1 顆）</p>
+            </div>`);
+    }
+
+    // 打洞器（talisman.js，第 28 節）：到符寶坊使用
+    if ((player.punchTools || 0) > 0) {
+        hasItems = true;
+        parts.push(`
+            <div class="card" style="border-color: var(--accent);">
+                <h3 style="color: var(--accent);">${PUNCH_TOOL.icon} ${PUNCH_TOOL.name} <span style="font-size:0.8em;">(x${player.punchTools.toWan()})</span></h3>
+                <p style="font-size: 0.85em; color: #9ca3af;">到宗門「🔮 符寶坊」替橙色／白金裝備多開 1 個空孔，最多 ${SOCKET_PUNCH_MAX} 孔。</p>
             </div>`);
     }
 
@@ -147,7 +181,10 @@ function renderBag() {
 
     if (player.equipInventory && player.equipInventory.length > 0) {
         hasItems = true;
-        player.equipInventory.forEach(eq => {
+        // 裝備過濾（2026-10-11 使用者：「背包新增過濾選項 太古、遠古、套裝」）：只影響下面的裝備清單，不影響一鍵刪除／分解
+        const shown = player.equipInventory.filter(eq => BAG_EQUIP_FILTERS[bagEquipFilter].test(eq));
+        if (!shown.length) parts.push(`<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 10px;">背包裡沒有符合「${BAG_EQUIP_FILTERS[bagEquipFilter].label}」的裝備。</div>`);
+        shown.forEach(eq => {
             let locked = isEquipLocked(eq);
             parts.push(`
                 <div class="${getEquipCardClass(eq)}" style="border-color: var(--equip-color);">

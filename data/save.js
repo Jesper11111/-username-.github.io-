@@ -154,6 +154,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         let idleXianmo = combatTicks > 0 ? rollXianmoDrops(combatTicks, true) : '';   // 仙魔戰場專屬掉落（map.js，第 79 節）
         let idleSpacetime = combatTicks > 0 ? rollSpacetimeDrops(combatTicks, true) : '';   // 時空秘境專屬掉落（map.js，第 78 節）   // 挑戰模式才有的野外圖紙（equipment.js，第 70 節）
         let idleSpellShards = combatTicks > 0 ? rollSpellShardFieldDrops(combatTicks, true) : '';   // 中品／上品武學秘典碎片（spells.js，第 35 節）
+        let idlePunch = combatTicks > 0 ? rollPunchToolDrops(combatTicks, true) : '';   // 打洞器（talisman.js，第 28 節）
         let idleLing = combatTicks > 0 ? rollLingStoneDrops(combatTicks, true) : '';   // 五行傳送陣靈石（lingjie.js，第 74 節）   // 做裝通貨：以收益次數擲（線上見 combat.js 的 takeDropRolls，第 69、71 節）
 
         // 離線聲望：以該區「平均擊殺聲望 × OFFLINE_REPUTATION_RATE」計算，刻意低於線上掛機
@@ -189,6 +190,7 @@ function settleIdleSeconds(offlineSeconds, label, isOffline) {
         if (idleCraft) msg += `\n✨ 從妖獸遺骸中拾得 ${idleCraft}`;
         if (idleLing) msg += `\n💎 從妖獸體內取出 ${idleLing}`;
         if (idleSpellShards) msg += `\n📜 妖獸身上掉出 ${idleSpellShards}`;
+        if (idlePunch) msg += `\n🔨 妖獸遺骸中翻出稀有的 ${idlePunch}（到符寶坊打孔）`;
         if (idleBlueprints) msg += `\n📜 挑戰模式斬殺妖獸，獲得${idleBlueprints}（至鍛造閣打造）`;
         if (idleSpacetime) msg += `\n🌀 時空秘境的妖獸遺落 ${idleSpacetime}`;
         if (idleXianmo) msg += `\n⚔️ 仙魔戰場的敵人遺落 ${idleXianmo}`;
