@@ -327,7 +327,8 @@ function spawnMapMon(near) {
     for (let tries = 0; tries < 40; tries++) {
         const r = near ? rand(2, 4) : rand(3, 9);
         const x = scene.pl.x + rand(-r, r), y = scene.pl.y + rand(-r, r);
-        if (freeTile(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2) {
+        // 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
+        if (freeTile(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2 && findPath(scene.pl.x, scene.pl.y, x, y, true).length) {
             const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, mid: look.mid, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
             scene.mons.push(m);
             return m;
@@ -375,7 +376,19 @@ function sceneUpdate(dt) {
     }
     const target = fighting ? scene.mons.find(m => m.inst === hunt.mon && !m.dead) || null : null;
     if (target !== scene.engaged) { scene.engaged = target; if (target) pl.path = []; }
-    if (fighting && scene.engaged) hunt.reach = { mon: hunt.mon, ...sceneReach(scene.engaged), seenAt: gameNow };
+    if (fighting && scene.engaged) {
+        const r = sceneReach(scene.engaged);
+        hunt.reach = { mon: hunt.mon, ...r, seenAt: gameNow };
+        // 保險：目標卡在走不到的地方超過 2.5 秒（角色、怪都沒路）→ 把目標移到角色旁邊的空格
+        const ok = weaponIsRanged() ? r.ranged : r.melee;
+        scene.stuckMs = ok || pl.path.length ? 0 : (scene.stuckMs || 0) + dt;
+        if (scene.stuckMs > 2500) {
+            const e = scene.engaged;
+            const spot = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].map(([dx, dy]) => [pl.x + dx, pl.y + dy]).find(([x, y]) => freeTile(x, y));
+            if (spot) { e.x = e.rx = spot[0]; e.y = e.ry = spot[1]; }
+            scene.stuckMs = 0;
+        }
+    }
 
     // 怪物遊走、死亡淡出
     for (const m of scene.mons) {
