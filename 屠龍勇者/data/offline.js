@@ -65,11 +65,11 @@ function measureHunt(sampleMs) {
 }
 
 // 結算離線收益；回傳報告（沒有在掛機則回傳 null）
-function applyOffline(awayMs) {
+function applyOffline(awayMs, paidMs = Infinity) {   // paidMs：伺服器用鑽石換到的可結算時間（vault.js offlineSettle）
     if (!player || !player.hunting || player.loc.type !== 'zone') return null;
     const z = currentZone();
     if (!z || z.type === 'dragon') return null;
-    const capped = Math.min(awayMs, OFFLINE_MAX_MS);
+    const capped = Math.min(awayMs, OFFLINE_MAX_MS, paidMs);
     let eff = capped * OFFLINE_RATE;
     const s = measureHunt(Math.min(OFFLINE_SAMPLE_MS, eff));
     if (s.ms <= 0) return null;
@@ -128,7 +128,7 @@ function applyOffline(awayMs) {
     player.hp = Math.min(player.hp, st.maxHp);
 
     const report = {
-        awayMs, effMs: eff, exp, gold, kills, lvUp: player.lv - lv0, used: usedText, endText, capped: awayMs > OFFLINE_MAX_MS,
+        awayMs, effMs: eff, exp, gold, kills, lvUp: player.lv - lv0, used: usedText, endText, capped: awayMs > capped,
     };
     addLog(`🌙 離線收益：擊倒 ${fmt(kills)}、經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'rare');
     saveGame();
@@ -142,7 +142,8 @@ function fmtHM(ms) {
 
 function showOfflineReport(r) {
     const lines = [
-        `離開 ${fmtHM(r.awayMs)}${r.capped ? '（最多結算 12 小時）' : ''}，以 ${OFFLINE_RATE * 100}% 效率結算 ${fmtHM(r.effMs)}`,
+        `離開 ${fmtHM(r.awayMs)}${r.capped ? '（最多結算 12 小時，或鑽石夠付的時間）' : ''}，以 ${OFFLINE_RATE * 100}% 效率結算 ${fmtHM(r.effMs)}`,
+        ...(r.diaCost != null ? [`消耗鑽石：💎${r.diaCost}（剩 ${r.diaLeft}）`] : []),
         '',
         `擊倒：${fmt(r.kills)} 隻`,
         `經驗：+${fmt(r.exp)}${r.lvUp > 0 ? `（升了 ${r.lvUp} 級！）` : ''}`,

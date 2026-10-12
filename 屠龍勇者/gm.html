@@ -74,13 +74,13 @@
 </div>
 <div id="modal" class="hidden" onclick="if (event.target === this) gmClose()"><div class="box" id="modal-box"></div></div>
 
-<script src="data/config.js?v=20261012i"></script>
-<script src="data/classes.js?v=20261012i"></script>
-<script src="data/cloud.js?v=20261012i"></script>
+<script src="data/config.js?v=20261012j"></script>
+<script src="data/classes.js?v=20261012j"></script>
+<script src="data/cloud.js?v=20261012j"></script>
 <script>
-const KIND_NAMES = { exp_rate: '經驗暴增', gold_rate: '金幣暴增', stat: '能力值超過上限', elixir: '萬能藥超量', enchant: '強化超過 +15', level: '等級異常', gold_negative: '金幣為負', clock: '裝置時間異常', parse: '存檔格式異常', wb_dmg: '世界首領傷害超過上限', market_dupe: '交易所疑似複製道具' };
+const KIND_NAMES = { exp_rate: '經驗暴增', gold_rate: '金幣暴增', stat: '能力值超過上限', elixir: '萬能藥超量', enchant: '強化超過 +15', level: '等級異常', gold_negative: '金幣為負', clock: '裝置時間異常', parse: '存檔格式異常', wb_dmg: '世界首領傷害超過上限', market_dupe: '交易所疑似複製道具', vault_dupe: '共用倉庫疑似複製道具' };
 let sb = null, me = null, tab = 'flags', showResolved = false, playerQuery = '';
-let flags = [], profiles = [], saves = [], bans = [], chats = [], mutes = [];
+let flags = [], profiles = [], saves = [], bans = [], chats = [], mutes = [], dias = {};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -139,6 +139,7 @@ async function gmLoad() {
         } else if (tab === 'players') {
             profiles = await q(sb.from('dragon_profiles').select('*').order('last_seen', { ascending: false }).limit(500));
             saves = await q(sb.from('dragon_saves').select('user_id, slot, name, cls, lv, updated_at').order('updated_at', { ascending: false }).limit(1000));
+            dias = {}; for (const d of await q(sb.rpc('dia_admin_list'))) dias[d.user_id] = d.diamonds;
         }
         gmRender();
     } catch (e) { $('view').innerHTML = `<p class="bad">讀取失敗：${esc(e.message)}</p>`; }
@@ -163,11 +164,11 @@ function gmRender() {
         const rows = profiles.filter(p => !qy || (p.email || '').toLowerCase().includes(qy) || saves.some(s => s.user_id === p.user_id && (s.name || '').toLowerCase().includes(qy))).map(p => {
             const chars = saves.filter(s => s.user_id === p.user_id).sort((a, b) => a.slot - b.slot)
                 .map(s => `<button class="mini secondary" onclick="gmHistory('${p.user_id}', ${s.slot}, '${esc(p.email || '')}')">${esc(s.name)}・${esc(clsName(s.cls))} Lv.${s.lv}</button>`).join(' ');
-            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>${banBtn(p.user_id, p.email)}</td></tr>`;
+            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>💎 ${dias[p.user_id] || 0} <button class="mini secondary" onclick="gmDia('${p.user_id}', '${esc(p.email || '')}')">發放</button></td><td>${banBtn(p.user_id, p.email)}</td></tr>`;
         }).join('');
         $('view').innerHTML = `<div class="row" style="margin-bottom:8px"><input id="pq" type="text" placeholder="搜尋 Email 或角色名" value="${esc(playerQuery)}" oninput="playerQuery = this.value; gmRender(); $('pq').focus()">
             <span class="muted">共 ${profiles.length} 個帳號（點角色看存檔歷程）</span></div>
-            <div class="table-wrap"><table><tr><th>帳號</th><th>最後上傳</th><th>角色</th><th></th></tr>${rows}</table></div>`;
+            <div class="table-wrap"><table><tr><th>帳號</th><th>最後上傳</th><th>角色</th><th>鑽石</th><th></th></tr>${rows}</table></div>`;
         const el = $('pq'); if (el) el.setSelectionRange(el.value.length, el.value.length);
     } else if (tab === 'chat') {
         const emailOf = uid => (profiles.find(p => p.user_id === uid) || {}).email || '';
@@ -205,6 +206,16 @@ async function gmHistory(uid, slot, email) {
     } catch (e) { $('modal-box').innerHTML = `<p class="bad">讀取失敗：${esc(e.message)}</p><button onclick="gmClose()">關閉</button>`; }
 }
 function gmClose() { show('modal', false); }
+
+async function gmDia(uid, email) {
+    const n = parseInt(prompt(`發放鑽石給 ${email || uid}\n輸入數量（負數＝扣除）：`, '10'), 10);
+    if (!n) return;
+    const reason = prompt('原因（記錄用）：', '活動獎勵');
+    if (reason == null) return;
+    try { const v = await q(sb.rpc('dia_grant', { p_user: uid, p_n: n, p_reason: reason })); alert(`完成，目前 💎${v}`); }
+    catch (e) { alert('失敗：' + e.message); }
+    gmLoad();
+}
 
 async function gmResolve(id) {
     try { await q(sb.from('dragon_flags').update({ resolved: true }).eq('id', id)); } catch (e) { alert('失敗：' + e.message); }

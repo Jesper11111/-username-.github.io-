@@ -626,7 +626,9 @@ function renderStorage() {
     const row = (x, btn) => `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
     const inv = sortedInv(player.inv).map(x => row(x, `<button class="mini" onclick="depositItem(${x.uid})">存入</button>`)).join('') || '<p class="muted">背包是空的</p>';
     const sto = sortedInv(player.storage).map(x => row(x, `<button class="mini" onclick="withdrawItem(${x.uid})">取出</button>`)).join('') || '<p class="muted">倉庫是空的</p>';
-    return `<h4>📦 倉庫（${player.storage.length} 格）</h4><div class="list">${sto}</div><h4>🎒 背包</h4><div class="list">${inv}</div>`;
+    const tabs = `<div class="chips"><button class="chip-btn ${storageMode === 'char' ? 'active' : ''}" onclick="setStorageMode('char')">📦 角色倉庫</button><button class="chip-btn ${storageMode === 'vault' ? 'active' : ''}" onclick="setStorageMode('vault')">🏦 帳號共用倉庫</button></div>`;
+    if (storageMode === 'vault') return tabs + vaultHtml();
+    return tabs + `<h4>📦 角色倉庫（${player.storage.length} 格，只有這個角色能用）</h4><div class="list">${sto}</div><h4>🎒 背包</h4><div class="list">${inv}</div>`;
 }
 
 function renderCraft() {

@@ -34,6 +34,7 @@
 | `data/rank.js` | **排行榜**：`RANK_KINDS`（等級／屠龍／永夜之塔／擊殺／血盟）、`rankLoad`（呼叫 Supabase `dragon_leaderboard`，同一榜 1 分鐘快取）、`renderRank`；載入時把 `rank` 加進 `TABS`／`PANEL_FNS`（第 34 節） |
 | `data/wb.js` | **世界首領**：`WB_KINDS`（5 隻首領的種族與招式）、`wbLoad`、`wbAttack`（60 秒模擬→`wb_attack`）、`wbClaim`／`wbReward`（領獎）、`renderWb`；載入時把 `wb` 加進 `TABS`／`PANEL_FNS`（第 35 節） |
 | `data/market.js` | **交易所**：寄賣、瀏覽／搜尋／購買、出售、我的上架、交貨 `marketDeliver`（兩段式＋`player.marketGot`）、`marketGiveItem`；載入時把 `market` 加進 `TABS`／`PANEL_FNS`（第 36 節） |
+| `data/vault.js` | 帳號共用倉庫、鑽石（每日登入、掉落）、離線掛機扣鑽石（第 38 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
@@ -44,11 +45,11 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -57,7 +58,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012j`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -242,6 +243,7 @@ kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過
 
 ## 14. 離線收益（`offline.js`）
 
+- **2026-10-12 起要登入、扣鑽石、只有最後離線的角色**（第 38 節 `offlineSettle`）：沒登入沒有離線收益；`applyOffline(awayMs, paidMs)` 的 paidMs 是伺服器 `offline_claim` 用鑽石換到的可結算時間。
 - 觸發：①「繼續冒險」讀檔時，離開時間 = 現在 − 存檔時間（`lastSaveAt`）；② 遊戲中主迴圈發現兩次 tick 間隔 ≥ 30 秒（分頁在背景被暫停、電腦休眠）。
 - 條件：在狩獵地圖且 `player.hunting` 為 true；村莊、步行中、龍穴都不結算。
 - 做法：`measureHunt` 把玩家狀態存成快照，用 `SIM_MODE` 快轉模擬 10 分鐘掛機（會自動喝水、施法、回家），量出經驗、金幣、擊殺與每種消耗品用量，結束後完整還原。
@@ -1115,3 +1117,22 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   1. 使用者在 Supabase → SQL Editor 執行 `tools/wipe.sql`。
   2. `config.js`：`WIPE = { id: 'launch1', at: <現在的毫秒時間> }`、`TEST_NOTICE = ''`，換版本號、發佈。之後再測再洗：換新的 id（launch2…）與 at，再跑一次 wipe.sql。
 - 驗證：本機 PostgreSQL 執行 wipe.sql 無錯誤、帳號數不變；Playwright 未啟動時角色保留＋顯示封測提示，啟動後角色清空、登入狀態與修仙資料保留、重新整理不會再洗第二次。
+
+## 38. 帳號共用倉庫、鑽石、離線掛機扣鑽石（2026-10-12，版本 `20261012j`；`vault.js`、`tools/vault.sql`（也併入 `supabase.sql` 最後一段））
+
+- 使用者要求：倉庫 200 格、可放金幣、每次 100 金幣手續費、同帳號角色共用；離線掛機只有最後離線的那隻、要扣鑽石；鑽石來源＝每日登入＋打怪掉落＋首領／龍＋管理者發放；沒登入不能離線掛機。
+- **資料表**（玩家不能直接讀寫，全部經過函式）：`dragon_wallet`（鑽石、每日／掉落計數、`off_at` 上次離線結算）、`dragon_dia_log`（鑽石增減紀錄）、
+  `dragon_vault`（倉庫金幣）、`dragon_vault_items`（存入的道具，`taken_at` 取出後留 30 天給防複製用）、`dragon_vault_out`（取出待交貨，`got`）。
+- **鑽石**：`dia_status()` 回傳鑽石並發每日登入 +5（台北時間換日）；`dia_drop('mob'|'boss')` 一般怪 +1（每天最多 10）、首領／龍 +3（每天最多 15）——遊戲端擲骰（`diaRoll`，`onKill` 呼叫，一般怪 0.1%，`mon.boss`／`mon.dragon` 必給），離線模擬不掉；
+  `dia_grant(user, n, reason)` 管理者發放／扣除（gm.html 玩家分頁「💎 發放」），`dia_admin_list()` 管理頁讀全部鑽石。目前鑽石 `diaCount` 顯示在共用倉庫頁。
+- **離線掛機** `offline_claim(slot, away_ms)`：①這個欄位必須是帳號「最後上傳存檔」的那個（`dragon_saves.updated_at` 最新），否則 `not_last`；
+  ②可結算時間＝min(離開時間, 12 小時, 上次結算到現在的真實時間, 鑽石×30 分鐘)；③扣 ceil(時間/30 分鐘) 顆（每小時 2 顆），記 `off_at`。不到 30 秒回 `too_short`／`no_diamond`。
+  遊戲端 `offlineSettle`（`continueGame` 與主迴圈發現分頁被暫停時）：不在掛機狀態不結算也不扣；沒登入只提示；結算中 `offlineHold` 暫停主迴圈；報告多一行「消耗鑽石」。
+- **共用倉庫**（倉庫 NPC →「📦 角色倉庫／🏦 帳號共用倉庫」切換，`storageMode`）：要在村莊、要登入。存取前先 `saveGame`＋`cloudFlush`，伺服器以雲端存檔為準：
+  - `vault_put(slot, item|null, gold|null, name)`：道具要在該欄位雲端存檔背包裡（同 uid、數量夠）、存檔金幣 ≥ 100（存金幣時 ≥ 金額＋100）、未滿 200 格、同一件沒重複存；成功後遊戲才從背包拿走、扣手續費。
+  - `vault_take(slot, id|null, gold|null)`：存檔金幣 ≥ 100；道具標 `taken_at`、金幣扣掉，寫進 `dragon_vault_out`。`vaultDeliver` 讀 `vault_pending(slot)` 交貨（道具用 `marketGiveItem` 保留詞綴、拿新 uid），
+    扣 100 手續費、`player.vaultGot` 記已入帳編號 → 存檔上傳後 `vault_ack`。進入角色時也會補交貨。
+  - 防複製 trigger `dragon_vault_audit`：存入超過 1 分鐘的裝備（有 ench）又出現在原欄位存檔的背包／角色倉庫／身上 → `dragon_flags` `vault_dupe`（管理頁「共用倉庫疑似複製道具」）。
+- **驗證**：本機 PostgreSQL（每日只送一次、掉落上限、非最後角色被拒、重複結算 too_short、存入不在存檔／重複／金幣不足被拒、取出不夠手續費被拒、交貨與確認、非管理者不能發放、不能直接讀表、裝備複製標記）；
+  Playwright 以假伺服器測：沒登入無離線收益、登入離開 2 小時扣 4 顆、非最後角色提示、首領 +3、存入道具扣 100、存金幣 1000 扣 1100、取回道具扣 100 且強化值保留、取金幣 600 實得 500；Console 無錯誤。
+

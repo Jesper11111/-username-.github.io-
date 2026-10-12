@@ -7,13 +7,11 @@ function gameTick() {
     const gap = now - lastTick;
     const dt = Math.min(1000, gap);   // 一般情況最多補 1 秒
     lastTick = now;
+    if (offlineHold) return;   // 向伺服器結算離線收益中（vault.js）
     gameNow += dt;
     if (!player) return;
-    // 分頁在背景被瀏覽器暫停太久（或電腦休眠）：用離線收益補上這段時間
-    if (gap >= OFFLINE_MIN_MS) {
-        const r = applyOffline(gap);
-        if (r) { refreshUI(); showOfflineReport(r); }
-    }
+    // 分頁在背景被瀏覽器暫停太久（或電腦休眠）：用離線收益補上這段時間（要登入、扣鑽石）
+    if (gap >= OFFLINE_MIN_MS && offlineEligible()) { offlineSettle(gap); return; }
     cleanBuffs();
     regenAcc += dt;
     if (regenAcc >= REGEN_MS) { regenAcc -= REGEN_MS; regenTick(); }
@@ -42,10 +40,11 @@ function continueGame() {
     resetSessionState();
     addLog(`歡迎回來，${player.name}！`, 'sys');
     const away = Date.now() - lastSaveAt;
-    const report = away >= OFFLINE_MIN_MS ? applyOffline(away) : null;
     enterGame();
-    if (report) showOfflineReport(report);
+    offlineSettle(away);   // 離線收益：要登入、只有最後離線的角色、扣鑽石（vault.js）
     marketDeliver(true);   // 交易所：離線時買到的道具、賣出的金幣（market.js）
+    vaultDeliver();        // 共用倉庫：還沒交貨的取出（vault.js）
+    diaRefresh();          // 鑽石、每日登入獎勵   // 交易所：離線時買到的道具、賣出的金幣（market.js）
 }
 
 window.addEventListener('DOMContentLoaded', () => {
