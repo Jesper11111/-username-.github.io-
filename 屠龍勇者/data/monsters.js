@@ -22,21 +22,24 @@ const MONSTERS = {
     dwarf:          { name: '侏儒',       icon: '🧔', lv: 2 },
     wolf:           { name: '狼',         icon: '🐺', lv: 3, spd: 1200 },
     orc:            { name: '妖魔',       icon: '👹', lv: 4 },
-    floatingEye:    { name: '漂浮之眼',   icon: '👁️', lv: 5, magic: { p: 0.2, dmg: [4, 9], name: '凝視' } },
+    floatingEye:    { name: '浮空之眼',   icon: '👁️', lv: 5, magic: { p: 0.2, dmg: [4, 9], name: '凝視' } },
     skeleton:       { name: '骷髏',       icon: '💀', lv: 6, undead: true },
     // 低語墓窟
     dwarfWarrior:   { name: '侏儒戰士',   icon: '🧔', lv: 9 },
     orcArcher:      { name: '妖魔弓箭手', icon: '🏹', lv: 10 },
     skeletonArcher: { name: '骷髏弓箭手', icon: '💀', lv: 11, undead: true },
     ghoul:          { name: '食屍鬼',     icon: '🧟', lv: 13, undead: true, hpMul: 1.2 },
+    orcWarrior:     { name: '妖魔戰士',   icon: '👹', lv: 12, hpMul: 1.1 },   // 2026-10-12 依使用者的怪物圖新增
     // 腐朽礦坑
     gandiOrc:       { name: '甘地妖魔',   icon: '👹', lv: 16 },
     zombie:         { name: '殭屍',       icon: '🧟', lv: 17, undead: true, hpMul: 1.3, spd: 1800 },
     lycan:          { name: '萊肯',       icon: '🐺', lv: 18, large: true, spd: 1200 },
+    orcxOrc:        { name: '歐西斯妖魔', icon: '👹', lv: 19, acAdd: -2 },   // 2026-10-12 新增
     stoneGolem:     { name: '石頭高崙',   icon: '🗿', lv: 20, large: true, acAdd: -5, hpMul: 1.3, spd: 1900 },
-    skeletonAxe:    { name: '骷髏斧手',   icon: '💀', lv: 25, undead: true },
+    skeletonAxe:    { name: '骷髏禁衛兵',   icon: '💀', lv: 25, undead: true },
     blackKnight:    { name: '黑騎士',     icon: '🗡️', lv: 28, acAdd: -5 },
     giantAnt:       { name: '巨大兵蟻',   icon: '🐜', lv: 30, large: true, hpMul: 1.2 },
+    spartoi:        { name: '史巴托',     icon: '💀', lv: 26, undead: true, acAdd: -3 },   // 2026-10-12 新增
     ghast:          { name: '鬼魂',       icon: '👻', lv: 32, undead: true, magic: { p: 0.25, dmg: [25, 45], name: '冰之觸摸' } },
     baphomet: {
         name: '巴風特', icon: '🐐', lv: 38, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -10, expMul: 15, goldMul: 10,
@@ -47,6 +50,7 @@ const MONSTERS = {
     hellhound:      { name: '地獄犬',       icon: '🐕', lv: 36, large: true, magic: { p: 0.2, dmg: [30, 50], name: '火焰吐息' } },
     lamia:          { name: '蛇女',         icon: '🐍', lv: 38 },
     ivoryMage:      { name: '墮落法師', icon: '🧙', lv: 40, hpMul: 0.9, magic: { p: 0.35, dmg: [35, 60], name: '火球術' } },
+    beholder:       { name: '眼怪',       icon: '👁️', lv: 38, large: true, hpMul: 1.2, magic: { p: 0.25, dmg: [35, 60], name: '死亡凝視' } },   // 2026-10-12 新增
     ivoryGuard:     { name: '法師塔守衛',   icon: '🗿', lv: 42, large: true, acAdd: -8, hpMul: 1.3 },
     demon: {
         name: '惡魔', icon: '😈', lv: 50, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
@@ -74,9 +78,10 @@ const MONSTERS = {
         drops: [{ id: 'treantHeart', p: 1, n: [1, 2] }, { id: 'elvenBow', p: 0.03 }, { id: 'crystalWand', p: 0.05 }, { id: 'bArmorScroll', p: 0.04 }],
     },
     // 沉眠龍窟
-    lizardman:      { name: '蜥蜴人',         icon: '🦎', lv: 19 },
+    lizardman:      { name: '邪惡蜥蜴',       icon: '🦎', lv: 19 },
     caveBat:        { name: '吸血蝙蝠',       icon: '🦇', lv: 20, spd: 1100, hpMul: 0.8 },
     darkElfScout:   { name: '黑暗妖精斥候',   icon: '🧝', lv: 22, acAdd: -3 },
+    castor:         { name: '卡司特',         icon: '🧙', lv: 22, magic: { p: 0.25, dmg: [16, 28], name: '暗影箭' } },   // 2026-10-12 新增
     drake:          { name: '幼龍',           icon: '🦖', lv: 25, large: true, hpMul: 1.2, magic: { p: 0.15, dmg: [18, 30], name: '小火球' } },
     wakingDrake: {
         name: '甦醒的地龍', icon: '🐊', lv: 33, boss: true, large: true, hpMul: 11, dmgMul: 1.5, acAdd: -10, expMul: 14, goldMul: 9,
@@ -184,7 +189,7 @@ const TOWER_ICONS = ['💀', '🦇', '🔥', '❄️', '☠️', '😇', '🌀',
 
 // 種族標籤：human 人型、demon 惡魔、holy 神聖（天使、惡魔職業的剋制加成用）；不死系用模板的 undead
 const MONSTER_TAGS = {
-    goblin: ['human'], dwarf: ['human'], orc: ['human'], dwarfWarrior: ['human'], orcArcher: ['human'], gandiOrc: ['human'],
+    goblin: ['human'], dwarf: ['human'], orc: ['human'], orcWarrior: ['human'], orcxOrc: ['human'], castor: ['human'], dwarfWarrior: ['human'], orcArcher: ['human'], gandiOrc: ['human'],
     blackKnight: ['human'], ivoryMage: ['human'], hellhound: ['demon'], baphomet: ['demon'], demon: ['demon'],
     sphinx: ['holy'], anubis: ['holy'], osiris: ['holy'],
     darkElfScout: ['human'], pirate: ['human'], pirateGunner: ['human'], pirateKing: ['human'], frostWitch: ['human'], necromancer: ['human'],
