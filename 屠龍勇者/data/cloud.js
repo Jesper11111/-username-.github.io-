@@ -74,9 +74,10 @@ async function initCloud() {
     try {
         await cloudLoadSdk();
         cloudSb = window.supabase.createClient(CLOUD_SUPABASE_URL, CLOUD_SUPABASE_KEY, {
-            auth: { storageKey: CLOUD_AUTH_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+            auth: { storageKey: CLOUD_AUTH_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }   // pkce：Google 登入／確認信回來的網址只帶一次性代碼（要搭配這個瀏覽器存的驗證碼），網址被複製分享也登不進去
         });
         const { data } = await cloudSb.auth.getSession();
+        cloudCleanUrl();
         cloudReady = true;
         if (data && data.session) await cloudOnSignedIn(data.session.user, true);
         // Google 登入跳轉回來、或在其他分頁登出時
@@ -93,6 +94,16 @@ async function initCloud() {
     renderCloudEntry();
     setInterval(cloudAutoPush, 15 * 1000);
 }
+
+// 網址上的登入參數（?code=、#error=…）用完就拿掉，不留在網址列被複製分享；#access_token 舊格式在 index.html 開頭就清掉了
+function cloudCleanUrl() {
+    const u = new URL(location.href);
+    let dirty = false;
+    for (const k of ['code', 'error', 'error_code', 'error_description']) if (u.searchParams.has(k)) { u.searchParams.delete(k); dirty = true; }
+    if (/(^#|&)(error|error_code|error_description)=/.test(u.hash)) { u.hash = ''; dirty = true; }
+    if (dirty) history.replaceState(history.state, '', u.toString());
+}
+function cloudRedirectUrl() { return location.origin + location.pathname; }
 
 async function cloudOnSignedIn(u, silent) {
     cloudUser = { id: u.id, email: u.email || '' };
@@ -429,7 +440,7 @@ async function cloudSignUp() {
     if (pass.length < 6) { cloudFormMsg('密碼至少 6 個字元', true); return; }
     cloudFormMsg('註冊中…');
     try {
-        const { data, error } = await cloudTimeout(cloudSb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href.split('#')[0] } }));
+        const { data, error } = await cloudTimeout(cloudSb.auth.signUp({ email, password: pass, options: { emailRedirectTo: cloudRedirectUrl() } }));
         if (error) throw error;
         if (data.session) {   // 主控台關閉「Confirm email」時，註冊完直接登入
             closeDialog();
@@ -437,14 +448,14 @@ async function cloudSignUp() {
         } else if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) {
             cloudFormMsg('這個 Email 已經註冊過，請直接登入', true);
         } else {
-            cloudFormMsg('註冊成功！請到信箱點確認連結，再回來登入。');
+            cloudFormMsg('註冊成功！請用這台裝置的這個瀏覽器打開信箱裡的確認連結（用別台開啟也會完成驗證，回來這裡登入即可）。');
         }
     } catch (e) { cloudFormMsg(cloudErrText(e), true); }
 }
 
 async function cloudSignInGoogle() {
     try {
-        const { error } = await cloudSb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0] } });
+        const { error } = await cloudSb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: cloudRedirectUrl() } });
         if (error) throw error;
     } catch (e) { cloudFormMsg(cloudErrText(e), true); }
 }
@@ -463,8 +474,9 @@ function openCloudAccount() {
     openDialog('☁️ 雲端帳號', `<p>帳號：<b>${esc(cloudUser.email)}</b></p>
         <p>狀態：${esc(cloudStatusText())}</p>
         <p class="muted">遊戲每分鐘自動上傳進度，回標題畫面或關閉頁面時也會上傳。<br>
-        同一個角色請不要在兩台裝置同時玩，否則會出現「進度衝突」要你選擇保留哪一邊。</p>`,
-        [{ text: '關閉', cls: 'secondary' }, { text: '登出', cls: 'danger', onClick: cloudSignOut }, { text: '立即同步', onClick: cloudSyncNow }]);
+        同一個角色請不要在兩台裝置同時玩，否則會出現「進度衝突」要你選擇保留哪一邊。</p>
+        <p class="muted">⚠️ 不要把網址列很長、帶有 <code>access_token</code> 或 <code>code=</code> 的網址傳給別人。懷疑別人登入過你的帳號：按「登出所有裝置」並改密碼。</p>`,
+        [{ text: '關閉', cls: 'secondary' }, { text: '🚪 登出所有裝置', cls: 'danger', onClick: () => cloudSignOut(true) }, { text: '登出', cls: 'danger', onClick: () => cloudSignOut(false) }, { text: '立即同步', onClick: cloudSyncNow }]);
 }
 
 async function cloudSyncNow() {
@@ -482,21 +494,29 @@ async function cloudSyncNow() {
 }
 
 // 登出：先上傳，再把這台裝置的角色移除（都在雲端，下次登入自動下載）
-async function cloudSignOut() {
+// all＝登出所有裝置（signOut scope global：這個帳號在每台裝置的登入一起失效，別人拿到的登入狀態也會被踢掉）
+async function cloudSignOut(all) {
     if (!cloudLoggedIn()) return;
     if (player) { showToast('請先回標題畫面再登出'); return; }
     showToast('上傳進度中…');
     const ok = await cloudFlush(true);
-    const msg = ok ? '登出後，這台裝置上的角色會移除（都已存在雲端，下次登入會自動下載）。\n確定登出？'
-        : '⚠️ 有進度還沒上傳成功（' + (cloudError || '網路問題') + '），現在登出會遺失這些進度！\n確定登出？';
-    gameConfirm('登出', msg, cloudDoSignOut, '登出');
+    const what = all ? '所有裝置（包含這台）都會登出，別人登入中的也會被踢掉。' : '';
+    const msg = ok ? what + '登出後，這台裝置上的角色會移除（都已存在雲端，下次登入會自動下載）。\n確定登出？'
+        : '⚠️ 有進度還沒上傳成功（' + (cloudError || '網路問題') + '），現在登出會遺失這些進度！\n' + what + '確定登出？';
+    gameConfirm(all ? '登出所有裝置' : '登出', msg, () => cloudDoSignOut(all), '登出');
 }
 
-async function cloudDoSignOut() {
+async function cloudDoSignOut(all) {
     const bak = {};
     for (let i = 0; i < MAX_SLOTS; i++) { const raw = cloudLs(slotKey(i)); if (raw) bak[i] = raw; }
     cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: bak }));
-    try { await cloudTimeout(cloudSb.auth.signOut()); } catch (e) { console.warn('登出失敗', e); }
+    try {
+        const { error } = await cloudTimeout(cloudSb.auth.signOut({ scope: all ? 'global' : 'local' }));
+        if (error) throw error;
+    } catch (e) {
+        console.warn('登出失敗', e);
+        if (all) { gameAlert('登出所有裝置', '沒有成功（' + cloudErrText(e) + '），其他裝置可能還在登入中。請確認網路後再試一次。'); return; }
+    }
     for (let i = 0; i < MAX_SLOTS; i++) cloudLs(slotKey(i), null);
     cloudLs(CLOUD_OWNER_KEY, null);
     cloudLs(CLOUD_SEEN_KEY, null);
@@ -504,7 +524,7 @@ async function cloudDoSignOut() {
     myClan = null; myClanRole = null; clanLoaded = false; clanViewLoaded = false; clanList = null;
     cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();
-    showToast('已登出');
+    showToast(all ? '已登出所有裝置，建議順便改密碼' : '已登出');
 }
 
 // ───────── 畫面 ─────────

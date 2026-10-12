@@ -2,6 +2,8 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<script>/* 網址列帶有登入憑證（#access_token＝舊版 Google 登入／確認信）：一開頁就清掉、不使用，避免網址被複製分享後別人用你的帳號登入（ARCHITECTURE.md 第 29 節「登入安全」） */
+(function () { if (/(^#|&)(access_token|refresh_token|provider_token)=/.test(location.hash)) history.replaceState(history.state, '', location.pathname + location.search); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>黑暗大陸</title>
 <link rel="manifest" href="manifest.json">
@@ -692,39 +694,39 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261012x"></script>
-<script src="data/classes.js?v=20261012x"></script>
-<script src="data/skills.js?v=20261012x"></script>
-<script src="data/items.js?v=20261012x"></script>
-<script src="data/monsters.js?v=20261012x"></script>
-<script src="data/zones.js?v=20261012x"></script>
-<script src="data/quests.js?v=20261012x"></script>
-<script src="data/resonance.js?v=20261012x"></script>
-<script src="data/player.js?v=20261012x"></script>
-<script src="data/enchant.js?v=20261012x"></script>
-<script src="data/affix.js?v=20261012x"></script>
-<script src="data/craft.js?v=20261012x"></script>
-<script src="data/maps.js?v=20261012x"></script>
-<script src="data/combat.js?v=20261012x"></script>
-<script src="data/town.js?v=20261012x"></script>
-<script src="data/save.js?v=20261012x"></script>
-<script src="data/cloud.js?v=20261012x"></script>
-<script src="data/offline.js?v=20261012x"></script>
-<script src="data/ui.js?v=20261012x"></script>
-<script src="data/ui-create.js?v=20261012x"></script>
-<script src="data/ui-panels.js?v=20261012x"></script>
-<script src="data/codex.js?v=20261012x"></script>
-<script src="data/raid.js?v=20261012x"></script>
-<script src="data/clan.js?v=20261012x"></script>
-<script src="data/chat.js?v=20261012x"></script>
-<script src="data/rank.js?v=20261012x"></script>
-<script src="data/wb.js?v=20261012x"></script>
-<script src="data/market.js?v=20261012x"></script>
-<script src="data/vault.js?v=20261012x"></script>
-<script src="data/presence.js?v=20261012x"></script>
-<script src="data/ui-frame.js?v=20261012x"></script>
-<script src="data/ui-scene.js?v=20261012x"></script>
-<script src="data/pwa.js?v=20261012x"></script>
-<script src="data/main.js?v=20261012x"></script>
+<script src="data/config.js?v=20261012y"></script>
+<script src="data/classes.js?v=20261012y"></script>
+<script src="data/skills.js?v=20261012y"></script>
+<script src="data/items.js?v=20261012y"></script>
+<script src="data/monsters.js?v=20261012y"></script>
+<script src="data/zones.js?v=20261012y"></script>
+<script src="data/quests.js?v=20261012y"></script>
+<script src="data/resonance.js?v=20261012y"></script>
+<script src="data/player.js?v=20261012y"></script>
+<script src="data/enchant.js?v=20261012y"></script>
+<script src="data/affix.js?v=20261012y"></script>
+<script src="data/craft.js?v=20261012y"></script>
+<script src="data/maps.js?v=20261012y"></script>
+<script src="data/combat.js?v=20261012y"></script>
+<script src="data/town.js?v=20261012y"></script>
+<script src="data/save.js?v=20261012y"></script>
+<script src="data/cloud.js?v=20261012y"></script>
+<script src="data/offline.js?v=20261012y"></script>
+<script src="data/ui.js?v=20261012y"></script>
+<script src="data/ui-create.js?v=20261012y"></script>
+<script src="data/ui-panels.js?v=20261012y"></script>
+<script src="data/codex.js?v=20261012y"></script>
+<script src="data/raid.js?v=20261012y"></script>
+<script src="data/clan.js?v=20261012y"></script>
+<script src="data/chat.js?v=20261012y"></script>
+<script src="data/rank.js?v=20261012y"></script>
+<script src="data/wb.js?v=20261012y"></script>
+<script src="data/market.js?v=20261012y"></script>
+<script src="data/vault.js?v=20261012y"></script>
+<script src="data/presence.js?v=20261012y"></script>
+<script src="data/ui-frame.js?v=20261012y"></script>
+<script src="data/ui-scene.js?v=20261012y"></script>
+<script src="data/pwa.js?v=20261012y"></script>
+<script src="data/main.js?v=20261012y"></script>
 </body>
 </html>
