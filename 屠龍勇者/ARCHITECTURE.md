@@ -650,7 +650,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - 使用者提供三張怪物動作表，原圖在 `tools/monsters/`：`S1.jpg`（第一批，白底灰框，每方向 1 格）、`A.jpg`（骷髏系，無框，每隻 3 欄＝正面／側面／背面，走路、攻擊各 2 列＝2 格動畫）、
   `B.jpg`（哥布林等，有框，每隻一列：走路 5 格、攻擊 6 格…，只有正面）。**英文標題常和圖對不上**，照實際的圖配對；使用者說名稱對不上就改遊戲裡的名稱。
-- 有模型的怪（70 種）：
+- 有模型的怪（74 種）：
   - S1：妖魔 orc、妖魔弓箭手 orcArcher、侏儒 dwarf（只有正面）、狼 wolf（Wild Dog，只有側面）、狼人 werewolf、萊肯 lycan、幼龍 drake、黑騎士 blackKnight、巨大蜘蛛 giantSpider。
   - A：骷髏 skeleton、骷髏弓箭手 skeletonArcher、**骷髏禁衛兵** skeletonAxe（原名骷髏斧手，改名）、食屍鬼 ghoul、**史巴托 spartoi（新增）**、巴風特 baphomet（用施法列的 3 方向）。
   - B：哥布林 goblin、**妖魔戰士 orcWarrior（新增）**、甘地妖魔 gandiOrc、**歐西斯妖魔 orcxOrc（新增）**、**邪惡蜥蜴** lizardman（原名蜥蜴人，改名）、**眼怪 beholder（新增）**、**浮空之眼** floatingEye（原名漂浮之眼，改名，畫面身高 26）、**卡司特 castor（新增）**。
@@ -663,6 +663,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - E（第六張，2026-10-12，版本 `20261012g`，`tools/monsters/E.jpg`＋`specE.json`）：沉船海灣重畫版，海賊、海賊火槍手、巨蟹、溺死的水手改用這張（走路 2 格、攻擊 3 格，覆蓋 D 表的單張版），新增 ★海賊王・德雷克 pirateKing。
   - F（第七張，2026-10-12，版本 `20261012h`，`F.jpg`＋`specF.json`）：暮光法師塔重畫版，地獄犬、蛇女、墮落法師、法師塔守衛改用這張（走路 2 格、攻擊 3～4 格），新增 ★惡魔 demon。
     地獄犬攻擊前兩列畫成蛇女，改用攻擊第 3 列＋施法列；惡魔走路格是大張立繪，走路也用攻擊列。`spec2.py` 的 `NORM`：攻擊格畫得比走路小的怪（地獄犬、蛇女、墮落法師），`cut2.py` 把攻擊列放大到和走路列同高。
+  - G（第八張，2026-10-12，版本 `20261012w`，`G.jpg`＋`specG.json`）：後期 5 張地圖重畫版（正面／側面／背面各 1 張，走路與攻擊同一張），覆蓋 D 表：
+    沙漠金字塔（木乃伊、沙漠蠍、人面獅身、阿努比斯）、歐瑞雪原（冰原狼、雪怪、冰高崙、冰霜魔女）、火焰洞窟（火蜥蜴、火焰精靈、熔岩高崙、火焰騎士、伊弗利特）、
+    遺忘之島（古代巨人、哈比、遺忘騎士、奇美拉）、巨人墓穴（巨大骷髏、墓穴守衛、死靈法師、骨龍 size 56）；新增 4 隻稀有首領（只有一張圖，三方向共用）：
+    ★歐西里斯 osiris、★冰之巨人王 iceGiantKing、★遺忘之王 forgottenKing、★巨人王的亡魂 giantKingSpirit。巨大骷髏正面格裁掉標籤字（`['G',1638,90,1730,205]`）。
+    `spec2.py` 的 `NOHOLE`：身上有大片白色的怪（雪怪、冰高崙、冰霜魔女、冰之巨人王、巨人王的亡魂、冰原狼），`cut2.py` 不去掉被圍住的白色區塊。原圖第 33 張（同系列較小的版本）沒有用。
 - 新增怪物放在各地圖 `mons` 倒數第二個（`maps.js` 異界首領用最後一隻當底，不能動）：妖魔戰士 Lv12→低語墓窟、歐西斯妖魔 Lv19→腐朽礦坑・上層、卡司特 Lv22（魔法暗影箭）→沉眠龍窟、
   史巴托 Lv26（不死）→腐朽礦坑・深層、眼怪 Lv38（大型、魔法死亡凝視）→暮光法師塔；妖魔戰士、歐西斯妖魔、卡司特標 human。
 - 切圖：`tools/monsters/spec2.py` 每隻怪 walk／attack × 正面／側面／背面，每格一串裁切框（照播放順序；沒寫的方向沿用正面；`FLIP`＝側面朝左要翻），
@@ -670,7 +675,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   （6 列＝走路 正／側／背、攻擊 正／側／背，每列 n 格，每格 cw×ch，腳底貼齊）與 meta。執行：`cd tools/monsters && python3 cut2.py [怪物id…]`（要先建 out/）。
 - 遊戲：`ui-scene.js` 的 `MON_SPRITES`（照 meta 抄：cw、ch、body、n、size）＋`monSpriteImg(mid)`；地圖怪 `m.mid`＝怪物 id（綁定戰鬥時改成 `inst.id`）。
   身高一般 42px、大型 62px（`size` 可覆寫）；方向＝戰鬥中面向角色、遊走看移動方向（`m.face`），向左用側面鏡像；出手時 `m.atk = 380` ms 照進度播攻擊列；走動時循環走路列（每格 150ms），只有 1 格的怪改成上下輕晃。
-  68 張圖共約 1.7MB，進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
+  74 張圖共約 2.5MB（G 表輸出後用 PIL `quantize(256)` 轉調色盤 PNG，約小 80%），進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
