@@ -3,7 +3,11 @@ from collections import deque
 from PIL import Image, ImageFilter
 sys.path.insert(0, '.')
 from spec2 import SPEC, FLIP
-SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C', 'D', 'E')}
+try:
+    from spec2 import NORM
+except ImportError:
+    NORM = set()
+SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C', 'D', 'E', 'F')}
 def cut(box):
     sh, x0, y0, x1, y1 = box
     a = np.array(SHEETS[sh].crop((x0, y0, x1, y1))).astype(int); H, W = a.shape[:2]
@@ -46,6 +50,10 @@ for k, v in SPEC.items():
             boxes = dirs[d] if d < len(dirs) and dirs[d] else dirs[0]
             fr = [c for c in (cut(b) for b in boxes) if c]
             rows.append(fr)
+    if k in NORM:   # 攻擊列放大到和走路列同高
+        med = lambda rs: sorted(im.getbbox()[3] - im.getbbox()[1] for r in rs for im in r)[sum(len(r) for r in rs) // 2]
+        f = med(rows[:3]) / med(rows[3:])
+        rows = rows[:3] + [[im.resize((round(im.width * f), round(im.height * f)), Image.LANCZOS) for im in r] for r in rows[3:]]
     bbs = [im.getbbox() for r in rows for im in r]
     cw = max(b[2] - b[0] for b in bbs) + 4; ch = max(b[3] - b[1] for b in bbs) + 4
     cols = max(len(r) for r in rows)

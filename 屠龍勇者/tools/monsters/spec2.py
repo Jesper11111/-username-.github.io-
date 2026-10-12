@@ -48,3 +48,8 @@ for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specD.j
 # 第六張表 E.jpg（2026-10-12，沉船海灣重畫版：海賊、海賊火槍手、巨蟹、溺死的水手、海賊王・德雷克）：走路 2 格、攻擊 3 格，覆蓋 D 表的版本；裁切框 specE.json
 for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specE.json'))).items():
     SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
+# 第七張表 F.jpg（2026-10-12，暮光法師塔：地獄犬、蛇女、墮落法師、法師塔守衛、惡魔）；地獄犬攻擊用攻擊第 3 列＋施法列（攻擊前兩列畫成蛇女）、惡魔走路用攻擊列（走路格是大張立繪）；裁切框 specF.json
+for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specF.json'))).items():
+    SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
+# 攻擊格畫得比走路格小的怪：把攻擊列整體放大到和走路列同高（中位數）
+NORM = {'hellhound', 'lamia', 'ivoryMage'}
