@@ -463,6 +463,7 @@ function sceneUpdate(dt) {
     if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
     for (const m of scene.mons) if (m.atk > 0) m.atk -= dt;
+    if (!inZone) presUpdate(dt);   // 村莊裡其他玩家的位置（presence.js）
 }
 
 // ───────── 攻擊距離（combat.js 的 canReach）─────────
@@ -726,6 +727,7 @@ function sceneDraw(ctx, W, H) {
     };
     const actors = scene.mons.map(m => ({ y: m.ry, draw: () => drawMon(m) }));
     actors.push({ y: pl.ry + 0.01, draw: drawPlayer });
+    if (player.loc.type === 'town') for (const key in presOthers) { const o = presOthers[key]; actors.push({ y: o.ry, draw: () => presDraw(ctx, o, camX, camY, labels) }); }   // 其他在線玩家（presence.js）
     if (player.loc.type === 'town') for (const n of townNpcList(scene.bg)) actors.push({ y: n.y, draw: () => {
         const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
         if (n.painted) { labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - n.h * TILE, camX, camY, n)); return; }   // 圖上已畫好的人：只加名牌
@@ -862,6 +864,8 @@ function sceneClick(ev) {
     if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { npcOpen(plate.npc); return; }
+    const other = presHit(wx, wy);   // 其他在線玩家（presence.js）
+    if (other) { presMenu(other); return; }
     const tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
     const b = townNpcList(scene.bg).find(b => Math.abs(b.x - tx) <= 1 && ty <= b.y + 1 && ty >= b.y - (b.painted ? Math.ceil(b.h) : 1));   // 圖上的人：點身體也算
     if (b) { npcOpen(b); return; }
