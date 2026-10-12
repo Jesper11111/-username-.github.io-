@@ -80,11 +80,12 @@ const maps = [
         //   只能從靈界地圖「風元大陸」紅點進入（hidden，map.js 的 enterXianmoBattlefield）；hardMinRealm＝仙人初境以下不能進、也不能用挑戰模式越級
         //   妖獸＝玩家自己境界（仙人初境～混沌道祖）的 10 階，強度＝該境界主要練功圖（config-realms.js 的 realmPacing）的 nv2Str（getter，例：天仙→九天仙域 10～15 倍、真仙→不死山 40～50 倍）
         //   經驗、靈石、聲望照主要練功圖（rewardAsMain，map.js 的 getRewardMap）；rewardSpeedCap Infinity＝不設收益速度上限（線上 nv2RewardSpeedAdj、離線 save.js 都一樣）
-        { name: "仙魔戰場", expRate: 3, diff: 1, coins: 0, hidden: true, xianmo: true, minRealm: 10, hardMinRealm: 10, respawnSec: 1, rewardAsMain: true, rewardSpeedCap: Infinity,
+        //   2026-10-12 使用者：「仙魔戰場經驗太高導致玩家被標記，降低經驗並增加難度」→ rewardSpeedCap Infinity → 3（同時空秘境）、強度 ×XIANMO_STR_MULT
+        { name: "仙魔戰場", expRate: 3, diff: 1, coins: 0, hidden: true, xianmo: true, minRealm: 10, hardMinRealm: 10, respawnSec: 1, rewardAsMain: true, rewardSpeedCap: 3,
           get nv2L() { return typeof player !== 'undefined' && player ? Math.min(Math.max(player.realmIndex || 0, 10), 15) : 10; },
           get nv2FixedL() { return this.nv2L + 0.9; },
           get suit() { return [this.nv2L, this.nv2L]; },
-          get nv2Str() { const m = typeof getMainMapForRealm === 'function' && typeof player !== 'undefined' && player ? getMainMapForRealm() : null; return m && m.nv2Str ? m.nv2Str : [10, 15]; } }
+          get nv2Str() { const m = typeof getMainMapForRealm === 'function' && typeof player !== 'undefined' && player ? getMainMapForRealm() : null; return (m && m.nv2Str ? m.nv2Str : [10, 15]).map(v => Math.round(v * XIANMO_STR_MULT)); } }
     ]},
     // 無邊海（2026-10-03 使用者要求：第三區雷鳴大陸之後 7 張圖搬來這裡；世界地圖「無邊海」區塊開這一區）
     // ⚠️ 加在最後（索引 6），不插在第三區後面：分類索引被 monsterAttrsByMapCategory／REPUTATION_MAX_BY_MAP_CATEGORY／PROF_MAP_MULT／LIFESPAN_DANGER_MULT／DARK_MAP_CATEGORIES 等使用，
@@ -147,6 +148,8 @@ const XIANMO_DROPS = {
 // 2026-10-06 使用者：「時空秘境內不會掉落任何靈石；相反每秒扣 1 萬靈石才足以支撐開啟時空秘境的能量消耗」
 //   upkeepPerSec：每秒消耗的靈石（線上 combat.js 每秒、離線／背景 save.js 按秒數）；付不起就被送回復活點（宗門）；擊殺靈石為 0（combat.js 的 rollKillCoins）
 // rewardSpeedCap：線上每小時收益（經驗、聲望、熟練度）的速度上限＝主要地圖一般玩家的幾倍（一般地圖 NV2.rewardSpeedCap 1；2026-10-09 使用者回報經驗異常後選 3 倍，map.js 的 getRewardSpeedCap）
+// 仙魔戰場（第 79 節）敵人強度＝主要練功圖 nv2Str × 這個倍數（2026-10-12 使用者：「增加難度」；原本 ×1）
+const XIANMO_STR_MULT = 1.5;
 const SPACETIME_REALM = { name: "時空秘境", maxRealm: 10, craftMult: 3, upkeepPerSec: 10000, rewardSpeedCap: 3,
     blueprintMaxLevel: 3000, blueprint: 1 / 3000, lingStone: 1 / 1200, starIron: 1 / 200, fireShard: 1 / 400 };
 // 離線／背景依實力估算戰鬥效率用（save.js 的 estimateIdleCombat）：一波平均隻數（1～5 隻）、波與波之間的秒數（刷新＋生成 1 秒）
