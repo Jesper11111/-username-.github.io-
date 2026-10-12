@@ -53,3 +53,7 @@ for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specF.j
     SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
 # 攻擊格畫得比走路格小的怪：把攻擊列整體放大到和走路列同高（中位數）
 NORM = {'hellhound', 'lamia', 'ivoryMage'}
+# 第八張表 G.jpg（2026-10-12，焦灼沙漠～詛咒墓穴重畫版＋4 隻首領）：每隻正面／側面／背面各 1 張大圖，覆蓋 D 表；specG.json
+for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specG.json'))).items():
+    SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
+NOHOLE = {'yeti', 'iceGolem', 'frostWitch', 'iceGiantKing', 'giantKingSpirit', 'snowWolf'}

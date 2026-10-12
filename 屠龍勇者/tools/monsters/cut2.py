@@ -7,7 +7,12 @@ try:
     from spec2 import NORM
 except ImportError:
     NORM = set()
-SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C', 'D', 'E', 'F')}
+try:
+    from spec2 import NOHOLE
+except ImportError:
+    NOHOLE = set()
+CUR = ['']
+SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C', 'D', 'E', 'F', 'G')}
 def cut(box):
     sh, x0, y0, x1, y1 = box
     a = np.array(SHEETS[sh].crop((x0, y0, x1, y1))).astype(int); H, W = a.shape[:2]
@@ -23,7 +28,7 @@ def cut(box):
         j, i = q.popleft()
         for jj, ii in ((j + 1, i), (j - 1, i), (j, i + 1), (j, i - 1)):
             if 0 <= jj < H and 0 <= ii < W and not bg[jj, ii] and white[jj, ii]: bg[jj, ii] = True; q.append((jj, ii))
-    loose = (a.min(2) >= 205) & ((a.max(2) - a.min(2)) <= 26)
+    loose = (a.min(2) >= 205) & (CUR[0] not in NOHOLE) & ((a.max(2) - a.min(2)) <= 26)
     n, lbl, st, _ = cv2.connectedComponentsWithStats((loose & ~bg).astype(np.uint8), connectivity=4)
     for i in range(1, n):
         if st[i, cv2.CC_STAT_AREA] >= 5: bg[lbl == i] = True
@@ -43,6 +48,7 @@ meta = {}
 only = sys.argv[1:]
 for k, v in SPEC.items():
     if only and k not in only: continue
+    CUR[0] = k
     rows = []   # walk down/right/up, attack down/right/up
     for anim in ('walk', 'attack'):
         dirs = v[anim]
