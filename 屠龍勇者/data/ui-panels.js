@@ -455,7 +455,8 @@ function openItemDialog(uid) {
     }
     if (d.cat === 'map') {
         if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
-        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
+        // 地圖改造搬到村莊鍛造 NPC 的「🗺️ 地圖打造」（2026-10-12 使用者要求）
+        btns.push({ text: '🔨 找鍛造 NPC 改造', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🗺️ 地圖打造」改造地圖') });
     }
     if (d.cat === 'currency') btns.push({ text: '選擇裝備', onClick: () => { bagFilter = 'gear'; switchTab('bag'); showToast('點一件裝備 →「🔮 改造」使用通貨'); } });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
@@ -649,8 +650,27 @@ function renderStorage() {
     return tabs + `<h4>📦 角色倉庫（${player.storage.length} 格，只有這個角色能用）</h4><div class="list">${sto}</div><h4>🎒 背包</h4><div class="list">${inv}</div>`;
 }
 
+// 鍛造 NPC：🔨 裝備鍛造（配方）／🗺️ 地圖打造（用通貨改造異界地圖，craft.js openCraftDialog）
+let craftMode = 'gear';
+function setCraftMode(m) { craftMode = m; renderPanel(); }
+function renderMapForge() {
+    const maps = player.inv.filter(x => ITEMS[x.id].cat === 'map').sort((a, b) => ITEMS[b.id].tier - ITEMS[a.id].tier || qualityRank(b) - qualityRank(a));
+    const curs = Object.keys(MAP_CURRENCY).filter(c => countItem(c) > 0).map(c => `${CURRENCY[c] ? CURRENCY[c].icon : ''}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
+    const list = maps.map(x => {
+        const mods = x.mm || [];
+        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>
+            <small>${mapZoneFor(ITEMS[x.id].tier).name}${mods.length ? '　' + mods.map(k => MAP_MODS[k].icon + MAP_MODS[k].name).join('、') + `　<span class="good">獎勵 +${Math.round(mapBonusOf(mods) * 100)}%</span>` : '　（普通）'}</small></div>
+            <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;
+    }).join('');
+    return `<div class="panel"><small class="muted">用製作通貨替異界地圖加上、重擲或移除詞綴；詞綴越多，怪物越強、獎勵越高。</small>
+        <div><small>持有通貨：${curs || '<span class="muted">沒有可用在地圖的通貨（打怪掉落）</span>'}</small></div></div>
+        <div class="list">${list || '<p class="muted">背包沒有異界地圖。打怪有機率掉落，通關異界首領必掉。</p>'}</div>`;
+}
+
 function renderCraft() {
-    return `<div class="list">` + RECIPES.map((r, i) => {
+    const tabs = `<div class="chips"><button class="chip-btn ${craftMode === 'gear' ? 'active' : ''}" onclick="setCraftMode('gear')">🔨 裝備鍛造</button><button class="chip-btn ${craftMode === 'map' ? 'active' : ''}" onclick="setCraftMode('map')">🗺️ 地圖打造</button></div>`;
+    if (craftMode === 'map') return tabs + renderMapForge();
+    return tabs + `<div class="list">` + RECIPES.map((r, i) => {
         const miss = recipeMissing(r);
         const need = Object.keys(r.need).map(id => `${ITEMS[id].name}×${r.need[id]}`).join('、');
         return `<div class="list-row"><div><b class="rare-item clickable" onclick="shopInfo('${r.out}')">${ITEMS[r.out].name}</b>

@@ -99,5 +99,6 @@ function craftUseBtn(cid, uid) {
     const err = useCurrency(cid, uid);
     if (err) { showToast(err); return; }
     saveGame();
+    renderPanel();          // 背後的清單（鍛造 NPC 地圖打造、背包）一起更新
     openCraftDialog(uid);   // 重畫視窗顯示新詞綴
 }
