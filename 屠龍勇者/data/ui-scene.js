@@ -163,7 +163,7 @@ function openTownSub(sub) { townSub = sub; switchTab('town'); }
 // 目前村莊要畫的 NPC：有背景圖的村莊用 SCENE_BGS 的 npcs（只換位置，名字、功能沿用 TOWN_NPCS），沒有背景圖用 TOWN_NPCS
 function townNpcList(bg) {
     if (!bg) return TOWN_NPCS;
-    return (bg.npcs || []).map(n => ({ ...TOWN_NPCS.find(t => t.role === n.role), ...n }));
+    return (bg.npcs || []).map(n => ({ ...TOWN_NPCS.find(t => t.role === n.role), painted: true, h: 0.6, ...n }));   // 背景圖村莊不畫 NPC 圖示，只留名牌（2026-10-12 使用者要求）
 }
 
 // ───────── 地圖產生 ─────────
