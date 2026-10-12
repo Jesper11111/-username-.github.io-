@@ -50,7 +50,7 @@ const RESONANCE = {
     dragonSlayer:  { tier: 3, cls: ['knight', 'royal'], trigger: 'charge', n: 20, name: '屠龍斬', kind: 'strike', mult: 4.5, desc: '4.5 倍斬擊（對龍再 ×1.5）' },
     dkFlameSword:  { tier: 3, cls: ['knight', 'warrior'], trigger: 'proc', p: 0.1, name: '烈炎', kind: 'strike', mult: 1, magic: { dmg: [40, 80], spK: 1 }, aoe: true, desc: '範圍：烈炎吞噬所有敵人' },
     windBow:       { tier: 3, cls: ['elf'], trigger: 'proc', p: 0.12, name: '疾風連矢', kind: 'strike', mult: 0.8, hits: 3, spread: true, desc: '連射 3 箭分散射向敵人' },
-    royalKingSword:  { tier: 3, cls: ['royal'], trigger: 'cd', cd: 20, name: '君主威光', kind: 'buff', sec: 10, fx: { dmg: 6, hit: 6, ac: 3 }, desc: '10 秒內傷害 +6、命中 +6、AC -3' },
+    royalKingSword:  { tier: 3, cls: ['royal'], trigger: 'cd', cd: 20, name: '君主威光', kind: 'buff', sec: 10, fx: { dmg: 6, hit: 6, ac: 3 }, desc: '10 秒內傷害 +6、命中 +6、防禦 +3' },
     knightOathSword: { tier: 3, cls: ['knight'], trigger: 'charge', n: 12, name: '誓約斬', kind: 'strike', mult: 3, aoe: true, desc: '範圍：3 倍斬擊所有敵人' },
     mageArchStaff:   { tier: 3, cls: ['mage'], trigger: 'cd', cd: 8, name: '賢者之雷', kind: 'spell', dmg: [80, 130], spK: 2.5, aoe: true, desc: '範圍：雷擊所有敵人（魔法）' },
     elfWorldBow:     { tier: 3, cls: ['elf'], trigger: 'proc', p: 0.1, name: '世界樹之光', kind: 'strike', mult: 1.2, hits: 4, spread: true, desc: '4 道光箭分散射向敵人' },
@@ -90,7 +90,7 @@ const RESONANCE_ARMOR_ITEMS = {
 Object.assign(ITEMS, RESONANCE_ARMOR_ITEMS);
 Object.assign(RESONANCE, {
     // 稀有
-    knightHelm:   { tier: 1, cls: ['knight', 'paladin'], trigger: 'hurt', p: 0.08, name: '堅守', kind: 'buff', sec: 8, fx: { ac: 4 }, desc: '8 秒內 AC -4' },
+    knightHelm:   { tier: 1, cls: ['knight', 'paladin'], trigger: 'hurt', p: 0.08, name: '堅守', kind: 'buff', sec: 8, fx: { ac: 4 }, desc: '8 秒內 防禦 +4' },
     protectCloak: { tier: 1, trigger: 'lowhp', pct: 0.3, cd: 60, name: '守護', kind: 'heal', heal: [40, 70], spK: 0, desc: 'HP 低於 30% 時回復 HP' },
     powerGloves:  { tier: 1, cls: ['warrior', 'shura'], trigger: 'proc', p: 0.06, name: '猛力', kind: 'strike', mult: 1.4, desc: '1.4 倍重擊' },
     wolfAmulet:   { tier: 1, trigger: 'charge', n: 25, name: '狼嚎', kind: 'buff', sec: 10, fx: { spdMul: 0.15 }, desc: '10 秒內攻速 +15%' },
@@ -98,7 +98,7 @@ Object.assign(RESONANCE, {
     // 英雄
     hasteBoots:   { tier: 2, trigger: 'hurt', p: 0.1, name: '疾走', kind: 'buff', sec: 6, fx: { dodge: 0.15 }, desc: '6 秒內閃避 +15%' },
     mrCloak:      { tier: 2, trigger: 'hurt', p: 0.1, name: '魔法反射', kind: 'buff', sec: 8, fx: { mr: 20, reduce: 3 }, desc: '8 秒內 MR +20、減傷 3' },
-    titanBelt:    { tier: 2, cls: ['warrior'], trigger: 'lowhp', pct: 0.35, cd: 90, name: '泰坦之軀', kind: 'buff', sec: 12, fx: { reduce: 8, ac: 5 }, desc: 'HP 低於 35% 時 12 秒內減傷 8、AC -5' },
+    titanBelt:    { tier: 2, cls: ['warrior'], trigger: 'lowhp', pct: 0.35, cd: 90, name: '泰坦之軀', kind: 'buff', sec: 12, fx: { reduce: 8, ac: 5 }, desc: 'HP 低於 35% 時 12 秒內減傷 8、防禦 +5' },
     frostShield:  { tier: 2, trigger: 'hurt', p: 0.12, name: '冰霜反擊', kind: 'strike', mult: 1.2, stun: 1500, desc: '反擊 1.2 倍並暈眩 1.5 秒' },
     wyvernHelm:   { tier: 2, trigger: 'charge', n: 30, name: '龍吼', kind: 'spell', dmg: [50, 80], spK: 1, aoe: true, desc: '範圍：龍吼震傷所有敵人（魔法）' },
     flameGloves:  { tier: 2, trigger: 'proc', p: 0.08, name: '爆炎', kind: 'spell', dmg: [30, 60], spK: 1, desc: '爆炎（魔法）灼燒目標' },

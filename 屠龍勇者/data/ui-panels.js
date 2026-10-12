@@ -275,7 +275,7 @@ function renderChar() {
     h += `</div><small class="muted">51 級起每升一級 +1 點；萬能藥 ${player.elixirs}/${ELIXIR_MAX}</small></div>`;
 
     const rows = [
-        ['AC', st.ac], ['MR', st.mr], ['命中', st.hit], ['傷害加成', '+' + st.dmgBonus], ['SP', st.sp],
+        ['防禦', defenseOf(st)], ['MR', st.mr], ['命中', st.hit], ['傷害加成', '+' + st.dmgBonus], ['SP', st.sp],
         ['爆擊', Math.round(st.crit * 100) + '%'], ['閃避', Math.round(st.dodge * 100) + '%'], ['減傷', st.reduce],
         ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['回血／5秒', st.hpRegen], ['回魔／5秒', st.mpRegen],
         ['負重', `${Math.floor(invWeight())} / ${st.weightMax}`],
@@ -359,7 +359,7 @@ function itemDescHtml(inst) {
     }
     if (d.cat === 'armor') {
         const ac = (d.ac || 0) + (d.safe >= 0 ? ench : 0);
-        if (ac) L.push(`AC ${ac > 0 ? '-' : '+'}${Math.abs(ac)}`);
+        if (ac) L.push(`防禦 ${ac > 0 ? '+' : '-'}${Math.abs(ac)}`);
         if (d.mr) L.push(`MR +${d.mr}`);
         if (d.sp) L.push(`SP +${d.sp}`);
         STAT_KEYS.forEach(k => { if (d[k]) L.push(`${STAT_NAMES[k]} +${d[k]}`); });
@@ -393,14 +393,14 @@ function itemDescHtml(inst) {
 // 模擬「換上這件」後的 calcStats，和目前比較；戒指兩格都比；雙手武器會把盾卸下、盾會把雙手武器卸下（同 equipItem）
 const COMPARE_ROWS = [
     ['avgS', '平均傷害（小型）', 1], ['avgL', '平均傷害（大型）', 1], ['atkMs', '攻擊間隔（秒）', -1, v => (v / 1000).toFixed(2)],
-    ['hit', '命中', 1], ['crit', '爆擊', 1, v => Math.round(v * 100) + '%'], ['ac', 'AC（越低越好）', -1], ['mr', 'MR', 1],
+    ['hit', '命中', 1], ['crit', '爆擊', 1, v => Math.round(v * 100) + '%'], ['def', '防禦', 1], ['mr', 'MR', 1],
     ['maxHp', 'HP 上限', 1], ['maxMp', 'MP 上限', 1], ['sp', 'SP', 1], ['reduce', '減傷', 1], ['dodge', '閃避', 1, v => Math.round(v * 100) + '%'],
     ['lifesteal', '吸血', 1, v => Math.round(v * 100) + '%'], ['hpRegen', '回血', 1], ['mpRegen', '回魔', 1],
     ['str', '力量', 1], ['dex', '敏捷', 1], ['con', '體質', 1], ['int', '智力', 1], ['wis', '精神', 1], ['weightMax', '負重上限', 1],
 ];
 function compareStats() {
     const st = calcStats(), w = st.weapon;
-    return { ...st, avgS: (w ? (1 + w.dmg[0]) / 2 : 1.5) + st.dmgBonus, avgL: (w ? (1 + w.dmg[1]) / 2 : 1.5) + st.dmgBonus };
+    return { ...st, def: defenseOf(st), avgS: (w ? (1 + w.dmg[0]) / 2 : 1.5) + st.dmgBonus, avgL: (w ? (1 + w.dmg[1]) / 2 : 1.5) + st.dmgBonus };
 }
 // 把 inst 放進 slot 後算能力，算完還原（不改任何存檔資料）
 function statsWithEquip(inst, slot) {
@@ -601,7 +601,7 @@ function renderShop() {
 
 function shortDesc(d) {
     if (d.cat === 'weapon') return `${WEAPON_TYPES[d.type].name} ${d.dmg[0]}/${d.dmg[1]}${d.sp ? ' SP+' + d.sp : ''}`;
-    if (d.cat === 'armor') return `${SLOTS[d.slot === 'ring' ? 'ring1' : d.slot]}${d.ac ? ' AC-' + d.ac : ''}${d.mr ? ' MR+' + d.mr : ''}${d.hp ? ' HP+' + d.hp : ''}`;
+    if (d.cat === 'armor') return `${SLOTS[d.slot === 'ring' ? 'ring1' : d.slot]}${d.ac ? ' 防禦+' + d.ac : ''}${d.mr ? ' MR+' + d.mr : ''}${d.hp ? ' HP+' + d.hp : ''}`;
     if (d.heal) return `回復 ${d.heal[0]}～${d.heal[1]}`;
     if (d.buff) return `${BUFF_DEFS[d.buff].name} ${d.sec / 60} 分`;
     return d.desc || CAT_NAMES[d.cat];
