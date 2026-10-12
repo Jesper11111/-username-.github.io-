@@ -1124,6 +1124,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - PC（橫向、寬 ≥ 700px）標題畫面：按鈕改成小顆橫排放在封面最下方（`@media (orientation: landscape) and (min-width: 700px)`），封測提示縮小，不擋封面（版本 `20261012t`）。
 
+- 封面改用 `background-size: contain`（版本 `20261012u`，使用者回報 PC 上人物被裁掉）：任何螢幕比例都看得到整張封面，多出來的地方補黑；矮的直向手機（高 ≤ 780px）按鈕縮小。
+
 ## 37. 洗白（刪檔）與封測提示（2026-10-12，版本 `20261012i`；`config.js` 的 `WIPE`／`TEST_NOTICE`、`save.js` 開頭 `wipeCheck`、`tools/wipe.sql`）
 
 - **目前狀態：未啟動**（`WIPE = { id: '', at: 0 }`），只在標題畫面顯示封測提示 `TEST_NOTICE`（`#test-notice`，`showTitle` 設定；空字串＝不顯示）。
