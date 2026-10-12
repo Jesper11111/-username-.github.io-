@@ -2,11 +2,10 @@
 // 依賴 player、items、market（marketRpc／marketErrText／marketGiveItem／marketTradeable）、cloud、offline、ui-panels。
 // 共用倉庫：同帳號所有角色共用 200 格＋金幣，存、取各收 100 金幣；伺服器以雲端存檔確認道具／金幣（vault_put），取出走兩段式交貨（vault_take → vault_pending／vault_ack）。
 // 鑽石存在伺服器（dragon_wallet）：每日登入 +5、打怪 0.1% 掉 1 顆（每天 10）、首領／龍 +3（每天 15）、管理者發放。
-// 離線掛機要登入，只有最後上傳存檔的角色能結算，每小時 2 顆鑽石（offline_claim）。
+// 離線掛機要登入，只有最後上傳存檔的角色能結算（2026-10-12 起不消耗鑽石；伺服器的 offline_claim 不再使用）。
 
 const VAULT_MAX = 200, VAULT_FEE = 100;
 const DIA_MOB_P = 0.001;      // 一般怪掉鑽石機率
-const OFFLINE_DIA_PER_H = 2;  // 離線掛機每小時鑽石
 
 let diaCount = null;          // 目前鑽石（null＝還沒讀到）
 let vaultData = null, vaultBusy = false, vaultErr = '', storageMode = 'char';
@@ -54,20 +53,20 @@ let offlineHold = false;   // 向伺服器結算中：主迴圈暫停，避免�
 // 有離線時間要結算：登入才算，向伺服器扣鑽石換可結算的時間，再用 applyOffline 模擬
 async function offlineSettle(awayMs) {
     if (awayMs < OFFLINE_MIN_MS || !offlineEligible()) return;
-    if (!vaultOnline()) { addLog('🌙 登入帳號才有離線掛機收益（離線掛機要消耗鑽石）', 'sys'); return; }
+    if (!vaultOnline()) { addLog('🌙 登入帳號才有離線掛機收益', 'sys'); return; }
     offlineHold = true;
     try {
         saveGame();
-        const r = await marketRpc('offline_claim', { p_slot: currentSlot, p_away_ms: Math.round(awayMs) });
-        if (r.diamonds != null) diaCount = r.diamonds;
-        if (!r.ok) {
-            const why = { not_last: '只有最後離線的角色才能離線掛機', no_diamond: `鑽石不足（每小時 ${OFFLINE_DIA_PER_H} 顆）`, too_short: '剛結算過，這段時間不再重複結算', no_save: '雲端還沒有這個角色的存檔' }[r.reason] || r.reason;
-            addLog(`🌙 沒有離線收益：${why}`, 'sys');
-            showToast(`🌙 沒有離線收益：${why}`, 3500);
+        // 2026-10-12 使用者要求：離線掛機不再消耗鑽石。仍要登入、只有帳號裡最後上傳存檔的角色能結算（直接讀自己的 dragon_saves，不扣鑽石）
+        const { data: last, error } = await cloudTimeout(cloudSb.from('dragon_saves').select('slot').order('updated_at', { ascending: false }).limit(1));
+        if (error) throw error;
+        if (last && last.length && last[0].slot !== currentSlot) {
+            addLog('🌙 沒有離線收益：只有最後離線的角色才能離線掛機', 'sys');
+            showToast('🌙 沒有離線收益：只有最後離線的角色才能離線掛機', 3500);
             return;
         }
-        const rep = applyOffline(awayMs, r.ms);
-        if (rep) { rep.diaCost = r.cost; rep.diaLeft = r.diamonds; refreshUI(); showOfflineReport(rep); }
+        const rep = applyOffline(awayMs);
+        if (rep) { refreshUI(); showOfflineReport(rep); }
     } catch (e) {
         addLog('🌙 離線收益結算失敗：' + vaultErrText(e), 'sys');
     } finally {
