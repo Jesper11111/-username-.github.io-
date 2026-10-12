@@ -57,7 +57,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012f`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -638,13 +638,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - 使用者提供三張怪物動作表，原圖在 `tools/monsters/`：`S1.jpg`（第一批，白底灰框，每方向 1 格）、`A.jpg`（骷髏系，無框，每隻 3 欄＝正面／側面／背面，走路、攻擊各 2 列＝2 格動畫）、
   `B.jpg`（哥布林等，有框，每隻一列：走路 5 格、攻擊 6 格…，只有正面）。**英文標題常和圖對不上**，照實際的圖配對；使用者說名稱對不上就改遊戲裡的名稱。
-- 有模型的怪（34 種）：
+- 有模型的怪（68 種）：
   - S1：妖魔 orc、妖魔弓箭手 orcArcher、侏儒 dwarf（只有正面）、狼 wolf（Wild Dog，只有側面）、狼人 werewolf、萊肯 lycan、幼龍 drake、黑騎士 blackKnight、巨大蜘蛛 giantSpider。
   - A：骷髏 skeleton、骷髏弓箭手 skeletonArcher、**骷髏禁衛兵** skeletonAxe（原名骷髏斧手，改名）、食屍鬼 ghoul、**史巴托 spartoi（新增）**、巴風特 baphomet（用施法列的 3 方向）。
   - B：哥布林 goblin、**妖魔戰士 orcWarrior（新增）**、甘地妖魔 gandiOrc、**歐西斯妖魔 orcxOrc（新增）**、**邪惡蜥蜴** lizardman（原名蜥蜴人，改名）、**眼怪 beholder（新增）**、**浮空之眼** floatingEye（原名漂浮之眼，改名，畫面身高 26）、**卡司特 castor（新增）**。
   - C（第四張，2026-10-12，版本 `20261012d`，`tools/monsters/C.jpg`＋`specC.json`）：侏儒戰士 dwarfWarrior、森林熊 forestBear、樹精 treant、古老樹精 elderTreant（★）、殭屍 zombie、石頭高崙 stoneGolem、
     吸血蝙蝠 caveBat（size 26）、黑暗妖精斥候 darkElfScout（背面只有 1 格）、甦醒的地龍 wakingDrake（★，側面圖比正面大一倍，全部方向用正面）、巨大兵蟻 giantAnt（size 44；原圖走路格只有大張示意圖，走路也用攻擊列）、鬼魂 ghast。
     每隻 3 欄＝正面／側面／背面，走路 3 格、攻擊 3～4 格；裁切框由每格的連通塊自動量出，存在 `specC.json`（石頭高崙走路、吸血蝙蝠的格子手動改成固定網格）。
+  - D（第五張，2026-10-12，版本 `20261012f`，`tools/monsters/D.jpg`＋`specD.json`＋`top.json`）：沉船海灣～泰坦墓穴 32 種一般怪＋巨大飛龍 wyvern、伊弗利特 ifrit（用金色鳳凰圖）。
+    AI 圖品質不一：每列常混到別隻怪、下半部動畫格亂掉，**只用上半部**，`top.json` 是上半部每個連通塊的框（編號），`specD.json` 逐格挑真的是這隻的圖，每方向 1 格（走路、攻擊各挑不同姿勢）；
+    標籤字壓到的格裁掉下緣，格線殘留的左右各內縮 3px。只有側面圖的（地獄犬、冰原狼、火蜥蜴）三方向都用側面；海賊火槍手、法師塔守衛只有 1 張。巨蟹 size 30、火蜥蜴 size 34。
 - 新增怪物放在各地圖 `mons` 倒數第二個（`maps.js` 異界首領用最後一隻當底，不能動）：妖魔戰士 Lv12→低語墓窟、歐西斯妖魔 Lv19→腐朽礦坑・上層、卡司特 Lv22（魔法暗影箭）→沉眠龍窟、
   史巴托 Lv26（不死）→腐朽礦坑・深層、眼怪 Lv38（大型、魔法死亡凝視）→暮光法師塔；妖魔戰士、歐西斯妖魔、卡司特標 human。
 - 切圖：`tools/monsters/spec2.py` 每隻怪 walk／attack × 正面／側面／背面，每格一串裁切框（照播放順序；沒寫的方向沿用正面；`FLIP`＝側面朝左要翻），
@@ -652,7 +655,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   （6 列＝走路 正／側／背、攻擊 正／側／背，每列 n 格，每格 cw×ch，腳底貼齊）與 meta。執行：`cd tools/monsters && python3 cut2.py [怪物id…]`（要先建 out/）。
 - 遊戲：`ui-scene.js` 的 `MON_SPRITES`（照 meta 抄：cw、ch、body、n、size）＋`monSpriteImg(mid)`；地圖怪 `m.mid`＝怪物 id（綁定戰鬥時改成 `inst.id`）。
   身高一般 42px、大型 62px（`size` 可覆寫）；方向＝戰鬥中面向角色、遊走看移動方向（`m.face`），向左用側面鏡像；出手時 `m.atk = 380` ms 照進度播攻擊列；走動時循環走路列（每格 150ms），只有 1 格的怪改成上下輕晃。
-  34 張圖共約 1.2MB，進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
+  68 張圖共約 1.7MB，進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 

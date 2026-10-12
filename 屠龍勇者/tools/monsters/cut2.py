@@ -3,7 +3,7 @@ from collections import deque
 from PIL import Image, ImageFilter
 sys.path.insert(0, '.')
 from spec2 import SPEC, FLIP
-SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C')}
+SHEETS = {k: Image.open(f'{k}.jpg').convert('RGB') for k in ('S1', 'A', 'B', 'C', 'D')}
 def cut(box):
     sh, x0, y0, x1, y1 = box
     a = np.array(SHEETS[sh].crop((x0, y0, x1, y1))).astype(int); H, W = a.shape[:2]
