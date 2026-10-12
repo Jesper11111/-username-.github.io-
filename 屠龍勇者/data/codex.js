@@ -124,7 +124,7 @@ function codexDetailHtml(id) {
         if (WEAPON_TYPES[d.type].double) L.push(['雙擊率', WEAPON_TYPES[d.type].double * 100 + '%']);
         if (WEAPON_TYPES[d.type].ranged) L.push(['彈藥', WEAPON_TYPES[d.type].ammo === 'arrow' ? '箭' : '子彈']);
     }
-    if (d.cat === 'armor' && d.ac) L.push(['AC', '-' + d.ac]);
+    if (d.cat === 'armor' && d.ac) L.push(['防禦', '+' + d.ac]);
     if (d.mr) L.push(['MR', '+' + d.mr]);
     if (d.sp) L.push(['SP', '+' + d.sp]);
     if (d.cat === 'armor' && d.hit) L.push(['命中', '+' + d.hit]);

@@ -159,6 +159,9 @@ function addFx(acc, fx) {
     }
 }
 
+// 防禦（顯示用，2026-10-12 使用者要求改成正數、越高越好）＝10 − AC；內部戰鬥公式仍用天堂式 AC（越低越好）
+function defenseOf(st) { return 10 - st.ac; }
+
 function calcStats() {
     const p = player, c = CLASSES[p.cls], fx = {}, now = gameNow;
     let weaponEnch = 0;
