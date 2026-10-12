@@ -15,7 +15,7 @@ function pwaIsIOS() {
 function pwaInAppBrowser() { return /Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent); }
 
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); pwaInstallEvent = e; });
-window.addEventListener('appinstalled', () => { pwaInstallEvent = null; showToast('📲 已安裝屠龍勇者'); });
+window.addEventListener('appinstalled', () => { pwaInstallEvent = null; showToast('📲 已安裝' + GAME_TITLE); });
 
 function initPwa() {
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
@@ -80,7 +80,7 @@ async function openInstallGuide() {
     } else if (pwaIsIOS()) {
         msg = 'iPhone／iPad 安裝方式（請用 Safari）：\n1. 按畫面下方的「分享」按鈕（方框加向上箭頭）\n2. 往下找「加入主畫面」\n3. 按右上角「新增」\n\n⚠️ 主畫面版和 Safari 的存檔是分開的：安裝前先到「⚙️ 設定 → 匯出存檔」複製文字，打開主畫面版後再「匯入存檔」。';
     } else {
-        msg = '安裝方式：\n・Android Chrome：按右上角「⋮」→「安裝應用程式」或「加到主畫面」\n・電腦 Chrome／Edge：網址列右側的安裝圖示，或選單 →「安裝屠龍勇者」\n\n找不到安裝選項的話，可能是瀏覽器還在準備，玩一下再試一次。';
+        msg = '安裝方式：\n・Android Chrome：按右上角「⋮」→「安裝應用程式」或「加到主畫面」\n・電腦 Chrome／Edge：網址列右側的安裝圖示，或選單 →「安裝黑暗大陸」\n\n找不到安裝選項的話，可能是瀏覽器還在準備，玩一下再試一次。';
     }
     gameAlert('📲 安裝到主畫面', msg);
 }
