@@ -323,11 +323,12 @@ function sceneUpdate(dt) {
     }
     const target = fighting ? scene.mons.find(m => m.inst === hunt.mon && !m.dead) || null : null;
     if (target !== scene.engaged) { scene.engaged = target; if (target) pl.path = []; }
+    if (fighting && scene.engaged) hunt.reach = { mon: hunt.mon, ...sceneReach(scene.engaged), seenAt: gameNow };
 
     // 怪物遊走、死亡淡出
     for (const m of scene.mons) {
         if (m.dead) { m.dying -= dt; continue; }
-        if (m === scene.engaged) continue;
+        if (m === scene.engaged && (pl.path.length || !m.inst)) continue;   // 目標：角色走過去時站著等，角色停下（遠程）時自己走過來
         m.cd -= dt;
         if (m.inst) {   // 圍上來的怪：一格一格走到角色旁邊
             if (m.cd > 0) continue;
@@ -368,9 +369,10 @@ function sceneUpdate(dt) {
     const manual = inZone && scene.manualUntil > gameNow;
     if (!pl.path.length && !manual && !scene.dodging) {
         if (fighting && scene.engaged) {
-            const e = scene.engaged;
-            if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = findPath(pl.x, pl.y, e.x, e.y, true);
-            else pl.dir = e.x > pl.x ? 'right' : e.x < pl.x ? 'left' : e.y > pl.y ? 'down' : 'up';
+            // 走到攻擊距離就停：遠程武器 4 格內且看得到，近戰走到旁邊；一次只走一格，每格重新判斷（怪也會移動）
+            const e = scene.engaged, r = sceneReach(e);
+            if (weaponIsRanged() ? r.ranged : r.melee) pl.dir = Math.abs(e.x - pl.x) >= Math.abs(e.y - pl.y) ? (e.x > pl.x ? 'right' : 'left') : (e.y > pl.y ? 'down' : 'up');
+            else if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = findPath(pl.x, pl.y, e.x, e.y, true).slice(0, 1);
         } else if (inZone && player.hunting && !walkHome) {
             let best = null, bd = 1e9;
             for (const m of scene.mons) { if (m.dead) continue; const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y); if (d < bd) { bd = d; best = m; } }
@@ -409,6 +411,27 @@ function sceneUpdate(dt) {
     if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
     for (const m of scene.mons) if (m.atk > 0) m.atk -= dt;
+}
+
+// ───────── 攻擊距離（combat.js 的 canReach）─────────
+// 近戰：目標在旁邊 1 格（含斜角）；遠程：4 格內（直線距離）且視線沒被牆、障礙物擋住（怪物不擋）
+function lineOfSight(x0, y0, x1, y1) {
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy, x = x0, y = y0;
+    while (x !== x1 || y !== y1) {
+        const e2 = err * 2;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+        if ((x !== x1 || y !== y1) && scene.grid[y][x] !== 0) return false;
+    }
+    return true;
+}
+function sceneReach(e) {
+    const pl = scene.pl, dx = Math.abs(e.x - pl.x), dy = Math.abs(e.y - pl.y);
+    return {
+        melee: Math.max(dx, dy) <= MELEE_RANGE,
+        ranged: Math.hypot(dx, dy) <= RANGED_RANGE + 0.5 && lineOfSight(pl.x, pl.y, e.x, e.y),
+    };
 }
 
 // ───────── 首領大招紅圈（hunt.tele）與自動閃避 ─────────

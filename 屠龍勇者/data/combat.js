@@ -280,6 +280,7 @@ function manualCast(id) {
     if (k.type === 'heal') { castHeal(k, st); return ''; }
     if (k.type === 'buff') { castBuff(k); return ''; }
     if (!fightAlive()) return '沒有戰鬥目標';
+    if (!canReach(skillReach(k, st))) return skillReach(k, st) === 'ranged' ? '距離太遠或被擋住（4 格內、不能穿牆）' : '要走到目標旁邊才能使用';
     if (k.type === 'spell') castSpell(k, st); else doStrike(k, st);
     if (!fightAlive()) return '';
     hunt.pCd = st.atkMs;
@@ -360,6 +361,22 @@ function spawnMonster() {
 }
 
 // 玩家行動優先順序：治癒 → 增益 → 共鳴裝備（冷卻型）→ 攻擊技能／魔法 → 普攻
+// ───────── 攻擊距離（2026-10-12）─────────
+// 近戰武器要走到目標旁 1 格（含斜角）才能攻擊；遠程武器（弓、槍）、攻擊魔法、共鳴技能 4 格內可攻擊，但中間不能有牆或障礙物。
+// 地圖畫面開著時由 ui-scene.js 每幀回報 hunt.reach = { mon, melee, ranged, seenAt }；畫面沒開（背景、離線模擬）不限制，收益不變。
+const MELEE_RANGE = 1, RANGED_RANGE = 4;
+function weaponIsRanged() {
+    const w = player.equip.weapon;
+    return !!(w && WEAPON_TYPES[ITEMS[w.id].type] && WEAPON_TYPES[ITEMS[w.id].type].ranged);
+}
+function canReach(kind) {
+    const r = hunt && hunt.reach;
+    if (!r || r.mon !== hunt.mon || gameNow - r.seenAt > 500) return true;
+    return kind === 'ranged' ? r.ranged : r.melee;
+}
+// 技能要用哪種距離：攻擊魔法＝遠程；物理技能看武器
+function skillReach(k, st) { return k.type === 'spell' ? 'ranged' : (st.ranged ? 'ranged' : 'melee'); }
+
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = learnedSkills().filter(k => k.type !== 'passive' && s.skills[k.id] !== false);
@@ -372,9 +389,10 @@ function playerAction(st) {
         if (k.type === 'buff' && ready(k) && !buffActive(k.group || k.id)) return castBuff(k);
     }
     const rid = resonanceReady();
-    if (rid) return castResonance(rid, st);
-    const atk = skills.filter(k => (k.type === 'spell' || k.type === 'strike') && ready(k)).pop();
+    if (rid && canReach('ranged')) return castResonance(rid, st);
+    const atk = skills.filter(k => (k.type === 'spell' || k.type === 'strike') && ready(k) && canReach(skillReach(k, st))).pop();
     if (atk) return atk.type === 'spell' ? castSpell(atk, st) : doStrike(atk, st);
+    if (!canReach(st.ranged ? 'ranged' : 'melee')) { hunt.pCd = 150; return; }   // 還沒走到攻擊距離：等一下再試
     physicalAttack(st, 1, {});
 }
 
