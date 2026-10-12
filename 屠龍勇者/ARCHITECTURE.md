@@ -359,6 +359,9 @@ kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過
   做大型地圖的方法：圖片寬高比決定格數（高 17 格，寬＝17×寬/高），每格約 32 原圖像素，原圖不用放大；`walk` 列出地面範圍即可，其他程式不用改。
   可走：市集大街 [4,14,48,15]、[9,12,30,13]、雕像前 [31,13,36,15]、鐵匠區 [40,14,58,15]；國王雕像 [36,12,41,14] 擋路。
   NPC 都是圖上的人（painted）：倉庫＝最左鎧甲衛兵 [3,15]、商店＝攤位前兜帽商人 [9,14]、旅館＝大街修士 [16,14]、傳送師＝雕像旁兜帽術士 [44,14]、回收＝鐵匠區工匠 [49,14]、鍛造＝右下打鐵匠 [56,15]。
+- **NPC 專用對話框**（2026-10-12，版本 `20261012k`）：點 NPC（名牌或身體）走 `npcOpen(n)`→ 設 `townNpcNow = { name, role }`，村莊分頁標題改成「💬 名字（功能）」，
+  只顯示招呼語 `NPC_LINES[townSub]`＋這位 NPC 的功能（不顯示村莊資訊、團隊副本／交易所按鈕、設施切換列）；換到其他分頁時清掉。
+  回收＝只有回收、旅館＝只有休息、鍛造＝只有鍛造、倉庫＝角色倉庫／帳號共用倉庫切換；**商店分類** `SHOP_CATS`：⚔️ 武器裝備（weapon、armor、ammo）、🧪 藥水（potion、elixir）、📜 卷軸，其他類別出現時多一個「📦 其他」（`shopCat`）。
 - 沒有背景圖時的備用村莊：中間泥土廣場、外圍草地，`TOWN_HOUSES` 房屋（`drawHouse` 用 canvas 畫，擋路）；
   `TOWN_NPCS` 7 位 NPC 站在廣場上：商店、回收、旅館、倉庫、鍛造、傳送師（＝地圖）、任務（＝任務分頁），每村名字不同（`names[村莊id]`）。
   頭上名牌 `drawNpcPlate`：深藍圓角框＋細邊，名字亮金色＋功能灰字；點名牌或 NPC 周圍 1 格打開對應設施（`scene.npcRects` 記名牌範圍）。
@@ -1123,6 +1126,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 使用者要求：倉庫 200 格、可放金幣、每次 100 金幣手續費、同帳號角色共用；離線掛機只有最後離線的那隻、要扣鑽石；鑽石來源＝每日登入＋打怪掉落＋首領／龍＋管理者發放；沒登入不能離線掛機。
 - **資料表**（玩家不能直接讀寫，全部經過函式）：`dragon_wallet`（鑽石、每日／掉落計數、`off_at` 上次離線結算）、`dragon_dia_log`（鑽石增減紀錄）、
   `dragon_vault`（倉庫金幣）、`dragon_vault_items`（存入的道具，`taken_at` 取出後留 30 天給防複製用）、`dragon_vault_out`（取出待交貨，`got`）。
+- 介面下方金幣旁顯示鑽石 `💎`（`renderStatus` 的 `#hud-stats .dia`；登入且讀到 `diaCount` 才顯示）。
 - **鑽石**：`dia_status()` 回傳鑽石並發每日登入 +5（台北時間換日）；`dia_drop('mob'|'boss')` 一般怪 +1（每天最多 10）、首領／龍 +3（每天最多 15）——遊戲端擲骰（`diaRoll`，`onKill` 呼叫，一般怪 0.1%，`mon.boss`／`mon.dragon` 必給），離線模擬不掉；
   `dia_grant(user, n, reason)` 管理者發放／扣除（gm.html 玩家分頁「💎 發放」），`dia_admin_list()` 管理頁讀全部鑽石。目前鑽石 `diaCount` 顯示在共用倉庫頁。
 - **離線掛機** `offline_claim(slot, away_ms)`：①這個欄位必須是帳號「最後上傳存檔」的那個（`dragon_saves.updated_at` 最新），否則 `not_last`；
