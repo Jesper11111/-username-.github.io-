@@ -451,15 +451,10 @@ function openItemDialog(uid) {
         btns.push(slot
             ? { text: '卸下', onClick: () => { unequipSlot(slot); saveGame(); refreshUI(); } }
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
-        // 裝備改造搬到村莊鍛造 NPC 的「🔮 裝備改造」（2026-10-12 使用者要求）
-        btns.push({ text: '🔨 找鍛造 NPC 改造', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🔮 裝備改造」使用通貨') });
     }
     if (d.cat === 'map') {
         if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
-        // 地圖改造搬到村莊鍛造 NPC 的「🗺️ 地圖打造」（2026-10-12 使用者要求）
-        btns.push({ text: '🔨 找鍛造 NPC 改造', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🗺️ 地圖打造」改造地圖') });
     }
-    if (d.cat === 'currency') btns.push({ text: '怎麼使用？', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🔮 裝備改造」或「🗺️ 地圖打造」使用通貨') });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
