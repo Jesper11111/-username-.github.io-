@@ -45,3 +45,6 @@ for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specC.j
 # 第五張表 D.jpg（2026-10-12，沉船海灣～泰坦墓穴）：AI 圖每列常混到別隻怪，逐格挑「真的是這隻」的圖，每方向 1 格；裁切框 specD.json
 for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specD.json'))).items():
     SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
+# 第六張表 E.jpg（2026-10-12，沉船海灣重畫版：海賊、海賊火槍手、巨蟹、溺死的水手、海賊王・德雷克）：走路 2 格、攻擊 3 格，覆蓋 D 表的版本；裁切框 specE.json
+for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specE.json'))).items():
+    SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
