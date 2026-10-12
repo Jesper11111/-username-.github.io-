@@ -940,6 +940,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
     `cloudCleanUrl()`（`getSession` 之後）拿掉 `?code=`／`error` 參數；`cloudRedirectUrl()`＝`origin + pathname`（不帶 query／hash）。
   - 「☁️ 雲端帳號」對話框加「🚪 登出所有裝置」：`cloudSignOut(true)` → `cloudDoSignOut(true)` 用 `signOut({ scope: 'global' })` 讓所有 refresh token 失效（失敗就停下並提示，不清本機），提醒改密碼。
   - 手動踢人：SQL Editor `delete from auth.sessions where user_id = …`（`auth.sessions` 也看得到各裝置的 IP、user_agent）。
+  - **踢人立即生效**（`tools/session-guard.sql`，也附在 `supabase.sql` 最後）：`dragon_is_banned()` 多檢查 JWT 的 `session_id` 是否還在 `auth.sessions`；session 被刪（登出所有裝置／後台刪除）→ 視同停權，存檔、團隊、聊天、倉庫等寫入立刻被拒（不然對方手上的 access token 還能用到過期，最多 1 小時）。沒有 `session_id` 的 JWT 不受影響。本機 PostgreSQL 測過：活的 session f、被刪的 t、停權 t。
 - **介面**：標題畫面 `#btn-cloud`（未登入「☁️ 登入／註冊」，已登入顯示 Email 與同步狀態 `cloudStatusText`）；登入對話框 Email＋密碼，「登入」／「註冊新帳號」，錯誤訊息翻成中文（`cloudErrText`）。
   設定分頁「☁️ 雲端存檔」區塊（`cloudSettingsHtml`）：已登入顯示狀態與「立即上傳」，未登入「回標題畫面登入」。
 - **Supabase 開通步驟**（使用者在主控台操作）：
