@@ -106,19 +106,33 @@ const TOWN_NPCS = [
 // 村莊房屋（格子座標 x, y, 寬, 高；整塊擋路），畫成石牆＋石板屋頂
 const TOWN_HOUSES = [[5, 9, 4, 3], [9, 6, 4, 3], [16, 6, 4, 3], [20, 9, 4, 3], [5, 17, 4, 3], [20, 17, 4, 3], [12, 20, 5, 3]];
 
-// 怪物模型（2026-10-12，使用者提供的動作表，tools/monsters/cut.py 切出）：images/monsters/怪物id.png
-// 2 列（走路、攻擊）× 3 欄（正面、側面朝右、背面），每格 cw×ch，body＝正面走路的身高（縮放基準）；沒有的怪照舊畫 emoji
+// 怪物模型（2026-10-12，使用者提供的動作表，tools/monsters/cut2.py 切出）：images/monsters/怪物id.png
+// 6 列＝走路 正面／側面朝右／背面、攻擊 正面／側面／背面；每列 n[列] 格動畫，每格 cw×ch；body＝正面走路第一格身高（縮放基準），size＝畫面身高（預設 42、大型 62）
+// 沒有模型的怪照舊畫 emoji
 const MON_SPRITES = {
-    orc: { cw: 46, ch: 62, body: 55 },
-    orcArcher: { cw: 43, ch: 64, body: 60 },
-    dwarf: { cw: 41, ch: 52, body: 48 },
-    wolf: { cw: 52, ch: 50, body: 46 },
-    werewolf: { cw: 50, ch: 63, body: 46 },
-    lycan: { cw: 63, ch: 64, body: 53 },
-    drake: { cw: 63, ch: 58, body: 54 },
-    blackKnight: { cw: 48, ch: 67, body: 63 },
-    giantSpider: { cw: 62, ch: 49, body: 45 },
-    skeleton: { cw: 49, ch: 65, body: 51 },
+    skeleton: { cw: 46, ch: 65, body: 56, n: [2,  2,  2,  2,  2,  2] },
+    skeletonArcher: { cw: 44, ch: 64, body: 56, n: [2,  2,  2,  2,  2,  2] },
+    skeletonAxe: { cw: 41, ch: 76, body: 69, n: [1,  1,  1,  2,  2,  2] },
+    ghoul: { cw: 47, ch: 56, body: 50, n: [1,  1,  1,  2,  2,  2] },
+    spartoi: { cw: 35, ch: 71, body: 65, n: [2,  2,  2,  2,  2,  2] },
+    baphomet: { cw: 83, ch: 92, body: 75, n: [1,  1,  1,  1,  1,  1] },
+    goblin: { cw: 26, ch: 39, body: 33, n: [4,  4,  4,  5,  5,  5] },
+    orcWarrior: { cw: 37, ch: 46, body: 42, n: [5,  5,  5,  6,  6,  6] },
+    gandiOrc: { cw: 27, ch: 47, body: 42, n: [5,  5,  5,  6,  6,  6] },
+    orcxOrc: { cw: 31, ch: 49, body: 44, n: [5,  5,  5,  6,  6,  6] },
+    lizardman: { cw: 33, ch: 42, body: 38, n: [5,  5,  5,  6,  6,  6] },
+    beholder: { cw: 39, ch: 43, body: 38, n: [5,  5,  5,  4,  4,  4] },
+    floatingEye: { cw: 20, ch: 19, body: 15, n: [2,  2,  2,  1,  1,  1], size: 26 },
+    castor: { cw: 38, ch: 52, body: 47, n: [5,  5,  5,  2,  2,  2] },
+    orc: { cw: 46, ch: 62, body: 55, n: [1,  1,  1,  1,  1,  1] },
+    orcArcher: { cw: 43, ch: 64, body: 60, n: [1,  1,  1,  1,  1,  1] },
+    dwarf: { cw: 41, ch: 52, body: 48, n: [1,  1,  1,  1,  1,  1] },
+    wolf: { cw: 52, ch: 50, body: 46, n: [1,  1,  1,  1,  1,  1] },
+    werewolf: { cw: 50, ch: 63, body: 46, n: [1,  1,  1,  1,  1,  1] },
+    lycan: { cw: 63, ch: 64, body: 53, n: [1,  1,  1,  1,  1,  1] },
+    drake: { cw: 63, ch: 58, body: 54, n: [1,  1,  1,  1,  1,  1] },
+    blackKnight: { cw: 48, ch: 67, body: 63, n: [1,  1,  1,  1,  1,  1] },
+    giantSpider: { cw: 62, ch: 49, body: 45, n: [1,  1,  1,  1,  1,  1] },
 };
 function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
 
@@ -571,13 +585,16 @@ function sceneDraw(ctx, W, H) {
             const fight = m.inst && !m.dead;
             const dx = fight ? pl.rx - m.rx : m.x - m.rx, dy = fight ? pl.ry - m.ry : m.y - m.ry;
             if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) m.face = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
-            const f = m.face || 'down', ms = MON_SPRITES[m.mid], col = { down: 0, right: 1, left: 1, up: 2 }[f];
-            const dh0 = (big ? 62 : 42) * ms.ch / ms.body, k = dh0 / ms.ch, dw = ms.cw * k, dh = dh0;
+            const f = m.face || 'down', ms = MON_SPRITES[m.mid], row = { down: 0, right: 1, left: 1, up: 2 }[f] + (m.atk > 0 ? 3 : 0);
+            const dh = (ms.size || (big ? 62 : 42)) * ms.ch / ms.body, dw = ms.cw * dh / ms.ch;
             const moving = !fight && (Math.abs(m.x - m.rx) + Math.abs(m.y - m.ry)) > 0.02;
-            const bob = moving ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
+            const n = ms.n[row];
+            // 格：攻擊照出手進度播一次；走動時循環；站著停在第一格（只有 1 格的怪走動時上下輕晃）
+            const fr = m.atk > 0 ? Math.min(n - 1, Math.floor((1 - m.atk / 380) * n)) : moving ? Math.floor(gameNow / 150) % n : 0;
+            const bob = moving && n === 1 ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
             ctx.save();
             if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
-            ctx.drawImage(img, col * ms.cw, (m.atk > 0 ? 1 : 0) * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+            ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
             ctx.restore();
             top = sy + 13 - dh - 4;
         } else {

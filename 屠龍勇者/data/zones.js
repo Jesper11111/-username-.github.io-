@@ -23,7 +23,7 @@ const ZONES = [
     },
     {
         id: 'islandDungeon', name: '低語墓窟', icon: '🕳️', type: 'dungeon', lv: [8, 18], town: 'talking', fee: 50,
-        mons: ['dwarfWarrior', 'orcArcher', 'skeletonArcher', 'ghoul'],
+        mons: ['dwarfWarrior', 'orcArcher', 'skeletonArcher', 'orcWarrior', 'ghoul'],
         drops: [{ id: 'longSword', p: 0.004 }, { id: 'mace', p: 0.004 }, { id: 'handAxe', p: 0.004 }, { id: 'ironHelm', p: 0.003 },
             { id: 'scaleMail', p: 0.002 }, { id: 'cloak', p: 0.004 }, { id: 'matchlock', p: 0.003 }, { id: 'oakWand', p: 0.003 },
             { id: 'claw', p: 0.002 }, { id: 'dualBlade', p: 0.002 }, { id: 'silverArrow', p: 0.05, n: [5, 15] }],
@@ -38,14 +38,14 @@ const ZONES = [
     },
     {
         id: 'gludio1', name: '腐朽礦坑・上層', icon: '⛏️', type: 'dungeon', lv: [15, 25], town: 'gludio', fee: 150,
-        mons: ['gandiOrc', 'zombie', 'lycan', 'stoneGolem'],
+        mons: ['gandiOrc', 'zombie', 'lycan', 'orcxOrc', 'stoneGolem'],
         drops: [{ id: 'silverSword', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
             { id: 'leatherGloves', p: 0.005 }, { id: 'ironBoots', p: 0.002 }, { id: 'crystalWand', p: 0.001 }, { id: 'silverDagger', p: 0.002 }],
         desc: '中級冒險者的修練場。',
     },
     {
         id: 'sleepingCave', name: '沉眠龍窟', icon: '🦇', type: 'dungeon', scene: 'cave', lv: [18, 28], town: 'gludio', fee: 200,
-        mons: ['lizardman', 'caveBat', 'darkElfScout', 'drake'], rare: { id: 'wakingDrake', p: 0.006 },
+        mons: ['lizardman', 'caveBat', 'darkElfScout', 'castor', 'drake'], rare: { id: 'wakingDrake', p: 0.006 },
         drops: [{ id: 'silverSword', p: 0.002 }, { id: 'ironHelm', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
             { id: 'claw', p: 0.002 }, { id: 'dualBlade', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'silverBullet', p: 0.05, n: [5, 15] }],
         desc: '傳說地龍在最深處沉睡，吵醒牠可就麻煩了。',
@@ -59,7 +59,7 @@ const ZONES = [
     },
     {
         id: 'gludio2', name: '腐朽礦坑・深層', icon: '🔥', type: 'dungeon', lv: [24, 36], town: 'gludio', fee: 300,
-        mons: ['skeletonAxe', 'blackKnight', 'giantAnt', 'ghast'], rare: { id: 'baphomet', p: 0.01 },
+        mons: ['skeletonAxe', 'blackKnight', 'giantAnt', 'spartoi', 'ghast'], rare: { id: 'baphomet', p: 0.01 },
         drops: [{ id: 'katana', p: 0.0008 }, { id: 'twoHandSword', p: 0.002 }, { id: 'battleAxe', p: 0.002 }, { id: 'warHammer', p: 0.002 },
             { id: 'plateMail', p: 0.001 }, { id: 'mageRobe', p: 0.001 }, { id: 'longBow', p: 0.002 }, { id: 'rifle', p: 0.002 },
             { id: 'tshirt', p: 0.002 }, { id: 'strRing', p: 0.0005 }],
@@ -67,7 +67,7 @@ const ZONES = [
     },
     {
         id: 'ivory', name: '暮光法師塔', icon: '🗼', type: 'dungeon', scene: 'ivory', lv: [34, 46], town: 'giran', fee: 500,
-        mons: ['hellhound', 'lamia', 'ivoryMage', 'ivoryGuard'], rare: { id: 'demon', p: 0.008 },
+        mons: ['hellhound', 'lamia', 'ivoryMage', 'beholder', 'ivoryGuard'], rare: { id: 'demon', p: 0.008 },
         drops: [{ id: 'manaWand', p: 0.001 }, { id: 'elvenMail', p: 0.001 }, { id: 'mrCloak', p: 0.001 }, { id: 'powerGloves', p: 0.0008 },
             { id: 'mrAmulet', p: 0.0008 }, { id: 'dexRing', p: 0.0005 }, { id: 'intRing', p: 0.0005 }, { id: 'darkDagger', p: 0.001 }],
         desc: '魔法師們的高塔，被惡魔佔據。',
