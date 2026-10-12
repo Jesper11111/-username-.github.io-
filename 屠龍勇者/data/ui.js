@@ -40,6 +40,7 @@ function renderStatus() {
     renderSlots();
     renderSkull();
     renderLogPop();
+    presTick();   // 村莊其他玩家：加入／離開頻道、送出位置（presence.js）
 }
 
 function setOrb(id, cur, max, label) {

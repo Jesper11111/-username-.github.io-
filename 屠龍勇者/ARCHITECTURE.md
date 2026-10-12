@@ -35,6 +35,7 @@
 | `data/wb.js` | **世界首領**：`WB_KINDS`（5 隻首領的種族與招式）、`wbLoad`、`wbAttack`（60 秒模擬→`wb_attack`）、`wbClaim`／`wbReward`（領獎）、`renderWb`；載入時把 `wb` 加進 `TABS`／`PANEL_FNS`（第 35 節） |
 | `data/market.js` | **交易所**：寄賣、瀏覽／搜尋／購買、出售、我的上架、交貨 `marketDeliver`（兩段式＋`player.marketGot`）、`marketGiveItem`；載入時把 `market` 加進 `TABS`／`PANEL_FNS`（第 36 節） |
 | `data/vault.js` | 帳號共用倉庫、鑽石（每日登入、掉落）、離線掛機扣鑽石（第 38 節） |
+| `data/presence.js` | 村莊看得到其他在線玩家（Supabase Realtime presence／broadcast）、點人聊天／邀請組隊（第 39 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
@@ -49,7 +50,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -1144,4 +1145,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 防複製 trigger `dragon_vault_audit`：存入超過 1 分鐘的裝備（有 ench）又出現在原欄位存檔的背包／角色倉庫／身上 → `dragon_flags` `vault_dupe`（管理頁「共用倉庫疑似複製道具」）。
 - **驗證**：本機 PostgreSQL（每日只送一次、掉落上限、非最後角色被拒、重複結算 too_short、存入不在存檔／重複／金幣不足被拒、取出不夠手續費被拒、交貨與確認、非管理者不能發放、不能直接讀表、裝備複製標記）；
   Playwright 以假伺服器測：沒登入無離線收益、登入離開 2 小時扣 4 顆、非最後角色提示、首領 +3、存入道具扣 100、存金幣 1000 扣 1100、取回道具扣 100 且強化值保留、取金幣 600 實得 500；Console 無錯誤。
+
+## 39. 村莊看得到其他在線玩家（2026-10-12，版本 `20261012q`；`presence.js`）
+
+- 使用者要求：村莊（低語港等）看得到其他在線玩家、頭上有名字，可以點人聊天、邀請組隊；**野外看不到別人**。
+- **Supabase Realtime**（不用資料表、不用 SQL）：每個村莊一個頻道 `dragon-town:<村莊id>`，presence key＝`帳號id:欄位`。
+  自己的狀態 `{ n 名字, c 職業, l 等級, x, y 格子, d 方向, cl 血盟名 }` 用 `track` 廣播，位置變了最多每 0.35 秒更新一次（`presTick`，`renderStatus` 每 250ms 呼叫）。
+  要登入、沒被封鎖、在村莊才加入；離開村莊、換村莊、登出就 `untrack`＋`removeChannel`。同帳號的其他欄位不顯示。最多畫 40 人（`PRES_MAX`）。
+- **顯示**：`presSync` 把 presenceState 轉成 `presOthers`（保留插值位置 rx／ry），`presUpdate` 每幀平滑移動（村莊才跑），`presDraw` 用該職業的走路圖（移動時播走路格）、綠色名牌「名字 Lv.N［血盟］」，和 NPC、自己一起依 y 排序畫。
+- **點人**（`sceneClick` 先判 NPC 名牌，再 `presHit` 0.9 格內最近的玩家）→ `presMenu`：
+  - 💬 聊天：切到世界頻道，輸入框帶「@名字 」（`chatDraft`）。
+  - 👥 邀請組隊：自己要先在團隊副本建立／加入隊伍（房間 open）；用 broadcast `invite` 送 `{ to, from, room, code, raid }`，對方確認後 `raidJoin(room)` 並切到團隊副本頁。
+- **驗證**：沙盒的網路代理不支援 WebSocket，無法連真正的 Realtime；改用 Node 轉送的假 Realtime（`/tmp/claude-0/t/fakert.js` 模擬 presence／broadcast）兩個瀏覽器互測：互相看得到、移動同步、點人選單、聊天帶 @名字、組隊邀請→加入、離開村莊後消失；Console 無錯誤。
+  若正式站看不到別人：到 Supabase → Realtime → Settings 確認「Allow public access」有開。
 
