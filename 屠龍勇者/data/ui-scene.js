@@ -59,12 +59,12 @@ const SCENE_BGS = {
         walk: [[2, 13, 28, 15], [13, 11, 19, 12]],
         block: [[15, 13, 18, 14]],
         npcs: [
-            { role: '商店', x: 1, y: 14, painted: true, h: 1.9 },     // 左邊攤位坐著的兜帽商人
-            { role: '倉庫', x: 5, y: 15, painted: true, h: 3 },       // 左前方黑甲騎士
-            { role: '傳送師', x: 8, y: 15, painted: true, h: 2.8 },   // 兜帽劍士
-            { role: '旅館', x: 20, y: 15, painted: true, h: 2.6 },    // 右邊修士
-            { role: '回收', x: 24, y: 15, painted: true, h: 2.8 },    // 右邊兜帽女子
-            { role: '鍛造', x: 27, y: 15, painted: true, h: 2.7 },    // 右下打鐵匠
+            { role: '商店', x: 1, y: 14, painted: true, h: 1.9 },    // 左邊攤位坐著的兜帽商人
+            { role: '倉庫', x: 5, y: 15, painted: true, h: 3 },      // 左前方黑甲騎士
+            { role: '傳送師', x: 8, y: 15, painted: true, h: 2.8 },  // 兜帽劍士
+            { role: '旅館', x: 20, y: 15, painted: true, h: 2.6 },   // 右邊修士
+            { role: '回收', x: 24, y: 15, painted: true, h: 2.8 },   // 右邊兜帽女子
+            { role: '鍛造', x: 27, y: 15, painted: true, h: 2.7 },   // 右下打鐵匠
         ],
     },
     // 永夜王都：使用者提供的長條全景雨夜王都（2000×553 aden.webp），鋪成 61×17 格＝比畫面寬的「大型地圖」，PC、手機都會左右捲動；
@@ -74,12 +74,12 @@ const SCENE_BGS = {
         walk: [[4, 14, 48, 15], [9, 12, 30, 13], [31, 13, 36, 15], [40, 14, 58, 15]],
         block: [[36, 12, 41, 14]],
         npcs: [
-            { role: '倉庫', x: 3, y: 15, painted: true, h: 4.6 },     // 最左邊的鎧甲衛兵
-            { role: '商店', x: 9, y: 14, painted: true, h: 2.6 },     // 市集攤位前的兜帽商人
-            { role: '旅館', x: 16, y: 14, painted: true, h: 2.7 },    // 大街中間的修士
-            { role: '傳送師', x: 44, y: 14, painted: true, h: 3.2 },  // 雕像旁的兜帽術士
-            { role: '回收', x: 49, y: 14, painted: true, h: 2.8 },    // 鐵匠區的工匠
-            { role: '鍛造', x: 56, y: 15, painted: true, h: 4.2 },    // 右下打鐵匠
+            { role: '倉庫', x: 3, y: 15, painted: true, h: 4.6 },    // 最左邊的鎧甲衛兵
+            { role: '商店', x: 9, y: 14, painted: true, h: 2.6 },    // 市集攤位前的兜帽商人
+            { role: '旅館', x: 16, y: 14, painted: true, h: 2.7 },   // 大街中間的修士
+            { role: '傳送師', x: 44, y: 14, painted: true, h: 3.2 }, // 雕像旁的兜帽術士
+            { role: '回收', x: 49, y: 14, painted: true, h: 2.8 },   // 鐵匠區的工匠
+            { role: '鍛造', x: 56, y: 15, painted: true, h: 4.2 },   // 右下打鐵匠
         ],
     },
 };
@@ -88,51 +88,62 @@ const TOWN_BG = { gludio: 'ash', giran: 'darkgold', aden: 'aden' };
 
 // 村莊 NPC：站在廣場上，頭上名牌顯示「名字＋功能」，點 NPC 或名牌打開設施；names 依村莊 id
 const TOWN_NPCS = [
-    { role: '商店',   icon: '👩‍💼', x: 12, y: 12, act: () => openTownSub('shop'),
+    { role: '商店',  icon: '👩‍💼', x: 12, y: 12, act: () => openTownSub('shop'),
       names: { talking: '艾琳', gludio: '雷文', giran: '薩拉', aden: '塞琳' } },
-    { role: '回收',   icon: '🧔', x: 16, y: 12, act: () => openTownSub('sell'),
+    { role: '回收',  icon: '🧔', x: 16, y: 12, act: () => openTownSub('sell'),
       names: { talking: '巴克', gludio: '菲茲', giran: '馬可', aden: '海克' } },
-    { role: '旅館',   icon: '👩‍🍳', x: 18, y: 13, act: () => openTownSub('inn'),
+    { role: '旅館',  icon: '👩‍🍳', x: 18, y: 13, act: () => openTownSub('inn'),
       names: { talking: '莫莉', gludio: '蘿絲', giran: '貝拉', aden: '艾瑪' } },
-    { role: '倉庫',   icon: '👷', x: 10, y: 13, act: () => openTownSub('storage'), prop: '📦',
+    { role: '倉庫',  icon: '👷', x: 10, y: 13, act: () => openTownSub('storage'), prop: '📦',
       names: { talking: '杜克', gludio: '柏恩', giran: '歐文', aden: '葛雷' } },
-    { role: '鍛造',   icon: '🧑‍🏭', x: 17, y: 15, act: () => openTownSub('craft'), prop: '⚒️',
+    { role: '鍛造',  icon: '🧑‍🏭', x: 17, y: 15, act: () => openTownSub('craft'), prop: '⚒️',
       names: { talking: '葛蘭', gludio: '托爾', giran: '布洛克', aden: '巴恩' } },
     { role: '傳送師', icon: '🧙‍♀️', x: 14, y: 16, act: () => switchTab('map'),
       names: { talking: '露娜', gludio: '希雅', giran: '伊芙', aden: '星語者' } },
-    { role: '任務',   icon: '🧓', x: 11, y: 15, act: () => switchTab('quest'),
+    { role: '任務',  icon: '🧓', x: 11, y: 15, act: () => switchTab('quest'),
       names: { talking: '賽恩長老', gludio: '亞瑟隊長', giran: '諾亞祭司', aden: '騎士團長' } },
 ];
 // 村莊房屋（格子座標 x, y, 寬, 高；整塊擋路），畫成石牆＋石板屋頂
 const TOWN_HOUSES = [[5, 9, 4, 3], [9, 6, 4, 3], [16, 6, 4, 3], [20, 9, 4, 3], [5, 17, 4, 3], [20, 17, 4, 3], [12, 20, 5, 3]];
 
-// 怪物模型（2026-10-12，使用者提供的動作表，tools/monsters/cut2.py 切出）：images/monsters/怪物id.png
+// 怪物模型（2026-10-12，使用者提供的四張動作表，tools/monsters/cut2.py 切出）：images/monsters/怪物id.png
 // 6 列＝走路 正面／側面朝右／背面、攻擊 正面／側面／背面；每列 n[列] 格動畫，每格 cw×ch；body＝正面走路第一格身高（縮放基準），size＝畫面身高（預設 42、大型 62）
 // 沒有模型的怪照舊畫 emoji
 const MON_SPRITES = {
-    skeleton: { cw: 46, ch: 65, body: 56, n: [2,  2,  2,  2,  2,  2] },
-    skeletonArcher: { cw: 44, ch: 64, body: 56, n: [2,  2,  2,  2,  2,  2] },
-    skeletonAxe: { cw: 41, ch: 76, body: 69, n: [1,  1,  1,  2,  2,  2] },
-    ghoul: { cw: 47, ch: 56, body: 50, n: [1,  1,  1,  2,  2,  2] },
-    spartoi: { cw: 35, ch: 71, body: 65, n: [2,  2,  2,  2,  2,  2] },
-    baphomet: { cw: 83, ch: 92, body: 75, n: [1,  1,  1,  1,  1,  1] },
-    goblin: { cw: 26, ch: 39, body: 33, n: [4,  4,  4,  5,  5,  5] },
-    orcWarrior: { cw: 37, ch: 46, body: 42, n: [5,  5,  5,  6,  6,  6] },
-    gandiOrc: { cw: 27, ch: 47, body: 42, n: [5,  5,  5,  6,  6,  6] },
-    orcxOrc: { cw: 31, ch: 49, body: 44, n: [5,  5,  5,  6,  6,  6] },
-    lizardman: { cw: 33, ch: 42, body: 38, n: [5,  5,  5,  6,  6,  6] },
-    beholder: { cw: 39, ch: 43, body: 38, n: [5,  5,  5,  4,  4,  4] },
-    floatingEye: { cw: 20, ch: 19, body: 15, n: [2,  2,  2,  1,  1,  1], size: 26 },
-    castor: { cw: 38, ch: 52, body: 47, n: [5,  5,  5,  2,  2,  2] },
-    orc: { cw: 46, ch: 62, body: 55, n: [1,  1,  1,  1,  1,  1] },
-    orcArcher: { cw: 43, ch: 64, body: 60, n: [1,  1,  1,  1,  1,  1] },
-    dwarf: { cw: 41, ch: 52, body: 48, n: [1,  1,  1,  1,  1,  1] },
-    wolf: { cw: 52, ch: 50, body: 46, n: [1,  1,  1,  1,  1,  1] },
-    werewolf: { cw: 50, ch: 63, body: 46, n: [1,  1,  1,  1,  1,  1] },
-    lycan: { cw: 63, ch: 64, body: 53, n: [1,  1,  1,  1,  1,  1] },
-    drake: { cw: 63, ch: 58, body: 54, n: [1,  1,  1,  1,  1,  1] },
-    blackKnight: { cw: 48, ch: 67, body: 63, n: [1,  1,  1,  1,  1,  1] },
-    giantSpider: { cw: 62, ch: 49, body: 45, n: [1,  1,  1,  1,  1,  1] },
+    skeleton: { cw: 46, ch: 65, body: 56, n: [2, 2, 2, 2, 2, 2] },
+    skeletonArcher: { cw: 44, ch: 64, body: 56, n: [2, 2, 2, 2, 2, 2] },
+    skeletonAxe: { cw: 41, ch: 76, body: 69, n: [1, 1, 1, 2, 2, 2] },
+    ghoul: { cw: 47, ch: 56, body: 50, n: [1, 1, 1, 2, 2, 2] },
+    spartoi: { cw: 35, ch: 71, body: 65, n: [2, 2, 2, 2, 2, 2] },
+    baphomet: { cw: 83, ch: 92, body: 75, n: [1, 1, 1, 1, 1, 1] },
+    goblin: { cw: 26, ch: 39, body: 33, n: [4, 4, 4, 5, 5, 5] },
+    orcWarrior: { cw: 37, ch: 46, body: 42, n: [5, 5, 5, 6, 6, 6] },
+    gandiOrc: { cw: 27, ch: 47, body: 42, n: [5, 5, 5, 6, 6, 6] },
+    orcxOrc: { cw: 31, ch: 49, body: 44, n: [5, 5, 5, 6, 6, 6] },
+    lizardman: { cw: 33, ch: 42, body: 38, n: [5, 5, 5, 6, 6, 6] },
+    beholder: { cw: 39, ch: 43, body: 38, n: [5, 5, 5, 4, 4, 4] },
+    floatingEye: { cw: 20, ch: 19, body: 15, n: [2, 2, 2, 1, 1, 1], size: 26 },
+    castor: { cw: 38, ch: 52, body: 47, n: [5, 5, 5, 2, 2, 2] },
+    orc: { cw: 46, ch: 62, body: 55, n: [1, 1, 1, 1, 1, 1] },
+    orcArcher: { cw: 43, ch: 64, body: 60, n: [1, 1, 1, 1, 1, 1] },
+    dwarf: { cw: 41, ch: 52, body: 48, n: [1, 1, 1, 1, 1, 1] },
+    wolf: { cw: 52, ch: 50, body: 46, n: [1, 1, 1, 1, 1, 1] },
+    werewolf: { cw: 50, ch: 63, body: 46, n: [1, 1, 1, 1, 1, 1] },
+    lycan: { cw: 63, ch: 64, body: 53, n: [1, 1, 1, 1, 1, 1] },
+    drake: { cw: 63, ch: 58, body: 54, n: [1, 1, 1, 1, 1, 1] },
+    blackKnight: { cw: 48, ch: 67, body: 63, n: [1, 1, 1, 1, 1, 1] },
+    giantSpider: { cw: 62, ch: 49, body: 45, n: [1, 1, 1, 1, 1, 1] },
+    dwarfWarrior: { cw: 34, ch: 42, body: 37, n: [3, 3, 3, 4, 4, 4] },
+    forestBear: { cw: 40, ch: 41, body: 36, n: [3, 3, 3, 4, 4, 4] },
+    treant: { cw: 27, ch: 53, body: 44, n: [3, 3, 3, 3, 3, 3] },
+    elderTreant: { cw: 38, ch: 61, body: 45, n: [3, 3, 3, 3, 3, 3] },
+    zombie: { cw: 36, ch: 47, body: 43, n: [3, 3, 3, 3, 3, 3] },
+    stoneGolem: { cw: 46, ch: 50, body: 39, n: [3, 3, 3, 3, 3, 3] },
+    caveBat: { cw: 40, ch: 23, body: 18, n: [3, 3, 3, 4, 4, 4], size: 26 },
+    ghast: { cw: 36, ch: 44, body: 38, n: [3, 3, 3, 4, 4, 4] },
+    darkElfScout: { cw: 33, ch: 45, body: 41, n: [3, 3, 1, 4, 4, 4] },
+    wakingDrake: { cw: 61, ch: 39, body: 35, n: [3, 3, 3, 3, 3, 3] },
+    giantAnt: { cw: 42, ch: 34, body: 27, n: [4, 4, 4, 4, 4, 4], size: 44 },
 };
 function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
 
