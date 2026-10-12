@@ -57,7 +57,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261011k`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012a`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -627,6 +627,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 去背：每格以邊框亮度中位數當背景，從邊緣洪水填滿「中性灰（RGB 差 ≤ 14）且接近背景亮度」的點；背景 2px 內的點依色差給半透明並扣掉背景色；小於主體 4% 的碎塊去掉。
   `glow`：洪水填滿時遇到「平滑（和上下左右差 ≤ glowSmooth）、偏藍（B ≥ R+4；warm 模式改成飽和暖色）、亮度在背景−8～＋150」的點當光暈，依色差給透明度（色差 ÷ (tol×4)），碰到輪廓線、花紋就停。
 - 對齊與輸出同 PowerShell 版：腳底貼齊、水平以頭部（上方 35% 的暗色點）中心、所有格同尺寸；印出 `cellW／cellH／格數` 照抄到 `classes.js`。
+
+### 18.3 怪物模型（2026-10-12，版本 `20261012a`）
+
+- 使用者提供一張怪物動作表（1376×768，白底灰框小格，原圖 `tools/monsters/sheet.jpg`）。**英文標題和圖對不上**（寫 Spider 的欄是狼人、Skeleton Warrior 是蜘蛛、第一個 Young Red Dragon 走路格是骷髏），照實際的圖配對：
+  妖魔 orc、妖魔弓箭手 orcArcher、侏儒 dwarf（只有正面）、狼 wolf（＝Wild Dog，只有側面）、狼人 werewolf、萊肯 lycan（沒有背面）、幼龍 drake、黑騎士 blackKnight、巨大蜘蛛 giantSpider、骷髏 skeleton。
+  低語海岸的哥布林、漂浮之眼不在圖上，照舊畫 emoji。
+- `tools/monsters/spec.py` 列每隻怪 walk／attack 兩列、正面／側面／背面三格的裁切框（沒有的方向填 None＝沿用正面），`FLIP` 是側面朝左、要翻成朝右的格；
+  `tools/monsters/cut.py`：每格內縮 3px，從邊緣洪水填滿白色（最小值 ≥ 222），被圍住的偏白小區塊（≥ 5px）也去掉，背景旁 1px 依亮度給半透明；腳底貼齊、水平置中，輸出 `images/monsters/怪物id.png`（2 列 × 3 欄，每格 cw×ch）與 meta（cw、ch、body＝正面走路身高）。
+- 遊戲：`ui-scene.js` 的 `MON_SPRITES`（照 meta 抄）＋`monSpriteImg(mid)`；地圖怪 `m.mid`＝怪物 id（綁定戰鬥時改成 `inst.id`）。
+  畫法：身高一般 42px、大型 62px（以 body 縮放）；方向＝戰鬥中面向角色、遊走時看移動方向（`m.face`），向左用側面鏡像；怪物出手時 `m.atk = 380` ms 顯示攻擊那列；走動時上下輕晃。血條、名字放在圖上方。
+  進野外時先載入該地圖所有怪的圖；10 張圖共約 200KB，也在 `sw.js` 預先快取。要加新怪：在 spec.py 加裁切框、跑 cut.py、把 meta 抄進 `MON_SPRITES`。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 

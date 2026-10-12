@@ -106,6 +106,22 @@ const TOWN_NPCS = [
 // 村莊房屋（格子座標 x, y, 寬, 高；整塊擋路），畫成石牆＋石板屋頂
 const TOWN_HOUSES = [[5, 9, 4, 3], [9, 6, 4, 3], [16, 6, 4, 3], [20, 9, 4, 3], [5, 17, 4, 3], [20, 17, 4, 3], [12, 20, 5, 3]];
 
+// 怪物模型（2026-10-12，使用者提供的動作表，tools/monsters/cut.py 切出）：images/monsters/怪物id.png
+// 2 列（走路、攻擊）× 3 欄（正面、側面朝右、背面），每格 cw×ch，body＝正面走路的身高（縮放基準）；沒有的怪照舊畫 emoji
+const MON_SPRITES = {
+    orc: { cw: 46, ch: 62, body: 55 },
+    orcArcher: { cw: 43, ch: 64, body: 60 },
+    dwarf: { cw: 41, ch: 52, body: 48 },
+    wolf: { cw: 52, ch: 50, body: 46 },
+    werewolf: { cw: 50, ch: 63, body: 46 },
+    lycan: { cw: 63, ch: 64, body: 53 },
+    drake: { cw: 63, ch: 58, body: 54 },
+    blackKnight: { cw: 48, ch: 67, body: 63 },
+    giantSpider: { cw: 62, ch: 49, body: 45 },
+    skeleton: { cw: 49, ch: 65, body: 51 },
+};
+function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
+
 let scene = null;   // { key, grid, theme, pl:{x,y,rx,ry,path,dir,lunge}, mons:[], engaged, floats:[], ... }
 let sceneRaf = 0;
 
@@ -151,6 +167,8 @@ function buildScene() {
     if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
     const bg = theme.bg ? SCENE_BGS[theme.bg] : null;
     if (bg) spriteImage(bg.src);
+    const zz = player.loc.type === 'zone' ? currentZone() : null;
+    if (zz && zz.mons) zz.mons.forEach(monSpriteImg);
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
     const cx = bg ? bg.start[0] : Math.floor(mw / 2), cy = bg ? bg.start[1] : Math.floor(mh / 2);
     const grid = [];   // 0 地板、1 牆、2 障礙物（畫 emoji）、3 建築
@@ -285,6 +303,7 @@ function sceneUpdate(dt) {
         best.inst = inst;
         best.icon = inst.icon;
         best.name = inst.name;
+        best.mid = inst.id;
         best.lastHp = inst.hp;
         if (inst === hunt.mon) pl.path = [];
     }
@@ -375,6 +394,7 @@ function sceneUpdate(dt) {
     if (pl.lunge) { pl.lunge.t += dt; if (pl.lunge.t > 180) pl.lunge = null; }
     if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
+    for (const m of scene.mons) if (m.atk > 0) m.atk -= dt;
 }
 
 // ───────── 首領大招紅圈（hunt.tele）與自動閃避 ─────────
@@ -463,7 +483,7 @@ function sceneReadEvents() {
         // 隨機一隻貼在旁邊的怪做出攻擊動作
         const near = scene.mons.filter(m => m.inst && !m.dead && Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) <= 1);
         const a = near.length ? near[rand(0, near.length - 1)] : e;
-        if (a) a.lunge = { dx: pl.x - a.x, dy: pl.y - a.y, t: 0 };
+        if (a) { a.lunge = { dx: pl.x - a.x, dy: pl.y - a.y, t: 0 }; a.atk = 380; }   // atk：怪物模型顯示攻擊那列
         playAnim('hit');
     } else if (player.hp > scene.lastPlayerHp + 1 && scene.lastPlayerHp > 0) {
         addFloat(pl.rx, pl.ry, '+' + fmt(player.hp - scene.lastPlayerHp), '#7fe07a');
@@ -544,13 +564,31 @@ function sceneDraw(ctx, W, H) {
         const big = m.inst && (m.inst.boss || m.inst.dragon);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 16 : 11, 4, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
-        ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
+        const img = monSpriteImg(m.mid);
+        let top = sy - (big ? 44 : 30);
+        if (img) {
+            // 方向：戰鬥中面向角色，遊走時看移動方向；左右用側面圖鏡像
+            const fight = m.inst && !m.dead;
+            const dx = fight ? pl.rx - m.rx : m.x - m.rx, dy = fight ? pl.ry - m.ry : m.y - m.ry;
+            if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) m.face = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+            const f = m.face || 'down', ms = MON_SPRITES[m.mid], col = { down: 0, right: 1, left: 1, up: 2 }[f];
+            const dh0 = (big ? 62 : 42) * ms.ch / ms.body, k = dh0 / ms.ch, dw = ms.cw * k, dh = dh0;
+            const moving = !fight && (Math.abs(m.x - m.rx) + Math.abs(m.y - m.ry)) > 0.02;
+            const bob = moving ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
+            ctx.save();
+            if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
+            ctx.drawImage(img, col * ms.cw, (m.atk > 0 ? 1 : 0) * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+            ctx.restore();
+            top = sy + 13 - dh - 4;
+        } else {
+            ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
+            ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
+        }
         ctx.globalAlpha = 1;
         // 圍上來的怪都有血條；名字只標在目標（避免擠在一起），目標腳下加紅圈
         if (m.inst && !m.dead) {
             const tgt = m === scene.engaged;
-            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = sy - (big ? 44 : 30);
+            const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = Math.min(sy - (big ? 44 : 30), top);
             if (m.inst.elite) { ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(sx, sy + 11, 16, 6, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
             if (tgt) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 20 : 14, big ? 6 : 5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
             labels.push(() => {
