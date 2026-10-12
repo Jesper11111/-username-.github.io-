@@ -38,3 +38,7 @@ OLD = {
 for k, v in OLD.items():
     SPEC[k] = {a: [[S1(*b)] for b in v[a]] for a in v}
 FLIP = {('S1', 289 + 3, 63 + 3), ('S1', 289 + 3, 137 + 3), ('S1', 1009 + 3, 437 + 3), ('S1', 1009 + 3, 609 + 3), ('S1', 319 + 3, 437 + 3)}
+# 第四張表 C.jpg（2026-10-12，侏儒戰士…鬼魂）：每隻 3 欄＝正面／側面／背面，走路 3 格、攻擊 3～4 格；裁切框由 specC.json 提供
+import json as _json, os as _os
+for _k, _v in _json.load(open(_os.path.join(_os.path.dirname(__file__), 'specC.json'))).items():
+    SPEC[_k] = {a: [[tuple(b) for b in col] for col in _v[a]] for a in _v}
