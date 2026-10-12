@@ -330,7 +330,8 @@ function renderBag() {
     let h = `<div class="panel">${bar(w, st.weightMax, 'wt', `負重 ${Math.floor(w)} / ${st.weightMax}`)}
         <small class="muted">超過 50% 不會自然回復；點道具可裝備、使用或衝裝。</small></div>`;
     h += `<div class="chips">${BAG_FILTERS.map(([id, n]) => `<button class="chip-btn ${bagFilter === id ? 'active' : ''}" onclick="setBagFilter('${id}')">${n}</button>`).join('')}</div>`;
-    const list = sortedInv(player.inv).filter(x => bagMatch(ITEMS[x.id]));
+    h += `<div class="btn-row"><button class="secondary mini" onclick="bagTidy()">🧹 整理背包</button></div>`;
+    const list = player.inv.filter(x => bagMatch(ITEMS[x.id]));   // 照背包實際順序（新撿的在最後），按「整理」才排列
     h += `<div class="list">` + (list.map(x => `<button class="item-row" onclick="openItemDialog(${x.uid})">
             <span class="${itemClass(x)}">${esc(itemName(x))}</span><span class="muted">${x.n > 1 ? '×' + fmt(x.n) : ''}</span></button>`).join('')
         || '<p class="muted">沒有道具</p>') + `</div>`;
@@ -338,6 +339,34 @@ function renderBag() {
 }
 
 function setBagFilter(f) { bagFilter = f; renderPanel(); }
+
+// 整理背包（2026-10-12 使用者要求）：同性質的放在一起——類別 → 武器種類／防具部位 → 品質高→低 → 階級／名稱 → 強化高→低；同種可堆疊道具合併成一疊
+const WEAPON_TYPE_ORDER = Object.keys(WEAPON_TYPES);
+function bagTidyKey(x) {
+    const d = ITEMS[x.id];
+    const sub = d.cat === 'weapon' ? WEAPON_TYPE_ORDER.indexOf(d.type) : d.cat === 'armor' ? SLOT_KEYS.indexOf(d.slot === 'ring' ? 'ring1' : d.slot) : 0;
+    return [CAT_ORDER.indexOf(d.cat), sub, -qualityRank(x), -(d.tier || 0), d.name, -(x.ench || 0)];
+}
+function bagTidy() {
+    // 合併相同的可堆疊道具
+    const merged = [];
+    for (const x of player.inv) {
+        const same = isStackable(ITEMS[x.id]) && merged.find(y => y.id === x.id && (y.ench || 0) === (x.ench || 0));
+        if (same) same.n += x.n; else merged.push(x);
+    }
+    merged.sort((a, b) => {
+        const ka = bagTidyKey(a), kb = bagTidyKey(b);
+        for (let i = 0; i < ka.length; i++) {
+            if (ka[i] === kb[i]) continue;
+            return typeof ka[i] === 'string' ? ka[i].localeCompare(kb[i]) : ka[i] - kb[i];
+        }
+        return 0;
+    });
+    player.inv = merged;
+    saveGame();
+    renderPanel();
+    showToast('🧹 背包整理完成');
+}
 
 function itemDescHtml(inst) {
     if (ITEMS[inst.id].cat === 'map') return mapDescHtml(inst);   // 異界地圖（maps.js）
