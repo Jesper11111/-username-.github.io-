@@ -934,6 +934,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `dragonSlayer_cloud_seen`＝上次同步時雲端有哪些角色：本機有、雲端沒有、但上次還在 → 是在別台裝置刪掉的，這台也移除（不會又被傳回雲端）。刪角色、登出時一併更新。
   - 不是正在玩的角色上傳時遇到衝突（例如重新整理時舊頁面的上傳比較晚到）→ 0.5 秒後自動重新同步一次（每分鐘最多一次），同一角色取較新的一邊。
 - **登出**：只能在標題畫面（「☁️ 雲端帳號」→ 登出）。先上傳；上傳失敗會警告。確定後**移除這台裝置的所有角色**（已在雲端，下次登入自動下載；也先備份到 `dragonSlayer_cloud_bak`），再登入別的帳號就不會混到。
+- **登入安全**（2026-10-12，版本 `20261012y`）：使用者把帶有 `#access_token=…&refresh_token=…` 的網址（舊的 implicit 登入流程，Google 登入／確認信跳轉回來時網址列會帶）傳給別人，對方就以使用者的帳號登入、開了角色「操真猛」。修正：
+  - `index.html` `<head>` 第一個 `<script>`：網址 hash 有 `access_token`／`refresh_token`／`provider_token` → 立刻 `history.replaceState` 清掉、**不使用**（舊確認信點了仍會完成驗證，只是要回來手動登入）。
+  - `createClient` 改 `flowType: 'pkce'`：Google 登入、確認信回來只帶 `?code=`，要配這個瀏覽器 localStorage 裡的驗證碼才能換登入，網址傳出去沒用；確認信要用註冊的同一個瀏覽器開才會自動登入。
+    `cloudCleanUrl()`（`getSession` 之後）拿掉 `?code=`／`error` 參數；`cloudRedirectUrl()`＝`origin + pathname`（不帶 query／hash）。
+  - 「☁️ 雲端帳號」對話框加「🚪 登出所有裝置」：`cloudSignOut(true)` → `cloudDoSignOut(true)` 用 `signOut({ scope: 'global' })` 讓所有 refresh token 失效（失敗就停下並提示，不清本機），提醒改密碼。
+  - 手動踢人：SQL Editor `delete from auth.sessions where user_id = …`（`auth.sessions` 也看得到各裝置的 IP、user_agent）。
 - **介面**：標題畫面 `#btn-cloud`（未登入「☁️ 登入／註冊」，已登入顯示 Email 與同步狀態 `cloudStatusText`）；登入對話框 Email＋密碼，「登入」／「註冊新帳號」，錯誤訊息翻成中文（`cloudErrText`）。
   設定分頁「☁️ 雲端存檔」區塊（`cloudSettingsHtml`）：已登入顯示狀態與「立即上傳」，未登入「回標題畫面登入」。
 - **Supabase 開通步驟**（使用者在主控台操作）：
