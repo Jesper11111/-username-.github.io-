@@ -34,8 +34,17 @@ function igSign(str) { return igHash(IG_SALT + str, 7) + igHash(str + IG_SALT, 1
 const IG_AMNESTY_AT = Date.UTC(2026, 9, 5, 9);   // 2026-10-05 17:00（台灣時間）
 // 2026-10-12 使用者：「靈界仙魔戰場經驗太高導致玩家被標記，請把被標記玩家取消標記」（仙魔戰場原本不設收益上限，第 79 節）
 //   → 這個時間以前的「修煉進度過快」標記一律解除（簽章不符等其他標記不動）
-const IG_SPEED_AMNESTY_AT = Date.UTC(2026, 9, 12, 9);   // 2026-10-12 17:00（台灣時間）
+// 2026-10-12 21:00 使用者再次要求（17:00 之後仍有玩家被標：舊版快取還在刷仙魔戰場）→ 延到 2026-10-15 00:00，留時間給所有人更新
+const IG_SPEED_AMNESTY_AT = Date.UTC(2026, 9, 14, 16);   // 2026-10-15 00:00（台灣時間）
+// 全體一次性重設合理性檢查起點（沒被標記、但已在仙魔戰場累積大量進度的玩家，之後才不會被標）：audit.reset 小於這個值就重設
+const IG_AUDIT_RESET = 2;
 function igAmnesty() {
+    if (player && (!player.audit || typeof player.audit !== 'object' || (player.audit.reset || 0) < IG_AUDIT_RESET)) {
+        if (!player.audit || typeof player.audit !== 'object') player.audit = {};
+        try { player.audit.max = igProgressHours(); } catch (e) { delete player.audit.max; }
+        player.audit.used = 0;
+        player.audit.reset = IG_AUDIT_RESET;
+    }
     const g = player && player.integrity;
     if (!g || !g.flagged) return;
     // 解除：① IG_AMNESTY_AT 以前的所有標記 ②「修煉進度過快」是在比現在低的門檻下判的（舊標記沒有 speedMax＝10 倍；之後再調高門檻也自動解除）
