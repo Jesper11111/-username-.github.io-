@@ -148,10 +148,10 @@ const MON_SPRITES = {
     pirateGunner: { cw: 54, ch: 64, body: 59, n: [2, 2, 2, 3, 3, 3] },
     giantCrab: { cw: 63, ch: 41, body: 35, n: [2, 2, 2, 3, 3, 3], size: 30 },
     drownedSailor: { cw: 57, ch: 58, body: 51, n: [2, 2, 2, 3, 3, 3] },
-    hellhound: { cw: 42, ch: 36, body: 32, n: [1, 1, 1, 1, 1, 1] },
-    lamia: { cw: 34, ch: 48, body: 44, n: [1, 1, 1, 1, 1, 1] },
-    ivoryMage: { cw: 30, ch: 48, body: 42, n: [1, 1, 1, 1, 1, 1] },
-    ivoryGuard: { cw: 28, ch: 56, body: 52, n: [1, 1, 1, 1, 1, 1] },
+    hellhound: { cw: 61, ch: 52, body: 42, n: [2, 2, 2, 4, 4, 4] },
+    lamia: { cw: 67, ch: 69, body: 62, n: [2, 2, 2, 3, 3, 3] },
+    ivoryMage: { cw: 49, ch: 63, body: 58, n: [2, 2, 2, 3, 3, 3] },
+    ivoryGuard: { cw: 38, ch: 66, body: 61, n: [2, 2, 2, 3, 3, 3] },
     dvLizard: { cw: 45, ch: 48, body: 42, n: [1, 1, 1, 1, 1, 1] },
     cerberus: { cw: 60, ch: 55, body: 51, n: [1, 1, 1, 1, 1, 1] },
     wyvernling: { cw: 53, ch: 55, body: 41, n: [1, 1, 1, 1, 1, 1] },
@@ -179,6 +179,7 @@ const MON_SPRITES = {
     necromancer: { cw: 32, ch: 48, body: 43, n: [1, 1, 1, 1, 1, 1] },
     boneDragon: { cw: 71, ch: 58, body: 47, n: [1, 1, 1, 1, 1, 1] },
     pirateKing: { cw: 50, ch: 70, body: 66, n: [2, 2, 2, 3, 3, 3] },
+    demon: { cw: 59, ch: 53, body: 49, n: [2, 2, 2, 3, 3, 3] },
 };
 function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
 
