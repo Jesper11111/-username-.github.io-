@@ -1119,6 +1119,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 遊戲名稱改為「黑暗大陸」：`config.js` 的 `GAME_TITLE`、`index.html` 的 `<title>`／`apple-mobile-web-app-title`、`manifest.json` 的 name／short_name、`pwa.js` 安裝提示、`gm.html` 標題。
   **資料夾、網址（`屠龍勇者/`）、localStorage key（`dragonSlayer_`）、雲端資料表都不變**，舊存檔照常讀取。四大龍全討伐的稱號「屠龍勇者」是遊戲內成就，保留。
 - 標題畫面：使用者提供的封面（原圖 1342×2000）縮成 `images/cover.jpg`（1000×1490，260KB，`?v=1`，sw.js 預先快取），當 `#screen-title` 背景（`center top / cover`，下半漸層變黑），
+  2026-10-12（版本 `20261012s`）換成使用者第二版封面（只有「黑暗大陸」標題字，`cover.jpg?v=2`）；App 圖示 `icon-192／512`、`apple-touch-icon`、`icon-maskable-512`（中間 80% 放圖、外圍黑）改用封面上半正方形（標題＋人物），`?v=2`。
   圖上已有「黑暗大陸／角色扮演遊戲」字樣，所以拿掉原本的 🐉、標題字與副標題（保留隱藏的 `<h1 class="sr-only">`）；按鈕、封測提示疊在下方，次要按鈕半透明。
 
 ## 37. 洗白（刪檔）與封測提示（2026-10-12，版本 `20261012i`；`config.js` 的 `WIPE`／`TEST_NOTICE`、`save.js` 開頭 `wipeCheck`、`tools/wipe.sql`）
