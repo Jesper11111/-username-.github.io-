@@ -1,6 +1,6 @@
 // 屠龍勇者：製作通貨（POE 式改造裝備與異界地圖）（ARCHITECTURE.md 第 23 節）（依賴 items、affix、player；地圖部分見 maps.js）
 // ───────── 製作通貨 ─────────
-// 通貨是可堆疊道具（cat 'currency'，不佔負重），怪物掉落；在背包點裝備 →「🔮 改造」使用。
+// 通貨是可堆疊道具（cat 'currency'，不佔負重），怪物掉落；在村莊鍛造 NPC →「🔮 裝備改造／🗺️ 地圖打造」使用。
 // 傳說裝備只能用淬鍊石（重骰數值）；稀有最多 6 條詞綴（自然掉落 3～4 條）。
 const CURRENCY = {
     curAug:     { name: '點化石', icon: '🔹', w: 40,  desc: '普通 → 魔法（1～2 條詞綴）', can: x => !x.q, use: x => applyAffixes(x, 'magic', craftIl(x)) },

@@ -451,14 +451,15 @@ function openItemDialog(uid) {
         btns.push(slot
             ? { text: '卸下', onClick: () => { unequipSlot(slot); saveGame(); refreshUI(); } }
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
-        btns.push({ text: '🔮 改造', cls: 'secondary', onClick: () => openCraftDialog(uid) });
+        // 裝備改造搬到村莊鍛造 NPC 的「🔮 裝備改造」（2026-10-12 使用者要求）
+        btns.push({ text: '🔨 找鍛造 NPC 改造', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🔮 裝備改造」使用通貨') });
     }
     if (d.cat === 'map') {
         if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
         // 地圖改造搬到村莊鍛造 NPC 的「🗺️ 地圖打造」（2026-10-12 使用者要求）
         btns.push({ text: '🔨 找鍛造 NPC 改造', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🗺️ 地圖打造」改造地圖') });
     }
-    if (d.cat === 'currency') btns.push({ text: '選擇裝備', onClick: () => { bagFilter = 'gear'; switchTab('bag'); showToast('點一件裝備 →「🔮 改造」使用通貨'); } });
+    if (d.cat === 'currency') btns.push({ text: '怎麼使用？', cls: 'secondary', onClick: () => showToast('回村莊找鍛造 NPC →「🔮 裝備改造」或「🗺️ 地圖打造」使用通貨') });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
@@ -653,6 +654,19 @@ function renderStorage() {
 // 鍛造 NPC：🔨 裝備鍛造（配方）／🗺️ 地圖打造（用通貨改造異界地圖，craft.js openCraftDialog）
 let craftMode = 'gear';
 function setCraftMode(m) { craftMode = m; renderPanel(); }
+// 裝備改造：身上與背包的武器、防具，用通貨改詞綴（craft.js openCraftDialog）
+function renderGearForge() {
+    const curs = CURRENCY_IDS.filter(c => countItem(c) > 0).map(c => `${CURRENCY[c].icon}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
+    const gear = x => ['weapon', 'armor'].includes(ITEMS[x.id].cat);
+    const row = (x, where) => `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b><small>${where}${x.af && x.af.length ? '　詞綴 ' + x.af.length + ' 條' : ''}</small></div>
+        <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;
+    const worn = SLOT_KEYS.filter(k => player.equip[k] && gear(player.equip[k])).map(k => row(player.equip[k], '裝備中・' + SLOTS[k])).join('');
+    const bag = sortedInv(player.inv).filter(gear).map(x => row(x, '背包')).join('');
+    return `<div class="panel"><small class="muted">用製作通貨替武器、防具加上、重擲或移除詞綴（傳說裝備只能用淬鍊石）。</small>
+        <div><small>持有通貨：${curs || '<span class="muted">沒有通貨（打怪掉落）</span>'}</small></div></div>
+        <div class="list">${worn + bag || '<p class="muted">沒有可以改造的裝備</p>'}</div>`;
+}
+
 function renderMapForge() {
     const maps = player.inv.filter(x => ITEMS[x.id].cat === 'map').sort((a, b) => ITEMS[b.id].tier - ITEMS[a.id].tier || qualityRank(b) - qualityRank(a));
     const curs = Object.keys(MAP_CURRENCY).filter(c => countItem(c) > 0).map(c => `${CURRENCY[c] ? CURRENCY[c].icon : ''}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
@@ -668,8 +682,9 @@ function renderMapForge() {
 }
 
 function renderCraft() {
-    const tabs = `<div class="chips"><button class="chip-btn ${craftMode === 'gear' ? 'active' : ''}" onclick="setCraftMode('gear')">🔨 裝備鍛造</button><button class="chip-btn ${craftMode === 'map' ? 'active' : ''}" onclick="setCraftMode('map')">🗺️ 地圖打造</button></div>`;
+    const tabs = `<div class="chips">${[['gear', '🔨 裝備鍛造'], ['mod', '🔮 裝備改造'], ['map', '🗺️ 地圖打造']].map(([k, n]) => `<button class="chip-btn ${craftMode === k ? 'active' : ''}" onclick="setCraftMode('${k}')">${n}</button>`).join('')}</div>`;
     if (craftMode === 'map') return tabs + renderMapForge();
+    if (craftMode === 'mod') return tabs + renderGearForge();
     return tabs + `<div class="list">` + RECIPES.map((r, i) => {
         const miss = recipeMissing(r);
         const need = Object.keys(r.need).map(id => `${ITEMS[id].name}×${r.need[id]}`).join('、');
