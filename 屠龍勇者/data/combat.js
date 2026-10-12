@@ -566,6 +566,7 @@ function onKill(mon) {
     hunt.mobs = hunt.mobs.filter(m => m !== mon);
     if (hunt.mon === mon) hunt.mon = hunt.mobs.slice().sort((a, b) => a.hp - b.hp)[0] || null;
     addLog(`☠️ 擊倒${mon.name}！經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'win');
+    diaRoll(mon);   // 鑽石掉落（vault.js）
     gainExp(exp);
     rollDrops(mon, z);
     questOnKill(mon, z);

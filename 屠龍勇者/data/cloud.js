@@ -102,6 +102,7 @@ async function cloudOnSignedIn(u, silent) {
     if (!silent && r) showToast(r);
     raidResume();   // 團隊副本：回到原本的隊伍、補領離線時打完的獎勵（raid.js）
     clanLoad(true); // 血盟：背景讀自己的血盟（聊天頻道、團隊副本加成要用；clan.js）
+    diaRefresh();   // 鑽石、每日登入獎勵（vault.js）
 }
 
 // 有沒有被管理者封鎖（dragon_bans 自己那一列；被封鎖的人看得到原因）。封鎖中：不上傳、不能組隊，本機照常遊玩
