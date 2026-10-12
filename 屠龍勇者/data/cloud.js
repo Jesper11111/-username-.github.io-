@@ -148,7 +148,7 @@ async function cloudSync() {
         const playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
         const pendingDel = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
         const cloud = [];
-        for (const r of rows || []) if (r.slot >= 0 && r.slot < MAX_SLOTS && r.data && r.data.player) cloud[r.slot] = { data: r.data, t: r.client_t, id: cloudCharId(r.data) };
+        for (const r of rows || []) if (r.slot >= 0 && r.slot < MAX_SLOTS && r.data && r.data.player && !(WIPE.at && r.client_t < WIPE.at)) cloud[r.slot] = { data: r.data, t: r.client_t, id: cloudCharId(r.data) };
         cloudKnown = {};
         for (let i = 0; i < MAX_SLOTS; i++) cloudKnown[i] = cloud[i] ? cloud[i].t : null;
         // 上次在這台裝置刪掉、雲端還沒刪成功的角色

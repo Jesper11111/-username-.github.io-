@@ -5,6 +5,9 @@ let selSlot = 0;      // 人物選單目前選中的欄位
 
 function showTitle() {
     $('version').textContent = 'v' + GAME_VERSION;
+    const note = window.__wiped ? '🧹 遊戲已正式上線，測試期的角色已清除，歡迎重新開始冒險！' : TEST_NOTICE;
+    $('test-notice').textContent = note;
+    $('test-notice').classList.toggle('hidden', !note);
     const any = hasSave();
     if (any && !slotHasSave(currentSlot)) setCurrentSlot(nextFilledSlot());
     const sum = any ? readSlotSummary(currentSlot) : null;

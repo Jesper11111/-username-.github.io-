@@ -44,7 +44,7 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
 
@@ -57,7 +57,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012h`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012i`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1102,3 +1102,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   **真實伺服器** Playwright 兩台：上架稀有 +5 武士刀與 20 瓶治癒藥水（背包剩 10 瓶）、買家瀏覽與分類篩選、購買後扣 88,000、拿到的武士刀詞綴完全相同、
   賣家看「我的上架」入帳 83,600、下架取回藥水、再次入帳不重複；網路與 Console 無錯誤。測試存檔已刪除。
 
+
+## 37. 洗白（刪檔）與封測提示（2026-10-12，版本 `20261012i`；`config.js` 的 `WIPE`／`TEST_NOTICE`、`save.js` 開頭 `wipeCheck`、`tools/wipe.sql`）
+
+- **目前狀態：未啟動**（`WIPE = { id: '', at: 0 }`），只在標題畫面顯示封測提示 `TEST_NOTICE`（`#test-notice`，`showTitle` 設定；空字串＝不顯示）。
+- **玩家裝置**：`save.js` 一載入就執行 `wipeCheck`——`WIPE.id` 不是空字串、且和這台裝置記的 `dragonSlayer_wipe` 不同時，刪掉所有 `dragonSlayer_` 開頭的 localStorage
+  （保留 `dragonSlayer_auth*` 登入狀態與 `dragonSlayer_logOpen`；凡塵修仙傳的資料不動），再記下新 id，所以**每台裝置只洗一次**。有刪到角色時標題提示改成「已正式上線，測試期的角色已清除」。
+- **雲端保險**：`cloudSync` 忽略 `client_t < WIPE.at` 的雲端存檔（忘了跑 wipe.sql 也不會把舊角色下載回來；新角色上傳時會覆蓋那個欄位）。
+- **伺服器**：`tools/wipe.sql`（交易包起來，`truncate … restart identity cascade`）清掉雲端存檔、存檔紀錄、可疑紀錄、團隊副本、聊天、禁言、血盟、世界首領、交易所；
+  **保留**帳號 auth.users、管理者 `dragon_admins`、封鎖 `dragon_bans`、帳號 Email 對照 `dragon_profiles`（清掉 last_name）。世界首領資料表清空後 `wb_current` 會自動開新的一隻。
+- **上線那天的步驟**（執行前先跟使用者確認，清掉無法復原）：
+  1. 使用者在 Supabase → SQL Editor 執行 `tools/wipe.sql`。
+  2. `config.js`：`WIPE = { id: 'launch1', at: <現在的毫秒時間> }`、`TEST_NOTICE = ''`，換版本號、發佈。之後再測再洗：換新的 id（launch2…）與 at，再跑一次 wipe.sql。
+- 驗證：本機 PostgreSQL 執行 wipe.sql 無錯誤、帳號數不變；Playwright 未啟動時角色保留＋顯示封測提示，啟動後角色清空、登入狀態與修仙資料保留、重新整理不會再洗第二次。
