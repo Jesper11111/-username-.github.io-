@@ -80,11 +80,12 @@ async function initCloud() {
         cloudCleanUrl();
         cloudReady = true;
         if (data && data.session) await cloudOnSignedIn(data.session.user, true);
+        else if (cloudOwnedSlots()) showToast('☁️ 帳號未登入：這台裝置的角色重新登入後才會繼續同步', 3500);
         // Google 登入跳轉回來、或在其他分頁登出時
         cloudSb.auth.onAuthStateChange((ev, session) => {
             const u = session && session.user;
             if (u && (!cloudUser || cloudUser.id !== u.id)) setTimeout(() => cloudOnSignedIn(u, false), 0);
-            else if (ev === 'SIGNED_OUT' && cloudUser) { cloudUser = null; renderCloudEntry(); }
+            else if (ev === 'SIGNED_OUT' && cloudUser && !cloudSigningOut) cloudOnPassiveSignOut();
         });
     } catch (e) {
         cloudReady = true;
@@ -104,6 +105,30 @@ function cloudCleanUrl() {
     if (dirty) history.replaceState(history.state, '', u.toString());
 }
 function cloudRedirectUrl() { return location.origin + location.pathname; }
+
+function cloudOwnedSlots() { let n = 0; for (let i = 0; i < MAX_SLOTS; i++) { const o = slotOwnerInfo(i); if (o && o.owner) n++; } return n; }
+
+// 被動登出（別的分頁／裝置按了登出、登入過期、被踢）：角色留在本機（屬於原帳號），遊戲中就先存檔再回標題
+let cloudSigningOut = false;   // 自己按登出（cloudDoSignOut）時不走這裡
+function cloudOnPassiveSignOut() {
+    const email = cloudUser ? cloudUser.email : '';
+    cloudUser = null; cloudBan = null;
+    cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    if (player) {
+        if (slotHasSave(currentSlot)) saveGame(true);   // 本機欄位已被別的分頁清掉（主動登出）就不寫回去
+        hunt = null; session = null; walkHome = null; player = null;
+        showTitle();
+    } else cloudRefreshScreen();
+    renderCloudEntry();
+    gameAlert('帳號已登出', `帳號${email ? `「${email}」` : ''}已登出（可能在別的分頁或裝置登出、或登入過期）。\n這台裝置上的角色仍保留，屬於原本的帳號；重新登入後才會繼續同步。`);
+}
+
+// 別的分頁改了登入狀態：這個分頁的角色不屬於新帳號就回標題（不存檔）
+window.addEventListener('storage', e => {
+    if (e.key !== CLOUD_AUTH_KEY || !player || !playerOwner) return;
+    const uid = authUid();
+    if (uid && uid !== playerOwner) ownerKick();
+});
 
 async function cloudOnSignedIn(u, silent) {
     cloudUser = { id: u.id, email: u.email || '' };
@@ -144,7 +169,7 @@ function cloudCharId(data) {
 function cloudReadLocal(i) {
     const raw = cloudLs(slotKey(i));
     if (!raw) return null;
-    try { const data = JSON.parse(raw); return data && data.player ? { raw, data, id: cloudCharId(data), t: data.t || 0 } : null; }
+    try { const data = JSON.parse(raw); return data && data.player ? { raw, data, id: cloudCharId(data), t: data.t || 0, owner: saveOwnerOf(data) } : null; }
     catch (e) { return null; }
 }
 
@@ -157,7 +182,7 @@ async function cloudSync() {
         const { data: rows, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('slot, client_t, data'));
         if (error) throw error;
         const uid = cloudUser.id, owner = cloudLs(CLOUD_OWNER_KEY);
-        const playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
+        let playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
         const pendingDel = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
         const cloud = [];
         for (const r of rows || []) if (r.slot >= 0 && r.slot < MAX_SLOTS && r.data && r.data.player && !(WIPE.at && r.client_t < WIPE.at)) cloud[r.slot] = { data: r.data, t: r.client_t, id: cloudCharId(r.data) };
@@ -171,46 +196,65 @@ async function cloudSync() {
         cloudLs(CLOUD_DEL_KEY, null);
 
         const tomb = await cloudTombIds();
-        const local = [];
+        // 每個本機角色看自己的 owner（save.js 角色歸屬）：自己帳號的照常合併；訪客角色（owner 空）收進目前帳號；
+        // 別的帳號的角色＝foreign：不上傳、不覆蓋、不刪除，那個欄位保留給它（reserved），雲端角色不寫進那些欄位
+        const local = [], reserved = new Set(), foreignEmails = new Set();
+        let kicked = null;
         for (let i = 0; i < MAX_SLOTS; i++) {
             local[i] = cloudReadLocal(i);
-            if (local[i] && tomb.has(local[i].id) && owner === uid) { cloudDropDeleted(i, true); local[i] = null; }   // 這個帳號已刪除的角色
+            const L = local[i];
+            if (!L) continue;
+            if (L.owner && L.owner !== uid) {
+                reserved.add(i);
+                if (L.data.ownerEmail) foreignEmails.add(L.data.ownerEmail);
+                if (i === playing) {   // 遊戲中的角色屬於別的帳號：先存在本機、回標題，不上傳
+                    saveGame(true);
+                    hunt = null; session = null; walkHome = null; player = null;
+                    kicked = L.data.player.name; playing = -1;
+                }
+                continue;
+            }
+            if (tomb.has(L.id) && L.owner === uid) { cloudDropDeleted(i, true); local[i] = null; }   // 這個帳號已刪除的角色
         }
         for (let i = 0; i < MAX_SLOTS; i++) if (cloud[i] && tomb.has(cloud[i].id)) cloud[i] = null;
+        // 本機文字要帶 owner＝目前帳號；已經是自己帳號的那份就沿用（jsonb 會改變欄位順序，避免每次都判定有變動）
+        const mineRaw = L => L && L.owner === uid && L.data.owner === uid ? L.raw : null;
         const final = [];
+        let hidden = 0;
         for (let i = 0; i < MAX_SLOTS; i++) {
             const c = cloud[i];
-            // 本機同欄位就是同一份（同角色、同時間）：沿用本機文字，不必改寫（jsonb 會改變欄位順序）
-            final[i] = c ? { data: c.data, t: c.t, id: c.id, raw: local[i] && local[i].id === c.id && local[i].t === c.t ? local[i].raw : null } : null;
+            if (c && reserved.has(i)) { final[i] = null; hidden++; continue; }   // 欄位被別帳號的角色佔著：這台先不顯示（雲端照舊）
+            final[i] = c ? { data: c.data, t: c.t, id: c.id, raw: local[i] && local[i].id === c.id && local[i].t === c.t ? mineRaw(local[i]) : null } : null;
         }
+        const freeSlot = () => { for (let k = 0; k < MAX_SLOTS; k++) if (!final[k] && !reserved.has(k)) return k; return -1; };
         const upload = new Set(), conflicts = [];
         let added = 0, newer = 0, lost = 0, gone = 0;
-        const sameOwner = !owner || owner === uid;
         const seen = owner === uid ? JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]') : [];
         for (let i = 0; i < MAX_SLOTS; i++) {
             const L = local[i];
-            if (!L) continue;
+            if (!L || reserved.has(i)) continue;
+            const mine = L.owner === uid;   // 否則是訪客角色
             if (i === playing) {   // 遊戲中的角色固定在原欄位
                 if (final[i] && final[i].id !== L.id) {
-                    const j = final.indexOf(null);
+                    const j = freeSlot();
                     if (j >= 0) final[j] = final[i]; else lost++;
                 }
                 const same = final[i] && final[i].id === L.id;
                 if (same && final[i].t > L.t) conflicts.push(i);   // 別台裝置有更新的進度：不能直接蓋掉
                 else if (cloudKnown[i] !== L.t) upload.add(i);
                 final[i] = { data: L.data, t: L.t, id: L.id, raw: L.raw };
+                if (!mine) { playerOwner = uid; playerOwnerEmail = cloudUser.email || ''; saveGame(); }   // 訪客角色歸到這個帳號（存檔補上 owner 才會上傳）
                 continue;
             }
-            if (!sameOwner) continue;
             const j = final.findIndex(f => f && f.id === L.id);
             if (j >= 0) {
-                if (L.t > final[j].t) { final[j] = { data: L.data, t: L.t, id: L.id, raw: L.raw }; upload.add(j); newer++; }
-            } else if (seen.includes(L.id)) {
+                if (L.t > final[j].t) { final[j] = { data: L.data, t: L.t, id: L.id, raw: mineRaw(L) }; upload.add(j); newer++; }
+            } else if (mine && seen.includes(L.id)) {
                 gone++;   // 上次同步時雲端還有、現在沒了：在別台裝置刪掉的，這台也移除（改寫前會備份）
             } else {
-                const k = !final[i] ? i : final.indexOf(null);
+                const k = !final[i] ? i : freeSlot();
                 if (k < 0) { lost++; continue; }
-                final[k] = { data: L.data, t: L.t, id: L.id, raw: L.raw };
+                final[k] = { data: L.data, t: L.t, id: L.id, raw: mineRaw(L) };
                 upload.add(k); added++;
             }
         }
@@ -219,24 +263,34 @@ async function cloudSync() {
             gameAlert('雲端存檔', `這台裝置與雲端的角色加起來超過 ${MAX_SLOTS} 個欄位，這次沒有合併。\n請先在人物選單刪除不需要的角色，或登出後再登入。`);
             return '';
         }
+        // 寫進本機的文字：帶 owner＝目前帳號（雲端那份不含 owner）
+        const wantRaw = f => f ? (f.raw || JSON.stringify(Object.assign(cloudStripOwner(f.data), { owner: uid, ownerEmail: cloudUser.email || '' }))) : null;
         // 改寫本機前先備份整份
         let changed = false;
         for (let i = 0; i < MAX_SLOTS; i++) {
-            const want = final[i] ? (final[i].raw || JSON.stringify(final[i].data)) : null;
-            if ((local[i] ? local[i].raw : null) !== want) changed = true;
+            if (i === playing || reserved.has(i)) continue;
+            if ((local[i] ? local[i].raw : null) !== wantRaw(final[i])) changed = true;
         }
         if (changed) {
             const bak = {};
             for (let i = 0; i < MAX_SLOTS; i++) if (local[i]) bak[i] = local[i].raw;
             cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner, saves: bak }));
             for (let i = 0; i < MAX_SLOTS; i++) {
-                if (i === playing) continue;
-                const want = final[i] ? (final[i].raw || JSON.stringify(final[i].data)) : null;
+                if (i === playing || reserved.has(i)) continue;
+                const want = wantRaw(final[i]);
                 if ((local[i] ? local[i].raw : null) === want) continue;
                 if (want) cloudLs(slotKey(i), want); else cloudLs(slotKey(i), null);
             }
         }
-        cloudLs(CLOUD_OWNER_KEY, uid);
+        cloudLs(CLOUD_OWNER_KEY, uid);   // 只剩舊存檔轉換（ownerMigrate）與刪除重試會用到
+        if (kicked || reserved.size) {
+            const who = foreignEmails.size ? `（${[...foreignEmails].join('、')}）` : '';
+            const lines = [];
+            if (kicked) lines.push(`「${kicked}」屬於其他帳號${who}，目前登入的帳號和這個角色不同，已回到標題畫面（進度留在這台裝置）。`);
+            lines.push(`這台裝置有 ${reserved.size} 個角色屬於其他帳號${who}，不會上傳到目前的帳號，也不能用這個帳號遊玩；要玩請登入原本的帳號。`);
+            if (hidden) lines.push(`這個帳號有 ${hidden} 個雲端角色因為欄位被佔用，這台暫時不顯示（雲端資料不受影響）。`);
+            setTimeout(() => { if (kicked) showTitle(); gameAlert('角色屬於其他帳號', lines.join('\n\n')); }, 0);
+        }
         cloudLs(CLOUD_SEEN_KEY, JSON.stringify(final.filter(Boolean).map(f => f.id)));
         cloudConflict = {};
         cloudDirty = upload;
@@ -318,11 +372,16 @@ async function cloudFlushRun() {
     return ok;
 }
 
+// 雲端那份存檔不含 owner／ownerEmail（只在本機用）
+function cloudStripOwner(d) { const o = Object.assign({}, d); delete o.owner; delete o.ownerEmail; return o; }
+
 // 上傳一個欄位。雲端那筆必須還是上次看到的版本（client_t），否則代表別台裝置有新進度 → 衝突
 async function cloudPushSlot(i, overwrite) {
     const raw = cloudLs(slotKey(i));
     if (!raw) return true;
-    const data = JSON.parse(raw), p = data.player, t = data.t || 0;
+    const full = JSON.parse(raw);
+    if (saveOwnerOf(full) !== cloudUser.id) return true;   // 不是目前帳號的角色（別的帳號或還沒歸屬的訪客角色）一律不上傳
+    const data = cloudStripOwner(full), p = data.player, t = data.t || 0;
     const row = { slot: i, client_t: t, name: String(p.name || '').slice(0, 40), cls: p.cls, lv: p.lv | 0, data };
     const known = cloudKnown[i];
     let res;
@@ -398,7 +457,7 @@ async function cloudUseCloudSlot() {
         cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
         hunt = null; session = null; walkHome = null;
         player = null;
-        cloudLs(slotKey(i), JSON.stringify(data.data));
+        cloudLs(slotKey(i), JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' })));
         cloudKnown[i] = data.client_t;
         delete cloudConflict[i];
         cloudDirty.delete(i);
@@ -414,7 +473,11 @@ function cloudDeleteSlot(i, raw) {
     delete cloudConflict[i];
     if (!cloudLoggedIn() || !raw) return;
     let id = '';
-    try { id = cloudCharId(JSON.parse(raw)); } catch (e) { }
+    try {
+        const d = JSON.parse(raw);
+        if (saveOwnerOf(d) && saveOwnerOf(d) !== cloudUser.id) return;   // 別的帳號的角色：只刪本機，不能動目前帳號雲端同欄位的角色
+        id = cloudCharId(d);
+    } catch (e) { }
     cloudKnown[i] = null;
     cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
     try {   // 墓碑：其他還開著這個角色的裝置不能再傳回來
@@ -541,6 +604,10 @@ async function cloudSignOut(all) {
 }
 
 async function cloudDoSignOut(all) {
+    cloudSigningOut = true;
+    try { await cloudDoSignOutRun(all); } finally { cloudSigningOut = false; }
+}
+async function cloudDoSignOutRun(all) {
     const bak = {};
     for (let i = 0; i < MAX_SLOTS; i++) { const raw = cloudLs(slotKey(i)); if (raw) bak[i] = raw; }
     cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: bak }));

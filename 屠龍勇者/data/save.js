@@ -1,5 +1,6 @@
 // 屠龍勇者：存檔／讀檔／匯出匯入（依賴 config、player）
-// 存檔格式：{ schema, t, player }；改存檔結構時把 SAVE_SCHEMA +1，並在 migrateSave 補上轉換
+// 存檔格式：{ schema, t, owner, ownerEmail, player }；改存檔結構時把 SAVE_SCHEMA +1，並在 migrateSave 補上轉換
+// owner（schema 4）：這個角色屬於哪個雲端帳號（uid；訪客建立的是空字串）。只存在本機，上傳雲端時拿掉（cloudPushSlot）
 
 let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用）
 
@@ -48,7 +49,8 @@ function readSlotSummary(i) {
         try { player = p; st = calcStats(); } finally { player = keep; }
         const loc = p.loc.type === 'town' ? TOWNS[p.loc.id].name : ZONE_BY_ID[p.loc.id].name;
         return { name: p.name, cls: p.cls, lv: p.lv, exp: p.exp, hp: p.hp, mp: p.mp, maxHp: st.maxHp, maxMp: st.maxMp,
-            gold: p.gold, loc, hunting: p.hunting && p.loc.type === 'zone', t: data.t || 0 };
+            gold: p.gold, loc, hunting: p.hunting && p.loc.type === 'zone', t: data.t || 0,
+            locked: slotLocked(i), ownerEmail: data.ownerEmail || '' };
     } catch (e) {
         return { broken: true };
     }
@@ -59,10 +61,68 @@ function hasSave() {
     return false;
 }
 
-function saveGame() {
+// ───────── 角色歸屬（ARCHITECTURE.md 第 29 節「角色歸屬」）─────────
+// 每份存檔自己記屬於哪個帳號，不再只靠整台裝置一個 dragonSlayer_cloud_owner（多帳號／被動登出時會把角色收進別人的帳號）
+let playerOwner = '', playerOwnerEmail = '';   // 目前遊戲中角色的 owner
+let ownerKickPending = false;
+
+// 這個瀏覽器目前登入的帳號：直接讀 SDK 存的登入狀態（所有分頁共用；SDK 還沒載入、離線也讀得到）
+function authUid() {
+    try { const s = JSON.parse(localStorage.getItem('dragonSlayer_auth')); return (s && s.user && s.user.id) || ''; } catch (e) { return ''; }
+}
+function saveOwnerOf(data) { return (data && data.owner) || ''; }
+function slotOwnerInfo(i) {
+    try { const d = JSON.parse(localStorage.getItem(slotKey(i))); return d ? { owner: saveOwnerOf(d), email: d.ownerEmail || '' } : null; } catch (e) { return null; }
+}
+// 角色屬於別的帳號（而且這個瀏覽器正登入別的帳號）→ 不能進入
+function slotLocked(i) {
+    const o = slotOwnerInfo(i), uid = authUid();
+    return !!(o && o.owner && uid && o.owner !== uid);
+}
+// 舊存檔（schema 3 以前）沒有 owner：用這台裝置記的帳號（dragonSlayer_cloud_owner）補上，訪客角色補空字串。main.js 啟動時呼叫一次
+function ownerMigrate() {
+    try {
+        const legacy = localStorage.getItem('dragonSlayer_cloud_owner') || '';
+        for (let i = 0; i < MAX_SLOTS; i++) {
+            const raw = localStorage.getItem(slotKey(i));
+            if (!raw) continue;
+            const d = JSON.parse(raw);
+            if (!d || d.owner !== undefined) continue;
+            d.owner = legacy;
+            localStorage.setItem(slotKey(i), JSON.stringify(d));
+        }
+    } catch (e) {}
+}
+
+// 遊戲中的角色和登入帳號對不上（另一個分頁登出／換帳號）：不存檔、回標題
+function ownerKick(msg) {
+    if (ownerKickPending) return;
+    ownerKickPending = true;
+    setTimeout(() => {   // 延後：呼叫 saveGame 的地方接下來還會用到 player
+        ownerKickPending = false;
+        if (!player) return;
+        hunt = null; session = null; walkHome = null; player = null;
+        showTitle();
+        gameAlert('帳號已變更', msg || '這個瀏覽器登入的帳號已經登出或換人，這個角色屬於原本的帳號，已回到標題畫面（沒有存檔）。');
+    }, 0);
+}
+
+// force：被動登出時先把進度存在本機（cloud.js），不檢查歸屬
+function saveGame(force) {
     if (!player || SIM_MODE) return;
-    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player })); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
-    cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳
+    const uid = authUid();
+    if (!force) {
+        if (ownerKickPending) return;
+        // 訪客角色在登入狀態存檔 → 歸到這個帳號（之後會上傳）
+        if (!playerOwner && uid && cloudLoggedIn() && cloudUser.id === uid) { playerOwner = uid; playerOwnerEmail = cloudUser.email || ''; }
+        if (playerOwner && isCloudConfigured()) {
+            if (uid && uid !== playerOwner) { ownerKick(); return; }   // 現在登入的是別的帳號
+            if (!uid && !slotHasSave(currentSlot)) { ownerKick(); return; }   // 帳號在別的分頁登出、本機角色已清掉：不要寫回去
+        }
+    }
+    const data = { schema: SAVE_SCHEMA, t: Date.now(), owner: playerOwner, ownerEmail: playerOwnerEmail, player };
+    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify(data)); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
+    cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳（只上傳屬於目前帳號的角色）
 }
 
 function migrateSave(data) {
@@ -103,6 +163,7 @@ function loadGame() {
 function applySaveData(data) {
     if (!data || !data.player || !CLASSES[data.player.cls]) return false;
     player = migrateSave(data);
+    playerOwner = saveOwnerOf(data); playerOwnerEmail = data.ownerEmail || '';
     lastSaveAt = data.t || Date.now();
     return true;
 }
@@ -120,6 +181,8 @@ function exportSaveText() {
 function importSaveText(text) {
     try {
         const data = JSON.parse(decodeURIComponent(escape(atob(text.trim()))));
+        if (!data || typeof data !== 'object') return false;
+        delete data.owner; delete data.ownerEmail;   // 匯入的存檔不帶別人的帳號：當作訪客角色，登入中就歸到目前帳號
         if (!applySaveData(data)) return false;
         saveGame();
         return true;
