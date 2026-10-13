@@ -84,7 +84,7 @@ async function initCloud() {
         // Google 登入跳轉回來、或在其他分頁登出時
         cloudSb.auth.onAuthStateChange((ev, session) => {
             const u = session && session.user;
-            if (u && (!cloudUser || cloudUser.id !== u.id)) setTimeout(() => cloudOnSignedIn(u, false), 0);
+            if (u && !onlineBlocked && (!cloudUser || cloudUser.id !== u.id)) setTimeout(() => cloudOnSignedIn(u, false), 0);
             else if (ev === 'SIGNED_OUT' && cloudUser && !cloudSigningOut) cloudOnPassiveSignOut();
         });
     } catch (e) {
@@ -111,6 +111,7 @@ function cloudOwnedSlots() { let n = 0; for (let i = 0; i < MAX_SLOTS; i++) { co
 // 被動登出（別的分頁／裝置按了登出、登入過期、被踢）：角色留在本機（屬於原帳號），遊戲中就先存檔再回標題
 let cloudSigningOut = false;   // 自己按登出（cloudDoSignOut）時不走這裡
 function cloudOnPassiveSignOut() {
+    onlineStop();
     const email = cloudUser ? cloudUser.email : '';
     cloudUser = null; cloudBan = null;
     cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
@@ -130,10 +131,101 @@ window.addEventListener('storage', e => {
     if (uid && uid !== playerOwner) ownerKick();
 });
 
-async function cloudOnSignedIn(u, silent) {
+// ───────── 單一裝置登入（tools/single-login.sql；ARCHITECTURE.md 第 29 節）─────────
+// 帳號在別台裝置使用中（90 秒內有心跳）→ 拒絕這次登入，可選「強制登入」（登出其他所有裝置後接手）；
+// 登入後每 30 秒心跳，被別台強制登入搶走就把這台登出。伺服器還沒執行 single-login.sql、或網路錯誤時不擋（照舊可以玩）。
+const ONLINE_BEAT_MS = 30 * 1000;
+let onlineTimer = null, onlineBlocked = false;
+
+function onlineDevice() {
+    const ua = navigator.userAgent || '';
+    const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : '裝置';
+    const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung' : /Line\//.test(ua) ? 'LINE' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : '';
+    return (os + ' ' + br).trim();
+}
+function onlineMissing(e) { return !!e && (e.code === 'PGRST202' || /Could not find the function|does not exist/i.test(e.message || '')); }
+
+// 回傳 true＝可以使用；{ device, ago }＝別台使用中
+async function onlineClaim(force) {
+    try {
+        const r = await cloudTimeout(cloudSb.rpc('online_claim', { p_device: onlineDevice(), p_force: !!force }));
+        if (r.error) { if (!onlineMissing(r.error)) console.warn('online_claim', r.error); return true; }
+        return r.data && r.data.ok === false ? { device: r.data.device || '', ago: r.data.ago | 0 } : true;
+    } catch (e) { return true; }   // 連不上：不擋
+}
+
+function onlineStart() {
+    clearInterval(onlineTimer);
+    onlineTimer = setInterval(onlinePing, ONLINE_BEAT_MS);
+}
+function onlineStop() { clearInterval(onlineTimer); onlineTimer = null; }
+
+async function onlinePing() {
+    if (!cloudLoggedIn() || onlineBlocked) return;
+    try {
+        const r = await cloudTimeout(cloudSb.rpc('online_ping'));
+        if (!r.error && r.data === false) onlineKicked();
+    } catch (e) { }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) onlinePing(); });
+
+// 被別台強制登入：這台存檔、回標題、登出（角色留在本機）
+async function onlineKicked() {
+    if (!cloudUser) return;
+    onlineStop();
+    if (player) {
+        saveGame();
+        hunt = null; session = null; walkHome = null; player = null;
+        showTitle();
+    }
+    cloudUser = null; cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {};
+    cloudSigningOut = true;
+    try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; }
+    renderCloudEntry(); cloudRefreshScreen();
+    gameAlert('已在其他裝置登入', '這個帳號在另一台裝置登入了，這台已自動登出（角色留在這台，重新登入後會同步）。\n如果不是你本人，請馬上改密碼。');
+}
+
+// 登入被拒：先不登出，讓玩家選「取消」（登出這台）或「強制登入」
+function onlineReject(u, info) {
+    onlineBlocked = true;
+    if (player) {
+        saveGame();
+        hunt = null; session = null; walkHome = null; player = null;
+        showTitle();
+    }
+    cloudUser = null;
+    renderCloudEntry();
+    const ago = info.ago < 60 ? `${info.ago} 秒前` : `${Math.floor(info.ago / 60)} 分鐘前`;
+    openDialog('⛔ 帳號使用中', `<p>帳號 <b>${esc(u.email || '')}</b> 正在另一台裝置使用中${info.device ? `（${esc(info.device)}，${ago}還在線上）` : `（${ago}還在線上）`}，已拒絕這次登入。</p>
+        <p class="muted">那台裝置離開遊戲約 1～2 分鐘後就能在這裡登入。<br>如果那<b>不是你本人</b>：按「強制登入」會把其他所有裝置登出，接著請馬上改密碼。</p>`,
+        [{ text: '取消', cls: 'secondary', onClick: onlineCancel }, { text: '強制登入', cls: 'danger', onClick: () => onlineForce(u) }]);
+}
+
+async function onlineCancel() {
+    cloudSigningOut = true;
+    try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; onlineBlocked = false; }
+    renderCloudEntry();
+}
+
+async function onlineForce(u) {
+    showToast('登出其他裝置中…');
+    try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'others' })); } catch (e) { console.warn('登出其他裝置失敗', e); }
+    await onlineClaim(true);
+    onlineBlocked = false;
+    await cloudOnSignedIn(u, false, true);
+}
+
+async function cloudOnSignedIn(u, silent, claimed) {
+    if (onlineBlocked) return;   // 「帳號使用中」對話框還開著
     cloudUser = { id: u.id, email: u.email || '' };
     renderCloudEntry();
     if (await cloudCheckBan()) return;
+    if (!claimed) {
+        const c = await onlineClaim(false);
+        if (c !== true) { onlineReject(u, c); return; }
+    }
+    if (!cloudUser || cloudUser.id !== u.id) return;
+    onlineStart();
     const r = await cloudSync();
     if (!silent && r) showToast(r);
     raidResume();   // 團隊副本：回到原本的隊伍、補領離線時打完的獎勵（raid.js）
@@ -608,6 +700,8 @@ async function cloudDoSignOut(all) {
     try { await cloudDoSignOutRun(all); } finally { cloudSigningOut = false; }
 }
 async function cloudDoSignOutRun(all) {
+    onlineStop();
+    try { await cloudTimeout(cloudSb.rpc('online_release')); } catch (e) { }   // 讓別台馬上可以登入
     const bak = {};
     for (let i = 0; i < MAX_SLOTS; i++) { const raw = cloudLs(slotKey(i)); if (raw) bak[i] = raw; }
     cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: bak }));
