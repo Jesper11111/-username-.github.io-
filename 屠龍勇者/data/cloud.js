@@ -170,8 +170,13 @@ async function cloudSync() {
         }
         cloudLs(CLOUD_DEL_KEY, null);
 
+        const tomb = await cloudTombIds();
         const local = [];
-        for (let i = 0; i < MAX_SLOTS; i++) local[i] = cloudReadLocal(i);
+        for (let i = 0; i < MAX_SLOTS; i++) {
+            local[i] = cloudReadLocal(i);
+            if (local[i] && tomb.has(local[i].id) && owner === uid) { cloudDropDeleted(i, true); local[i] = null; }   // 這個帳號已刪除的角色
+        }
+        for (let i = 0; i < MAX_SLOTS; i++) if (cloud[i] && tomb.has(cloud[i].id)) cloud[i] = null;
         const final = [];
         for (let i = 0; i < MAX_SLOTS; i++) {
             const c = cloud[i];
@@ -330,10 +335,35 @@ async function cloudPushSlot(i, overwrite) {
         res = await cloudTimeout(cloudSb.from(CLOUD_TABLE).update(row).eq('slot', i).eq('client_t', known).select('slot'));
         if (!res.error && (!res.data || !res.data.length)) return cloudOnConflict(i);
     }
+    if (res.error && cloudIsTombErr(res.error)) { cloudDropDeleted(i); return true; }
     if (res.error) throw res.error;
     cloudKnown[i] = t;
     delete cloudConflict[i];
     return true;
+}
+
+// 已刪除的角色（tools/char-tombstone.sql 墓碑）：伺服器拒收 → 這台也移除，正在玩就回標題
+function cloudIsTombErr(e) { return !!e && (e.hint === 'dragon_char_deleted' || /char deleted/.test(e.message || '')); }
+function cloudDropDeleted(i, inSync) {
+    const raw = cloudLs(slotKey(i));
+    let name = '';
+    try { name = JSON.parse(raw).player.name; } catch (e) { }
+    if (raw) cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser && cloudUser.id, saves: { [i]: raw } }));
+    cloudLs(slotKey(i), null);
+    cloudDirty.delete(i); delete cloudConflict[i];
+    if (!inSync) cloudKnown[i] = null;
+    if (player && i === currentSlot) {
+        hunt = null; session = null; walkHome = null; player = null;
+        showTitle();
+    }
+    gameAlert('角色已刪除', `「${name || '這個角色'}」已經在這個帳號刪除，這台裝置上的資料也一併移除。`);
+}
+async function cloudTombIds() {
+    try {
+        const { data, error } = await cloudTimeout(cloudSb.from('dragon_deleted_chars').select('char_created, cls'));
+        if (error) throw error;
+        return new Set((data || []).map(d => `${d.char_created}|${d.cls}`));
+    } catch (e) { return new Set(); }   // 還沒執行 char-tombstone.sql：當作沒有墓碑
 }
 
 let cloudAutoFixAt = 0;
@@ -387,6 +417,10 @@ function cloudDeleteSlot(i, raw) {
     try { id = cloudCharId(JSON.parse(raw)); } catch (e) { }
     cloudKnown[i] = null;
     cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
+    try {   // 墓碑：其他還開著這個角色的裝置不能再傳回來
+        const p = JSON.parse(raw).player;
+        if (p && p.created) cloudSb.from('dragon_deleted_chars').insert({ char_created: p.created, cls: p.cls, name: String(p.name || '').slice(0, 40) }).then(() => { }, () => { });
+    } catch (e) { }
     cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i)).then(r => { if (r.error) throw r.error; }).catch(e => {
         console.warn('雲端刪除失敗', e);
         const list = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
