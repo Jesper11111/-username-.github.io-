@@ -36,6 +36,11 @@ function resetSessionState() {
 
 function continueGame() {
     if (!slotHasSave(currentSlot)) setCurrentSlot(nextFilledSlot());
+    if (slotLocked(currentSlot)) {   // 角色屬於別的帳號（save.js 角色歸屬）
+        const o = slotOwnerInfo(currentSlot);
+        gameAlert('無法進入', `這個角色屬於帳號${o && o.email ? `「${o.email}」` : '（其他帳號）'}，目前登入的是別的帳號。\n請登出後用那個帳號登入，或在人物選單選別的角色。`);
+        return;
+    }
     if (!loadGame()) { showToast('讀取存檔失敗'); return; }
     resetSessionState();
     addLog(`歡迎回來，${player.name}！`, 'sys');
@@ -49,6 +54,7 @@ function continueGame() {
 
 window.addEventListener('DOMContentLoaded', () => {
     document.title = GAME_TITLE;
+    ownerMigrate();   // 舊存檔補上 owner（save.js）
     showTitle();
     setInterval(gameTick, TICK_MS);
     initPwa();

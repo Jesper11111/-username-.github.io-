@@ -934,6 +934,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `dragonSlayer_cloud_seen`＝上次同步時雲端有哪些角色：本機有、雲端沒有、但上次還在 → 是在別台裝置刪掉的，這台也移除（不會又被傳回雲端）。刪角色、登出時一併更新。
   - 不是正在玩的角色上傳時遇到衝突（例如重新整理時舊頁面的上傳比較晚到）→ 0.5 秒後自動重新同步一次（每分鐘最多一次），同一角色取較新的一邊。
 - **登出**：只能在標題畫面（「☁️ 雲端帳號」→ 登出）。先上傳；上傳失敗會警告。確定後**移除這台裝置的所有角色**（已在雲端，下次登入自動下載；也先備份到 `dragonSlayer_cloud_bak`），再登入別的帳號就不會混到。
+- **角色歸屬**（2026-10-13，版本 `20261013b`，`SAVE_SCHEMA` 4）：舊做法整台裝置只有一個 `dragonSlayer_cloud_owner`，有三個漏洞會把角色收進別人的帳號：owner 空的時候所有本機角色都上傳給下一個登入的帳號、遊戲中的角色不檢查 owner 就上傳、被動登出後角色留著又被下一個帳號收走／覆蓋。改成**每份存檔自己記帳號**：
+  - 本機存檔最外層 `{ schema, t, owner, ownerEmail, player }`；`owner`＝uid，訪客角色是空字串。**只存在本機**，`cloudPushSlot` 上傳前用 `cloudStripOwner` 拿掉。
+  - `save.js`：`playerOwner`／`playerOwnerEmail`（遊戲中角色的 owner，`applySaveData` 讀出、創角清空）；`authUid()` 直接讀 `localStorage['dragonSlayer_auth']`（所有分頁共用、SDK 沒載入也讀得到）；`saveGame(force)`：訪客角色在登入中存檔 → 歸到目前帳號；`owner` 和登入帳號不同、或帳號已登出而本機欄位已被清掉（別的分頁主動登出）→ 不寫入，`ownerKick()` 延後回標題。`slotLocked(i)`＝角色有 owner 且瀏覽器登入的是別的帳號 → 人物卡顯示 🔒、`continueGame` 擋下。沒登入（被動登出、離線）時自己的角色照常可玩、可存。`ownerMigrate()`（main.js 啟動）：舊存檔沒有 owner → 補上 `dragonSlayer_cloud_owner` 的值（沒有就空字串）。匯入存檔拿掉 owner（當訪客角色）。
+  - `cloudSync` 逐角色判斷：owner＝目前帳號 → 照舊合併（比 t、seen、墓碑）；空 → 訪客角色收進目前帳號（寫回本機時補 owner）；別的帳號 → `reserved`：不上傳、不覆蓋、不刪除，雲端在那些欄位的角色這台先不顯示；遊戲中的角色屬於別的帳號 → `saveGame(true)` 存本機後回標題。有 reserved 時跳「角色屬於其他帳號」說明。寫回本機的文字一律帶 owner（自己帳號的那份沿用原文字，避免每次判定有變動）。
+  - `cloudPushSlot`：存檔 owner 不是目前帳號就不上傳。`cloudDeleteSlot`：別帳號的角色只刪本機。`raidClaim`：只改屬於目前帳號的欄位，寫回時保留 owner。`cloudUseCloudSlot` 寫回本機帶 owner。
+  - 被動登出（`onAuthStateChange` 的 SIGNED_OUT，自己按登出時 `cloudSigningOut` 略過）：`cloudOnPassiveSignOut` 清 `cloudKnown／cloudDirty／cloudConflict`，遊戲中先存本機（欄位還在才存）再回標題，提示重新登入才會同步；啟動時沒登入但本機有帶 owner 的角色 → toast 提示。`storage` 事件：別的分頁換成別的帳號 → 這個分頁回標題（不存檔）。
+  - 驗收（Playwright＋模擬 RLS 的假後端 `/tmp` 測試）：訪客角色→A 登入→被動登出→註冊 B：雲端 B 沒有、本機保留且鎖住、有提示；遊戲中另一分頁換 B：雲端 B 沒有、回標題；分頁 1 登出清本機、分頁 2 存檔：不寫回、註冊 B 後雲端 B 沒有；純訪客註冊照樣上傳、同帳號別台角色下載、衝突對話框、刪角色墓碑照舊；舊存檔補 owner。
+  - 已經混進別人帳號的資料不會自動搬回：管理者用 `dragon_save_dev` 查是哪台上傳，再改 `dragon_saves.user_id`（目標欄位要空），或請原主匯出→自己帳號匯入。
 - **登入安全**（2026-10-12，版本 `20261012y`）：使用者把帶有 `#access_token=…&refresh_token=…` 的網址（舊的 implicit 登入流程，Google 登入／確認信跳轉回來時網址列會帶）傳給別人，對方就以使用者的帳號登入、開了角色「操真猛」。修正：
   - `index.html` `<head>` 第一個 `<script>`：網址 hash 有 `access_token`／`refresh_token`／`provider_token` → 立刻 `history.replaceState` 清掉、**不使用**（舊確認信點了仍會完成驗證，只是要回來手動登入）。
   - `createClient` 改 `flowType: 'pkce'`：Google 登入、確認信回來只帶 `?code=`，要配這個瀏覽器 localStorage 裡的驗證碼才能換登入，網址傳出去沒用；確認信要用註冊的同一個瀏覽器開才會自動登入。

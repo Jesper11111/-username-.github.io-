@@ -12,7 +12,7 @@ function showTitle() {
     if (any && !slotHasSave(currentSlot)) setCurrentSlot(nextFilledSlot());
     const sum = any ? readSlotSummary(currentSlot) : null;
     $('btn-continue').classList.toggle('hidden', !any);
-    $('btn-continue').innerHTML = '📜 繼續冒險' + (sum && !sum.broken ? `<br><small>${esc(sum.name)}・${CLASSES[sum.cls].name} Lv.${sum.lv}</small>` : '');
+    $('btn-continue').innerHTML = '📜 繼續冒險' + (sum && !sum.broken ? `<br><small>${sum.locked ? '🔒 ' : ''}${esc(sum.name)}・${CLASSES[sum.cls].name} Lv.${sum.lv}</small>` : '');
     $('btn-select').classList.toggle('hidden', !any);
     $('btn-new').classList.toggle('hidden', any);
     renderCloudEntry();
@@ -48,6 +48,7 @@ function agoText(t) {
 
 function charCardHtml(i, s) {
     if (!s) return `<button class="char-card empty" onclick="openCreate(${i})"><span class="char-plus">＋</span>建立新角色<small>欄位 ${i + 1}</small></button>`;
+    if (s.locked) return `<button class="char-card broken ${i === selSlot ? 'sel' : ''}" onclick="pickSlot(${i})"><span class="char-plus">🔒</span>${esc(s.name)}・Lv.${s.lv}<small>屬於其他帳號${s.ownerEmail ? '：' + esc(s.ownerEmail) : ''}</small></button>`;
     if (s.broken) return `<button class="char-card broken ${i === selSlot ? 'sel' : ''}" onclick="pickSlot(${i})"><span class="char-plus">⚠️</span>存檔損毀<small>欄位 ${i + 1}</small></button>`;
     const c = CLASSES[s.cls];
     const next = s.lv >= MAX_LEVEL ? 'MAX' : fmt(expToNext(s.lv) - s.exp);
@@ -81,9 +82,9 @@ function renderCharSelect() {
     const empty = sums.indexOf(null);
     $('char-grid').innerHTML = sums.map((s, i) => s || i === empty ? charCardHtml(i, s) : '').join('');
     const s = sums[selSlot];
-    $('btn-play').disabled = !s || !!s.broken;
+    $('btn-play').disabled = !s || !!s.broken || !!s.locked;
     $('btn-delchar').disabled = !s;
-    $('select-hint').textContent = s && !s.broken ? `選中：${s.name}（${CLASSES[s.cls].name} Lv.${s.lv}）` : '點選角色卡片，或點空欄位建立新角色';
+    $('select-hint').textContent = s && s.locked ? `「${s.name}」屬於其他帳號${s.ownerEmail ? '（' + s.ownerEmail + '）' : ''}，要登入那個帳號才能玩` : s && !s.broken ? `選中：${s.name}（${CLASSES[s.cls].name} Lv.${s.lv}）` : '點選角色卡片，或點空欄位建立新角色';
 }
 
 function pickSlot(i) { selSlot = i; renderCharSelect(); }
@@ -243,6 +244,7 @@ function confirmCreate() {
     setCurrentSlot(createSlot);
     resetSessionState();
     createPlayer(name, createState.cls, createState.stats);
+    playerOwner = ''; playerOwnerEmail = '';   // 新角色：登入中 saveGame 會歸到目前帳號，沒登入就是訪客角色
     saveGame();
     addLog(`歡迎來到低語海岸，${name}！先去「地圖」傳送到低語海岸狩獵吧。Lv.15 起可以在「📜 任務」接職業任務。`, 'sys');
     enterGame();

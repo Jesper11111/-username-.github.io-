@@ -287,13 +287,14 @@ function raidClaim(res, runKey, charId) {
         let data;
         try { data = JSON.parse(raw); } catch (e) { continue; }
         if (cloudCharId(data) !== charId) continue;
+        if (saveOwnerOf(data) && saveOwnerOf(data) !== uid) continue;   // 屬於別的帳號的角色不動
         const keep = player;
         let out;
         try {
             player = migrateSave(data);
             out = raidApplyReward(res, uid, runKey);
             if (out) {
-                cloudLs(slotKey(i), JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player }));
+                cloudLs(slotKey(i), JSON.stringify(Object.assign({}, data, { schema: SAVE_SCHEMA, t: Date.now(), player })));   // 保留 owner
                 cloudMarkDirty(i);
             }
         } finally { player = keep; }
