@@ -78,13 +78,13 @@ const CLASSES = {
         base: { str: 12, dex: 15, con: 8, int: 10, wis: 11, cha: 9 },
         hp: [10, 12], mp: [3, 5], startHp: 12, startMp: 5, mr: 10, spDiv: 8, mpRegenK: 0.6,
         weapons: ['dagger', 'claw', 'dual'], shield: true, start: ['dagger', 'leatherArmor'],
-        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/darkelf-v2-*.json 切出（v2 有背面；施法用原圖受傷正面那排，第 18 節）
+        // 人物模型：tools/cut-sprites.ps1 依 tools/sprite-src/darkelf-*.json 切出（原圖沒有背面，向上沿用側面格，第 18 節）
         sprite: {
             drawH: 48, charH: 113,
-            walk:   { src: 'images/sprites/darkelf-v2-walk.png',   cellW: 110, cellH: 121, frames: { down: 6, right: 5, up: 6 }, ms: 110 },
-            attack: { src: 'images/sprites/darkelf-v2-attack.png', cellW: 134, cellH: 107, frames: { down: 12, right: 12, up: 12 }, ms: 45 },
-            cast:   { src: 'images/sprites/darkelf-v2-cast.png',   cellW: 100, cellH: 109, frames: { down: 5, right: 5, up: 5 }, ms: 100 },
-            hit:    { src: 'images/sprites/darkelf-v2-hit.png',    cellW: 92,  cellH: 108, frames: { down: 5, right: 5, up: 4 }, ms: 90 },
+            walk:   { src: 'images/sprites/darkelf-walk.png',   cellW: 152, cellH: 117, frames: { down: 8, right: 7, up: 7 }, ms: 110 },
+            attack: { src: 'images/sprites/darkelf-attack.png', cellW: 252, cellH: 155, frames: { down: 7, right: 7, up: 5 }, ms: 55 },
+            cast:   { src: 'images/sprites/darkelf-cast.png',   cellW: 206, cellH: 112, frames: { down: 4, right: 4, up: 4 }, ms: 100 },
+            hit:    { src: 'images/sprites/darkelf-hit.png',    cellW: 154, cellH: 130, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
         },
         art: 'images/classes/darkelf.jpg',
     },
