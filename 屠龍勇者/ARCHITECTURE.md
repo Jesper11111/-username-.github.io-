@@ -10,8 +10,9 @@
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
 | `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（12 職業，含 `slayer` 種族剋制） |
-| `data/skills.js` | `SKILLS[職業]` 技能／魔法、`COMMON_SKILLS`、`findSkill` |
+| `data/skills.js` | 共用魔法 1～10 級 `MAGIC`、各職業魔法上限 `MAGIC_CLASS`、職業專屬技能 `SKILLS[職業]`、索引 `SKILL_BY_ID`、`findSkill`／`skillNeedLv`／`classSkillList`（第 40 節） |
 | `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
+| `data/spellbook.js` | **魔法書**：每招一本 `book_技能id`（載入時併入 `ITEMS`，cat `book`）、商店價格／掉落、學習 `learnBook`／`bookLearnError`、說明 `bookInfoHtml`、掉落 `rollBookDrop`（第 40 節） |
 | `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
@@ -50,7 +51,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -59,7 +60,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015d`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -112,7 +113,7 @@
 - 物理傷害：`1～武器骰（小型/大型）` + 傷害加成 + 彈藥；銀武器／銀彈打不死系 +1～10；屠龍劍打龍 ×1.5。
 - 怪物傷害：玩家 AC < 0 時額外減 `0～(-AC/5)`，再扣減傷；法力護盾把部分傷害轉到 MP。
 - 魔法：`dmg + SP×spK`，必中，乘 `(1 − 怪物MR/200)`。怪物魔法無視 AC、受玩家 MR 減免。
-- 玩家行動優先：治癒（HP < healPct）→ 增益（效果結束）→ 攻擊技能／魔法（最高級、MP 夠、冷卻好）→ 普攻。
+- 玩家行動優先：治癒（HP < healPct）→ 增益（效果結束）→ 共鳴裝備（冷卻型）→ 攻擊技能／魔法 → 普攻。**只用技能欄裡的技能，欄位順序＝優先順序**（2026-10-15，第 40 節；以前是等級最高的優先）。
 - 自動補給（`autoSupport`）：瞬移卷軸 → 治癒藥水（挑不浪費的那瓶，間隔 1 秒）→ 綠水 → 勇水類 → 藍水。
 - 自動回家：沒藥水、沒彈藥、負重超過設定 → 有回家卷軸就回村；沒卷軸只提示一次。
 - 死亡：損失本級所需經驗的 `deathLossRate`（天堂原版：1～44 級 10%、45 級 9%、46 級 8%、47 級 7%、48 級 6%、49 級以上 5%；不降級，最低扣到本級 0）；有復活卷軸則不損失；清除增益、HP／MP 剩 30%、回地圖所屬村莊。
@@ -220,7 +221,7 @@
 
 `name, cls, lv, exp, gold, stats, statPoints, elixirs, baseHp, baseMp, hp, mp, inv, equip, storage, nextUid,
 buffs{key:{src,id,until}}, cds{技能id:到期}, loc{type,id,floor}, hunting, towerMax, towerCleared, dragons, dragonCd,
-kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過獎勵的場次], marketGot[已入帳的交易所編號 b123／s456]`（後兩個是團隊副本，第 30 節；舊存檔沒有也沒關係）
+kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已學會的技能 id，第 40 節], raidCd{副本id:真實時間}, raidRuns[領過獎勵的場次], marketGot[已入帳的交易所編號 b123／s456]`（後兩個是團隊副本，第 30 節；舊存檔沒有也沒關係）
 
 ## 11. 尚未實作（之後可做）
 
@@ -344,7 +345,7 @@ kills, deaths, settings, created, raidCd{副本id:真實時間}, raidRuns[領過
   `sceneFrame` 放大倍數 `clamp(W / (TILE × 28), 1, 1.3)`（PC 約看到 28 格寬）。
 - **野外手動操作（ARPG，2026-10-09）**：點地圖上的怪＝改打牠或拉進戰鬥（`sceneZoneClick`→`focusMob`／`pullMob`，地圖怪記著 `mid` 怪物 id）；
   點地面＝走過去，之後 2.5 秒（`MANUAL_HOLD_MS`）不自動尋怪；方向鍵／WASD 在野外也能走。沒操作時照樣自動掛機。
-- **技能快捷列** `#skill-bar`（地圖右下 4 格，鍵盤 1～4）：`skillBarSkills` 自動挑攻擊技能（範圍／分散優先、等級高優先）最多 3 個＋治癒（沒有就增益），
+- **技能快捷列** `#skill-bar`（地圖右下，兩排 4 格，鍵盤 1～8）＝技能欄 8 格（`player.settings.skillSlots`，第 40 節），空格不顯示；
   `skillBarCast`→`manualCast`；按鈕顯示技能名前兩字、範圍／分散／治癒標籤、冷卻倒數（conic 遮罩），MP 不足變灰。村莊不顯示。
 - **首領大招紅圈**：`sceneTeleTick` 在 `hunt.tele` 出現時記下圓心（角色當下格子），每幀回報角色是否在圈外；畫半透明紅圈＋隨蓄力長大的內圈。
   設定開「自動閃避」時，0.35～0.9 秒反應後自動尋路走到圈外最近的空格（`scene.dodging`，閃避中不自動尋怪）；也可以自己點地面或用方向鍵躲。
@@ -1233,3 +1234,27 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **驗證**：沙盒的網路代理不支援 WebSocket，無法連真正的 Realtime；改用 Node 轉送的假 Realtime（`/tmp/claude-0/t/fakert.js` 模擬 presence／broadcast）兩個瀏覽器互測：互相看得到、移動同步、點人選單、聊天帶 @名字、組隊邀請→加入、離開村莊後消失；Console 無錯誤。
   若正式站看不到別人：到 Supabase → Realtime → Settings 確認「Allow public access」有開。
 
+
+## 40. 天堂式技能：魔法 1～10 級、魔法書、技能欄（2026-10-15，版本 `20261015d`；`skills.js`、`spellbook.js`）
+
+- 使用者要求：移植天堂 1 的技能設定——共用魔法分 1～10 級＋各職業技能；**用魔法書學**；技能**放進面板欄位（下拉選單）才會自動施放**；被動技能學會就生效。
+- **共用魔法 `MAGIC`**（34 招，`tier` 1～10）：光箭、初級治癒術、保護罩、神聖武器／冰箭、風刃、鎧甲護持、冥想術／中級治癒術、火焰箭、極光雷電、敏捷術／
+  火球術、加速術、吸血鬼之吻、力量術／極道落雷、寒冰氣息、狂暴術／高級治癒術、烈炎術、冰矛、體魄強健術／冰雪暴、龍捲風、魔法屏障／
+  全部治癒術、雷電風暴、聖結界／流星雨、究極光裂術、絕對屏障／煉獄、黑闇之星。id 沿用舊版（`energyBolt`、`heal1～3`、`haste`、`meteor`…），舊存檔的冷卻、增益照常。
+- **`MAGIC_CLASS`**：各職業最高魔法等級與每級需要的角色等級——法師 10、天使 8、妖精／魔鬥士／聖騎士 6、惡魔 4、王族／黑妖 3、槍手 2、騎士／修羅／戰士 1。
+  法師原本的攻擊魔法全部移到共用魔法，職業技能只剩被動（魔力集中、魔力精通）；其他職業原本的治癒術、鎧甲護持也移到共用魔法，職業技能（`SKILLS`）不變。
+  `SKILL_BY_ID` 索引全部技能（`kind` 'magic'／'class'）；`skillNeedLv(s, cls)` 這個職業學這招要幾級（學不了 0）；`classSkillList(cls)` 魔法在前、職業技能在後。
+- **魔法書**（`spellbook.js`）：每招一本 `book_技能id`（cat `book`，可堆疊、重量 1、可交易）。書名：魔法＝「N級魔法書（名稱）」，職業技能＝妖精「精靈水晶」、黑妖「黑暗精靈水晶」、其他「技能書」（職業限定 `classes`）。
+  - 商店：魔法 1～6 級（村莊等級 1：1～2 級、2：3～4 級、3：5～6 級，價格 100～8,000）；職業技能 Lv.55 以下（價格 lv²×4＋200）。**只列自己職業學得會的書**（`shopItemIds`）。
+  - 掉落（`rollBookDrop`，`rollDrops` 呼叫）：商店沒賣的高級書，一般怪 0.3%、首領 25%，挑最低學習等級 ≤ 怪物等級 +5 的，任何職業的書都會掉（可賣、可交易）。
+  - 學習：背包點書「📖 學習」或技能頁「📖 學習」（`learnBook`）——要職業學得會、等級夠、還沒學過（`bookLearnError` 說明原因）；主動技能自動放進第一個空的技能欄。
+  - 升級時提示「可以學習 X 了（需要 Y）」，不再自動學會。創角時 Lv.1 可學的直接學會（法師／天使的 1 級魔法、惡魔的血之渴望）。
+- **技能欄**（`player.settings.skillSlots`，8 格，`SKILL_SLOTS`）：技能頁上方 8 個下拉選單（分「魔法／職業技能」兩組），同一招放到別格時從原欄位移過去；「↺ 自動排好」＝`defaultSkillSlots`。
+  `slotSkills()` 是欄位裡已學會的主動技能；`playerAction`、團隊副本補血（`raidAllyHeal`）只用它，**欄位順序＝優先順序**（治癒／增益／攻擊各自取第一個可用的）。
+  地圖右下快捷列就是這 8 格（兩排 4 格，鍵盤 1～8）。舊的「自動：開／關」（`settings.skills`）不再使用。
+  - `defaultSkillSlots`：最強的治癒 → 增益 3 個（職業增益優先，魔法增益依 `MAGIC_BUFF_PREF`：加速術、魔法屏障…）→ 職業攻擊技能（範圍／分散、等級高優先）→ 攻擊魔法（只給 4 級以上魔法的施法職業）→ 剩下的增益補空格。
+- **舊存檔轉換**（`migrateSave`）：沒有 `player.skills` → 依舊規則把這個職業等級已到的全部學會，技能欄用 `defaultSkillSlots`（舊設定關掉的技能不放）。存檔 schema 不變。
+- 介面：技能頁依「一級魔法…N 級魔法＋職業技能」分區，每招顯示類型、MP、冷卻、說明，沒學的顯示書名與取得方式（商店／掉落、背包裡有沒有）；商店、背包、圖鑑多「📖 魔法書」分類。
+- 驗證：12 職業的可學數量（騎士 15～天使 38 招）、新角色起始技能、舊存檔轉換（Lv.30～60 的技能欄）、買書學習、等級不夠被擋、下拉換欄位、只放冰箭時戰鬥只用冰箭（低血也不治癒）；
+  舊存檔轉換後 Lv.35 各職業 5 分鐘擊殺 15～29 隻，與改版前相近。Console 無錯誤。
+- 之後可做：攻速問題（使用者 10-15 暫緩：技能攻速和勇水疊加太快）、天堂的「魔法 1～10 級各職業一覽表」畫面、技能動畫。

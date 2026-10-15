@@ -220,7 +220,7 @@ function raidSimulate(def, list, opts = {}) {
 function raidAllyHeal(m, st, ms, ev, t) {
     const s = player.settings;
     if (player.hp < st.maxHp * s.healPct / 100) return false;   // 先顧自己（playerAction 會補自己）
-    const k = learnedSkills().filter(k => k.type === 'heal' && s.skills[k.id] !== false && player.mp >= k.mp && !(player.cds[k.id] > gameNow)).pop();
+    const k = slotSkills().find(k => k.type === 'heal' && player.mp >= k.mp && !(player.cds[k.id] > gameNow));   // 技能欄裡的治癒（欄位順序優先）
     if (!k) return false;
     const hurt = ms.filter(o => o.alive && o !== m && o.p.hp < o.maxHp * 0.5).sort((a, b) => a.p.hp / a.maxHp - b.p.hp / b.maxHp)[0];
     if (!hurt) return false;

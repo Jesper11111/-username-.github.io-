@@ -19,7 +19,8 @@ const DEFAULT_SETTINGS = {
     autoHome: true, weightPct: 82,    // 沒藥水、沒彈藥或負重過高時自動回家
     autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
     lootFilter: 1,                    // 戰利品過濾：0 全撿、1 普通自動賣、2 魔法以下自動賣、3 只撿傳說（affix.js）
-    skills: {},                       // 技能 id → false 代表關閉自動施放
+    skills: {},                       // 舊版：技能 id → false 代表關閉自動施放（2026-10-15 起改用技能欄，只在舊存檔轉換時參考）
+    skillSlots: [],                   // 技能欄 8 格（技能 id，'' 空格）；只有放進欄位的技能自動施放（第 40 節）
 };
 
 function conHpBonus(con) { return Math.max(0, Math.floor((con - 10) / 2)); }
@@ -40,7 +41,11 @@ function createPlayer(name, cls, stats) {
         quests: { ch: 0, active: false, prog: 0, bossDone: false },
         settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null,
         created: Date.now(),
+        skills: [],
     };
+    // Lv.1 就能學的（法師、天使的 1 級魔法與惡魔的血之渴望等）直接學會，其他要魔法書
+    player.skills = classSkillList(cls).filter(s => skillNeedLv(s, cls) <= 1).map(s => s.id);
+    player.settings.skillSlots = defaultSkillSlots(player);
     c.start.forEach(id => { const it = addItem(id, 1); equipItem(it.uid, true); });
     addItem('redPotion', 30);
     addItem('homeScroll', 3);
@@ -159,9 +164,45 @@ function clockSanity() {
         if (b.until - now > max) b.until = now + max;
     }
 }
-function learnedSkillById(id) { return (SKILLS[player.cls] || []).find(s => s.id === id) || null; }
+function learnedSkillById(id) { return SKILL_BY_ID[id] || null; }
 
-function learnedSkills() { return (SKILLS[player.cls] || []).filter(s => player.lv >= s.lv); }
+// ───────── 技能（2026-10-15 起：用魔法書學，存在 player.skills；ARCHITECTURE.md 第 40 節）─────────
+// 已學會、而且這個職業用得了的技能（被動學會就生效）
+function learnedSkills(p = player) {
+    return (p.skills || []).map(id => SKILL_BY_ID[id]).filter(s => s && skillNeedLv(s, p.cls));
+}
+function hasSkill(id) { return (player.skills || []).includes(id); }
+// 技能欄（8 格，player.settings.skillSlots）：只有放進欄位的主動技能會自動施放，欄位順序＝優先順序
+const SKILL_SLOTS = 8;
+function slotSkills() {
+    const out = [];
+    for (const id of player.settings.skillSlots || []) {
+        const s = id && hasSkill(id) ? SKILL_BY_ID[id] : null;
+        if (s && s.type !== 'passive' && !out.includes(s)) out.push(s);
+    }
+    return out;
+}
+// 預設技能欄（新角色、舊存檔轉換、「自動排好」）：最強的治癒 → 增益最多 3 個 → 攻擊技能，排滿 8 格。
+// 職業技能優先；攻擊魔法只給施法職業（能學到 4 級以上魔法：法師、天使、妖精、魔鬥士、聖騎士），物理系增益只給非施法職業
+const MAGIC_BUFF_PREF = ['haste', 'mageBarrier', 'holyBarrier', 'meditate', 'bodyBless', 'armorBless', 'mShield', 'enchantDex', 'enchantStr', 'holyWeapon', 'berserkSpell', 'absBarrier'];
+const PHYSICAL_BUFFS = ['holyWeapon', 'enchantStr', 'berserkSpell'];
+function defaultSkillSlots(p = player, skip = {}) {
+    const L = learnedSkills(p).filter(s => s.type !== 'passive' && skip[s.id] !== false);
+    const caster = (MAGIC_CLASS[p.cls] || { max: 0 }).max >= 4;
+    const lvOf = s => skillNeedLv(s, p.cls);
+    const heal = L.filter(s => s.type === 'heal').sort((a, b) => b.heal[1] - a.heal[1])[0];
+    const classBuffs = L.filter(s => s.type === 'buff' && s.kind === 'class').sort((a, b) => lvOf(b) - lvOf(a));
+    const magicBuffs = L.filter(s => s.type === 'buff' && s.kind === 'magic' && !(caster && PHYSICAL_BUFFS.includes(s.id)))
+        .sort((a, b) => MAGIC_BUFF_PREF.indexOf(a.id) - MAGIC_BUFF_PREF.indexOf(b.id));
+    const atkOrder = (a, b) => (!!(b.aoe || b.spread) - !!(a.aoe || a.spread)) || lvOf(b) - lvOf(a);
+    const classAtk = L.filter(s => (s.type === 'spell' || s.type === 'strike') && s.kind === 'class').sort(atkOrder);
+    const magicAtk = caster ? L.filter(s => s.type === 'spell' && s.kind === 'magic').sort(atkOrder) : [];
+    const buffs = [...classBuffs, ...magicBuffs];
+    // 還有空格：補剩下的增益（舊版所有增益都會自動施放）
+    const ids = [heal, ...buffs.slice(0, 3), ...classAtk, ...magicAtk, ...buffs.slice(3)].filter(Boolean).map(s => s.id).slice(0, SKILL_SLOTS);
+    while (ids.length < SKILL_SLOTS) ids.push('');
+    return ids;
+}
 
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
@@ -257,7 +298,8 @@ function gainExp(n) {
         player.hp = st2.maxHp;
         player.mp = st2.maxMp;
         addLog(`🎉 升級！Lv.${player.lv}（HP +${hpUp}、MP +${mpUp}）`, 'lvup');
-        (SKILLS[player.cls] || []).filter(s => s.lv === player.lv).forEach(s => addLog(`✨ 學會了「${s.name}」`, 'lvup'));
+        classSkillList(player.cls).filter(s => skillNeedLv(s, player.cls) === player.lv && !hasSkill(s.id))
+            .forEach(s => addLog(`📖 可以學習「${s.name}」了（需要${skillBookName(s)}）`, 'lvup'));
         if (player.lv >= BONUS_STAT_LEVEL) addLog('獲得 1 點能力點數，可在「角色」分配', 'lvup');
     }
     if (player.lv >= MAX_LEVEL) player.exp = 0;

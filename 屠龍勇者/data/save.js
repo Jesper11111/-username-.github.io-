@@ -132,6 +132,15 @@ function migrateSave(data) {
         quests: { ch: 0, active: false, prog: 0, bossDone: false } };
     for (const k in fresh) if (p[k] == null) p[k] = fresh[k];
     p.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), p.settings || {});
+    // 2026-10-15：技能改成用魔法書學（player.skills）＋技能欄（settings.skillSlots）。
+    // 舊存檔沒有 skills：照舊規則（等級到就會）把這個職業該會的全部學好；技能欄依舊的自動開關（settings.skills=false 的不放）排好
+    if (!Array.isArray(p.skills)) {
+        p.skills = classSkillList(p.cls).filter(s => { const n = skillNeedLv(s, p.cls); return n && n <= p.lv; }).map(s => s.id);
+        p.settings.skillSlots = defaultSkillSlots(p, p.settings.skills || {});
+    }
+    if (!Array.isArray(p.settings.skillSlots)) p.settings.skillSlots = [];
+    p.settings.skillSlots = p.settings.skillSlots.slice(0, SKILL_SLOTS).map(id => (id && SKILL_BY_ID[id] ? id : ''));
+    while (p.settings.skillSlots.length < SKILL_SLOTS) p.settings.skillSlots.push('');
     // 移除已不存在的道具，避免舊存檔讓遊戲壞掉
     const valid = x => x && ITEMS[x.id];
     p.inv = (p.inv || []).filter(valid);

@@ -377,12 +377,13 @@ function canReach(kind) {
 // 技能要用哪種距離：攻擊魔法＝遠程；物理技能看武器
 function skillReach(k, st) { return k.type === 'spell' ? 'ranged' : (st.ranged ? 'ranged' : 'melee'); }
 
+// 只用技能欄（player.settings.skillSlots）裡的技能，欄位順序＝優先順序（2026-10-15，第 40 節）
 function playerAction(st) {
     const s = player.settings, now = gameNow;
-    const skills = learnedSkills().filter(k => k.type !== 'passive' && s.skills[k.id] !== false);
-    const ready = k => player.mp >= k.mp && !(player.cds[k.id] > now);
+    const skills = slotSkills();
+    const ready = k => player.mp >= (k.mp || 0) && !(player.cds[k.id] > now);
     if (player.hp < st.maxHp * s.healPct / 100) {
-        const heal = skills.filter(k => k.type === 'heal' && ready(k)).pop();
+        const heal = skills.find(k => k.type === 'heal' && ready(k));
         if (heal) return castHeal(heal, st);
     }
     for (const k of skills) {
@@ -390,7 +391,7 @@ function playerAction(st) {
     }
     const rid = resonanceReady();
     if (rid && canReach('ranged')) return castResonance(rid, st);
-    const atk = skills.filter(k => (k.type === 'spell' || k.type === 'strike') && ready(k) && canReach(skillReach(k, st))).pop();
+    const atk = skills.find(k => (k.type === 'spell' || k.type === 'strike') && ready(k) && canReach(skillReach(k, st)));
     if (atk) return atk.type === 'spell' ? castSpell(atk, st) : doStrike(atk, st);
     if (!canReach(st.ranged ? 'ranged' : 'melee')) { hunt.pCd = 150; return; }   // 還沒走到攻擊距離：等一下再試
     physicalAttack(st, 1, {});
@@ -632,6 +633,8 @@ function rollDrops(mon, z) {
     if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
     // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉
     rollMapDrop(mon, qm);   // 異界地圖掉落（maps.js）
+    const book = rollBookDrop(mon);   // 高級魔法書／技能書（spellbook.js）
+    if (book) give(book, null);
     // 異界首領：依地圖階級掉共鳴裝備（resonance.js）
     if (mon.mapBoss && player.mapRun && chance(RES_MAP_BOSS_P * qm)) {
         const max = resMaxTierForMap(player.mapRun.t), pool = Object.keys(RESONANCE).filter(id => RESONANCE[id].tier <= max);

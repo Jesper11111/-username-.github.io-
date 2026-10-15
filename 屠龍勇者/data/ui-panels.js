@@ -181,14 +181,9 @@ function updateHuntLive() {
 
 // ───────── 技能快捷列（野外地圖右下 4 格，鍵盤 1～4；ARCHITECTURE.md 第 17 節）─────────
 // 自動挑：攻擊技能（範圍／分散優先、等級高優先）最多 3 個＋治癒（沒有就增益）
+// 地圖右下的技能快捷列＝技能欄 8 格（鍵盤 1～8）；空格不顯示
 function skillBarSkills() {
-    const L = learnedSkills().filter(k => k.type !== 'passive');
-    const atk = L.filter(k => k.type === 'spell' || k.type === 'strike').reverse();
-    const pick = [...atk.filter(k => k.aoe || k.spread), ...atk.filter(k => !k.aoe && !k.spread)].slice(0, 3);
-    const heal = L.filter(k => k.type === 'heal').pop();
-    if (heal) pick.push(heal);
-    for (const k of L.filter(k => k.type === 'buff').reverse()) { if (pick.length >= 4) break; if (!pick.includes(k)) pick.push(k); }
-    return pick.slice(0, 4);
+    return (player.settings.skillSlots || []).map(id => (id && hasSkill(id) ? SKILL_BY_ID[id] : null));
 }
 function renderSkillBar() {
     const bar = $('skill-bar');
@@ -196,6 +191,7 @@ function renderSkillBar() {
     if (inTown()) { if (bar.innerHTML) bar.innerHTML = ''; return; }
     const list = skillBarSkills(), now = gameNow;
     const html = list.map((k, i) => {
+        if (!k || k.type === 'passive') return '';
         const cd = player.cds[k.id] > now ? Math.ceil((player.cds[k.id] - now) / 1000) : 0;
         const pct = cd && k.cd ? Math.round((player.cds[k.id] - now) / (k.cd * 1000) * 100) : 0;
         const tag = k.aoe ? '範圍' : k.spread ? '分散' : k.type === 'heal' ? '治癒' : k.type === 'buff' ? '增益' : '';
@@ -302,8 +298,8 @@ function renderChar() {
 function addStatBtn(k) { addStatPoint(k); saveGame(); refreshUI(); }
 
 // ───────── 背包 ─────────
-const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['map', '地圖'], ['other', '其他']];
-const CAT_ORDER = ['quest', 'map', 'weapon', 'armor', 'potion', 'scroll', 'currency', 'ammo', 'elixir', 'material'];
+const BAG_FILTERS = [['all', '全部'], ['gear', '裝備'], ['potion', '藥水'], ['scroll', '卷軸'], ['book', '魔法書'], ['map', '地圖'], ['other', '其他']];
+const CAT_ORDER = ['quest', 'map', 'weapon', 'armor', 'potion', 'scroll', 'book', 'currency', 'ammo', 'elixir', 'material'];
 
 function bagMatch(def) {
     if (bagFilter === 'all') return true;
@@ -410,6 +406,7 @@ function itemDescHtml(inst) {
     if (d.classes) L.push(`限定：${d.classes.map(c => CLASSES[c].name).join('、')}`);
     if (d.desc) L.push(d.desc);
     if (d.res) L.push(resonanceHtml(d));   // 共鳴武器（resonance.js）
+    if (d.cat === 'book') L.push(bookInfoHtml(d));   // 魔法書：技能內容、能不能學（spellbook.js）
     if (inst.q) {   // 暗黑式詞綴
         L.push(`<b class="${QUALITY[inst.q].cls}">${QUALITY[inst.q].name}品質</b><small class="muted">（物品等級 ${inst.il || 1}）</small>`);
         for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);
@@ -488,6 +485,7 @@ function openItemDialog(uid) {
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
     if (d.cat === 'elixir') btns.push({ text: '使用', onClick: () => openElixirDialog() });
+    if (d.cat === 'book' && !bookLearnError(d)) btns.push({ text: '📖 學習', onClick: () => learnBook(uid) });   // 魔法書（spellbook.js）
     if (!slot && isCloudConfigured() && cloudLoggedIn() && inTown() && marketTradeable(inst)) btns.push({ text: '🏪 上架', cls: 'secondary', onClick: () => marketOpenSell(uid) });
     if (!slot) btns.push({ text: '丟棄', cls: 'danger', onClick: () => gameConfirm('丟棄道具', `確定丟棄 ${itemName(inst)}${inst.n > 1 ? ' ×' + inst.n : ''}？丟掉就找不回來了。`, () => { removeInst(uid); saveGame(); refreshUI(); }, '丟棄') });
     btns.push({ text: '關閉', cls: 'secondary' });
@@ -532,24 +530,53 @@ function useElixirBtn(k) { closeDialog(); useElixir(k); saveGame(); refreshUI();
 // ───────── 技能 ─────────
 const SKILL_TYPE_NAMES = { spell: '攻擊魔法', strike: '技能', heal: '治癒', buff: '增益', passive: '被動' };
 
-function renderSkills() {
-    const list = SKILLS[player.cls] || [];
-    let h = `<div class="panel"><small class="muted">掛機時依序自動施放：治癒（HP 低於設定）→ 增益（效果結束時）→ 攻擊技能。可個別關閉。</small></div><div class="list">`;
-    for (const s of list) {
-        const learned = player.lv >= s.lv, on = player.settings.skills[s.id] !== false;
-        const info = [`Lv.${s.lv}`, SKILL_TYPE_NAMES[s.type], s.mp ? `MP ${s.mp}` : '', s.cd ? `冷卻 ${s.cd} 秒` : '', s.sec ? `持續 ${s.sec / 60} 分` : ''].filter(Boolean).join('｜');
-        const btn = !learned ? '<span class="muted">未學會</span>'
-            : s.type === 'passive' ? '<span class="good">生效中</span>'
-            : `<button class="${on ? '' : 'secondary'}" onclick="toggleSkill('${s.id}')">${on ? '自動：開' : '自動：關'}</button>`;
-        h += `<div class="list-row ${learned ? '' : 'locked'}"><div><b>${s.name}</b><small>${info}</small><small>${s.desc}</small></div>${btn}</div>`;
-    }
-    return h + `</div>`;
+// ───────── 技能頁（2026-10-15 天堂式：魔法 1～10 級＋職業技能、魔法書學習、技能欄 8 格；第 40 節）─────────
+function skillInfoText(s) {
+    const sec = s.sec ? (s.sec >= 60 ? `持續 ${s.sec / 60} 分` : `持續 ${s.sec} 秒`) : '';
+    return [SKILL_TYPE_NAMES[s.type], s.mp ? `MP ${s.mp}` : '', s.cd ? `冷卻 ${s.cd} 秒` : '', sec].filter(Boolean).join('｜');
 }
-
-function toggleSkill(id) {
-    player.settings.skills[id] = player.settings.skills[id] === false;
+function renderSkills() {
+    const cls = player.cls, slots = player.settings.skillSlots, learned = learnedSkills().filter(s => s.type !== 'passive');
+    const opt = (s, cur) => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${esc(s.name)}（${SKILL_TYPE_NAMES[s.type]}${s.mp ? `・MP ${s.mp}` : ''}）</option>`;
+    const magic = learned.filter(s => s.kind === 'magic'), own = learned.filter(s => s.kind === 'class');
+    let h = `<div class="panel"><h4>⚔️ 技能欄（自動施放）</h4>
+        <small class="muted">只有放進欄位的技能會在掛機時自動施放，<b>上面的欄位優先</b>：治癒（HP 低於設定時）→ 增益（效果結束時）→ 攻擊技能。被動技能學會就生效，不用放。地圖右下的按鈕＝這 8 格（鍵盤 1～8）。</small>
+        <div class="slot-grid">` + slots.map((cur, i) => `<label class="slot-row"><span>${i + 1}</span><select onchange="setSkillSlot(${i}, this.value)">
+            <option value="">（空）</option>
+            ${magic.length ? `<optgroup label="魔法">${magic.map(s => opt(s, cur)).join('')}</optgroup>` : ''}
+            ${own.length ? `<optgroup label="職業技能">${own.map(s => opt(s, cur)).join('')}</optgroup>` : ''}
+        </select></label>`).join('') + `</div>
+        <div class="btn-row"><button class="secondary mini" onclick="resetSkillSlots()">↺ 自動排好</button></div></div>`;
+    const row = s => {
+        const need = skillNeedLv(s, cls), have = hasSkill(s.id), book = countItem(bookIdOf(s.id)) > 0;
+        const slotNo = slots.indexOf(s.id);
+        let btn;
+        if (have) btn = s.type === 'passive' ? '<span class="good">被動・生效中</span>' : slotNo >= 0 ? `<span class="good">欄位 ${slotNo + 1}</span>` : '<span class="muted">已學會</span>';
+        else if (book && player.lv >= need) btn = `<button class="mini" onclick="learnSkillBook('${s.id}')">📖 學習</button>`;
+        else btn = `<span class="muted">${player.lv < need ? `Lv.${need}` : '需要書'}</span>`;
+        return `<div class="list-row ${have ? '' : 'locked'}"><div><b>${esc(s.name)}</b><small>${skillInfoText(s)}</small><small>${esc(s.desc)}</small>
+            ${have ? '' : `<small class="muted">${esc(skillBookName(s))}${ITEMS[bookIdOf(s.id)] && ITEMS[bookIdOf(s.id)].price ? '：村莊商店' : '：怪物掉落（首領較容易）'}${book ? '（背包裡有）' : ''}</small>`}</div>${btn}</div>`;
+    };
+    const mc = MAGIC_CLASS[cls];
+    if (mc) for (let t = 1; t <= mc.max; t++) {
+        h += `<h4>📘 ${MAGIC_TIER_NAMES[t]}級魔法 <small class="muted">（${CLASSES[cls].name} Lv.${mc.lv[t - 1]} 可學）</small></h4><div class="list">` + MAGIC.filter(s => s.tier === t).map(row).join('') + `</div>`;
+    }
+    h += `<h4>🗡️ ${CLASSES[cls].name}技能</h4><div class="list">` + (SKILLS[cls] || []).map(row).join('') + `</div>`;
+    return h;
+}
+function setSkillSlot(i, id) {
+    const slots = player.settings.skillSlots;
+    if (id && !hasSkill(id)) return;
+    const j = slots.indexOf(id);
+    if (id && j >= 0 && j !== i) slots[j] = '';   // 同一招只放一格：從原本的欄位移過來
+    slots[i] = id || '';
     saveGame();
     renderPanel();
+}
+function resetSkillSlots() { player.settings.skillSlots = defaultSkillSlots(); saveGame(); renderPanel(); showToast('已依目前學會的技能自動排好'); }
+function learnSkillBook(skillId) {
+    const it = player.inv.find(x => x.id === bookIdOf(skillId));
+    if (it) learnBook(it.uid);
 }
 
 // ───────── 職業任務 ─────────
@@ -584,7 +611,7 @@ function renderQuest() {
 const NPC_LINES = { shop: '歡迎光臨！武器、藥水、卷軸應有盡有，慢慢挑。', sell: '有用不到的東西嗎？我全部收購。', storage: '要寄放什麼東西嗎？角色倉庫和帳號共用倉庫都在這裡。',
     craft: '帶齊材料來，我幫你打造最好的裝備。', inn: '旅途辛苦了，住一晚好好休息吧。' };
 // 商店分類（renderShop）：武器裝備（含彈藥）、藥水、卷軸，其他類別放「其他」
-const SHOP_CATS = [['gear', '⚔️ 武器裝備', ['weapon', 'armor', 'ammo']], ['potion', '🧪 藥水', ['potion', 'elixir']], ['scroll', '📜 卷軸', ['scroll']]];
+const SHOP_CATS = [['gear', '⚔️ 武器裝備', ['weapon', 'armor', 'ammo']], ['potion', '🧪 藥水', ['potion', 'elixir']], ['scroll', '📜 卷軸', ['scroll']], ['book', '📖 魔法書', ['book']]];
 let townNpcNow = null, shopCat = 'gear';
 function setShopCat(c) { shopCat = c; renderPanel(); }
 const TOWN_SUBS = [['shop', '🏪 商店'], ['sell', '💰 回收'], ['storage', '📦 倉庫'], ['craft', '🔨 鍛造'], ['inn', '🛏️ 旅館']];
@@ -628,6 +655,7 @@ function shortDesc(d) {
     if (d.cat === 'armor') return `${SLOTS[d.slot === 'ring' ? 'ring1' : d.slot]}${d.ac ? ' 防禦+' + d.ac : ''}${d.mr ? ' MR+' + d.mr : ''}${d.hp ? ' HP+' + d.hp : ''}`;
     if (d.heal) return `回復 ${d.heal[0]}～${d.heal[1]}`;
     if (d.buff) return `${BUFF_DEFS[d.buff].name} ${d.sec / 60} 分`;
+    if (d.cat === 'book') { const s = SKILL_BY_ID[d.skill]; return `${d.desc}｜Lv.${skillNeedLv(s, player.cls)}${hasSkill(d.skill) ? '｜已學會' : ''}`; }
     return d.desc || CAT_NAMES[d.cat];
 }
 

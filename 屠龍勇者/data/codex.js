@@ -2,7 +2,7 @@
 // 列出遊戲裡所有道具（任務收集品除外）：分類、品質、能力值、取得方式（商店／怪物掉落／鍛造／職業任務），
 // 「已擁有」看背包＋裝備＋倉庫，不另存進度（不改存檔結構）。
 const CODEX_CATS = [
-    ['all', '全部'], ['weapon', '武器'], ['armor', '防具'], ['acc', '飾品'], ['use', '消耗品'], ['currency', '通貨'], ['map', '地圖'], ['material', '材料'],
+    ['all', '全部'], ['weapon', '武器'], ['armor', '防具'], ['acc', '飾品'], ['use', '消耗品'], ['book', '魔法書'], ['currency', '通貨'], ['map', '地圖'], ['material', '材料'],
 ];
 const CODEX_ACC_SLOTS = ['amulet', 'ring', 'belt'];
 // 品質：商店買得到＝一般；其他依回收價分級
@@ -15,7 +15,7 @@ const CODEX_GRADES = [
 ];
 const CODEX_WEAPON_ICONS = { dagger: '🗡️', sword: '⚔️', twohand: '⚔️', axe: '🪓', spear: '🔱', blunt: '🔨', bow: '🏹', gun: '🔫', staff: '🪄', claw: '🐾', dual: '⚔️', scythe: '☠️' };
 const CODEX_SLOT_ICONS = { helm: '⛑️', armor: '🥋', shield: '🛡️', tshirt: '👕', cloak: '🧥', gloves: '🧤', boots: '👢', amulet: '📿', ring: '💍', belt: '🎗️' };
-const CODEX_CAT_ICONS = { potion: '🧪', scroll: '📜', ammo: '➶', elixir: '⚗️', material: '💎' };
+const CODEX_CAT_ICONS = { potion: '🧪', scroll: '📜', ammo: '➶', elixir: '⚗️', material: '💎', book: '📖' };
 
 let codexCat = 'all', codexGrade = 'all', codexQuery = '', codexSel = null;
 
@@ -25,6 +25,7 @@ function codexGroup(d) {
     if (d.cat === 'material') return 'material';
     if (d.cat === 'currency') return 'currency';
     if (d.cat === 'map') return 'map';
+    if (d.cat === 'book') return 'book';
     return 'use';
 }
 function codexGradeOf(id) {
@@ -46,7 +47,7 @@ function codexKind(d) {
     if (d.cat === 'armor') return SLOTS[d.slot === 'ring' ? 'ring1' : d.slot];
     return CAT_NAMES[d.cat];
 }
-const CODEX_ORDER = ['weapon', 'armor', 'acc', 'use', 'currency', 'map', 'material'];
+const CODEX_ORDER = ['weapon', 'armor', 'acc', 'use', 'book', 'currency', 'map', 'material'];
 
 // 全部道具 id（第一次打開時建立，依分類→品質→名稱排序）
 let codexIdsCache = null;
@@ -89,6 +90,7 @@ function codexSources(id) {
     const needLv = Math.max(1, Math.ceil(sellPriceOf(id) / 600));
     const topLv = Math.max(makeTowerMonster(100, true).lv, ...Object.values(MONSTERS).map(m => m.lv));
     if ((d.cat === 'weapon' || d.cat === 'armor') && !d.classes && !d.res && needLv <= topLv) list.push(`掉落：隨機裝備（Lv.${needLv} 以上的怪物，至少魔法品質）`);
+    if (d.cat === 'book' && !d.price) list.push(`掉落：Lv.${Math.max(1, bookMinLv(d) - 5)} 以上的怪物 ${BOOK_DROP_P * 100}%、首領 ${BOOK_BOSS_P * 100}%（隨機一本高級書）`);
     if (d.res) {   // 共鳴武器：異界首領（resonance.js）
         const minT = [1, 6, 11, 15][d.res.tier - 1];
         list.push(`掉落：T${minT} 以上異界首領 ${Math.round(RES_MAP_BOSS_P * 100)}%（隨機一件共鳴裝備）`);
