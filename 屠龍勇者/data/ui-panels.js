@@ -161,11 +161,9 @@ function updateHuntLive() {
     if (mp) { const t = mapProgressText(); if (mp.textContent !== t) mp.textContent = t; }
     const buffs = $('hunt-buffs');
     if (buffs) {
-        const now = gameNow;
-        buffs.innerHTML = Object.keys(player.buffs).filter(k => player.buffs[k].until > now).map(k => {
-            const b = player.buffs[k], sec = Math.ceil((b.until - now) / 1000);
-            return `<span class="chip">${esc(buffName(b))} ${sec >= 60 ? Math.ceil(sec / 60) + '分' : sec + '秒'}</span>`;
-        }).join('') + resonanceChip();   // 共鳴武器狀態（resonance.js）
+        // 增益＋共鳴裝備：圖示＋剩餘時間（icons.js，2026-10-15 取代文字 chip；內容沒變就不重畫，點擊才不會被吃掉）
+        const html = buffIconsHtml();
+        if (buffs.dataset.html !== html) { buffs.dataset.html = html; buffs.innerHTML = html; }
     }
     const ses = $('hunt-session');
     if (ses && !inTown()) {
@@ -525,7 +523,7 @@ function renderSkills() {
             : `<button class="mini secondary" onclick="barPlaceSkill('${s.id}')">放進快捷欄</button>`;
         else if (book && player.lv >= need) btn = `<button class="mini" onclick="learnSkillBook('${s.id}')">📖 學習</button>`;
         else btn = `<span class="muted">${player.lv < need ? `Lv.${need}` : '需要書'}</span>`;
-        return `<div class="list-row ${have ? '' : 'locked'}"><div><b>${esc(s.name)}</b><small>${skillInfoText(s)}</small><small>${esc(s.desc)}</small>
+        return `<div class="list-row ${have ? '' : 'locked'}"><span class="sk-ico">${skillIconHtml(s)}</span><div style="flex:1;min-width:0"><b>${esc(s.name)}</b><small>${skillInfoText(s)}</small><small>${esc(s.desc)}</small>
             ${have ? '' : `<small class="muted">${esc(skillBookName(s))}${ITEMS[bookIdOf(s.id)] && ITEMS[bookIdOf(s.id)].price ? '：村莊商店' : '：怪物掉落（首領較容易）'}${book ? '（背包裡有）' : ''}</small>`}</div>${btn}</div>`;
     };
     const mc = MAGIC_CLASS[cls];

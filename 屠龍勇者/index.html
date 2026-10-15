@@ -303,21 +303,17 @@
     .hb.dragging .hb-face { transition: none; }
     .hb.empty .hb-face { background: #0c0907d9; border: 1px dashed #5a4630; }
     .hb.empty .hb-face::before { content: '+'; color: #6a5638; font-size: calc(var(--cell) * .45); }
-    .hb-face.fire { --c1: #d2541c; --c2: #3a0c04; --bd: #c86a2a; }
-    .hb-face.ice { --c1: #4aa8e8; --c2: #0a2440; --bd: #5a9ad0; }
-    .hb-face.bolt { --c1: #9a6ae8; --c2: #1e0c40; --bd: #8a6ad0; }
-    .hb-face.wind { --c1: #4ab8a8; --c2: #0a2a2a; --bd: #4a9a90; }
-    .hb-face.dark { --c1: #8a3ab8; --c2: #1a0828; --bd: #7a4aa8; }
-    .hb-face.holy { --c1: #e8c060; --c2: #3a2608; --bd: #e8c06a; }
-    .hb-face.heal { --c1: #5ab84a; --c2: #0c2a0a; --bd: #5aa04a; }
-    .hb-face.guard { --c1: #3a7ae0; --c2: #0a1a3a; --bd: #5a8ad8; }
-    .hb-face.arcane { --c1: #6a5ae8; --c2: #140c3a; --bd: #7a6ad8; }
-    .hb-face.phys { --c1: #b8884a; --c2: #2a1808; --bd: #c9a052; }
-    .hb-face.item { --c1: #5a4a3a; --c2: #16100c; --bd: #9a7a4a; }
+    /* 圖示（icons.js，B 款發光填色 SVG，第 41 節）：格子整個由 SVG 畫，外框也在 SVG 裡 */
+    .ico { display: block; width: 100%; height: 100%; }
+    .hb-face.svg { background: #000; border: 0; box-shadow: 0 0 0 1px #000; }
+    /* 圖片圖示（imgIconHtml）：金屬漸層外框＋圖；狀態用的亮色外框較粗 */
+    .ico-img { position: relative; padding: 2px; border-radius: 5px; background: linear-gradient(135deg, var(--f1), var(--f2) 50%, var(--f3)); overflow: hidden; }
+    .ico-img.framed { padding: 3px; }
+    .ico-img img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px; pointer-events: none; -webkit-user-drag: none; }
     .hb-face::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: conic-gradient(#000a var(--cd, 0%), #0000 0); }
     .hb:hover:not(.empty) .hb-face { border-color: #ffe08a; box-shadow: 0 0 0 1px #000, 0 0 8px #e8c06a, inset 0 0 8px #000c; }
     .hb.dim .hb-face { filter: grayscale(.85) brightness(.55); }
-    .hb-ic { font-size: calc(var(--cell) * .55); line-height: 1; filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 6px #0008); }
+    .hb-ic { position: absolute; inset: 0; }
     .hb-tl, .hb-tr, .hb-br, .hb-key { position: absolute; z-index: 1; font-size: max(8px, calc(var(--cell) * .22)); font-weight: bold; line-height: 1; text-shadow: 0 0 2px #000, 0 0 3px #000; }
     .hb-tl { left: 2px; top: 1px; color: #8ac4ff; }
     .hb-tr { right: 2px; top: 1px; color: #fff; }
@@ -355,7 +351,21 @@
     /* 選擇放什麼（openBarPicker） */
     .hb-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
     .hb-opt { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px; font-size: 11px; line-height: 1.2; background: #221a14; border: 1px solid #3a2c1c; }
-    .hb-opt span { font-size: 22px; }
+    .hb-opt span { display: block; width: 36px; height: 36px; margin-bottom: 2px; }
+    /* 技能頁每招前面的圖示 */
+    .sk-ico { flex: none; width: 36px; height: 36px; margin-right: 8px; align-self: center; }
+    .list-row.locked .sk-ico { filter: grayscale(.9) brightness(.5); }
+    /* 地圖左上角狀態（buffIconsHtml）：圖示＋剩餘時間，剩 10 秒閃爍，點一下顯示名稱 */
+    .scene-buffs { display: flex; flex-wrap: wrap; gap: 3px; }
+    .bf { position: relative; width: 28px; pointer-events: auto; cursor: pointer; }
+    .bf .ico { width: 28px; height: 28px; }
+    .bf span { display: block; margin-top: 1px; font-size: 9px; line-height: 10px; text-align: center; color: #fff; font-weight: bold; white-space: nowrap; text-shadow: 0 0 2px #000, 0 0 3px #000, 0 0 4px #000; }
+    .bf.low span { color: #ff8a6a; }
+    .bf.low .ico { animation: bf-blink 1s infinite; }
+    @keyframes bf-blink { 50% { opacity: .45; } }
+    #frame.pc .bf { width: 34px; }
+    #frame.pc .bf .ico { width: 34px; height: 34px; }
+    #frame.pc .bf span { font-size: 10px; line-height: 12px; }
     .hb-opt small { color: var(--muted); font-size: 10px; }
     .hb-opt.cur { border-color: var(--gold); }
     .skull-hunt {
@@ -775,41 +785,42 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261015i"></script>
-<script src="data/classes.js?v=20261015i"></script>
-<script src="data/skills.js?v=20261015i"></script>
-<script src="data/items.js?v=20261015i"></script>
-<script src="data/spellbook.js?v=20261015i"></script>
-<script src="data/monsters.js?v=20261015i"></script>
-<script src="data/zones.js?v=20261015i"></script>
-<script src="data/quests.js?v=20261015i"></script>
-<script src="data/resonance.js?v=20261015i"></script>
-<script src="data/player.js?v=20261015i"></script>
-<script src="data/enchant.js?v=20261015i"></script>
-<script src="data/affix.js?v=20261015i"></script>
-<script src="data/craft.js?v=20261015i"></script>
-<script src="data/maps.js?v=20261015i"></script>
-<script src="data/combat.js?v=20261015i"></script>
-<script src="data/town.js?v=20261015i"></script>
-<script src="data/save.js?v=20261015i"></script>
-<script src="data/cloud.js?v=20261015i"></script>
-<script src="data/offline.js?v=20261015i"></script>
-<script src="data/ui.js?v=20261015i"></script>
-<script src="data/ui-create.js?v=20261015i"></script>
-<script src="data/ui-panels.js?v=20261015i"></script>
-<script src="data/codex.js?v=20261015i"></script>
-<script src="data/raid.js?v=20261015i"></script>
-<script src="data/clan.js?v=20261015i"></script>
-<script src="data/chat.js?v=20261015i"></script>
-<script src="data/rank.js?v=20261015i"></script>
-<script src="data/wb.js?v=20261015i"></script>
-<script src="data/market.js?v=20261015i"></script>
-<script src="data/vault.js?v=20261015i"></script>
-<script src="data/presence.js?v=20261015i"></script>
-<script src="data/ui-frame.js?v=20261015i"></script>
-<script src="data/hotbar.js?v=20261015i"></script>
-<script src="data/ui-scene.js?v=20261015i"></script>
-<script src="data/pwa.js?v=20261015i"></script>
-<script src="data/main.js?v=20261015i"></script>
+<script src="data/config.js?v=20261015o"></script>
+<script src="data/classes.js?v=20261015o"></script>
+<script src="data/skills.js?v=20261015o"></script>
+<script src="data/items.js?v=20261015o"></script>
+<script src="data/spellbook.js?v=20261015o"></script>
+<script src="data/monsters.js?v=20261015o"></script>
+<script src="data/zones.js?v=20261015o"></script>
+<script src="data/quests.js?v=20261015o"></script>
+<script src="data/resonance.js?v=20261015o"></script>
+<script src="data/player.js?v=20261015o"></script>
+<script src="data/enchant.js?v=20261015o"></script>
+<script src="data/affix.js?v=20261015o"></script>
+<script src="data/craft.js?v=20261015o"></script>
+<script src="data/maps.js?v=20261015o"></script>
+<script src="data/combat.js?v=20261015o"></script>
+<script src="data/town.js?v=20261015o"></script>
+<script src="data/save.js?v=20261015o"></script>
+<script src="data/cloud.js?v=20261015o"></script>
+<script src="data/offline.js?v=20261015o"></script>
+<script src="data/ui.js?v=20261015o"></script>
+<script src="data/ui-create.js?v=20261015o"></script>
+<script src="data/ui-panels.js?v=20261015o"></script>
+<script src="data/codex.js?v=20261015o"></script>
+<script src="data/raid.js?v=20261015o"></script>
+<script src="data/clan.js?v=20261015o"></script>
+<script src="data/chat.js?v=20261015o"></script>
+<script src="data/rank.js?v=20261015o"></script>
+<script src="data/wb.js?v=20261015o"></script>
+<script src="data/market.js?v=20261015o"></script>
+<script src="data/vault.js?v=20261015o"></script>
+<script src="data/presence.js?v=20261015o"></script>
+<script src="data/ui-frame.js?v=20261015o"></script>
+<script src="data/icons.js?v=20261015o"></script>
+<script src="data/hotbar.js?v=20261015o"></script>
+<script src="data/ui-scene.js?v=20261015o"></script>
+<script src="data/pwa.js?v=20261015o"></script>
+<script src="data/main.js?v=20261015o"></script>
 </body>
 </html>

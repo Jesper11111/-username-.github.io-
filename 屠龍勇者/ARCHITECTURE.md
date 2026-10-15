@@ -39,7 +39,8 @@
 | `data/presence.js` | 村莊看得到其他在線玩家（Supabase Realtime presence／broadcast）、點人聊天／邀請組隊（第 39 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
-| `data/hotbar.js` | **快捷欄**（第 40 節）：技能圖示 `skillIcon`、格子 HTML `barSlotHtml`、`renderHotbar`（手機地圖下方兩排／PC 外框 `#hotbar`）、`barUse`／`barToggleAuto`／`openBarPicker`／`barPick`／`barPlaceSkill`／`resetSkillSlots`、點一下／往下拉／長按手勢 |
+| `data/icons.js` | **圖示**（第 41 節）：原創 SVG 符號 `ICON_SYM`、`iconSvg`（B 款發光填色）、藥水瓶 `flaskSvg`、技能自動配圖 `buildSkillIconMap`／`skillIconHtml`、道具 `itemIconHtml`、地圖左上角狀態 `buffIconsHtml` |
+| `data/hotbar.js` | **快捷欄**（第 40 節）：格子 HTML `barSlotHtml`、`renderHotbar`（手機地圖下方兩排／PC 外框 `#hotbar`）、`barUse`／`barToggleAuto`／`openBarPicker`／`barPick`／`barPlaceSkill`／`resetSkillSlots`、點一下／往下拉／長按手勢 |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
@@ -47,12 +48,12 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -61,7 +62,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015o`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1293,3 +1294,26 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - **編輯模式**（`barEditMode`／`toggleBarEdit`）：手機狩獵畫面多一顆「✎ 編輯快捷欄」（`huntButtonsHtml`），開啟後快捷欄金色虛線框閃爍、點任何格子＝打開選單（換掉／清空），按「✔ 完成」結束。PC 仍用右鍵或長按。
   - 選單上方顯示「目前：XXX（自動／手動）」與清空說明（`.hb-now`）。
 - 驗證：舊存檔轉換（黑妖 Lv.47，舊設定藍水、瞬移開、勇水關 → 對應格子自動）、新角色預設、手機下拉切換勇水自動、點空格選冰箭（手動格不會自動施放）、60 秒戰鬥模擬自動喝綠水／勇水／藍水／治癒藥水、鍵盤 C、PC 點上排治癒藥水；Console 無錯誤。
+
+## 41. 技能／道具／狀態圖示（2026-10-15，版本 `20261015m`；`icons.js`）
+
+- 使用者給天堂 M 的技能／增益圖示當參考（官方美術、有 INVEN 浮水印，**不能直接用**），要求「找出適合的設計成技能圖示」、地圖左上角狀態不要文字改用圖片。
+  先做樣品（A 款線條、B 款發光填色），使用者選 **B 款**並要求「重複的圖示再分開」；勇水／綠水／藍水依使用者附的圓肚玻璃瓶參考圖另外畫。全部是原創 SVG，沒有外部圖檔。
+- `iconSvg(sym, col, frame)`：64×64，金屬斜面外框（`frame` 給 `skill` 藍／`item` 金／`res` 紫／`bad` 紅時是亮色外框，給增益狀態用）、深色底＋屬性色光暈與放射光、
+  符號三層（模糊粗光管、半透明填色、白色核心細線）、7 個光點、暗角。id 依內容固定並快取（`iconCache`），同一張圖字串相同，畫面每 250ms 重畫不會一直換 DOM。
+  符號 `ICON_SYM` 41 種（火、冰、雷、風、龍捲、骷髏、暗影、太陽、星、治癒、葉、盾、屏障、反擊、加速、劍、雙劍、靶心、箭、隕石、毒刃、血滴、眼、暈眩、魔法陣、王冠、力量、心、蓮花、爆裂、爪、月、翼、漩渦、矛、斧、鎖鏈、手、藥瓶、卷軸、傳送門）；
+  顏色 `ICON_COLOR`（fire 橘、ice 藍、bolt 紫、wind 青綠、dark 紫紅、holy 金、heal 綠、guard 藍、phys 橙、poison 黃綠、blood 紅、arcane 靛、gray 米白）。
+- **技能自動配圖**（`skillIconCandidates` → `buildSkillIconMap`，第一次用到時算）：屬性色＝名稱第一個符合 `SKILL_ICON_RULES` 的規則（沒有看說明、再看類型）；
+  候選順序＝名稱符合的符號 → 同屬性備用 `ELEMENT_ALTS` → 說明符合的符號 → 類型備用 `SKILL_ICON_POOL` → 全部符號，**全部用同一個屬性色**。
+  不重複：共用魔法 34 招彼此「符號＋顏色」不重複；同職業的職業技能彼此「符號」不重複、跟共用魔法「符號＋顏色」不重複；兩輪分配（先讓每招拿第一志願）。驗證：13 組（共用魔法＋12 職業）重複數都是 0。
+  想指定某招的圖：在 `buildSkillIconMap` 前面加覆寫表即可（目前沒有）。
+- **藥水瓶**（2026-10-15 版本 `20261015n` 改用使用者提供的圖）：`images/icons/potion-*.jpg`（128×128，由使用者的 4 瓶並排圖裁切），勇敢藥水＝粉紅、藍色藥水＝深藍、慎重藥水＝紫、自我加速藥水＝淺藍那瓶把藍色像素換成綠色（G、B 對調）。
+  `imgIconHtml(file, frame)` 畫圖片圖示：外框是 CSS 漸層（`.ico-img`，顏色同 `ICON_FRAMES`），換圖時把 `ICON_IMG_VER` 加一。`flaskSvg(kind)` 現在只是轉呼叫它。
+  其他道具 `ITEM_ICON`：治癒藥水類＝藥瓶符號（紅／橙／白／金）、精靈餅乾＝葉、回家卷軸＝卷軸、瞬移卷軸＝傳送門。
+- **技能圖片**（2026-10-15，版本 `20261015o`）：使用者提供兩張 Gemini 生成的技能圖示大圖（3584×1184，放在 `tools/icon-src/`），用 `tools/cut-icons.ps1` 裁成 128×128
+  （第一張 18 欄×6 列，格線不規則所以用固定格距 `-FixCols 18 -FixX0 16 -FixPitch 198.5 -FixW 178`；第二張 20 欄×7 列自動偵測）。檔名＝`a`／`b`＋列兩碼＋欄兩碼。
+  **146 招全部人工挑圖**，用到的 121 張放 `images/icons/sk/`（共約 730KB），對照表 `SKILL_IMG`（技能 id → 檔名）在 `icons.js`；`skillIconHtml` 有圖就用圖（`imgIconHtml`），沒有才用 SVG 自動配圖。
+  規則：共用魔法彼此不重複、同職業內不重複（長得太像的也換掉）、職業技能不跟共用魔法撞圖；Lv／EXP／愛心／天鵝／城堡、帶字母（C、H、K、E、I）的圖不用。
+  要換某招的圖：改 `SKILL_IMG` 的檔名（`tools/cut-icons.ps1` 重新裁出全部候選，再複製到 `images/icons/sk/`），換同檔名的圖要把 `ICON_IMG_VER` 加一。- 用在：快捷欄格子（`barSlotHtml`，`.hb-face.svg` 整格由 SVG 畫）、選放對話框、技能頁每招前面（`.sk-ico`，沒學會變灰）。
+- **地圖左上角狀態**（`buffIconsHtml`，取代原本文字 chip 與 `resonanceChip()`）：每個增益一個圖示，下方剩餘時間（≥60 秒「分:秒」，否則「N秒」），剩 10 秒內變紅閃爍；
+  技能增益＝該技能圖示藍框、藥水＝道具圖示金框、共鳴裝備＝紫框星星（下方顯示冷卻秒數／就緒／充能／機率）。點一下顯示名稱（`buffTip`），滑鼠移上去有 title。內容沒變就不重畫。地點名稱保留。

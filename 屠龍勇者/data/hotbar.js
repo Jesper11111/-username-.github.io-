@@ -3,27 +3,7 @@
 //   手機：地圖下方兩排（0～7、8～15；村莊裡不顯示）
 //   PC：底部骷髏頭左邊 0～7（鍵盤 1～8）、右邊 8～15（Q E R F Z X C V）、上排原本藥水卷軸的 6 格 16～21
 
-// 技能圖示：還沒有技能圖檔，依名稱／說明的屬性挑圖示與底色
-const SKILL_ICON_RULES = [
-    [/煉獄|火|炎|焰/, '🔥', 'fire'], [/冰|寒|雪|霜/, '❄️', 'ice'], [/雷|電/, '⚡', 'bolt'], [/風|龍捲|旋/, '🌪️', 'wind'],
-    [/吸血|暗|黑|闇|魂|血/, '💀', 'dark'], [/流星|隕/, '☄️', 'fire'], [/光|聖|神/, '✨', 'holy'],
-    [/屏障|護|盾|鎧|甲|防禦|結界|鋼鐵/, '🛡️', 'guard'], [/加速|迅|疾|敏捷|速/, '💨', 'wind'],
-    [/箭|射|狙|槍|彈/, '🏹', 'phys'], [/拳|掌|擊|斬|劍|刃|砍|劈|刺|突/, '⚔️', 'phys'],
-];
-function skillIcon(k) {
-    if (k.type === 'heal') return ['🌿', 'heal'];
-    const txt = k.name + (k.desc || '');
-    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(k.name)) return [ic, cls];
-    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(txt)) return [ic, cls];
-    return k.type === 'buff' ? ['🔆', 'holy'] : k.type === 'spell' ? ['🔮', 'arcane'] : ['⚔️', 'phys'];
-}
-function barItemIcon(id) {
-    const d = ITEMS[id];
-    if (id === 'homeScroll') return '📜';
-    if (id === 'teleScroll') return '🌀';
-    if (d.heal) return '🧪';
-    return { haste: '💨', brave: '⚡', wisdom: '⚡', blue: '💧' }[d.buff] || '✨';
-}
+// 圖示在 icons.js（skillIconHtml／itemIconHtml，第 41 節）
 function barName(id) { return SKILL_BY_ID[id] ? SKILL_BY_ID[id].name : ITEMS[id] ? ITEMS[id].name : ''; }
 function barKeyLabel(i) { return i < BAR_KEYS.length ? BAR_KEYS[i].toUpperCase() : ''; }
 
@@ -33,9 +13,9 @@ function barSlotHtml(i, cls = '', style = '') {
     const keyHtml = key ? `<span class="hb-key">${key}</span>` : '';
     if (!b || !b.id) return `<div class="hb empty ${cls}" style="${style}" data-i="${i}" title="點一下放技能或道具"><div class="hb-face">${keyHtml}</div></div>`;
     const now = gameNow, s = SKILL_BY_ID[b.id];
-    let ic, face, tl = '', tr = '', br = '', pct = 0, cdTxt = '', dim = false, tip;
+    let ic, face = 'svg', tl = '', tr = '', br = '', pct = 0, cdTxt = '', dim = false, tip;
     if (s) {
-        [ic, face] = skillIcon(s);
+        ic = skillIconHtml(s);
         const left = player.cds[s.id] > now ? (player.cds[s.id] - now) / 1000 : 0;
         if (left) { cdTxt = Math.ceil(left) + 's'; pct = s.cd ? Math.min(100, Math.round(left / s.cd * 100)) : 0; }
         tl = s.mp ? `<span class="hb-tl">${s.mp}</span>` : '';
@@ -44,7 +24,7 @@ function barSlotHtml(i, cls = '', style = '') {
         tip = `${s.name}（${s.mp || 0} MP${s.cd ? '・冷卻 ' + s.cd + ' 秒' : ''}）${hasSkill(s.id) ? '' : '尚未學會'}`;
     } else {
         const n = countItem(b.id);
-        ic = barItemIcon(b.id); face = 'item';
+        ic = itemIconHtml(b.id);
         tr = `<span class="hb-tr">${n > 999 ? '999+' : n}</span>`;   // 數量放右上，底部留給 AUTO
         dim = n <= 0;
         tip = `${ITEMS[b.id].name}（${n} 個）`;
@@ -129,8 +109,8 @@ function openBarPicker(i) {
     const opt = (id, ic, sub) => `<button class="hb-opt ${b.id === id ? 'cur' : ''}" onclick="barPick(${i}, '${id}')"><span>${ic}</span>${esc(barName(id))}<small>${sub}</small></button>`;
     const html = `${b.id ? `<div class="hb-now">目前：<b>${esc(barName(b.id))}</b>${b.a ? '（自動）' : '（手動）'}　點下方選項換掉，或按「清空這格」</div>` : ''}
         <small class="muted">點一下＝手動使用；<b>按住格子往下拉再放開</b>＝切換自動（綠框＋AUTO）。${barKeyLabel(i) ? `鍵盤 ${barKeyLabel(i)}。` : ''}</small>
-        <h4>⚔️ 技能</h4><div class="hb-opts">${skills.map(s => opt(s.id, skillIcon(s)[0], s.mp ? `MP ${s.mp}` : '')).join('') || '<small class="muted">還沒學會主動技能</small>'}</div>
-        <h4>🎒 道具</h4><div class="hb-opts">${items.map(id => opt(id, barItemIcon(id), `${countItem(id)} 個`)).join('')}</div>`;
+        <h4>⚔️ 技能</h4><div class="hb-opts">${skills.map(s => opt(s.id, skillIconHtml(s), s.mp ? `MP ${s.mp}` : '')).join('') || '<small class="muted">還沒學會主動技能</small>'}</div>
+        <h4>🎒 道具</h4><div class="hb-opts">${items.map(id => opt(id, itemIconHtml(id), `${countItem(id)} 個`)).join('')}</div>`;
     const btns = [{ text: barEditMode ? '返回' : '關閉', cls: 'secondary' }];
     if (b.id) btns.unshift({ text: '清空這格', cls: 'danger', onClick: () => barPick(i, '') });
     openDialog(`快捷欄第 ${i + 1} 格`, html, btns);
