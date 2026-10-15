@@ -99,7 +99,10 @@ async function buyLingbaoItem(itemId) {
     } else {
         if (!player.learnedSkills) player.learnedSkills = [];
         player.learnedSkills.push(Object.assign({}, item.skillData));
-        addLog(`📚 於靈寶閣兌換並領悟了${SECT_TIER_NAMES[item.tier]}宗門武學：【${item.skillData.name}】！`, "skill");
+        // 2026-10-15 起靈寶閣武學併入武學密典、放技能格才施放（spells.js，第 35 節）：有空格就自動放入
+        autoSlotSectSkills();
+        const slotted = (player.spellSlots || []).slice(0, getSpellSlotCount()).includes(LINGBAO_SKILL_SLOT_PREFIX + item.skillData.name);
+        addLog(`📚 於靈寶閣兌換並領悟了${SECT_TIER_NAMES[item.tier]}宗門武學：【${item.skillData.name}】！${slotted ? '已放入技能格。' : '技能格已滿，請到「📜 武學密典」放入技能格才會施放。'}`, "skill");
     }
 
     toastBought(item.name);

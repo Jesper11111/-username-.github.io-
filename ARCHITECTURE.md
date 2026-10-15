@@ -1059,6 +1059,7 @@ combatTick() 每秒執行 [combat.js]
 - 裝備兌換前會檢查背包空位（`hasEquipInventorySpace()`），不足時不扣資源。
 - 舊版靈寶閣商品（降魔伏虎杖、紫電青霜劍〔舊〕、太素霓裳羽衣、神魔九變、大羅天經）已下架；
   已購買的玩家仍保有物品與技能（技能存在 `learnedSkills` 內，技能列表標示為「[靈寶閣]」）。
+- **2026-10-15 起靈寶閣武學併入武學密典**：兌換後要放進技能格才會施放（不再自動參戰），在密典用「💎靈寶閣」篩選管理，見第 35 節。
 - **舊禁術已下修到新標準**：舊版售價僅 1～1.5 萬靈石，遠低於新版初級的 10 萬，因此由 `migrateLegacySkills()`
   依 `legacySkillAdjustments` 於每次讀檔／匯入時校正（結果固定，重複套用不會越改越低）：
 
@@ -1649,7 +1650,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DP`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DQ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -2029,7 +2030,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 ### 宗門武學併入武學密典（2026-10-06，版本 `20261005CJ`）
 - 使用者：「把宗門學會的武學跟秘典武學合併，都放在秘典武學內」→ 選「放格子且格數增加」。
 - **規則**：宗門武學不再自動參戰，要跟主動仙法一樣放進技能格才會施放；技能格＝`SPELL_SLOT_BASE` 3 ＋ 人物等級 ÷ 100（原本 1 ＋ 等級 ÷ 100，等於每個等級都多 2 格）。
-  靈寶閣買的技能（`player.learnedSkills`）照舊自動參戰。每回合 40% 施放技能、從可用技能平均抽一招的規則不變（combat.js 的 `playerAttackTurn`）。
+  靈寶閣買的技能（`player.learnedSkills`）照舊自動參戰（⚠️ 2026-10-15 起也要放格子，見本節「靈寶閣武學併入武學密典」）。每回合 40% 施放技能、從可用技能平均抽一招的規則不變（combat.js 的 `playerAttackTurn`）。
 - **存檔**：`player.spellSlots` 可放宗門武學 id＝`SECT_SKILL_SLOT_PREFIX`（"sect:"）＋招式名稱（config-spells.js；招式名稱不重複，上線後不要改名）；
   `player.sectSkillSeen`＝已自動放過格子的宗門武學 id（只新增欄位）。
 - spells.js：`getLearnedSectSkills()`（依 `player.sectSkills` 三個階段列出招式）、`isSectSkillId`／`getLearnedSectSkill`／`isValidSlotEntry`、
@@ -2045,6 +2046,20 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
     點宗門武學卡片顯示詳細（品階｜宗門武學（初級・武當）｜術法／物理｜傷害說明、耗魔），未學會＝「拜入某級宗門【名】即可習得」，已學會可放入技能格。上方「🏯 宗門武學」區塊與「當前可用技能」也標出品階。
 - **移除「🏯 宗門武學」區塊**（2026-10-06，版本 `20261005CL`，使用者：「不要有宗門武學格，技能統一在秘典裡面找」）：技能格下方的 `.spell-sect-box` 清單與 CSS 刪除；
   宗門武學只在密典卡片清單（可用「🏯宗門」篩選）點選後「放入技能格」。技能格裡的宗門武學仍以 🏯 標示。
+
+### 靈寶閣武學併入武學密典（2026-10-15，版本 `20261005DQ`）
+- 使用者：「靈寶閣技能也合併到武學密典內，不再獨立」→ 選「放格子，格數不變」（技能格仍是基本 `SPELL_SLOT_BASE` 3 格＋每 100 級 1 格）。
+- **規則**：靈寶閣武學（`player.learnedSkills`，兌換時複製的 `skillData`，含已下架的大羅天經、神魔九變）**不再自動參戰**，要跟仙法、宗門武學一樣放進技能格才會施放；stats.js 的 `getAllSkills()` 改成只回傳 `getEquippedCombatSkills()`。
+- **存檔**：技能格 id＝`LINGBAO_SKILL_SLOT_PREFIX`（"lb:"）＋招式名稱（config-spells.js；上線後不要改招式名）；自動放格的紀錄共用 `player.sectSkillSeen`（前綴不同不會撞）。不改存檔結構。
+- **品階分類**（只是分類，威力不變）：config-spells.js `LINGBAO_SKILL_GRADE = { 1: mid, 2: high, 3: ultimate }`（初級 200／180% ≈ 中品、中級 350／260% ≈ 上品、高級 600／400% ≈ 絕學）；已下架的舊禁術列為下品・「（舊）」。
+- spells.js：`getLearnedLingbaoSkills()`、`getLingbaoCatalog()`（上架的 6 招＋已兌換的舊禁術；從 config-lingbao.js 的 `lingbaoShopItems` 組）、`isLingbaoSkillId`／`getLearnedLingbaoSkill`、`describeLingbaoSkill`、
+  `slotEntryLabel`（技能格顯示 🏯／💎／仙法圖示）；`isValidSlotEntry`、`getEquippedCombatSkills`、`equipSpell` 都接受 "lb:" id。
+  `autoSlotSectSkills()` 也處理靈寶閣武學：讀檔（舊存檔已兌換的依序放進空格）、開密典、**靈寶閣兌換時**（lingbao-shop.js 的 `buyLingbaoItem`，日誌說明已放入或「技能格已滿，請到武學密典放入」）；沒有空格就只留在密典。
+- **畫面**：密典屬性篩選新增「💎靈寶閣」；卡片清單最前面列靈寶閣武學（品階・💎靈寶閣・單體／群體）；點選顯示詳細（品階｜靈寶閣武學（初級／中級／高級）｜術法／物理｜傷害、耗魔、屬性觸發），
+  未兌換＝「拜入X級宗門後，在宗門『靈寶閣』兌換」，已兌換可放入技能格；收錄數＝仙法 200＋宗門 36＋靈寶閣（6＋已兌換舊禁術）。index.html 密典說明、ui.js「當前可用技能」空白提示一併改字。
+  靈寶閣商店照舊兌換，兌換後的武學只在密典管理。
+- 驗證（本機，不存檔）：Lv150（4 格）已兌換寒冰綿掌、天罡破軍斬＋舊大羅天經 → 改版前 `getAllSkills` 有 0 招在格子、讀檔後自動放入 3 格並參戰；卸下後只剩 2 招、重整不會被塞回；
+  篩選「💎靈寶閣」顯示 7 張卡（中品×2、上品×2、絕學×2、下品（舊）×1）；收錄 3 / 243；詳細與放入技能格正常；Console 無錯誤。
 
 ### 中品／上品武學秘典碎片（2026-10-06，版本 `20261005CD`）
 - 使用者：「凡界新增中品武學碎片」「靈界新增上品武學碎片」。存檔 `player.spellShardsMid`、`player.spellShardsHigh`（下品仍是 `player.spellShards`）；同樣 `SPELL_SHARD_NEED` 100 片合成。

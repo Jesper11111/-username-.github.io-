@@ -46,7 +46,7 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
 
@@ -59,7 +59,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261012j`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015a`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -922,7 +922,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **資料表** `dragon_saves`（`tools/supabase.sql`）：主鍵 (user_id, slot)，欄位 `client_t`（存檔的 t）、`name/cls/lv`（方便主控台查看）、`data`（整份存檔 jsonb）、`updated_at`（伺服器時間，trigger 自動寫）。
   RLS：登入者只能讀寫刪自己的列；anon 完全沒有權限。2026-10-10 在本機 PostgreSQL 16（模擬 auth schema）實測：可重複執行、別人的列看不到改不了、slot 超出範圍被擋、條件式更新衝突時 0 列。
 - **本機仍是主要存檔**：`saveGame` 照舊寫 localStorage，成功後 `cloudMarkDirty(欄位)`；`cloudAutoPush` 每 15 秒檢查，同一批最多每 `CLOUD_PUSH_MS`（60 秒）上傳一次。
-  回標題（`backToTitle`）、開人物選單、切到背景（visibilitychange）、設定的「☁️ 立即上傳」會立刻上傳。`deleteSave` 呼叫 `cloudDeleteSlot` 一併刪雲端；失敗時記在 `dragonSlayer_cloud_del`，下次同步再刪。
+  回標題（`backToTitle`）、開人物選單、切到背景（visibilitychange）、設定的「☁️ 立即上傳」會立刻上傳。`deleteSave` 呼叫 `cloudDeleteSlot` 一併刪雲端；沒登入或失敗時記在 `dragonSlayer_cloud_del`（依帳號分開），該帳號下次同步再刪（見下面「刪除角色」）。
 - **防覆蓋（多裝置）**：`cloudKnown[欄位]`＝上次看到的雲端 `client_t`。上傳用「`update … where slot=? and client_t=上次看到的`」，0 列＝別台裝置已經更新過 → 進度衝突，該欄位暫停上傳；
   遊戲中的角色跳「☁️ 進度衝突」對話框：「用雲端的進度」（`cloudUseCloudSlot`，下載後重新進入角色，照常算離線收益）／「用這台的進度」（`cloudUseLocalSlot`，upsert 強制覆蓋）。雲端沒有這欄時用 insert，主鍵重複同樣視為衝突。
 - **登入時合併**（`cloudSync`）：用角色的 `created|cls` 辨認同一角色。
@@ -946,6 +946,19 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 被動登出（`onAuthStateChange` 的 SIGNED_OUT，自己按登出時 `cloudSigningOut` 略過）：`cloudOnPassiveSignOut` 清 `cloudKnown／cloudDirty／cloudConflict`，遊戲中先存本機（欄位還在才存）再回標題，提示重新登入才會同步；啟動時沒登入但本機有帶 owner 的角色 → toast 提示。`storage` 事件：別的分頁換成別的帳號 → 這個分頁回標題（不存檔）。
   - 驗收（Playwright＋模擬 RLS 的假後端 `/tmp` 測試）：訪客角色→A 登入→被動登出→註冊 B：雲端 B 沒有、本機保留且鎖住、有提示；遊戲中另一分頁換 B：雲端 B 沒有、回標題；分頁 1 登出清本機、分頁 2 存檔：不寫回、註冊 B 後雲端 B 沒有；純訪客註冊照樣上傳、同帳號別台角色下載、衝突對話框、刪角色墓碑照舊；舊存檔補 owner。
   - 已經混進別人帳號的資料不會自動搬回：管理者用 `dragon_save_dev` 查是哪台上傳，再改 `dragon_saves.user_id`（目標欄位要空），或請原主匯出→自己帳號匯入。
+- **刪除角色**（2026-10-15，版本 `20261015a`）：使用者回報「A 帳號刪除角色後重新登入，其他帳號的人物又出現在 A」。三個缺口：
+  ①沒登入（被動登出）時刪角色只刪本機，雲端那份下次登入又被下載；②雲端刪除失敗的重試清單 `dragonSlayer_cloud_del` 只在「`dragonSlayer_cloud_owner`＝目前帳號」時處理，
+  登出會清掉 owner key，之後永遠不重試、清單還被清掉；③這台有別的帳號的角色（🔒）時，A 雲端裡同一個角色（以前混進來的）又被下載成 A 的，同一角色出現兩份，刪 🔒 那份只刪本機。修正（`cloud.js`）：
+  - 待刪除改成**依帳號分開** `{ uid: [角色id…] }`（`cloudDelMap`／`cloudDelAdd`／`cloudDelSave`；舊的陣列格式歸給 `dragonSlayer_cloud_owner` 的帳號）。登出不清。
+    `cloudSync` 處理目前帳號那份：雲端找到同一角色就刪、寫墓碑（`cloudTombAdd`），刪不掉的留著下次再試，雲端已經沒有的移除。
+  - `cloudDeleteSlot`：沒登入 → 記到角色所屬帳號的待刪除；登入中刪自己的（或訪客）角色 → 寫墓碑＋`cloudRemoveChar`（依角色的 `created`＋`cls` 刪，不管在哪個欄位，原本只照欄位刪可能刪錯），失敗記待刪除；
+    **登入中刪別的帳號的角色（🔒）→ 只刪這台的那份，原帳號雲端不動**（不能讓 A 在共用裝置刪掉 B 帳號的角色），目前帳號雲端如果也有同一角色就一起刪並寫墓碑。人物選單刪 🔒 角色時確認框會說明。
+  - `cloudSync`：本機有 🔒 角色時，目前帳號雲端裡同一角色不再下載（`dup`，「角色屬於其他帳號」提示會說明）。
+  - **擋舊版遊戲**（`tools/client-version.sql`，也附在 `supabase.sql` 最後）：沒有角色歸屬的舊版（存檔 schema < 4）會把別人的角色傳進目前帳號；`dragon_saves` 觸發器 `dragon_saves_client_version` 拒絕 `data.schema < 4` 的寫入（hint `dragon_client_old`，`cloudErrText` 翻成「遊戲版本太舊」）。
+    只擋 `auth.role() = 'authenticated'`、且存檔內容有變的寫入（管理者在 SQL Editor 改 `user_id` 不受影響）。新版 `cloudPushSlot` 上傳時一律把 `data.schema` 設成 `SAVE_SCHEMA`。**要等新版發佈後才在 SQL Editor 執行**。
+  - B 的角色匯出→匯入 A：匯入會拿掉 owner、成為 A 的新角色（同一個 `created`）；B 刪除時墓碑只擋 B 自己的上傳（`d.user_id = new.user_id`），A 那份不受影響。
+  - 驗證（本機、模擬 Supabase：每帳號只看自己的列、墓碑與版本觸發器）：沒登入時刪→再登入雲端也刪；刪除失敗→登出→再登入會補刪；🔒 角色不重複、刪除後 A 雲端的混入那份刪掉、B 雲端不動；B 匯入 A 後 B 刪除、A 照舊；
+    舊版 schema 3 上傳被擋、新版照常；兩台裝置合併、別台刪除、正常刪除照舊。沒有用真實 Supabase 測。
 - **登入安全**（2026-10-12，版本 `20261012y`）：使用者把帶有 `#access_token=…&refresh_token=…` 的網址（舊的 implicit 登入流程，Google 登入／確認信跳轉回來時網址列會帶）傳給別人，對方就以使用者的帳號登入、開了角色「操真猛」。修正：
   - `index.html` `<head>` 第一個 `<script>`：網址 hash 有 `access_token`／`refresh_token`／`provider_token` → 立刻 `history.replaceState` 清掉、**不使用**（舊確認信點了仍會完成驗證，只是要回來手動登入）。
   - `createClient` 改 `flowType: 'pkce'`：Google 登入、確認信回來只帶 `?code=`，要配這個瀏覽器 localStorage 裡的驗證碼才能換登入，網址傳出去沒用；確認信要用註冊的同一個瀏覽器開才會自動登入。

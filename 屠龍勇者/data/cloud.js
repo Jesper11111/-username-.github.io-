@@ -53,6 +53,7 @@ function cloudErrText(e) {
     if (/rate limit|too many/i.test(m)) return '嘗試太多次，請稍後再試';
     if (/signups not allowed|Signups not allowed/i.test(m)) return '目前暫停註冊新帳號';
     if (/timeout|Failed to fetch|NetworkError|network/i.test(m)) return '連不上雲端伺服器，請確認網路';
+    if (/client too old/i.test(m)) return '遊戲版本太舊，請重新整理或按「有新版本」更新';
     return m || '未知錯誤';
 }
 
@@ -275,17 +276,23 @@ async function cloudSync() {
         if (error) throw error;
         const uid = cloudUser.id, owner = cloudLs(CLOUD_OWNER_KEY);
         let playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
-        const pendingDel = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
         const cloud = [];
         for (const r of rows || []) if (r.slot >= 0 && r.slot < MAX_SLOTS && r.data && r.data.player && !(WIPE.at && r.client_t < WIPE.at)) cloud[r.slot] = { data: r.data, t: r.client_t, id: cloudCharId(r.data) };
         cloudKnown = {};
         for (let i = 0; i < MAX_SLOTS; i++) cloudKnown[i] = cloud[i] ? cloud[i].t : null;
-        // 上次在這台裝置刪掉、雲端還沒刪成功的角色
-        for (let i = 0; i < MAX_SLOTS; i++) if (cloud[i] && pendingDel.includes(cloud[i].id) && owner === uid && i !== playing) {
-            await cloudSb.from(CLOUD_TABLE).delete().eq('slot', i);
+        // 這個帳號的待刪除（沒登入時刪的、雲端刪除失敗的、在別的帳號登入時刪的）：刪雲端、寫墓碑；刪不掉的留著下次再試
+        const delMap = cloudDelMap(), pend = delMap[uid] || [], keepPend = [];
+        for (const id of pend) {
+            const i = cloud.findIndex(c => c && c.id === id);
+            if (i < 0) continue;   // 雲端已經沒有了
+            if (i === playing) { keepPend.push(id); continue; }
+            const { error: de } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i));
+            if (de) { keepPend.push(id); continue; }
+            cloudTombAdd(cloud[i].data.player);
             cloud[i] = null; cloudKnown[i] = null;
         }
-        cloudLs(CLOUD_DEL_KEY, null);
+        if (keepPend.length) delMap[uid] = keepPend; else delete delMap[uid];
+        cloudDelSave(delMap);
 
         const tomb = await cloudTombIds();
         // 每個本機角色看自己的 owner（save.js 角色歸屬）：自己帳號的照常合併；訪客角色（owner 空）收進目前帳號；
@@ -312,10 +319,13 @@ async function cloudSync() {
         // 本機文字要帶 owner＝目前帳號；已經是自己帳號的那份就沿用（jsonb 會改變欄位順序，避免每次都判定有變動）
         const mineRaw = L => L && L.owner === uid && L.data.owner === uid ? L.raw : null;
         const final = [];
-        let hidden = 0;
+        let hidden = 0, dup = 0;
+        // 本機已經有、但屬於別的帳號的角色（🔒）：這個帳號雲端裡同一個角色（以前混進來或匯入的）這台不重複下載
+        const foreignIds = new Set([...reserved].map(i => local[i].id));
         for (let i = 0; i < MAX_SLOTS; i++) {
             const c = cloud[i];
             if (c && reserved.has(i)) { final[i] = null; hidden++; continue; }   // 欄位被別帳號的角色佔著：這台先不顯示（雲端照舊）
+            if (c && foreignIds.has(c.id)) { final[i] = null; dup++; continue; }
             final[i] = c ? { data: c.data, t: c.t, id: c.id, raw: local[i] && local[i].id === c.id && local[i].t === c.t ? mineRaw(local[i]) : null } : null;
         }
         const freeSlot = () => { for (let k = 0; k < MAX_SLOTS; k++) if (!final[k] && !reserved.has(k)) return k; return -1; };
@@ -381,6 +391,7 @@ async function cloudSync() {
             if (kicked) lines.push(`「${kicked}」屬於其他帳號${who}，目前登入的帳號和這個角色不同，已回到標題畫面（進度留在這台裝置）。`);
             lines.push(`這台裝置有 ${reserved.size} 個角色屬於其他帳號${who}，不會上傳到目前的帳號，也不能用這個帳號遊玩；要玩請登入原本的帳號。`);
             if (hidden) lines.push(`這個帳號有 ${hidden} 個雲端角色因為欄位被佔用，這台暫時不顯示（雲端資料不受影響）。`);
+            if (dup) lines.push(`這個帳號的雲端也有 ${dup} 個和上面（其他帳號）相同的角色，這台不重複顯示。在人物選單刪除 🔒 的那個角色時，這個帳號雲端裡的同一個角色會一起刪除（原帳號的不受影響）。`);
             setTimeout(() => { if (kicked) showTitle(); gameAlert('角色屬於其他帳號', lines.join('\n\n')); }, 0);
         }
         cloudLs(CLOUD_SEEN_KEY, JSON.stringify(final.filter(Boolean).map(f => f.id)));
@@ -474,6 +485,7 @@ async function cloudPushSlot(i, overwrite) {
     const full = JSON.parse(raw);
     if (saveOwnerOf(full) !== cloudUser.id) return true;   // 不是目前帳號的角色（別的帳號或還沒歸屬的訪客角色）一律不上傳
     const data = cloudStripOwner(full), p = data.player, t = data.t || 0;
+    data.schema = SAVE_SCHEMA;   // 伺服器用它擋掉沒有角色歸屬的舊版遊戲（tools/client-version.sql）；從雲端下載後沒再存檔的舊格式也照樣上傳得了
     const row = { slot: i, client_t: t, name: String(p.name || '').slice(0, 40), cls: p.cls, lv: p.lv | 0, data };
     const known = cloudKnown[i];
     let res;
@@ -559,28 +571,61 @@ async function cloudUseCloudSlot() {
     renderCloudEntry();
 }
 
-// 刪除角色時：雲端也刪；失敗記下來，下次同步再刪
+// ───────── 刪除角色（ARCHITECTURE.md 第 29 節「刪除角色」）─────────
+// 待刪除清單依帳號分開：{ uid: [角色id…] }。沒登入、雲端刪除失敗、或刪的是別的帳號的角色時記在這裡，
+// 那個帳號下次登入同步（cloudSync）時才刪雲端並寫墓碑；登出也不會清掉（舊版是一個陣列，登出後就永遠不會重試）
+function cloudDelMap() {
+    let m = null;
+    try { m = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '{}'); } catch (e) { }
+    if (Array.isArray(m)) { const legacy = cloudLs(CLOUD_OWNER_KEY); m = legacy ? { [legacy]: m } : {}; }   // 舊格式：屬於這台裝置記的帳號
+    return m && typeof m === 'object' ? m : {};
+}
+function cloudDelSave(m) { cloudLs(CLOUD_DEL_KEY, Object.keys(m).length ? JSON.stringify(m) : null); }
+function cloudDelAdd(uid, id) {
+    if (!uid || !id) return;
+    const m = cloudDelMap();
+    m[uid] = m[uid] || [];
+    if (!m[uid].includes(id)) m[uid].push(id);
+    cloudDelSave(m);
+}
+// 墓碑：其他還開著這個角色的裝置不能再傳回這個帳號（tools/char-tombstone.sql；只擋同一個帳號）
+function cloudTombAdd(p) {
+    if (!cloudLoggedIn() || !p || !p.created) return;
+    cloudSb.from('dragon_deleted_chars').insert({ char_created: p.created, cls: p.cls, name: String(p.name || '').slice(0, 40) }).then(() => { }, () => { });
+}
+// 刪掉目前帳號雲端裡的這個角色（用角色的建立時間＋職業找，不管在哪個欄位；只照欄位刪可能刪到換過位置的別的角色）
+async function cloudRemoveChar(p) {
+    const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).delete()
+        .eq('data->player->>created', String(p.created)).eq('cls', p.cls).select('slot'));
+    if (error) throw error;
+    for (const r of data || []) cloudKnown[r.slot] = null;
+    return data || [];
+}
+
+// 刪除角色時（save.js deleteSave）：
+//   自己帳號的角色（或訪客角色）＋登入中 → 刪雲端、寫墓碑；失敗記待刪除
+//   現在沒有登入任何帳號 → 記在角色所屬帳號的待刪除，那個帳號下次登入時刪（被動登出後刪角色）
+//   登入中刪的是別的帳號的角色（🔒）→ 只刪這台的那份，原帳號雲端不動（不能讓 A 刪掉 B 帳號的角色）；
+//     目前帳號雲端如果也有同一個角色（以前混進來的），一起刪掉並寫墓碑
 function cloudDeleteSlot(i, raw) {
     cloudDirty.delete(i);
     delete cloudConflict[i];
-    if (!cloudLoggedIn() || !raw) return;
-    let id = '';
-    try {
-        const d = JSON.parse(raw);
-        if (saveOwnerOf(d) && saveOwnerOf(d) !== cloudUser.id) return;   // 別的帳號的角色：只刪本機，不能動目前帳號雲端同欄位的角色
-        id = cloudCharId(d);
-    } catch (e) { }
-    cloudKnown[i] = null;
-    cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
-    try {   // 墓碑：其他還開著這個角色的裝置不能再傳回來
-        const p = JSON.parse(raw).player;
-        if (p && p.created) cloudSb.from('dragon_deleted_chars').insert({ char_created: p.created, cls: p.cls, name: String(p.name || '').slice(0, 40) }).then(() => { }, () => { });
-    } catch (e) { }
-    cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i)).then(r => { if (r.error) throw r.error; }).catch(e => {
+    if (!raw) return;
+    let d = null;
+    try { d = JSON.parse(raw); } catch (e) { return; }
+    const p = d && d.player, id = cloudCharId(d), owner = saveOwnerOf(d);
+    if (!p || !p.created || !id) return;
+    const me = cloudLoggedIn() ? cloudUser.id : '';
+    if (!me) { if (owner) cloudDelAdd(owner, id); return; }
+    const mine = !owner || owner === me;
+    if (mine) {
+        cloudKnown[i] = null;
+        cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
+        cloudTombAdd(p);
+    }
+    cloudRemoveChar(p).then(rows => { if (!mine && rows.length) cloudTombAdd(p); }).catch(e => {
         console.warn('雲端刪除失敗', e);
-        const list = JSON.parse(cloudLs(CLOUD_DEL_KEY) || '[]');
-        if (id && !list.includes(id)) list.push(id);
-        cloudLs(CLOUD_DEL_KEY, JSON.stringify(list));
+        cloudDelAdd(me, id);
     });
 }
 

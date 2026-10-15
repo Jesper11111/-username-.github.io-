@@ -15,6 +15,11 @@ const SPELL_SLOT_LEVEL_STEP = 100;   // 每幾級多開一格技能格
 //   宗門武學也要放進技能格才會施放（不再自動參戰），技能格改成 基本 SPELL_SLOT_BASE 格＋每 SPELL_SLOT_LEVEL_STEP 級 1 格（原本基本 1 格）
 const SPELL_SLOT_BASE = 3;
 const SECT_SKILL_SLOT_PREFIX = "sect:";   // 技能格內的宗門武學 id＝"sect:" + 招式名稱（招式名稱不重複；寫進存檔，上線後不要改招式名）
+// 2026-10-15 使用者：「靈寶閣技能也合併到武學密典內，不再獨立」→ 選「放格子，格數不變」：
+//   靈寶閣武學（player.learnedSkills）也要放進技能格才會施放；技能格內 id＝"lb:" + 招式名稱（寫進存檔，上線後不要改招式名）
+//   品階只是分類（威力不變）：靈寶閣初級 200／180% ≈ 中品、中級 350／260% ≈ 上品、高級 600／400% ≈ 絕學（秘典單體 240／340／500、群體 170／250／380）
+const LINGBAO_SKILL_SLOT_PREFIX = "lb:";
+const LINGBAO_SKILL_GRADE = { 1: "mid", 2: "high", 3: "ultimate" };
 // 下品武學秘典碎片（2026-10-01 使用者要求「新增下品武學秘典碎片，100 個可合成，在奇遇機緣等探索發現」）：
 //   player.spellShards；武學密典視窗「合成」→ 隨機習得一招尚未學會的下品仙法（spells.js 的 synthesizeSpell）；來源見 config-encounter.js
 const SPELL_SHARD_NEED = 100;

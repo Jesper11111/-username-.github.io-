@@ -101,7 +101,9 @@ function deleteSelectedChar() {
     const s = readSlotSummary(selSlot);
     if (!s) return;
     const who = s.broken ? `欄位 ${selSlot + 1} 的損毀存檔` : `「${s.name}」（${CLASSES[s.cls].name} Lv.${s.lv}）`;
-    gameConfirm('刪除角色', `${who}與所有道具會永久刪除，無法復原！確定刪除？`, () => {
+    // 🔒 別的帳號的角色：只刪這台的那份，原帳號雲端不動；目前帳號雲端如果混有同一個角色也一起刪（cloud.js cloudDeleteSlot）
+    const note = s.locked ? `\n\n這個角色屬於其他帳號${s.ownerEmail ? `（${s.ownerEmail}）` : ''}：只刪除這台裝置上的資料，原帳號雲端的角色不受影響；目前登入的帳號雲端如果也混有同一個角色，會一起刪除。` : '';
+    gameConfirm('刪除角色', `${who}與所有道具會永久刪除，無法復原！確定刪除？${note}`, () => {
         deleteSave(selSlot);
         if (!hasSave()) { showTitle(); return; }
         selSlot = nextFilledSlot();

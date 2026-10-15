@@ -365,7 +365,7 @@ function renderSkillList() {
     let skills = getAllSkills();
 
     if (skills.length === 0) {
-        document.getElementById("skill-list").innerHTML = "技能格內沒有技能（宗門武學與仙法要到武學密典放進技能格才會施放）。";
+        document.getElementById("skill-list").innerHTML = "技能格內沒有技能（仙法、宗門武學與靈寶閣武學要到武學密典放進技能格才會施放）。";
         return;
     }
 

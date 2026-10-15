@@ -1,9 +1,9 @@
 // 仙法系統與「武學密典」彈窗（ARCHITECTURE.md 第 35 節）；資料表在 config-spells.js
 //   player.spells     = 已學會的仙法 id（下品／中品／上品：秘典碎片合成 synthesizeSpell；絕學尚無取得方式）
 //   player.spellShards／spellShardsMid／spellShardsHigh = 下品／中品／上品武學秘典碎片（config-spells.js 的 SPELL_SHARD_KINDS）
-//   player.spellSlots = 技能格內放的主動仙法 id 或宗門武學 "sect:招式名"（格數 = SPELL_SLOT_BASE + 人物等級 ÷ SPELL_SLOT_LEVEL_STEP）
-//   player.sectSkillSeen = 已自動放過格子的宗門武學 id（新學會的才自動放進空格；玩家卸下後不會再被塞回去）
-// 被動光環學會即生效（getSpellAuraBonus，stats.js／elements.js 讀取）；主動仙法與宗門武學放進技能格才會施放（getAllSkills 讀取）
+//   player.spellSlots = 技能格內放的主動仙法 id、宗門武學 "sect:招式名" 或靈寶閣武學 "lb:招式名"（格數 = SPELL_SLOT_BASE + 人物等級 ÷ SPELL_SLOT_LEVEL_STEP）
+//   player.sectSkillSeen = 已自動放過格子的宗門武學／靈寶閣武學 id（新學會的才自動放進空格；玩家卸下後不會再被塞回去）
+// 被動光環學會即生效（getSpellAuraBonus，stats.js／elements.js 讀取）；主動仙法、宗門武學、靈寶閣武學放進技能格才會施放（getAllSkills 讀取）
 
 // ---- 由 config-spells.js 組出 200 招（載入時執行一次，只讀同檔之前載入的設定）----
 const spellList = (function buildSpellList() {
@@ -102,19 +102,54 @@ function describeSectSkill(sk) {
 }
 function isSectSkillId(id) { return typeof id === 'string' && id.startsWith(SECT_SKILL_SLOT_PREFIX); }
 function getLearnedSectSkill(id) { return isSectSkillId(id) ? getLearnedSectSkills().find(e => e.id === id) || null : null; }
-// 技能格內的這一項是否有效（已學會的主動仙法，或目前宗門的武學）
+
+// ---- 靈寶閣武學（2026-10-15 併入武學密典、放技能格才施放；格數不變）----
+// 已兌換的靈寶閣武學（player.learnedSkills，含已下架的舊禁術）：[{ id: "lb:招式名", skill }]
+function getLearnedLingbaoSkills() {
+    return (Array.isArray(player.learnedSkills) ? player.learnedSkills : []).filter(sk => sk && sk.name)
+        .map(sk => ({ id: LINGBAO_SKILL_SLOT_PREFIX + sk.name, skill: sk }));
+}
+// 武學密典收錄的靈寶閣武學（目前上架的 6 招，不論是否兌換）＋已兌換但下架的舊禁術：{ id, name, grade, tier, skill, faction, role, item }
+function getLingbaoCatalog() {
+    const list = lingbaoShopItems.filter(i => i.type === 'skill' && i.skillData).map(i => ({
+        id: LINGBAO_SKILL_SLOT_PREFIX + i.skillData.name, name: i.skillData.name, grade: LINGBAO_SKILL_GRADE[i.tier] || "mid",
+        tier: i.tier, skill: i.skillData, faction: "正", role: "atk", item: i
+    }));
+    getLearnedLingbaoSkills().forEach(e => {
+        if (list.some(x => x.id === e.id)) return;
+        list.push({ id: e.id, name: e.skill.name, grade: "low", tier: 0, skill: e.skill, faction: "正", role: e.skill.type === "buff" ? "support" : "atk", legacy: true });
+    });
+    return list;
+}
+function isLingbaoSkillId(id) { return typeof id === 'string' && id.startsWith(LINGBAO_SKILL_SLOT_PREFIX); }
+function getLearnedLingbaoSkill(id) { return isLingbaoSkillId(id) ? getLearnedLingbaoSkills().find(e => e.id === id) || null : null; }
+function describeLingbaoSkill(sk) {
+    const effectNames = { metal: "金重擊", fire: "燒傷", ice: "冰凍", poison: "中毒", thunder: "雷擊" };
+    if (sk.type === "single" || sk.type === "aoe") return describeSectSkill(sk) + (sk.effect ? `｜${Math.round(sk.effect.chance * 100)}% 機率觸發${effectNames[sk.effect.type] || sk.effect.type}` : '');
+    if (sk.type === "buff") return `攻擊力 × ${sk.mult}，持續 ${sk.duration || 3} 回合｜耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}`;
+    return `耗魔 ${fmtCombat(skillMpCost(sk.mpCost))}`;
+}
+// 技能格內這一項的名稱與圖示（技能格、日誌用）
+function slotEntryLabel(id) {
+    const e = getLearnedSectSkill(id); if (e) return `🏯 ${e.skill.name}`;
+    const l = getLearnedLingbaoSkill(id); if (l) return `💎 ${l.skill.name}`;
+    const s = getSpell(id); return s ? `${SPELL_ROLES[s.role].icon} ${s.name}` : '';
+}
+// 技能格內的這一項是否有效（已學會的主動仙法、目前宗門的武學、已兌換的靈寶閣武學）
 function isValidSlotEntry(id) {
     if (isSectSkillId(id)) return !!getLearnedSectSkill(id);
+    if (isLingbaoSkillId(id)) return !!getLearnedLingbaoSkill(id);
     const s = getSpell(id);
     return !!(s && s.active && isSpellLearned(id));
 }
-// 新學會的宗門武學自動放進空格（讀檔、拜入宗門、開密典時呼叫）；放過的記在 sectSkillSeen，玩家卸下後不再自動放回
+// 新學會的宗門武學、新兌換的靈寶閣武學自動放進空格（讀檔、拜入宗門、兌換、開密典時呼叫）；
+//   放過的記在 sectSkillSeen（靈寶閣也記在這裡，id 前綴不同不會撞），玩家卸下後不再自動放回；沒有空格就只留在密典裡
 function autoSlotSectSkills() {
     if (!player) return;
     if (!Array.isArray(player.sectSkillSeen)) player.sectSkillSeen = [];
     if (!Array.isArray(player.spellSlots)) player.spellSlots = [];
     const count = getSpellSlotCount();
-    getLearnedSectSkills().forEach(e => {
+    getLearnedSectSkills().concat(getLearnedLingbaoSkills()).forEach(e => {
         if (player.sectSkillSeen.includes(e.id)) return;
         player.sectSkillSeen.push(e.id);
         if (player.spellSlots.slice(0, count).includes(e.id)) return;
@@ -134,6 +169,7 @@ function getEquippedCombatSkills() {
     let slots = Array.isArray(player.spellSlots) ? player.spellSlots.slice(0, getSpellSlotCount()) : [];
     return slots.map(id => {
         if (isSectSkillId(id)) { const e = getLearnedSectSkill(id); return e ? e.skill : null; }
+        if (isLingbaoSkillId(id)) { const e = getLearnedLingbaoSkill(id); return e ? e.skill : null; }
         const s = getSpell(id);
         return s && s.active && isSpellLearned(s.id) ? spellToCombatSkill(s) : null;
     }).filter(Boolean);
@@ -273,8 +309,9 @@ function renderSpellModal() {
     const box = document.getElementById('spell-modal-body');
     if (!box) return;
     autoSlotSectSkills();
-    let learnedCount = spellList.filter(s => isSpellLearned(s.id)).length + getLearnedSectSkills().length;
-    const totalCount = spellList.length + sectSkillCatalog.length;
+    const lingbaoCatalog = getLingbaoCatalog();
+    let learnedCount = spellList.filter(s => isSpellLearned(s.id)).length + getLearnedSectSkills().length + getLearnedLingbaoSkills().length;
+    const totalCount = spellList.length + sectSkillCatalog.length + lingbaoCatalog.length;
     let slotCount = getSpellSlotCount();
     let slots = Array.isArray(player.spellSlots) ? player.spellSlots : [];
 
@@ -282,7 +319,7 @@ function renderSpellModal() {
     let slotHtml = '';
     for (let i = 0; i < slotCount; i++) {
         let id = slots[i], valid = isValidSlotEntry(id), label = '';
-        if (valid) { const e = getLearnedSectSkill(id); const s = getSpell(id); label = e ? `🏯 ${e.skill.name}` : `${SPELL_ROLES[s.role].icon} ${s.name}`; }
+        if (valid) label = slotEntryLabel(id);
         slotHtml += `<div class="spell-slot${valid ? ' filled' : ''}">
             <span class="spell-slot-no">${i + 1}</span>
             ${valid ? `${label}<button class="spell-slot-x" onclick="unequipSpell(${i})" aria-label="卸下">✕</button>` : '<span class="spell-slot-empty">空格</span>'}
@@ -294,21 +331,30 @@ function renderSpellModal() {
     // 篩選列
     const chip = (key, value, label) => `<button class="spell-chip${spellFilter[key] === value ? ' on' : ''}" onclick="setSpellFilter('${key}', '${value}')">${label}</button>`;
     let filters = `
-        <div class="spell-filter-row">${chip('attr', 'all', '全部屬性')}${spellAttributes.map(a => chip('attr', a.key, a.name)).join('')}${chip('attr', 'law', '法則')}${chip('attr', 'sect', '🏯宗門')}</div>
+        <div class="spell-filter-row">${chip('attr', 'all', '全部屬性')}${spellAttributes.map(a => chip('attr', a.key, a.name)).join('')}${chip('attr', 'law', '法則')}${chip('attr', 'sect', '🏯宗門')}${chip('attr', 'lingbao', '💎靈寶閣')}</div>
         <div class="spell-filter-row">${chip('faction', 'all', '正邪不限')}${chip('faction', '正', '☯️ 正道')}${chip('faction', '邪', '😈 邪道')}
             ${chip('role', 'all', '全部類型')}${Object.keys(SPELL_ROLES).map(r => chip('role', r, SPELL_ROLES[r].icon + SPELL_ROLES[r].name)).join('')}</div>
         <div class="spell-filter-row">${chip('grade', 'all', '全部品階')}${Object.keys(SPELL_GRADES).map(g => chip('grade', g, SPELL_GRADES[g].name)).join('')}</div>`;
 
-    // 仙法＋宗門武學（2026-10-06 收錄進密典；屬性篩選「🏯宗門」只看宗門武學）
-    const pass = (s, isSect) =>
-        (spellFilter.attr === "all" || (isSect ? spellFilter.attr === "sect" : spellFilter.attr !== "sect" && (spellFilter.attr === "law" ? !s.attr : s.attr === spellFilter.attr))) &&
+    // 仙法＋宗門武學（2026-10-06）＋靈寶閣武學（2026-10-15）收錄進密典；屬性篩選「🏯宗門」「💎靈寶閣」只看該類
+    //   src：'spell'／'sect'／'lingbao'
+    const pass = (s, src) =>
+        (spellFilter.attr === "all" || (src !== 'spell' ? spellFilter.attr === src
+            : spellFilter.attr !== "sect" && spellFilter.attr !== "lingbao" && (spellFilter.attr === "law" ? !s.attr : s.attr === spellFilter.attr))) &&
         (spellFilter.faction === "all" || s.faction === spellFilter.faction) &&
         (spellFilter.role === "all" || s.role === spellFilter.role) &&
         (spellFilter.grade === "all" || s.grade === spellFilter.grade);
-    let shown = spellList.filter(s => pass(s, false));
-    const shownSect = sectSkillCatalog.filter(e => pass(e, true));
+    let shown = spellList.filter(s => pass(s, 'spell'));
+    const shownSect = sectSkillCatalog.filter(e => pass(e, 'sect'));
+    const shownLingbao = lingbaoCatalog.filter(e => pass(e, 'lingbao'));
 
-    let cards = shownSect.map(e => {
+    let cards = shownLingbao.map(e => {
+        const learned = !!getLearnedLingbaoSkill(e.id), g = SPELL_GRADES[e.grade];
+        return `<button class="spell-card${learned ? ' learned' : ''}${spellSelectedId === e.id ? ' selected' : ''}" onclick="selectSpell('${e.id}')">
+            <span class="spell-card-name">${e.name}</span>
+            <span class="spell-card-meta"><span style="color:${learned ? g.color : '#6b7280'};">${g.name}</span>・💎靈寶閣${e.legacy ? '（舊）' : ''}・${e.skill.type === 'aoe' ? '群體' : e.skill.type === 'buff' ? '增益' : '單體'}</span>
+        </button>`;
+    }).join('') + shownSect.map(e => {
         const learned = !!getLearnedSectSkill(e.id), g = SPELL_GRADES[e.grade];
         return `<button class="spell-card${learned ? ' learned' : ''}${spellSelectedId === e.id ? ' selected' : ''}" onclick="selectSpell('${e.id}')">
             <span class="spell-card-name">${e.name}</span>
@@ -327,7 +373,20 @@ function renderSpellModal() {
     let detail = '';
     let sel = getSpell(spellSelectedId);
     const selSect = getSectCatalogEntry(spellSelectedId);
-    if (selSect) {
+    const selLb = lingbaoCatalog.find(e => e.id === spellSelectedId);
+    if (selLb) {
+        const learned = !!getLearnedLingbaoSkill(selLb.id), sk = selLb.skill, g = SPELL_GRADES[selLb.grade];
+        let action;
+        if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（拜入${SECT_TIER_NAMES[selLb.tier]}宗門後，在宗門「靈寶閣」兌換）</p>`;
+        else if (slots.slice(0, slotCount).includes(selLb.id)) action = `<p class="spell-detail-note">✅ 已放入技能格</p>`;
+        else action = `<button class="sys-btn" onclick="equipSpell('${selLb.id}')">放入技能格</button>`;
+        detail = `<div class="spell-detail">
+            <div class="spell-detail-title" style="color:${g.color};">${sk.name}</div>
+            <div class="spell-detail-tags">${g.name}｜靈寶閣武學（${selLb.legacy ? '已下架' : SECT_TIER_NAMES[selLb.tier]}）｜${sk.dmgType === 'mag' ? '術法（悟性）' : '物理（力量）'}｜${sk.type === 'buff' ? '✨增益' : '⚔️攻擊'}（主動）</div>
+            <div class="spell-detail-desc">${describeLingbaoSkill(sk)}</div>
+            ${action}
+        </div>`;
+    } else if (selSect) {
         const learned = !!getLearnedSectSkill(selSect.id), sk = selSect.skill, g = SPELL_GRADES[selSect.grade];
         let action;
         if (!learned) action = `<p class="spell-detail-note">🔒 尚未習得（拜入${SECT_TIER_NAMES[selSect.tier]}宗門【${selSect.sect.name}】即可習得）</p>`;
@@ -366,19 +425,20 @@ function renderSpellModal() {
     }).join('');
 
     box.innerHTML = `
-        <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${totalCount} 種武學（仙法 ${spellList.length}＋宗門武學 ${sectSkillCatalog.length}）｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
+        <div class="spell-summary">已收錄 <b>${learnedCount}</b> / ${totalCount} 種武學（仙法 ${spellList.length}＋宗門武學 ${sectSkillCatalog.length}＋靈寶閣 ${lingbaoCatalog.length}）｜技能格 ${slotCount} 格（Lv${nextLv} 開下一格）</div>
         ${shardHtml}
         <div class="spell-slots">${slotHtml}</div>
         ${filters}
         ${detail}
-        <div class="spell-count">顯示 ${shown.length + shownSect.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
+        <div class="spell-count">顯示 ${shown.length + shownSect.length + shownLingbao.length} 種（金色 = 已學會、灰色 = 未學會，點選可看效果）</div>
         <div class="spell-grid">${cards}</div>`;
 }
 
-// 放入第一個空格；格子都滿時替換最後一格（仙法 id 或宗門武學 "sect:招式名"）
+// 放入第一個空格；格子都滿時替換最後一格（仙法 id、宗門武學 "sect:招式名"、靈寶閣武學 "lb:招式名"）
 function equipSpell(id) {
     if (!isValidSlotEntry(id)) return;
-    const e = getLearnedSectSkill(id), name = e ? e.skill.name : getSpell(id).name;
+    const e = getLearnedSectSkill(id), lb = getLearnedLingbaoSkill(id);
+    const name = e ? e.skill.name : lb ? lb.skill.name : getSpell(id).name;
     if (!Array.isArray(player.spellSlots)) player.spellSlots = [];
     let count = getSpellSlotCount();
     let slots = player.spellSlots.slice(0, count);
@@ -389,7 +449,7 @@ function equipSpell(id) {
     }
     if (idx === -1) idx = count - 1;
     player.spellSlots[idx] = id;
-    addLog(`📜 將${e ? '宗門武學' : '仙法'}【${name}】放入第 ${idx + 1} 格技能格。`, "skill");
+    addLog(`📜 將${e ? '宗門武學' : lb ? '靈寶閣武學' : '仙法'}【${name}】放入第 ${idx + 1} 格技能格。`, "skill");
     renderSpellModal();
     updateUI();
 }
