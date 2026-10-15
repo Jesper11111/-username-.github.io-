@@ -190,7 +190,17 @@ const SKILL_IMG = {
     // 惡魔
     demonThirst: 'a0016', demonSlash: 'c0105', demonPact: 'b0111', demonSkin: 'b0411', demonFear: 'a0114', demonBloodlust: 'c0104', demonHellfire: 'c0201', demonDrain: 'c0101', demonLord: 'c0203', demonDoom: 'c0304',
 };
+// 共鳴裝備（resonance.js 的 RESONANCE）：每件一張圖，地圖左上角狀態與共鳴觸發的增益（id ＝ res_裝備id）共用；不跟技能圖重複
+const RES_IMG = {
+    tsurugi: 'a0207', holyMace: 'a0107', darkClaw: 'b0103', darkDual: 'b0015', manaWand: 'a0314', pirateCannon: 'a0500', magicSniper: 'a0512', iceQueenStaff: 'b0310', abyssScythe: 'c0500',
+    demonAxe: 'c0503', wyvernSpear: 'a0210', ifritClaw: 'a0302', dragonSlayer: 'c0200', dkFlameSword: 'b0211', windBow: 'b0506', royalKingSword: 'b0006', knightOathSword: 'b0114', mageArchStaff: 'a0402',
+    elfWorldBow: 'b0508', darkDualBlades: 'b0014', shuraDualBlades: 'b0302', warTitanAxe: 'b0407', gunDragonGun: 'a0502', mfHolySword: 'a0316', palJudgeHammer: 'a0509', angelSpear: 'b0306', demonDeathScythe: 'c0501',
+    earthRender: 'b0404', tidalStaff: 'b0208', galeBow: 'b0517', infernoBlade: 'a0308', knightHelm: 'a0404', protectCloak: 'a0111', powerGloves: 'b0115', wolfAmulet: 'a0200', pirateRing: 'b0318',
+    hasteBoots: 'b0317', mrCloak: 'c0401', titanBelt: 'b0217', frostShield: 'b0219', wyvernHelm: 'a0206', flameGloves: 'a0213', dragonScaleMail: 'a0315', archmageHat: 'a0511', phoenixMail: 'a0307',
+    shadowCloak: 'b0107', giantBelt: 'b0403', angelRing: 'b0007', demonRing: 'c0300', abyssAmulet: 'a0304', earthGuard: 'b0218', tideHeart: 'b0307', galeBoots: 'b0511', dragonHeartRing: 'c0005',
+};
 function skillIconHtml(s, frame) {
+    if (s.id && s.id.startsWith('res_') && RES_IMG[s.id.slice(4)]) return imgIconHtml('sk/' + RES_IMG[s.id.slice(4)], frame);
     if (SKILL_IMG[s.id]) return imgIconHtml('sk/' + SKILL_IMG[s.id], frame);
     const [sym, col] = skillIconOf(s);
     return iconSvg(sym, col, frame);
@@ -222,23 +232,30 @@ function itemIconHtml(id, frame) { const [sym, col] = itemIconOf(id); return sym
 // ───────── 地圖左上角狀態：增益與共鳴裝備改成圖示＋剩餘時間（2026-10-15）─────────
 function fmtBuffTime(sec) { return sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}秒`; }
 function buffIconsHtml() {
-    const now = gameNow;
-    const buffs = Object.keys(player.buffs).filter(k => player.buffs[k].until > now).map(k => {
+    const now = gameNow, equippedRes = typeof resItemIds === 'function' ? resItemIds() : [];
+    // 共鳴觸發的增益（res_裝備id）：裝備還穿著就不另外多一格，改在下面那件裝備的圖示上發光＋顯示秒數（避免同一張圖出現兩次）
+    const buffs = Object.keys(player.buffs).filter(k => player.buffs[k].until > now && !(k.startsWith('res_') && equippedRes.includes(k.slice(4)))).map(k => {
         const b = player.buffs[k], sec = Math.ceil((b.until - now) / 1000), sk = b.src === 'skill' && findSkill(b.id);
         const ico = sk ? skillIconHtml(sk, 'skill') : ITEMS[b.id] ? itemIconHtml(b.id, 'item') : iconSvg('sun', 'holy', 'skill');
         const name = buffName(b) || k;
         return `<div class="bf ${sec <= 10 ? 'low' : ''}" title="${esc(name)}" onclick="buffTip('${esc(name)}')">${ico}<span>${fmtBuffTime(sec)}</span></div>`;
     });
     // 共鳴裝備（resonance.js）：紫框，下方顯示冷卻／充能／機率
-    const res = typeof resItemIds === 'function' ? resItemIds().map(id => {
-        const r = ITEMS[id].res, left = Math.ceil(((player.cds['res_' + id] || 0) - now) / 1000);
+    const res = equippedRes.map(id => {
+        const r = ITEMS[id].res, left = Math.ceil(((player.cds['res_' + id] || 0) - now) / 1000), act = player.buffs['res_' + id];
         let s;
+        if (act && act.until > now) {   // 共鳴增益生效中：顯示剩餘秒數、圖示發光
+            const sec = Math.ceil((act.until - now) / 1000);
+            const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'res') : iconSvg('star', 'dark', 'res');
+            return `<div class="bf on ${sec <= 10 ? 'low' : ''}" title="${esc(r.name + '（生效中）：' + r.desc)}" onclick="buffTip('${esc(r.name)}')">${ico}<span>${fmtBuffTime(sec)}</span></div>`;
+        }
         if (r.trigger === 'cd' || r.trigger === 'lowhp') s = left > 0 ? `${left}秒` : r.trigger === 'cd' ? '就緒' : '待命';
         else if (r.trigger === 'charge') s = `${resChargeMap()[id] || 0}/${r.n}`;
         else s = `${Math.round(r.p * 100)}%`;
         const on = resCls(r).includes(player.cls) ? '（職業共鳴）' : '';
-        return `<div class="bf" title="${esc(r.name + on + '：' + r.desc)}" onclick="buffTip('${esc(r.name + on)}')">${iconSvg('star', 'dark', 'res')}<span>${s}</span></div>`;
-    }) : [];
+        const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'res') : iconSvg('star', 'dark', 'res');
+        return `<div class="bf" title="${esc(r.name + on + '：' + r.desc)}" onclick="buffTip('${esc(r.name + on)}')">${ico}<span>${s}</span></div>`;
+    });
     return buffs.concat(res).join('');
 }
 function buffTip(name) { showToast(name, 1500); }
