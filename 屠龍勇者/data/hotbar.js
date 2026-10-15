@@ -66,7 +66,11 @@ function barPcPos(i) {
 function renderHotbar() {
     if (!player || !player.settings.bar || barDrag) return;
     const pcBox = $('hotbar'), mapBar = $('skill-bar');
-    const set = (el, html) => { if (el && el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; } };
+    const set = (el, html) => {
+        if (!el) return;
+        el.classList.toggle('editing', barEditMode);
+        if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }
+    };
     if (isPcFrame()) {
         set(pcBox, player.settings.bar.map((b, i) => barSlotHtml(i, 'abs', barPcPos(i))).join(''));
         set(mapBar, '');
@@ -123,10 +127,11 @@ function openBarPicker(i) {
     const items = [...new Set([...base.filter(id => id && (countItem(id) > 0 || ['redPotion', 'greenPotion', 'bluePotion', 'homeScroll', 'teleScroll', braveItemFor(player.cls)].includes(id))),
         ...player.inv.map(x => x.id).filter(barItemOk)])];
     const opt = (id, ic, sub) => `<button class="hb-opt ${b.id === id ? 'cur' : ''}" onclick="barPick(${i}, '${id}')"><span>${ic}</span>${esc(barName(id))}<small>${sub}</small></button>`;
-    const html = `<small class="muted">點一下＝手動使用；<b>按住格子往下拉再放開</b>＝切換自動（綠框＋AUTO）。${barKeyLabel(i) ? `鍵盤 ${barKeyLabel(i)}。` : ''}</small>
+    const html = `${b.id ? `<div class="hb-now">目前：<b>${esc(barName(b.id))}</b>${b.a ? '（自動）' : '（手動）'}　點下方選項換掉，或按「清空這格」</div>` : ''}
+        <small class="muted">點一下＝手動使用；<b>按住格子往下拉再放開</b>＝切換自動（綠框＋AUTO）。${barKeyLabel(i) ? `鍵盤 ${barKeyLabel(i)}。` : ''}</small>
         <h4>⚔️ 技能</h4><div class="hb-opts">${skills.map(s => opt(s.id, skillIcon(s)[0], s.mp ? `MP ${s.mp}` : '')).join('') || '<small class="muted">還沒學會主動技能</small>'}</div>
         <h4>🎒 道具</h4><div class="hb-opts">${items.map(id => opt(id, barItemIcon(id), `${countItem(id)} 個`)).join('')}</div>`;
-    const btns = [{ text: '關閉', cls: 'secondary' }];
+    const btns = [{ text: barEditMode ? '返回' : '關閉', cls: 'secondary' }];
     if (b.id) btns.unshift({ text: '清空這格', cls: 'danger', onClick: () => barPick(i, '') });
     openDialog(`快捷欄第 ${i + 1} 格`, html, btns);
 }
@@ -164,6 +169,20 @@ function resetSkillSlots() {
     showToast('第一排已依目前學會的技能自動排好');
 }
 
+// ───────── 編輯模式（手機沒有右鍵，長按又不好找：按「✎ 編輯快捷欄」後點任何格子都是更換／清空）─────────
+let barEditMode = false;
+function toggleBarEdit() {
+    barEditMode = !barEditMode;
+    showToast(barEditMode ? '編輯快捷欄：點格子更換或清空，完成後按「✔ 完成」' : '快捷欄編輯完成', 2000);
+    refreshHotbarUI();
+}
+// 手指放開的瞬間打開選單時，瀏覽器接著補發的 click 會點到選單裡手指下的選項（還沒選就被放進去）→ 打開後 0.6 秒內忽略對話框上的 click
+let barIgnoreClickUntil = 0;
+function openBarPickerSafe(i) { barIgnoreClickUntil = Date.now() + 600; openBarPicker(i); }
+document.addEventListener('click', e => {
+    if (Date.now() < barIgnoreClickUntil && e.target.closest && e.target.closest('#dialog-layer')) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+
 // ───────── 手勢：點一下、往下拉、長按 ─────────
 const BAR_PULL = 16;   // 往下拉超過這個距離（px）放開就切換自動
 let barDrag = null;
@@ -182,7 +201,7 @@ document.addEventListener('pointerdown', e => {
     e.preventDefault();
     const i = +el.dataset.i;
     barDrag = { el, i, x0: e.clientX, y0: e.clientY, dy: 0, moved: false,
-        long: setTimeout(() => { if (barDrag && !barDrag.moved) { barDragEnd(); openBarPicker(i); } }, 550) };
+        long: setTimeout(() => { if (barDrag && !barDrag.moved) { barDragEnd(); openBarPickerSafe(i); } }, 550) };
     try { el.setPointerCapture(e.pointerId); } catch (err) { }
 });
 document.addEventListener('pointermove', e => {
@@ -201,7 +220,7 @@ document.addEventListener('pointerup', () => {
     barDragEnd();
     const b = player.settings.bar[i];
     if (dy >= BAR_PULL && b.id) barToggleAuto(i);
-    else if (!moved) { if (b.id) barUse(i); else openBarPicker(i); }
+    else if (!moved) { if (b.id && !barEditMode) barUse(i); else openBarPickerSafe(i); }
     else renderHotbar();
 });
 document.addEventListener('pointercancel', () => { barDragEnd(); renderHotbar(); });
@@ -209,5 +228,6 @@ document.addEventListener('contextmenu', e => {
     const el = e.target.closest && e.target.closest('.hb');
     if (!el || !player) return;
     e.preventDefault();
-    openBarPicker(+el.dataset.i);
+    if (document.getElementById('dialog-layer').classList.contains('active')) return;   // 長按計時已經打開了
+    openBarPickerSafe(+el.dataset.i);
 });

@@ -136,6 +136,8 @@ function huntButtonsHtml() {
     // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
     let h = `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
     h += `<button class="secondary" onclick="walkHomeBtn()">🚶 步行回村</button>`;
+    // 手機沒有右鍵：編輯模式下點格子＝更換／清空（hotbar.js）
+    h += `<button class="${barEditMode ? 'bar-edit-on' : 'secondary'}" onclick="toggleBarEdit()">${barEditMode ? '✔ 完成' : '✎ 編輯快捷欄'}</button>`;
     if (z && z.type === 'tower') {
         h += `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>`;
     }
@@ -145,7 +147,7 @@ function huntButtonsHtml() {
 function updateHuntLive() {
     const btns = $('hunt-btns');
     if (btns) {
-        const sig = [isPcFrame(), inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor].join('|');
+        const sig = [isPcFrame(), inTown(), player.hunting, !!walkHome, countItem('homeScroll'), player.loc.floor, barEditMode].join('|');
         if (btns.dataset.sig !== sig) {
             btns.dataset.sig = sig;
             btns.innerHTML = huntButtonsHtml();
