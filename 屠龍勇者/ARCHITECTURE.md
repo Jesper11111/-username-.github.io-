@@ -62,7 +62,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015o`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015p`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1312,8 +1312,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   其他道具 `ITEM_ICON`：治癒藥水類＝藥瓶符號（紅／橙／白／金）、精靈餅乾＝葉、回家卷軸＝卷軸、瞬移卷軸＝傳送門。
 - **技能圖片**（2026-10-15，版本 `20261015o`）：使用者提供兩張 Gemini 生成的技能圖示大圖（3584×1184，放在 `tools/icon-src/`），用 `tools/cut-icons.ps1` 裁成 128×128
   （第一張 18 欄×6 列，格線不規則所以用固定格距 `-FixCols 18 -FixX0 16 -FixPitch 198.5 -FixW 178`；第二張 20 欄×7 列自動偵測）。檔名＝`a`／`b`＋列兩碼＋欄兩碼。
-  **146 招全部人工挑圖**，用到的 121 張放 `images/icons/sk/`（共約 730KB），對照表 `SKILL_IMG`（技能 id → 檔名）在 `icons.js`；`skillIconHtml` 有圖就用圖（`imgIconHtml`），沒有才用 SVG 自動配圖。
-  規則：共用魔法彼此不重複、同職業內不重複（長得太像的也換掉）、職業技能不跟共用魔法撞圖；Lv／EXP／愛心／天鵝／城堡、帶字母（C、H、K、E、I）的圖不用。
+  **146 招全部人工挑圖、全遊戲每招一張不重複**（2026-10-15 `20261015p` 加第三張 6×6 繪畫風大圖 `c` 系列補齊：每格下方有文字，只裁上方 278×278 圖片區），146 張放 `images/icons/sk/`，對照表 `SKILL_IMG`（技能 id → 檔名）在 `icons.js`；`skillIconHtml` 有圖就用圖（`imgIconHtml`），沒有才用 SVG 自動配圖。
+  規則：每招一張圖、同職業內長得太像的也換掉；Lv／EXP／愛心／天鵝／城堡、帶字母（C、H、K、E、I）的圖不用。
   要換某招的圖：改 `SKILL_IMG` 的檔名（`tools/cut-icons.ps1` 重新裁出全部候選，再複製到 `images/icons/sk/`），換同檔名的圖要把 `ICON_IMG_VER` 加一。- 用在：快捷欄格子（`barSlotHtml`，`.hb-face.svg` 整格由 SVG 畫）、選放對話框、技能頁每招前面（`.sk-ico`，沒學會變灰）。
 - **地圖左上角狀態**（`buffIconsHtml`，取代原本文字 chip 與 `resonanceChip()`）：每個增益一個圖示，下方剩餘時間（≥60 秒「分:秒」，否則「N秒」），剩 10 秒內變紅閃爍；
   技能增益＝該技能圖示藍框、藥水＝道具圖示金框、共鳴裝備＝紫框星星（下方顯示冷卻秒數／就緒／充能／機率）。點一下顯示名稱（`buffTip`），滑鼠移上去有 title。內容沒變就不重畫。地點名稱保留。
+  **頂端一整排、不換行**（`20261015p` 使用者要求：疊好幾排會擋畫面）：`.buffs.scene-buffs` nowrap＋overflow hidden，右邊 24px 淡出（放不下的看不到）；PC 從地點下方延伸到地圖右側。要用 `.buffs.scene-buffs` 才蓋得過後面通用的 `.buffs { flex-wrap: wrap }`。

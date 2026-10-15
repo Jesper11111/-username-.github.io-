@@ -160,35 +160,35 @@ function skillIconOf(s) {
     return SKILL_ICON_MAP[s.id] || skillIconCandidates(s)[0];
 }
 // ───────── 技能圖片（使用者提供的 Gemini 生成圖，images/icons/sk/；2026-10-15）─────────
-// 兩張大圖由 tools 外的腳本裁成 128×128：a＝第一張、b＝第二張，後面 4 碼＝列、欄。逐招人工挑選，
-// 共用魔法彼此不重複、同職業內不重複、職業技能不跟共用魔法撞圖。沒列在這裡的技能用上面的 SVG 自動配圖。
+// 三張大圖（tools/icon-src/）裁成 128×128：a＝第一張、b＝第二張、c＝第三張（6×6 繪畫風），後面 4 碼＝列、欄。逐招人工挑選，
+// 全遊戲 146 招每招一張圖、沒有重複。沒列在這裡的技能（之後新增的）用上面的 SVG 自動配圖。
 const SKILL_IMG = {
     // 共用魔法
     energyBolt: 'b0303', heal1: 'b0319', mShield: 'a0403', holyWeapon: 'a0416', iceDagger: 'a0202', windCutter: 'b0012', armorBless: 'b0101', meditate: 'b0109', heal2: 'b0513', fireArrow: 'a0312', auroraBolt: 'a0215', enchantDex: 'b0316', fireball: 'b0212', haste: 'b0601', vampKiss: 'a0112', enchantStr: 'b0600', lightning: 'a0217', frostBreath: 'b0018', berserkSpell: 'a0205', heal3: 'b0510', blaze: 'a0305', iceLance: 'a0313', bodyBless: 'b0500', blizzard: 'a0203', tornado: 'a0411', mageBarrier: 'b0512', fullHeal: 'a0415', thunderStorm: 'a0300', holyBarrier: 'b0401', meteor: 'b0112', disintegrate: 'a0101', absBarrier: 'b0313', mageInferno: 'a0014', darkStar: 'b0200',
     // 王族
-    royalAim: 'b0415', royalStrike: 'a0508', royalMorale: 'b0418', royalIron: 'b0102', royalAura: 'a0117', royalImpact: 'b0408', royalWrath: 'a0507', royalDecree: 'a0413',
+    royalAim: 'b0415', royalStrike: 'b0118', royalMorale: 'b0418', royalIron: 'b0102', royalAura: 'a0117', royalImpact: 'c0400', royalWrath: 'a0507', royalDecree: 'a0413',
     // 騎士
     knightBash: 'a0401', knightStun: 'b0409', knightCharge: 'b0215', knightSolid: 'b0110', knightWill: 'a0211', knightCounter: 'a0417', knightVow: 'a0116', knightGuard: 'b0216', knightShield: 'b0017', knightWrath: 'a0503', knightVerdict: 'b0113',
     // 法師
     mageFocus: 'a0012', mageMind: 'a0414',
     // 妖精
-    elfShot: 'a0100', elfWind: 'b0507', elfEarth: 'a0410', elfBless: 'b0005', elfTriple: 'b0304', elfSpring: 'a0115', elfStorm: 'b0119', elfFire: 'a0317', elfPierce: 'a0212', elfRain: 'b0214',
+    elfShot: 'a0100', elfWind: 'b0507', elfEarth: 'a0410', elfBless: 'b0005', elfTriple: 'b0304', elfSpring: 'a0510', elfStorm: 'b0119', elfFire: 'a0317', elfPierce: 'a0212', elfRain: 'b0214',
     // 黑暗妖精
     deStab: 'a0311', deShadow: 'b0203', dePoison: 'b0205', deBurn: 'b0019', deFang: 'a0505', deBody: 'b0106', deDouble: 'b0013', deStorm: 'b0016', deAssassin: 'a0209', deArmor: 'b0100', deNightmare: 'a0301',
     // 修羅
-    shuraPalm: 'b0117', shuraCombo: 'b0116', shuraIron: 'b0102', shuraBreak: 'a0409', shuraWhirl: 'a0412', shuraRage: 'a0204', shuraBlood: 'a0504', shuraThousand: 'a0211', shuraFist: 'b0400', shuraWrath: 'b0402', shuraAsura: 'a0113',
+    shuraPalm: 'b0117', shuraCombo: 'b0116', shuraIron: 'c0100', shuraBreak: 'a0409', shuraWhirl: 'a0412', shuraRage: 'a0204', shuraBlood: 'a0504', shuraThousand: 'c0001', shuraFist: 'b0400', shuraWrath: 'b0402', shuraAsura: 'a0113',
     // 戰士
-    warStrike: 'a0401', warSmash: 'b0406', warLeap: 'b0305', warTough: 'a0400', warIron: 'b0410', warBerserk: 'a0504', warWhirl: 'a0409', warTitan: 'b0011', warExecute: 'a0506', warCry: 'a0208', warQuake: 'a0503',
+    warStrike: 'c0003', warSmash: 'b0406', warLeap: 'b0305', warTough: 'a0400', warIron: 'b0410', warBerserk: 'c0403', warWhirl: 'c0504', warTitan: 'b0011', warExecute: 'a0506', warCry: 'a0208', warQuake: 'c0303',
     // 槍手
-    gunQuick: 'b0504', gunAim: 'b0515', gunBlast: 'b0414', gunFlash: 'a0110', gunRapid: 'b0501', gunSteady: 'a0513', gunSnipe: 'b0416', gunPierce: 'b0419', gunBarrage: 'a0516', gunRocket: 'b0519', gunBullet: 'b0518',
+    gunQuick: 'b0504', gunAim: 'b0515', gunBlast: 'b0414', gunFlash: 'c0205', gunRapid: 'b0501', gunSteady: 'a0513', gunSnipe: 'b0416', gunPierce: 'b0419', gunBarrage: 'a0516', gunRocket: 'b0519', gunBullet: 'b0518',
     // 魔鬥士
     mfSlash: 'b0009', mfEnchant: 'b0201', mfThunder: 'b0315', mfFlame: 'b0311', mfShield: 'a0108', mfFocus: 'b0210', mfBurst: 'b0108', mfStorm: 'b0301', mfAvatar: 'b0412', mfCollapse: 'a0406',
     // 聖騎士
-    palStrike: 'a0507', palShield: 'b0213', palHammer: 'a0116', palAura: 'a0117', palBless: 'a0115', palRighteous: 'a0413', palJudge: 'a0405', palDivine: 'a0508',
+    palStrike: 'c0202', palShield: 'b0213', palHammer: 'c0000', palAura: 'c0102', palBless: 'a0115', palRighteous: 'c0302', palJudge: 'a0405', palDivine: 'a0508',
     // 天使
-    holyBolt: 'b0304', angelAegis: 'a0517', angelWings: 'b0418', angelJudge: 'a0405', angelGrace: 'a0115', angelRay: 'a0110', angelWrath: 'a0116', angelSanct: 'b0408', angelSeraph: 'b0008',
+    holyBolt: 'c0305', angelAegis: 'a0517', angelWings: 'c0402', angelJudge: 'c0002', angelGrace: 'c0204', angelRay: 'a0110', angelWrath: 'c0505', angelSanct: 'b0408', angelSeraph: 'b0008',
     // 惡魔
-    demonThirst: 'a0016', demonSlash: 'a0503', demonPact: 'b0111', demonSkin: 'b0411', demonFear: 'a0114', demonBloodlust: 'a0505', demonHellfire: 'a0317', demonDrain: 'a0204', demonLord: 'b0400', demonDoom: 'a0506',
+    demonThirst: 'a0016', demonSlash: 'c0105', demonPact: 'b0111', demonSkin: 'b0411', demonFear: 'a0114', demonBloodlust: 'c0104', demonHellfire: 'c0201', demonDrain: 'c0101', demonLord: 'c0203', demonDoom: 'c0304',
 };
 function skillIconHtml(s, frame) {
     if (SKILL_IMG[s.id]) return imgIconHtml('sk/' + SKILL_IMG[s.id], frame);
