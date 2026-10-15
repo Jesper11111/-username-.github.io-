@@ -49,12 +49,12 @@ function learnBook(uid) {
     const s = SKILL_BY_ID[d.skill];
     consumeItem(inst.id);
     player.skills.push(s.id);
-    // 主動技能：放進第一個空的技能欄（滿了就不放，玩家自己到技能頁調整）
-    const slots = player.settings.skillSlots;
-    let placed = false;
-    if (s.type !== 'passive') { const i = slots.indexOf(''); if (i >= 0) { slots[i] = s.id; placed = true; } }
+    // 主動技能：放進第一排第一個空格並開自動（第一排滿了就不放，玩家自己點空格放）
+    const bar = player.settings.bar;
+    let placed = -1;
+    if (s.type !== 'passive') { placed = bar.findIndex((b, i) => i < SKILL_SLOTS && !b.id); if (placed >= 0) bar[placed] = { id: s.id, a: 1 }; }
     addLog(`✨ 學會了「${s.name}」`, 'lvup');
-    showToast(`✨ 學會了「${s.name}」${s.type === 'passive' ? '（被動，已生效）' : placed ? `（已放進技能欄第 ${slots.indexOf(s.id) + 1} 格）` : '（技能欄滿了，到技能頁放進欄位才會自動施放）'}`, 3000);
+    showToast(`✨ 學會了「${s.name}」${s.type === 'passive' ? '（被動，已生效）' : placed >= 0 ? `（已放進快捷欄第 ${placed + 1} 格，自動施放）` : '（第一排滿了，點快捷欄空格放進去）'}`, 3000);
     saveGame();
     refreshUI();
 }

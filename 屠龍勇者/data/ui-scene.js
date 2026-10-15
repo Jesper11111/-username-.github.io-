@@ -969,13 +969,14 @@ document.addEventListener('keydown', ev => {
     const k = sceneKeyName(ev);
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if (!scene || !player || !huntVisible() || walkHome) return;
-    if (!SCENE_KEY_DIRS[k] && !/^[1-8]$/.test(k)) return;
+    const barKey = BAR_KEYS.indexOf(k);   // 快捷欄：1～8、Q E R F Z X C V（hotbar.js）
+    if (!SCENE_KEY_DIRS[k] && barKey < 0) return;
     const t = ev.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
     const dl = $('dialog-layer');
     if (dl && dl.classList.contains('active')) return;
     ev.preventDefault();
-    if (/^[1-8]$/.test(k)) { if (!ev.repeat) skillBarCast(+k - 1); return; }   // 技能快捷鍵
+    if (barKey >= 0) { if (!ev.repeat) barUse(barKey); return; }
     if (!sceneKeys.includes(k)) sceneKeys.push(k);
     scene.pl.path = scene.pl.path.slice(0, 1);   // 改用鍵盤：取消點地圖的路線（走完這一格）
     scene.moveMark = null;

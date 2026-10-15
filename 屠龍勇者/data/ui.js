@@ -38,6 +38,7 @@ function renderStatus() {
     const lv = $('lv-badge');
     if (lv) lv.textContent = 'Lv.' + player.lv;
     renderSlots();
+    renderHotbar();   // 快捷欄（hotbar.js）：冷卻、數量每 250ms 更新
     renderSkull();
     renderLogPop();
     presTick();   // 村莊其他玩家：加入／離開頻道、送出位置（presence.js）

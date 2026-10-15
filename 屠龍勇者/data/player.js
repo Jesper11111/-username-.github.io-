@@ -20,7 +20,8 @@ const DEFAULT_SETTINGS = {
     autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
     lootFilter: 1,                    // 戰利品過濾：0 全撿、1 普通自動賣、2 魔法以下自動賣、3 只撿傳說（affix.js）
     skills: {},                       // 舊版：技能 id → false 代表關閉自動施放（2026-10-15 起改用技能欄，只在舊存檔轉換時參考）
-    skillSlots: [],                   // 技能欄 8 格（技能 id，'' 空格）；只有放進欄位的技能自動施放（第 40 節）
+    skillSlots: [],                   // 舊版技能欄 8 格（2026-10-15 改用 bar，只在舊存檔轉換時參考）
+    bar: [],                          // 快捷欄 22 格 { id, a }（技能或道具＋自動開關，第 40 節）；potionOn／autoHaste／autoBrave／autoBlue／teleOn 改由這裡決定
 };
 
 function conHpBonus(con) { return Math.max(0, Math.floor((con - 10) / 2)); }
@@ -45,7 +46,7 @@ function createPlayer(name, cls, stats) {
     };
     // Lv.1 就能學的（法師、天使的 1 級魔法與惡魔的血之渴望等）直接學會，其他要魔法書
     player.skills = classSkillList(cls).filter(s => skillNeedLv(s, cls) <= 1).map(s => s.id);
-    player.settings.skillSlots = defaultSkillSlots(player);
+    player.settings.bar = defaultBar(player);
     c.start.forEach(id => { const it = addItem(id, 1); equipItem(it.uid, true); });
     addItem('redPotion', 30);
     addItem('homeScroll', 3);
@@ -172,15 +173,48 @@ function learnedSkills(p = player) {
     return (p.skills || []).map(id => SKILL_BY_ID[id]).filter(s => s && skillNeedLv(s, p.cls));
 }
 function hasSkill(id) { return (player.skills || []).includes(id); }
-// 技能欄（8 格，player.settings.skillSlots）：只有放進欄位的主動技能會自動施放，欄位順序＝優先順序
+// ───────── 快捷欄（player.settings.bar，2026-10-15 起取代 skillSlots；第 40 節）─────────
+// 22 格 { id, a }：id＝技能 id 或道具 id（'' 空格），a＝1 自動使用（格子往下拉切換）。
+//   0～7  第一排（PC 底部骷髏頭左邊、手機地圖下方第一排；鍵盤 1～8）
+//   8～15 第二排（PC 底部右邊、手機第二排；鍵盤 Q E R F Z X C V）
+//   16～21 PC 上排原本藥水、卷軸的 6 格（手機不顯示，但自動照樣生效）
+// 自動技能＝依格子順序施放（治癒 → 增益 → 攻擊）；自動道具：治癒藥水 HP 低於設定時喝、增益藥水效果沒了就喝、瞬移卷軸 HP 危險時用。
 const SKILL_SLOTS = 8;
+const BAR_N = 22;
+const BAR_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', 'q', 'e', 'r', 'f', 'z', 'x', 'c', 'v'];   // WASD 是移動鍵，第二排避開
+function barItemOk(id) { const d = ITEMS[id]; return !!d && (!!d.heal || !!d.buff || id === 'homeScroll' || id === 'teleScroll'); }
+function barCanAuto(id) {
+    const s = SKILL_BY_ID[id];
+    if (s) return s.type !== 'passive';
+    return barItemOk(id) && id !== 'homeScroll';   // 自動回家在設定頁
+}
+function barList(p = player) { return (p.settings.bar || []); }
+function barAutoItemIds(p = player) { return new Set(barList(p).filter(b => b.a && b.id && !SKILL_BY_ID[b.id] && barItemOk(b.id)).map(b => b.id)); }
+function barHealAuto() { return [...barAutoItemIds()].some(id => ITEMS[id].heal); }
+// 自動施放的技能（已學會、主動），格子順序＝優先順序
 function slotSkills() {
     const out = [];
-    for (const id of player.settings.skillSlots || []) {
-        const s = id && hasSkill(id) ? SKILL_BY_ID[id] : null;
+    for (const b of barList()) {
+        const s = b.a && b.id && hasSkill(b.id) ? SKILL_BY_ID[b.id] : null;
         if (s && s.type !== 'passive' && !out.includes(s)) out.push(s);
     }
     return out;
+}
+// 預設快捷欄：第一排＝預設技能（自動）；第二排＝補給（照舊的自動補給設定）；PC 上排＝同樣的補給（手動）
+function defaultBar(p = player, skillIds) {
+    const s = p.settings, brave = braveItemFor(p.cls) || '';
+    const E = (id, a) => ({ id: id || '', a: id && a ? 1 : 0 });
+    const skills = (skillIds || defaultSkillSlots(p)).slice(0, SKILL_SLOTS);
+    while (skills.length < SKILL_SLOTS) skills.push('');
+    const sup = [['redPotion', s.potionOn !== false], ['greenPotion', s.autoHaste !== false], [brave, s.autoBrave !== false], ['bluePotion', !!s.autoBlue], ['homeScroll', 0], ['teleScroll', !!s.teleOn]];
+    return [...skills.map(id => E(id, 1)), ...sup.map(([id, a]) => E(id, a)), E(''), E(''), ...sup.map(([id]) => E(id, 0))];
+}
+function normalizeBar(p) {
+    const bar = Array.isArray(p.settings.bar) ? p.settings.bar : [];
+    p.settings.bar = Array.from({ length: BAR_N }, (_, i) => {
+        const b = bar[i] || {}, id = b.id && (SKILL_BY_ID[b.id] || barItemOk(b.id)) ? b.id : '';
+        return { id, a: id && b.a && barCanAuto(id) ? 1 : 0 };
+    });
 }
 // 預設技能欄（新角色、舊存檔轉換、「自動排好」）：最強的治癒 → 增益最多 3 個 → 攻擊技能，排滿 8 格。
 // 職業技能優先；攻擊魔法只給施法職業（能學到 4 級以上魔法：法師、天使、妖精、魔鬥士、聖騎士），物理系增益只給非施法職業

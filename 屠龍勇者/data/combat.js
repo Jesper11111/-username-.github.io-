@@ -107,9 +107,10 @@ function braveItemFor(cls) {
     return Object.keys(ITEMS).find(id => ['brave', 'wisdom'].includes(ITEMS[id].buff) && ITEMS[id].classes.includes(cls)) || null;
 }
 
+// 自動補給：只用快捷欄裡開了「自動」的道具（2026-10-15，第 40 節）。治癒藥水格開自動＝跟以前一樣從身上所有治癒藥水挑合適的
 function autoSupport(st) {
-    const s = player.settings, now = gameNow, z = currentZone();
-    if (s.teleOn && player.hp < st.maxHp * s.telePct / 100 && countItem('teleScroll') > 0) {
+    const s = player.settings, now = gameNow, z = currentZone(), auto = barAutoItemIds();
+    if (auto.has('teleScroll') && !s.noTele && player.hp < st.maxHp * s.telePct / 100 && countItem('teleScroll') > 0) {
         consumeItem('teleScroll');
         if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
         addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
@@ -117,18 +118,18 @@ function autoSupport(st) {
         return;
     }
     if (now < hunt.potCd) return;
-    if (s.potionOn && player.hp < st.maxHp * s.potionPct / 100) {
+    if (barHealAuto() && player.hp < st.maxHp * s.potionPct / 100) {
         const id = choosePotion(st);
         if (id) { usePotion(id); hunt.potCd = now + POTION_CD_MS; return; }
         if (s.autoHome && useHomeScroll('藥水用完')) return;
     }
-    const tryBuff = (key, id) => {
-        if (buffActive(key) || !id || countItem(id) <= 0) return false;
-        usePotion(id); hunt.potCd = now + POTION_CD_MS; return true;
-    };
-    if (s.autoHaste && !st.haste && tryBuff('haste', 'greenPotion')) return;
-    if (s.autoBrave) { const id = braveItemFor(player.cls); if (id && tryBuff(ITEMS[id].buff, id)) return; }
-    if (s.autoBlue && tryBuff('blue', 'bluePotion')) return;
+    // 增益藥水：效果沒了就喝（加速看整體加速，技能的加速術也算）
+    for (const id of auto) {
+        const d = ITEMS[id];
+        if (!d.buff || countItem(id) <= 0 || (d.classes && !d.classes.includes(player.cls))) continue;
+        if (d.buff === 'haste' ? st.haste : buffActive(d.buff)) continue;
+        usePotion(id); hunt.potCd = now + POTION_CD_MS; return;
+    }
 }
 
 // ───────── 主迴圈中的掛機處理 ─────────
@@ -377,7 +378,7 @@ function canReach(kind) {
 // 技能要用哪種距離：攻擊魔法＝遠程；物理技能看武器
 function skillReach(k, st) { return k.type === 'spell' ? 'ranged' : (st.ranged ? 'ranged' : 'melee'); }
 
-// 只用技能欄（player.settings.skillSlots）裡的技能，欄位順序＝優先順序（2026-10-15，第 40 節）
+// 只用快捷欄（player.settings.bar）裡開了自動的技能，格子順序＝優先順序（2026-10-15，第 40 節）
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = slotSkills();
@@ -651,7 +652,7 @@ function checkAutoHome() {
     const s = player.settings;
     if (!s.autoHome) return;
     const reasons = [];
-    if (s.potionOn && healPotionCount() === 0) reasons.push('藥水用完');
+    if (barHealAuto() && healPotionCount() === 0) reasons.push('藥水用完');
     if (invWeight() >= calcStats().weightMax * s.weightPct / 100) reasons.push('負重過高');
     if (reasons.length) useHomeScroll(reasons.join('、'));
 }

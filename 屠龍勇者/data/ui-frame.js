@@ -31,12 +31,7 @@ const PC_SLOTS = [
     { icon: '✨', name: '技能',     tab: 'skill', x: 447, y: 933, w: 66, h: 66, round: true },
     { icon: '📜', name: '任務',     tab: 'quest', ...PC_SQ(0) },
     { icon: '🎒', name: '背包',     tab: 'bag',   ...PC_SQ(1) },
-    { icon: '🧪', name: '治癒藥水', count: () => healPotionCount(), use: quickHeal, ...PC_SQ(2) },
-    { icon: '💨', name: '自我加速藥水', count: () => countItem('greenPotion'), use: () => quickPotion('greenPotion'), ...PC_SQ(3) },
-    { icon: '⚡', name: '勇敢藥水類', count: () => { const id = braveItemFor(player.cls); return id ? countItem(id) : 0; }, use: () => { const id = braveItemFor(player.cls); if (id) quickPotion(id); }, ...PC_SQ(4) },
-    { icon: '💧', name: '藍色藥水', count: () => countItem('bluePotion'), use: () => quickPotion('bluePotion'), ...PC_SQ(5) },
-    { icon: '📜', name: '回家卷軸', count: () => countItem('homeScroll'), use: () => homeScrollBtn(), ...PC_SQ(6) },
-    { icon: '🌀', name: '瞬間移動卷軸', count: () => countItem('teleScroll'), use: quickTele, ...PC_SQ(7) },
+    // PC_SQ(2)～(7)：原本藥水、卷軸 6 格，2026-10-15 改成快捷欄第 17～22 格（hotbar.js）
     { icon: '🚶', name: '步行回村', use: () => { if (currentZone()) startWalkHome(); else showToast('你已經在村莊裡'); }, ...PC_SQ(8) },
     { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(9) },
     { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(10) },

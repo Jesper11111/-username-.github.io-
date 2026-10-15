@@ -275,58 +275,83 @@
     .slot.active { box-shadow: 0 0 0 2px var(--gold), 0 0 8px var(--gold); }
     .slot.empty { opacity: .35; }
     /* 底部骷髏頭（原圖 x 610～730、y 1870～1990）：開始／停止掛機，眼睛表示狀態 */
-    /* 技能快捷列（地圖右下）：冷卻用 conic 遮罩，MP 不足變暗 */
-    /* 技能欄 8 格：地圖下方置中的金框橫排（方格圖示＋技能名＋按鍵圓鈕，2026-10-15 依使用者附圖，第 40 節） */
-    .skill-bar { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); z-index: 2; width: max-content; }
+    /* ── 快捷欄（hotbar.js，2026-10-15，第 40 節）：方格圖示、點一下用、往下拉切換自動（綠色跑馬燈＋AUTO）── */
+    /* 手機：地圖下方置中兩排金框（各 8 格＋技能名）；PC：#hotbar 疊在外框上（底部石條左右各 8 格、上排 6 格） */
+    .scene-wrap { container-type: inline-size; --cell: min(40px, calc((100cqw - 34px) / 8)); }   /* 格子依地圖寬度縮小，8 格一定放得下 */
+    .skill-bar { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); z-index: 2; width: max-content; display: flex; flex-direction: column; gap: 3px; }
     .sk-row {
-        position: relative; display: flex; justify-content: center; gap: 2px; padding: 5px 5px 0; border-radius: 6px;
+        position: relative; display: flex; justify-content: center; gap: 2px; padding: 5px 5px 2px; border-radius: 6px;
         background: linear-gradient(#1d1712f2, #0d0a08f2); border: 1px solid #c9a052;
         box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #5a4322, inset 0 0 12px #000, 0 2px 10px #000c;
     }
     .sk-row::before, .sk-row::after { content: '◆'; position: absolute; top: 40%; color: #e8c06a; font-size: 13px; text-shadow: 0 0 4px #c9a052; transform: translateY(-50%); }
     .sk-row::before { left: -7px; }
     .sk-row::after { right: -7px; }
-    .scene-wrap { container-type: inline-size; }   /* 技能格依地圖寬度縮小，8 格一定放得下 */
-    .skill-bar { --cell: min(40px, calc((100cqw - 34px) / 8)); }
     .sk-cell { display: flex; flex-direction: column; align-items: center; flex: none; width: var(--cell); }
+    .sk-cell .hb { width: var(--cell); height: var(--cell); }
     .sk-name { width: 100%; margin-top: 2px; font-size: 9px; line-height: 11px; color: #f1dca8; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip; text-shadow: 0 1px 2px #000; }
-    .sk-key {
-        width: 16px; height: 16px; margin: 1px 0 -8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-size: 9px; font-weight: bold; color: #f5dc9a; background: radial-gradient(#3a2a18, #120c07); border: 1px solid #c9a052; box-shadow: 0 0 3px #000;
-    }
-    .skill-bar { padding-bottom: 8px; }
-    /* 技能頁：技能欄 8 格下拉選單 */
-    .slot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-    .slot-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-    .slot-row span { width: 18px; text-align: center; font-weight: bold; color: var(--gold); }
-    .slot-row select { flex: 1; min-width: 0; width: 100%; max-width: 100%; padding: 6px; text-overflow: ellipsis; }
-    @media (max-width: 420px) { .slot-grid { grid-template-columns: 1fr; } }
-    .skill-bar .sk {
+    #hotbar { display: none; }
+    #frame.pc #hotbar { display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none; --cell: calc(var(--s) * 62px); }
+    .hb { position: relative; flex: none; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    .hb.abs { position: absolute; pointer-events: auto; }
+    .hb-face {
         --c1: #6a4a2a; --c2: #1c120c; --bd: #8a6a3a;
-        position: relative; width: 100%; height: auto; aspect-ratio: 1; padding: 0; border-radius: 3px; overflow: hidden; flex: none;
+        position: absolute; inset: 0; border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center;
         background: radial-gradient(circle at 50% 40%, var(--c1), var(--c2) 85%); border: 1px solid var(--bd); color: #fff;
-        box-shadow: 0 0 0 1px #000, inset 0 0 8px #000c; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 0 1px #000, inset 0 0 8px #000c; transition: transform .18s ease;
     }
-    .skill-bar .sk.empty { background: #0c0907; border-color: #3a2c1c; }
-    .skill-bar .sk.fire { --c1: #d2541c; --c2: #3a0c04; --bd: #c86a2a; }
-    .skill-bar .sk.ice { --c1: #4aa8e8; --c2: #0a2440; --bd: #5a9ad0; }
-    .skill-bar .sk.bolt { --c1: #9a6ae8; --c2: #1e0c40; --bd: #8a6ad0; }
-    .skill-bar .sk.wind { --c1: #4ab8a8; --c2: #0a2a2a; --bd: #4a9a90; }
-    .skill-bar .sk.dark { --c1: #8a3ab8; --c2: #1a0828; --bd: #7a4aa8; }
-    .skill-bar .sk.holy { --c1: #e8c060; --c2: #3a2608; --bd: #e8c06a; }
-    .skill-bar .sk.heal { --c1: #5ab84a; --c2: #0c2a0a; --bd: #5aa04a; }
-    .skill-bar .sk.guard { --c1: #3a7ae0; --c2: #0a1a3a; --bd: #5a8ad8; }
-    .skill-bar .sk.arcane { --c1: #6a5ae8; --c2: #140c3a; --bd: #7a6ad8; }
-    .skill-bar .sk.phys { --c1: #b8884a; --c2: #2a1808; --bd: #c9a052; }
-    .skill-bar .sk::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-        background: conic-gradient(#000a var(--cd), #0000 0); }
-    .skill-bar .sk:hover:not(.empty) { box-shadow: 0 0 0 1px #000, 0 0 8px #e8c06a, inset 0 0 8px #000c; border-color: #ffe08a; }
-    .skill-bar .sk.nomp { filter: grayscale(.85) brightness(.55); }
-    .skill-bar .sk:active { transform: scale(.93); }
-    .sk-ic { font-size: calc(var(--cell) * .55); line-height: 1; filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 6px #0008); }
-    .sk-base { position: absolute; right: 2px; top: 0; font-size: 8px; font-weight: bold; color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000; }
-    .sk-mp { position: absolute; left: 2px; top: 0; font-size: 8px; font-weight: bold; color: #8ac4ff; text-shadow: 0 0 2px #000, 0 0 3px #000; }
-    .sk-cd { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 1px 0; font-size: 10px; font-weight: bold; text-align: center; line-height: 11px; color: #fff; background: #000a; text-shadow: 0 0 3px #000; }
+    .hb.dragging .hb-face { transition: none; }
+    .hb.empty .hb-face { background: #0c0907d9; border: 1px dashed #5a4630; }
+    .hb.empty .hb-face::before { content: '+'; color: #6a5638; font-size: calc(var(--cell) * .45); }
+    .hb-face.fire { --c1: #d2541c; --c2: #3a0c04; --bd: #c86a2a; }
+    .hb-face.ice { --c1: #4aa8e8; --c2: #0a2440; --bd: #5a9ad0; }
+    .hb-face.bolt { --c1: #9a6ae8; --c2: #1e0c40; --bd: #8a6ad0; }
+    .hb-face.wind { --c1: #4ab8a8; --c2: #0a2a2a; --bd: #4a9a90; }
+    .hb-face.dark { --c1: #8a3ab8; --c2: #1a0828; --bd: #7a4aa8; }
+    .hb-face.holy { --c1: #e8c060; --c2: #3a2608; --bd: #e8c06a; }
+    .hb-face.heal { --c1: #5ab84a; --c2: #0c2a0a; --bd: #5aa04a; }
+    .hb-face.guard { --c1: #3a7ae0; --c2: #0a1a3a; --bd: #5a8ad8; }
+    .hb-face.arcane { --c1: #6a5ae8; --c2: #140c3a; --bd: #7a6ad8; }
+    .hb-face.phys { --c1: #b8884a; --c2: #2a1808; --bd: #c9a052; }
+    .hb-face.item { --c1: #5a4a3a; --c2: #16100c; --bd: #9a7a4a; }
+    .hb-face::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: conic-gradient(#000a var(--cd, 0%), #0000 0); }
+    .hb:hover:not(.empty) .hb-face { border-color: #ffe08a; box-shadow: 0 0 0 1px #000, 0 0 8px #e8c06a, inset 0 0 8px #000c; }
+    .hb.dim .hb-face { filter: grayscale(.85) brightness(.55); }
+    .hb-ic { font-size: calc(var(--cell) * .55); line-height: 1; filter: drop-shadow(0 0 3px #000) drop-shadow(0 0 6px #0008); }
+    .hb-tl, .hb-tr, .hb-br, .hb-key { position: absolute; z-index: 1; font-size: max(8px, calc(var(--cell) * .22)); font-weight: bold; line-height: 1; text-shadow: 0 0 2px #000, 0 0 3px #000; }
+    .hb-tl { left: 2px; top: 1px; color: #8ac4ff; }
+    .hb-tr { right: 2px; top: 1px; color: #fff; }
+    .hb-br { right: 2px; bottom: 1px; color: #fff; }
+    .hb-key { left: 2px; bottom: 1px; color: #e8d8a8; }
+    .sk-cell .hb-key { display: none; }   /* 手機不顯示鍵盤字 */
+    .hb-cd { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 1px 0; font-size: max(9px, calc(var(--cell) * .24)); font-weight: bold; text-align: center; line-height: 1.15; color: #fff; background: #000a; text-shadow: 0 0 3px #000; }
+    /* 往下拉：露出「▼ 自動」，超過距離變亮，放開切換 */
+    .hb-pull { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1px; pointer-events: none; z-index: 0;
+        font-size: max(8px, calc(var(--cell) * .2)); font-weight: bold; color: #7dff8a; opacity: 0; white-space: nowrap; }
+    .hb.dragging .hb-pull { opacity: .6; }
+    .hb.armed .hb-pull { opacity: 1; text-shadow: 0 0 6px #3aff5a; }
+    .hb.armed.auto .hb-pull { color: #ff8a6a; text-shadow: 0 0 6px #ff3a1a; }
+    /* 自動中：綠色跑馬燈外框＋AUTO */
+    .hb.auto .hb-face { border-color: #5aff7a; }
+    .hb.auto::after {
+        content: ''; position: absolute; inset: -3px; border-radius: 5px; pointer-events: none; padding: 2px; z-index: 3;
+        background: conic-gradient(from var(--hb-a, 0deg), #3aff5a, #0000 30%, #3aff5a 50%, #0000 80%, #3aff5a);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+        animation: hb-spin 2.4s linear infinite;
+    }
+    @property --hb-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    @keyframes hb-spin { to { --hb-a: 360deg; } }
+    .hb.dragging::after { display: none; }
+    .hb-auto { position: absolute; left: 50%; bottom: 1px; transform: translateX(-50%); z-index: 3; padding: 0 3px; border-radius: 3px; pointer-events: none; display: none;
+        font-size: max(7px, calc(var(--cell) * .18)); font-weight: bold; line-height: 1.3; color: #0a1a0a; background: #5aff7a; box-shadow: 0 0 4px #3aff5a; }
+    .hb.auto .hb-auto { display: block; }
+    .hb.auto:has(.hb-cd) .hb-auto { bottom: calc(var(--cell) * .3); }   /* 冷卻黑條在底部時 AUTO 往上移 */
+    /* 選擇放什麼（openBarPicker） */
+    .hb-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+    .hb-opt { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px; font-size: 11px; line-height: 1.2; background: #221a14; border: 1px solid #3a2c1c; }
+    .hb-opt span { font-size: 22px; }
+    .hb-opt small { color: var(--muted); font-size: 10px; }
+    .hb-opt.cur { border-color: var(--gold); }
     .skull-hunt {
         position: absolute; left: calc(var(--s) * 610px); bottom: calc(var(--s) * 10px); width: calc(var(--s) * 120px); height: calc(var(--s) * 120px);
         padding: 0; border: 0; border-radius: 40%; background: transparent; z-index: 3; cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -369,7 +394,9 @@
     /* 手機外框：地圖滿版，操作按鈕浮在地圖左下（技能欄上方），掛機統計文字不顯示（補給數量看底部格子）（2026-10-15） */
     #frame:not(.pc) .hunt-view { position: relative; }
     #frame:not(.pc) .scene-wrap { border: 0; border-radius: 0; }
-    #frame:not(.pc) .hunt-ctrl { position: absolute; left: 6px; bottom: 86px; z-index: 3; pointer-events: none; }
+    #frame:not(.pc) .hunt-ctrl { position: absolute; left: 6px; bottom: calc(var(--cell) * 2 + 52px); z-index: 3; pointer-events: none; }   /* 快捷欄兩排上方 */
+    #frame:not(.pc) .hunt-view { container-type: inline-size; }
+    #frame:not(.pc) .hunt-ctrl { --cell: min(40px, calc((100cqw - 34px) / 8)); }
     #frame:not(.pc) .hunt-view.in-town .hunt-ctrl { bottom: 8px; }
     #frame:not(.pc) .hunt-ctrl button { pointer-events: auto; padding: 4px 8px; font-size: 12px; background: #2a1d14e0; border: 1px solid #8a6a3a; box-shadow: 0 1px 4px #000a; }
     #frame:not(.pc) .hunt-ctrl.empty, #frame:not(.pc) #hunt-session { display: none; }
@@ -407,13 +434,7 @@
     #frame.pc .slot.side { background: #1a1410d9; border: 1px solid #5a4028; border-radius: 50%; box-shadow: 0 0 8px #000a; }
     #frame.pc .slot.side.active { border-color: var(--gold); }
     #frame.pc .slot.round { border-radius: 50%; }
-    #frame.pc .skill-bar { bottom: calc(var(--s) * 100px); }   /* 在地點文字 #hud-bottom 上方 */
-    #frame.pc .skill-bar { --cell: min(calc(var(--s) * 84px), calc((100cqw - 90px) / 8)); }   /* 1280 寬約 54px，跟外框一起縮放 */
-    #frame.pc .sk-row { gap: calc(var(--cell) * .11); padding: calc(var(--cell) * .15) calc(var(--cell) * .22) 0; }
-    #frame.pc .sk-name { font-size: max(9px, calc(var(--cell) * .2)); line-height: 1.3; }
-    #frame.pc .sk-key { width: max(16px, calc(var(--cell) * .37)); height: max(16px, calc(var(--cell) * .37)); font-size: max(9px, calc(var(--cell) * .2)); margin-bottom: min(-8px, calc(var(--cell) * -.18)); }
-    #frame.pc .sk-base, #frame.pc .sk-mp { font-size: max(8px, calc(var(--cell) * .18)); }
-    #frame.pc .sk-cd { font-size: max(10px, calc(var(--cell) * .22)); line-height: 1.2; }
+    #frame.pc .skill-bar { display: none; }   /* PC 快捷欄在外框底部（#hotbar） */
     #frame.pc .skull-hunt { left: calc(var(--s) * 950px); bottom: calc(var(--s) * 6px); width: calc(var(--s) * 100px); height: calc(var(--s) * 100px); }
     #frame.pc .skull-hunt .eye { top: 43%; width: 20%; height: 15%; }
     #frame.pc .skull-hunt .eye.l { left: 33%; }
@@ -730,6 +751,8 @@
             <button id="orb-hp" class="orb hp" onclick="orbHpClick()" aria-label="HP，點一下喝治癒藥水"><div class="orb-empty"></div><span></span></button>
             <button id="orb-mp" class="orb mp" onclick="orbMpClick()" aria-label="MP，點一下喝藍色藥水"><div class="orb-empty"></div><span></span></button>
             <div id="slots"></div>
+            <!-- PC 外框的快捷欄（底部左右各 8 格＋上排 6 格，hotbar.js；手機版快捷欄畫在地圖下方 #skill-bar） -->
+            <div id="hotbar"></div>
             <!-- 底部中間骷髏頭＝開始／停止掛機：眼睛黑＝沒在掛機、紅光＝掛機中（ARCHITECTURE.md 第 15 節） -->
             <!-- 左下（紅球下方）骷髏頭＝戰鬥訊息抽屜開關；抽屜從下往上滑出 -->
             <button id="skull-log" class="skull-log" onclick="toggleLogDrawer()" title="戰鬥訊息" aria-label="戰鬥訊息"><span>📜</span></button>
@@ -746,40 +769,41 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261015g"></script>
-<script src="data/classes.js?v=20261015g"></script>
-<script src="data/skills.js?v=20261015g"></script>
-<script src="data/items.js?v=20261015g"></script>
-<script src="data/spellbook.js?v=20261015g"></script>
-<script src="data/monsters.js?v=20261015g"></script>
-<script src="data/zones.js?v=20261015g"></script>
-<script src="data/quests.js?v=20261015g"></script>
-<script src="data/resonance.js?v=20261015g"></script>
-<script src="data/player.js?v=20261015g"></script>
-<script src="data/enchant.js?v=20261015g"></script>
-<script src="data/affix.js?v=20261015g"></script>
-<script src="data/craft.js?v=20261015g"></script>
-<script src="data/maps.js?v=20261015g"></script>
-<script src="data/combat.js?v=20261015g"></script>
-<script src="data/town.js?v=20261015g"></script>
-<script src="data/save.js?v=20261015g"></script>
-<script src="data/cloud.js?v=20261015g"></script>
-<script src="data/offline.js?v=20261015g"></script>
-<script src="data/ui.js?v=20261015g"></script>
-<script src="data/ui-create.js?v=20261015g"></script>
-<script src="data/ui-panels.js?v=20261015g"></script>
-<script src="data/codex.js?v=20261015g"></script>
-<script src="data/raid.js?v=20261015g"></script>
-<script src="data/clan.js?v=20261015g"></script>
-<script src="data/chat.js?v=20261015g"></script>
-<script src="data/rank.js?v=20261015g"></script>
-<script src="data/wb.js?v=20261015g"></script>
-<script src="data/market.js?v=20261015g"></script>
-<script src="data/vault.js?v=20261015g"></script>
-<script src="data/presence.js?v=20261015g"></script>
-<script src="data/ui-frame.js?v=20261015g"></script>
-<script src="data/ui-scene.js?v=20261015g"></script>
-<script src="data/pwa.js?v=20261015g"></script>
-<script src="data/main.js?v=20261015g"></script>
+<script src="data/config.js?v=20261015h"></script>
+<script src="data/classes.js?v=20261015h"></script>
+<script src="data/skills.js?v=20261015h"></script>
+<script src="data/items.js?v=20261015h"></script>
+<script src="data/spellbook.js?v=20261015h"></script>
+<script src="data/monsters.js?v=20261015h"></script>
+<script src="data/zones.js?v=20261015h"></script>
+<script src="data/quests.js?v=20261015h"></script>
+<script src="data/resonance.js?v=20261015h"></script>
+<script src="data/player.js?v=20261015h"></script>
+<script src="data/enchant.js?v=20261015h"></script>
+<script src="data/affix.js?v=20261015h"></script>
+<script src="data/craft.js?v=20261015h"></script>
+<script src="data/maps.js?v=20261015h"></script>
+<script src="data/combat.js?v=20261015h"></script>
+<script src="data/town.js?v=20261015h"></script>
+<script src="data/save.js?v=20261015h"></script>
+<script src="data/cloud.js?v=20261015h"></script>
+<script src="data/offline.js?v=20261015h"></script>
+<script src="data/ui.js?v=20261015h"></script>
+<script src="data/ui-create.js?v=20261015h"></script>
+<script src="data/ui-panels.js?v=20261015h"></script>
+<script src="data/codex.js?v=20261015h"></script>
+<script src="data/raid.js?v=20261015h"></script>
+<script src="data/clan.js?v=20261015h"></script>
+<script src="data/chat.js?v=20261015h"></script>
+<script src="data/rank.js?v=20261015h"></script>
+<script src="data/wb.js?v=20261015h"></script>
+<script src="data/market.js?v=20261015h"></script>
+<script src="data/vault.js?v=20261015h"></script>
+<script src="data/presence.js?v=20261015h"></script>
+<script src="data/ui-frame.js?v=20261015h"></script>
+<script src="data/hotbar.js?v=20261015h"></script>
+<script src="data/ui-scene.js?v=20261015h"></script>
+<script src="data/pwa.js?v=20261015h"></script>
+<script src="data/main.js?v=20261015h"></script>
 </body>
 </html>

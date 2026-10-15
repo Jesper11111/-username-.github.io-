@@ -39,6 +39,7 @@
 | `data/presence.js` | 村莊看得到其他在線玩家（Supabase Realtime presence／broadcast）、點人聊天／邀請組隊（第 39 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
+| `data/hotbar.js` | **快捷欄**（第 40 節）：技能圖示 `skillIcon`、格子 HTML `barSlotHtml`、`renderHotbar`（手機地圖下方兩排／PC 外框 `#hotbar`）、`barUse`／`barToggleAuto`／`openBarPicker`／`barPick`／`barPlaceSkill`／`resetSkillSlots`、點一下／往下拉／長按手勢 |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
@@ -51,7 +52,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -60,7 +61,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015h`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -732,7 +733,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 | 位置 | 內容 |
 |---|---|
 | 左 2 圓鈕（中心 x 380、480） | 🧝 人物狀態、✨ 技能 |
-| 12 方格（x 590 起每 70，寬 62） | 📜 任務、🎒 背包、🧪 治癒藥水、💨 綠水、⚡ 勇水類（依職業：勇敢藥水／精靈餅乾／慎重藥水）、💧 藍水、📜 回家卷軸、🌀 瞬移卷軸、🚶 步行回村、💾 手動存檔、📖 裝備圖鑑（2026-10-11 拿掉 🏘️ 村莊，後面往前補，最後一格空著；開始／停止掛機改用底部骷髏頭） |
+| 12 方格（x 590 起每 70，寬 62） | 📜 任務、🎒 背包、**第 3～8 格＝快捷欄第 17～22 格**（2026-10-15，原本固定的治癒／綠水／勇水類／藍水／回家／瞬移，改成可自由擺放，見第 40 節）、🚶 步行回村、💾 手動存檔、📖 裝備圖鑑（2026-10-11 拿掉 🏘️ 村莊，最後一格空著；開始／停止掛機改用底部骷髏頭） |
+| 底部石條（y 1036～1098，寬 62、間隔 72） | **快捷欄**（2026-10-15）：骷髏頭左邊 x 318 起 8 格（第 1～8 格，鍵盤 1～8）、右邊 x 1114 起 8 格（第 9～16 格，鍵盤 Q E R F Z X C V）；`#hotbar`（z3）由 hotbar.js 畫，PC 不再顯示地圖上的技能欄 |
 | 右 2 圓鈕（中心 x 1520、1616） | 🗺️ 地圖、⚙️ 設定 |
 
 - 分頁格子再按一次＝關閉視窗。PC 外框沒有柱子抽屜（功能都在底部按鈕）。切回其他畫面尺寸時自動回到直式外框與 6 格。
@@ -1267,3 +1269,22 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證：12 職業的可學數量（騎士 15～天使 38 招）、新角色起始技能、舊存檔轉換（Lv.30～60 的技能欄）、買書學習、等級不夠被擋、下拉換欄位、只放冰箭時戰鬥只用冰箭（低血也不治癒）；
   舊存檔轉換後 Lv.35 各職業 5 分鐘擊殺 15～29 隻，與改版前相近。Console 無錯誤。
 - 之後可做：攻速問題（使用者 10-15 暫緩：技能攻速和勇水疊加太快）、天堂的「魔法 1～10 級各職業一覽表」畫面、技能動畫。
+
+### 40.1 快捷欄：技能＋道具、往下拉切換自動（2026-10-15，版本 `20261015h`；`hotbar.js`）
+
+- 使用者要求（先做樣品確認後才改）：手機技能欄下面再加一排；PC 把欄位搬到底部骷髏頭左右、左右各 8 格；上排原本藥水卷軸的格子也改成新格子；
+  **每格都能自由放技能或道具**；格子「往下拉」才啟動自動使用，讓玩家更有手動玩的感覺。
+- 資料 `player.settings.bar`（22 格 `{ id, a }`，取代 `skillSlots`；`BAR_N`、`BAR_KEYS` 在 player.js）：0～7 第一排、8～15 第二排、16～21 PC 上排 6 格（手機不顯示，但自動照樣生效）。
+  可放：技能（`SKILL_BY_ID`）、道具 `barItemOk`＝有 `heal`／`buff` 的藥水＋回家卷軸＋瞬移卷軸。`barCanAuto`：被動技能、回家卷軸不能自動（自動回家仍在設定頁 `autoHome`）。
+- 操作：**點一下**＝手動使用（`barUse`：技能 `manualCast`、治癒藥水這格用完改喝其他治癒藥水、回家 `homeScrollBtn`、瞬移 `quickTele`、其他 `quickPotion`）；
+  **按住往下拉 16px 以上再放開**＝切換自動（`barToggleAuto`，綠色跑馬燈外框＋AUTO）；**點空格／長按 550ms／右鍵**＝選放什麼（`openBarPicker` 對話框，可清空）；
+  同一招技能只放一格（放到別格會搬過去並保留自動開關）。鍵盤 1～8、Q E R F Z X C V（W A S D 是移動鍵，所以第二排沒照樣品用 Q～I）。
+- 自動規則：`slotSkills()` 只取 `a=1` 的已學會主動技能（格子順序＝優先順序，`playerAction` 不變）；`autoSupport` 改看 `barAutoItemIds()`：
+  治癒藥水任一格開自動＝HP 低於 `potionPct` 時從身上所有治癒藥水挑（`choosePotion`，跟以前一樣，不限那一格的藥水）；增益藥水效果沒了就喝（加速看 `st.haste`）；瞬移卷軸開自動＝HP 低於 `telePct` 瞬移。
+  設定頁拿掉「自動喝治癒藥水／綠水／勇水／藍水」「自動瞬移」勾選（只留百分比，並說明改在快捷欄下拉）；`checkAutoHome` 的「藥水用完」改看 `barHealAuto()`。團隊副本用 `settings.noTele` 強制不瞬移。
+- 預設 `defaultBar`：第一排＝`defaultSkillSlots`（自動）；第二排＝治癒藥水、綠水、勇水類（`braveItemFor`）、藍水、回家、瞬移（自動與否照舊設定 `potionOn`／`autoHaste`／`autoBrave`／`autoBlue`／`teleOn`），最後 2 格空；PC 上排＝同樣 6 種（手動）。
+  舊存檔（沒有 `bar`）在 `migrateSave` 用舊 `skillSlots`＋舊自動補給設定轉換，`normalizeBar` 補滿 22 格、清掉不存在的 id。學魔法書時放進第一排第一個空格並開自動。
+- 畫面：手機＝地圖下方兩排金框（`.sk-row`，格子大小 `--cell` 依地圖寬度，375 寬約 35px），格子下方顯示名稱、不顯示鍵盤字；村莊裡不顯示；回家卷軸／步行回村按鈕浮在兩排上方。
+  PC＝`#hotbar` 疊在外框（底部石條左右各 8 格＋上排 6 格，`barPcPos`），格子左下顯示鍵盤字。技能格：左上 MP、右上冷卻秒數、冷卻中底部黑條；道具格：右上數量，沒有了變灰。
+- 技能頁：上方改成快捷欄說明＋「↺ 第一排技能自動排好」；每招顯示「第 N 格・自動／手動」或「放進快捷欄」按鈕（`barPlaceSkill`，放進前兩排第一個空格並開自動）。
+- 驗證：舊存檔轉換（黑妖 Lv.47，舊設定藍水、瞬移開、勇水關 → 對應格子自動）、新角色預設、手機下拉切換勇水自動、點空格選冰箭（手動格不會自動施放）、60 秒戰鬥模擬自動喝綠水／勇水／藍水／治癒藥水、鍵盤 C、PC 點上排治癒藥水；Console 無錯誤。

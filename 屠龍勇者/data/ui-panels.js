@@ -154,7 +154,7 @@ function updateHuntLive() {
         }
     }
     startScene();
-    renderSkillBar();
+    renderHotbar();
     const mp = $('map-prog');
     if (mp) { const t = mapProgressText(); if (mp.textContent !== t) mp.textContent = t; }
     const buffs = $('hunt-buffs');
@@ -179,52 +179,7 @@ function updateHuntLive() {
     } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
 }
 
-// ───────── 技能快捷列（ARCHITECTURE.md 第 40 節）─────────
-// 地圖下方置中的金框橫排＝技能欄 8 格（鍵盤 1～8）；空格顯示空框
-function skillBarSkills() {
-    return (player.settings.skillSlots || []).map(id => (id && hasSkill(id) ? SKILL_BY_ID[id] : null));
-}
-// 技能圖示：還沒有技能圖檔，依名稱／說明的屬性挑圖示與底色（2026-10-15 技能欄改橫排金框，第 40 節）
-const SKILL_ICON_RULES = [
-    [/煉獄|火|炎|焰/, '🔥', 'fire'], [/冰|寒|雪|霜/, '❄️', 'ice'], [/雷|電/, '⚡', 'bolt'], [/風|龍捲|旋/, '🌪️', 'wind'],
-    [/吸血|暗|黑|闇|魂|血/, '💀', 'dark'], [/流星|隕/, '☄️', 'fire'], [/光|聖|神/, '✨', 'holy'],
-    [/屏障|護|盾|鎧|甲|防禦|結界|鋼鐵/, '🛡️', 'guard'], [/加速|迅|疾|敏捷|速/, '💨', 'wind'],
-    [/箭|射|狙|槍|彈/, '🏹', 'phys'], [/拳|掌|擊|斬|劍|刃|砍|劈|刺|突/, '⚔️', 'phys'],
-];
-function skillIcon(k) {
-    if (k.type === 'heal') return ['🌿', 'heal'];
-    const txt = k.name + (k.desc || '');
-    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(k.name)) return [ic, cls];
-    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(txt)) return [ic, cls];
-    return k.type === 'buff' ? ['🔆', 'holy'] : k.type === 'spell' ? ['🔮', 'arcane'] : ['⚔️', 'phys'];
-}
-function renderSkillBar() {
-    const bar = $('skill-bar');
-    if (!bar) return;
-    if (inTown()) { if (bar.innerHTML) bar.innerHTML = ''; return; }
-    const list = skillBarSkills(), now = gameNow;
-    const cells = list.map((k, i) => {
-        if (!k || k.type === 'passive') return `<div class="sk-cell"><div class="sk empty"></div><div class="sk-name"> </div><div class="sk-key">${i + 1}</div></div>`;
-        const left = player.cds[k.id] > now ? (player.cds[k.id] - now) / 1000 : 0;
-        const cd = left ? Math.ceil(left) : 0;
-        const pct = cd && k.cd ? Math.min(100, Math.round(left / k.cd * 100)) : 0;
-        const [ic, cls] = skillIcon(k);
-        return `<div class="sk-cell"><button class="sk ${cls} ${player.mp < k.mp ? 'nomp' : ''} ${cd ? 'cd' : ''}" style="--cd:${pct}%" onclick="skillBarCast(${i})" title="${esc(k.name)}（${k.mp || 0} MP${k.cd ? '・冷卻 ' + k.cd + ' 秒' : ''}）${esc(k.desc || '')}">
-            <span class="sk-ic">${ic}</span>${k.cd ? `<span class="sk-base">${k.cd}s</span>` : ''}<span class="sk-mp">${k.mp || 0}</span>${cd ? `<span class="sk-cd">${cd}s</span>` : ''}</button>
-            <div class="sk-name">${esc(k.name)}</div><div class="sk-key">${i + 1}</div></div>`;
-    });
-    if (!cells.some(c => c.includes('<button'))) { if (bar.innerHTML) { bar.innerHTML = ''; bar.dataset.html = ''; } return; }
-    const html = `<div class="sk-row">${cells.join('')}</div>`;
-    if (bar.dataset.html !== html) { bar.dataset.html = html; bar.innerHTML = html; }
-}
-function skillBarCast(i) {
-    const k = skillBarSkills()[i];
-    if (!k) return;
-    const err = manualCast(k.id);
-    if (err) showToast(`${k.name}：${err}`, 1200);
-    renderStatus();
-    updateHuntLive();
-}
+// 快捷欄（地圖下方兩排／PC 底部）在 hotbar.js（第 40 節）
 
 function homeScrollBtn() { if (!useHomeScroll('')) showToast('沒有回家卷軸'); }
 function walkHomeBtn() { startWalkHome(); updateHuntLive(); }
@@ -553,22 +508,19 @@ function skillInfoText(s) {
     return [SKILL_TYPE_NAMES[s.type], s.mp ? `MP ${s.mp}` : '', s.cd ? `冷卻 ${s.cd} 秒` : '', sec].filter(Boolean).join('｜');
 }
 function renderSkills() {
-    const cls = player.cls, slots = player.settings.skillSlots, learned = learnedSkills().filter(s => s.type !== 'passive');
-    const opt = (s, cur) => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${esc(s.name)}（${SKILL_TYPE_NAMES[s.type]}${s.mp ? `・MP ${s.mp}` : ''}）</option>`;
-    const magic = learned.filter(s => s.kind === 'magic'), own = learned.filter(s => s.kind === 'class');
-    let h = `<div class="panel"><h4>⚔️ 技能欄（自動施放）</h4>
-        <small class="muted">只有放進欄位的技能會在掛機時自動施放，<b>上面的欄位優先</b>：治癒（HP 低於設定時）→ 增益（效果結束時）→ 攻擊技能。被動技能學會就生效，不用放。地圖右下的按鈕＝這 8 格（鍵盤 1～8）。</small>
-        <div class="slot-grid">` + slots.map((cur, i) => `<label class="slot-row"><span>${i + 1}</span><select onchange="setSkillSlot(${i}, this.value)">
-            <option value="">（空）</option>
-            ${magic.length ? `<optgroup label="魔法">${magic.map(s => opt(s, cur)).join('')}</optgroup>` : ''}
-            ${own.length ? `<optgroup label="職業技能">${own.map(s => opt(s, cur)).join('')}</optgroup>` : ''}
-        </select></label>`).join('') + `</div>
-        <div class="btn-row"><button class="secondary mini" onclick="resetSkillSlots()">↺ 自動排好</button></div></div>`;
+    const cls = player.cls, bar = player.settings.bar;
+    let h = `<div class="panel"><h4>⚔️ 快捷欄</h4>
+        <small class="muted">${isPcFrame() ? '畫面底部骷髏頭左右各 8 格（鍵盤 1～8、Q E R F Z X C V），上排 6 格也能放' : '狩獵時地圖下方兩排各 8 格'}，技能、藥水、卷軸都能放。
+        <b>點一下</b>＝手動使用；<b>按住往下拉再放開</b>＝切換自動（綠框＋AUTO）；點空格、長按或右鍵＝換成別的。
+        自動技能依格子順序：治癒（HP 低於設定時）→ 增益（效果結束時）→ 攻擊技能；被動技能學會就生效，不用放。</small>
+        <div class="btn-row"><button class="secondary mini" onclick="resetSkillSlots()">↺ 第一排技能自動排好</button></div></div>`;
     const row = s => {
         const need = skillNeedLv(s, cls), have = hasSkill(s.id), book = countItem(bookIdOf(s.id)) > 0;
-        const slotNo = slots.indexOf(s.id);
+        const slotNo = bar.findIndex(b => b.id === s.id), slot = bar[slotNo];
         let btn;
-        if (have) btn = s.type === 'passive' ? '<span class="good">被動・生效中</span>' : slotNo >= 0 ? `<span class="good">欄位 ${slotNo + 1}</span>` : '<span class="muted">已學會</span>';
+        if (have) btn = s.type === 'passive' ? '<span class="good">被動・生效中</span>'
+            : slotNo >= 0 ? `<span class="${slot.a ? 'good' : 'muted'}">第 ${slotNo + 1} 格${slot.a ? '・自動' : '・手動'}</span>`
+            : `<button class="mini secondary" onclick="barPlaceSkill('${s.id}')">放進快捷欄</button>`;
         else if (book && player.lv >= need) btn = `<button class="mini" onclick="learnSkillBook('${s.id}')">📖 學習</button>`;
         else btn = `<span class="muted">${player.lv < need ? `Lv.${need}` : '需要書'}</span>`;
         return `<div class="list-row ${have ? '' : 'locked'}"><div><b>${esc(s.name)}</b><small>${skillInfoText(s)}</small><small>${esc(s.desc)}</small>
@@ -581,16 +533,6 @@ function renderSkills() {
     h += `<h4>🗡️ ${CLASSES[cls].name}技能</h4><div class="list">` + (SKILLS[cls] || []).map(row).join('') + `</div>`;
     return h;
 }
-function setSkillSlot(i, id) {
-    const slots = player.settings.skillSlots;
-    if (id && !hasSkill(id)) return;
-    const j = slots.indexOf(id);
-    if (id && j >= 0 && j !== i) slots[j] = '';   // 同一招只放一格：從原本的欄位移過來
-    slots[i] = id || '';
-    saveGame();
-    renderPanel();
-}
-function resetSkillSlots() { player.settings.skillSlots = defaultSkillSlots(); saveGame(); renderPanel(); showToast('已依目前學會的技能自動排好'); }
 function learnSkillBook(skillId) {
     const it = player.inv.find(x => x.id === bookIdOf(skillId));
     if (it) learnBook(it.uid);
@@ -779,9 +721,10 @@ function renderSettings() {
             <small class="muted">這台裝置的顯示設定，不影響存檔。PC 16:9 時，狩獵固定在左邊外框，其他頁面顯示在右側。</small>
         </div>
         <div class="panel"><h4>💊 自動補給</h4>
-            ${chk('potionOn', '自動喝治癒藥水')}${num('potionPct', 'HP 低於 % 喝水', 5, 95)}
+            <small class="muted">要不要自動喝藥水、自動用瞬移卷軸，改在快捷欄：把道具放進格子、<b>往下拉</b>開啟自動（綠框＋AUTO）。</small>
+            ${num('potionPct', 'HP 低於 % 喝治癒藥水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
-            ${chk('autoHaste', '自動喝綠水（加速）')}${chk('autoBrave', '自動喝勇水／精靈餅乾／慎重藥水')}${chk('autoBlue', '自動喝藍水')}${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}
+            ${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}
         </div>
         <div class="panel"><h4>🎒 戰利品過濾</h4>
             <label class="set-row"><span>撿到裝備時</span><select onchange="setSettingNum('lootFilter',this.value,0,3)">
@@ -789,7 +732,7 @@ function renderSettings() {
             <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、屠龍劍這類商店沒賣的稀有裝備一律保留。</small>
         </div>
         <div class="panel"><h4>🛡️ 安全</h4>
-            ${chk('teleOn', '危險時自動使用瞬間移動卷軸')}${num('telePct', 'HP 低於 % 瞬移', 5, 90)}
+            ${num('telePct', 'HP 低於 % 瞬移（快捷欄瞬移卷軸開自動時）', 5, 90)}
             ${chk('autoHome', '藥水／彈藥用完或負重過高時自動回家')}${num('weightPct', '負重超過 % 回家', 30, 100)}
         </div>
         <div class="panel"><h4>📲 App</h4>

@@ -87,7 +87,7 @@ function raidSimulate(def, list, opts = {}) {
             const p = migrateSave({ player: JSON.parse(JSON.stringify(x.snap)) });
             p.buffs = {}; p.cds = {}; p.mapRun = null; p.hunting = true;
             p.loc = { type: 'zone', id: def.zone };
-            p.settings.teleOn = false; p.settings.autoHome = false;   // 團戰中不瞬移、不回家
+            p.settings.noTele = true; p.settings.autoHome = false;   // 團戰中不瞬移、不回家（瞬移改由快捷欄自動格決定，noTele 強制關）
             player = p;
             const st = calcStats();
             p.hp = st.maxHp; p.mp = st.maxMp;   // 進副本前補滿
