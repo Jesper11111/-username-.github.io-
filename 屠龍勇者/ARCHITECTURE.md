@@ -59,7 +59,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015b`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -956,6 +956,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `cloudSync`：本機有 🔒 角色時，目前帳號雲端裡同一角色不再下載（`dup`，「角色屬於其他帳號」提示會說明）。
   - **擋舊版遊戲**（`tools/client-version.sql`，也附在 `supabase.sql` 最後）：沒有角色歸屬的舊版（存檔 schema < 4）會把別人的角色傳進目前帳號；`dragon_saves` 觸發器 `dragon_saves_client_version` 拒絕 `data.schema < 4` 的寫入（hint `dragon_client_old`，`cloudErrText` 翻成「遊戲版本太舊」）。
     只擋 `auth.role() = 'authenticated'`、且存檔內容有變的寫入（管理者在 SQL Editor 改 `user_id` 不受影響）。新版 `cloudPushSlot` 上傳時一律把 `data.schema` 設成 `SAVE_SCHEMA`。**要等新版發佈後才在 SQL Editor 執行**。
+  - **真正的主因（`20261015b`）**：使用者用 a 版測試仍「刪除的角色重新登入又出現」。伺服器規則 `dragon_saves_select_admin` 讓**管理者帳號讀得到所有人的存檔**，
+    而 `cloudSync` 讀雲端存檔沒有加 `user_id` 條件（靠 RLS 過濾）→ 管理者登入時把所有玩家的角色當成自己的下載（同欄位互相蓋掉、寫回本機帶自己的 owner），刪幾次都會再從別人那邊抓回來；
+    a 版的待刪除照欄位刪，還可能刪到管理者自己同欄位的角色。修正：**讀自己資料的查詢一律加 `.eq('user_id', cloudUser.id)`**——`cloudSync`、`cloudTombIds`（管理者也看得到所有墓碑）、
+    `cloudUseCloudSlot`、`vault.js` 的 `offlineSettle`（最後上傳的角色）。之後新增查詢 `dragon_saves`／`dragon_deleted_chars`／`dragon_bans`／`dragon_mutes` 這類「管理者可看全部」的表時都要記得加。
+  - 同版：刪除時**先記待刪除再送出刪除請求**，成功刪到才移除（`cloudDelRemove`）——刪完馬上關頁面時請求會被瀏覽器中斷，原本連待刪除都來不及記；
+    `cloudSync` 處理待刪除時，刪不掉（網路、伺服器沒刪到）的角色也不下載回來，留著下次再刪。
+  - 驗證（模擬伺服器加上「管理者看得到所有人」規則）：管理者登入只看到自己的角色、刪除後不再出現、其他玩家雲端不受影響；刪除請求中斷→再登入補刪；雲端刪不掉→不顯示、恢復後補刪；🔒 情境照舊。
   - B 的角色匯出→匯入 A：匯入會拿掉 owner、成為 A 的新角色（同一個 `created`）；B 刪除時墓碑只擋 B 自己的上傳（`d.user_id = new.user_id`），A 那份不受影響。
   - 驗證（本機、模擬 Supabase：每帳號只看自己的列、墓碑與版本觸發器）：沒登入時刪→再登入雲端也刪；刪除失敗→登出→再登入會補刪；🔒 角色不重複、刪除後 A 雲端的混入那份刪掉、B 雲端不動；B 匯入 A 後 B 刪除、A 照舊；
     舊版 schema 3 上傳被擋、新版照常；兩台裝置合併、別台刪除、正常刪除照舊。沒有用真實 Supabase 測。

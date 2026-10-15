@@ -272,7 +272,8 @@ async function cloudSync() {
     cloudError = '';
     renderCloudEntry();
     try {
-        const { data: rows, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('slot, client_t, data'));
+        // 一定要限定自己的帳號：管理者帳號有「可以查看任何人的存檔」權限（dragon_saves_select_admin），不加條件會把所有玩家的角色當成自己的下載（2026-10-15）
+        const { data: rows, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('slot, client_t, data').eq('user_id', cloudUser.id));
         if (error) throw error;
         const uid = cloudUser.id, owner = cloudLs(CLOUD_OWNER_KEY);
         let playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
@@ -281,15 +282,19 @@ async function cloudSync() {
         cloudKnown = {};
         for (let i = 0; i < MAX_SLOTS; i++) cloudKnown[i] = cloud[i] ? cloud[i].t : null;
         // 這個帳號的待刪除（沒登入時刪的、雲端刪除失敗的、在別的帳號登入時刪的）：刪雲端、寫墓碑；刪不掉的留著下次再試
+        // 刪不掉（網路、伺服器規則）的也不下載回來，留著下次再刪
         const delMap = cloudDelMap(), pend = delMap[uid] || [], keepPend = [];
         for (const id of pend) {
             const i = cloud.findIndex(c => c && c.id === id);
             if (i < 0) continue;   // 雲端已經沒有了
             if (i === playing) { keepPend.push(id); continue; }
-            const { error: de } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i));
-            if (de) { keepPend.push(id); continue; }
-            cloudTombAdd(cloud[i].data.player);
-            cloud[i] = null; cloudKnown[i] = null;
+            const p = cloud[i].data.player;
+            cloudTombAdd(p);
+            let ok = false;
+            try { const { data: dd, error: de } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).delete().eq('slot', i).select('slot')); ok = !de && dd && dd.length > 0; } catch (e) { }
+            if (!ok) { keepPend.push(id); console.warn('雲端刪除沒有成功，這台先不顯示、下次再刪', p.name); }
+            else cloudKnown[i] = null;
+            cloud[i] = null;
         }
         if (keepPend.length) delMap[uid] = keepPend; else delete delMap[uid];
         cloudDelSave(delMap);
@@ -523,7 +528,7 @@ function cloudDropDeleted(i, inSync) {
 }
 async function cloudTombIds() {
     try {
-        const { data, error } = await cloudTimeout(cloudSb.from('dragon_deleted_chars').select('char_created, cls'));
+        const { data, error } = await cloudTimeout(cloudSb.from('dragon_deleted_chars').select('char_created, cls').eq('user_id', cloudUser.id));   // 管理者看得到所有人的墓碑，要限定自己
         if (error) throw error;
         return new Set((data || []).map(d => `${d.char_created}|${d.cls}`));
     } catch (e) { return new Set(); }   // 還沒執行 char-tombstone.sql：當作沒有墓碑
@@ -555,7 +560,7 @@ async function cloudUseLocalSlot() {
 async function cloudUseCloudSlot() {
     const i = currentSlot;
     try {
-        const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t, data').eq('slot', i).maybeSingle());
+        const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t, data').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
         if (error) throw error;
         if (!data) { showToast('雲端沒有這個角色'); return; }
         cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
@@ -588,6 +593,13 @@ function cloudDelAdd(uid, id) {
     if (!m[uid].includes(id)) m[uid].push(id);
     cloudDelSave(m);
 }
+function cloudDelRemove(uid, id) {
+    const m = cloudDelMap();
+    if (!m[uid]) return;
+    m[uid] = m[uid].filter(x => x !== id);
+    if (!m[uid].length) delete m[uid];
+    cloudDelSave(m);
+}
 // 墓碑：其他還開著這個角色的裝置不能再傳回這個帳號（tools/char-tombstone.sql；只擋同一個帳號）
 function cloudTombAdd(p) {
     if (!cloudLoggedIn() || !p || !p.created) return;
@@ -618,15 +630,18 @@ function cloudDeleteSlot(i, raw) {
     const me = cloudLoggedIn() ? cloudUser.id : '';
     if (!me) { if (owner) cloudDelAdd(owner, id); return; }
     const mine = !owner || owner === me;
+    // 先記待刪除、再送出刪除：刪完馬上關頁面（請求被瀏覽器中斷）、網路失敗、伺服器沒刪到，下次登入同步都會補刪，同步也不會再把它下載回來（2026-10-15）
+    cloudDelAdd(me, id);
     if (mine) {
         cloudKnown[i] = null;
         cloudLs(CLOUD_SEEN_KEY, JSON.stringify(JSON.parse(cloudLs(CLOUD_SEEN_KEY) || '[]').filter(x => x !== id)));
         cloudTombAdd(p);
     }
-    cloudRemoveChar(p).then(rows => { if (!mine && rows.length) cloudTombAdd(p); }).catch(e => {
-        console.warn('雲端刪除失敗', e);
-        cloudDelAdd(me, id);
-    });
+    cloudRemoveChar(p).then(rows => {
+        if (!rows.length) return;   // 沒刪到任何一列（雲端本來就沒有，或被伺服器規則擋下）：留著待刪除，下次同步確認
+        if (!mine) cloudTombAdd(p);
+        cloudDelRemove(me, id);
+    }).catch(e => console.warn('雲端刪除失敗，下次登入再刪', e));
 }
 
 // ───────── 登入／註冊／登出 ─────────

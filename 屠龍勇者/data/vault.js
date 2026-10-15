@@ -58,7 +58,7 @@ async function offlineSettle(awayMs) {
     try {
         saveGame();
         // 2026-10-12 使用者要求：離線掛機不再消耗鑽石。仍要登入、只有帳號裡最後上傳存檔的角色能結算（直接讀自己的 dragon_saves，不扣鑽石）
-        const { data: last, error } = await cloudTimeout(cloudSb.from('dragon_saves').select('slot').order('updated_at', { ascending: false }).limit(1));
+        const { data: last, error } = await cloudTimeout(cloudSb.from('dragon_saves').select('slot').eq('user_id', cloudUser.id).order('updated_at', { ascending: false }).limit(1));   // 限定自己（管理者看得到所有人的存檔）
         if (error) throw error;
         if (last && last.length && last[0].slot !== currentSlot) {
             addLog('🌙 沒有離線收益：只有最後離線的角色才能離線掛機', 'sys');
