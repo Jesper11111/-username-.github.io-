@@ -425,6 +425,7 @@ function magicDamage(base, spK, st, undeadMul, mon = hunt.mon) {
 
 function castSpell(k, st) {
     useSkillCost(k);
+    hunt.lastAtkAt = gameNow;
     // 範圍魔法：打全部圍上來的怪
     const targets = k.aoe ? mobTargets() : [hunt.mon];
     const parts = targets.map(m => {
@@ -486,6 +487,7 @@ function lifeSteal(dmg, st) {
 
 // 回傳 false 代表無法攻擊（沒彈藥）
 function physicalAttack(st, mult, opt, mon = hunt.mon) {
+    hunt.lastAtkAt = gameNow;   // 最後一次出手（ui-scene.js：鎖定 5 秒沒出手就重新鎖定）
     let ammoDef = null;
     if (st.ranged) {
         const ammo = pickAmmo(st.weaponType.ammo, mon);

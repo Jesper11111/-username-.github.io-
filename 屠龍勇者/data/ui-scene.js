@@ -381,17 +381,16 @@ function sceneUpdate(dt) {
     const target = fighting ? scene.mons.find(m => m.inst === hunt.mon && !m.dead) || null : null;
     if (target !== scene.engaged) { scene.engaged = target; if (target) pl.path = []; }
     if (fighting && scene.engaged) {
-        const r = sceneReach(scene.engaged);
-        hunt.reach = { mon: hunt.mon, ...r, seenAt: gameNow };
-        // 保險：目標卡在走不到的地方超過 2.5 秒（角色、怪都沒路）→ 把目標移到角色旁邊的空格
-        const ok = weaponIsRanged() ? r.ranged : r.melee;
-        scene.stuckMs = ok || pl.path.length ? 0 : (scene.stuckMs || 0) + dt;
-        if (scene.stuckMs > 2500) {
-            const e = scene.engaged;
-            const spot = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].map(([dx, dy]) => [pl.x + dx, pl.y + dy]).find(([x, y]) => freeTile(x, y));
-            if (spot) { e.x = e.rx = spot[0]; e.y = e.ry = spot[1]; }
-            scene.stuckMs = 0;
+        // 目標打不到、身邊卻有打得到的怪 → 先打身邊的（玩家剛點選的目標 5 秒內不換）（2026-10-15）
+        if (!sceneCanHit(scene.engaged) && !(scene.focusUntil > gameNow)) {
+            const near = sceneFightMons().filter(m => m !== scene.engaged && sceneCanHit(m)).sort((a, b) => sceneDist(a) - sceneDist(b))[0];
+            if (near) sceneLock(near);
         }
+        // 鎖定後 5 秒都沒出手（走不到、被擋住、卡住）→ 重新鎖定（RELOCK_MS）
+        if (hunt.mon !== scene.lockMon) { scene.lockMon = hunt.mon; scene.lockAt = gameNow; }
+        if (scene.dodging || scene.manualUntil > gameNow) scene.lockAt = gameNow;   // 閃首領大招、玩家手動走路時不算
+        if (gameNow - Math.max(scene.lockAt || 0, hunt.lastAtkAt || 0) > RELOCK_MS) sceneRelock();
+        hunt.reach = { mon: hunt.mon, ...sceneReach(scene.engaged), seenAt: gameNow };
     }
 
     // 怪物遊走、死亡淡出
@@ -481,6 +480,33 @@ function sceneUpdate(dt) {
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
     for (const m of scene.mons) if (m.atk > 0) m.atk -= dt;
     if (!inZone) presUpdate(dt);   // 村莊裡其他玩家的位置（presence.js）
+}
+
+// ───────── 目標鎖定（2026-10-15 使用者回報：鎖定遠方的怪、身邊的怪一直打，原地喝水到死）─────────
+// 戰鬥選目標（combat.js）只看血量，不知道位置；畫面開著時由這裡依位置修正：
+//   目標打不到、身邊有打得到的 → 改打身邊最近的；鎖定後 RELOCK_MS 都沒出手 → 重新鎖定最近的怪，還是打不到就把牠移到角色旁邊
+const RELOCK_MS = 5000;
+function sceneFightMons() { return scene.mons.filter(m => !m.dead && m.inst && hunt.mobs.includes(m.inst) && m.inst.hp > 0); }
+function sceneDist(m) { return Math.abs(m.x - scene.pl.x) + Math.abs(m.y - scene.pl.y); }
+function sceneCanHit(m) { const r = sceneReach(m); return weaponIsRanged() ? r.ranged : r.melee; }
+function sceneLock(m) {
+    focusMob(m.inst);
+    scene.engaged = m;
+    scene.pl.path = [];
+    scene.lockMon = hunt.mon;
+    scene.lockAt = gameNow;
+}
+function sceneRelock() {
+    const list = sceneFightMons().sort((a, b) => sceneDist(a) - sceneDist(b));
+    if (!list.length) return;
+    // 打得到的最近那隻 → 不然換一隻別的（原本那隻可能卡在死角）→ 都沒有就原本那隻
+    const pick = list.find(sceneCanHit) || list.find(m => m !== scene.engaged) || list[0];
+    if (!sceneCanHit(pick)) {   // 還是打不到：把牠移到角色旁邊的空格
+        const pl = scene.pl;
+        const spot = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].map(([dx, dy]) => [pl.x + dx, pl.y + dy]).find(([x, y]) => freeTile(x, y));
+        if (spot) { pick.x = pick.rx = spot[0]; pick.y = pick.ry = spot[1]; }
+    }
+    sceneLock(pick);
 }
 
 // ───────── 攻擊距離（combat.js 的 canReach）─────────
@@ -906,6 +932,7 @@ function sceneZoneClick(wx, wy) {
             hit.inst = inst; hit.icon = inst.icon; hit.name = inst.name; hit.lastHp = inst.hp;
         }
         scene.manualUntil = 0;
+        scene.focusUntil = gameNow + RELOCK_MS;   // 玩家自己點的目標：5 秒內不會被「先打身邊的怪」換掉
         scene.effects.push({ x: hit.rx, y: hit.ry, t: 0, dur: 350, color: '#ffe7a8' });
         updateHuntLive();
         return;
