@@ -46,7 +46,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame.jpg`（第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
+| `images/` | App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節） |
 
 ## 2. 載入順序與依賴
@@ -60,7 +60,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261015g`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -284,6 +284,11 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
   再把挖掉的地方填成遊戲底色 `#100c0a`，輸出 `frame.jpg`（約 293KB，不需要透明度）。要換框就用同尺寸的圖覆蓋，並把 `index.html` 的 `frame.jpg?v=` 加一。
 - 版面：`#frame` 用 CSS `border-image` 九宮格鋪滿畫面：slice `715 102 655 104 fill`，上方（拱門、惡魔頭）與下方（法球、欄杆、格子）維持比例，
   左右柱子（符文段）以 `round` 重複延伸到手機高度。外框寬 = min(螢幕寬, 560px, 螢幕高 × 0.62)，`--s` = 寬 ÷ 1342。
+- **2026-10-15 拿掉上方拱門（版本 `20261015g`，使用者要求滿版）**：改用 `images/frame-notop.jpg`（frame.jpg 裁掉 y 715 以上，1342×1285；PowerShell System.Drawing 裁的），
+  slice `25 102 655 104 fill`、上方寬度 0（頂端 25px 還有拱門殘邊所以跳過），左右柱子直接接到畫面頂。`#panel` top 改成 `--s×20px`，柱子按鈕 top 0、抽屜 top `--s×60px`。
+  狩獵畫面 `#panel:has(> .hunt-view)` 不留內距，地圖填滿；下方操作框（回家卷軸／步行回村／前往狩獵地點）改浮在地圖左下、技能欄上方（村莊 `.hunt-view.in-town` 貼底），
+  掛機統計文字 `#hunt-session` 手機也不顯示（同 PC；補給數量看底部格子）。地圖縮放（`sceneFrame`）另外取「蓋滿畫面高／寬」的倍率，地圖變高後不留上下黑邊。
+  下表 `#panel` 的 y 445 是舊值；`frame.jpg` 保留但遊戲不再載入。
 - 所有元素位置都寫成「原圖座標 × `--s`」：
 
 | 元素 | 原圖位置 | 內容 |
@@ -1251,7 +1256,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 升級時提示「可以學習 X 了（需要 Y）」，不再自動學會。創角時 Lv.1 可學的直接學會（法師／天使的 1 級魔法、惡魔的血之渴望）。
 - **技能欄**（`player.settings.skillSlots`，8 格，`SKILL_SLOTS`）：技能頁上方 8 個下拉選單（分「魔法／職業技能」兩組），同一招放到別格時從原欄位移過去；「↺ 自動排好」＝`defaultSkillSlots`。
   `slotSkills()` 是欄位裡已學會的主動技能；`playerAction`、團隊副本補血（`raidAllyHeal`）只用它，**欄位順序＝優先順序**（治癒／增益／攻擊各自取第一個可用的）。
-  地圖右下快捷列就是這 8 格（兩排 4 格，鍵盤 1～8）。舊的「自動：開／關」（`settings.skills`）不再使用。
+  地圖上的快捷列就是這 8 格（鍵盤 1～8）。舊的「自動：開／關」（`settings.skills`）不再使用。
+  - **快捷列外觀**（2026-10-15，版本 `20261015e`，使用者附圖）：地圖下方置中一排 8 格，金框深底（`.sk-row`，左右菱形裝飾），每格＝方形圖示（`.sk`）＋技能名（`.sk-name`）＋按鍵圓鈕（`.sk-key`）；
+    方格左上 MP（藍字）、右上原本冷卻秒數、冷卻中下方黑條顯示剩餘秒數＋conic 遮罩，MP 不足變灰，空格顯示空框（全空則整列不顯示）。
+    還沒有技能圖檔：`skillIcon(k)`（ui-panels.js）依 `SKILL_ICON_RULES` 比對名稱／說明的關鍵字（火、冰、雷、風、暗、光、護盾、箭、斬…）挑 emoji 與底色 class（fire／ice／bolt／wind／dark／holy／heal／guard／arcane／phys）。
+    格子大小用 container query：`.scene-wrap` 設 `container-type: inline-size`，`--cell = min(40px, (100cqw − 34px) / 8)`（手機 375 寬約 33px）；PC 外框 `--cell = min(--s×84px, …)`（1280 寬 54px），位置在地點文字 `#hud-bottom` 上方（`bottom: --s×100px`）。
   - `defaultSkillSlots`：最強的治癒 → 增益 3 個（職業增益優先，魔法增益依 `MAGIC_BUFF_PREF`：加速術、魔法屏障…）→ 職業攻擊技能（範圍／分散、等級高優先）→ 攻擊魔法（只給 4 級以上魔法的施法職業）→ 剩下的增益補空格。
 - **舊存檔轉換**（`migrateSave`）：沒有 `player.skills` → 依舊規則把這個職業等級已到的全部學會，技能欄用 `defaultSkillSlots`（舊設定關掉的技能不放）。存檔 schema 不變。
 - 介面：技能頁依「一級魔法…N 級魔法＋職業技能」分區，每招顯示類型、MP、冷卻、說明，沒學的顯示書名與取得方式（商店／掉落、背包裡有沒有）；商店、背包、圖鑑多「📖 魔法書」分類。

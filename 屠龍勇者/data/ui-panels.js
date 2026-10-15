@@ -83,7 +83,7 @@ function renderHunt() {
 
 // 中間的即時地圖（ui-scene.js 畫在 canvas 上）＋下方操作列、補給、精簡訊息
 function huntViewHtml(title) {
-    return `<div class="hunt-view">
+    return `<div class="hunt-view ${inTown() ? 'in-town' : ''}">
         <div class="scene-wrap">
             <canvas id="scene-canvas" onclick="sceneClick(event)"></canvas>
             <div class="scene-top">${title}</div>
@@ -179,25 +179,42 @@ function updateHuntLive() {
     } else if (ses) ses.innerHTML = '<div>村莊裡很安全（自然回復 ×3），補給好再出發吧。</div>';
 }
 
-// ───────── 技能快捷列（野外地圖右下 4 格，鍵盤 1～4；ARCHITECTURE.md 第 17 節）─────────
-// 自動挑：攻擊技能（範圍／分散優先、等級高優先）最多 3 個＋治癒（沒有就增益）
-// 地圖右下的技能快捷列＝技能欄 8 格（鍵盤 1～8）；空格不顯示
+// ───────── 技能快捷列（ARCHITECTURE.md 第 40 節）─────────
+// 地圖下方置中的金框橫排＝技能欄 8 格（鍵盤 1～8）；空格顯示空框
 function skillBarSkills() {
     return (player.settings.skillSlots || []).map(id => (id && hasSkill(id) ? SKILL_BY_ID[id] : null));
+}
+// 技能圖示：還沒有技能圖檔，依名稱／說明的屬性挑圖示與底色（2026-10-15 技能欄改橫排金框，第 40 節）
+const SKILL_ICON_RULES = [
+    [/煉獄|火|炎|焰/, '🔥', 'fire'], [/冰|寒|雪|霜/, '❄️', 'ice'], [/雷|電/, '⚡', 'bolt'], [/風|龍捲|旋/, '🌪️', 'wind'],
+    [/吸血|暗|黑|闇|魂|血/, '💀', 'dark'], [/流星|隕/, '☄️', 'fire'], [/光|聖|神/, '✨', 'holy'],
+    [/屏障|護|盾|鎧|甲|防禦|結界|鋼鐵/, '🛡️', 'guard'], [/加速|迅|疾|敏捷|速/, '💨', 'wind'],
+    [/箭|射|狙|槍|彈/, '🏹', 'phys'], [/拳|掌|擊|斬|劍|刃|砍|劈|刺|突/, '⚔️', 'phys'],
+];
+function skillIcon(k) {
+    if (k.type === 'heal') return ['🌿', 'heal'];
+    const txt = k.name + (k.desc || '');
+    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(k.name)) return [ic, cls];
+    for (const [re, ic, cls] of SKILL_ICON_RULES) if (re.test(txt)) return [ic, cls];
+    return k.type === 'buff' ? ['🔆', 'holy'] : k.type === 'spell' ? ['🔮', 'arcane'] : ['⚔️', 'phys'];
 }
 function renderSkillBar() {
     const bar = $('skill-bar');
     if (!bar) return;
     if (inTown()) { if (bar.innerHTML) bar.innerHTML = ''; return; }
     const list = skillBarSkills(), now = gameNow;
-    const html = list.map((k, i) => {
-        if (!k || k.type === 'passive') return '';
-        const cd = player.cds[k.id] > now ? Math.ceil((player.cds[k.id] - now) / 1000) : 0;
-        const pct = cd && k.cd ? Math.round((player.cds[k.id] - now) / (k.cd * 1000) * 100) : 0;
-        const tag = k.aoe ? '範圍' : k.spread ? '分散' : k.type === 'heal' ? '治癒' : k.type === 'buff' ? '增益' : '';
-        return `<button class="sk ${player.mp < k.mp ? 'nomp' : ''} ${cd ? 'cd' : ''}" style="--cd:${pct}%" onclick="skillBarCast(${i})" title="${esc(k.name)}（${k.mp} MP）${esc(k.desc || '')}">
-            <span class="sk-n">${esc(k.name.slice(0, 2))}</span>${tag ? `<span class="sk-t">${tag}</span>` : ''}<span class="sk-k">${i + 1}</span>${cd ? `<span class="sk-cd">${cd}</span>` : ''}</button>`;
-    }).join('');
+    const cells = list.map((k, i) => {
+        if (!k || k.type === 'passive') return `<div class="sk-cell"><div class="sk empty"></div><div class="sk-name"> </div><div class="sk-key">${i + 1}</div></div>`;
+        const left = player.cds[k.id] > now ? (player.cds[k.id] - now) / 1000 : 0;
+        const cd = left ? Math.ceil(left) : 0;
+        const pct = cd && k.cd ? Math.min(100, Math.round(left / k.cd * 100)) : 0;
+        const [ic, cls] = skillIcon(k);
+        return `<div class="sk-cell"><button class="sk ${cls} ${player.mp < k.mp ? 'nomp' : ''} ${cd ? 'cd' : ''}" style="--cd:${pct}%" onclick="skillBarCast(${i})" title="${esc(k.name)}（${k.mp || 0} MP${k.cd ? '・冷卻 ' + k.cd + ' 秒' : ''}）${esc(k.desc || '')}">
+            <span class="sk-ic">${ic}</span>${k.cd ? `<span class="sk-base">${k.cd}s</span>` : ''}<span class="sk-mp">${k.mp || 0}</span>${cd ? `<span class="sk-cd">${cd}s</span>` : ''}</button>
+            <div class="sk-name">${esc(k.name)}</div><div class="sk-key">${i + 1}</div></div>`;
+    });
+    if (!cells.some(c => c.includes('<button'))) { if (bar.innerHTML) { bar.innerHTML = ''; bar.dataset.html = ''; } return; }
+    const html = `<div class="sk-row">${cells.join('')}</div>`;
     if (bar.dataset.html !== html) { bar.dataset.html = html; bar.innerHTML = html; }
 }
 function skillBarCast(i) {
