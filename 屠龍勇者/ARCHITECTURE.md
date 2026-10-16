@@ -29,7 +29,7 @@
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/sfx.js` | **音效**（第 44 節）：`SFX_DEFS`、`sfx(name, soft)`、`sfxHit(crit, ranged)`、設定區塊 `sfxSettingsHtml`／`setSfxOn`／`setSfxVol`；開關與音量存在 localStorage `dragonSlayer_sfx` |
-| `data/bgm.js` | **背景音樂**（第 44 節）：`BGM_LISTS`（目前只有野外 `field`）、`bgmUpdate`（每 0.5 秒依位置切換、淡入淡出）、設定列 `bgmSettingsHtml`／`setBgmOn`／`setBgmVol`；存在 localStorage `dragonSlayer_bgm` |
+| `data/bgm.js` | **背景音樂**（第 44 節）：`BGM_LISTS`（野外 `field`、村莊 `town`）、`bgmUpdate`（每 0.5 秒依位置切換、淡入淡出）、設定列 `bgmSettingsHtml`／`setBgmOn`／`setBgmVol`；存在 localStorage `dragonSlayer_bgm` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
 | `data/raid.js` | **團隊副本**：`RAIDS`（6 個副本）、團戰模擬 `raidSimulate`、獎勵 `raidApplyReward`／`raidClaim`、隊伍大廳（Supabase `raid_rooms`／`raid_members`）、重播畫面；載入時把 `raid` 加進 `TABS`／`PANEL_FNS`（第 30 節） |
 | `data/chat.js` | **聊天**：世界／隊伍頻道、`renderChat`、`chatFetch`（分頁開著時每 4 秒抓新訊息）、`chatSend`、`chatOpen`；載入時把 `chat` 加進 `TABS`／`PANEL_FNS`（第 32 節） |
@@ -52,7 +52,7 @@
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
-| `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外，第 44 節） |
+| `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節） |
 
 ## 2. 載入順序與依賴
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261017c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261017d`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1452,5 +1452,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   `setInterval(bgmUpdate, 500)`＋`visibilitychange`＋`pointerdown` 檢查；換狀態時淡入淡出 1.5 秒，淡出後暫停，回到野外從原本位置繼續；一首播完換下一首（第一次隨機挑一首）。
 - 設定 →「🔊 音效與音樂」：背景音樂開關＋音樂音量（預設 40%），這台裝置的設定。
 - `sw.js`：`music/` 與帶 `Range` 的請求不經過 SW（`<audio>` 分段要檔回 206，`cache.put` 會丟錯讓播放失敗）；所以離線時沒有音樂。
-- 之後要加村莊／首領／龍穴音樂：在 `BGM_LISTS` 加一組、`bgmWant()` 回傳對應名稱即可。
+- **村莊音樂**（版本 `20261017d`）：使用者給 `城鎮音樂.mp4`（放在桌面 `屠龍勇者人物模組資料/`）→ `music/town1.m4a`（約 2.8MB、2:58），`player.loc.type === 'town'` 時循環播。
+  換區（野外↔村莊）時先淡出 1.5 秒再換曲淡入（`bgmSwap`）；`bgmPos` 記每組播到哪，回到同一區從原位置繼續（本機伺服器不支援 Range，跳不過去會從頭播）。`bgmList`＝該播的組、`bgmCur`＝`<audio>` 目前載入的組。
+- 之後要加首領／龍穴音樂：在 `BGM_LISTS` 加一組、`bgmWant()` 回傳對應名稱即可。
 - 驗證：本機野外自動播放、回村莊 1.5 秒淡出暫停、回野外從原位置繼續、`playbackRate` 16 倍播完自動換下一首、關掉開關會停、Console 無錯誤（本機測試伺服器不支援 Range，拖曳進度會跳回 0，GitHub Pages 正常）。

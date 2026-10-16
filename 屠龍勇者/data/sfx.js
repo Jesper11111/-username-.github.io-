@@ -98,7 +98,7 @@ function sfxSettingsHtml() {
             <label class="set-row"><span>音量 <b id="sfx-vol-n">${sfxCfg.vol}</b>%</span><input type="range" min="0" max="100" step="5" value="${sfxCfg.vol}"
                 oninput="setSfxVol(this.value);$('sfx-vol-n').textContent=this.value" onchange="sfxTest()"></label>
             ${bgmSettingsHtml()}
-            <small class="muted">戰鬥：攻擊、受傷、擊倒、掉寶、施法；介面：按鈕、視窗、升級、任務、買賣；背景音樂在野外地圖播放。這台裝置的設定，不影響存檔；遊戲在背景或離線結算時不出聲。</small>
+            <small class="muted">戰鬥：攻擊、受傷、擊倒、掉寶、施法；介面：按鈕、視窗、升級、任務、買賣；背景音樂分野外、村莊。這台裝置的設定，不影響存檔；遊戲在背景或離線結算時不出聲。</small>
         </div>`;
 }
 
