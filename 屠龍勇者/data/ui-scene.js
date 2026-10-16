@@ -907,26 +907,10 @@ function sceneClick(ev) {
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
     if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
-    if (plate) { npcOpen(plate.npc); return; }
-    const b = npcBodyHit(wx, wy);   // NPC 身體先判，免得被旁邊的玩家或走路搶走（手機手指點不準）
-    if (b) { npcOpen(b); return; }
+    if (plate) { npcOpen(plate.npc); return; }   // 只有點名牌才開 NPC（2026-10-16 使用者要求，點身體不觸發）
     const other = presHit(wx, wy);   // 其他在線玩家（presence.js）
     if (other) { presMenu(other); return; }
     sceneWalkTo(Math.floor(wx / TILE), Math.floor(wy / TILE));
-}
-
-// 點 NPC 身體：左右各 1.5 格、名牌上方 0.5 格到腳下 1 格都算，重疊時取離身體中心最近的（2026-10-16 放大，手機點身體常沒反應）
-function npcBodyHit(wx, wy) {
-    const fx = wx / TILE, fy = wy / TILE;
-    let best = null, bd = Infinity;
-    for (const b of townNpcList(scene.bg)) {
-        const h = b.painted ? b.h : 1;
-        const cx = b.x + 0.5, top = b.y + 0.5 - h - 0.5, bottom = b.y + 2;
-        if (Math.abs(fx - cx) > 1.5 || fy < top || fy > bottom) continue;
-        const d = Math.hypot(fx - cx, fy - (top + bottom) / 2);
-        if (d < bd) { bd = d; best = b; }
-    }
-    return best;
 }
 
 // 野外點擊（ARPG 手動操作）：點怪＝改打牠／把牠拉進戰鬥（沒掛機會自動開始）；點地面＝走過去，之後 2.5 秒不自動尋怪
