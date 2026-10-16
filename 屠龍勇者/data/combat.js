@@ -346,7 +346,7 @@ function spawnMonster() {
     else if (z.type === 'dragon') mon = makeMonster(z.boss);
     else if (z.type === 'tower') {
         const f = player.loc.floor;
-        mon = makeTowerMonster(f, f % 10 === 0 && !player.towerCleared[f]);
+        mon = makeTowerMonster(f, towerBossUp(f));
     } else if (z.rare && chance(z.rare.p)) mon = makeMonster(z.rare.id);
     else {
         // 只出現不超過「玩家等級 +3」的怪；全都太強就出最弱的
@@ -588,6 +588,8 @@ function onKill(mon) {
 
     if (mon.towerFloor) {
         player.towerCleared[mon.towerFloor] = true;
+        player.towerBossCd[mon.towerFloor] = Date.now() + TOWER_BOSS_RESPAWN_H * 3600 * 1000;
+        addLog(`🏛️ ${mon.baseName}將在 ${TOWER_BOSS_RESPAWN_H} 小時後復活`, 'sys');
         const next = Math.min(100, mon.towerFloor + 10);
         if (next > player.towerMax) { player.towerMax = next; addLog(`🏛️ 解鎖永夜之塔 ${next}F！`, 'rare'); }
     }

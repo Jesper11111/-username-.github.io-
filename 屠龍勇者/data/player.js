@@ -37,7 +37,7 @@ function createPlayer(name, cls, stats) {
         inv: [], equip: {}, storage: [], nextUid: 1,
         buffs: {}, cds: {},
         loc: { type: 'town', id: 'talking' }, hunting: false,
-        towerMax: 10, towerCleared: {}, dragons: {}, dragonCd: {},
+        towerMax: 10, towerCleared: {}, towerBossCd: {}, dragons: {}, dragonCd: {},
         kills: 0, deaths: 0,
         quests: { ch: 0, active: false, prog: 0, bossDone: false },
         settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null,

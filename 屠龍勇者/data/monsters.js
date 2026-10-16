@@ -223,6 +223,11 @@ function buildMonster(id, t) {
 
 function makeMonster(id) { return buildMonster(id, MONSTERS[id]); }
 
+// 守關首領復活（2026-10-16 使用者要求）：打倒後 6 小時（真實時間，player.towerBossCd[樓層]）再出現；打倒一次就永久解鎖上 10 層（towerCleared）
+const TOWER_BOSS_RESPAWN_H = 6;
+function towerBossUp(floor) {
+    return floor % 10 === 0 && (!player.towerCleared[floor] || Date.now() >= (player.towerBossCd[floor] || 0));
+}
 function makeTowerMonster(floor, isBoss) {
     const g = Math.min(9, Math.floor((floor - 1) / 10));
     const lv = 44 + Math.round(floor * 0.45);

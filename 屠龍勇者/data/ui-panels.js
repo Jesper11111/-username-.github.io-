@@ -250,7 +250,7 @@ function renderMap() {
         }
         const extra = z.type === 'dragon'
             ? `<small class="${player.dragons[z.boss] ? 'good' : 'muted'}">${player.dragons[z.boss] ? `已討伐 ${player.dragons[z.boss]} 次` : '尚未討伐'}${why ? '｜' + why : ''}</small>`
-            : '';
+            : z.type === 'tower' ? towerBossStatusHtml() : '';
         h += `<div class="zone-card ${z.type}">
             <div class="zone-head"><span class="zone-icon">${z.icon}</span><b>${z.name}</b>
                 <small class="${player.lv < z.lv[0] ? 'bad' : 'muted'}">${z.type === 'dragon' ? '需求' : '建議'} Lv.${z.lv[0]}${z.type === 'dragon' ? '' : '～' + z.lv[1]}</small></div>
@@ -264,6 +264,18 @@ function renderMap() {
 function travelTowerBtn() {
     const v = parseInt($('tower-floor').value, 10) || 1;
     travelZone('tower', clamp(v, 1, player.towerMax));
+}
+
+// 永夜之塔：已打倒的守關首領復活倒數（打倒後 6 小時，monsters.js TOWER_BOSS_RESPAWN_H）
+function towerBossStatusHtml() {
+    const now = Date.now(), L = [];
+    for (let f = 10; f <= 100; f += 10) {
+        if (!player.towerCleared[f]) continue;
+        const left = (player.towerBossCd[f] || 0) - now;
+        if (left <= 0) L.push(`<span class="good">${f}F 已復活</span>`);
+        else { const m = Math.ceil(left / 60000); L.push(`${f}F ${m >= 60 ? Math.floor(m / 60) + ' 小時 ' : ''}${m % 60} 分`); }
+    }
+    return `<small class="muted">${L.length ? '守關首領（打倒後 6 小時復活）：' + L.join('、') : '10、20…100 樓有守關首領，打倒後 6 小時復活'}</small>`;
 }
 
 // ───────── 角色 ─────────
