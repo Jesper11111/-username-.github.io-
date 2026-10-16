@@ -92,12 +92,13 @@ function setSfxVol(v) {
 }
 function sfxTest() { sfxUnlock(); sfxPreload(); setTimeout(() => sfx('levelup'), sfxBuf.levelup ? 0 : 400); }
 function sfxSettingsHtml() {
-    return `<div class="panel"><h4>🔊 音效</h4>
+    return `<div class="panel"><h4>🔊 音效與音樂</h4>
             <label class="set-row"><span>戰鬥音效</span><input type="checkbox" ${sfxCfg.combat ? 'checked' : ''} onchange="setSfxOn('combat',this.checked)"></label>
             <label class="set-row"><span>介面音效</span><input type="checkbox" ${sfxCfg.ui ? 'checked' : ''} onchange="setSfxOn('ui',this.checked)"></label>
             <label class="set-row"><span>音量 <b id="sfx-vol-n">${sfxCfg.vol}</b>%</span><input type="range" min="0" max="100" step="5" value="${sfxCfg.vol}"
                 oninput="setSfxVol(this.value);$('sfx-vol-n').textContent=this.value" onchange="sfxTest()"></label>
-            <small class="muted">戰鬥：攻擊、受傷、擊倒、掉寶、施法；介面：按鈕、視窗、升級、任務、買賣。這台裝置的設定，不影響存檔；遊戲在背景或離線結算時不出聲。</small>
+            ${bgmSettingsHtml()}
+            <small class="muted">戰鬥：攻擊、受傷、擊倒、掉寶、施法；介面：按鈕、視窗、升級、任務、買賣；背景音樂在野外地圖播放。這台裝置的設定，不影響存檔；遊戲在背景或離線結算時不出聲。</small>
         </div>`;
 }
 

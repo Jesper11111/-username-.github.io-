@@ -38,6 +38,8 @@ self.addEventListener('fetch', event => {
     if (req.method !== 'GET') return;
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;
+    // 背景音樂（<audio> 串流用 Range 分段要，回 206 不能放進快取）：直接走網路，不經過 SW
+    if (req.headers.has('range') || url.pathname.includes('/music/')) return;
     if (req.mode === 'navigate' || /\.html$/i.test(url.pathname) || url.pathname.endsWith('/')) {
         event.respondWith(networkFirst(url));
     } else if (url.searchParams.has('v') && /\.js$/i.test(url.pathname)) {
