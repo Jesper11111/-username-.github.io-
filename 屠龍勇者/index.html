@@ -535,7 +535,7 @@
     .tower-pick { font-size: 13px; }
 
     /* 角色 */
-    /* 人物狀態「角色裝備」視窗（renderChar，2026-10-16；ARCHITECTURE.md 第 42 節）：容器寬 ≥ 700px 三欄，否則上下排 */
+    /* 人物狀態「角色裝備」視窗（renderChar，2026-10-16；ARCHITECTURE.md 第 42 節）：一律左中右三欄（使用者要求跟樣本一樣）；容器寬 < 700px 用緊湊版（裝備一欄、字縮小） */
     .cv { container-type: inline-size; margin-bottom: 10px; }
     .cv-win { position: relative; background: linear-gradient(#211810, #120d09); border: 2px solid #5a4028; border-radius: 10px;
         box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #8a6a3a55, inset 0 0 40px #000c; }
@@ -545,12 +545,11 @@
     .cv-title { height: 42px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #5a4028; background: linear-gradient(#3a2a1c, #1a1209); border-radius: 8px 8px 0 0; }
     .cv-title h3 { margin: 0; font-size: 19px; letter-spacing: 5px; color: #f3d58a; text-shadow: 0 0 8px #d8a84a88, 0 2px 2px #000; }
     .cv-title h3::before, .cv-title h3::after { content: '◆'; font-size: 9px; color: var(--gold); margin: 0 12px; vertical-align: middle; }
-    .cv-body { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; }
-    @container (min-width: 700px) { .cv-body { grid-template-columns: 34% 1fr 30%; } .cv-stage { height: auto; min-height: 300px; } }
+    .cv-body { display: grid; grid-template-columns: 34% 1fr 30%; gap: 10px; padding: 10px; }
     .cv-box { background: linear-gradient(#231a13, #1a1410); border: 1px solid #5a4028; border-radius: 8px; box-shadow: inset 0 0 18px #000a; min-width: 0; }
     .cv-hero { display: flex; flex-direction: column; overflow: hidden; }
     .cv-name { margin: 8px auto 0; padding: 3px 16px; font-size: 16px; color: #f3d58a; border: 1px solid #5a4028; border-radius: 4px; background: #0008; letter-spacing: 2px; }
-    .cv-stage { position: relative; flex: 1; height: 260px; display: flex; align-items: flex-end; justify-content: center; background: radial-gradient(ellipse at 50% 55%, #3a4a6a55, transparent 60%); }
+    .cv-stage { position: relative; flex: 1; min-height: 300px; display: flex; align-items: flex-end; justify-content: center; background: radial-gradient(ellipse at 50% 55%, #3a4a6a55, transparent 60%); }
     .cv-stage img { position: relative; z-index: 2; height: 94%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 0 12px #5fa8ff66); }
     .cv-circle { position: absolute; bottom: 6px; left: 50%; width: 180px; height: 46px; transform: translateX(-50%); border-radius: 50%; z-index: 1;
         border: 2px solid #6ac8ff; box-shadow: 0 0 18px #3aa0ff, inset 0 0 18px #3aa0ff; background: radial-gradient(ellipse, #3aa0ff44, transparent 70%); animation: cv-glow 2.4s ease-in-out infinite; }
@@ -580,6 +579,30 @@
     .cv-row b.hp { color: #ff8a7a; } .cv-row b.mp { color: #7ab8ff; }
     .cv-btns { display: flex; gap: 8px; padding: 6px 10px 0; }
     .cv-btns button { flex: 1; padding: 7px 0; font-size: 13px; border: 1px solid var(--gold); border-radius: 5px; background: linear-gradient(#4a3522, #23180f); box-shadow: inset 0 1px 0 #ffffff22; }
+    /* 緊湊三欄（手機直拿、PC 窄視窗）：立繪 27%、裝備一欄、屬性 33% */
+    @container (max-width: 699px) {
+        .cv-title { height: 34px; } .cv-title h3 { font-size: 16px; letter-spacing: 3px; }
+        .cv-body { grid-template-columns: 27% 1fr 33%; gap: 5px; padding: 6px; }
+        .cv-name { margin-top: 6px; padding: 2px 6px; font-size: 12px; letter-spacing: 0; max-width: 92%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cv-stage { height: auto; min-height: 0; overflow: hidden; }
+        .cv-stage img { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); height: 88%; width: auto; max-width: none; }   /* 欄位窄：立繪照高度放大、左右裁掉 */
+        .cv-circle { width: 86%; height: 22px; bottom: 4px; }
+        .cv-circle::after { inset: 4px 10px; }
+        .cv-foot { flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px; font-size: 11px; }
+        .cv-gear { grid-template-columns: 1fr; gap: 1px; padding: 4px; }
+        .cv-slot { gap: 5px; padding: 2px; }
+        .cv-ico { width: 32px; height: 32px; font-size: 17px; border-width: 1.5px; }
+        .cv-en { font-size: 9px; left: 2px; }
+        .cv-info small { font-size: 9px; }
+        .cv-n { font-size: 11px; }
+        .cv-a { font-size: 9px; }
+        .cv-stats h4 { padding: 5px 2px; font-size: 12px; letter-spacing: 1px; }
+        .cv-rows { padding: 2px 6px; }
+        .cv-row { flex-direction: column; gap: 0; padding: 3px 0; font-size: 11px; line-height: 1.3; }
+        .cv-row b { text-align: right; }
+        .cv-btns { flex-direction: column; gap: 5px; padding: 5px 6px 0; }
+        .cv-btns button { padding: 6px 0; font-size: 12px; }
+    }
     .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .stat-cell { background: var(--panel2); border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .stat-cell span { color: var(--muted); font-size: 13px; }
@@ -835,42 +858,42 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261016h"></script>
-<script src="data/classes.js?v=20261016h"></script>
-<script src="data/skills.js?v=20261016h"></script>
-<script src="data/items.js?v=20261016h"></script>
-<script src="data/spellbook.js?v=20261016h"></script>
-<script src="data/monsters.js?v=20261016h"></script>
-<script src="data/zones.js?v=20261016h"></script>
-<script src="data/quests.js?v=20261016h"></script>
-<script src="data/resonance.js?v=20261016h"></script>
-<script src="data/player.js?v=20261016h"></script>
-<script src="data/enchant.js?v=20261016h"></script>
-<script src="data/affix.js?v=20261016h"></script>
-<script src="data/craft.js?v=20261016h"></script>
-<script src="data/maps.js?v=20261016h"></script>
-<script src="data/combat.js?v=20261016h"></script>
-<script src="data/town.js?v=20261016h"></script>
-<script src="data/save.js?v=20261016h"></script>
-<script src="data/cloud.js?v=20261016h"></script>
-<script src="data/offline.js?v=20261016h"></script>
-<script src="data/ui.js?v=20261016h"></script>
-<script src="data/ui-create.js?v=20261016h"></script>
-<script src="data/ui-panels.js?v=20261016h"></script>
-<script src="data/codex.js?v=20261016h"></script>
-<script src="data/raid.js?v=20261016h"></script>
-<script src="data/clan.js?v=20261016h"></script>
-<script src="data/chat.js?v=20261016h"></script>
-<script src="data/rank.js?v=20261016h"></script>
-<script src="data/wb.js?v=20261016h"></script>
-<script src="data/market.js?v=20261016h"></script>
-<script src="data/vault.js?v=20261016h"></script>
-<script src="data/presence.js?v=20261016h"></script>
-<script src="data/ui-frame.js?v=20261016h"></script>
-<script src="data/icons.js?v=20261016h"></script>
-<script src="data/hotbar.js?v=20261016h"></script>
-<script src="data/ui-scene.js?v=20261016h"></script>
-<script src="data/pwa.js?v=20261016h"></script>
-<script src="data/main.js?v=20261016h"></script>
+<script src="data/config.js?v=20261016j"></script>
+<script src="data/classes.js?v=20261016j"></script>
+<script src="data/skills.js?v=20261016j"></script>
+<script src="data/items.js?v=20261016j"></script>
+<script src="data/spellbook.js?v=20261016j"></script>
+<script src="data/monsters.js?v=20261016j"></script>
+<script src="data/zones.js?v=20261016j"></script>
+<script src="data/quests.js?v=20261016j"></script>
+<script src="data/resonance.js?v=20261016j"></script>
+<script src="data/player.js?v=20261016j"></script>
+<script src="data/enchant.js?v=20261016j"></script>
+<script src="data/affix.js?v=20261016j"></script>
+<script src="data/craft.js?v=20261016j"></script>
+<script src="data/maps.js?v=20261016j"></script>
+<script src="data/combat.js?v=20261016j"></script>
+<script src="data/town.js?v=20261016j"></script>
+<script src="data/save.js?v=20261016j"></script>
+<script src="data/cloud.js?v=20261016j"></script>
+<script src="data/offline.js?v=20261016j"></script>
+<script src="data/ui.js?v=20261016j"></script>
+<script src="data/ui-create.js?v=20261016j"></script>
+<script src="data/ui-panels.js?v=20261016j"></script>
+<script src="data/codex.js?v=20261016j"></script>
+<script src="data/raid.js?v=20261016j"></script>
+<script src="data/clan.js?v=20261016j"></script>
+<script src="data/chat.js?v=20261016j"></script>
+<script src="data/rank.js?v=20261016j"></script>
+<script src="data/wb.js?v=20261016j"></script>
+<script src="data/market.js?v=20261016j"></script>
+<script src="data/vault.js?v=20261016j"></script>
+<script src="data/presence.js?v=20261016j"></script>
+<script src="data/ui-frame.js?v=20261016j"></script>
+<script src="data/icons.js?v=20261016j"></script>
+<script src="data/hotbar.js?v=20261016j"></script>
+<script src="data/ui-scene.js?v=20261016j"></script>
+<script src="data/pwa.js?v=20261016j"></script>
+<script src="data/main.js?v=20261016j"></script>
 </body>
 </html>
