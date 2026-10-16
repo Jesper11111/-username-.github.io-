@@ -117,7 +117,25 @@ function lootFiltered(inst, level) {
     const d = ITEMS[inst.id];
     if (!level || (d.cat !== 'weapon' && d.cat !== 'armor')) return false;
     if (!d.price) return false;                       // 稀有基底一律保留
+    if (lootKeepHit(inst)) return false;              // 有勾選要保留的詞綴（設定 lootKeepAf）
     return qualityRank(inst) < level;
+}
+// 保留特殊詞綴（2026-10-17）：設定 lootKeepAf＝詞綴代號清單，裝備有其中任何一條就不自動賣（撿到時、回收頁一鍵賣出都一樣）
+function lootKeepHit(inst) {
+    const keep = player && player.settings.lootKeepAf;
+    return !!(keep && keep.length && inst.af && inst.af.some(a => keep.includes(a.k)));
+}
+function toggleLootKeep(k) {
+    if (!AFFIXES[k]) return;
+    const s = player.settings, list = (s.lootKeepAf || []).filter(x => AFFIXES[x]);
+    s.lootKeepAf = list.includes(k) ? list.filter(x => x !== k) : list.concat(k);
+    saveGame();
+    renderPanel();
+}
+function lootKeepHtml() {
+    const keep = player.settings.lootKeepAf || [];
+    return `<div class="loot-keep">${Object.keys(AFFIXES).map(k =>
+        `<button class="mini ${keep.includes(k) ? '' : 'secondary'}" onclick="toggleLootKeep('${k}')">${keep.includes(k) ? '✔ ' : ''}${AFFIXES[k].name}</button>`).join('')}</div>`;
 }
 
 // 依怪物等級挑一件隨機裝備（隨機裝備掉落用）：回收價不超過 怪物等級 × 600 的武器／防具

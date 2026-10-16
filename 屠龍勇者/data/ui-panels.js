@@ -834,6 +834,9 @@ function renderSettings() {
             <label class="set-row"><span>撿到裝備時</span><select onchange="setSettingNum('lootFilter',this.value,0,3)">
                 ${LOOT_FILTERS.map((n, i) => `<option value="${i}" ${s.lootFilter === i ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
             <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、屠龍劍這類商店沒賣的稀有裝備一律保留。</small>
+            <div class="set-row"><span>保留有這些詞綴的裝備（不論品質）</span></div>
+            ${lootKeepHtml()}
+            <small class="muted">勾選的詞綴只要裝備上有其中一條，就不會被自動賣出，回收頁的「一鍵賣出」也會跳過。</small>
         </div>
         <div class="panel"><h4>🛡️ 安全</h4>
             ${num('telePct', 'HP 低於 % 瞬移（快捷欄瞬移卷軸開自動時）', 5, 90)}
