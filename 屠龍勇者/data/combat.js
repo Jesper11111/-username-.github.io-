@@ -417,7 +417,9 @@ function skillGcdLeft() { return Math.max(0, (player.cds._gcd || 0) - gameNow); 
 function useSkillCost(k) {
     player.mp -= k.mp;
     if (k.cd) player.cds[k.id] = gameNow + k.cd * 1000;
-    player.cds._gcd = gameNow + SKILL_GCD_MS;
+    // 共鳴裝備技能（id 'res_…'，castResonance 也走 castSpell／doStrike…）不觸發公共冷卻：
+    // 2026-10-17 曾因共鳴武器每次命中都觸發而一直重設，公共冷卻永遠停在 3 秒、玩家技能放不出來
+    if (!String(k.id).startsWith('res_')) player.cds._gcd = gameNow + SKILL_GCD_MS;
 }
 
 function castHeal(k, st) {
