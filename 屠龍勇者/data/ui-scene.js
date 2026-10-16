@@ -184,6 +184,8 @@ const MON_SPRITES = {
     giantKingSpirit: { cw: 184, ch: 203, body: 199, n: [1, 1, 1, 1, 1, 1] },
     pirateKing: { cw: 50, ch: 70, body: 66, n: [2, 2, 2, 3, 3, 3] },
     demon: { cw: 59, ch: 53, body: 49, n: [2, 2, 2, 3, 3, 3] },
+    // 四大龍（2026-10-16 起，tools/monsters/cut-sheet.ps1＋specH.json 切出；走路 4 格、攻擊 8／6／8 格）
+    antharas: { cw: 109, ch: 82, body: 72, n: [4, 4, 4, 8, 6, 8], size: 80 },
 };
 function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
 
