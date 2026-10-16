@@ -24,6 +24,7 @@ function startHunt() {
 }
 
 function stopHunt(msg) {
+    rememberMapBoss();
     player.hunting = false;
     hunt = null;
     if (msg) addLog(msg, 'sys');
@@ -310,7 +311,14 @@ function makeZoneMob(z) {
 }
 
 // 離開戰鬥（瞬移、換樓層）：全部的怪都放掉
+// 異界首領被放掉（瞬移卷軸、停止掛機…）時記住剩餘 HP，下次現身接著打
+// （2026-10-16 玩家回報 T15：吃紅圈重擊→自動瞬移→重新生出滿血首領，永遠打不死）
+function rememberMapBoss() {
+    const b = hunt && hunt.mobs.find(m => m.mapBoss && m.hp > 0);
+    if (b && inMapRun()) player.mapRun.bossHp = b.hp;
+}
 function leaveFight(searchMs) {
+    rememberMapBoss();
     hunt.mon = null; hunt.mobs = []; hunt.tele = null; hunt.state = 'search'; hunt.timer = searchMs;
 }
 
@@ -352,6 +360,8 @@ function spawnMonster() {
     hunt.warned.home = false;
     addMob(mon);
     mon.atkCd = mon.spd * 0.6;
+    // 異界首領之前被打過：接著剩下的 HP（addMob 套地圖詞綴後再設，「強壯」會把 HP 重設成滿的）
+    if (mapBossUp && player.mapRun.bossHp > 0) { mon.hp = Math.min(mon.maxHp, player.mapRun.bossHp); addLog(`👹 ${mon.name}帶著傷回來了（HP ${mon.hp}/${mon.maxHp}）`, 'boss'); }
     // 一般怪成群出現（首領、龍單獨出現）
     const n = mon.boss ? 1 : Math.min(packRoll(), inMapRun() ? Math.max(1, player.mapRun.left) : 99);
     if (mapBossUp) { player.mapRun.boss = true; addLog(`👹 ${mon.name}現身了！`, 'boss'); }
