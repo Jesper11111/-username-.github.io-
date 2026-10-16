@@ -156,10 +156,12 @@ const STAGE_W = 2000, STAGE_H = 1493;
 // 立繪（images/classes/職業.jpg，960×536）去背的全身像 images/classes/hero/職業.webp 在立繪中的範圍 [左, 上, 右, 下]（tools/stage/artcut.py 印出）
 const CLASS_FRONT = {
     royal: [273, 18, 721, 535], knight: [188, 17, 772, 535], mage: [204, 18, 787, 535], elf: [287, 43, 712, 535],
-    darkelf: [267, 49, 700, 482], shura: [395, 21, 617, 459], warrior: [320, 1, 737, 536], gunner: [208, 35, 768, 535],
+    darkelf: [309, 35, 651, 535],   // 2026-10-16 新全身像 478×700（寬高比 0.683），高 500、置中 shura: [395, 21, 617, 459], warrior: [320, 1, 737, 536], gunner: [208, 35, 768, 535],
     magicfighter: [330, 67, 621, 523], paladin: [235, 0, 739, 532], angel: [149, 0, 844, 437], demon: [86, 2, 913, 481],
 };
 const ART_W = 960, ART_H = 536, FRONT_H = 0.8;   // 整張立繪高度＝舞台高的 80%
+// 去背全身像路徑：職業有 hero 欄位就用它（黑暗妖精 2026-10-16 新立繪是 PNG），否則 hero/職業.webp
+function heroSrc(cls) { return (CLASSES[cls] && CLASSES[cls].hero) || `images/classes/hero/${cls}.webp?v=1`; }
 let stageCls = null;
 
 function stagePos(b, shrink = 0) {
@@ -187,7 +189,7 @@ function renderStage() {
             <button class="stage-arrow l" onclick="stageStep(-1)" aria-label="上一個職業">‹</button>
             <button class="stage-arrow r" onclick="stageStep(1)" aria-label="下一個職業">›</button>
             <div class="stage-title"><small>選擇英雄職業・點人物或左右切換</small><b id="stage-name"></b><span id="stage-desc"></span></div>`;
-        for (const id in CLASS_FRONT) new Image().src = `images/classes/hero/${id}.webp?v=1`;   // 預先載入，切換時不會閃
+        for (const id in CLASS_FRONT) new Image().src = heroSrc(id);   // 預先載入，切換時不會閃
     }
     if (stageCls === cls) return;
     stageCls = cls;
@@ -204,7 +206,7 @@ function renderStage() {
     const cx = Math.max(STAGE_W * 0.28, Math.min(STAGE_W * 0.72, g));
     const L = cx + (f[0] - ART_W / 2) * k, T = STAGE_H - (ART_H - f[1]) * k, W = (f[2] - f[0]) * k, H = (f[3] - f[1]) * k;
     front.style.cssText = `left:${L / STAGE_W * 100}%;top:${T / STAGE_H * 100}%;width:${W / STAGE_W * 100}%;height:${H / STAGE_H * 100}%`;
-    front.src = `images/classes/hero/${cls}.webp?v=1`;
+    front.src = heroSrc(cls);
     const gw = Math.min(W, 260 * k * 2);
     glow.style.cssText = `left:${(cx - gw / 2) / STAGE_W * 100}%;top:${(STAGE_H - 70) / STAGE_H * 100}%;width:${gw / STAGE_W * 100}%;height:${110 / STAGE_H * 100}%`;
     // 走出來：從合照上的位置（腳底、身高）放大移到前方

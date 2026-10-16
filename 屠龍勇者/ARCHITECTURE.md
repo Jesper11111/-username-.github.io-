@@ -62,7 +62,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261016o`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261016p`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -502,7 +502,31 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
   - 施法：下 5 格（含魔法陣）、右 4 格、上 4 格（原圖「向上」也是側面施法）。
 - 原圖背景是純灰（72,72,74）且每格右下有金色編號，工具新增兩個選項（第 18.1 節）。
 
-**黑暗妖精 v3**（**目前使用中**，2026-10-16，版本 `20261016n`；使用者給的新動作表 `tools/sprite-src/darkelf-v3-sheet.jpg`（**1024×572**，聊天附圖被壓縮過，人物約 90px 高，地圖上畫 48px 仍夠用；有原始大圖可換掉同檔名重切），
+**黑暗妖精 v4**（**目前使用中**，2026-10-16，版本 `20261016p`；使用者給的新動作表 `tools/sprite-src/darkelf-v4-sheet.jpg`（2000×1116，白底，只有外框線、格子之間是空白）＋**原創立繪** `tools/sprite-src/darkelf-art-src.jpg`（1342×2000）；
+規格 `darkelf-v4-*.json` 用 `"tol": 18, "flat": true`，每段平均切格）
+
+| 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |
+|---|---|---|---|---|---|
+| 走路 | `images/sprites/darkelf-v4-walk.png` | 128×120 | 8／8／8 | 110ms | 362KB |
+| 攻擊 | `images/sprites/darkelf-v4-attack.png` | 150×105 | 8／8／8 | 55ms | 431KB |
+| 施法 | `images/sprites/darkelf-v4-cast.png` | 286×125 | 8／6／8 | 90ms | 811KB |
+| 受傷 | `images/sprites/darkelf-v4-hit.png` | 124×124 | 3／3／3 | 90ms | 146KB |
+| 立繪 | `images/classes/darkelf.jpg` | 960×536（原創立繪全寬、從 y 140 往下裁 16:9） | | | 100KB |
+| 全身像 | `images/classes/hero/darkelf.png?v=2` | 478×700 去背 PNG | | | 308KB |
+
+- 區塊 x：正面 82～710、側面 713～1348、背面 1350～1977；y：走路 107～261＋261～415（兩列）、攻擊 417～555＋555～693、受傷 698～860、施法 865～982＋982～1100。
+  走路、攻擊每段 4 格×2 列，受傷 3 格，施法正面／背面 4 格、側面 3 格×2 列；每格內縮 2px。走路量到身高 133（縮放 0.85），攻擊、受傷 `"bodyH": 133`；施法人物畫得比較小，自動量（96）。
+  背面施法第 2、6 格只有龍捲風特效、看不到人（原圖如此）。
+- **立繪／全身像**：使用者先貼了《我獨自升級：ARISE》官方宣傳圖（有 Netmarble 商標與版權字），**不能用**；改請使用者生成原創圖。
+  這台電腦沒有 Python／Segment Anything，新工具 **`tools/stage/art-cut.ps1`**（PowerShell＋C#）：① 立繪 960×536 從 `-BannerY` 裁 16:9；
+  ② 顏色去背：背景＝高彩度偏紫藍（`-Chroma` 48、藍比綠多 12）從邊緣洪水填滿 → 第二輪從背景往內吃「暗、偏紫」的煙霧觸手（亮度 < 100、彩度 ≥ 24），`-Protect` 矩形內不吃（頭髮也偏紫，黑暗妖精用 `660,170,1000,480`）
+  → 留最大塊 → 身體圍住的大片亮紫色（手臂與身體之間看到的背景）挖掉 → 填小洞 → 3×3 模糊當柔邊 → 縮成高 700。
+  執行：`powershell -ExecutionPolicy Bypass -File tools\stage\art-cut.ps1 -Src tools\sprite-src\darkelf-art-src.jpg -Cls darkelf -BannerY 140 -Chroma 48 -Protect 660,170,1000,480`。只適合背景是單一強烈色調、角色是黑灰白或暖色的圖。
+- 全身像輸出是 PNG（System.Drawing 不能寫 webp），職業加 **`hero` 欄位**指定路徑；`heroSrc(cls)`（ui-create.js）＝`CLASSES[cls].hero` 或 `images/classes/hero/職業.webp?v=1`，創角舞台與人物狀態頁都用它。
+  `CLASS_FRONT.darkelf` 改成 `[309, 35, 651, 535]`（新全身像寬高比 0.683、高 500、置中）。
+- v3（下一段）與更早的版本圖檔都留著。
+
+**黑暗妖精 v3**（**未使用**，2026-10-16 版本 `20261016n` 用了一下就被 v4 取代；使用者給的新動作表 `tools/sprite-src/darkelf-v3-sheet.jpg`（**1024×572**，聊天附圖被壓縮過，人物約 90px 高，地圖上畫 48px 仍夠用；有原始大圖可換掉同檔名重切），
 白底灰格線、正面／側面朝右／背面，規格 `darkelf-v3-*.json` 用 `"tol": 18, "flat": true`）
 
 | 動作 | 檔案 | 格子 | 格數（下／右／上） | 每格 | 大小 |

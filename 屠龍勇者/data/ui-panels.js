@@ -339,7 +339,7 @@ function renderChar() {
         <div class="cv-body">
             <div class="cv-box cv-hero">
                 <div class="cv-name">${esc(player.name)}</div>
-                <div class="cv-stage"><img src="images/classes/hero/${player.cls}.webp?v=1" alt="${c.name}" onerror="this.src='${c.art || ''}'"><span class="cv-circle"></span></div>
+                <div class="cv-stage"><img src="${heroSrc(player.cls)}" alt="${c.name}" onerror="this.src='${c.art || ''}'"><span class="cv-circle"></span></div>
                 <div class="cv-foot"><span>等級 <b>${player.lv}</b></span><span>職業 <b>${c.name}</b></span><span>經驗 <b class="gold">${expPct}%</b></span></div>
             </div>
             <div class="cv-box cv-gear">${charGearHtml()}</div>
