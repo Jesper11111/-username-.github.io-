@@ -393,8 +393,14 @@ function renderBag() {
     h += `<div class="chips">${BAG_FILTERS.map(([id, n]) => `<button class="chip-btn ${bagFilter === id ? 'active' : ''}" onclick="setBagFilter('${id}')">${n}</button>`).join('')}</div>`;
     h += `<div class="btn-row"><button class="secondary mini" onclick="bagTidy()">🧹 整理背包</button></div>`;
     const list = player.inv.filter(x => bagMatch(ITEMS[x.id]));   // 照背包實際順序（新撿的在最後），按「整理」才排列
-    h += `<div class="list">` + (list.map(x => `<button class="item-row" onclick="openItemDialog(${x.uid})">
-            <span class="${itemClass(x)}">${esc(itemName(x))}</span><span class="muted">${x.n > 1 ? '×' + fmt(x.n) : ''}</span></button>`).join('')
+    // 相同的異界地圖疊成一列（maps.js mapKindKey），點開的是第一張
+    const rows = [], mapRow = {};
+    for (const x of list) {
+        if (ITEMS[x.id].cat === 'map') { const k = mapKindKey(x); if (mapRow[k]) { mapRow[k].n++; continue; } rows.push(mapRow[k] = { x, n: 1 }); }
+        else rows.push({ x, n: x.n });
+    }
+    h += `<div class="list">` + (rows.map(({ x, n }) => `<button class="item-row" onclick="openItemDialog(${x.uid})">
+            <span class="${itemClass(x)}">${esc(itemName(x))}</span><span class="muted">${n > 1 ? '×' + fmt(n) : ''}</span></button>`).join('')
         || '<p class="muted">沒有道具</p>') + `</div>`;
     return h;
 }
@@ -775,9 +781,9 @@ function renderGearForge() {
 function renderMapForge() {
     const maps = player.inv.filter(x => ITEMS[x.id].cat === 'map').sort((a, b) => ITEMS[b.id].tier - ITEMS[a.id].tier || qualityRank(b) - qualityRank(a));
     const curs = Object.keys(MAP_CURRENCY).filter(c => countItem(c) > 0).map(c => `${CURRENCY[c] ? CURRENCY[c].icon : ''}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
-    const list = maps.map(x => {
+    const list = groupMaps(maps).map(({ x, count }) => {
         const mods = x.mm || [];
-        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>
+        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${count > 1 ? ` <span class="muted">×${count}</span>` : ''}
             <small>${mapZoneFor(ITEMS[x.id].tier).name}${mods.length ? '　' + mods.map(k => MAP_MODS[k].icon + MAP_MODS[k].name).join('、') + `　<span class="good">獎勵 +${Math.round(mapBonusOf(mods) * 100)}%</span>` : '　（普通）'}</small></div>
             <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;
     }).join('');

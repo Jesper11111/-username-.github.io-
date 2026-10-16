@@ -57,6 +57,15 @@ function giveMap(t, q, why) {
     addLog(`🗺️ ${why || '獲得'} ${x.q ? `【${QUALITY[x.q].name}】` : ''}${itemName(x)}`, x.q === 'rare' ? 'rare' : 'loot');
     return x;
 }
+// 相同的地圖（同階、同品質、同詞綴、同名稱）在清單裡疊成一列「×N」（2026-10-16 使用者要求）；
+// 存檔裡仍是一張一個實體，開啟／出售／改造／上架都只動其中一張，所以其他功能不用改
+function mapKindKey(x) { return [x.id, x.q || '', (x.mm || []).slice().sort().join(','), x.nm || ''].join('|'); }
+function groupMaps(list) {
+    const out = [], by = {};
+    for (const x of list) { const k = mapKindKey(x); if (by[k]) by[k].count++; else { by[k] = { x, count: 1 }; out.push(by[k]); } }
+    return out;
+}
+function mapCountSame(x) { const k = mapKindKey(x); return player.inv.filter(y => ITEMS[y.id].cat === 'map' && mapKindKey(y) === k).length; }
 function mapQtyOf(mods) { return Math.min(MAP_QTY_MAX, 1 + mods.reduce((a, k) => a + (MAP_MODS[k].qty || 0), 0)); }
 function mapBonusOf(mods) { return mods.reduce((a, k) => a + MAP_MODS[k].bonus, 0); }
 
@@ -76,7 +85,8 @@ const MAP_CURRENCY = {
 
 function mapDescHtml(x) {
     const t = ITEMS[x.id].tier, z = mapZoneFor(t), mods = x.mm || [];
-    const L = [`<small class="muted">異界地圖・T${t}</small>`, `地區：${z.icon} ${z.name}（建議 Lv.${z.lv[0]}～${z.lv[1]}）${t > mapZones().length ? '<span class="warn">　怪物強化 ×1.4</span>' : ''}`,
+    const same = findInv(x.uid) ? mapCountSame(x) : 1;
+    const L = [`<small class="muted">異界地圖・T${t}${same > 1 ? `　背包裡同樣的共 ${same} 張` : ''}</small>`, `地區：${z.icon} ${z.name}（建議 Lv.${z.lv[0]}～${z.lv[1]}）${t > mapZones().length ? '<span class="warn">　怪物強化 ×1.4</span>' : ''}`,
         `怪物數量：200～300 隻${mapQtyOf(mods) > 1 ? ` <b class="warn">×${mapQtyOf(mods)}</b>` : ''}，殺光後出現異界首領`];
     if (x.q) L.push(`<b class="${QUALITY[x.q].cls}">${QUALITY[x.q].name}地圖</b>　<span class="good">獎勵 +${Math.round(mapBonusOf(mods) * 100)}%</span>`);
     for (const k of mods) L.push(`<span class="q-magic">◆ ${MAP_MODS[k].icon} ${MAP_MODS[k].name}：${MAP_MODS[k].desc}</span>`);
@@ -186,9 +196,9 @@ function mapDevicePanelHtml() {
             <div class="btn-row"><button class="secondary" onclick="abandonMapBtn()">放棄這張地圖</button></div></div>`;
     }
     const maps = player.inv.filter(x => ITEMS[x.id].cat === 'map').sort((a, b) => ITEMS[b.id].tier - ITEMS[a.id].tier || qualityRank(b) - qualityRank(a));
-    h += maps.length ? `<div class="list">${maps.map(x => {
+    h += maps.length ? `<div class="list">${groupMaps(maps).map(({ x, count }) => {
         const t = ITEMS[x.id].tier, mods = x.mm || [];
-        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>
+        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${count > 1 ? ` <span class="muted">×${count}</span>` : ''}
             <small>${mapZoneFor(t).name}${mods.length ? '　' + mods.map(k => MAP_MODS[k].icon).join('') + ` 獎勵 +${Math.round(mapBonusOf(mods) * 100)}%` : ''}${mapQtyOf(mods) > 1 ? `　怪物 ×${mapQtyOf(mods)}` : ''}</small></div>
             <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openMap(${x.uid})" ${inTown() && !r ? '' : 'disabled'}>開啟</button></div></div>`;
     }).join('')}</div>` : '<small class="muted">還沒有異界地圖。打怪有機率掉落（一般地圖每隻 0.4%、異界裡 1.5%），通關異界首領必掉。</small>';
