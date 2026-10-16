@@ -4,11 +4,13 @@
 // 自己的狀態（名字、職業、等級、格子位置、方向）用 presence.track 廣播，移動時最多每 0.35 秒更新一次；別人的狀態畫在村莊地圖上。
 // 點別人：💬 聊天（世界頻道、輸入框帶 @名字）／👥 邀請組隊（broadcast invite，對方確認後 raidJoin）。野外不連線、看不到別人。
 
+// 2026-10-16 使用者要求關閉：Supabase 免費方案即時訊息每月 200 萬則，村莊多人走動幾小時就用完（ARCHITECTURE.md 第 39 節）。改回 true 即恢復。
+const PRES_ON = false;
 const PRES_MAX = 40;           // 畫面上最多畫幾個其他玩家
 const PRES_SEND_MS = 350;      // 位置更新間隔
 let presCh = null, presTown = null, presKey = '', presOthers = {}, presLastSent = 0, presLastPos = '', presJoining = false;
 
-function presEnabled() { return isCloudConfigured() && cloudLoggedIn() && cloudUser && cloudSb && cloudSb.channel && !cloudBan && player && !SIM_MODE; }
+function presEnabled() { return PRES_ON && isCloudConfigured() && cloudLoggedIn() && cloudUser && cloudSb && cloudSb.channel && !cloudBan && player && !SIM_MODE; }
 
 // 主迴圈每 250ms 呼叫（ui.js renderStatus）：依目前位置加入／離開頻道、送出位置
 function presTick() {
