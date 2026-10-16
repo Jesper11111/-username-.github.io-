@@ -1,0 +1,9 @@
+{
+  "sheet": "tools/sprite-src/darkelf-v3-sheet.jpg", "out": "images/sprites/darkelf-v3-hit.png",
+  "charH": 113, "pad": 4, "tol": 18, "flat": true, "bodyH": 87,
+  "dirs": {
+    "down":  [[63, 348, 99, 79], [168, 348, 100, 79], [274, 348, 99, 79]],
+    "right": [[379, 348, 99, 79], [484, 348, 92, 79], [582, 348, 105, 79]],
+    "up":    [[694, 348, 103, 79], [803, 348, 99, 79], [908, 348, 96, 79]]
+  }
+}
