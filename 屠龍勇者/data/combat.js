@@ -277,6 +277,7 @@ function manualCast(id) {
     const k = learnedSkills().find(s => s.id === id);
     if (!k || k.type === 'passive') return '尚未學會';
     if (player.cds[k.id] > gameNow) return `冷卻中（${Math.ceil((player.cds[k.id] - gameNow) / 1000)} 秒）`;
+    if (skillGcdLeft()) return `技能冷卻中（${Math.ceil(skillGcdLeft() / 1000)} 秒後才能放下一個技能）`;
     if (player.mp < k.mp) return 'MP 不足';
     const st = calcStats();
     if (k.type === 'heal') { castHeal(k, st); return ''; }
@@ -392,7 +393,8 @@ function skillReach(k, st) { return k.type === 'spell' ? 'ranged' : (st.ranged ?
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = slotSkills();
-    const ready = k => player.mp >= (k.mp || 0) && !(player.cds[k.id] > now);
+    const gcd = player.cds._gcd > now;   // 技能公共冷卻中：只普攻（共鳴照常）
+    const ready = k => !gcd && player.mp >= (k.mp || 0) && !(player.cds[k.id] > now);
     if (player.hp < st.maxHp * s.healPct / 100) {
         const heal = skills.find(k => k.type === 'heal' && ready(k));
         if (heal) return castHeal(heal, st);
@@ -408,9 +410,14 @@ function playerAction(st) {
     physicalAttack(st, 1, {});
 }
 
+// 技能公共冷卻（2026-10-17 使用者要求）：施放任何技能（治癒、增益、魔法、物理技能）後 3 秒內不能再放下一個技能，期間照常普攻；
+// 共鳴裝備技能、藥水不受影響。存在 player.cds._gcd（跟其他冷卻一起存檔、離線模擬照常計算）
+const SKILL_GCD_MS = 3000;
+function skillGcdLeft() { return Math.max(0, (player.cds._gcd || 0) - gameNow); }
 function useSkillCost(k) {
     player.mp -= k.mp;
     if (k.cd) player.cds[k.id] = gameNow + k.cd * 1000;
+    player.cds._gcd = gameNow + SKILL_GCD_MS;
 }
 
 function castHeal(k, st) {
