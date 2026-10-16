@@ -240,7 +240,7 @@ function defaultSkillSlots(p = player, skip = {}) {
 
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
-    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', ...STAT_KEYS];
+    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'weight', ...STAT_KEYS];
 
 function addFx(acc, fx) {
     if (!fx) return;
@@ -302,7 +302,8 @@ function calcStats() {
         lifesteal: fx.lifesteal || 0,
         hpRegen: 1 + Math.floor(p.lv / 8) + Math.max(0, s.con - 12) + (fx.hpRegen || 0),
         mpRegen: 1 + Math.floor(p.lv / 12) + Math.max(0, Math.floor((s.wis - 10) * c.mpRegenK)) + (fx.mpRegen || 0),
-        weightMax: (s.str + s.con) * 100,
+        // 負重（2026-10-16 改版）：底值 1200＋（力量＋體質）×80＋等級×20＋裝備（腰帶 weight）；原本 (力量＋體質)×100，1～50 級不會成長
+        weightMax: 1200 + (s.str + s.con) * 80 + p.lv * 20 + (fx.weight || 0),
         atkMs: Math.round(wt.spd * spdMul),
         haste: !!fx.haste, brave: !!fx.brave,
     };

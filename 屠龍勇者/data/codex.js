@@ -137,6 +137,7 @@ function codexDetailHtml(id) {
     if (d.mpRegen) L.push(['回魔', '+' + d.mpRegen]);
     STAT_KEYS.forEach(k => { if (d[k]) L.push([STAT_NAMES[k], '+' + d[k]]); });
     if (d.hp) L.push(['HP', '+' + d.hp]);
+    if (d.weight) L.push(['負重上限', '+' + d.weight]);
     if (d.reduce) L.push(['減傷', d.reduce]);
     if (d.lifesteal) L.push(['吸血', `+${Math.round(d.lifesteal * 100)}%`]);
     if (d.silver) L.push(['銀製', '對不死系額外傷害']);

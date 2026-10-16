@@ -116,8 +116,8 @@ const ITEMS = {
     conRing:       { name: '體質戒指', cat: 'armor', slot: 'ring', con: 1, hp: 20, safe: -1, wt: 2, sell: 8000 },
     intRing:       { name: '智力戒指', cat: 'armor', slot: 'ring', int: 1, safe: -1, wt: 2, sell: 8000 },
     protectRing:   { name: '守護戒指', cat: 'armor', slot: 'ring', ac: 1, safe: -1, wt: 2, price: 3000, tier: 3 },
-    belt:          { name: '皮帶',     cat: 'armor', slot: 'belt', hp: 15, safe: -1, wt: 10, price: 300, tier: 2 },
-    titanBelt:     { name: '泰坦腰帶', cat: 'armor', slot: 'belt', str: 1, con: 1, hp: 30, safe: -1, wt: 15, sell: 15000 },
+    belt:          { name: '皮帶',     cat: 'armor', slot: 'belt', hp: 15, weight: 300, safe: -1, wt: 10, price: 300, tier: 2 },
+    titanBelt:     { name: '泰坦腰帶', cat: 'armor', slot: 'belt', str: 1, con: 1, hp: 30, weight: 800, safe: -1, wt: 15, sell: 15000 },
 
     // ── 藥水 ──
     redPotion:     { name: '治癒藥水',     short: '紅水', cat: 'potion', heal: [15, 20], wt: 2, price: 20, tier: 1 },
@@ -142,10 +142,11 @@ const ITEMS = {
     cArmorScroll:  { name: '詛咒的對盔甲施法的卷軸', cat: 'scroll', scroll: 'enchant', target: 'armor', bless: -1, wt: 1, sell: 50, desc: '防具 -1' },
 
     // ── 彈藥 ──
-    arrow:         { name: '箭',     cat: 'ammo', ammo: 'arrow', dmg: 1, wt: 0.1, price: 1, tier: 1 },
-    silverArrow:   { name: '銀箭',   cat: 'ammo', ammo: 'arrow', dmg: 2, silver: true, wt: 0.1, price: 4, tier: 2 },
-    bullet:        { name: '子彈',   cat: 'ammo', ammo: 'bullet', dmg: 2, wt: 0.15, price: 2, tier: 1 },
-    silverBullet:  { name: '銀子彈', cat: 'ammo', ammo: 'bullet', dmg: 3, silver: true, wt: 0.15, price: 5, tier: 2 },
+    // 彈藥重量 2026-10-16 降為 1/5（箭 0.1→0.02、子彈 0.15→0.03），妖精／槍手帶大量彈藥不再超重
+    arrow:         { name: '箭',     cat: 'ammo', ammo: 'arrow', dmg: 1, wt: 0.02, price: 1, tier: 1 },
+    silverArrow:   { name: '銀箭',   cat: 'ammo', ammo: 'arrow', dmg: 2, silver: true, wt: 0.02, price: 4, tier: 2 },
+    bullet:        { name: '子彈',   cat: 'ammo', ammo: 'bullet', dmg: 2, wt: 0.03, price: 2, tier: 1 },
+    silverBullet:  { name: '銀子彈', cat: 'ammo', ammo: 'bullet', dmg: 3, silver: true, wt: 0.03, price: 5, tier: 2 },
 
     // ── 萬能藥、材料 ──
     elixir:        { name: '萬能藥', cat: 'elixir', wt: 1, sell: 10000, desc: `永久提升一項能力值 +1（最多 ${ELIXIR_MAX} 瓶）` },

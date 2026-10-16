@@ -359,7 +359,7 @@ const QUEST_REWARD_ITEMS = {
     darkElfClaw:     { name: '淬毒鋼爪',     cat: 'weapon', type: 'claw', dmg: [12, 12], crit: 0.05, safe: 6, wt: 40, sell: 5000, classes: ['darkelf'] },
     darkRing:        { name: '暗殺者之戒',   cat: 'armor', slot: 'ring', dex: 1, crit: 0.03, safe: -1, wt: 2, sell: 10000, classes: ['darkelf'] },
     darkDualBlades:  { name: '夜影雙刀',     cat: 'weapon', type: 'dual', dmg: [18, 18], crit: 0.08, safe: 6, wt: 55, sell: 40000, classes: ['darkelf'] },
-    shuraBelt:       { name: '修羅腰帶',     cat: 'armor', slot: 'belt', str: 1, hp: 30, safe: -1, wt: 10, sell: 1500, classes: ['shura'] },
+    shuraBelt:       { name: '修羅腰帶',     cat: 'armor', slot: 'belt', str: 1, hp: 30, weight: 500, safe: -1, wt: 10, sell: 1500, classes: ['shura'] },
     shuraClaw:       { name: '鬼刃之爪',     cat: 'weapon', type: 'claw', dmg: [13, 13], hit: 2, safe: 6, wt: 45, sell: 5000, classes: ['shura'] },
     shuraRing:       { name: '戰神之戒',     cat: 'armor', slot: 'ring', str: 1, dmg: 2, safe: -1, wt: 2, sell: 10000, classes: ['shura'] },
     shuraDualBlades: { name: '阿修羅雙刀',   cat: 'weapon', type: 'dual', dmg: [19, 19], crit: 0.05, safe: 6, wt: 55, sell: 40000, classes: ['shura'] },

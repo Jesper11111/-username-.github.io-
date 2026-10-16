@@ -78,7 +78,7 @@ const RESONANCE_ARMOR_ITEMS = {
     archmageHat:  { name: '大賢者頭冠',   cat: 'armor', slot: 'helm', ac: 2, sp: 3, mr: 10, safe: 4, wt: 15, sell: 45000 },
     phoenixMail:  { name: '不死鳥之鎧',   cat: 'armor', slot: 'armor', ac: 8, mr: 10, safe: 4, wt: 180, sell: 60000 },
     shadowCloak:  { name: '夜影斗篷',     cat: 'armor', slot: 'cloak', ac: 2, dodge: 0.05, safe: 4, wt: 10, sell: 40000 },
-    giantBelt:    { name: '巨人王腰帶',   cat: 'armor', slot: 'belt', str: 2, con: 2, hp: 60, safe: -1, wt: 20, sell: 55000 },
+    giantBelt:    { name: '巨人王腰帶',   cat: 'armor', slot: 'belt', str: 2, con: 2, hp: 60, weight: 1200, safe: -1, wt: 20, sell: 55000 },
     angelRing:    { name: '天使之戒',     cat: 'armor', slot: 'ring', wis: 1, mr: 5, hpRegen: 2, safe: -1, wt: 2, sell: 42000 },
     demonRing:    { name: '惡魔之戒',     cat: 'armor', slot: 'ring', str: 1, lifesteal: 0.03, safe: -1, wt: 2, sell: 42000 },
     abyssAmulet:  { name: '深淵之眼',     cat: 'armor', slot: 'amulet', crit: 0.05, mr: 5, safe: -1, wt: 5, sell: 50000 },
