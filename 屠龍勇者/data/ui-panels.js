@@ -59,6 +59,7 @@ function renderPanel() {
         $('panel').innerHTML = renderHunt();
         const open = currentTab !== 'hunt';
         ov.classList.toggle('hidden', !open);
+        ov.classList.toggle('wide', currentTab === 'char');   // 人物狀態「角色裝備」視窗放大到整個地圖窗口，三欄並排（2026-10-16）
         ov.innerHTML = open ? panelHead(currentTab, true) + PANEL_FNS[currentTab]() : '';
         lastLogRendered = 0;
         updateHuntLive();
@@ -226,14 +227,77 @@ function travelTowerBtn() {
 }
 
 // ───────── 角色 ─────────
+// 人物狀態頁（2026-10-16 改版，使用者選的「A Claude 版」樣本）：角色裝備視窗＝左立繪、中 12 格裝備、右人物屬性；
+// 容器寬 ≥ 700px 三欄，較窄（手機、PC 右側分頁視窗）上下排列（CSS @container，index.html .cv）
+const CHAR_SLOT_EMOJI = { weapon: '🗡️', shield: '🛡️', helm: '🪖', armor: '🥋', tshirt: '👕', cloak: '🧥', gloves: '🧤', boots: '👢', amulet: '📿', ring1: '💍', ring2: '💍', belt: '🎗️' };
+const CHAR_Q_CLS = { magic: 'q-magic', rare: 'q-rare', legend: 'q-legend' };
+function charGearBrief(d, it) {
+    const L = [];
+    if (d.cat === 'weapon') L.push(`傷害 ${d.dmg[0]}/${d.dmg[1]}`);
+    const ac = (d.ac || 0) + (d.cat === 'armor' && d.safe >= 0 ? (it.ench || 0) : 0);
+    if (ac) L.push(`防禦 +${ac}`);
+    if (d.hit) L.push(`命中 +${d.hit}`);
+    if (d.sp) L.push(`SP +${d.sp}`);
+    if (d.mr) L.push(`MR +${d.mr}`);
+    STAT_KEYS.forEach(k => { if (d[k]) L.push(`${STAT_NAMES[k]} +${d[k]}`); });
+    if (d.hp) L.push(`HP +${d.hp}`);
+    if (d.weight) L.push(`負重 +${d.weight}`);
+    if (d.haste) L.push('加速');
+    return L.slice(0, 2).join('・');
+}
+function charGearHtml() {
+    return SLOT_KEYS.map(slot => {
+        const it = player.equip[slot];
+        if (!it) return `<div class="cv-slot empty"><span class="cv-ico">${CHAR_SLOT_EMOJI[slot]}</span><div class="cv-info"><small>${SLOTS[slot]}</small><span class="cv-n muted">未裝備</span></div></div>`;
+        const d = ITEMS[it.id], q = CHAR_Q_CLS[it.q] || '';
+        const ico = typeof RES_IMG !== 'undefined' && RES_IMG[it.id] ? imgIconHtml('sk/' + RES_IMG[it.id]) : CHAR_SLOT_EMOJI[slot];
+        // 名稱只顯示裝備本名（品質看顏色），完整名稱（傳說・血月 …）放 title，免得窄格子只看到前綴
+        return `<button class="cv-slot" onclick="openItemDialog(${it.uid})" title="${esc(itemName(it))}"><span class="cv-ico ${q}">${ico}${it.ench ? `<b class="cv-en">${it.ench > 0 ? '+' : ''}${it.ench}</b>` : ''}</span>
+            <div class="cv-info"><small>${SLOTS[slot]}</small><span class="cv-n ${q}">${esc(d.name)}</span><span class="cv-a">${charGearBrief(d, it)}</span></div></button>`;
+    }).join('');
+}
+// 「詳細屬性」：全部戰鬥數值；「冒險紀錄」：擊殺、死亡、永夜之塔、四大龍、稱號
+function charDetailDialog() {
+    const st = calcStats();
+    const rows = [
+        ['傷害加成', '+' + st.dmgBonus], ['命中', st.hit], ['SP', st.sp], ['防禦', defenseOf(st)], ['MR', st.mr],
+        ['爆擊', Math.round(st.crit * 100) + '%'], ['閃避', Math.round(st.dodge * 100) + '%'], ['減傷', st.reduce], ['吸血', Math.round(st.lifesteal * 100) + '%'],
+        ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['回血／5秒', st.hpRegen], ['回魔／5秒', st.mpRegen],
+        ['負重', `${Math.floor(invWeight())} / ${st.weightMax}`], ['經驗', `${fmt(player.exp)} / ${fmt(expToNext(player.lv))}`],
+    ];
+    openDialog('📊 詳細屬性', `<div class="kv-grid">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}</div>`, [{ text: '關閉', cls: 'secondary' }]);
+}
+function charRecordDialog() {
+    const dragons = DRAGON_IDS.map(id => `${player.dragons[id] ? '✅' : '⬜'} ${MONSTERS[id].name}`).join('<br>');
+    openDialog('📜 冒險紀錄', `<div class="kv-grid">
+        <span>擊殺數</span><b>${fmt(player.kills)}</b><span>死亡數</span><b>${player.deaths}</b>
+        <span>永夜之塔</span><b>可到 ${player.towerMax}F</b></div>
+        <p class="dragon-list">${dragons}</p>${hasDragonTitle() ? '<p class="good">👑 稱號：屠龍勇者</p>' : ''}`, [{ text: '關閉', cls: 'secondary' }]);
+}
 function renderChar() {
     const st = calcStats(), c = CLASSES[player.cls];
-    let h = `<div class="panel">
-        ${c.art ? `<img class="class-art" src="${c.art}?v=${GAME_VERSION}" alt="${c.name}">` : ''}
-        <div class="loc">${c.icon} ${esc(player.name)} <small class="muted">${c.name} Lv.${player.lv}</small></div>
-        <small class="muted">${c.desc}</small>
-        <div class="exp-line">經驗 ${fmt(player.exp)} / ${fmt(expToNext(player.lv))}</div>
-    </div>`;
+    const expPct = player.lv >= MAX_LEVEL ? 100 : Math.floor(player.exp / expToNext(player.lv) * 1000) / 10;
+    const rows = [
+        ['傷害加成', '+' + st.dmgBonus], ['防禦', defenseOf(st)], ['HP', `<b class="hp">${player.hp} / ${st.maxHp}</b>`], ['MP', `<b class="mp">${player.mp} / ${st.maxMp}</b>`],
+        ['命中', st.hit], ['爆擊', Math.round(st.crit * 100) + '%'], ['閃避', Math.round(st.dodge * 100) + '%'], ['MR', st.mr],
+        ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['負重', `${fmt(Math.floor(invWeight()))} / ${fmt(st.weightMax)}`],
+    ];
+    let h = `<div class="cv"><div class="cv-win">
+        <div class="cv-title"><h3>角色裝備</h3></div>
+        <div class="cv-body">
+            <div class="cv-box cv-hero">
+                <div class="cv-name">${esc(player.name)}</div>
+                <div class="cv-stage"><img src="images/classes/hero/${player.cls}.webp?v=1" alt="${c.name}" onerror="this.src='${c.art || ''}'"><span class="cv-circle"></span></div>
+                <div class="cv-foot"><span>等級 <b>${player.lv}</b></span><span>職業 <b>${c.name}</b></span><span>經驗 <b class="gold">${expPct}%</b></span></div>
+            </div>
+            <div class="cv-box cv-gear">${charGearHtml()}</div>
+            <div class="cv-box cv-stats">
+                <h4>人物屬性</h4>
+                <div class="cv-rows">${rows.map(([k, v]) => `<div class="cv-row"><span>${k}</span>${String(v).startsWith('<b') ? v : `<b>${v}</b>`}</div>`).join('')}</div>
+                <div class="cv-btns"><button onclick="charDetailDialog()">詳細屬性</button><button onclick="charRecordDialog()">冒險紀錄</button></div>
+            </div>
+        </div>
+    </div></div>`;
     h += `<div class="panel"><h4>能力值 ${player.statPoints ? `<span class="good">（可分配 ${player.statPoints} 點）</span>` : ''}</h4><div class="stat-grid">`;
     for (const k of STAT_KEYS) {
         const bonus = st[k] - player.stats[k];
@@ -241,29 +305,6 @@ function renderChar() {
             ${player.statPoints && player.stats[k] < STAT_CAP ? `<button class="mini" onclick="addStatBtn('${k}')">＋</button>` : ''}</div>`;
     }
     h += `</div><small class="muted">51 級起每升一級 +1 點；萬能藥 ${player.elixirs}/${ELIXIR_MAX}</small></div>`;
-
-    const rows = [
-        ['防禦', defenseOf(st)], ['MR', st.mr], ['命中', st.hit], ['傷害加成', '+' + st.dmgBonus], ['SP', st.sp],
-        ['爆擊', Math.round(st.crit * 100) + '%'], ['閃避', Math.round(st.dodge * 100) + '%'], ['減傷', st.reduce],
-        ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['回血／5秒', st.hpRegen], ['回魔／5秒', st.mpRegen],
-        ['負重', `${Math.floor(invWeight())} / ${st.weightMax}`],
-    ];
-    h += `<div class="panel"><h4>戰鬥數值</h4><div class="kv-grid">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}</div></div>`;
-
-    h += `<div class="panel"><h4>裝備</h4><div class="equip-grid">`;
-    for (const slot of SLOT_KEYS) {
-        const it = player.equip[slot];
-        h += it
-            ? `<button class="equip-slot filled" onclick="openItemDialog(${it.uid})"><small>${SLOTS[slot]}</small>${esc(itemName(it))}</button>`
-            : `<div class="equip-slot"><small>${SLOTS[slot]}</small><span class="muted">—</span></div>`;
-    }
-    h += `</div></div>`;
-
-    const dragons = DRAGON_IDS.map(id => `${player.dragons[id] ? '✅' : '⬜'} ${MONSTERS[id].name}`).join('<br>');
-    h += `<div class="panel"><h4>冒險紀錄</h4><div class="kv-grid">
-        <span>擊殺數</span><b>${fmt(player.kills)}</b><span>死亡數</span><b>${player.deaths}</b>
-        <span>永夜之塔</span><b>可到 ${player.towerMax}F</b></div>
-        <p class="dragon-list">${dragons}</p>${hasDragonTitle() ? '<p class="good">👑 稱號：屠龍勇者</p>' : ''}</div>`;
     return h;
 }
 

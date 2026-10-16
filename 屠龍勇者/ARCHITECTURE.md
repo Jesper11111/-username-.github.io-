@@ -62,7 +62,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261016d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261016g`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -743,7 +743,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 | 經驗條 `#exp-strip` | x 300～1700、y 907～925（欄杆與底部按鈕之間） | EXP 百分比 |
 | 等級 `#lv-badge` | x 940～1060、y 848～894（欄杆正中間裝飾） | 目前等級「Lv.N」 |
 | 紅球／藍球 | 中心 (180, 920)／(1820, 920)，直徑 240 | HP／MP（點擊喝水） |
-| 分頁視窗 `#overlay` | x 1120～1880，y 300～816 | 目前分頁（人物狀態、背包…），右上「✖ 關閉」回到只看地圖 |
+| 分頁視窗 `#overlay` | x 1120～1880，y 300～816 | 目前分頁（人物狀態、背包…），右上「✖ 關閉」回到只看地圖。人物狀態加 `.wide` 放大成 x 260～1740、y 40～826 的大視窗（第 42 節） |
 
 - 底部 16 格（`PC_SLOTS`，`ui-frame.js`）：
 
@@ -1336,3 +1336,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **地圖左上角狀態**（`buffIconsHtml`，取代原本文字 chip 與 `resonanceChip()`）：每個增益一個圖示，下方剩餘時間（≥60 秒「分:秒」，否則「N秒」），剩 10 秒內變紅閃爍；
   技能增益＝該技能圖示藍框、藥水＝道具圖示金框、共鳴裝備＝紫框、每件自己的圖（下方顯示冷卻秒數／就緒／充能／機率；共鳴增益生效中顯示剩餘秒數並發光）。點一下顯示名稱（`buffTip`），滑鼠移上去有 title。內容沒變就不重畫。地點名稱保留。
   **頂端一整排、不換行**（`20261015p` 使用者要求：疊好幾排會擋畫面）：`.buffs.scene-buffs` nowrap＋overflow hidden，右邊 24px 淡出（放不下的看不到）；PC 從地點下方延伸到地圖右側。要用 `.buffs.scene-buffs` 才蓋得過後面通用的 `.buffs { flex-wrap: wrap }`。
+
+## 42. 人物狀態「角色裝備」視窗（2026-10-16，版本 `20261016g`；`ui-panels.js` 的 `renderChar`、`index.html` 的 `.cv` 規則）
+
+- 使用者給了一張手遊「角色裝備」介面參考圖，請 Claude 和 Gemini 各做一份靜態樣本並排比較（`.claude/gemini/char-claude.html`／`char-gemini.html`／`compare.html`，不進 git），使用者選了 **A：Claude 版**。
+- 版面：金邊暗色視窗＋標題「角色裝備」，三塊：
+  - **左**：角色名、該職業去背全身像 `images/classes/hero/職業.webp`（載入失敗就改用 `c.art`）、腳下發藍光的魔法陣（CSS 動畫 `cv-glow`），底部「等級／職業／經驗 %」（遊戲沒有戰力數值，所以用經驗 % 代替）。
+  - **中**：12 格裝備（`SLOT_KEYS` 順序、兩欄），`charGearHtml`：圖示框的邊框顏色＝品質（`q-magic`／`q-rare`／`q-legend`，普通米白），共鳴裝備用 `RES_IMG` 的圖片，其他用部位 emoji `CHAR_SLOT_EMOJI`；
+    左下角是強化值，右邊是部位、裝備本名（完整名稱「傳說・血月 …」放在 `title`）、`charGearBrief` 列兩項重點屬性。點擊開 `openItemDialog`；空格是虛線框加「未裝備」。
+  - **右**：人物屬性（傷害加成、防禦、HP、MP、命中、爆擊、閃避、MR、攻擊間隔、負重），兩顆按鈕：「詳細屬性」`charDetailDialog`（全部戰鬥數值＋經驗）、「冒險紀錄」`charRecordDialog`（擊殺、死亡、永夜之塔、四大龍、稱號）。
+- 視窗下方保留原本的「能力值」面板（配點 ＋ 按鈕、萬能藥）。原本的「戰鬥數值」「裝備」「冒險紀錄」面板與職業橫幅圖已移除（內容搬進視窗與兩個對話框）。
+- 寬度自適應：`.cv` 是 `container-type: inline-size`，容器寬 ≥ 700px 時三欄（34%／中間／30%），否則上下排（立繪 260px 高）。
+  手機寬約 355px → 上下排；PC 16:9 時 `renderPanel` 會給 `#overlay` 加 `.wide`（只有人物狀態），視窗放大到整個地圖範圍 → 三欄。

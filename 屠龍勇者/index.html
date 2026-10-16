@@ -466,6 +466,7 @@
         padding: 10px 12px; background: #120e0bf2; border: 1px solid #8a6a3a; border-radius: 10px; box-shadow: 0 0 24px #000;
     }
     #frame.pc #overlay.hidden { display: none; }
+    #frame.pc #overlay.wide { left: calc(var(--s) * 260px); right: calc(var(--s) * 260px); top: calc(var(--s) * 40px); bottom: calc(var(--s) * 290px); }   /* 人物狀態：放大成大視窗 */
     /* 戰鬥訊息抽屜：左下骷髏頭（原圖 x 15～120、y 1870～1985）開關，抽屜蓋在地圖下緣、從下往上滑出 */
     .skull-log {
         position: absolute; left: calc(var(--s) * 15px); bottom: calc(var(--s) * 15px); width: calc(var(--s) * 105px); height: calc(var(--s) * 115px);
@@ -534,6 +535,51 @@
     .tower-pick { font-size: 13px; }
 
     /* 角色 */
+    /* 人物狀態「角色裝備」視窗（renderChar，2026-10-16；ARCHITECTURE.md 第 42 節）：容器寬 ≥ 700px 三欄，否則上下排 */
+    .cv { container-type: inline-size; margin-bottom: 10px; }
+    .cv-win { position: relative; background: linear-gradient(#211810, #120d09); border: 2px solid #5a4028; border-radius: 10px;
+        box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #8a6a3a55, inset 0 0 40px #000c; }
+    .cv-win::before, .cv-win::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid var(--gold); pointer-events: none; }
+    .cv-win::before { left: -3px; top: -3px; border-right: 0; border-bottom: 0; }
+    .cv-win::after { right: -3px; bottom: -3px; border-left: 0; border-top: 0; }
+    .cv-title { height: 42px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #5a4028; background: linear-gradient(#3a2a1c, #1a1209); border-radius: 8px 8px 0 0; }
+    .cv-title h3 { margin: 0; font-size: 19px; letter-spacing: 5px; color: #f3d58a; text-shadow: 0 0 8px #d8a84a88, 0 2px 2px #000; }
+    .cv-title h3::before, .cv-title h3::after { content: '◆'; font-size: 9px; color: var(--gold); margin: 0 12px; vertical-align: middle; }
+    .cv-body { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; }
+    @container (min-width: 700px) { .cv-body { grid-template-columns: 34% 1fr 30%; } .cv-stage { height: auto; min-height: 300px; } }
+    .cv-box { background: linear-gradient(#231a13, #1a1410); border: 1px solid #5a4028; border-radius: 8px; box-shadow: inset 0 0 18px #000a; min-width: 0; }
+    .cv-hero { display: flex; flex-direction: column; overflow: hidden; }
+    .cv-name { margin: 8px auto 0; padding: 3px 16px; font-size: 16px; color: #f3d58a; border: 1px solid #5a4028; border-radius: 4px; background: #0008; letter-spacing: 2px; }
+    .cv-stage { position: relative; flex: 1; height: 260px; display: flex; align-items: flex-end; justify-content: center; background: radial-gradient(ellipse at 50% 55%, #3a4a6a55, transparent 60%); }
+    .cv-stage img { position: relative; z-index: 2; height: 94%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 0 12px #5fa8ff66); }
+    .cv-circle { position: absolute; bottom: 6px; left: 50%; width: 180px; height: 46px; transform: translateX(-50%); border-radius: 50%; z-index: 1;
+        border: 2px solid #6ac8ff; box-shadow: 0 0 18px #3aa0ff, inset 0 0 18px #3aa0ff; background: radial-gradient(ellipse, #3aa0ff44, transparent 70%); animation: cv-glow 2.4s ease-in-out infinite; }
+    .cv-circle::after { content: ''; position: absolute; inset: 7px 22px; border: 1px dashed #9adfff; border-radius: 50%; }
+    @keyframes cv-glow { 50% { box-shadow: 0 0 28px #3aa0ff, inset 0 0 26px #3aa0ff; } }
+    .cv-foot { display: flex; justify-content: space-around; gap: 6px; padding: 7px 6px; border-top: 1px solid #5a4028; background: #0007; font-size: 13px; color: var(--muted); }
+    .cv-foot b { color: var(--text); font-weight: normal; }
+    .cv-foot b.gold { color: #f3d58a; font-weight: bold; }
+    .cv-gear { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; padding: 8px; align-content: start; }
+    .cv-slot { display: flex; gap: 7px; align-items: center; padding: 3px; border: 0; border-radius: 6px; background: transparent; text-align: left; color: var(--text); min-width: 0; }
+    button.cv-slot:hover { background: #ffffff0d; }
+    .cv-ico { position: relative; flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 24px; border-radius: 6px; color: #e8e0cc;
+        background: radial-gradient(#3a2a1c, #0d0a08); border: 2px solid currentColor; box-shadow: inset 0 0 10px #000, 0 0 6px currentColor; }
+    .cv-ico .ico-img { position: absolute; inset: 2px; width: auto; height: auto; padding: 0; }
+    .cv-en { position: absolute; left: 3px; bottom: 0; z-index: 1; font-size: 11px; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 2px #000; }
+    .cv-slot.empty .cv-ico { border: 2px dashed #5a4028; color: #5a4028; box-shadow: inset 0 0 10px #000; opacity: .6; }
+    .cv-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+    .cv-info small { font-size: 11px; color: var(--muted); }
+    .cv-n { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cv-a { font-size: 11px; color: #c8bca4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cv-stats { display: flex; flex-direction: column; padding-bottom: 8px; }
+    .cv-stats h4 { margin: 0; padding: 7px; text-align: center; font-size: 15px; letter-spacing: 4px; color: #f3d58a; border-bottom: 1px solid #5a4028; background: #0006; border-radius: 8px 8px 0 0; }
+    .cv-rows { flex: 1; padding: 4px 12px; }
+    .cv-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 13px; border-bottom: 1px dashed #3a2a1e; }
+    .cv-row span { color: var(--muted); }
+    .cv-row b { font-weight: normal; font-variant-numeric: tabular-nums; }
+    .cv-row b.hp { color: #ff8a7a; } .cv-row b.mp { color: #7ab8ff; }
+    .cv-btns { display: flex; gap: 8px; padding: 6px 10px 0; }
+    .cv-btns button { flex: 1; padding: 7px 0; font-size: 13px; border: 1px solid var(--gold); border-radius: 5px; background: linear-gradient(#4a3522, #23180f); box-shadow: inset 0 1px 0 #ffffff22; }
     .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .stat-cell { background: var(--panel2); border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .stat-cell span { color: var(--muted); font-size: 13px; }
@@ -789,42 +835,42 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261016d"></script>
-<script src="data/classes.js?v=20261016d"></script>
-<script src="data/skills.js?v=20261016d"></script>
-<script src="data/items.js?v=20261016d"></script>
-<script src="data/spellbook.js?v=20261016d"></script>
-<script src="data/monsters.js?v=20261016d"></script>
-<script src="data/zones.js?v=20261016d"></script>
-<script src="data/quests.js?v=20261016d"></script>
-<script src="data/resonance.js?v=20261016d"></script>
-<script src="data/player.js?v=20261016d"></script>
-<script src="data/enchant.js?v=20261016d"></script>
-<script src="data/affix.js?v=20261016d"></script>
-<script src="data/craft.js?v=20261016d"></script>
-<script src="data/maps.js?v=20261016d"></script>
-<script src="data/combat.js?v=20261016d"></script>
-<script src="data/town.js?v=20261016d"></script>
-<script src="data/save.js?v=20261016d"></script>
-<script src="data/cloud.js?v=20261016d"></script>
-<script src="data/offline.js?v=20261016d"></script>
-<script src="data/ui.js?v=20261016d"></script>
-<script src="data/ui-create.js?v=20261016d"></script>
-<script src="data/ui-panels.js?v=20261016d"></script>
-<script src="data/codex.js?v=20261016d"></script>
-<script src="data/raid.js?v=20261016d"></script>
-<script src="data/clan.js?v=20261016d"></script>
-<script src="data/chat.js?v=20261016d"></script>
-<script src="data/rank.js?v=20261016d"></script>
-<script src="data/wb.js?v=20261016d"></script>
-<script src="data/market.js?v=20261016d"></script>
-<script src="data/vault.js?v=20261016d"></script>
-<script src="data/presence.js?v=20261016d"></script>
-<script src="data/ui-frame.js?v=20261016d"></script>
-<script src="data/icons.js?v=20261016d"></script>
-<script src="data/hotbar.js?v=20261016d"></script>
-<script src="data/ui-scene.js?v=20261016d"></script>
-<script src="data/pwa.js?v=20261016d"></script>
-<script src="data/main.js?v=20261016d"></script>
+<script src="data/config.js?v=20261016g"></script>
+<script src="data/classes.js?v=20261016g"></script>
+<script src="data/skills.js?v=20261016g"></script>
+<script src="data/items.js?v=20261016g"></script>
+<script src="data/spellbook.js?v=20261016g"></script>
+<script src="data/monsters.js?v=20261016g"></script>
+<script src="data/zones.js?v=20261016g"></script>
+<script src="data/quests.js?v=20261016g"></script>
+<script src="data/resonance.js?v=20261016g"></script>
+<script src="data/player.js?v=20261016g"></script>
+<script src="data/enchant.js?v=20261016g"></script>
+<script src="data/affix.js?v=20261016g"></script>
+<script src="data/craft.js?v=20261016g"></script>
+<script src="data/maps.js?v=20261016g"></script>
+<script src="data/combat.js?v=20261016g"></script>
+<script src="data/town.js?v=20261016g"></script>
+<script src="data/save.js?v=20261016g"></script>
+<script src="data/cloud.js?v=20261016g"></script>
+<script src="data/offline.js?v=20261016g"></script>
+<script src="data/ui.js?v=20261016g"></script>
+<script src="data/ui-create.js?v=20261016g"></script>
+<script src="data/ui-panels.js?v=20261016g"></script>
+<script src="data/codex.js?v=20261016g"></script>
+<script src="data/raid.js?v=20261016g"></script>
+<script src="data/clan.js?v=20261016g"></script>
+<script src="data/chat.js?v=20261016g"></script>
+<script src="data/rank.js?v=20261016g"></script>
+<script src="data/wb.js?v=20261016g"></script>
+<script src="data/market.js?v=20261016g"></script>
+<script src="data/vault.js?v=20261016g"></script>
+<script src="data/presence.js?v=20261016g"></script>
+<script src="data/ui-frame.js?v=20261016g"></script>
+<script src="data/icons.js?v=20261016g"></script>
+<script src="data/hotbar.js?v=20261016g"></script>
+<script src="data/ui-scene.js?v=20261016g"></script>
+<script src="data/pwa.js?v=20261016g"></script>
+<script src="data/main.js?v=20261016g"></script>
 </body>
 </html>
