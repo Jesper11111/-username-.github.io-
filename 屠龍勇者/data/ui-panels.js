@@ -17,7 +17,7 @@ const TABS = {
 
 function enterGame() {
     showScreen('game');
-    currentTab = 'hunt';
+    openTabs = []; currentTab = 'hunt';
     layoutFrame();
     renderTabs();
     refreshUI();
@@ -26,24 +26,46 @@ function enterGame() {
 // 更新抽屜、底部格子的「目前分頁」標示（ui-frame.js）
 function renderTabs() { renderFrameNav(); }
 
+// 多視窗（2026-10-16 使用者要求「開新頁面不要關掉上一頁」）：openTabs＝同時開著的分頁（不含狩獵），最新的在最後；
+// PC 最多 3 個左右並排、手機最多 2 個上下排，超過才把最舊的關掉。currentTab＝最後開／點的那個（沒有就是 'hunt'）。
+// 判斷「某分頁有沒有開著」一律用 tabOpen(tab)，不要用 currentTab === tab。
+let openTabs = [];
+function maxOpenTabs() { return isSideLayout() ? 3 : 2; }
+function tabOpen(tab) { return tab === 'hunt' ? !openTabs.length : openTabs.includes(tab); }
+function syncCurrentTab() { currentTab = openTabs.length ? openTabs[openTabs.length - 1] : 'hunt'; }
+
+// 打開分頁（已開著就只是移到最前面）；switchTab('hunt')＝全部關掉回到狩獵
 function switchTab(tab) {
-    if (tab !== 'town') townNpcNow = null;   // NPC 對話框只在從 NPC 打開時（ui-scene.js npcOpen）
-    currentTab = tab;
+    if (tab === 'hunt') openTabs = [];
+    else {
+        openTabs = openTabs.filter(t => t !== tab);
+        openTabs.push(tab);
+        while (openTabs.length > maxOpenTabs()) openTabs.shift();
+    }
+    if (!openTabs.includes('town')) townNpcNow = null;   // NPC 對話框只在從 NPC 打開時（ui-scene.js npcOpen）
+    syncCurrentTab();
     closeDrawers();
     renderTabs();
     renderPanel();
-    $(isSideLayout() ? 'overlay' : 'panel').scrollTop = 0;
+}
+// 視窗右上「✖ 關閉」：只關這一個
+function closeTab(tab) {
+    openTabs = openTabs.filter(t => t !== tab);
+    if (tab === 'town') townNpcNow = null;
+    syncCurrentTab();
+    renderTabs();
+    renderPanel();
 }
 
 // 狩獵畫面目前是否顯示中（PC 16:9 版面時狩獵一直在外框中間）
-function huntVisible() { return currentTab === 'hunt' || isSideLayout(); }
+function huntVisible() { return !openTabs.length || isSideLayout(); }
 
 const PANEL_FNS = { hunt: renderHunt, map: renderMap, char: renderChar, bag: renderBag, skill: renderSkills, quest: renderQuest, town: renderTown, set: renderSettings };
 
 function panelHead(tab, withBack) {
-    const back = isSideLayout() ? '✖ 關閉' : '✖ 返回狩獵';
+    const back = isSideLayout() || openTabs.length > 1 ? '✖ 關閉' : '✖ 返回狩獵';
     const title = tab === 'town' && townNpcNow ? `💬 ${esc(townNpcNow.name)}<small class="muted">（${townNpcNow.role}）</small>` : `${TABS[tab][0]} ${TABS[tab][1]}`;
-    return `<div class="panel-head"><b>${title}</b>${withBack ? `<button class="mini secondary" onclick="switchTab('hunt')">${back}</button>` : ''}</div>`;
+    return `<div class="panel-head"><b>${title}</b>${withBack ? `<button class="mini secondary" onclick="closeTab('${tab}')">${back}</button>` : ''}</div>`;
 }
 
 function refreshUI() {
@@ -53,24 +75,42 @@ function refreshUI() {
 }
 
 function renderPanel() {
-    const ov = $('overlay');
+    const ov = $('overlay'), p = $('panel');
     if (isSideLayout()) {
-        // PC 橫式外框：中間大地圖固定狩獵；其他分頁疊在地圖右側的視窗（按「關閉」回到只看地圖）
-        $('panel').innerHTML = renderHunt();
-        const open = currentTab !== 'hunt';
-        ov.classList.toggle('hidden', !open);
-        ov.classList.toggle('wide', currentTab === 'char');   // 人物狀態「角色裝備」視窗放大到整個地圖窗口，三欄並排（2026-10-16）
-        ov.innerHTML = open ? panelHead(currentTab, true) + PANEL_FNS[currentTab]() : '';
+        // PC 橫式外框：中間大地圖固定狩獵；分頁開成地圖上的視窗，最多 3 個左右並排（每個右上「✖ 關閉」）
+        p.innerHTML = renderHunt();
+        ov.classList.toggle('hidden', !openTabs.length);
+        ov.classList.toggle('wide', openTabs.length === 1 && openTabs[0] === 'char');   // 只開人物狀態時放大成大視窗，三欄並排
+        ov.dataset.n = openTabs.length;
+        renderPanes(ov);
         lastLogRendered = 0;
         updateHuntLive();
         return;
     }
     ov.classList.add('hidden');
     ov.innerHTML = '';
-    // 非狩獵分頁加上標題列與「返回狩獵」
-    const head = currentTab === 'hunt' ? '' : panelHead(currentTab, true);
-    $('panel').innerHTML = head + PANEL_FNS[currentTab]();
-    if (currentTab === 'hunt') { lastLogRendered = 0; updateHuntLive(); }
+    if (!openTabs.length) {
+        p.classList.remove('multi');
+        p.innerHTML = renderHunt();
+        lastLogRendered = 0;
+        updateHuntLive();
+        return;
+    }
+    // 手機：分頁蓋住地圖，2 個時上下各一半
+    if (!p.classList.contains('multi')) { p.innerHTML = ''; p.classList.add('multi'); }
+    p.dataset.n = openTabs.length;
+    renderPanes(p);
+}
+// 每個分頁一個 .pane 視窗；重畫時沿用原本的元素，捲動位置才不會跳回頂端
+function renderPanes(box) {
+    [...box.children].forEach(el => { if (!el.classList.contains('pane') || !openTabs.includes(el.dataset.tab)) el.remove(); });
+    openTabs.forEach((tab, i) => {
+        let el = [...box.children].find(e => e.dataset.tab === tab);
+        if (!el) { el = document.createElement('div'); el.className = 'pane'; el.dataset.tab = tab; }
+        if (box.children[i] !== el) box.insertBefore(el, box.children[i] || null);
+        el.classList.toggle('focus', tab === currentTab && openTabs.length > 1);
+        el.innerHTML = panelHead(tab, true) + PANEL_FNS[tab]();
+    });
 }
 
 // ───────── 狩獵 ─────────

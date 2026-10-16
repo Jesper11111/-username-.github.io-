@@ -51,14 +51,14 @@ async function clanLoad(silent) {
         if (me) {
             const cl = await raidQ(cloudSb.from('dragon_clans').select('*').eq('id', me.clan_id).limit(1));
             myClan = cl[0] || null; myClanRole = me.role;
-            if (!silent || currentTab === 'clan') {
+            if (!silent || tabOpen('clan')) {
                 clanMembers = await raidQ(cloudSb.from('dragon_clan_members').select('*').eq('clan_id', me.clan_id).limit(CLAN_MAX + 5));
                 clanApps = clanCanManage() ? await raidQ(cloudSb.from('dragon_clan_apps').select('*').eq('clan_id', me.clan_id).order('at', { ascending: true })) : [];
             }
             if (player) clanRpc('clan_touch', clanMeArgs()).catch(() => { });
         } else {
             myClan = null; myClanRole = null; clanMembers = []; clanApps = [];
-            if (!silent || currentTab === 'clan') {
+            if (!silent || tabOpen('clan')) {
                 clanList = await raidQ(cloudSb.from('dragon_clans').select('*').order('member_count', { ascending: false }).limit(60));
                 clanMyApps = await raidQ(cloudSb.from('dragon_clan_apps').select('clan_id, at').eq('user_id', cloudUser.id));
             }
@@ -70,7 +70,7 @@ async function clanLoad(silent) {
 }
 
 function clanRender() {
-    if (typeof currentTab !== 'undefined' && currentTab === 'clan' && player && !SIM_MODE) renderPanel();
+    if (typeof currentTab !== 'undefined' && tabOpen('clan') && player && !SIM_MODE) renderPanel();
 }
 
 // 執行一個動作，成功後重新讀取

@@ -34,7 +34,7 @@ function marketTradeable(inst) {
     return d && d.cat !== 'quest' && !(inst.ench > 15);
 }
 
-function marketRender() { if (typeof currentTab !== 'undefined' && currentTab === 'market' && player && !SIM_MODE) renderPanel(); }
+function marketRender() { if (typeof currentTab !== 'undefined' && tabOpen('market') && player && !SIM_MODE) renderPanel(); }
 
 // 把交易所的道具實體放進背包（裝備保留品質、詞綴、地圖詞綴等所有欄位；堆疊道具直接加數量）
 function marketGiveItem(it) {
@@ -250,7 +250,7 @@ function marketMineHtml() {
 }
 
 setInterval(() => {
-    if (player && !document.hidden && !SIM_MODE && Date.now() - marketDeliverAt > MARKET_DELIVER_MS) marketDeliver(true).then(() => { if (currentTab === 'market') marketLoad(); });
+    if (player && !document.hidden && !SIM_MODE && Date.now() - marketDeliverAt > MARKET_DELIVER_MS) marketDeliver(true).then(() => { if (tabOpen('market')) marketLoad(); });
 }, 30 * 1000);
 
 TABS.market = ['🏪', '交易所'];

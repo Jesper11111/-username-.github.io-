@@ -116,7 +116,7 @@ function setDisplayMode(mode) {
     try { localStorage.setItem(DISPLAY_KEY, mode); } catch (e) {}
     if (mode === 'full') enterFullscreen(); else exitFullscreen();
     // 從 PC 版面切回單欄時，回到狩獵畫面
-    if (wasSide && !isSideLayout()) currentTab = 'hunt';
+    if (wasSide && !isSideLayout()) { openTabs = []; currentTab = 'hunt'; }
     layoutFrame();
     renderTabs();
     refreshUI();
@@ -153,7 +153,7 @@ function closeDrawers() {
 function renderFrameNav() {
     for (const side in DRAWERS) {
         $('drawer-' + side).innerHTML = DRAWERS[side].map(([tab, icon, name]) =>
-            `<button class="${currentTab === tab ? 'active' : ''}" onclick="switchTab('${tab}')"><span>${icon}</span>${name}</button>`).join('');
+            `<button class="${tabOpen(tab) ? 'active' : ''}" onclick="switchTab('${tab}')"><span>${icon}</span>${name}</button>`).join('');
     }
     renderSlots(true);
 }
@@ -165,7 +165,7 @@ function renderSlots(force) {
     if (!box || !player) return;
     const defs = currentSlotDefs(), pc = isPcFrame();
     const counts = defs.map(d => d.count ? d.count() : '');
-    const sig = [pc, currentTab, player.hunting, counts.join(',')].join('|');
+    const sig = [pc, openTabs.join(','), player.hunting, counts.join(',')].join('|');
     if (!force && sig === slotSig) return;
     slotSig = sig;
     box.innerHTML = defs.map((d, i) => {
@@ -175,14 +175,14 @@ function renderSlots(force) {
         const pos = pc
             ? `left:calc(var(--s) * ${d.x}px);top:calc(var(--s) * ${d.y}px);width:calc(var(--s) * ${d.w}px);height:calc(var(--s) * ${d.h}px)`
             : `left:calc(var(--s) * ${SLOT_X[i] - SLOT_X[0]}px)`;
-        return `<button class="slot ${d.round ? 'round' : ''} ${d.side ? 'side' : ''} ${d.tab === currentTab ? 'active' : ''} ${empty ? 'empty' : ''}" style="${pos}"
+        return `<button class="slot ${d.round ? 'round' : ''} ${d.side ? 'side' : ''} ${d.tab && tabOpen(d.tab) ? 'active' : ''} ${empty ? 'empty' : ''}" style="${pos}"
             onclick="slotClick(${i})" title="${d.name}" aria-label="${d.name}">${icon}${d.count ? `<b>${n > 999 ? '999+' : n}</b>` : ''}</button>`;
     }).join('');
 }
 
 function slotClick(i) {
     const d = currentSlotDefs()[i];
-    if (d.tab) { switchTab(currentTab === d.tab ? 'hunt' : d.tab); return; }
+    if (d.tab) { if (tabOpen(d.tab)) closeTab(d.tab); else switchTab(d.tab); return; }   // 再按一次＝只關這個視窗
     d.use();
     renderSlots(true);
     renderStatus();

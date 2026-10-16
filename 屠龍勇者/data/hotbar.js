@@ -125,7 +125,7 @@ function barPick(i, id) {
     closeDialog();
     saveGame();
     refreshHotbarUI();
-    if (currentTab === 'skill') renderPanel();
+    if (tabOpen('skill')) renderPanel();
 }
 // 技能頁「放進快捷欄」：放進前兩排第一個空格並開自動
 function barPlaceSkill(id) {

@@ -82,7 +82,7 @@ async function vaultLoad() {
     catch (e) { vaultErr = vaultErrText(e); }
     vaultRender();
 }
-function vaultRender() { if (player && !SIM_MODE && currentTab === 'town' && townSub === 'storage' && storageMode === 'vault') renderPanel(); }
+function vaultRender() { if (player && !SIM_MODE && tabOpen('town') && townSub === 'storage' && storageMode === 'vault') renderPanel(); }
 function setStorageMode(m) { storageMode = m; renderPanel(); if (m === 'vault') vaultLoad(); }
 
 function vaultHtml() {

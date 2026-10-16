@@ -45,7 +45,7 @@ function travelZone(zoneId, floor) {
     session = null;
     addLog(`🌀 傳送到${zoneTitle()}`, 'sys');
     startHunt();
-    currentTab = 'hunt';
+    openTabs = []; currentTab = 'hunt';   // 傳送後回到地圖（關掉所有視窗）
     renderTabs();
     refreshUI();
 }

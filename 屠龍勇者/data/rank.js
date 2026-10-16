@@ -34,7 +34,7 @@ async function rankLoad(force) {
     rankRender();
 }
 
-function rankRender() { if (typeof currentTab !== 'undefined' && currentTab === 'rank' && player && !SIM_MODE) renderPanel(); }
+function rankRender() { if (typeof currentTab !== 'undefined' && tabOpen('rank') && player && !SIM_MODE) renderPanel(); }
 function rankSetKind(k) { rankKind = k; rankLoad(); rankRender(); }
 function rankSetCls(c) { rankCls = c; rankLoad(); rankRender(); }
 

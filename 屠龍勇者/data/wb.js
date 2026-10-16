@@ -49,7 +49,7 @@ async function wbLoad() {
     wbRender();
 }
 
-function wbRender() { if (typeof currentTab !== 'undefined' && currentTab === 'wb' && player && !SIM_MODE) renderPanel(); }
+function wbRender() { if (typeof currentTab !== 'undefined' && tabOpen('wb') && player && !SIM_MODE) renderPanel(); }
 
 // 依挑戰者等級做出首領（等級 +3，血量無限，打 60 秒）
 function wbMakeBoss(kind, name, icon, lv) {
@@ -165,7 +165,7 @@ function renderWb() {
 }
 
 setInterval(() => {
-    if (typeof currentTab !== 'undefined' && currentTab === 'wb' && player && !document.hidden && !SIM_MODE && !wbBusy) wbLoad();
+    if (typeof currentTab !== 'undefined' && tabOpen('wb') && player && !document.hidden && !SIM_MODE && !wbBusy) wbLoad();
 }, WB_REFRESH_MS);
 
 TABS.wb = ['👹', '世界首領'];

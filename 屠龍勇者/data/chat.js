@@ -33,7 +33,7 @@ function chatOpen(ch) {
 
 function chatSwitch(ch) {
     chatChannel = ch === 'room' ? (chatRoomChannel() || 'world') : ch === 'clan' ? (clanChannel() || 'world') : 'world';
-    if (currentTab === 'chat') renderPanel();
+    if (tabOpen('chat')) renderPanel();
     renderPopChat();
     chatFetch();
 }
@@ -204,7 +204,7 @@ function renderChat() {
 }
 
 setInterval(() => {
-    if (typeof currentTab !== 'undefined' && (currentTab === 'chat' || chatPopOpen()) && player && !document.hidden && !SIM_MODE) chatFetch();
+    if (typeof currentTab !== 'undefined' && (tabOpen('chat') || chatPopOpen()) && player && !document.hidden && !SIM_MODE) chatFetch();
 }, CHAT_POLL_MS);
 
 TABS.chat = ['💬', '聊天'];

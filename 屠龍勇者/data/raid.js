@@ -574,7 +574,7 @@ function raidResume() {
 
 // ───────── 畫面 ─────────
 function raidRender() {
-    if (typeof currentTab !== 'undefined' && currentTab === 'raid' && player && !SIM_MODE) renderPanel();
+    if (typeof currentTab !== 'undefined' && tabOpen('raid') && player && !SIM_MODE) renderPanel();
 }
 
 function renderRaid() {
@@ -696,7 +696,7 @@ function raidSkip() { if (raidReplay) { raidReplay.skip = true; raidRender(); } 
 
 // 重播中每秒重畫一次（只在團隊副本分頁開著時）
 setInterval(() => {
-    if (raidReplay && !raidReplay.shown && currentTab === 'raid' && player) {
+    if (raidReplay && !raidReplay.shown && tabOpen('raid') && player) {
         if (raidReplayPos() >= raidReplay.res.ms) raidReplay.shown = true;
         renderPanel();
     }
