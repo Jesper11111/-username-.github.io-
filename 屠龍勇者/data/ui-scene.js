@@ -187,6 +187,7 @@ const MON_SPRITES = {
     // 四大龍（2026-10-16 起，tools/monsters/cut-sheet.ps1＋specH.json 切出；走路 4 格、攻擊 8／6／8 格）
     antharas: { cw: 109, ch: 82, body: 72, n: [4, 4, 4, 8, 6, 8], size: 80 },
     fafurion: { cw: 118, ch: 91, body: 74, n: [4, 4, 4, 8, 6, 8], size: 80 },
+    lindvior: { cw: 128, ch: 105, body: 88, n: [4, 3, 4, 3, 6, 8], size: 80 },   // 風龍：側面走路 3 格、正面攻擊 3 格（原圖中間是大張立繪）
 };
 function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
 

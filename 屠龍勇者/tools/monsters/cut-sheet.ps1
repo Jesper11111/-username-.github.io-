@@ -69,12 +69,25 @@ foreach ($p in $specs.PSObject.Properties) {
         $g = $s.$anim
         for ($d = 0; $d -lt 3; $d++) {
             $xs = $g.x[$d]; $fr = New-Object System.Collections.ArrayList
+            if ($g.xb -and $g.xb[$d]) {   # optional explicit cells per direction: xb = [[[x0,x1], ...] or null, ...] (art crosses the grid lines)
+                $yr = $g.y; if ($yr.Count -eq 2 -and $yr[0] -is [ValueType]) { $yr = @(,@($yr)) }
+                foreach ($y in $yr) { foreach ($bx in $g.xb[$d]) {
+                    $im = [MonCut]::Cut($sheet, [int]$bx[0], [int]$y[0] + 4, [int]$bx[1], [int]$y[1] - 4, [bool]($d -eq 1 -and $s.flipSide))
+                    if ($im) { [void]$fr.Add($im) } } }
+                $rows += ,$fr; continue
+            }
             $yrs = if ($g.yd) { $g.yd[$d] } else { $g.y }   # optional per-direction rows: yd = [[front rows], [side rows], [back rows]]
             if ($yrs.Count -eq 2 -and $yrs[0] -is [ValueType]) { $yrs = @(,@($yrs)) }   # PowerShell unrolls a single [[y0,y1]] into [y0,y1]
+            $pad = if ($g.padX) { [int]$g.padX } else { 0 }   # optional: widen cells so wing tips crossing the grid line are kept
+            $ri = 0
             foreach ($yr in $yrs) { for ($c = 0; $c -lt $xs.Count - 1; $c++) {
+                if ([int]$xs[$c] -lt 0 -or [int]$xs[$c + 1] -lt 0) { continue }   # -1 in x lines = gap (skip a cell, e.g. a big illustration)
+                if ($g.skip -and ($g.skip -contains "$d-$ri-$c")) { continue }   # skip = ["dir-row-col", ...]
                 $flip = ($d -eq 1 -and $s.flipSide)
-                $im = [MonCut]::Cut($sheet, [int]$xs[$c] + 4, [int]$yr[0] + 4, [int]$xs[$c + 1] - 4, [int]$yr[1] - 4, [bool]$flip)
-                if ($im) { [void]$fr.Add($im) } } }
+                $xa = [Math]::Max(0, [int]$xs[$c] + 4 - $pad); $xb = [Math]::Min($sheet.Width, [int]$xs[$c + 1] - 4 + $pad)
+                $im = [MonCut]::Cut($sheet, $xa, [int]$yr[0] + 4, $xb, [int]$yr[1] - 4, [bool]$flip)
+                if ($im) { [void]$fr.Add($im) } }
+                $ri++ }
             $rows += ,$fr
         }
     }
