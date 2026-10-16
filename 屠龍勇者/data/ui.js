@@ -58,6 +58,7 @@ function showToast(msg, ms = 1800) {
     el.className = 'toast';
     el.textContent = msg;
     $('toast-layer').appendChild(el);
+    if (/⚠️|不足|不能|無法|失敗|找不到|不夠|已滿/.test(msg)) sfx('ui-error');
     setTimeout(() => el.remove(), ms);
 }
 
@@ -75,6 +76,7 @@ function openDialog(title, html, buttons) {
         box.appendChild(btn);
     });
     layer.classList.add('active');
+    sfx('notify', true);
 }
 
 function closeDialog() {

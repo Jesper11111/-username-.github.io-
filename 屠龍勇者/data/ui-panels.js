@@ -36,8 +36,9 @@ function syncCurrentTab() { currentTab = openTabs.length ? openTabs[openTabs.len
 
 // 打開分頁（已開著就只是移到最前面）；switchTab('hunt')＝全部關掉回到狩獵
 function switchTab(tab) {
-    if (tab === 'hunt') openTabs = [];
+    if (tab === 'hunt') { if (openTabs.length) sfx('ui-back'); openTabs = []; }
     else {
+        if (!openTabs.includes(tab)) sfx('ui-open');
         openTabs = openTabs.filter(t => t !== tab);
         openTabs.push(tab);
         while (openTabs.length > maxOpenTabs()) openTabs.shift();
@@ -50,6 +51,7 @@ function switchTab(tab) {
 }
 // 視窗右上「✖ 關閉」：只關這一個
 function closeTab(tab) {
+    sfx('ui-back');
     openTabs = openTabs.filter(t => t !== tab);
     if (tab === 'town') townNpcNow = null;
     syncCurrentTab();
@@ -583,6 +585,7 @@ function enchantPick(scrollUid, targetUid) {
     const d = ITEMS[t.id], sd = ITEMS[sc.id], cur = t.ench || 0;
     const go = () => {
         const r = doEnchant(scrollUid, targetUid);
+        if (r.ok) sfx('treasure');
         saveGame();
         refreshUI();
         gameAlert(r.gone ? '💥 蒸發了' : r.ok ? '✨ 衝裝結果' : '衝裝', r.msg);
@@ -820,6 +823,7 @@ function renderSettings() {
             <div class="grid2">${modes}</div>
             <small class="muted">這台裝置的顯示設定，不影響存檔。PC 16:9 時，狩獵固定在左邊外框，其他頁面顯示在右側。</small>
         </div>
+        ${sfxSettingsHtml()}
         <div class="panel"><h4>💊 自動補給</h4>
             <small class="muted">要不要自動喝藥水、自動用瞬移卷軸，改在快捷欄：把道具放進格子、<b>往下拉</b>開啟自動（綠框＋AUTO）。</small>
             ${num('potionPct', 'HP 低於 % 喝治癒藥水', 5, 95)}

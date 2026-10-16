@@ -333,6 +333,7 @@ function gainExp(n) {
         player.hp = st2.maxHp;
         player.mp = st2.maxMp;
         addLog(`🎉 升級！Lv.${player.lv}（HP +${hpUp}、MP +${mpUp}）`, 'lvup');
+        sfx('levelup');
         classSkillList(player.cls).filter(s => skillNeedLv(s, player.cls) === player.lv && !hasSkill(s.id))
             .forEach(s => addLog(`📖 可以學習「${s.name}」了（需要${skillBookName(s)}）`, 'lvup'));
         if (player.lv >= BONUS_STAT_LEVEL) addLog('獲得 1 點能力點數，可在「角色」分配', 'lvup');

@@ -52,5 +52,6 @@ function doEnchant(scrollUid, targetUid) {
     else removeInst(target.uid);
     clampHpMp();
     addLog(`💥 ${before} 蒸發了`, 'dead');
+    sfx('player-die');
     return { ok: false, gone: true, msg: `${before} 發出強烈的光芒後……蒸發了！` };
 }

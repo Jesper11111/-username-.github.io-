@@ -67,6 +67,7 @@ function buyItem(id, n) {
     player.gold -= cost;
     addItem(id, n);
     showToast(`購買 ${d.name} ×${n}（-${fmt(cost)}）`);
+    sfx('coin');
     refreshUI();
 }
 
@@ -80,6 +81,7 @@ function sellItem(uid, all) {
     if (it.n <= 0) removeInst(uid);
     player.gold += price;
     showToast(`賣出 ${ITEMS[it.id].name} ×${n}（+${fmt(price)}）`);
+    sfx('coin');
     refreshUI();
 }
 
@@ -139,6 +141,7 @@ function craftItem(idx) {
     player.gold -= r.gold;
     addItem(r.out, 1);
     addLog(`🔨 鍛造成功：${ITEMS[r.out].name}`, 'rare');
+    sfx('treasure');
     gameAlert('🔨 鍛造成功', `獲得 ${ITEMS[r.out].name}！`);
     saveGame();
     refreshUI();

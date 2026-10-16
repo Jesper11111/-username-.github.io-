@@ -447,6 +447,7 @@ function turnInQuest() {
     if (r.elixir) { addItem('elixir', r.elixir); got.push(`萬能藥 ×${r.elixir}`); }
     s.ch++; s.active = false; s.prog = 0; s.bossDone = false;
     addLog(`📜 完成任務「${q.title}」，獲得 ${got.join('、')}`, 'rare');
+    sfx('quest-done');
     let msg = `${q.outro}\n\n獲得：${got.join('、')}`;
     if (questTitleEarned()) {
         const t = CLASS_STORIES[player.cls].title;
@@ -464,7 +465,7 @@ function questOnKill(mon, z) {
     if (!q || !s.active || z.id !== q.goal.zone) return;
     const g = q.goal;
     if (g.type === 'boss') {
-        if (mon.questBoss) { s.bossDone = true; addLog(`📜 討伐「${g.boss.name}」成功！回村莊向${CLASS_STORIES[player.cls].npc}回報`, 'rare'); return; }
+        if (mon.questBoss) { s.bossDone = true; addLog(`📜 討伐「${g.boss.name}」成功！回村莊向${CLASS_STORIES[player.cls].npc}回報`, 'rare'); sfx('quest-done'); return; }
         if (s.prog < g.after) {
             s.prog++;
             if (s.prog === g.after) addLog(`⚠️ 你感覺到「${g.boss.name}」的氣息正在接近…`, 'boss');

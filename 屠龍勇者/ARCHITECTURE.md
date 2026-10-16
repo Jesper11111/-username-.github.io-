@@ -28,6 +28,7 @@
 | `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
+| `data/sfx.js` | **音效**（第 44 節）：`SFX_DEFS`、`sfx(name, soft)`、`sfxHit(crit, ranged)`、設定區塊 `sfxSettingsHtml`／`setSfxOn`／`setSfxVol`；開關與音量存在 localStorage `dragonSlayer_sfx` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
 | `data/raid.js` | **團隊副本**：`RAIDS`（6 個副本）、團戰模擬 `raidSimulate`、獎勵 `raidApplyReward`／`raidClaim`、隊伍大廳（Supabase `raid_rooms`／`raid_members`）、重播畫面；載入時把 `raid` 加進 `TABS`／`PANEL_FNS`（第 30 節） |
 | `data/chat.js` | **聊天**：世界／隊伍頻道、`renderChat`、`chatFetch`（分頁開著時每 4 秒抓新訊息）、`chatSend`、`chatOpen`；載入時把 `chat` 加進 `TABS`／`PANEL_FNS`（第 32 節） |
@@ -49,11 +50,12 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
+| `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → sfx → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -62,7 +64,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261016s`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261017b`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1425,3 +1427,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - PC：`#overlay` 變成透明 flex 容器（`data-n` 決定往左延伸多少），`.pane` 各自有底色、邊框、捲軸；中間地圖照常即時運作。
   - 手機：沒有分頁時 `#panel` 畫狩獵地圖；有分頁時 `#panel.multi` 變成上下排的 flex 容器，2 個時各佔一半、各自捲動；只剩 1 個時按鈕是「✖ 返回狩獵」。
 - 驗證：PC 開人物→背包→技能三個並排、第四個關掉最舊的、關中間一個、再按底部格子關掉；重畫後捲動位置保留；手機 2 個上下排、第三個擠掉最舊的、全部關掉回到地圖；Console 無錯誤。
+## 44. 音效（2026-10-17，版本 `20261017b`；`sfx.js`、`sounds/`）
+
+- 音檔：`sounds/*.mp3` 23 個。戰鬥 10 個來自 Freesound（CC0），介面 13 個來自 Mixkit（Envato 旗下免費站，免費商用、免標註、不能單獨轉售音檔）；都是網站的試聽 MP3（檔案小），來源與建議用途見 `sounds/CREDITS.md`。
+  Envato Elements 本身要訂閱才能下載（使用者帳號沒訂閱），它每月的免費檔案裡沒有音效，所以改用 Mixkit。
+- `sfx.js` 用 Web Audio：第一次 `pointerdown`／`keydown` 才建立 `AudioContext`（手機規定使用者操作後才能出聲）並預先下載開啟類別的音檔；SW 的 assets 快取會自動存起來。
+- `sfx(name, soft)` 不播的情況：`SIM_MODE`（離線收益模擬、團戰模擬）、`document.hidden`（背景）、該類別關閉、音量 0、還沒解鎖。
+  每個音效最短間隔 `gap`（預設 70ms，受傷 250、升級 1500…）、同時最多 8 聲；`soft`＝前 150ms 已有其他音效就不播（對話框）。`off`／`dur` 只播一段並淡出（`mon-die` 原檔有 3 聲，只播第一聲；施法、增益截短）。
+- 掛點（都是一行 `sfx(…)`）：
+  - `combat.js`：普攻／物理技能命中 `sfxHit`（爆擊 `crit`、遠程 `hit-pierce`、近戰隨機 4 種斬擊／鈍擊）、閃避 `block`、受傷 `hurt`、攻擊魔法 `magic-cast`（名字有冰／雪／霜／凍用 `magic-ice`）、治癒與增益 `buff`、擊倒 `mon-die`、掉落（稀有或有品質 `treasure`，其他 `loot-gold`）、死亡 `player-die`。
+  - `player.js` 升級 `levelup`；`quests.js` 完成任務、討伐任務首領 `quest-done`；`town.js` 買賣 `coin`、鍛造成功 `treasure`；`enchant.js` 衝裝蒸發 `player-die`、`ui-panels.js` 衝裝成功 `treasure`。
+  - 介面：`switchTab` 開新分頁 `ui-open`、回狩獵／`closeTab` `ui-back`、`openDialog` `notify`（soft）、`showToast` 訊息含「⚠️／不足／不能／無法／失敗／找不到／不夠／已滿」播 `ui-error`；
+    其他按鈕（`button`、`[onclick]`）點擊由 document 的 click 監聽播 `ui-click`，同一下已經播過介面音效就不重複。
+- 設定 →「🔊 音效」（放在畫面尺寸下面）：戰鬥音效、介面音效兩個開關＋音量滑桿（放開時試播升級音效）。這台裝置的設定（`dragonSlayer_sfx`），不進存檔、不需要改 `SAVE_SCHEMA`。
+- 驗證：本機 Lv.80 測試角色掛機 12 秒，命中／爆擊／受傷／開關視窗都有實際播放（攔 `AudioBufferSourceNode.start` 計數）；關掉戰鬥音效後 `crit` 不播、`levelup` 照播；`SIM_MODE` 時不播；Console 無錯誤。
