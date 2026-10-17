@@ -17,7 +17,7 @@ function barSlotHtml(i, cls = '', style = '') {
     if (s) {
         ic = skillIconHtml(s);
         const own = player.cds[s.id] > now ? (player.cds[s.id] - now) / 1000 : 0;
-        const gcd = s.type !== 'passive' ? skillGcdLeft() / 1000 : 0;   // 技能公共冷卻 3 秒（combat.js）
+        const gcd = s.type !== 'passive' && s.type !== 'buff' ? skillGcdLeft() / 1000 : 0;   // 技能公共冷卻 3 秒（combat.js；增益瞬發不受限）
         const left = Math.max(own, gcd), full = own >= gcd ? s.cd : SKILL_GCD_MS / 1000;
         if (left) { cdTxt = Math.ceil(left) + 's'; pct = full ? Math.min(100, Math.round(left / full * 100)) : 0; }
         tl = s.mp ? `<span class="hb-tl">${s.mp}</span>` : '';

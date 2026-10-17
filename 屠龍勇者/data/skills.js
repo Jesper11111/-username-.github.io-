@@ -16,36 +16,36 @@
 // id 沿用舊版（光箭 energyBolt、治癒術 heal1～3、加速術 haste…），舊存檔的冷卻與增益照常
 const MAGIC = [
     // 1 級
-    { id: 'energyBolt', tier: 1, name: '光箭',       mp: 3,  type: 'spell', dmg: [3, 8], spK: 1, desc: '基礎攻擊魔法' },
+    { id: 'energyBolt', tier: 1, name: '光箭',       mp: 3,  type: 'spell', cd: 3, dmg: [3, 8], spK: 1, desc: '基礎攻擊魔法' },
     { id: 'heal1',      tier: 1, name: '初級治癒術', mp: 5,  type: 'heal', heal: [12, 20], spK: 2, desc: '回復少量 HP' },
     { id: 'mShield',    tier: 1, name: '保護罩',     mp: 4,  type: 'buff', sec: 600, fx: { ac: 2 }, desc: '防禦 +2（10 分鐘）' },
     { id: 'holyWeapon', tier: 1, name: '神聖武器',   mp: 4,  type: 'buff', sec: 300, fx: { hit: 2, dmg: 1 }, desc: '命中 +2、傷害 +1' },
     // 2 級
-    { id: 'iceDagger',  tier: 2, name: '冰箭',       mp: 5,  type: 'spell', dmg: [8, 16], spK: 1.2, desc: '冰屬性攻擊魔法' },
-    { id: 'windCutter', tier: 2, name: '風刃',       mp: 6,  type: 'spell', dmg: [10, 18], spK: 1.2, desc: '風屬性攻擊魔法' },
+    { id: 'iceDagger',  tier: 2, name: '冰箭',       mp: 5,  type: 'spell', cd: 3, dmg: [8, 16], spK: 1.2, desc: '冰屬性攻擊魔法' },
+    { id: 'windCutter', tier: 2, name: '風刃',       mp: 6,  type: 'spell', cd: 3, dmg: [10, 18], spK: 1.2, desc: '風屬性攻擊魔法' },
     { id: 'armorBless', tier: 2, name: '鎧甲護持',   mp: 8,  type: 'buff', sec: 600, fx: { ac: 3 }, desc: '防禦 +3（10 分鐘）' },
     { id: 'meditate',   tier: 2, name: '冥想術',     mp: 5,  type: 'buff', sec: 600, fx: { mpRegen: 5 }, desc: '回魔 +5／5 秒' },
     // 3 級
     { id: 'heal2',      tier: 3, name: '中級治癒術', mp: 12, type: 'heal', heal: [40, 60], spK: 3, desc: '回復中量 HP' },
-    { id: 'fireArrow',  tier: 3, name: '火焰箭',     mp: 8,  type: 'spell', dmg: [16, 26], spK: 1.5, desc: '火屬性攻擊魔法' },
-    { id: 'auroraBolt', tier: 3, name: '極光雷電',   mp: 9,  type: 'spell', dmg: [18, 30], spK: 1.5, desc: '雷屬性攻擊魔法' },
+    { id: 'fireArrow',  tier: 3, name: '火焰箭',     mp: 8,  type: 'spell', cd: 4, dmg: [16, 26], spK: 1.5, desc: '火屬性攻擊魔法' },
+    { id: 'auroraBolt', tier: 3, name: '極光雷電',   mp: 9,  type: 'spell', cd: 4, dmg: [18, 30], spK: 1.5, desc: '雷屬性攻擊魔法' },
     { id: 'enchantDex', tier: 3, name: '敏捷術',     mp: 10, type: 'buff', sec: 600, fx: { dex: 2 }, desc: '敏捷 +2（10 分鐘）' },
     // 4 級
-    { id: 'fireball',   tier: 4, name: '火球術',     mp: 9,  type: 'spell', dmg: [20, 34], spK: 1.6, desc: '火屬性攻擊魔法' },
+    { id: 'fireball',   tier: 4, name: '火球術',     mp: 9,  type: 'spell', cd: 4, dmg: [20, 34], spK: 1.6, desc: '火屬性攻擊魔法' },
     { id: 'haste',      tier: 4, name: '加速術',     mp: 20, type: 'buff', sec: 600, group: 'haste', fx: { haste: true }, desc: '攻速提升（與綠水同效果）' },
-    { id: 'vampKiss',   tier: 4, name: '吸血鬼之吻', mp: 12, type: 'spell', dmg: [22, 36], spK: 1.6, desc: '暗屬性攻擊魔法（有吸血效果時可回 HP）' },
+    { id: 'vampKiss',   tier: 4, name: '吸血鬼之吻', mp: 12, type: 'spell', cd: 5, dmg: [22, 36], spK: 1.6, desc: '暗屬性攻擊魔法（有吸血效果時可回 HP）' },
     { id: 'enchantStr', tier: 4, name: '力量術',     mp: 10, type: 'buff', sec: 600, fx: { str: 2 }, desc: '力量 +2（10 分鐘）' },
     // 5 級
-    { id: 'lightning',  tier: 5, name: '極道落雷',   mp: 14, type: 'spell', dmg: [26, 44], spK: 2, desc: '雷屬性攻擊魔法' },
+    { id: 'lightning',  tier: 5, name: '極道落雷',   mp: 14, type: 'spell', cd: 5, dmg: [26, 44], spK: 2, desc: '雷屬性攻擊魔法' },
     { id: 'frostBreath', tier: 5, name: '寒冰氣息',  mp: 16, type: 'spell', dmg: [20, 34], spK: 1.5, aoe: true, cd: 4, desc: '範圍：冰霜吹向所有敵人（冷卻 4 秒）' },
     { id: 'berserkSpell', tier: 5, name: '狂暴術',   mp: 15, type: 'buff', sec: 300, fx: { dmg: 4, ac: -2 }, desc: '傷害 +4，但防禦 -2' },
     // 6 級
     { id: 'heal3',      tier: 6, name: '高級治癒術', mp: 22, type: 'heal', heal: [90, 130], spK: 4, desc: '回復大量 HP' },
-    { id: 'blaze',      tier: 6, name: '烈炎術',     mp: 20, type: 'spell', dmg: [40, 68], spK: 2.5, desc: '高階火焰魔法' },
-    { id: 'iceLance',   tier: 6, name: '冰矛',       mp: 22, type: 'spell', dmg: [44, 72], spK: 2.5, desc: '高階冰屬性魔法' },
+    { id: 'blaze',      tier: 6, name: '烈炎術',     mp: 20, type: 'spell', cd: 6, dmg: [40, 68], spK: 2.5, desc: '高階火焰魔法' },
+    { id: 'iceLance',   tier: 6, name: '冰矛',       mp: 22, type: 'spell', cd: 6, dmg: [44, 72], spK: 2.5, desc: '高階冰屬性魔法' },
     { id: 'bodyBless',  tier: 6, name: '體魄強健術', mp: 18, type: 'buff', sec: 600, fx: { hp: 60, con: 1 }, desc: 'HP 上限 +60、體質 +1（10 分鐘）' },
     // 7 級
-    { id: 'blizzard',   tier: 7, name: '冰雪暴',     mp: 30, type: 'spell', dmg: [50, 80], spK: 2.5, aoe: true, desc: '範圍：冰雪覆蓋所有敵人' },
+    { id: 'blizzard',   tier: 7, name: '冰雪暴',     mp: 30, type: 'spell', cd: 8, dmg: [50, 80], spK: 2.5, aoe: true, desc: '範圍：冰雪覆蓋所有敵人' },
     { id: 'tornado',    tier: 7, name: '龍捲風',     mp: 28, type: 'spell', dmg: [45, 75], spK: 2.3, aoe: true, cd: 3, desc: '範圍：龍捲風捲起所有敵人（冷卻 3 秒）' },
     { id: 'mageBarrier', tier: 7, name: '魔法屏障',  mp: 25, type: 'buff', sec: 300, fx: { mr: 20, reduce: 3 }, desc: 'MR +20、減傷 3' },
     // 8 級
@@ -53,7 +53,7 @@ const MAGIC = [
     { id: 'thunderStorm', tier: 8, name: '雷電風暴', mp: 38, type: 'spell', dmg: [70, 110], spK: 2.8, aoe: true, cd: 4, desc: '範圍：雷電打向所有敵人（冷卻 4 秒）' },
     { id: 'holyBarrier', tier: 8, name: '聖結界',    mp: 35, type: 'buff', sec: 120, fx: { reduce: 6, mr: 10 }, desc: '減傷 6、MR +10（2 分鐘）' },
     // 9 級
-    { id: 'meteor',     tier: 9, name: '流星雨',     mp: 45, type: 'spell', dmg: [85, 135], spK: 3, aoe: true, desc: '範圍：隕石打向所有敵人' },
+    { id: 'meteor',     tier: 9, name: '流星雨',     mp: 45, type: 'spell', cd: 10, dmg: [85, 135], spK: 3, aoe: true, desc: '範圍：隕石打向所有敵人' },
     { id: 'disintegrate', tier: 9, name: '究極光裂術', mp: 50, type: 'spell', dmg: [150, 220], spK: 3.5, cd: 6, desc: '單體最強光屬性魔法（冷卻 6 秒）' },
     { id: 'absBarrier', tier: 9, name: '絕對屏障',   mp: 40, type: 'buff', sec: 15, cd: 90, fx: { reduce: 20 }, desc: '15 秒內減傷 20（冷卻 90 秒）' },
     // 10 級
@@ -193,10 +193,10 @@ const SKILLS = {
         { id: 'palDivine', name: '神聖審判', lv: 82, mp: 30, type: 'strike', mult: 2.5, undeadMul: 2, aoe: true, cd: 14, desc: '範圍：2.5 倍攻擊所有敵人，對不死系再 ×2' },
     ],
     angel: [
-        { id: 'holyBolt',    name: '聖光彈',     lv: 1,  mp: 3,  type: 'spell', dmg: [4, 9], spK: 1.1, desc: '基礎神聖魔法' },
+        { id: 'holyBolt',    name: '聖光彈',     lv: 1,  mp: 3,  type: 'spell', cd: 3, dmg: [4, 9], spK: 1.1, desc: '基礎神聖魔法' },
         { id: 'angelAegis',  name: '神聖護盾',   lv: 12, mp: 10, type: 'buff', sec: 600, fx: { ac: 4, mr: 10 }, desc: '防禦 +4、MR +10（10 分鐘）' },
         { id: 'angelWings',  name: '天使之翼',   lv: 20, mp: 15, type: 'buff', sec: 300, fx: { dodge: 0.1, spdMul: 0.1 }, desc: '閃避 +10%、攻速 +10%' },
-        { id: 'angelJudge',  name: '審判之光',   lv: 32, mp: 16, type: 'spell', dmg: [30, 52], spK: 2.2, undeadMul: 1.5, desc: '神聖魔法，對不死系再 ×1.5' },
+        { id: 'angelJudge',  name: '審判之光',   lv: 32, mp: 16, type: 'spell', cd: 6, dmg: [30, 52], spK: 2.2, undeadMul: 1.5, desc: '神聖魔法，對不死系再 ×1.5' },
         { id: 'angelGrace',  name: '神恩',       lv: 45, type: 'passive', fx: { hpRegen: 6, mpRegen: 3 }, desc: '被動：回血 +6、回魔 +3（每 5 秒）' },
         { id: 'angelRay',    name: '神聖射線',   lv: 54, mp: 20, type: 'spell', dmg: [60, 100], spK: 2.6, undeadMul: 1.5, cd: 4, desc: '神聖光線，對不死系再 ×1.5' },
         { id: 'angelWrath',  name: '天罰',       lv: 60, mp: 45, type: 'spell', dmg: [90, 140], spK: 3, aoe: true, cd: 6, desc: '範圍：降下天罰打所有敵人（冷卻 6 秒）' },

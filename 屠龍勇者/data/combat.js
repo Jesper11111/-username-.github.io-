@@ -277,7 +277,7 @@ function manualCast(id) {
     const k = learnedSkills().find(s => s.id === id);
     if (!k || k.type === 'passive') return '尚未學會';
     if (player.cds[k.id] > gameNow) return `冷卻中（${Math.ceil((player.cds[k.id] - gameNow) / 1000)} 秒）`;
-    if (skillGcdLeft()) return `技能冷卻中（${Math.ceil(skillGcdLeft() / 1000)} 秒後才能放下一個技能）`;
+    if (k.type !== 'buff' && skillGcdLeft()) return `技能冷卻中（${Math.ceil(skillGcdLeft() / 1000)} 秒後才能放下一個技能）`;
     if (player.mp < k.mp) return 'MP 不足';
     const st = calcStats();
     if (k.type === 'heal') { castHeal(k, st); return ''; }
@@ -393,14 +393,15 @@ function skillReach(k, st) { return k.type === 'spell' ? 'ranged' : (st.ranged ?
 function playerAction(st) {
     const s = player.settings, now = gameNow;
     const skills = slotSkills();
-    const gcd = player.cds._gcd > now;   // 技能公共冷卻中：只普攻（共鳴照常）
-    const ready = k => !gcd && player.mp >= (k.mp || 0) && !(player.cds[k.id] > now);
+    const gcd = player.cds._gcd > now;   // 技能公共冷卻中：治癒、攻擊技能等一下，只普攻（增益、共鳴照常）
+    const ready = k => (k.type === 'buff' || !gcd) && player.mp >= (k.mp || 0) && !(player.cds[k.id] > now);
     if (player.hp < st.maxHp * s.healPct / 100) {
         const heal = skills.find(k => k.type === 'heal' && ready(k));
         if (heal) return castHeal(heal, st);
     }
+    // 增益瞬發：效果結束的直接補上，不佔這一次出手（接著照常攻擊）
     for (const k of skills) {
-        if (k.type === 'buff' && ready(k) && !buffActive(k.group || k.id)) return castBuff(k);
+        if (k.type === 'buff' && ready(k) && !buffActive(k.group || k.id)) castBuff(k);
     }
     const rid = resonanceReady();
     if (rid && canReach('ranged')) return castResonance(rid, st);
@@ -410,7 +411,8 @@ function playerAction(st) {
     physicalAttack(st, 1, {});
 }
 
-// 技能公共冷卻（2026-10-17 使用者要求）：施放任何技能（治癒、增益、魔法、物理技能）後 3 秒內不能再放下一個技能，期間照常普攻；
+// 技能公共冷卻（2026-10-17 使用者要求）：施放治癒、攻擊魔法、物理技能後 3 秒內不能再放下一個，期間照常普攻；
+// 增益技能（2026-10-18 改）瞬發：不受公共冷卻限制、也不會觸發公共冷卻，自動施放仍是效果結束才再放。
 // 共鳴裝備技能、藥水不受影響。存在 player.cds._gcd（跟其他冷卻一起存檔、離線模擬照常計算）
 const SKILL_GCD_MS = 3000;
 function skillGcdLeft() { return Math.max(0, (player.cds._gcd || 0) - gameNow); }
@@ -419,7 +421,7 @@ function useSkillCost(k) {
     if (k.cd) player.cds[k.id] = gameNow + k.cd * 1000;
     // 共鳴裝備技能（id 'res_…'，castResonance 也走 castSpell／doStrike…）不觸發公共冷卻：
     // 2026-10-17 曾因共鳴武器每次命中都觸發而一直重設，公共冷卻永遠停在 3 秒、玩家技能放不出來
-    if (!String(k.id).startsWith('res_')) player.cds._gcd = gameNow + SKILL_GCD_MS;
+    if (!String(k.id).startsWith('res_') && k.type !== 'buff') player.cds._gcd = gameNow + SKILL_GCD_MS;
 }
 
 function castHeal(k, st) {
