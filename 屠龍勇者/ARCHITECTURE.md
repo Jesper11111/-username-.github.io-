@@ -50,10 +50,10 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖、拼圖 `build-map.ps1`、可走範圍 `walk.json`、檢查圖 `check-mask.ps1`（第 45 節） |
 
 ## 2. 載入順序與依賴
 
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018k`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1511,3 +1511,25 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   驗證：手機模擬（Android UA、375 寬）點標題畫面後 AudioContext running、音檔 23 個載入、背景音樂已預備；建角進村莊自動播城鎮音樂，開關視窗有介面音效；Console 無錯誤。實機（iPhone／Android）尚待使用者確認。
 - 之後要加首領／龍穴音樂：在 `BGM_LISTS` 加一組、`bgmWant()` 回傳對應名稱即可。
 - 驗證：本機野外自動播放、回村莊 1.5 秒淡出暫停、回野外從原位置繼續、`playbackRate` 16 倍播完自動換下一首、關掉開關會停、Console 無錯誤（本機測試伺服器不支援 Range，拖曳進度會跳回 0，GitHub Pages 正常）。
+## 45. 大地圖第 1 期：低語海岸（2026-10-18，版本 `20261018k`；`ui-scene.js` 的 `SCENE_BGS.wild`、`tools/bigmap/`）
+
+- 起因：使用者給一段手遊影片（一張很大的連續地圖、右上小地圖、地圖裡分小區域、大量怪物），要改成那樣。分 4 期：①大地圖＋小地圖＋區域名稱 ②擺設物件（遮擋）③大量怪物／獸潮 ④介面。這次做第 1 期。
+- 素材：使用者用 AI 生成 6 張 2000×989 的圖（`tools/bigmap/`）：`swamp` 迷霧沼澤、`pond` 林間古泉、`village` 廢棄村落、`meadow` 河畔草原、`beach` 海灣營地、`forest` 純森林（`pond`、`forest` 右半也當森林填充）。
+  提示詞重點：top-down 3/4 view、orthographic 45 度、light from the top-left、no characters／UI／text，見對話紀錄。
+- `build-map.ps1`（PowerShell＋C#，本機沒有 Python）：每張縮成 1600×791，排成階梯狀讓路接上（沼澤 0,0 → 古泉 1600,0 → 村落 800,671 → 草原 664,1342 → 海灣 1304,2025），
+  底下先鋪三塊森林裁切（含左右翻轉、錯排、邊緣淡入）當填充，每張四邊淡入 112px（貼地圖外框的邊不淡入），草原調暗 0.8、飽和 0.78 配合其他霧感的圖。
+  輸出 `images/maps/wild.jpg` 3200×2816（＝100×88 格，1 格 32px，原圖 1:1，約 1.5MB）、`wild-mini.jpg` 320×282 小地圖；另外輸出 `auto-mask.txt`（依亮度／藍色自動猜可走格，不準，只當參考）。
+- 可走範圍：照 `check-mask.ps1` 畫的格線圖手動標，存在 `tools/bigmap/walk.json`，同一份抄進 `SCENE_BGS.wild.walk／block`（walk 以外全部擋住）：
+  沼澤泥路與兩側泥地、古泉小徑與池邊空地、村落石板路與空地（擋倒塌房屋、兩口井）、草原整片（擋河，兩座木橋可走）、海灣沙灘與左側林道、營地空地（擋帳篷、木箱）、各區之間的連接路。
+  檢查：可走 2366 格全部能從出生點走到。
+- 對應遊戲（使用者選「整張只當一個地圖」）：`ZONES` 的低語海岸 `island` 加 `bg: 'wild'`，`themeFor` 野外有 `z.bg` 就用那張背景圖；怪物、等級、掉落都沒變。其他野外照舊用遺跡圖。
+  五個區域名稱借用遊戲地名（`SCENE_BGS.wild.regions`，角色離哪個中心格最近就算哪一區）：沼澤＝紫霧遺跡、古泉＝迷霧古林、村落＝灰燼村、草原＝低語海岸（出生點 46,52 十字路口）、海灣＝沉船海灣。
+- `big: true` 的地圖（`ui-scene.js`）：
+  - 鏡頭本來就會跟著角色捲動；`findPath` 搜尋上限從 1000 格放寬到 6000（點小地圖可以走很遠）。
+  - 離角色 16 格以上、沒在戰鬥的怪收掉（怪只生在角色附近，走到新區域才會一直有怪）。
+  - `drawBigMapHud`：右上角小地圖（寬 min(128, 畫面 30%)，PC 橫式外框往下移 40）＝縮圖＋鏡頭範圍白框＋怪物紅點＋角色亮點，下面寫目前區域；
+    進入新區域時畫面上方顯示「— 區域名 —」加地圖名 2.5 秒（`scene.region`／`regionAt`）。狀態列地點後面加區域（`sceneRegionName`，跟地圖同名時不重複）。
+  - 點小地圖（`sceneMiniClick`，`sceneClick` 先判斷）＝走到那一格（不能走就找 8 格內最近能走的），之後照手動移動規則暫停自動尋怪。
+  - 長距離移動被怪擋住下一格時重新找路（`pl.dest`，`sceneWalkTo` 記下目的地；以前會直接停下）。這個修正所有地圖都適用。
+- 驗證：手機（375 寬）與 PC 16:9 畫面截圖；掛機 6 秒打倒 8 隻；點小地圖依序走到村落、沼澤、古泉、海灣再回草原，區域名稱、橫幅、狀態列都正確；迷霧古林仍是遺跡圖、沒有小地圖；Console 無錯誤。
+- 之後：第 2 期擺設遮擋（樹、帳篷要跟角色前後遮擋）、各區域放不同怪、第 3 期獸潮、其他野外也做大地圖。

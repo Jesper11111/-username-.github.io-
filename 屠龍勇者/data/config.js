@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261018i';
+const GAME_VERSION = '20261018k';
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
 const SAVE_KEY = 'dragonSlayer_save_v2';   // 欄位 0；其他欄位是 SAVE_KEY + '_s' + 編號（save.js slotKey）

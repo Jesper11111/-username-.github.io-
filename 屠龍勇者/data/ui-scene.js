@@ -82,6 +82,35 @@ const SCENE_BGS = {
             { role: '鍛造', x: 56, y: 15, painted: true, h: 4.2 },   // 右下打鐵匠
         ],
     },
+    // 大地圖（2026-10-18 第 1 期，ARCHITECTURE.md 第 45 節）：使用者用 AI 生成的 5 張場景＋森林填充，tools/bigmap/build-map.ps1 拼成 3200×2816＝100×88 格（1 格 32px，原圖 1:1）
+    // 走得到的範圍照 tools/bigmap/walk.json；big：鏡頭跟著角色捲動、離角色太遠的怪收掉、有小地圖；
+    // regions：區域中心格與名稱（名稱借用遊戲裡的地名），角色在哪個中心最近就算在哪一區
+    wild: {
+        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', w: 100, h: 88, start: [46, 52], big: true,
+        regions: [
+            { name: '紫霧遺跡', x: 22, y: 12 }, { name: '迷霧古林', x: 70, y: 15 }, { name: '灰燼村', x: 44, y: 34 },
+            { name: '低語海岸', x: 46, y: 54 }, { name: '沉船海灣', x: 63, y: 79 },
+        ],
+        walk: [
+            [4, 5, 8, 8], [7, 8, 12, 11], [10, 10, 18, 13], [15, 12, 22, 16], [18, 15, 26, 19], [22, 18, 30, 21], [26, 20, 33, 24],
+            [26, 16, 34, 20], [34, 16, 46, 21], [5, 11, 10, 15],
+            [53, 8, 56, 12], [54, 12, 57, 17], [56, 17, 59, 21], [57, 21, 61, 24], [62, 22, 64, 33], [59, 17, 66, 19],
+            [65, 14, 80, 17], [68, 17, 76, 21], [44, 16, 56, 18],
+            [26, 24, 32, 28], [28, 27, 38, 32], [32, 31, 45, 36], [38, 35, 55, 39], [44, 38, 66, 42], [36, 26, 45, 34],
+            [44, 33, 62, 40], [60, 32, 67, 41],
+            [24, 42, 68, 63],
+            [48, 63, 56, 70], [44, 64, 49, 68],
+            [48, 69, 63, 71], [48, 71, 52, 87], [53, 76, 61, 81], [60, 69, 67, 74], [61, 74, 67, 76], [59, 76, 68, 80],
+            [60, 80, 72, 83], [62, 83, 79, 87], [71, 85, 84, 87], [63, 66, 85, 68], [62, 67, 67, 70],
+        ],
+        block: [
+            [16, 8, 24, 9], [23, 10, 31, 12], [25, 13, 27, 15], [36, 16, 37, 18],
+            [71, 13, 79, 14], [78, 13, 80, 16],
+            [45, 23, 61, 32], [42, 27, 44, 29], [56, 34, 58, 36],
+            [56, 52, 68, 54], [55, 54, 56, 54], [49, 57, 51, 58], [47, 58, 49, 59], [45, 59, 48, 61], [44, 61, 46, 63],
+            [55, 75, 58, 77], [61, 78, 63, 80],
+        ],
+    },
 };
 // 各村莊用哪張背景圖（沒寫的用低語港 village）
 const TOWN_BG = { gludio: 'ash', giran: 'darkgold', aden: 'aden' };
@@ -231,7 +260,7 @@ function themeFor() {
     const z = currentZone();
     if (z.type === 'dragon') return SCENE_THEMES.dragon;
     if (z.type === 'tower') return SCENE_THEMES.tower;
-    if (z.type === 'field') return SCENE_THEMES.field;
+    if (z.type === 'field') return z.bg ? { ...SCENE_THEMES.field, bg: z.bg } : SCENE_THEMES.field;   // z.bg：這張野外用自己的背景圖（大地圖）
     return SCENE_THEMES[z.scene] || SCENE_THEMES.dungeon;
 }
 
@@ -240,7 +269,7 @@ function buildScene() {
     const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
     if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
     const bg = theme.bg ? SCENE_BGS[theme.bg] : null;
-    if (bg) spriteImage(bg.src);
+    if (bg) { spriteImage(bg.src); if (bg.mini) spriteImage(bg.mini); }
     const zz = player.loc.type === 'zone' ? currentZone() : null;
     if (zz && zz.mons) zz.mons.forEach(monSpriteImg);
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
@@ -305,7 +334,7 @@ function findPath(sx, sy, tx, ty, adjacent) {
             if (prev.has(nk) || !freeTileFor(nx, ny, tx, ty)) continue;
             prev.set(nk, key(x, y));
             q.push([nx, ny]);
-            if (prev.size > 1000) return [];
+            if (prev.size > (scene.bg && scene.bg.big ? 6000 : 1000)) return [];   // 大地圖：點小地圖可以走很遠
         }
     }
     return [];
@@ -349,6 +378,14 @@ function spawnMapMon(near) {
 function sceneUpdate(dt) {
     const pl = scene.pl, inZone = player.loc.type === 'zone', fighting = inZone && player.hunting && hunt && hunt.state === 'fight' && hunt.mon;
 
+    // 大地圖：離角色 16 格以上、沒在戰鬥的怪收掉（怪只生在角色附近，走遠了才會一直有新的）；記下目前在哪一區
+    if (scene.bg && scene.bg.big) {
+        scene.mons = scene.mons.filter(m => m.inst || m.dead || Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) < 16);
+        if (scene.bg.regions) {
+            const r = scene.bg.regions.reduce((a, b) => (Math.hypot(b.x - pl.x, b.y - pl.y) < Math.hypot(a.x - pl.x, a.y - pl.y) ? b : a));
+            if (r.name !== scene.region) { scene.region = r.name; scene.regionAt = gameNow; }
+        }
+    }
     // 怪物數量維持
     if (inZone && currentZone().type !== 'dragon') {
         scene.spawnCd -= dt;
@@ -461,9 +498,12 @@ function sceneUpdate(dt) {
     }
     if (pl.path.length) {
         scene.walkClock = (scene.walkClock || 0) + dt;
-        const [nx, ny] = pl.path[0];
-        if (!freeTileFor(nx, ny)) pl.path = [];
-        else {
+        const [nx, ny] = pl.path[0], last = pl.path[pl.path.length - 1];
+        if (!freeTileFor(nx, ny)) {
+            // 下一格被怪擋住：點地面／小地圖的長距離移動（pl.dest）重新找路繞過去，其他情況（尋怪一步步走）照舊停下
+            const far = pl.dest && pl.path.length > 1 && last[0] === pl.dest[0] && last[1] === pl.dest[1];
+            pl.path = far ? findPath(pl.x, pl.y, pl.dest[0], pl.dest[1], !freeTileFor(pl.dest[0], pl.dest[1])) : [];
+        } else {
             const step = PLAYER_SPEED * dt / 1000;
             const ddx = nx - pl.rx, ddy = ny - pl.ry;
             pl.dir = Math.abs(ddx) > Math.abs(ddy) ? (ddx > 0 ? 'right' : 'left') : (ddy > 0 ? 'down' : 'up');
@@ -886,7 +926,70 @@ function sceneDraw(ctx, W, H) {
         ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 90, H - 34, 180, 24);
         ctx.fillStyle = '#ffe7a8'; ctx.fillText(msg, W / 2, H - 22);
     }
+    if (scene.bg && scene.bg.big) drawBigMapHud(ctx, W, H, camX, camY);
     scene.cam = { x: camX, y: camY };
+}
+
+// ───────── 大地圖：小地圖＋進入區域的橫幅（第 45 節）─────────
+// 小地圖畫在右上角（畫面座標）：縮圖、鏡頭範圍白框、怪物紅點、角色亮點；點小地圖＝走過去（sceneClick → sceneMiniClick）
+function drawBigMapHud(ctx, W, H, camX, camY) {
+    const bg = scene.bg, mapW = scene.mw * TILE, mapH = scene.mh * TILE;
+    const mw = Math.round(Math.min(128, W * 0.3)), mh = Math.round(mw * mapH / mapW);
+    const mx = W - mw - 8, my = W > H * 2 ? 40 : 8;   // PC 橫式外框上緣有裝飾，往下移
+    scene.miniRect = { x: mx, y: my, w: mw, h: mh };
+    const k = mw / mapW, img = bg.mini && spriteImage(bg.mini);
+    ctx.save();
+    ctx.fillStyle = 'rgba(10,12,10,0.75)'; ctx.fillRect(mx - 3, my - 3, mw + 6, mh + 6);
+    ctx.strokeStyle = '#a88b4a'; ctx.lineWidth = 1.5; ctx.strokeRect(mx - 3, my - 3, mw + 6, mh + 6);
+    if (img) { ctx.globalAlpha = 0.92; ctx.drawImage(img, mx, my, mw, mh); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1;
+    ctx.strokeRect(mx + Math.max(0, camX) * k, my + Math.max(0, camY) * k, Math.min(W, mapW) * k, Math.min(H, mapH) * k);
+    for (const m of scene.mons) {
+        if (m.dead) continue;
+        ctx.fillStyle = m.inst ? '#ff5a3c' : '#e0705a';
+        ctx.fillRect(mx + (m.rx + 0.5) * TILE * k - 1, my + (m.ry + 0.5) * TILE * k - 1, 2.5, 2.5);
+    }
+    const px = mx + (scene.pl.rx + 0.5) * TILE * k, py = my + (scene.pl.ry + 0.5) * TILE * k;
+    ctx.fillStyle = '#7fe8ff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center';
+    if (scene.region) drawLabel(ctx, scene.region, mx + mw / 2, my + mh + 11, '#ffe7a8');
+    // 進入新區域：上方中間顯示區域名稱 2.5 秒（淡入淡出）
+    const t = gameNow - (scene.regionAt || -1e9);
+    if (scene.region && t < 2500) {
+        ctx.globalAlpha = t < 300 ? t / 300 : t > 2000 ? (2500 - t) / 500 : 1;
+        const by = W > H * 2 ? H * 0.22 : H * 0.18;
+        ctx.font = 'bold 20px serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.strokeText(`— ${scene.region} —`, W / 2, by); ctx.fillStyle = '#f2d9a0'; ctx.fillText(`— ${scene.region} —`, W / 2, by);
+        ctx.font = '11px sans-serif'; ctx.lineWidth = 3;
+        const sub = zoneTitle();
+        ctx.strokeText(sub, W / 2, by + 18); ctx.fillStyle = '#d8ccb0'; ctx.fillText(sub, W / 2, by + 18);
+        ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+}
+// 點小地圖：換算成格子，走到那裡（不能走的格子找附近最近能走的）；回傳 true＝點在小地圖上
+function sceneMiniClick(sx, sy) {
+    const r = scene.miniRect;
+    if (!r || !(scene.bg && scene.bg.big) || sx < r.x || sy < r.y || sx > r.x + r.w || sy > r.y + r.h) return false;
+    let tx = Math.floor((sx - r.x) / r.w * scene.mw), ty = Math.floor((sy - r.y) / r.h * scene.mh);
+    if (scene.grid[ty] && scene.grid[ty][tx] !== 0) {
+        let best = null, bd = 1e9;
+        for (let y = Math.max(0, ty - 8); y <= Math.min(scene.mh - 1, ty + 8); y++) for (let x = Math.max(0, tx - 8); x <= Math.min(scene.mw - 1, tx + 8); x++) {
+            const d = Math.hypot(x - tx, y - ty);
+            if (scene.grid[y][x] === 0 && d < bd) { bd = d; best = [x, y]; }
+        }
+        if (!best) return true;
+        [tx, ty] = best;
+    }
+    sceneWalkTo(tx, ty);
+    if (scene.pl.path.length) scene.manualUntil = gameNow + MANUAL_HOLD_MS + scene.pl.path.length * 1000 / PLAYER_SPEED;
+    return true;
+}
+// 狀態列地點後面加上目前區域（ui.js renderStatus）
+function sceneRegionName() {
+    const r = scene && scene.region && scene.bg && scene.bg.big && player.loc.type === 'zone' && scene.key === sceneKey() ? scene.region : '';
+    return r && r !== zoneTitle() ? r : '';   // 區域名跟地圖同名（低語海岸）就不重複
 }
 
 // 村莊房屋：石牆＋深色石板屋頂（屋頂佔上半、牆佔下半，有門窗）
@@ -967,6 +1070,7 @@ function sceneClick(ev) {
     const cv = $('scene-canvas'), r = cv.getBoundingClientRect();
     const z = scene.zoom || 1;
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
+    if (player.loc.type === 'zone' && !walkHome && sceneMiniClick((ev.clientX - r.left) / z, (ev.clientY - r.top) / z)) return;   // 大地圖小地圖
     if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { npcOpen(plate.npc); return; }   // 只有點名牌才開 NPC（2026-10-16 使用者要求，點身體不觸發）
@@ -1013,6 +1117,7 @@ function sceneWalkTo(tx, ty) {
     if (!path.length && !(sx === tx && sy === ty)) return;
     pl.path = (pl.path.length ? [pl.path[0]] : []).concat(path);
     const end = pl.path[pl.path.length - 1] || [sx, sy];
+    pl.dest = [end[0], end[1]];   // 路上被怪擋住時用來重新找路
     scene.moveMark = { x: end[0], y: end[1], t: 0 };
 }
 

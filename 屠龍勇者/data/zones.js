@@ -10,12 +10,12 @@ const TOWNS = {
 const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 
 // type：field 野外／dungeon 地監／tower 永夜之塔／dragon 龍穴
-// 畫面（ui-scene.js）：野外一律用遺跡背景圖，tint 疊一層顏色區分地區；地監用 scene 指定格子主題（沒寫就是 dungeon）
+// 畫面（ui-scene.js）：野外用遺跡背景圖，tint 疊一層顏色區分地區（bg 指定時改用那張背景圖，例如低語海岸的大地圖 wild）；地監用 scene 指定格子主題（沒寫就是 dungeon）
 // town：回家卷軸、死亡時回到的村莊；fee：從村莊傳送過去的費用
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', lv: [1, 10], town: 'talking', fee: 0,
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45 節）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
