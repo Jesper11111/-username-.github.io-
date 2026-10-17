@@ -335,6 +335,86 @@ function buildScene() {
         lastSeq: logSeq, lastPlayerHp: player.hp, critNext: false, spawnCd: 0, w: 0, h: 0,
         cam: { x: cx * TILE, y: cy * TILE }, moveMark: null,
     };
+    if (bg && bg.big && bg.regions) scene.gates = bg._gates || (bg._gates = bigMapGates(grid, bg.regions, mw, mh));
+}
+
+// 大地圖：格子屬於哪一區（rect 依序第一個符合的；都不符合用最近的中心）
+function bigRegionAt(rs, x, y) {
+    return rs.find(q => q.rect && x >= q.rect[0] && y >= q.rect[1] && x <= q.rect[2] && y <= q.rect[3])
+        || rs.reduce((a, b) => (Math.hypot(b.x - x, b.y - y) < Math.hypot(a.x - x, a.y - y) ? b : a));
+}
+// 路引（2026-10-18，第 50 節）：自動找出兩個不同地圖相接的可走格子，每一段交界在兩邊各放一個箭頭，指向另一個地圖
+// 回傳 [{ x, y, ang（弧度，箭頭方向）, from, to（zone id） }]
+function bigMapGates(grid, rs, mw, mh) {
+    const zoneOf = [];
+    for (let y = 0; y < mh; y++) { zoneOf.push([]); for (let x = 0; x < mw; x++) zoneOf[y].push(grid[y][x] === 0 ? bigRegionAt(rs, x, y).zone : null); }
+    const edge = new Map();   // 'x,y,往哪個地圖' → { x, y, to, dx, dy }：這格旁邊就是別的地圖（一格可能同時接兩個地圖）
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+        const a = zoneOf[y][x];
+        if (!a) continue;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const b = zoneOf[y + dy] && zoneOf[y + dy][x + dx], k = x + ',' + y + ',' + b;
+            if (b && b !== a && !edge.has(k)) edge.set(k, { x, y, to: b, dx, dy });
+        }
+    }
+    const gates = [], used = new Set();
+    for (const [k, e] of edge) {
+        if (used.has(k)) continue;
+        const from = zoneOf[e.y][e.x], grp = [], q = [e]; used.add(k);   // 同一段交界（同一個地圖往同一個地圖、2 格內相連）
+        while (q.length) {
+            const c = q.pop(); grp.push(c);
+            for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+                const nk = (c.x + dx) + ',' + (c.y + dy) + ',' + e.to, n = edge.get(nk);
+                if (n && !used.has(nk) && zoneOf[n.y][n.x] === from) { used.add(nk); q.push(n); }
+            }
+        }
+        let sx = 0, sy = 0, vx = 0, vy = 0;
+        for (const c of grp) { sx += c.x; sy += c.y; vx += c.dx; vy += c.dy; }
+        sx /= grp.length; sy /= grp.length;
+        const ang = Math.round(Math.atan2(vy, vx) / (Math.PI / 4)) * (Math.PI / 4), ux = Math.round(Math.cos(ang)), uy = Math.round(Math.sin(ang));   // 箭頭只用 8 個方向
+        let best = grp[0];   // 交界上離中心最近的格子，往自己這一側退 2 格（兩邊的箭頭才不會疊在一起）
+        for (const c of grp) if (Math.hypot(c.x - sx, c.y - sy) < Math.hypot(best.x - sx, best.y - sy)) best = c;
+        let gx = best.x, gy = best.y;
+        for (let i = 0; i < 2; i++) { const nx = gx - ux, ny = gy - uy; if (zoneOf[ny] && zoneOf[ny][nx] === from) { gx = nx; gy = ny; } }
+        gates.push({ x: gx, y: gy, ang, from, to: e.to, stack: 0 });
+    }
+    // 同一個地圖 3 格內有好幾個路引（三岔口）：後面的往上疊，名牌才不會重疊
+    gates.forEach((g, i) => { g.stack = gates.slice(0, i).filter(o => o.from === g.from && Math.abs(o.x - g.x) + Math.abs(o.y - g.y) <= 3).length; });
+    return gates;
+}
+// 畫一個發光箭頭（中心 cx,cy、方向 ang、大小 s）；路引用
+function drawGlowArrow(ctx, cx, cy, ang, s, color, glow) {
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(ang);
+    ctx.shadowColor = color; ctx.shadowBlur = glow;
+    ctx.fillStyle = color; ctx.strokeStyle = 'rgba(40,24,0,0.9)'; ctx.lineWidth = Math.max(1, s / 8);
+    ctx.beginPath();
+    ctx.moveTo(s, 0); ctx.lineTo(0, -s * 0.8); ctx.lineTo(0, -s * 0.35); ctx.lineTo(-s, -s * 0.35);
+    ctx.lineTo(-s, s * 0.35); ctx.lineTo(0, s * 0.35); ctx.lineTo(0, s * 0.8); ctx.closePath();
+    ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
+    ctx.restore();
+}
+// 大地圖上的路引：地上一圈光暈＋往目標方向來回飄的箭頭＋地圖名與建議等級（等級太高顯示紅色）
+function drawGates(ctx, camX, camY, W, H) {
+    if (!scene.gates) return;
+    const pulse = 0.5 + 0.5 * Math.sin(gameNow / 300);
+    for (const g of scene.gates) {
+        const cx = g.x * TILE - camX + TILE / 2, cy = g.y * TILE - camY + TILE / 2 - g.stack * 44;
+        if (cx < -80 || cy < -60 || cx > W + 80 || cy > H + 60) continue;
+        const z = ZONE_BY_ID[g.to], hard = z && player.lv < z.lv[0] - 5;
+        const col = hard ? '#ff7a5a' : '#ffd86a';
+        ctx.fillStyle = hard ? `rgba(255,90,60,${0.12 + 0.12 * pulse})` : `rgba(255,210,90,${0.12 + 0.12 * pulse})`;
+        ctx.beginPath(); ctx.ellipse(cx, cy + 6, 22, 9, 0, 0, Math.PI * 2); ctx.fill();
+        const b = 5 * Math.sin(gameNow / 220);
+        drawGlowArrow(ctx, cx + Math.cos(g.ang) * b, cy + Math.sin(g.ang) * b, g.ang, 13, col, 10 + 10 * pulse);
+        if (z) {
+            ctx.textAlign = 'center';
+            drawLabel(ctx, z.name, cx, cy - 24, col);
+            ctx.font = '9px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+            const sub = `Lv.${z.lv[0]}～${z.lv[1]}`;
+            ctx.strokeText(sub, cx, cy - 12); ctx.fillStyle = '#e8dcc0'; ctx.fillText(sub, cx, cy - 12); ctx.lineWidth = 1;
+        }
+    }
 }
 
 function freeTile(x, y) {
@@ -412,8 +492,7 @@ function sceneUpdate(dt) {
         scene.mons = scene.mons.filter(m => m.inst || m.dead || Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) < 16);
         if (scene.bg.regions && inZone) {
             const rs = scene.bg.regions;
-            const r = rs.find(q => q.rect && pl.x >= q.rect[0] && pl.y >= q.rect[1] && pl.x <= q.rect[2] && pl.y <= q.rect[3])
-                || rs.reduce((a, b) => (Math.hypot(b.x - pl.x, b.y - pl.y) < Math.hypot(a.x - pl.x, a.y - pl.y) ? b : a));
+            const r = bigRegionAt(rs, pl.x, pl.y);
             if (r.zone && r.zone !== player.loc.id && !walkHome) sceneEnterZone(r.zone);   // 走進別的地圖的區域
             const name = r.zone ? ZONE_BY_ID[r.zone].name : r.name;
             if (name !== scene.region) { scene.region = name; scene.regionAt = gameNow; }
@@ -789,6 +868,7 @@ function sceneDraw(ctx, W, H) {
         ctx.strokeStyle = '#ff3a1a'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.75, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1;
     }
+    if (scene.gates && player.loc.type === 'zone') drawGates(ctx, camX, camY, W, H);   // 大地圖路引（畫在地上，角色會走在上面）
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
     if (player.loc.type === 'town') scene.npcRects = [];
@@ -1058,6 +1138,14 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
         if (m.dead) continue;
         ctx.fillStyle = m.inst ? '#ff5a3c' : '#e0705a';
         ctx.fillRect(mx + (m.rx + 0.5) * TILE * k - 1, my + (m.ry + 0.5) * TILE * k - 1, 2.5, 2.5);
+    }
+    // 路引：目前這個地圖往外的出口，閃爍的小箭頭
+    if (scene.gates) {
+        const a = 0.55 + 0.45 * Math.sin(gameNow / 250);
+        ctx.globalAlpha = a;
+        for (const g of scene.gates) if (g.from === player.loc.id)
+            drawGlowArrow(ctx, mx + (g.x + 0.5) * TILE * k, my + (g.y + 0.5) * TILE * k, g.ang, 4.5, '#ffd86a', 6);
+        ctx.globalAlpha = 1;
     }
     const px = mx + (scene.pl.rx + 0.5) * TILE * k, py = my + (scene.pl.ry + 0.5) * TILE * k;
     ctx.fillStyle = '#7fe8ff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
