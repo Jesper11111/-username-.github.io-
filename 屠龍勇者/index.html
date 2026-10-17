@@ -327,7 +327,7 @@
     .hb.dragging .hb-pull { opacity: .6; }
     .hb.armed .hb-pull { opacity: 1; text-shadow: 0 0 6px #3aff5a; }
     .hb.armed.auto .hb-pull { color: #ff8a6a; text-shadow: 0 0 6px #ff3a1a; }
-    /* 自動中：綠色跑馬燈外框＋AUTO */
+    /* 自動中：綠色跑馬燈外框（2026-10-18 起不顯示 AUTO 字樣） */
     .hb.auto .hb-face { border-color: #5aff7a; }
     .hb.auto::after {
         content: ''; position: absolute; inset: -3px; border-radius: 5px; pointer-events: none; padding: 2px; z-index: 3;
@@ -338,10 +338,6 @@
     @property --hb-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
     @keyframes hb-spin { to { --hb-a: 360deg; } }
     .hb.dragging::after { display: none; }
-    .hb-auto { position: absolute; left: 50%; bottom: 1px; transform: translateX(-50%); z-index: 3; padding: 0 3px; border-radius: 3px; pointer-events: none; display: none;
-        font-size: max(7px, calc(var(--cell) * .18)); font-weight: bold; line-height: 1.3; color: #0a1a0a; background: #5aff7a; box-shadow: 0 0 4px #3aff5a; }
-    .hb.auto .hb-auto { display: block; }
-    .hb.auto:has(.hb-cd) .hb-auto { bottom: calc(var(--cell) * .3); }   /* 冷卻黑條在底部時 AUTO 往上移 */
     /* 編輯模式（toggleBarEdit）：金色虛線框、格子輕微閃爍，點格子＝更換／清空 */
     .skill-bar.editing .sk-row, #hotbar.editing .hb { outline: 2px dashed #ffd27a; outline-offset: 2px; }
     .skill-bar.editing .hb-face, #hotbar.editing .hb-face { animation: hb-edit 1.2s ease-in-out infinite; }
@@ -871,44 +867,44 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261018b"></script>
-<script src="data/classes.js?v=20261018b"></script>
-<script src="data/skills.js?v=20261018b"></script>
-<script src="data/items.js?v=20261018b"></script>
-<script src="data/spellbook.js?v=20261018b"></script>
-<script src="data/monsters.js?v=20261018b"></script>
-<script src="data/zones.js?v=20261018b"></script>
-<script src="data/quests.js?v=20261018b"></script>
-<script src="data/resonance.js?v=20261018b"></script>
-<script src="data/player.js?v=20261018b"></script>
-<script src="data/enchant.js?v=20261018b"></script>
-<script src="data/affix.js?v=20261018b"></script>
-<script src="data/craft.js?v=20261018b"></script>
-<script src="data/maps.js?v=20261018b"></script>
-<script src="data/combat.js?v=20261018b"></script>
-<script src="data/town.js?v=20261018b"></script>
-<script src="data/save.js?v=20261018b"></script>
-<script src="data/cloud.js?v=20261018b"></script>
-<script src="data/offline.js?v=20261018b"></script>
-<script src="data/ui.js?v=20261018b"></script>
-<script src="data/sfx.js?v=20261018b"></script>
-<script src="data/bgm.js?v=20261018b"></script>
-<script src="data/ui-create.js?v=20261018b"></script>
-<script src="data/ui-panels.js?v=20261018b"></script>
-<script src="data/codex.js?v=20261018b"></script>
-<script src="data/raid.js?v=20261018b"></script>
-<script src="data/clan.js?v=20261018b"></script>
-<script src="data/chat.js?v=20261018b"></script>
-<script src="data/rank.js?v=20261018b"></script>
-<script src="data/wb.js?v=20261018b"></script>
-<script src="data/market.js?v=20261018b"></script>
-<script src="data/vault.js?v=20261018b"></script>
-<script src="data/presence.js?v=20261018b"></script>
-<script src="data/ui-frame.js?v=20261018b"></script>
-<script src="data/icons.js?v=20261018b"></script>
-<script src="data/hotbar.js?v=20261018b"></script>
-<script src="data/ui-scene.js?v=20261018b"></script>
-<script src="data/pwa.js?v=20261018b"></script>
-<script src="data/main.js?v=20261018b"></script>
+<script src="data/config.js?v=20261018c"></script>
+<script src="data/classes.js?v=20261018c"></script>
+<script src="data/skills.js?v=20261018c"></script>
+<script src="data/items.js?v=20261018c"></script>
+<script src="data/spellbook.js?v=20261018c"></script>
+<script src="data/monsters.js?v=20261018c"></script>
+<script src="data/zones.js?v=20261018c"></script>
+<script src="data/quests.js?v=20261018c"></script>
+<script src="data/resonance.js?v=20261018c"></script>
+<script src="data/player.js?v=20261018c"></script>
+<script src="data/enchant.js?v=20261018c"></script>
+<script src="data/affix.js?v=20261018c"></script>
+<script src="data/craft.js?v=20261018c"></script>
+<script src="data/maps.js?v=20261018c"></script>
+<script src="data/combat.js?v=20261018c"></script>
+<script src="data/town.js?v=20261018c"></script>
+<script src="data/save.js?v=20261018c"></script>
+<script src="data/cloud.js?v=20261018c"></script>
+<script src="data/offline.js?v=20261018c"></script>
+<script src="data/ui.js?v=20261018c"></script>
+<script src="data/sfx.js?v=20261018c"></script>
+<script src="data/bgm.js?v=20261018c"></script>
+<script src="data/ui-create.js?v=20261018c"></script>
+<script src="data/ui-panels.js?v=20261018c"></script>
+<script src="data/codex.js?v=20261018c"></script>
+<script src="data/raid.js?v=20261018c"></script>
+<script src="data/clan.js?v=20261018c"></script>
+<script src="data/chat.js?v=20261018c"></script>
+<script src="data/rank.js?v=20261018c"></script>
+<script src="data/wb.js?v=20261018c"></script>
+<script src="data/market.js?v=20261018c"></script>
+<script src="data/vault.js?v=20261018c"></script>
+<script src="data/presence.js?v=20261018c"></script>
+<script src="data/ui-frame.js?v=20261018c"></script>
+<script src="data/icons.js?v=20261018c"></script>
+<script src="data/hotbar.js?v=20261018c"></script>
+<script src="data/ui-scene.js?v=20261018c"></script>
+<script src="data/pwa.js?v=20261018c"></script>
+<script src="data/main.js?v=20261018c"></script>
 </body>
 </html>

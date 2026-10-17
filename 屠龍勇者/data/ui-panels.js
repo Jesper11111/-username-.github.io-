@@ -825,7 +825,7 @@ function renderSettings() {
         </div>
         ${sfxSettingsHtml()}
         <div class="panel"><h4>💊 自動補給</h4>
-            <small class="muted">要不要自動喝藥水、自動用瞬移卷軸，改在快捷欄：把道具放進格子、<b>往下拉</b>開啟自動（綠框＋AUTO）。</small>
+            <small class="muted">要不要自動喝藥水、自動用瞬移卷軸，改在快捷欄：把道具放進格子、<b>往下拉</b>開啟自動（綠色跑馬燈框）。</small>
             ${num('potionPct', 'HP 低於 % 喝治癒藥水', 5, 95)}
             ${num('healPct', 'HP 低於 % 施放治癒魔法', 5, 95)}
             ${chk('autoDodge', '首領大招自動閃避（走出紅圈）')}

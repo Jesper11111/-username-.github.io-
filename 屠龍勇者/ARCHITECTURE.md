@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018c`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1378,7 +1378,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 資料 `player.settings.bar`（22 格 `{ id, a }`，取代 `skillSlots`；`BAR_N`、`BAR_KEYS` 在 player.js）：0～7 第一排、8～15 第二排、16～21 PC 上排 6 格（手機不顯示，但自動照樣生效）。
   可放：技能（`SKILL_BY_ID`）、道具 `barItemOk`＝有 `heal`／`buff` 的藥水＋回家卷軸＋瞬移卷軸。`barCanAuto`：被動技能、回家卷軸不能自動（自動回家仍在設定頁 `autoHome`）。
 - 操作：**點一下**＝手動使用（`barUse`：技能 `manualCast`、治癒藥水這格用完改喝其他治癒藥水、回家 `homeScrollBtn`、瞬移 `quickTele`、其他 `quickPotion`）；
-  **按住往下拉 16px 以上再放開**＝切換自動（`barToggleAuto`，綠色跑馬燈外框＋AUTO）；**點空格／長按 550ms／右鍵**＝選放什麼（`openBarPicker` 對話框，可清空）；
+  **按住往下拉 16px 以上再放開**＝切換自動（`barToggleAuto`，綠色跑馬燈外框）；**點空格／長按 550ms／右鍵**＝選放什麼（`openBarPicker` 對話框，可清空）；
   同一招技能只放一格（放到別格會搬過去並保留自動開關）。鍵盤 1～8、Q E R F Z X C V（W A S D 是移動鍵，所以第二排沒照樣品用 Q～I）。
 - 自動規則：`slotSkills()` 只取 `a=1` 的已學會主動技能（格子順序＝優先順序，`playerAction` 不變）；`autoSupport` 改看 `barAutoItemIds()`：
   治癒藥水任一格開自動＝HP 低於 `potionPct` 時從身上所有治癒藥水挑（`choosePotion`，跟以前一樣，不限那一格的藥水）；增益藥水效果沒了就喝（加速看 `st.haste`）；瞬移卷軸開自動＝HP 低於 `telePct` 瞬移。
@@ -1393,7 +1393,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `openBarPickerSafe`：打開選單後 0.6 秒內，對話框上的 click 一律忽略（document 捕獲階段攔下）；長按、右鍵、點空格都走這個。
   - **編輯模式**（`barEditMode`／`toggleBarEdit`）：手機狩獵畫面多一顆「✎ 編輯快捷欄」（`huntButtonsHtml`），開啟後快捷欄金色虛線框閃爍、點任何格子＝打開選單（換掉／清空），按「✔ 完成」結束。PC 仍用右鍵或長按。
   - 選單上方顯示「目前：XXX（自動／手動）」與清空說明（`.hb-now`）。
-- **技能格不顯示 AUTO 字樣**（2026-10-18，版本 `20261018b`，使用者要求）：`barSlotHtml` 只有道具格輸出 `.hb-auto`；技能格開自動只顯示綠色跑馬燈框。說明文字（選單、技能頁）同步改。
+- **不顯示 AUTO 字樣**（2026-10-18，使用者要求）：`20261018b` 先拿掉技能格的，`20261018c` 道具格也拿掉——開自動一律只顯示綠色跑馬燈框（`.hb.auto`），`.hb-auto` 元素與 CSS 已刪除；說明文字（選單、技能頁、設定頁）同步改成「綠色跑馬燈框」。
 - 驗證：舊存檔轉換（黑妖 Lv.47，舊設定藍水、瞬移開、勇水關 → 對應格子自動）、新角色預設、手機下拉切換勇水自動、點空格選冰箭（手動格不會自動施放）、60 秒戰鬥模擬自動喝綠水／勇水／藍水／治癒藥水、鍵盤 C、PC 點上排治癒藥水；Console 無錯誤。
 
 ## 41. 技能／道具／狀態圖示（2026-10-15，版本 `20261015m`；`icons.js`）

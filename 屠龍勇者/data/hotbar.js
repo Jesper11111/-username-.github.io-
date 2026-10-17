@@ -27,14 +27,14 @@ function barSlotHtml(i, cls = '', style = '') {
     } else {
         const n = countItem(b.id);
         ic = itemIconHtml(b.id);
-        tr = `<span class="hb-tr">${n > 999 ? '999+' : n}</span>`;   // 數量放右上，底部留給 AUTO
+        tr = `<span class="hb-tr">${n > 999 ? '999+' : n}</span>`;   // 數量放右上
         dim = n <= 0;
         tip = `${ITEMS[b.id].name}（${n} 個）`;
     }
     tip += b.a ? '｜自動中，往下拉關閉' : barCanAuto(b.id) ? '｜往下拉開啟自動' : '';
     return `<div class="hb ${b.a ? 'auto' : ''} ${dim ? 'dim' : ''} ${cls}" style="${style}" data-i="${i}" title="${esc(tip)}">
         <div class="hb-face ${face}" style="--cd:${pct}%"><span class="hb-ic">${ic}</span>${tl}${tr}${br}${keyHtml}${cdTxt ? `<span class="hb-cd">${cdTxt}</span>` : ''}</div>
-        <div class="hb-pull">▼ ${b.a ? '關閉自動' : '自動'}</div>${s ? '' : '<span class="hb-auto">AUTO</span>'}</div>`;   // 技能格不顯示 AUTO 字樣，只留綠色跑馬燈框（2026-10-18 使用者要求）
+        <div class="hb-pull">▼ ${b.a ? '關閉自動' : '自動'}</div></div>`;   // 開自動只顯示綠色跑馬燈框，不顯示 AUTO 字樣（2026-10-18 使用者要求，技能、道具都一樣）
 }
 
 // PC 外框上的位置（原圖 2000×1116 座標）：底部石條左右各 8 格、上排第 3～8 格
@@ -110,7 +110,7 @@ function openBarPicker(i) {
         ...player.inv.map(x => x.id).filter(barItemOk)])];
     const opt = (id, ic, sub) => `<button class="hb-opt ${b.id === id ? 'cur' : ''}" onclick="barPick(${i}, '${id}')"><span>${ic}</span>${esc(barName(id))}<small>${sub}</small></button>`;
     const html = `${b.id ? `<div class="hb-now">目前：<b>${esc(barName(b.id))}</b>${b.a ? '（自動）' : '（手動）'}　點下方選項換掉，或按「清空這格」</div>` : ''}
-        <small class="muted">點一下＝手動使用；<b>按住格子往下拉再放開</b>＝切換自動（綠色跑馬燈框；道具另外顯示 AUTO）。${barKeyLabel(i) ? `鍵盤 ${barKeyLabel(i)}。` : ''}</small>
+        <small class="muted">點一下＝手動使用；<b>按住格子往下拉再放開</b>＝切換自動（綠色跑馬燈框）。${barKeyLabel(i) ? `鍵盤 ${barKeyLabel(i)}。` : ''}</small>
         <h4>⚔️ 技能</h4><div class="hb-opts">${skills.map(s => opt(s.id, skillIconHtml(s), s.mp ? `MP ${s.mp}` : '')).join('') || '<small class="muted">還沒學會主動技能</small>'}</div>
         <h4>🎒 道具</h4><div class="hb-opts">${items.map(id => opt(id, itemIconHtml(id), `${countItem(id)} 個`)).join('')}</div>`;
     const btns = [{ text: barEditMode ? '返回' : '關閉', cls: 'secondary' }];
