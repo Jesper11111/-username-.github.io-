@@ -50,7 +50,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018y`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261018z`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1620,3 +1620,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 呼叫的地方：快捷欄／底部格子 `quickTele`（ui-frame.js）、自動使用 `autoSupport`（combat.js，先 `leaveFight` 再傳送）、背包道具視窗新增「使用」按鈕（ui-panels.js）。
   訊息：有傳送＝「📜 使用瞬間移動卷軸，傳送到別的地方」，地圖畫面沒開（背景、離線模擬）就照舊只脫離戰鬥。龍穴照舊直接回村。
 - 驗證：腐朽礦坑・上層連用 4 次都換到 10 格以上的別處、地圖仍是 gludio1、戰鬥狀態變成尋怪；低語墓窟（格子地圖）連用 3 次都換位置；Console 無錯誤。
+
+## 52. 永夜之塔通用地圖（2026-10-18，版本 `20261018z`；`ui-scene.js` 的 `SCENE_BGS.tower`）
+
+- 使用者給一張塔內大廳圖（2000×989，中間魔法陣廣場、北邊走廊、四條斜走道通往四角螺旋梯、下方是低一層的墓室），說「傲慢之塔通用地圖」（傲慢之塔＝現在的永夜之塔）。
+- 存成 `images/maps/tower.jpg`；`SCENE_THEMES.tower` 加 `bg: 'tower'`，**1～100F 每層都用這張**（以前是紫色格子＋蠟燭／骷髏 emoji）。鋪成 40×20 格（原圖每格 50×49.5px），出生在魔法陣中間 20,10。
+- 可走範圍 `walk`：北邊走廊 [19,2,21,6]；魔法陣廣場（八角形）[13,7,27,8]、[11,9,29,11]、[13,12,27,13]、[15,14,25,14]；東西走道 [3,9,10,10]、[30,9,37,10]；
+  左右上方斜陽台 [9,4,13,6]＋[12,6,14,7]、[27,4,31,6]＋[26,6,28,7]；左右下方往螺旋梯的斜走道 [10,12,13,14]→[7,14,11,15]→[4,16,8,17]→[2,18,5,18]（右邊對稱）。下方墓室、欄杆外、牆都不能走。
+- 驗證：本機傳送到永夜之塔 5F，畫面是新背景、怪物（骷髏神射手）在廣場上；可走 273 格全部能從出生點走到；掛機正常擊殺；Console 無錯誤。
