@@ -15,7 +15,7 @@ const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵／腐朽礦坑上層・深層／沉眠龍窟共用，第 48、49 節）
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵／腐朽礦坑上層・深層／沉眠龍窟／熔火煉獄共用，第 48、49、57 節）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
@@ -94,7 +94,7 @@ const ZONES = [
         desc: '終年冰封的北方雪原，遺跡被白雪掩埋。',
     },
     {
-        id: 'fireCave', name: '熔火煉獄', icon: '🌋', type: 'dungeon', scene: 'dragon', lv: [54, 66], town: 'aden', fee: 1500,
+        id: 'fireCave', name: '熔火煉獄', icon: '🌋', type: 'dungeon', scene: 'dragon', bg: 'wild', lv: [54, 66], town: 'aden', fee: 1500,
         mons: ['salamander', 'fireSpirit', 'lavaGolem', 'flameKnight'], rare: { id: 'ifrit', p: 0.007 },
         drops: [{ id: 'demonAxe', p: 0.0004 }, { id: 'darkClaw', p: 0.0006 }, { id: 'darkDual', p: 0.0006 }, { id: 'hasteBoots', p: 0.0004 },
             { id: 'titanBelt', p: 0.0004 }, { id: 'bWeaponScroll', p: 0.001 }],
