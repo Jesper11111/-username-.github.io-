@@ -93,7 +93,7 @@ Object.assign(RESONANCE, {
     knightHelm:   { tier: 1, cls: ['knight', 'paladin'], trigger: 'hurt', p: 0.08, name: '堅守', kind: 'buff', sec: 8, fx: { ac: 4 }, desc: '8 秒內 防禦 +4' },
     protectCloak: { tier: 1, trigger: 'lowhp', pct: 0.3, cd: 60, name: '守護', kind: 'heal', heal: [40, 70], spK: 0, desc: 'HP 低於 30% 時回復 HP' },
     powerGloves:  { tier: 1, cls: ['warrior', 'shura'], trigger: 'proc', p: 0.06, name: '猛力', kind: 'strike', mult: 1.4, desc: '1.4 倍重擊' },
-    wolfAmulet:   { tier: 1, trigger: 'charge', n: 25, name: '狼嚎', kind: 'buff', sec: 10, fx: { spdMul: 0.15 }, desc: '10 秒內攻速 +15%' },
+    wolfAmulet:   { tier: 1, trigger: 'charge', n: 25, name: '狼嚎', kind: 'buff', sec: 10, fx: { spdMul: 0.15 }, desc: '10 秒內攻擊間隔 −0.1 秒' },
     pirateRing:   { tier: 1, trigger: 'proc', p: 0.08, name: '海風', kind: 'buff', sec: 8, fx: { dodge: 0.1 }, desc: '8 秒內閃避 +10%' },
     // 英雄
     hasteBoots:   { tier: 2, trigger: 'hurt', p: 0.1, name: '疾走', kind: 'buff', sec: 6, fx: { dodge: 0.15 }, desc: '6 秒內閃避 +15%' },
@@ -114,7 +114,7 @@ Object.assign(RESONANCE, {
     // 神話（四大龍）
     earthGuard:   { tier: 4, cls: ['knight', 'paladin', 'warrior'], trigger: 'hurt', p: 0.12, name: '大地震', kind: 'strike', mult: 2, aoe: true, stun: 2000, desc: '範圍：反擊 2 倍並暈眩 2 秒' },
     tideHeart:    { tier: 4, trigger: 'cd', cd: 30, name: '潮汐之癒', kind: 'heal', heal: [200, 300], spK: 2, desc: '每 30 秒回復大量 HP' },
-    galeBoots:    { tier: 4, trigger: 'hurt', p: 0.15, name: '風神', kind: 'buff', sec: 5, fx: { dodge: 0.4, spdMul: 0.2 }, desc: '5 秒內閃避 +40%、攻速 +20%' },
+    galeBoots:    { tier: 4, trigger: 'hurt', p: 0.15, name: '風神', kind: 'buff', sec: 5, fx: { dodge: 0.4, spdMul: 0.2 }, desc: '5 秒內閃避 +40%、攻擊間隔 −0.14 秒' },
     dragonHeartRing: { tier: 4, trigger: 'proc', p: 0.08, name: '龍炎', kind: 'spell', dmg: [100, 160], spK: 2, aoe: true, desc: '範圍：龍炎燒灼所有敵人（魔法）' },
 });
 // 防具掉落：稀有首領、永夜之塔守關首領、四大龍

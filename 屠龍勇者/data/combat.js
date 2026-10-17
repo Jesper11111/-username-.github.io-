@@ -286,7 +286,7 @@ function manualCast(id) {
     if (!canReach(skillReach(k, st))) return skillReach(k, st) === 'ranged' ? '距離太遠或被擋住（4 格內、不能穿牆）' : '要走到目標旁邊才能使用';
     if (k.type === 'spell') castSpell(k, st); else doStrike(k, st);
     if (!fightAlive()) return '';
-    hunt.pCd = st.atkMs;
+    hunt.pCd = k.type === 'spell' ? st.castMs : st.atkMs;
     reapMobs();
     return '';
 }
@@ -451,6 +451,7 @@ function magicDamage(base, spK, st, undeadMul, mon = hunt.mon) {
 function castSpell(k, st) {
     useSkillCost(k);
     hunt.lastAtkAt = gameNow;
+    if (!k.id.startsWith('res_')) hunt.pCd = st.castMs;   // 攻擊魔法用施法間隔（不看武器）；共鳴觸發的不影響出手計時
     // 範圍魔法：打全部圍上來的怪
     const targets = k.aoe ? mobTargets() : [hunt.mon];
     const parts = targets.map(m => {

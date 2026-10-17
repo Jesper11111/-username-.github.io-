@@ -1,21 +1,23 @@
 // 屠龍勇者：道具、裝備、彈藥、材料、鍛造配方（依賴 config.js）
 
 // 武器種類：spd 攻擊間隔（毫秒）、two 雙手（不能拿盾）、ranged 遠程（吃敏捷、耗彈藥）、double 雙擊率
+// add：揮舞加值（秒），攻擊間隔＝基礎 1 秒＋add − 綠水／勇水各 0.3…（player.js calcStats；2026-10-18 改版，原本是 spd 毫秒×倍率）
 const WEAPON_TYPES = {
-    fist:    { name: '空手',   spd: 1000 },
-    dagger:  { name: '匕首',   spd: 700 },
-    sword:   { name: '單手劍', spd: 900 },
-    twohand: { name: '雙手劍', spd: 1150, two: true },
-    axe:     { name: '斧',     spd: 1000 },
-    spear:   { name: '矛',     spd: 1050, two: true },
-    blunt:   { name: '鈍器',   spd: 950 },
-    bow:     { name: '弓',     spd: 950,  two: true, ranged: true, ammo: 'arrow' },
-    gun:     { name: '槍',     spd: 1100, two: true, ranged: true, ammo: 'bullet' },
-    staff:   { name: '魔杖',   spd: 1000 },
-    claw:    { name: '鋼爪',   spd: 750,  two: true },
-    dual:    { name: '雙刀',   spd: 800,  two: true, double: 0.25 },
-    scythe:  { name: '鐮刀',   spd: 1050, two: true },
+    fist:    { name: '空手',   add: 0.5 },
+    dagger:  { name: '匕首',   add: 0.2 },
+    sword:   { name: '單手劍', add: 0.4 },
+    twohand: { name: '雙手劍', add: 0.65, two: true },
+    axe:     { name: '斧',     add: 0.5 },
+    spear:   { name: '矛',     add: 0.55, two: true },
+    blunt:   { name: '鈍器',   add: 0.45 },
+    bow:     { name: '弓',     add: 0.45, two: true, ranged: true, ammo: 'arrow' },
+    gun:     { name: '槍',     add: 0.6,  two: true, ranged: true, ammo: 'bullet' },
+    staff:   { name: '魔杖',   add: 0.5 },
+    claw:    { name: '鋼爪',   add: 0.25, two: true },
+    dual:    { name: '雙刀',   add: 0.3,  two: true, double: 0.25 },
+    scythe:  { name: '鐮刀',   add: 0.55, two: true },
 };
+function weaponBaseMs(type) { return Math.round((1 + WEAPON_TYPES[type].add) * 1000); }   // 不喝水時的攻擊間隔（說明、圖鑑用）
 
 const SLOTS = {
     weapon: '武器', shield: '盾牌', helm: '頭盔', armor: '盔甲', tshirt: '內衣', cloak: '斗篷',
@@ -27,7 +29,7 @@ const SLOT_KEYS = Object.keys(SLOTS);
 const BUFF_DEFS = {
     haste:  { name: '加速', fx: { haste: true } },
     brave:  { name: '勇敢', fx: { brave: true } },
-    wisdom: { name: '慎重', fx: { sp: 2, mpRegen: 2 } },
+    wisdom: { name: '慎重', fx: { sp: 2, mpRegen: 2, wise: true } },   // wise：施法間隔 −0.3 秒（法師、魔鬥士、天使的「勇水」）
     blue:   { name: '藍水', fx: { mpRegen: 4 } },
 };
 

@@ -89,6 +89,7 @@ function affixFx(inst) {
 
 function affixText(a) {
     const d = AFFIXES[a.k];
+    if (a.k === 'spdMul') return `攻擊間隔 −${(a.v * SPD_PCT_TO_MS / 1000).toFixed(2)} 秒`;   // 2026-10-18 攻速改成加減秒數（player.js）
     return `${d.name} +${d.pct ? Math.round(a.v * 100) + '%' : a.v}`;
 }
 

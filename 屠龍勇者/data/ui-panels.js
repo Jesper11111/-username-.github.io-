@@ -316,7 +316,7 @@ function charDetailDialog() {
     const rows = [
         ['傷害加成', '+' + st.dmgBonus], ['命中', st.hit], ['SP', st.sp], ['防禦', defenseOf(st)], ['MR', st.mr],
         ['爆擊', Math.round(st.crit * 100) + '%'], ['閃避', Math.round(st.dodge * 100) + '%'], ['減傷', st.reduce], ['吸血', Math.round(st.lifesteal * 100) + '%'],
-        ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['回血／5秒', st.hpRegen], ['回魔／5秒', st.mpRegen],
+        ['攻擊間隔', (st.atkMs / 1000).toFixed(2) + ' 秒'], ['施法間隔', (st.castMs / 1000).toFixed(2) + ' 秒'], ['回血／5秒', st.hpRegen], ['回魔／5秒', st.mpRegen],
         ['負重', `${Math.floor(invWeight())} / ${st.weightMax}`], ['經驗', `${fmt(player.exp)} / ${fmt(expToNext(player.lv))}`],
     ];
     openDialog('📊 詳細屬性', `<div class="kv-grid">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}</div>`, [{ text: '關閉', cls: 'secondary' }]);
@@ -446,7 +446,7 @@ function itemDescHtml(inst) {
     L.push(`<small class="muted">${kind}</small>`);
     if (d.cat === 'weapon') {
         L.push(`傷害：小型 1～${d.dmg[0]}　大型 1～${d.dmg[1]}${ench ? `（強化 ${ench > 0 ? '+' : ''}${ench}）` : ''}`);
-        L.push(`攻擊間隔：${(WEAPON_TYPES[d.type].spd / 1000).toFixed(2)} 秒`);
+        L.push(`攻擊間隔：${(weaponBaseMs(d.type) / 1000).toFixed(2)} 秒（不喝水；綠水、勇水各快 0.3 秒）`);
         if (d.hit) L.push(`命中 +${d.hit}`);
         if (d.sp) L.push(`SP +${d.sp}`);
         if (d.crit) L.push(`爆擊 +${Math.round(d.crit * 100)}%`);

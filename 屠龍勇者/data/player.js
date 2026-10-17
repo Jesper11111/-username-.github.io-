@@ -241,7 +241,10 @@ function defaultSkillSlots(p = player, skip = {}) {
 
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
-    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'weight', ...STAT_KEYS];
+    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight', ...STAT_KEYS];
+// 攻速規則（毫秒）：見 calcStats 的 atkMs／castMs
+const ATK_BASE_MS = 1000, ATK_MIN_MS = 400, POTION_SPD_MS = 300, SPD_EXTRA_MAX_MS = 300, SPD_PCT_TO_MS = 700;
+const CAST_BASE_MS = 1200, CAST_MIN_MS = 600;
 
 function addFx(acc, fx) {
     if (!fx) return;
@@ -283,10 +286,12 @@ function calcStats() {
     const sp = Math.floor(p.lv / c.spDiv) + Math.max(0, s.int - 11) + (fx.sp || 0);
     const statHit = ranged ? Math.floor((s.dex - 8) / 2) : Math.floor((s.str - 8) / 3) + Math.floor((s.dex - 8) / 4);
     const statDmg = ranged ? Math.max(0, Math.floor((s.dex - 10) / 2)) : Math.max(0, Math.floor((s.str - 10) / 2));
-    let spdMul = 1;
-    if (fx.haste) spdMul *= 0.75;
-    if (fx.brave) spdMul *= 0.75;
-    if (fx.spdMul) spdMul *= Math.max(0.3, 1 - fx.spdMul);
+    // 攻擊間隔（2026-10-18 改成加減秒數，使用者定的規則）：基礎 1 秒＋武器揮舞加值 − 綠水 0.3 − 勇水 0.3 − 其他加速（最多 0.3），最快 0.4 秒
+    // 其他加速：技能／詞綴／共鳴的 spdMul（攻速比例）每 1% 換成 7ms（15%→0.105 秒）
+    const extraMs = Math.min(SPD_EXTRA_MAX_MS, Math.round((fx.spdMul || 0) * SPD_PCT_TO_MS));
+    const atkMs = Math.max(ATK_MIN_MS, ATK_BASE_MS + wt.add * 1000 - (fx.haste ? POTION_SPD_MS : 0) - (fx.brave ? POTION_SPD_MS : 0) - extraMs);
+    // 施法間隔（攻擊魔法用，不看武器）：1.2 秒 − 綠水 0.3 − 慎重藥水 0.3（法師、魔鬥士、天使），最快 0.6 秒
+    const castMs = Math.max(CAST_MIN_MS, CAST_BASE_MS - (fx.haste ? POTION_SPD_MS : 0) - (fx.wise ? POTION_SPD_MS : 0));
 
     return {
         ...s, sp, maxHp, maxMp, ranged, weapon: w, weaponType: wt, weaponEnch,
@@ -305,8 +310,8 @@ function calcStats() {
         mpRegen: 1 + Math.floor(p.lv / 12) + Math.max(0, Math.floor((s.wis - 10) * c.mpRegenK)) + (fx.mpRegen || 0),
         // 負重（2026-10-16 改版）：底值 1200＋（力量＋體質）×80＋等級×20＋裝備（腰帶 weight）；原本 (力量＋體質)×100，1～50 級不會成長
         weightMax: 1200 + (s.str + s.con) * 80 + p.lv * 20 + (fx.weight || 0),
-        atkMs: Math.round(wt.spd * spdMul),
-        haste: !!fx.haste, brave: !!fx.brave,
+        atkMs, castMs,
+        haste: !!fx.haste, brave: !!fx.brave, wise: !!fx.wise,
     };
 }
 

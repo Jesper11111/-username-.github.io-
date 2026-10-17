@@ -120,7 +120,7 @@ function codexDetailHtml(id) {
     const d = ITEMS[id], g = codexGradeOf(id), own = codexOwned(id), L = [];
     if (d.cat === 'weapon') {
         L.push(['傷害', `小型 1～${d.dmg[0]}／大型 1～${d.dmg[1]}`]);
-        L.push(['攻擊間隔', `${(WEAPON_TYPES[d.type].spd / 1000).toFixed(2)} 秒`]);
+        L.push(['攻擊間隔', `${(weaponBaseMs(d.type) / 1000).toFixed(2)} 秒（不喝水）`]);
         if (d.hit) L.push(['命中', '+' + d.hit]);
         if (d.crit) L.push(['爆擊', `+${Math.round(d.crit * 100)}%`]);
         if (WEAPON_TYPES[d.type].double) L.push(['雙擊率', WEAPON_TYPES[d.type].double * 100 + '%']);
