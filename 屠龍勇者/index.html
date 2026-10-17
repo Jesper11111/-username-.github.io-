@@ -182,8 +182,9 @@
         position: relative; flex: none; width: 100%; height: 100%; overflow: hidden; background: #100c0a;
         border-style: solid; border-color: transparent; border-width: 0;
         /* frame-notop.jpg＝frame.jpg 去掉上方拱門（原圖 y 715 以上，2026-10-15 使用者要求滿版）；頂端 25px 還有拱門殘邊，slice 跳過 */
-        border-image-source: url(images/frame-notop.jpg?v=1);
-        border-image-slice: 25 102 655 104 fill;
+        /* frame-nopillar.png（2026-10-19，第 54 節）：frame-notop 縮 75%、左右骷髏頭頂的符文石柱改透明（底部淡入），地圖延伸到左右邊；slice 跟著 ×0.75 */
+        border-image-source: url(images/frame-nopillar.png?v=1);
+        border-image-slice: 19 77 491 78 fill;
         border-image-width: 0 calc(var(--s) * 102px) calc(var(--s) * 655px) calc(var(--s) * 104px);
         border-image-repeat: stretch round;
     }
@@ -199,7 +200,7 @@
     .npc-say { font-style: italic; color: #e9d9b4; border-left: 3px solid #8a6a3a; }
     .hud-stats .hud-lv-gap { width: calc(var(--s) * 120px); padding: 0; background: none; }
     #panel {
-        position: absolute; top: calc(var(--s) * 20px); left: calc(var(--s) * 112px); right: calc(var(--s) * 110px);
+        position: absolute; top: calc(var(--s) * 20px); left: 0; right: 0;   /* 左右石柱拿掉，滿版（第 54 節） */
         bottom: calc(var(--s) * 626px); overflow-y: auto; padding: 4px 6px 10px;
     }
     /* 狩獵畫面：地圖填滿整個 #panel（操作按鈕浮在地圖上，2026-10-15） */
@@ -227,12 +228,13 @@
         background: radial-gradient(ellipse, #1a0e08f0 55%, #1a0e0800 100%); border-radius: 50%;
         text-shadow: 0 0 3px #000, 0 0 6px #d8a84a88;
     }
+    /* 左右抽屜按鈕：石柱拿掉後改成地圖左右邊中間的小半圓鈕（不擋地圖點擊，第 54 節） */
     .pillar {
-        position: absolute; top: 0; bottom: calc(var(--s) * 655px); width: calc(var(--s) * 104px);
-        background: transparent; border: 0; border-radius: 0; padding: 0; z-index: 4;
+        position: absolute; top: calc((100% - var(--s) * 655px) / 2 - 28px); height: 56px; width: 26px;
+        background: #0c0806b3; border: 1px solid #7a5530; padding: 0; z-index: 4;
     }
-    .pillar.left { left: 0; }
-    .pillar.right { right: 0; width: calc(var(--s) * 102px); }
+    .pillar.left { left: 0; border-left: 0; border-radius: 0 28px 28px 0; }
+    .pillar.right { right: 0; border-right: 0; border-radius: 28px 0 0 28px; }
     .pillar::after {
         content: '❯'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         color: #ff8a5a; font-size: 20px; text-shadow: 0 0 6px #ff3a1a, 0 0 14px #ff3a1a; animation: rune-pulse 2.2s ease-in-out infinite;
@@ -863,44 +865,44 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261019a"></script>
-<script src="data/classes.js?v=20261019a"></script>
-<script src="data/skills.js?v=20261019a"></script>
-<script src="data/items.js?v=20261019a"></script>
-<script src="data/spellbook.js?v=20261019a"></script>
-<script src="data/monsters.js?v=20261019a"></script>
-<script src="data/zones.js?v=20261019a"></script>
-<script src="data/quests.js?v=20261019a"></script>
-<script src="data/resonance.js?v=20261019a"></script>
-<script src="data/player.js?v=20261019a"></script>
-<script src="data/enchant.js?v=20261019a"></script>
-<script src="data/affix.js?v=20261019a"></script>
-<script src="data/craft.js?v=20261019a"></script>
-<script src="data/maps.js?v=20261019a"></script>
-<script src="data/combat.js?v=20261019a"></script>
-<script src="data/town.js?v=20261019a"></script>
-<script src="data/save.js?v=20261019a"></script>
-<script src="data/cloud.js?v=20261019a"></script>
-<script src="data/offline.js?v=20261019a"></script>
-<script src="data/ui.js?v=20261019a"></script>
-<script src="data/sfx.js?v=20261019a"></script>
-<script src="data/bgm.js?v=20261019a"></script>
-<script src="data/ui-create.js?v=20261019a"></script>
-<script src="data/ui-panels.js?v=20261019a"></script>
-<script src="data/codex.js?v=20261019a"></script>
-<script src="data/raid.js?v=20261019a"></script>
-<script src="data/clan.js?v=20261019a"></script>
-<script src="data/chat.js?v=20261019a"></script>
-<script src="data/rank.js?v=20261019a"></script>
-<script src="data/wb.js?v=20261019a"></script>
-<script src="data/market.js?v=20261019a"></script>
-<script src="data/vault.js?v=20261019a"></script>
-<script src="data/presence.js?v=20261019a"></script>
-<script src="data/ui-frame.js?v=20261019a"></script>
-<script src="data/icons.js?v=20261019a"></script>
-<script src="data/hotbar.js?v=20261019a"></script>
-<script src="data/ui-scene.js?v=20261019a"></script>
-<script src="data/pwa.js?v=20261019a"></script>
-<script src="data/main.js?v=20261019a"></script>
+<script src="data/config.js?v=20261019b"></script>
+<script src="data/classes.js?v=20261019b"></script>
+<script src="data/skills.js?v=20261019b"></script>
+<script src="data/items.js?v=20261019b"></script>
+<script src="data/spellbook.js?v=20261019b"></script>
+<script src="data/monsters.js?v=20261019b"></script>
+<script src="data/zones.js?v=20261019b"></script>
+<script src="data/quests.js?v=20261019b"></script>
+<script src="data/resonance.js?v=20261019b"></script>
+<script src="data/player.js?v=20261019b"></script>
+<script src="data/enchant.js?v=20261019b"></script>
+<script src="data/affix.js?v=20261019b"></script>
+<script src="data/craft.js?v=20261019b"></script>
+<script src="data/maps.js?v=20261019b"></script>
+<script src="data/combat.js?v=20261019b"></script>
+<script src="data/town.js?v=20261019b"></script>
+<script src="data/save.js?v=20261019b"></script>
+<script src="data/cloud.js?v=20261019b"></script>
+<script src="data/offline.js?v=20261019b"></script>
+<script src="data/ui.js?v=20261019b"></script>
+<script src="data/sfx.js?v=20261019b"></script>
+<script src="data/bgm.js?v=20261019b"></script>
+<script src="data/ui-create.js?v=20261019b"></script>
+<script src="data/ui-panels.js?v=20261019b"></script>
+<script src="data/codex.js?v=20261019b"></script>
+<script src="data/raid.js?v=20261019b"></script>
+<script src="data/clan.js?v=20261019b"></script>
+<script src="data/chat.js?v=20261019b"></script>
+<script src="data/rank.js?v=20261019b"></script>
+<script src="data/wb.js?v=20261019b"></script>
+<script src="data/market.js?v=20261019b"></script>
+<script src="data/vault.js?v=20261019b"></script>
+<script src="data/presence.js?v=20261019b"></script>
+<script src="data/ui-frame.js?v=20261019b"></script>
+<script src="data/icons.js?v=20261019b"></script>
+<script src="data/hotbar.js?v=20261019b"></script>
+<script src="data/ui-scene.js?v=20261019b"></script>
+<script src="data/pwa.js?v=20261019b"></script>
+<script src="data/main.js?v=20261019b"></script>
 </body>
 </html>

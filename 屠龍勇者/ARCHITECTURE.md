@@ -50,7 +50,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-notop.jpg`（去掉拱門，原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019b`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1638,3 +1638,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 掛機尋怪只找這個地圖裡的怪；`huntPath`：掛機自動走的路線（尋怪、走到目標旁）走到要出地圖的那一格前就停。
   - 手動走路、點地面、點小地圖、圍上來的怪走到角色旁邊都不受限，玩家自己走過交界照舊換地圖（第 47 節）。瞬間移動卷軸本來就只傳到同一區（第 51 節）。
 - 驗證：角色放在礦坑上層與海灘交界（44,89）掛機 3 分鐘：擊倒 26 隻、地圖一直是 gludio1、沒有怪生在區域外；之後手動走到海灘會換成低語海岸；Console 無錯誤。
+
+## 54. 手機外框拿掉左右石柱（2026-10-19，版本 `20261019b`；`images/frame-nopillar.png`、`index.html` 的 `#frame`／`#panel`／`.pillar`）
+
+- 使用者要求「遊戲畫面左右骷髏頭頂石柱移除」（手機直式外框；PC 橫式外框 `frame-pc-notop` 沒動）。
+- `frame-nopillar.png`（1006×964，約 940KB）：`frame-notop.jpg` 縮成 75%，原圖座標左邊 x < 104、右邊 x ≥ 1240 在 y < 668 的部分改透明，y 600～668 用 smoothstep 淡入（石柱底部接骷髏翅膀的地方不會切一條硬邊）。
+  一次性用 PowerShell＋C# 產生（沒有留腳本）；`border-image-slice` 跟著 ×0.75 改成 `19 77 491 78 fill`，`border-image-width` 不變（仍用原圖座標 × `--s`）。
+- `#panel` 左右改成 0：地圖（和其他分頁）延伸到畫面左右邊。
+- 左右抽屜按鈕 `.pillar` 以前是蓋在整根石柱上的透明按鈕，改成地圖左右邊中間 26×56 的半圓小鈕（半透明深底＋金邊，箭頭照舊），不會擋到地圖邊緣的點擊。
+- 驗證：手機（375 寬）截圖：狩獵畫面地圖滿版、骷髏與法球完整；點左邊小鈕打開抽屜、開人物狀態版面正常；Console 無錯誤。
