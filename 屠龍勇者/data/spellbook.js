@@ -7,21 +7,25 @@ const BOOK_PREFIX = { elf: '精靈水晶', darkelf: '黑暗精靈水晶' };
 function skillBookName(s) { return s.kind === 'magic' ? `${MAGIC_TIER_NAMES[s.tier]}級魔法書（${s.name}）` : `${BOOK_PREFIX[s.cls] || '技能書'}（${s.name}）`; }
 function bookIdOf(skillId) { return 'book_' + skillId; }
 
-// 商店販售：魔法 1～6 級（村莊等級 1：1～2 級、2：3～4 級、3：5～6 級）；職業技能 Lv.55 以下（≤15 村 1、≤35 村 2、≤55 村 3）
-// 魔法 7～10 級、職業技能 Lv.56 以上只有掉落
-const MAGIC_BOOK_PRICE = [0, 100, 300, 900, 2000, 4000, 8000];
+// 商店販售（2026-10-18 使用者改）：魔法只賣 1～3 級（村莊等級 1：1～2 級、2：3 級）；職業技能每個職業只賣第 1 本（學習等級最低的那本）
+// 其他（魔法 4～10 級、職業技能第 2 本以後）只有怪物掉落
+const MAGIC_BOOK_PRICE = [0, 100, 300, 900];
+const MAGIC_SHOP_MAX_TIER = 3;
 for (const s of MAGIC) {
-    const shop = s.tier <= 6;
+    const shop = s.tier <= MAGIC_SHOP_MAX_TIER;
     ITEMS[bookIdOf(s.id)] = { name: skillBookName(s), cat: 'book', skill: s.id, wt: 1,
         ...(shop ? { price: MAGIC_BOOK_PRICE[s.tier], tier: Math.ceil(s.tier / 2) } : { sell: s.tier * 3000 }),
         desc: `學習${MAGIC_TIER_NAMES[s.tier]}級魔法「${s.name}」` };
 }
-for (const cls in SKILLS) for (const s of SKILLS[cls]) {
-    if (s.lv <= 1) continue;   // Lv.1 的創角就會
-    const shop = s.lv <= 55;
-    ITEMS[bookIdOf(s.id)] = { name: skillBookName(s), cat: 'book', skill: s.id, wt: 1, classes: [cls],
-        ...(shop ? { price: s.lv * s.lv * 4 + 200, tier: s.lv <= 15 ? 1 : s.lv <= 35 ? 2 : 3 } : { sell: s.lv * 400 }),
-        desc: `${CLASSES[cls].name}專屬技能「${s.name}」` };
+for (const cls in SKILLS) {
+    const books = SKILLS[cls].filter(s => s.lv > 1);   // Lv.1 的創角就會，沒有書
+    const first = books.reduce((a, s) => (!a || s.lv < a.lv ? s : a), null);
+    for (const s of books) {
+        const shop = s === first;
+        ITEMS[bookIdOf(s.id)] = { name: skillBookName(s), cat: 'book', skill: s.id, wt: 1, classes: [cls],
+            ...(shop ? { price: s.lv * s.lv * 4 + 200, tier: s.lv <= 15 ? 1 : s.lv <= 35 ? 2 : 3 } : { sell: s.lv * 400 }),
+            desc: `${CLASSES[cls].name}專屬技能「${s.name}」` };
+    }
 }
 // 書最低可以學的角色等級（任何職業；掉落挑書用）
 function bookMinLv(d) {
