@@ -356,6 +356,22 @@ function bigRegionAt(rs, x, y) {
     return rs.find(q => q.rect && x >= q.rect[0] && y >= q.rect[1] && x <= q.rect[2] && y <= q.rect[3])
         || rs.reduce((a, b) => (Math.hypot(b.x - x, b.y - y) < Math.hypot(a.x - x, a.y - y) ? b : a));
 }
+// 大地圖掛機只在目前這個地圖的區域內（2026-10-18，第 53 節，使用者選「限制在原地圖」）：怪只生在、只遊走在這一區，角色追怪就不會跨到別的地圖
+// 每格屬於哪個地圖存在 bg._zoneOf（只算一次）；不是大地圖一律 true
+function inHuntZone(x, y) {
+    const bg = scene.bg;
+    if (!bg || !bg.big || !bg.regions || player.loc.type !== 'zone') return true;
+    if (!bg._zoneOf) {
+        bg._zoneOf = [];
+        for (let yy = 0; yy < scene.mh; yy++) { bg._zoneOf.push([]); for (let xx = 0; xx < scene.mw; xx++) bg._zoneOf[yy].push(bigRegionAt(bg.regions, xx, yy).zone); }
+    }
+    return !!bg._zoneOf[y] && bg._zoneOf[y][x] === player.loc.id;
+}
+// 掛機自動走的路線：走到要出這個地圖的那一格前就停（手動走路、點小地圖不受限）
+function huntPath(path) {
+    const i = path.findIndex(([x, y]) => !inHuntZone(x, y));
+    return i < 0 ? path : path.slice(0, i);
+}
 // 路引（2026-10-18，第 50 節）：自動找出兩個不同地圖相接的可走格子，每一段交界在兩邊各放一個箭頭，指向另一個地圖
 // 回傳 [{ x, y, ang（弧度，箭頭方向）, from, to（zone id） }]
 function bigMapGates(grid, rs, mw, mh) {
@@ -487,7 +503,7 @@ function spawnMapMon(near) {
         const r = near ? rand(2, 4) : rand(3, 9);
         const x = scene.pl.x + rand(-r, r), y = scene.pl.y + rand(-r, r);
         // 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
-        if (freeTile(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2 && findPath(scene.pl.x, scene.pl.y, x, y, true).length) {
+        if (freeTile(x, y) && inHuntZone(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2 && findPath(scene.pl.x, scene.pl.y, x, y, true).length) {
             const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, mid: look.mid, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
             scene.mons.push(m);
             return m;
@@ -575,7 +591,7 @@ function sceneUpdate(dt) {
         if (m.cd <= 0) {
             m.cd = rand(...MON_WANDER_MS);
             const [dx, dy] = [[1, 0], [-1, 0], [0, 1], [0, -1]][rand(0, 3)];
-            if (freeTile(m.x + dx, m.y + dy)) { m.x += dx; m.y += dy; }
+            if (freeTile(m.x + dx, m.y + dy) && inHuntZone(m.x + dx, m.y + dy)) { m.x += dx; m.y += dy; }
         }
     }
     scene.mons = scene.mons.filter(m => !(m.dead && m.dying <= 0));
@@ -606,11 +622,11 @@ function sceneUpdate(dt) {
             // 走到攻擊距離就停：遠程武器 4 格內且看得到，近戰走到旁邊；一次只走一格，每格重新判斷（怪也會移動）
             const e = scene.engaged, r = sceneReach(e);
             if (weaponIsRanged() ? r.ranged : r.melee) pl.dir = Math.abs(e.x - pl.x) >= Math.abs(e.y - pl.y) ? (e.x > pl.x ? 'right' : 'left') : (e.y > pl.y ? 'down' : 'up');
-            else if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = findPath(pl.x, pl.y, e.x, e.y, true).slice(0, 1);
+            else if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = huntPath(findPath(pl.x, pl.y, e.x, e.y, true).slice(0, 1));
         } else if (inZone && player.hunting && !walkHome) {
             let best = null, bd = 1e9;
-            for (const m of scene.mons) { if (m.dead) continue; const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y); if (d < bd) { bd = d; best = m; } }
-            if (best && bd > 1) pl.path = findPath(pl.x, pl.y, best.x, best.y, true).slice(0, 6);
+            for (const m of scene.mons) { if (m.dead || !inHuntZone(m.x, m.y)) continue; const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y); if (d < bd) { bd = d; best = m; } }   // 大地圖只找這個地圖的怪
+            if (best && bd > 1) pl.path = huntPath(findPath(pl.x, pl.y, best.x, best.y, true).slice(0, 6));
         } else if (inZone) {
             // 野外停止掛機：原地附近隨機走動；村莊裡站著不動
             pl.idleCd -= dt;
