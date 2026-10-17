@@ -15,7 +15,7 @@ const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡共用）
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵共用）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
@@ -73,21 +73,21 @@ const ZONES = [
         desc: '魔法師們的高塔，被惡魔佔據。',
     },
     {
-        id: 'dragonValley', name: '焦骨峽谷', icon: '🐉', type: 'field', tint: 'rgba(150,60,20,0.22)', lv: [36, 48], town: 'giran', fee: 600,
+        id: 'dragonValley', name: '焦骨峽谷', icon: '🐉', type: 'field', bg: 'wild', tint: 'rgba(150,60,20,0.22)', lv: [36, 48], town: 'giran', fee: 600,
         mons: ['dvLizard', 'cerberus', 'wyvernling', 'boneDragonKnight'], rare: { id: 'wyvern', p: 0.007 },
         drops: [{ id: 'knightHelm', p: 0.0006 }, { id: 'plateMail', p: 0.001 }, { id: 'warHammer', p: 0.002 }, { id: 'magicHelm', p: 0.0006 },
             { id: 'protectRing', p: 0.001 }, { id: 'strAmulet', p: 0.0004 }, { id: 'boneScythe', p: 0.001 }],
         desc: '飛龍盤旋的焦土山谷，龍騎士的遺骸仍在守望。',
     },
     {
-        id: 'pyramid', name: '黃沙王陵', icon: '🔺', type: 'dungeon', scene: 'pyramid', lv: [44, 56], town: 'giran', fee: 700,
+        id: 'pyramid', name: '黃沙王陵', icon: '🔺', type: 'dungeon', scene: 'pyramid', bg: 'wild', lv: [44, 56], town: 'giran', fee: 700,
         mons: ['mummy', 'sandScorpion', 'sphinx', 'anubis'], rare: { id: 'osiris', p: 0.008 },
         drops: [{ id: 'trident', p: 0.002 }, { id: 'darkClaw', p: 0.0008 }, { id: 'darkDual', p: 0.0008 }, { id: 'elvenBow', p: 0.0008 },
             { id: 'protectCloak', p: 0.001 }, { id: 'conRing', p: 0.0005 }, { id: 'titanBelt', p: 0.0005 }, { id: 'hasteBoots', p: 0.0005 }],
         desc: '沙漠中的古代陵墓，冥王歐西里斯沉睡於此。',
     },
     {
-        id: 'orenSnow', name: '永凍荒原', icon: '❄️', type: 'field', tint: 'rgba(225,238,255,0.38)', lv: [46, 58], town: 'aden', fee: 900,
+        id: 'orenSnow', name: '永凍荒原', icon: '❄️', type: 'field', bg: 'wild', tint: 'rgba(225,238,255,0.38)', lv: [46, 58], town: 'aden', fee: 900,
         mons: ['snowWolf', 'yeti', 'iceGolem', 'frostWitch'], rare: { id: 'iceGiantKing', p: 0.007 },
         drops: [{ id: 'mrCloak', p: 0.001 }, { id: 'mrAmulet', p: 0.0008 }, { id: 'conRing', p: 0.0005 }, { id: 'intRing', p: 0.0005 },
             { id: 'knightShield', p: 0.0006 }, { id: 'boneScythe', p: 0.002 }],

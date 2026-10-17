@@ -81,7 +81,7 @@ public static class Occ {
 }
 '@
 $j = Get-Content (Join-Path $dir 'walk.json') -Raw | ConvertFrom-Json
-$tw = 100; $th = 88
+$img0 = [System.Drawing.Bitmap]::FromFile((Join-Path $root 'images\maps\wild.jpg')); $tw = $img0.Width / 32; $th = $img0.Height / 32; $img0.Dispose()
 $blocked = New-Object 'bool[]' ($tw * $th); for ($i = 0; $i -lt $blocked.Length; $i++) { $blocked[$i] = $true }
 foreach ($r in $j.walk) { for ($y = $r[1]; $y -le $r[3]; $y++) { for ($x = $r[0]; $x -le $r[2]; $x++) { $blocked[$y * $tw + $x] = $false } } }
 foreach ($r in $j.block) { for ($y = $r[1]; $y -le $r[3]; $y++) { for ($x = $r[0]; $x -le $r[2]; $x++) { $blocked[$y * $tw + $x] = $true } } }

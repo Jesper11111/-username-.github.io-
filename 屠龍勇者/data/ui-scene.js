@@ -82,20 +82,24 @@ const SCENE_BGS = {
             { role: '鍛造', x: 56, y: 15, painted: true, h: 4.2 },   // 右下打鐵匠
         ],
     },
-    // 大地圖（2026-10-18 第 1 期，ARCHITECTURE.md 第 45 節）：使用者用 AI 生成的 5 張場景＋森林填充，tools/bigmap/build-map.ps1 拼成 3200×2816＝100×88 格（1 格 32px，原圖 1:1）
+    // 大地圖（2026-10-18 第 1 期，ARCHITECTURE.md 第 45、47、48 節）：使用者用 AI 生成的場景＋森林／雪地／沙漠填充，tools/bigmap/build-map.ps1 拼成 4512×2816＝141×88 格（1 格 32px，原圖 1:1）
     // 走得到的範圍照 tools/bigmap/walk.json；big：鏡頭跟著角色捲動、離角色太遠的怪收掉、有小地圖；
     // regions：區域中心格、對應的地圖 zone、從村莊傳送過來的出生格 start；角色離哪個中心最近就算在哪一區
     // 2026-10-18 使用者改成「5 個真的地圖合併」：海灘＝低語海岸、草原與古泉＝迷霧古林、廢村＝沉船海灣、沼澤＝紫霧遺跡；
     // 走進別區就自動換成那個地圖（怪物、等級、掉落跟著換，sceneEnterZone），這幾個地圖共用同一個畫面（sceneKey 'zone:wild'）
     wild: {
-        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', occ: 'images/maps/wild-occ.png', w: 100, h: 88, start: [63, 78], big: true,
+        src: 'images/maps/wild.jpg?v=2', mini: 'images/maps/wild-mini.jpg?v=2', occ: 'images/maps/wild-occ.png', w: 141,   // ?v=：圖改過就加 1（SW 會先給快取的舊圖）
+        h: 88, start: [63, 78], big: true,
         // rect：這一區的範圍（格子 [x0,y0,x1,y1]，依序第一個符合的；沒有符合的才用最近的中心）
         regions: [
             { zone: 'forgottenIsle', x: 22, y: 12, start: [20, 14], rect: [0, 0, 49, 21] },
-            { zone: 'elvenForest', x: 70, y: 15, rect: [50, 0, 99, 21] },   // 古泉：迷霧古林的另一區（傳送出生在草原）
-            { zone: 'pirateIsle', x: 44, y: 34, start: [40, 34], rect: [0, 22, 99, 42] },
-            { zone: 'elvenForest', x: 46, y: 54, start: [46, 52], rect: [0, 43, 99, 64] },
-            { zone: 'island', x: 63, y: 79, start: [63, 78], rect: [0, 65, 99, 87] },
+            { zone: 'elvenForest', x: 70, y: 15, rect: [50, 0, 81, 21] },   // 古泉：迷霧古林的另一區（傳送出生在草原）
+            { zone: 'orenSnow', x: 105, y: 15, start: [92, 14], rect: [82, 0, 140, 32] },        // 2026-10-18 往東擴大：古泉東邊的雪原
+            { zone: 'pirateIsle', x: 44, y: 34, start: [40, 34], rect: [0, 22, 69, 42] },
+            { zone: 'dragonValley', x: 94, y: 50, start: [80, 52], rect: [70, 33, 140, 63] },   // 骨骸綠洲＋東邊沙丘
+            { zone: 'elvenForest', x: 46, y: 54, start: [46, 52], rect: [0, 43, 69, 64] },
+            { zone: 'pyramid', x: 116, y: 76, start: [97, 84], rect: [91, 63, 140, 87] },       // 金字塔（地監黃沙王陵的外圍）
+            { zone: 'island', x: 63, y: 79, start: [63, 78], rect: [0, 65, 90, 87] },
         ],
         walk: [
             [4, 5, 8, 8], [7, 8, 12, 11], [10, 10, 18, 13], [15, 12, 22, 16], [18, 15, 26, 19], [22, 18, 30, 21], [26, 20, 33, 24],
@@ -108,6 +112,9 @@ const SCENE_BGS = {
             [48, 63, 56, 70], [44, 64, 49, 68],
             [48, 69, 63, 71], [48, 71, 52, 87], [53, 76, 61, 81], [60, 69, 67, 74], [61, 74, 67, 76], [59, 76, 68, 80],
             [60, 80, 72, 83], [62, 83, 79, 87], [71, 85, 84, 87], [63, 66, 85, 68], [62, 67, 67, 70],
+            [85, 5, 97, 21], [97, 2, 140, 32], [78, 15, 86, 19],                                  // 雪原、古泉往雪原
+            [100, 33, 140, 64], [74, 44, 114, 62], [66, 56, 76, 58],                              // 沙丘、骨骸綠洲、草原往綠洲
+            [92, 63, 140, 68], [92, 68, 102, 87], [100, 80, 140, 87], [130, 66, 140, 82],         // 金字塔四周
         ],
         block: [
             [16, 8, 24, 9], [23, 10, 31, 12], [25, 13, 27, 15], [36, 16, 37, 18],
@@ -115,6 +122,7 @@ const SCENE_BGS = {
             [45, 23, 61, 32], [42, 27, 44, 29], [56, 34, 58, 36],
             [56, 52, 68, 54], [55, 54, 56, 54], [49, 57, 51, 58], [47, 58, 49, 59], [45, 59, 48, 61], [44, 61, 46, 63],
             [55, 75, 58, 77], [61, 78, 63, 80],
+            [87, 50, 100, 56], [103, 68, 130, 81],   // 綠洲水池與樹根、金字塔建築群
         ],
     },
 };
@@ -267,6 +275,7 @@ function sceneKey() {
 function themeFor() {
     if (player.loc.type === 'town') return { ...SCENE_THEMES.town, bg: TOWN_BG[player.loc.id] || 'village' };
     const z = currentZone();
+    if (z.bg && SCENE_BGS[z.bg] && SCENE_BGS[z.bg].big) return { ...SCENE_THEMES.field, bg: z.bg };   // 大地圖（含地監黃沙王陵的外圍）
     if (z.type === 'dragon') return SCENE_THEMES.dragon;
     if (z.type === 'tower') return SCENE_THEMES.tower;
     if (z.type === 'field') return z.bg ? { ...SCENE_THEMES.field, bg: z.bg } : SCENE_THEMES.field;   // z.bg：這張野外用自己的背景圖（大地圖）

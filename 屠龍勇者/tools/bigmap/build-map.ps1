@@ -1,6 +1,7 @@
 # Build the big field map (ARCHITECTURE.md section 45).
-# Sources in this folder (2000x989 each, user-generated): swamp / pond / village / meadow / beach = regions, forest + pond = forest filler.
-# Output: images/maps/wild.jpg (3200x2816 = 100x88 tiles of 32px), images/maps/wild-mini.jpg (minimap), tools/bigmap/auto-mask.txt
+# Sources in this folder (2000x989 each, user-generated): swamp / pond-snow / village / meadow / beach / oasis / pyramid = regions,
+#   forest + pond = forest filler, pond-snow right half = snow filler, oasis / pyramid edges = desert filler.
+# Output: images/maps/wild.jpg (4512x2816 = 141x88 tiles of 32px; east part added 2026-10-18: snow, oasis, pyramid), images/maps/wild-mini.jpg (minimap), tools/bigmap/auto-mask.txt
 #         (per-tile guess: '.' walkable, '#' blocked; Claude then hand-edits it into data/bigmap.js) and tools/bigmap/mask-check.jpg.
 # Run from the game folder: powershell -ExecutionPolicy Bypass -File tools\bigmap\build-map.ps1
 $ErrorActionPreference = 'Stop'
@@ -66,27 +67,44 @@ public static class BigMap {
   }
 }
 '@
-$W = 3200; $H = 2816; $RW = 1600; $RH = 791; $F = 112
+$W = 4512; $H = 2816; $RW = 1600; $RH = 791; $F = 112
 $out = New-Object System.Drawing.Bitmap $W, $H
 $g = [System.Drawing.Graphics]::FromImage($out); $g.Clear([System.Drawing.Color]::FromArgb(28, 36, 27))
 $g.InterpolationMode = 'HighQualityBicubic'
 # forest filler: three crops (700x760 source) drawn at 560x608, mirrored variants, rows offset by half a tile
-$tiles = @()
-foreach ($c in @(@('forest.jpg', 1000, 200), @('pond.jpg', 1300, 150), @('forest.jpg', 1250, 180))) {
-    $src = [System.Drawing.Bitmap]::FromFile((Join-Path $dir $c[0]))
-    $crop = $src.Clone((New-Object System.Drawing.Rectangle $c[1], $c[2], 700, 760), $src.PixelFormat); $src.Dispose()
-    $tiles += [BigMap]::Region($crop, 560, 608, 1, 1, 50, 50, 50, 50)
-    $crop.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX)
-    $tiles += [BigMap]::Region($crop, 560, 608, 1, 1, 50, 50, 50, 50); $crop.Dispose()
+# filler sets (crop file, x, y, w, h): forest everywhere, snow in the north-east, desert in the south-east (2026-10-18 east extension)
+function FillerSet($list, $fe) {
+    $set = @()
+    foreach ($c in $list) {
+        $src = [System.Drawing.Bitmap]::FromFile((Join-Path $dir $c[0]))
+        $crop = $src.Clone((New-Object System.Drawing.Rectangle $c[1], $c[2], $c[3], $c[4]), $src.PixelFormat); $src.Dispose()
+        $set += [BigMap]::Region($crop, 560, 608, 1, 1, $fe, $fe, $fe, $fe)
+        $crop.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX)
+        $set += [BigMap]::Region($crop, 560, 608, 1, 1, $fe, $fe, $fe, $fe); $crop.Dispose()
+    }
+    return ,$set
 }
-$i = 0; $row = 0
-for ($ty = -200; $ty -lt $H; $ty += 520) {
-    for ($tx = -(($row % 2) * 280) - 40; $tx -lt $W; $tx += 480) { $g.DrawImage($tiles[($i * 3 + $row) % $tiles.Count], $tx, $ty, 560, 608); $i++ }
-    $row++
+$forestT = FillerSet @(@('forest.jpg', 1000, 200, 700, 760), @('pond.jpg', 1300, 150, 700, 760), @('forest.jpg', 1250, 180, 700, 760)) 50
+$snowT = FillerSet @(@('pond-snow.jpg', 1450, 250, 550, 600), @('pond-snow.jpg', 1400, 380, 600, 560)) 150
+$desertT = FillerSet @(@('oasis.jpg', 1480, 120, 520, 600), @('pyramid.jpg', 1420, 80, 580, 640), @('pyramid.jpg', 0, 60, 520, 560)) 150
+$tiles = $forestT + $snowT + $desertT
+# pass 1: forest everywhere; pass 2: snow (north-east) / desert (south-east) on top with wide soft edges so the borders blend
+foreach ($pass in 1, 2) {
+    $i = 0; $row = 0
+    $sy = if ($pass -eq 1) { 520 } else { 300 }; $sx = if ($pass -eq 1) { 480 } else { 280 }   # pass 2 overlaps densely so the soft edges cover each other
+    for ($ty = -200; $ty -lt $H; $ty += $sy) {
+        for ($tx = -(($row % 2) * 280) - 40; $tx -lt $W; $tx += $sx) {
+            $cx = $tx + 280; $cy = $ty + 304
+            $set = if ($pass -eq 1) { $forestT } elseif ($cx -gt 3150 -and $cy -lt 1200) { $snowT } elseif ($cx -gt 3150 -or ($cx -gt 2500 -and $cy -gt 1900)) { $desertT } else { $null }
+            if ($set) { $g.DrawImage($set[($i * 3 + $row) % $set.Count], $tx, $ty, 560, 608) }
+            $i++ }
+        $row++
+    }
 }
 # regions: file, x, y, brightness, saturation (meadow toned down to match the foggy maps); edges on the map border are not feathered
 $regions = @(
-    @('swamp.jpg', 0, 0, 1, 1), @('pond.jpg', 1600, 0, 1, 1), @('village.jpg', 800, 671, 1, 1),
+    @('swamp.jpg', 0, 0, 1, 1), @('pond-snow.jpg', 1600, 0, 1, 1), @('village.jpg', 800, 671, 1, 1),
+    @('oasis.jpg', 2240, 1300, 0.92, 0.9), @('pyramid.jpg', 2904, ($H - $RH), 0.92, 0.9),
     @('meadow.jpg', 664, 1342, 0.8, 0.78), @('beach.jpg', 1304, ($H - $RH), 1, 1)
 )
 foreach ($r in $regions) {
@@ -102,7 +120,7 @@ foreach ($t in $tiles) { $t.Dispose() }
 $enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
 $ep = New-Object System.Drawing.Imaging.EncoderParameters 1; $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 82L
 $out.Save((Join-Path $root 'images\maps\wild.jpg'), $enc, $ep)
-$mini = New-Object System.Drawing.Bitmap 320, 282; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 320, 282); $mg.Dispose()
+$mini = New-Object System.Drawing.Bitmap 400, 250; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 400, 250); $mg.Dispose()
 $mini.Save((Join-Path $root 'images\maps\wild-mini.jpg'), $enc, $ep); $mini.Dispose()
 $mask = [BigMap]::Mask($out, 32)
 [IO.File]::WriteAllText((Join-Path $dir 'auto-mask.txt'), $mask)
