@@ -564,10 +564,27 @@ function addFloat(tx, ty, text, color, big, crit) {
     scene.floats.push({ x: tx * TILE + TILE / 2 + rand(-6, 6), y: ty * TILE, text, color, t: 0, dur: crit ? 1100 : 900, size: crit ? 24 : big ? 17 : 13, pop: !!crit });
 }
 // 受擊打擊感（2026-10-18 使用者要求，參考天堂經典版）：怪物被打中時身體往下壓扁一下、往後退一點、閃白，HURT_MS 內彈回；爆擊幅度更大
-const HURT_MS = 220;
+// 第二版（使用者回報手機看不出來）：幅度加大、閃白改用白色剪影疊圖（iPhone Safari 不支援 ctx.filter）、身上加一個受擊火花
+const HURT_MS = 260;
 function monHurt(m, crit) {
     const pl = scene.pl, dx = m.x - pl.x, dy = m.y - pl.y, d = Math.hypot(dx, dy) || 1;
     m.hurt = { t: 0, crit: !!crit, dx: dx / d, dy: dy / d };
+    scene.effects.push({ kind: 'spark', x: m.rx, y: m.ry, t: 0, dur: crit ? 260 : 180, crit: !!crit, rot: Math.random() * Math.PI });
+}
+// 白色剪影：把怪物這一格畫到暫存畫布再用 source-atop 塗白（所有瀏覽器都支援）
+let hitFlashCv = null;
+function hitFlashCanvas(img, fx, fy, fw, fh, a) {
+    if (!hitFlashCv) hitFlashCv = document.createElement('canvas');
+    const c = hitFlashCv;
+    if (c.width !== fw || c.height !== fh) { c.width = fw; c.height = fh; }
+    const g = c.getContext('2d');
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, fw, fh);
+    g.drawImage(img, fx, fy, fw, fh, 0, 0, fw, fh);
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = `rgba(255,255,255,${a})`;
+    g.fillRect(0, 0, fw, fh);
+    return c;
 }
 
 // 從 HP 變化與遊戲訊息產生傷害數字、MISS、特效
@@ -707,17 +724,16 @@ function sceneDraw(ctx, W, H) {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
         if (m.lunge) { const k = Math.sin(m.lunge.t / 180 * Math.PI) * 8; sx += m.lunge.dx * k; sy += m.lunge.dy * k; }
         // 受擊（monHurt）：往後退幾 px、以腳底為準壓扁（矮一點、寬一點）、前段閃白
-        let hsx = 1, hsy = 1, flash = false;
+        let hsx = 1, hsy = 1, flash = 0;
         if (m.hurt) {
-            const h = m.hurt, s = Math.sin(Math.min(1, h.t / HURT_MS) * Math.PI), amp = h.crit ? 1.7 : 1;
-            sx += h.dx * 4 * amp * s; sy += h.dy * 2.5 * amp * s;
-            hsy = 1 - 0.13 * amp * s; hsx = 1 + 0.07 * amp * s;
-            flash = h.t < HURT_MS * 0.45;
+            const h = m.hurt, k = Math.min(1, h.t / HURT_MS), s = Math.sin(k * Math.PI), amp = h.crit ? 1.5 : 1;
+            sx += h.dx * 7 * amp * s; sy += h.dy * 4 * amp * s;
+            hsy = 1 - 0.22 * amp * s; hsx = 1 + 0.12 * amp * s;
+            flash = k < 0.5 ? (h.crit ? 0.85 : 0.7) * (1 - k * 2) : 0;   // 白色剪影的濃度，前半段由濃變淡
         }
         const hurtFx = () => {
             if (hsx === 1 && hsy === 1) return;
             ctx.translate(sx, sy + 13); ctx.scale(hsx, hsy); ctx.translate(-sx, -(sy + 13));
-            if (flash && 'filter' in ctx) ctx.filter = 'brightness(1.9) saturate(0.6)';   // Safari 舊版沒有 ctx.filter，只有壓扁
         };
         ctx.globalAlpha = m.dead ? Math.max(0, m.dying / 600) : 1;
         const big = m.inst && (m.inst.boss || m.inst.dragon);
@@ -741,6 +757,7 @@ function sceneDraw(ctx, W, H) {
             hurtFx();
             if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
             ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+            if (flash > 0 && img.complete && img.naturalWidth) ctx.drawImage(hitFlashCanvas(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, flash), sx - dw / 2, sy + 13 - dh - bob, dw, dh);
             ctx.restore();
             top = sy + 13 - dh - 4;
         } else {
@@ -830,6 +847,19 @@ function sceneDraw(ctx, W, H) {
     }
     for (const e of scene.effects) {
         const sx = e.x * TILE - camX + TILE / 2, sy = e.y * TILE - camY + TILE / 2, k = e.t / e.dur;
+        if (e.kind === 'spark') {   // 受擊火花（monHurt）：身體中間爆開的十字光芒，爆擊較大、偏橘紅
+            const cy = sy - 14, R = (e.crit ? 20 : 13) * (0.5 + k * 0.8), core = (e.crit ? 7 : 5) * (1 - k);
+            ctx.globalAlpha = 1 - k; ctx.strokeStyle = e.crit ? '#ffb04a' : '#fff6d0'; ctx.lineWidth = e.crit ? 3 : 2;
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const a = e.rot + i * Math.PI / 4, r0 = i % 2 ? R * 0.35 : R * 0.15, r1 = i % 2 ? R * 0.7 : R;
+                ctx.moveTo(sx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(sx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+            }
+            ctx.stroke();
+            if (core > 0) { ctx.fillStyle = e.crit ? '#fff1c0' : '#ffffff'; ctx.beginPath(); ctx.arc(sx, cy, core, 0, Math.PI * 2); ctx.fill(); }
+            ctx.globalAlpha = 1; ctx.lineWidth = 1;
+            continue;
+        }
         ctx.strokeStyle = e.color; ctx.globalAlpha = 1 - k; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(sx, sy, 8 + k * 18, 0, Math.PI * 2); ctx.stroke();
         ctx.globalAlpha = 1; ctx.lineWidth = 1;
