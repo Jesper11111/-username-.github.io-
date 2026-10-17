@@ -483,6 +483,7 @@ function sceneUpdate(dt) {
     if (pl.anim) { pl.anim.t += dt; if (pl.anim.t >= pl.anim.dur) pl.anim = null; }
     for (const m of scene.mons) if (m.lunge) { m.lunge.t += dt; if (m.lunge.t > 180) m.lunge = null; }
     for (const m of scene.mons) if (m.atk > 0) m.atk -= dt;
+    for (const m of scene.mons) if (m.hurt) { m.hurt.t += dt; if (m.hurt.t >= HURT_MS) m.hurt = null; }
     if (!inZone) presUpdate(dt);   // 村莊裡其他玩家的位置（presence.js）
 }
 
@@ -558,8 +559,15 @@ function sceneTeleTick(dt) {
     if (best) { pl.path = best; scene.dodging = true; }
 }
 
-function addFloat(tx, ty, text, color, big) {
-    scene.floats.push({ x: tx * TILE + TILE / 2 + rand(-6, 6), y: ty * TILE, text, color, t: 0, dur: 900, size: big ? 17 : 13 });
+// big：升級等大字；crit：爆擊傷害（紅色大字、出現時先彈大再縮回，停留久一點）
+function addFloat(tx, ty, text, color, big, crit) {
+    scene.floats.push({ x: tx * TILE + TILE / 2 + rand(-6, 6), y: ty * TILE, text, color, t: 0, dur: crit ? 1100 : 900, size: crit ? 24 : big ? 17 : 13, pop: !!crit });
+}
+// 受擊打擊感（2026-10-18 使用者要求，參考天堂經典版）：怪物被打中時身體往下壓扁一下、往後退一點、閃白，HURT_MS 內彈回；爆擊幅度更大
+const HURT_MS = 220;
+function monHurt(m, crit) {
+    const pl = scene.pl, dx = m.x - pl.x, dy = m.y - pl.y, d = Math.hypot(dx, dy) || 1;
+    m.hurt = { t: 0, crit: !!crit, dx: dx / d, dy: dy / d };
 }
 
 // 從 HP 變化與遊戲訊息產生傷害數字、MISS、特效
@@ -580,7 +588,7 @@ function sceneReadEvents() {
     let castNow = false, missNow = false;
     for (const l of gameLog) {
         if (l.seq <= scene.lastSeq) continue;
-        if (l.cls === 'crit') scene.critNext = true;
+        if (l.cls === 'crit' && l.msg.includes('爆擊')) scene.critNext = true;   // 反擊也用 crit 樣式，但不是爆擊
         if (l.cls === 'miss') {
             if (l.msg.includes('沒有命中') && e) { addFloat(e.rx, e.ry, 'MISS', '#9a9a9a'); missNow = true; }
             else addFloat(pl.rx, pl.ry, 'MISS', '#9a9a9a');
@@ -601,13 +609,14 @@ function sceneReadEvents() {
     // 記住讀過的最大編號（不能只用 logSeq：編號若倒退，同一批訊息會每幀重讀）
     scene.lastSeq = gameLog.reduce((m, l) => Math.max(m, l.seq), Math.max(scene.lastSeq, logSeq));
     let dealt = false;
-    // 每隻圍上來的怪：HP 減少就飄傷害數字（爆擊黃色大字只算在目標身上）
+    // 每隻圍上來的怪：HP 減少就飄傷害數字＋受擊縮一下（爆擊紅色大字只算在目標身上）
     for (const m of scene.mons) {
         if (!m.inst || m.lastHp == null) continue;
         const hp = Math.max(0, m.inst.hp);
         if (hp < m.lastHp) {
-            const big = m === e && scene.critNext;
-            addFloat(m.rx, m.ry, '-' + fmt(m.lastHp - hp), big ? '#ffd34d' : '#ffffff', big);
+            const crit = m === e && scene.critNext;
+            addFloat(m.rx, m.ry, '-' + fmt(m.lastHp - hp), crit ? '#ff3b2f' : '#ffffff', false, crit);
+            monHurt(m, crit);
             if (m === e) { scene.critNext = false; if (!CLASSES[player.cls].sprite) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 }; }
             dealt = true;
         }
@@ -697,6 +706,19 @@ function sceneDraw(ctx, W, H) {
     const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
         if (m.lunge) { const k = Math.sin(m.lunge.t / 180 * Math.PI) * 8; sx += m.lunge.dx * k; sy += m.lunge.dy * k; }
+        // 受擊（monHurt）：往後退幾 px、以腳底為準壓扁（矮一點、寬一點）、前段閃白
+        let hsx = 1, hsy = 1, flash = false;
+        if (m.hurt) {
+            const h = m.hurt, s = Math.sin(Math.min(1, h.t / HURT_MS) * Math.PI), amp = h.crit ? 1.7 : 1;
+            sx += h.dx * 4 * amp * s; sy += h.dy * 2.5 * amp * s;
+            hsy = 1 - 0.13 * amp * s; hsx = 1 + 0.07 * amp * s;
+            flash = h.t < HURT_MS * 0.45;
+        }
+        const hurtFx = () => {
+            if (hsx === 1 && hsy === 1) return;
+            ctx.translate(sx, sy + 13); ctx.scale(hsx, hsy); ctx.translate(-sx, -(sy + 13));
+            if (flash && 'filter' in ctx) ctx.filter = 'brightness(1.9) saturate(0.6)';   // Safari 舊版沒有 ctx.filter，只有壓扁
+        };
         ctx.globalAlpha = m.dead ? Math.max(0, m.dying / 600) : 1;
         const big = m.inst && (m.inst.boss || m.inst.dragon);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -716,13 +738,17 @@ function sceneDraw(ctx, W, H) {
             const fr = m.atk > 0 ? Math.min(n - 1, Math.floor((1 - m.atk / 380) * n)) : moving ? Math.floor(gameNow / 150) % n : 0;
             const bob = moving && n === 1 ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
             ctx.save();
+            hurtFx();
             if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
             ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
             ctx.restore();
             top = sy + 13 - dh - 4;
         } else {
+            ctx.save();
+            hurtFx();
             ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
             ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
+            ctx.restore();
         }
         ctx.globalAlpha = 1;
         // 圍上來的怪都有血條；名字只標在目標（避免擠在一起），目標腳下加紅圈
@@ -811,9 +837,11 @@ function sceneDraw(ctx, W, H) {
     for (const f of scene.floats) {
         const k = f.t / f.dur;
         ctx.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
-        ctx.font = `bold ${f.size}px sans-serif`;
-        ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-        const sy = f.y - camY - 4 - k * 26;
+        // 爆擊：前 140ms 從 1.7 倍彈回原本大小
+        const pop = f.pop && f.t < 140 ? 1 + 0.7 * (1 - f.t / 140) : 1;
+        ctx.font = `bold ${Math.round(f.size * pop)}px sans-serif`;
+        ctx.lineWidth = f.pop ? 4 : 3; ctx.strokeStyle = '#000';
+        const sy = f.y - camY - 4 - k * (f.pop ? 18 : 26);
         ctx.strokeText(f.text, f.x - camX, sy);
         ctx.fillStyle = f.color;
         ctx.fillText(f.text, f.x - camX, sy);
