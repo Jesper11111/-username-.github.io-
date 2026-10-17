@@ -1,23 +1,25 @@
 ﻿# NPC cut-out from a user illustration whose background is a green forest / grey ground (ARCHITECTURE.md section 55).
 # Background = flood fill from the image border over pixels that are "not the character":
 #   bright-ish (L > -Light) and not warm (R - G < -Warm: staff wood, skin stay), or green-dominant (G > R + 6, forest shadows).
+# Light-coloured characters (white robe): -Light 999 turns the grey rule off so only greens (G > R + -Green) are background.
 # Rows below -FeetY are dropped (ground). Keeps the largest blob, fills holes, 1.5px feathered edge, resized to -OutH tall.
 # Also writes a portrait (head and shoulders, -Face x,y,w,h in source px) as jpg for dialogs.
 # -Erase: polygons cleared after keying (rocks / ground that touch the character).
+# -Keep: polygons copied back from the source after keying (parts the key removed, e.g. a pale crystal on a staff).
 # Run from 屠龍勇者: powershell -ExecutionPolicy Bypass -File tools\stage\npc-cut.ps1 -Src tools\sprite-src\tower-keeper-src.jpg -Out images\npc\tower-keeper
-param([string]$Src, [string]$Out, [int]$FeetY = 0, [int]$OutH = 360, [int]$Light = 62, [int]$Warm = 16, [string]$Face = '0,0,0,0', [string]$Check = '', [string]$Erase = '')
+param([string]$Src, [string]$Out, [int]$FeetY = 0, [int]$OutH = 360, [int]$Light = 62, [int]$Warm = 16, [int]$Green = 6, [string]$Face = '0,0,0,0', [string]$Check = '', [string]$Erase = '', [string]$Keep = '')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
 using System; using System.Collections.Generic; using System.Drawing; using System.Drawing.Imaging; using System.Runtime.InteropServices;
 public static class NpcCut {
-    public static Bitmap Cut(Bitmap src, int light, int warm, int feetY) {
+    public static Bitmap Cut(Bitmap src, int light, int warm, int green, int feetY) {
         int W = src.Width, H = feetY > 0 ? Math.Min(feetY, src.Height) : src.Height;
         var d = src.LockBits(new Rectangle(0, 0, src.Width, src.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
         int st = d.Stride; var a = new byte[st * src.Height]; Marshal.Copy(d.Scan0, a, 0, a.Length); src.UnlockBits(d);
         Func<int, bool> bgLike = k => { int i = (k / W) * st + (k % W) * 3; int b = a[i], g = a[i + 1], r = a[i + 2];
             double L = 0.299 * r + 0.587 * g + 0.114 * b;
-            if (g > r + 6) return true;                       // forest greens / teal shadows
+            if (g > r + green) return true;                   // forest greens / teal shadows
             return L > light && r - g < warm;                  // grey ground, light fog (not wood / skin)
         };
         var bg = new bool[W * H]; var q = new Queue<int>();
@@ -58,7 +60,7 @@ public static class NpcCut {
 }
 '@
 $img = New-Object System.Drawing.Bitmap ((Resolve-Path $Src).Path)   # not $src: PowerShell names are case-insensitive and $Src is a [string] parameter
-$cut = [NpcCut]::Cut($img, $Light, $Warm, $FeetY)
+$cut = [NpcCut]::Cut($img, $Light, $Warm, $Green, $FeetY)
 # -Erase "x,y x,y x,y;x,y ..." : polygons (source px) cleared after keying, for ground / rocks touching the character
 if ($Erase) {
     $eg = [System.Drawing.Graphics]::FromImage($cut); $eg.CompositingMode = 'SourceCopy'; $eg.SmoothingMode = 'AntiAlias'
@@ -68,6 +70,15 @@ if ($Erase) {
         $eg.FillPolygon($clear, [System.Drawing.PointF[]]$pts)
     }
     $eg.Dispose()
+}
+if ($Keep) {
+    $kg = [System.Drawing.Graphics]::FromImage($cut); $kg.SmoothingMode = 'AntiAlias'
+    foreach ($poly in $Keep.Split(';')) {
+        $pts = $poly.Trim().Split(' ') | ForEach-Object { $xy = $_.Split(','); New-Object System.Drawing.PointF ([float]$xy[0]), ([float]$xy[1]) }
+        $gp = New-Object System.Drawing.Drawing2D.GraphicsPath; $gp.AddPolygon([System.Drawing.PointF[]]$pts)
+        $kg.SetClip($gp); $kg.DrawImage($img, 0, 0, $img.Width, $img.Height); $kg.ResetClip(); $gp.Dispose()
+    }
+    $kg.Dispose()
 }
 $w = [int]($cut.Width * $OutH / $cut.Height)
 $o = New-Object System.Drawing.Bitmap $w, $OutH, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)

@@ -50,7 +50,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`＋`-face.jpg` 永夜之塔傳送師（第 55 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019h`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1672,3 +1672,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `openTowerKeeper()`：角色要在傳送師 5 格內（`towerKeeperNear`），對話框＝頭像＋台詞、建議等級、傳送費、樓層輸入（預設最高樓 −9）、守關首領復活狀態；
   「進入永夜之塔」`towerKeeperGo`（`keep: true`，先讀樓層再關對話框）→ `enterTowerFromKeeper(floor)`：收傳送費 1,000、進塔、開始掛機。「不了」關掉。`travelTowerBtn` 已移除。
 - 驗證（手機 375 寬）：永夜王都按「前往傳送師」→ 出生在 6,8、地圖紫霧遺跡、沒有掛機、看得到傳送師與名牌；點名牌開對話框；按進入 → 永夜之塔 11F、扣 1,000、開始掛機；Console 無錯誤。
+
+## 56. 暮光法師塔傳送師＋傳送師程式通用化（腐朽礦坑・深層；2026-10-19，版本 `20261019h`）
+
+- 使用者給白袍老法師立繪＋PC 截圖（紅圈）：「新增暮光法師塔傳送 NPC，地點塗上紅圈處」。紅圈在深層石拱右邊草坡上那根大腿骨旁邊（右下有肋骨）＝格子 132,98（草坡擋格 [127,93,132,98] 的角，NPC 站的格子本來就不能走），落點 131,100。
+- 圖：`tools/sprite-src/ivory-keeper-src.jpg` → `images/npc/ivory-keeper.png`（243×360）＋`ivory-keeper-face.jpg`。白袍是淺色，`npc-cut.ps1` 新增：
+  `-Light 999`（關掉「偏亮不偏暖＝背景」那條，只去綠色）、`-Green`（綠色門檻，這張用 0）、`-Keep` 多邊形（去背後再從原圖補回來：手杖上的水晶）。指令：
+  `-Light 999 -Green 0 -FeetY 1060 -Face '150,100,300,300' -Erase '0,760 104,760 104,1060 0,1060;590,885 716,885 716,1000 690,972 640,940 590,925' -Keep '56,192 70,163 86,163 98,195 86,236 68,242 55,216'`。
+- 程式改成通用（第 55 節的永夜之塔專用函式全部換掉）：`fieldNpcs` 每個多 `to`（要送去的地圖）、`face`（頭像）、`say`（台詞）；ui-panels.js：
+  `keeperNpc(to)`、`keeperNear(to)`、`travelToKeeper(to)`（地圖清單「前往傳送師」）、`openKeeper(to)`（對話框，只有永夜之塔有樓層與首領狀態）、`keeperGo(to)`、`enterZoneFromKeeper(to, floor)`。
+  地圖清單：只要那張地圖有傳送師（`keeperNpc(z.id)`）就顯示「前往傳送師」，所以暮光法師塔也改成先飛到傳送師面前。上一版留下沒用到的 `travelTowerBtn` 也刪了。
+- 驗證（PC 16:9）：暗金城按暮光法師塔「前往傳送師」→ 深層 131,100、傳送師站在草坡骨頭旁（對照使用者截圖）；點名牌開對話框（沒有樓層欄）→ 進入 → 暮光法師塔、扣 500、開始掛機；
+  永夜之塔傳送師對話仍有樓層欄；地圖清單兩個「前往傳送師」；Console 無錯誤。

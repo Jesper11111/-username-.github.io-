@@ -103,9 +103,12 @@ const SCENE_BGS = {
     wild: {
         src: 'images/maps/wild.jpg?v=3', mini: 'images/maps/wild-mini.jpg?v=3', occ: 'images/maps/wild-occ.png', w: 141,   // ?v=：圖改過就加 1（SW 會先給快取的舊圖）
         h: 112, start: [63, 78], big: true,   // 2026-10-18 往南加一排（第 49 節）：腐朽礦坑・上層／沉眠龍窟／腐朽礦坑・深層，88 → 112 列
-        // 野外 NPC（第 55 節）：站的格子不能走；點名牌對話（act 呼叫 ui-panels.js 的函式）；front＝「飛到 NPC 面前」的落點
+        // 野外 NPC（第 55 節）：站的格子不能走；點名牌對話（act 呼叫 ui-panels.js 的 openKeeper）；to＝要送去的地圖；front＝「飛到 NPC 面前」的落點
         fieldNpcs: [
-            { name: '永夜之塔傳送師', role: '對話', zone: 'forgottenIsle', x: 5, y: 6, front: [6, 8], img: 'images/npc/tower-keeper.png', h: 2.4, act: () => openTowerKeeper() },   // 紫霧遺跡最左上角
+            { name: '永夜之塔傳送師', role: '對話', to: 'tower', zone: 'forgottenIsle', x: 5, y: 6, front: [6, 8], img: 'images/npc/tower-keeper.png', face: 'images/npc/tower-keeper-face.jpg', h: 2.4,
+              say: '永夜之塔聳立在遺跡的盡頭……上去的人很多，回來的人很少。你要進去嗎？', act: () => openKeeper('tower') },   // 紫霧遺跡最左上角
+            { name: '暮光法師塔傳送師', role: '對話', to: 'ivory', zone: 'gludio2', x: 132, y: 98, front: [131, 100], img: 'images/npc/ivory-keeper.png', face: 'images/npc/ivory-keeper-face.jpg', h: 2.4,
+              say: '暮光法師塔的大門只為有準備的人敞開。塔裡的法師與魔像可不會手下留情……你要過去嗎？', act: () => openKeeper('ivory') },   // 腐朽礦坑・深層（使用者截圖紅圈處，第 56 節）
         ],
         // rect：這一區的範圍（格子 [x0,y0,x1,y1]，依序第一個符合的；沒有符合的才用最近的中心）
         regions: [
