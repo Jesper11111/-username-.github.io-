@@ -1,23 +1,33 @@
 // 屠龍勇者：道具、裝備、彈藥、材料、鍛造配方（依賴 config.js）
 
-// 武器種類：spd 攻擊間隔（毫秒）、two 雙手（不能拿盾）、ranged 遠程（吃敏捷、耗彈藥）、double 雙擊率
-// add：揮舞加值（秒），攻擊間隔＝基礎 1 秒＋add − 綠水／勇水各 0.3…（player.js calcStats；2026-10-18 改版，原本是 spd 毫秒×倍率）
+// 武器種類：spd 不喝水時的攻擊間隔（毫秒，騎士為準）、two 雙手（不能拿盾）、ranged 遠程（吃敏捷、耗彈藥）、double 雙擊率
+// 2026-10-18 改成天堂式（使用者給的天堂攻速資料）：間隔＝武器 spd × 職業動作係數 ÷ 綠水 1.33 ÷ 二段加速（勇水 1.33／精靈餅乾 1.15）× (1−其他攻速)，見 player.js calcStats
+// 對照：騎士單手劍 920ms＝65 下/分，綠水 87 下/分（天堂約 86）、綠水＋勇水 116 下/分；妖精弓 1000ms＝60 下/分，綠水 80、綠水＋精餅 92（天堂 60→78→89～90）
 const WEAPON_TYPES = {
-    fist:    { name: '空手',   add: 0.5 },
-    dagger:  { name: '匕首',   add: 0.2 },
-    sword:   { name: '單手劍', add: 0.4 },
-    twohand: { name: '雙手劍', add: 0.65, two: true },
-    axe:     { name: '斧',     add: 0.5 },
-    spear:   { name: '矛',     add: 0.55, two: true },
-    blunt:   { name: '鈍器',   add: 0.45 },
-    bow:     { name: '弓',     add: 0.45, two: true, ranged: true, ammo: 'arrow' },
-    gun:     { name: '槍',     add: 0.6,  two: true, ranged: true, ammo: 'bullet' },
-    staff:   { name: '魔杖',   add: 0.5 },
-    claw:    { name: '鋼爪',   add: 0.25, two: true },
-    dual:    { name: '雙刀',   add: 0.3,  two: true, double: 0.25 },
-    scythe:  { name: '鐮刀',   add: 0.55, two: true },
+    fist:    { name: '空手',   spd: 1000 },
+    dagger:  { name: '匕首',   spd: 850 },
+    sword:   { name: '單手劍', spd: 920 },
+    twohand: { name: '雙手劍', spd: 1000, two: true },
+    axe:     { name: '斧',     spd: 1000 },
+    spear:   { name: '矛',     spd: 1050, two: true },
+    blunt:   { name: '鈍器',   spd: 950 },
+    bow:     { name: '弓',     spd: 1000, two: true, ranged: true, ammo: 'arrow' },
+    gun:     { name: '槍',     spd: 1100, two: true, ranged: true, ammo: 'bullet' },
+    staff:   { name: '魔杖',   spd: 1050 },
+    claw:    { name: '鋼爪',   spd: 800,  two: true },
+    dual:    { name: '雙刀',   spd: 800,  two: true, double: 0.25 },
+    scythe:  { name: '鐮刀',   spd: 1050, two: true },
 };
-function weaponBaseMs(type) { return Math.round((1 + WEAPON_TYPES[type].add) * 1000); }   // 不喝水時的攻擊間隔（說明、圖鑑用）
+// 職業動作係數（天堂：不同職業拿同類武器揮動格數不同；越大越慢）。weapons 裡可以針對專精武器另外給
+const CLASS_ATK_K = {
+    knight: { k: 1.0 }, warrior: { k: 1.0 }, paladin: { k: 1.05 }, royal: { k: 1.1 },
+    elf: { k: 1.1, weapons: { bow: 1.0 } }, gunner: { k: 1.1, weapons: { gun: 1.0, bow: 1.0 } },
+    darkelf: { k: 0.95 }, shura: { k: 0.95 }, demon: { k: 1.0 },
+    magicfighter: { k: 1.1 }, angel: { k: 1.15 }, mage: { k: 1.25 },
+};
+function classAtkK(cls, type) { const c = CLASS_ATK_K[cls] || { k: 1 }; return (c.weapons && c.weapons[type]) || c.k; }
+// 不喝水時的攻擊間隔（說明、圖鑑用；有角色時乘上職業動作係數）
+function weaponBaseMs(type, cls = player && player.cls) { return Math.round(WEAPON_TYPES[type].spd * (cls ? classAtkK(cls, type) : 1)); }
 
 const SLOTS = {
     weapon: '武器', shield: '盾牌', helm: '頭盔', armor: '盔甲', tshirt: '內衣', cloak: '斗篷',

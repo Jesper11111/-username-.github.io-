@@ -242,9 +242,9 @@ function defaultSkillSlots(p = player, skip = {}) {
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
     'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight', ...STAT_KEYS];
-// 攻速規則（毫秒）：見 calcStats 的 atkMs／castMs
-const ATK_BASE_MS = 1000, ATK_MIN_MS = 400, POTION_SPD_MS = 300, SPD_EXTRA_MAX_MS = 300, SPD_PCT_TO_MS = 700;
-const CAST_BASE_MS = 1200, CAST_MIN_MS = 600;
+// 攻速規則：見 calcStats 的 atkMs／castMs（天堂式：綠水、勇水 ×1.33，精靈餅乾 ×1.15）
+const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, SPD_EXTRA_MAX = 0.3, ATK_MIN_MS = 400;
+const CAST_BASE_MS = 1200, CAST_MIN_MS = 600, CAST_POTION_MS = 300;
 
 function addFx(acc, fx) {
     if (!fx) return;
@@ -286,12 +286,15 @@ function calcStats() {
     const sp = Math.floor(p.lv / c.spDiv) + Math.max(0, s.int - 11) + (fx.sp || 0);
     const statHit = ranged ? Math.floor((s.dex - 8) / 2) : Math.floor((s.str - 8) / 3) + Math.floor((s.dex - 8) / 4);
     const statDmg = ranged ? Math.max(0, Math.floor((s.dex - 10) / 2)) : Math.max(0, Math.floor((s.str - 10) / 2));
-    // 攻擊間隔（2026-10-18 改成加減秒數，使用者定的規則）：基礎 1 秒＋武器揮舞加值 − 綠水 0.3 − 勇水 0.3 − 其他加速（最多 0.3），最快 0.4 秒
-    // 其他加速：技能／詞綴／共鳴的 spdMul（攻速比例）每 1% 換成 7ms（15%→0.105 秒）
-    const extraMs = Math.min(SPD_EXTRA_MAX_MS, Math.round((fx.spdMul || 0) * SPD_PCT_TO_MS));
-    const atkMs = Math.max(ATK_MIN_MS, ATK_BASE_MS + wt.add * 1000 - (fx.haste ? POTION_SPD_MS : 0) - (fx.brave ? POTION_SPD_MS : 0) - extraMs);
+    // 攻擊間隔（2026-10-18 改成天堂式，使用者給的天堂攻速資料）：武器 spd × 職業動作係數 ÷ 一段加速（綠水 1.33）÷ 二段加速（勇水 1.33、精靈餅乾 1.15）
+    // × (1 − 其他攻速，最多 30%)，最快 0.4 秒（150 下/分）
+    const wid = w ? w.type : 'fist';
+    let atkMs = wt.spd * classAtkK(p.cls, wid);
+    if (fx.haste) atkMs /= HASTE_MUL;
+    if (fx.brave) atkMs /= braveItemFor(p.cls) === 'elvenWafer' ? WAFER_MUL : BRAVE_MUL;
+    atkMs = Math.max(ATK_MIN_MS, Math.round(atkMs * (1 - Math.min(SPD_EXTRA_MAX, fx.spdMul || 0))));
     // 施法間隔（攻擊魔法用，不看武器）：1.2 秒 − 綠水 0.3 − 慎重藥水 0.3（法師、魔鬥士、天使），最快 0.6 秒
-    const castMs = Math.max(CAST_MIN_MS, CAST_BASE_MS - (fx.haste ? POTION_SPD_MS : 0) - (fx.wise ? POTION_SPD_MS : 0));
+    const castMs = Math.max(CAST_MIN_MS, CAST_BASE_MS - (fx.haste ? CAST_POTION_MS : 0) - (fx.wise ? CAST_POTION_MS : 0));
 
     return {
         ...s, sp, maxHp, maxMp, ranged, weapon: w, weaponType: wt, weaponEnch,

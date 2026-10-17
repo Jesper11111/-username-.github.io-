@@ -446,7 +446,7 @@ function itemDescHtml(inst) {
     L.push(`<small class="muted">${kind}</small>`);
     if (d.cat === 'weapon') {
         L.push(`傷害：小型 1～${d.dmg[0]}　大型 1～${d.dmg[1]}${ench ? `（強化 ${ench > 0 ? '+' : ''}${ench}）` : ''}`);
-        L.push(`攻擊間隔：${(weaponBaseMs(d.type) / 1000).toFixed(2)} 秒（不喝水；綠水、勇水各快 0.3 秒）`);
+        L.push(`攻擊間隔：${(weaponBaseMs(d.type) / 1000).toFixed(2)} 秒（不喝水；綠水、勇水各 ×1.33 倍速，精靈餅乾 ×1.15）`);
         if (d.hit) L.push(`命中 +${d.hit}`);
         if (d.sp) L.push(`SP +${d.sp}`);
         if (d.crit) L.push(`爆擊 +${Math.round(d.crit * 100)}%`);
