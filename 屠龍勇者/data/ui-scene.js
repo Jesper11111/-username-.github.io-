@@ -84,12 +84,18 @@ const SCENE_BGS = {
     },
     // 大地圖（2026-10-18 第 1 期，ARCHITECTURE.md 第 45 節）：使用者用 AI 生成的 5 張場景＋森林填充，tools/bigmap/build-map.ps1 拼成 3200×2816＝100×88 格（1 格 32px，原圖 1:1）
     // 走得到的範圍照 tools/bigmap/walk.json；big：鏡頭跟著角色捲動、離角色太遠的怪收掉、有小地圖；
-    // regions：區域中心格與名稱（名稱借用遊戲裡的地名），角色在哪個中心最近就算在哪一區
+    // regions：區域中心格、對應的地圖 zone、從村莊傳送過來的出生格 start；角色離哪個中心最近就算在哪一區
+    // 2026-10-18 使用者改成「5 個真的地圖合併」：海灘＝低語海岸、草原與古泉＝迷霧古林、廢村＝沉船海灣、沼澤＝紫霧遺跡；
+    // 走進別區就自動換成那個地圖（怪物、等級、掉落跟著換，sceneEnterZone），這幾個地圖共用同一個畫面（sceneKey 'zone:wild'）
     wild: {
-        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', occ: 'images/maps/wild-occ.png', w: 100, h: 88, start: [46, 52], big: true,
+        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', occ: 'images/maps/wild-occ.png', w: 100, h: 88, start: [63, 78], big: true,
+        // rect：這一區的範圍（格子 [x0,y0,x1,y1]，依序第一個符合的；沒有符合的才用最近的中心）
         regions: [
-            { name: '紫霧遺跡', x: 22, y: 12 }, { name: '迷霧古林', x: 70, y: 15 }, { name: '灰燼村', x: 44, y: 34 },
-            { name: '低語海岸', x: 46, y: 54 }, { name: '沉船海灣', x: 63, y: 79 },
+            { zone: 'forgottenIsle', x: 22, y: 12, start: [20, 14], rect: [0, 0, 49, 21] },
+            { zone: 'elvenForest', x: 70, y: 15, rect: [50, 0, 99, 21] },   // 古泉：迷霧古林的另一區（傳送出生在草原）
+            { zone: 'pirateIsle', x: 44, y: 34, start: [40, 34], rect: [0, 22, 99, 42] },
+            { zone: 'elvenForest', x: 46, y: 54, start: [46, 52], rect: [0, 43, 99, 64] },
+            { zone: 'island', x: 63, y: 79, start: [63, 78], rect: [0, 65, 99, 87] },
         ],
         walk: [
             [4, 5, 8, 8], [7, 8, 12, 11], [10, 10, 18, 13], [15, 12, 22, 16], [18, 15, 26, 19], [22, 18, 30, 21], [26, 20, 33, 24],
@@ -252,7 +258,10 @@ function seededRand(seed) {
 function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 
 function sceneKey() {
-    return player.loc.type === 'town' ? 'town:' + player.loc.id : `zone:${player.loc.id}:${player.loc.floor || 0}`;
+    if (player.loc.type === 'town') return 'town:' + player.loc.id;
+    const z = currentZone();
+    if (z && z.bg && SCENE_BGS[z.bg] && SCENE_BGS[z.bg].big) return 'zone:' + z.bg;   // 大地圖：幾個地圖共用同一個畫面，換區不重建
+    return `zone:${player.loc.id}:${player.loc.floor || 0}`;
 }
 
 function themeFor() {
@@ -273,7 +282,10 @@ function buildScene() {
     const zz = player.loc.type === 'zone' ? currentZone() : null;
     if (zz && zz.mons) zz.mons.forEach(monSpriteImg);
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
-    const cx = bg ? bg.start[0] : Math.floor(mw / 2), cy = bg ? bg.start[1] : Math.floor(mh / 2);
+    // 大地圖：從村莊傳送過來時出生在這個地圖對應區域的 start
+    const zr = bg && bg.regions && player.loc.type === 'zone' && bg.regions.find(r => r.zone === player.loc.id && r.start);
+    const st = zr ? zr.start : bg && bg.start;
+    const cx = st ? st[0] : Math.floor(mw / 2), cy = st ? st[1] : Math.floor(mh / 2);
     const grid = [];   // 0 地板、1 牆、2 障礙物（畫 emoji）、3 建築
     for (let y = 0; y < mh; y++) {
         grid.push([]);
@@ -300,7 +312,7 @@ function buildScene() {
     }
     const z = player.loc.type === 'zone' ? currentZone() : null;
     scene = {
-        key, theme, grid, deco, shade, bg, mw, mh, tint: z && z.tint,
+        key, theme, grid, deco, shade, bg, mw, mh, tint: z && !(bg && bg.big) && z.tint,   // 大地圖本身就是各區的畫面，不疊地區色調
         pl: { x: cx, y: cy, rx: cx, ry: cy, path: [], dir: 'down', lunge: null, idleCd: 1500 },
         mons: [], engaged: null, floats: [], effects: [],
         lastSeq: logSeq, lastPlayerHp: player.hp, critNext: false, spawnCd: 0, w: 0, h: 0,
@@ -381,9 +393,13 @@ function sceneUpdate(dt) {
     // 大地圖：離角色 16 格以上、沒在戰鬥的怪收掉（怪只生在角色附近，走遠了才會一直有新的）；記下目前在哪一區
     if (scene.bg && scene.bg.big) {
         scene.mons = scene.mons.filter(m => m.inst || m.dead || Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) < 16);
-        if (scene.bg.regions) {
-            const r = scene.bg.regions.reduce((a, b) => (Math.hypot(b.x - pl.x, b.y - pl.y) < Math.hypot(a.x - pl.x, a.y - pl.y) ? b : a));
-            if (r.name !== scene.region) { scene.region = r.name; scene.regionAt = gameNow; }
+        if (scene.bg.regions && inZone) {
+            const rs = scene.bg.regions;
+            const r = rs.find(q => q.rect && pl.x >= q.rect[0] && pl.y >= q.rect[1] && pl.x <= q.rect[2] && pl.y <= q.rect[3])
+                || rs.reduce((a, b) => (Math.hypot(b.x - pl.x, b.y - pl.y) < Math.hypot(a.x - pl.x, a.y - pl.y) ? b : a));
+            if (r.zone && r.zone !== player.loc.id && !walkHome) sceneEnterZone(r.zone);   // 走進別的地圖的區域
+            const name = r.zone ? ZONE_BY_ID[r.zone].name : r.name;
+            if (name !== scene.region) { scene.region = name; scene.regionAt = gameNow; }
         }
     }
     // 怪物數量維持
@@ -1039,7 +1055,7 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
         ctx.font = 'bold 20px serif'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)';
         ctx.strokeText(`— ${scene.region} —`, W / 2, by); ctx.fillStyle = '#f2d9a0'; ctx.fillText(`— ${scene.region} —`, W / 2, by);
         ctx.font = '11px sans-serif'; ctx.lineWidth = 3;
-        const sub = zoneTitle();
+        const z = currentZone(), sub = z && z.lv ? `建議等級 Lv.${z.lv[0]}～${z.lv[1]}` : zoneTitle();
         ctx.strokeText(sub, W / 2, by + 18); ctx.fillStyle = '#d8ccb0'; ctx.fillText(sub, W / 2, by + 18);
         ctx.globalAlpha = 1;
     }
@@ -1062,6 +1078,14 @@ function sceneMiniClick(sx, sy) {
     sceneWalkTo(tx, ty);
     if (scene.pl.path.length) scene.manualUntil = gameNow + MANUAL_HOLD_MS + scene.pl.path.length * 1000 / PLAYER_SPEED;
     return true;
+}
+// 大地圖換區：直接把所在地圖換成那個地圖（不重建畫面、不打斷正在打的怪；之後生的怪、掉落、經驗、任務、死亡回哪個村莊都照新地圖）
+function sceneEnterZone(id) {
+    const z = ZONE_BY_ID[id];
+    if (!z) return;
+    player.loc = { type: 'zone', id };
+    addLog(`📍 進入${z.name}（建議 Lv.${z.lv[0]}～${z.lv[1]}）`, player.lv < z.lv[0] ? 'warn' : 'sys');
+    if (player.lv < z.lv[0] - 5) showToast(`⚠️ ${z.name}建議 Lv.${z.lv[0]} 以上，小心！`, 2500);
 }
 // 狀態列地點後面加上目前區域（ui.js renderStatus）
 function sceneRegionName() {

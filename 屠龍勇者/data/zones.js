@@ -15,7 +15,7 @@ const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45 節）
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡共用）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
@@ -30,7 +30,7 @@ const ZONES = [
         desc: '陰暗潮濕的地下城，不死系開始出沒。',
     },
     {
-        id: 'elvenForest', name: '迷霧古林', icon: '🌲', type: 'field', lv: [10, 20], town: 'gludio', fee: 100,
+        id: 'elvenForest', name: '迷霧古林', icon: '🌲', type: 'field', bg: 'wild', lv: [10, 20], town: 'gludio', fee: 100,
         mons: ['werewolf', 'forestBear', 'giantSpider', 'treant'], rare: { id: 'elderTreant', p: 0.006 },
         drops: [{ id: 'elvenMail', p: 0.001 }, { id: 'cloak', p: 0.004 }, { id: 'leatherGloves', p: 0.005 }, { id: 'longBow', p: 0.002 },
             { id: 'crystalWand', p: 0.001 }, { id: 'belt', p: 0.002 }, { id: 'silverArrow', p: 0.05, n: [5, 15] }],
@@ -51,7 +51,7 @@ const ZONES = [
         desc: '傳說地龍在最深處沉睡，吵醒牠可就麻煩了。',
     },
     {
-        id: 'pirateIsle', name: '沉船海灣', icon: '🏴‍☠️', type: 'field', tint: 'rgba(40,110,160,0.18)', lv: [26, 38], town: 'giran', fee: 400,
+        id: 'pirateIsle', name: '沉船海灣', icon: '🏴‍☠️', type: 'field', bg: 'wild', tint: 'rgba(40,110,160,0.18)', lv: [26, 38], town: 'giran', fee: 400,
         mons: ['pirate', 'pirateGunner', 'giantCrab', 'drownedSailor'], rare: { id: 'pirateKing', p: 0.007 },
         drops: [{ id: 'rifle', p: 0.002 }, { id: 'trident', p: 0.001 }, { id: 'tshirt', p: 0.002 }, { id: 'battleAxe', p: 0.002 },
             { id: 'dexRing', p: 0.0004 }, { id: 'silverBullet', p: 0.05, n: [5, 15] }],
@@ -101,7 +101,7 @@ const ZONES = [
         desc: '熔岩翻騰的火山洞窟，炎之魔神伊弗利特的領域。',
     },
     {
-        id: 'forgottenIsle', name: '紫霧遺跡', icon: '🏚️', type: 'field', tint: 'rgba(70,30,110,0.30)', lv: [62, 76], town: 'aden', fee: 2500,
+        id: 'forgottenIsle', name: '紫霧遺跡', icon: '🏚️', type: 'field', bg: 'wild', tint: 'rgba(70,30,110,0.30)', lv: [62, 76], town: 'aden', fee: 2500,
         mons: ['ancientGiant', 'harpy', 'forgottenKnight', 'chimera'], rare: { id: 'forgottenKing', p: 0.007 },
         drops: [{ id: 'tsurugi', p: 0.0003 }, { id: 'abyssScythe', p: 0.0003 }, { id: 'holyMace', p: 0.0004 }, { id: 'magicSniper', p: 0.0002 },
             { id: 'elixir', p: 0.0004 }, { id: 'bArmorScroll', p: 0.002 }],
