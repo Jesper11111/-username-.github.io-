@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019c`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1641,9 +1641,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 54. 手機外框拿掉左右石柱（2026-10-19，版本 `20261019b`；`images/frame-nopillar.png`、`index.html` 的 `#frame`／`#panel`／`.pillar`）
 
-- 使用者要求「遊戲畫面左右骷髏頭頂石柱移除」（手機直式外框；PC 橫式外框 `frame-pc-notop` 沒動）。
+- 使用者要求「遊戲畫面左右骷髏頭頂石柱移除」，先做手機直式外框，再做 PC 橫式外框（見本節最後）。
 - `frame-nopillar.png`（1006×964，約 940KB）：`frame-notop.jpg` 縮成 75%，原圖座標左邊 x < 104、右邊 x ≥ 1240 在 y < 668 的部分改透明，y 600～668 用 smoothstep 淡入（石柱底部接骷髏翅膀的地方不會切一條硬邊）。
   一次性用 PowerShell＋C# 產生（沒有留腳本）；`border-image-slice` 跟著 ×0.75 改成 `19 77 491 78 fill`，`border-image-width` 不變（仍用原圖座標 × `--s`）。
 - `#panel` 左右改成 0：地圖（和其他分頁）延伸到畫面左右邊。
 - 左右抽屜按鈕 `.pillar` 以前是蓋在整根石柱上的透明按鈕，改成地圖左右邊中間 26×56 的半圓小鈕（半透明深底＋金邊，箭頭照舊），不會擋到地圖邊緣的點擊。
 - 驗證：手機（375 寬）截圖：狩獵畫面地圖滿版、骷髏與法球完整；點左邊小鈕打開抽屜、開人物狀態版面正常；Console 無錯誤。
+- **PC 橫式外框**（版本 `20261019c`）：外框圖 `frame-pc-notop.jpg` 不變，換遮罩 `images/frame-pc-nopillar-mask.png`（`frame-pc-notop-mask.png` 複製後，原圖座標 x < 92、x ≥ 1908 在 y < 625 的 alpha 乘上 0，y 570～625 smoothstep 淡入），
+  `#frame.pc #panel` 左右改成 0，大地圖延伸到左右邊。原遮罩檔留著不用。
+  驗證：預覽窗格在大尺寸時截圖只截到局部（工具問題），改用 PowerShell 把外框＋新遮罩疊在沉眠龍窟圖上合成預覽，確認石柱消失、骷髏／法球／欄杆完整；頁面上元素位置（外框、地圖 1280×536、法球）正確；Console 無錯誤。
