@@ -244,9 +244,8 @@ function renderMap() {
     for (const z of ZONES) {
         const why = zoneBlockReason(z);
         let action;
-        if (z.type === 'tower') {
-            action = `<span class="tower-pick">樓層 <input id="tower-floor" type="number" min="1" max="${player.towerMax}" value="${Math.max(1, player.towerMax - 9)}"> / ${player.towerMax}F</span>
-                <button onclick="travelTowerBtn()" ${town ? '' : 'disabled'}>前往</button>`;
+        if (z.type === 'tower') {   // 先飛到紫霧遺跡左上角的永夜之塔傳送師面前，跟他說話才進塔（第 55 節）
+            action = `<button onclick="travelTowerKeeper()" ${town ? '' : 'disabled'}>前往傳送師</button>`;
         } else {
             action = `<button onclick="travelZone('${z.id}')" ${town && !why ? '' : 'disabled'}>前往</button>`;
         }
@@ -265,7 +264,60 @@ function renderMap() {
 
 function travelTowerBtn() {
     const v = parseInt($('tower-floor').value, 10) || 1;
-    travelZone('tower', clamp(v, 1, player.towerMax));
+    if (towerKeeperNear()) enterTowerFromKeeper(clamp(v, 1, player.towerMax));
+    else travelZone('tower', clamp(v, 1, player.towerMax));
+}
+
+// ───────── 永夜之塔傳送師（大地圖紫霧遺跡最左上角，第 55 節）─────────
+function towerKeeperNpc() { return (SCENE_BGS.wild.fieldNpcs || []).find(n => n.act && n.name === '永夜之塔傳送師'); }
+// 角色在大地圖上、站在傳送師附近（5 格內）
+function towerKeeperNear() {
+    const n = towerKeeperNpc();
+    return !!(n && scene && scene.bg === SCENE_BGS.wild && player.loc.type === 'zone' && scene.key === sceneKey()
+        && Math.abs(scene.pl.x - n.x) + Math.abs(scene.pl.y - n.y) <= 5);
+}
+// 地圖清單「前往傳送師」：從村莊免費飛到傳送師面前（不開始掛機），提示點名牌對話
+function travelTowerKeeper() {
+    if (!inTown()) { showToast('要在村莊裡才能找傳送師'); return; }
+    const n = towerKeeperNpc();
+    player.loc = { type: 'zone', id: n.zone };
+    sceneSpawnAt = n.front;
+    session = null;
+    if (player.hunting) stopHunt();
+    addLog('🌀 飛到紫霧遺跡的永夜之塔傳送師面前', 'sys');
+    openTabs = []; currentTab = 'hunt';
+    renderTabs(); refreshUI();
+    showToast('點「永夜之塔傳送師」的名牌跟他說話', 3000);
+}
+function openTowerKeeper() {
+    if (!towerKeeperNear()) { showToast('走近一點才能跟傳送師說話'); return; }
+    const z = ZONE_BY_ID.tower, max = player.towerMax;
+    openDialog('永夜之塔傳送師', `
+        <div class="npc-talk"><img src="images/npc/tower-keeper-face.jpg" alt="" class="npc-face">
+        <p class="npc-say">「永夜之塔聳立在遺跡的盡頭……上去的人很多，回來的人很少。你要進去嗎？」</p></div>
+        <p>建議 Lv.${z.lv[0]}～${z.lv[1]}・傳送費 💰${fmt(z.fee)}・已開放到 ${max}F</p>
+        <p class="tower-pick">樓層 <input id="tower-floor" type="number" min="1" max="${max}" value="${Math.max(1, max - 9)}"> / ${max}F</p>
+        ${towerBossStatusHtml()}`,
+        [{ text: '不了', cls: 'secondary' }, { text: '進入永夜之塔', keep: true, onClick: towerKeeperGo }]);
+}
+// 對話框「進入永夜之塔」：先讀樓層再關對話框（openDialog 預設先關掉才呼叫 onClick）
+function towerKeeperGo() {
+    const v = parseInt($('tower-floor').value, 10) || 1;
+    closeDialog();
+    enterTowerFromKeeper(clamp(v, 1, player.towerMax));
+}
+// 跟傳送師說話進塔：跟村莊傳送一樣收傳送費、開始掛機（travelZone 要在村莊才行，這裡另外處理）
+function enterTowerFromKeeper(floor) {
+    const z = ZONE_BY_ID.tower;
+    if (player.gold < z.fee) { showToast(`金幣不足（傳送費 ${fmt(z.fee)}）`); return; }
+    if (player.hunting) stopHunt();
+    player.gold -= z.fee;
+    player.loc = { type: 'zone', id: 'tower', floor: clamp(floor || 1, 1, player.towerMax) };
+    session = null;
+    addLog(`🌀 傳送師把你送進${zoneTitle()}`, 'sys');
+    startHunt();
+    openTabs = []; currentTab = 'hunt';
+    renderTabs(); refreshUI();
 }
 
 // 永夜之塔：已打倒的守關首領復活倒數（打倒後 6 小時，monsters.js TOWER_BOSS_RESPAWN_H）

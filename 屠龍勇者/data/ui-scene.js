@@ -103,6 +103,10 @@ const SCENE_BGS = {
     wild: {
         src: 'images/maps/wild.jpg?v=3', mini: 'images/maps/wild-mini.jpg?v=3', occ: 'images/maps/wild-occ.png', w: 141,   // ?v=：圖改過就加 1（SW 會先給快取的舊圖）
         h: 112, start: [63, 78], big: true,   // 2026-10-18 往南加一排（第 49 節）：腐朽礦坑・上層／沉眠龍窟／腐朽礦坑・深層，88 → 112 列
+        // 野外 NPC（第 55 節）：站的格子不能走；點名牌對話（act 呼叫 ui-panels.js 的函式）；front＝「飛到 NPC 面前」的落點
+        fieldNpcs: [
+            { name: '永夜之塔傳送師', role: '對話', zone: 'forgottenIsle', x: 5, y: 6, front: [6, 8], img: 'images/npc/tower-keeper.png', h: 2.4, act: () => openTowerKeeper() },   // 紫霧遺跡最左上角
+        ],
         // rect：這一區的範圍（格子 [x0,y0,x1,y1]，依序第一個符合的；沒有符合的才用最近的中心）
         regions: [
             { zone: 'forgottenIsle', x: 22, y: 12, start: [20, 14], rect: [0, 0, 49, 21] },
@@ -257,6 +261,7 @@ function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`image
 
 let scene = null;   // { key, grid, theme, pl:{x,y,rx,ry,path,dir,lunge}, mons:[], engaged, floats:[], ... }
 let sceneRaf = 0;
+let sceneSpawnAt = null;   // 下一次 buildScene 大地圖的出生格（[x, y]），用完就清掉（第 55 節）
 
 // 人物模型圖片快取（classes.js 的 sprite.src）；還沒載入完成時先用職業圖示
 const spriteCache = {};
@@ -314,7 +319,9 @@ function buildScene() {
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
     // 大地圖：從村莊傳送過來時出生在這個地圖對應區域的 start
     const zr = bg && bg.regions && player.loc.type === 'zone' && bg.regions.find(r => r.zone === player.loc.id && r.start);
-    const st = zr ? zr.start : bg && bg.start;
+    const st = (bg && bg.big && sceneSpawnAt) || (zr ? zr.start : bg && bg.start);   // sceneSpawnAt：指定落點（飛到永夜之塔傳送師面前，第 55 節）
+    sceneSpawnAt = null;
+    if (bg && bg.fieldNpcs) bg.fieldNpcs.forEach(n => spriteImage(n.img));
     const cx = st ? st[0] : Math.floor(mw / 2), cy = st ? st[1] : Math.floor(mh / 2);
     const grid = [];   // 0 地板、1 牆、2 障礙物（畫 emoji）、3 建築
     for (let y = 0; y < mh; y++) {
@@ -334,6 +341,7 @@ function buildScene() {
     const shade = [];  // 地板深淺
     for (let y = 0; y < mh; y++) { shade.push([]); for (let x = 0; x < mw; x++) shade[y].push(rnd() < 0.5); }
     if (player.loc.type === 'town' && bg) for (const b of townNpcList(bg)) grid[b.y][b.x] = 3;   // NPC 站的格子不能走
+    if (player.loc.type === 'zone' && bg && bg.fieldNpcs) for (const n of bg.fieldNpcs) grid[n.y][n.x] = 3;
     if (player.loc.type === 'town' && !bg) {   // 沒有背景圖時才用畫出來的房屋與 NPC
         for (const b of TOWN_NPCS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
         for (const [hx, hy, hw, hh] of TOWN_HOUSES) for (let y = hy; y < hy + hh; y++) for (let x = hx; x < hx + hw; x++) grid[y][x] = 4;
@@ -900,7 +908,7 @@ function sceneDraw(ctx, W, H) {
     if (scene.gates && player.loc.type === 'zone') drawGates(ctx, camX, camY, W, H);   // 大地圖路引（畫在地上，角色會走在上面）
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
-    if (player.loc.type === 'town') scene.npcRects = [];
+    if (player.loc.type === 'town' || (scene.bg && scene.bg.fieldNpcs)) scene.npcRects = [];
     const actorFont = '36px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
     const drawMon = m => {
         let sx = m.rx * TILE - camX + TILE / 2, sy = m.ry * TILE - camY + TILE / 2;
@@ -1031,6 +1039,16 @@ function sceneDraw(ctx, W, H) {
         ctx.fillText(n.icon, sx, sy - 2);
         if (n.prop) { ctx.font = '18px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.fillText(n.prop, sx - 20, sy + 6); }
         labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - 26, camX, camY, n));
+    } });
+    // 野外 NPC（大地圖，第 55 節）：去背立繪腳底對齊格子、腳下陰影，名牌可點
+    if (player.loc.type === 'zone' && scene.bg && scene.bg.fieldNpcs) for (const n of scene.bg.fieldNpcs) actors.push({ y: n.y, draw: () => {
+        const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
+        if (sx < -120 || sy < -160 || sx > W + 120 || sy > H + 60) return;
+        const img = spriteImage(n.img), dh = n.h * TILE;
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath(); ctx.ellipse(sx, sy + 12, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+        if (img) { const dw = dh * img.naturalWidth / img.naturalHeight; ctx.drawImage(img, sx - dw * 0.62, sy + 14 - dh, dw, dh); }   // 人站在圖的偏右（手杖在右邊）
+        labels.push(() => drawNpcPlate(ctx, n.name, n.role, sx, sy + 8 - dh, camX, camY, { act: n.act }));
     } });
     // 村莊點擊移動的目的地標記（走到就消失）
     const mk = scene.moveMark;
@@ -1327,7 +1345,11 @@ function sceneClick(ev) {
     const z = scene.zoom || 1;
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
     if (player.loc.type === 'zone' && !walkHome && sceneMiniClick((ev.clientX - r.left) / z, (ev.clientY - r.top) / z)) return;   // 大地圖小地圖
-    if (player.loc.type === 'zone') { sceneZoneClick(wx, wy); return; }
+    if (player.loc.type === 'zone') {
+        const np = scene.bg && scene.bg.fieldNpcs && (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
+        if (np) { np.npc.act(); return; }   // 野外 NPC 名牌（第 55 節）
+        sceneZoneClick(wx, wy); return;
+    }
     const plate = (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
     if (plate) { npcOpen(plate.npc); return; }   // 只有點名牌才開 NPC（2026-10-16 使用者要求，點身體不觸發）
     const other = presHit(wx, wy);   // 其他在線玩家（presence.js）

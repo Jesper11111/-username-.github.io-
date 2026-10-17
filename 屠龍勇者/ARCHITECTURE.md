@@ -50,10 +50,10 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`＋`-face.jpg` 永夜之塔傳送師（第 55 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
 
 ## 2. 載入順序與依賴
 
@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019f`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1656,3 +1656,19 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - PC：`frame-pc-nopillar-mask.png` 從 `frame-pc-notop-mask.png` 重新做：石柱清掉＋淡入（同上）、清掉頭頂旁邊的格紋殘邊 [92,560,128,628]／[1872,560,1908,628]，
     再在兩個角落 [0,560,330,800]、[1670,560,1999,800] 從已透明處 flood fill 暗色（亮度 < 48），**只穿過 9×9 全暗的寬通道再往回長 4px**（肋骨縫太窄不會被挖空，骷髏保持實心）；網址改 `?v=2`。
   - 一次性 PowerShell＋C# 產生，沒有留腳本；驗證用合成圖（外框＋遮罩疊在地圖上）與手機截圖。
+
+## 55. 永夜之塔傳送師（大地圖紫霧遺跡最左上角；2026-10-19，版本 `20261019f`）
+
+- 使用者要求：「大地圖紫霧遺跡最左上角新增 NPC 永夜之塔傳送師；地圖使用永夜之塔會飛到傳送師面前，跟傳送師講話可以選擇要不要進入永夜之塔」，給了一張森林裡黑袍老法師的立繪。
+- 圖：原圖存 `tools/sprite-src/tower-keeper-src.jpg`；`tools/stage/npc-cut.ps1` 去背 → `images/npc/tower-keeper.png`（266×360）＋對話頭像 `tower-keeper-face.jpg`。
+  去背規則：從圖邊 flood fill「綠色為主（G > R+6）」或「偏亮（L > 62）且不偏暖（R−G < 16）」的像素（森林、霧、灰石地），手杖、皮膚、鬍子被黑袍包住所以留著；
+  `-FeetY 1110` 切掉腳下地面，`-Erase` 多邊形再清掉碰到黑袍的左下岩石、右下地面、黑袍與手杖之間的地面。參數見腳本開頭與本節指令：
+  `-FeetY 1110 -Face '380,110,360,360' -Erase '0,600 335,600 322,660 305,700 270,800 222,900 160,1000 110,1055 80,1110 0,1110;742,985 820,985 820,1110 735,1110;688,740 707,740 707,995 690,995'`。
+  （腳本裡圖片變數不能叫 `$src`：PowerShell 變數不分大小寫，會跟 `[string]$Src` 參數衝突、被轉成字串。）
+- `SCENE_BGS.wild.fieldNpcs`（ui-scene.js）：`{ name, role, zone, x: 5, y: 6, front: [6, 8], img, h: 2.4, act }`。`buildScene` 把 NPC 站的格子設成 3（不能走）並預載圖；
+  畫在角色依 y 排序裡（腳下陰影＋立繪，人在圖的偏右所以往左偏 62%），名牌用 `drawNpcPlate`；`sceneClick` 在野外先檢查 `scene.npcRects`，**只有點名牌才對話**（跟村莊一樣）。
+- 地圖清單（`renderMap`）永夜之塔卡片：拿掉樓層輸入，按鈕改「前往傳送師」→ `travelTowerKeeper()`（ui-panels.js）：要在村莊、**免費**、`player.loc` 改成紫霧遺跡、
+  `sceneSpawnAt = front`（ui-scene.js 全域，下一次 `buildScene` 大地圖用這格出生，用完清掉）、不開始掛機，提示「點名牌跟他說話」。
+- `openTowerKeeper()`：角色要在傳送師 5 格內（`towerKeeperNear`），對話框＝頭像＋台詞、建議等級、傳送費、樓層輸入（預設最高樓 −9）、守關首領復活狀態；
+  「進入永夜之塔」`towerKeeperGo`（`keep: true`，先讀樓層再關對話框）→ `enterTowerFromKeeper(floor)`：收傳送費 1,000、進塔、開始掛機。「不了」關掉。`travelTowerBtn` 已移除。
+- 驗證（手機 375 寬）：永夜王都按「前往傳送師」→ 出生在 6,8、地圖紫霧遺跡、沒有掛機、看得到傳送師與名牌；點名牌開對話框；按進入 → 永夜之塔 11F、扣 1,000、開始掛機；Console 無錯誤。
