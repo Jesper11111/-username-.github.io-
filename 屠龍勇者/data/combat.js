@@ -114,8 +114,9 @@ function autoSupport(st) {
     if (auto.has('teleScroll') && !s.noTele && player.hp < st.maxHp * s.telePct / 100 && countItem('teleScroll') > 0) {
         consumeItem('teleScroll');
         if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
-        addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
         leaveFight(1500);
+        const moved = typeof sceneTeleport === 'function' && sceneTeleport();   // 地圖畫面開著：傳到別的地方（ui-scene.js，第 51 節）
+        addLog(moved ? '📜 使用瞬間移動卷軸，傳送到別的地方' : '📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
         return;
     }
     if (now < hunt.potCd) return;

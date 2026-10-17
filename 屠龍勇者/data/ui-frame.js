@@ -208,8 +208,9 @@ function quickTele() {
     if (!z) { showToast('在村莊裡不需要瞬移'); return; }
     if (!consumeItem('teleScroll')) { showToast('沒有瞬間移動卷軸'); return; }
     if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
-    addLog('📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
     if (hunt) leaveFight(1500);
+    addLog(sceneTeleport() ? '📜 使用瞬間移動卷軸，傳送到別的地方' : '📜 使用瞬間移動卷軸脫離戰鬥', 'sys');   // 畫面開著才真的換位置（第 51 節）
+    renderStatus();
 }
 
 function orbHpClick() { quickHeal(); renderStatus(); }

@@ -1192,6 +1192,27 @@ function sceneEnterZone(id) {
     addLog(`📍 進入${z.name}（建議 Lv.${z.lv[0]}～${z.lv[1]}）`, player.lv < z.lv[0] ? 'warn' : 'sys');
     if (player.lv < z.lv[0] - 5) showToast(`⚠️ ${z.name}建議 Lv.${z.lv[0]} 以上，小心！`, 2500);
 }
+// 瞬間移動卷軸（2026-10-18，第 51 節）：天堂式，把角色傳到同一個地圖裡隨機一格（離原地 10 格以上、沒有怪）；
+// 大地圖只傳到目前地圖自己的區域內，格子地圖要走得到。畫面沒開（背景、離線）就只脫離戰鬥（combat.js leaveFight）
+function sceneTeleport() {
+    if (!scene || scene.key !== sceneKey() || player.loc.type !== 'zone') return false;
+    const pl = scene.pl, rs = scene.bg && scene.bg.big && scene.bg.regions;
+    let spot = null;
+    for (let i = 0; i < 600 && !spot; i++) {
+        const x = rand(1, scene.mw - 2), y = rand(1, scene.mh - 2), far = Math.abs(x - pl.x) + Math.abs(y - pl.y) >= (i < 400 ? 10 : 4);
+        if (!far || !freeTile(x, y)) continue;
+        if (scene.mons.some(m => !m.dead && Math.abs(m.x - x) + Math.abs(m.y - y) < 4)) continue;
+        if (rs ? bigRegionAt(rs, x, y).zone !== player.loc.id : !findPath(pl.x, pl.y, x, y).length) continue;
+        spot = [x, y];
+    }
+    if (!spot) return false;
+    scene.effects.push({ x: pl.rx, y: pl.ry, t: 0, dur: 500, color: '#9fd8ff' });   // 原地留一道光
+    pl.x = pl.rx = spot[0]; pl.y = pl.ry = spot[1];
+    pl.path = []; pl.dest = null; pl.lunge = null; scene.moveMark = null; scene.engaged = null;   // 原本圍著的怪留在原地（leaveFight 後 sceneUpdate 會放回遊走）
+    scene.effects.push({ x: pl.rx, y: pl.ry, t: 0, dur: 600, color: '#9fd8ff' });
+    addFloat(pl.rx, pl.ry - 0.6, '瞬間移動', '#9fd8ff');
+    return true;
+}
 // 狀態列地點後面加上目前區域（ui.js renderStatus）
 function sceneRegionName() {
     const r = scene && scene.region && scene.bg && scene.bg.big && player.loc.type === 'zone' && scene.key === sceneKey() ? scene.region : '';

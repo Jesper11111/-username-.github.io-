@@ -557,6 +557,7 @@ function openItemDialog(uid) {
     }
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
+    if (d.scroll === 'tele') btns.push({ text: '使用', onClick: quickTele });   // 2026-10-18 第 51 節
     if (d.scroll === 'home') btns.push({ text: '使用', onClick: () => { if (!currentZone()) showToast('你已經在村莊裡'); else useHomeScroll(''); } });
     if (d.cat === 'elixir') btns.push({ text: '使用', onClick: () => openElixirDialog() });
     if (d.cat === 'book' && !bookLearnError(d)) btns.push({ text: '📖 學習', onClick: () => learnBook(uid) });   // 魔法書（spellbook.js）
