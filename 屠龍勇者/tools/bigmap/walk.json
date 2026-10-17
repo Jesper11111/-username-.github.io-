@@ -18,5 +18,18 @@
     [45, 23, 61, 32], [42, 27, 44, 29], [56, 34, 58, 36],
     [56, 52, 68, 54], [55, 54, 56, 54], [49, 57, 51, 58], [47, 58, 49, 59], [45, 59, 48, 61], [44, 61, 46, 63],
     [55, 75, 58, 77], [61, 78, 63, 80]
+  ],
+  "noocc_note": "Tile rects that are never occluders (flat water: the river is dark teal and would be mistaken for pine foliage).",
+  "noocc": [[56, 52, 68, 54], [55, 54, 56, 54], [49, 56, 52, 58], [47, 58, 49, 59], [45, 59, 48, 61], [43, 61, 46, 64], [71, 12, 79, 14]],
+  "occluders_note": "Man-made / non-pine props for tools/bigmap/build-occ.ps1: poly in tile units, base = tile row the prop stands on (actors north of it are drawn behind).",
+  "occluders": [
+    { "name": "camp tent", "base": 77, "poly": [[54.3, 77.6], [55.4, 74.6], [57.0, 73.5], [58.7, 77.4]] },
+    { "name": "camp crates", "base": 80, "poly": [[60.4, 79.9], [60.7, 77.7], [63.3, 77.7], [63.3, 79.9]] },
+    { "name": "village house back wall", "base": 27, "poly": [[46, 23.5], [51, 22.3], [57, 22.8], [61, 24], [61, 27], [46, 27]] },
+    { "name": "village house front walls", "base": 32, "poly": [[45, 27], [61.5, 27], [61.5, 30.5], [57, 32.6], [50, 32.2], [45.3, 30]] },
+    { "name": "village well 1", "base": 29, "poly": [[42, 29.4], [42, 27.6], [44.5, 27.6], [44.5, 29.4]] },
+    { "name": "village well 2", "base": 36, "poly": [[55.8, 36.4], [55.8, 34.5], [58.5, 34.5], [58.5, 36.4]] },
+    { "name": "swamp wall 1", "base": 10, "poly": [[16, 10.2], [16.4, 8.2], [24.5, 7.8], [24.5, 9.8]] },
+    { "name": "swamp wall 2", "base": 15, "poly": [[22.5, 11], [24, 9.6], [31.6, 12.2], [31.6, 13.4], [27, 15.4], [25.5, 15.2]] }
   ]
 }

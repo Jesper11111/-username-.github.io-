@@ -86,7 +86,7 @@ const SCENE_BGS = {
     // 走得到的範圍照 tools/bigmap/walk.json；big：鏡頭跟著角色捲動、離角色太遠的怪收掉、有小地圖；
     // regions：區域中心格與名稱（名稱借用遊戲裡的地名），角色在哪個中心最近就算在哪一區
     wild: {
-        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', w: 100, h: 88, start: [46, 52], big: true,
+        src: 'images/maps/wild.jpg', mini: 'images/maps/wild-mini.jpg', occ: 'images/maps/wild-occ.png', w: 100, h: 88, start: [46, 52], big: true,
         regions: [
             { name: '紫霧遺跡', x: 22, y: 12 }, { name: '迷霧古林', x: 70, y: 15 }, { name: '灰燼村', x: 44, y: 34 },
             { name: '低語海岸', x: 46, y: 54 }, { name: '沉船海灣', x: 63, y: 79 },
@@ -269,7 +269,7 @@ function buildScene() {
     const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
     if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
     const bg = theme.bg ? SCENE_BGS[theme.bg] : null;
-    if (bg) { spriteImage(bg.src); if (bg.mini) spriteImage(bg.mini); }
+    if (bg) { spriteImage(bg.src); if (bg.mini) spriteImage(bg.mini); if (bg.occ) occData(bg.occ); }
     const zz = player.loc.type === 'zone' ? currentZone() : null;
     if (zz && zz.mons) zz.mons.forEach(monSpriteImg);
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
@@ -793,19 +793,32 @@ function sceneDraw(ctx, W, H) {
             // 格：攻擊照出手進度播一次；走動時循環；站著停在第一格（只有 1 格的怪走動時上下輕晃）
             const fr = m.atk > 0 ? Math.min(n - 1, Math.floor((1 - m.atk / 380) * n)) : moving ? Math.floor(gameNow / 150) % n : 0;
             const bob = moving && n === 1 ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
-            ctx.save();
-            hurtFx();
-            if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
-            ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
-            if (flash > 0 && img.complete && img.naturalWidth) ctx.drawImage(hitFlashCanvas(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, flash), sx - dw / 2, sy + 13 - dh - bob, dw, dh);
-            ctx.restore();
+            const body = () => {
+                ctx.save();
+                hurtFx();
+                if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
+                ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+                if (flash > 0 && img.complete && img.naturalWidth) ctx.drawImage(hitFlashCanvas(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, flash), sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+                ctx.restore();
+            };
+            body();
             top = sy + 13 - dh - 4;
+            const a = ctx.globalAlpha;
+            ctx.globalAlpha = 1;
+            // 被樹、擺設擋住：目前鎖定的目標疊半透明身影（其他怪就讓牠躲在後面）
+            if (drawOccPatch(ctx, sx - dw / 2 - 4, sy + 13 - dh - 4, sx + dw / 2 + 4, sy + 15, m.ry, camX, camY) && m === scene.engaged) { ctx.globalAlpha = OCC_GHOST * a; body(); }
         } else {
-            ctx.save();
-            hurtFx();
-            ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
-            ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
-            ctx.restore();
+            const body = () => {
+                ctx.save();
+                hurtFx();
+                ctx.font = big ? '54px "Segoe UI Emoji","Apple Color Emoji",sans-serif' : actorFont;
+                ctx.fillText(m.icon, sx, sy - (big ? 12 : 4));
+                ctx.restore();
+            };
+            body();
+            const a = ctx.globalAlpha;
+            ctx.globalAlpha = 1;
+            if (drawOccPatch(ctx, sx - 28, sy - (big ? 44 : 30), sx + 28, sy + 14, m.ry, camX, camY) && m === scene.engaged) { ctx.globalAlpha = OCC_GHOST * a; body(); }
         }
         ctx.globalAlpha = 1;
         // 圍上來的怪都有血條；名字只標在目標（避免擠在一起），目標腳下加紅圈
@@ -840,18 +853,27 @@ function sceneDraw(ctx, W, H) {
             if (playing) frame = Math.min(n - 1, Math.floor(pl.anim.t / anim.ms));
             else frame = pl.path.length ? Math.floor(scene.walkClock / anim.ms) % n : Math.floor(n / 2);
             const k = sp.drawH / sp.charH, dw = anim.cellW * k, dh = anim.cellH * k;
-            ctx.save();
-            if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
-            ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
-            ctx.restore();
+            const body = () => {
+                ctx.save();
+                if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
+                ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
+                ctx.restore();
+            };
+            body();
             labelY = py + 14 - sp.drawH - 6;
+            // 走到樹、帳篷後面：被蓋住的部分再疊一層半透明身影，不會完全看不到自己
+            if (drawOccPatch(ctx, px - dw / 2, py + 14 - dh, px + dw / 2, py + 16, pl.ry, camX, camY)) { ctx.globalAlpha = OCC_GHOST; body(); ctx.globalAlpha = 1; }
         } else {
-            ctx.font = '40px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-            ctx.save();
-            if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
-            ctx.fillText(CLASSES[player.cls].icon, px, py - 6 + bob);
+            const body = () => {
+                ctx.font = '40px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+                ctx.save();
+                if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
+                ctx.fillText(CLASSES[player.cls].icon, px, py - 6 + bob);
+                ctx.restore();
+            };
+            body();
             labelY = py - 32;
-            ctx.restore();
+            if (drawOccPatch(ctx, px - 24, py - 30, px + 24, py + 16, pl.ry, camX, camY)) { ctx.globalAlpha = OCC_GHOST; body(); ctx.globalAlpha = 1; }
         }
         labels.push(() => drawLabel(ctx, player.name, px, labelY, '#9fe0ff'));
     };
@@ -928,6 +950,61 @@ function sceneDraw(ctx, W, H) {
     }
     if (scene.bg && scene.bg.big) drawBigMapHud(ctx, W, H, camX, camY);
     scene.cam = { x: camX, y: camY };
+}
+
+// ───────── 大地圖：擺設遮擋（第 46 節）─────────
+// wild-occ.png（tools/bigmap/build-occ.ps1）：1 格＝原圖 4×4 px，紅色值＝0 不是遮擋物，否則＝(這塊樹冠／擺設站的格子列＋1)。
+// 角色、怪物畫完後，範圍內「站得比牠南邊」的那些像素用背景圖原樣再畫一次蓋在上面＝走到樹、帳篷後面會被擋住
+const OCC_CELL = 4;
+const occCache = {};   // src → { w, h, d: Uint8Array } | 'loading'
+function occData(src) {
+    const c = occCache[src];
+    if (c) return c === 'loading' ? null : c;
+    occCache[src] = 'loading';
+    const img = new Image();
+    img.onload = () => {
+        const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+        const g = cv.getContext('2d'); g.drawImage(img, 0, 0);
+        const px = g.getImageData(0, 0, img.width, img.height).data, d = new Uint8Array(img.width * img.height);
+        for (let i = 0; i < d.length; i++) d[i] = px[i * 4];
+        occCache[src] = { w: img.width, h: img.height, d };
+    };
+    img.onerror = () => { delete occCache[src]; };
+    img.src = `${src}?v=${GAME_VERSION}`;   // 深度圖會跟著調整，帶版本號避免 SW 一直給舊的
+    return null;
+}
+let occMaskCv = null, occPatchCv = null;
+// (x0,y0)-(x1,y1)：角色在畫面上的範圍；footY：腳底所在的格子列（可以有小數）；有蓋到東西回傳 true（呼叫端再疊一層半透明身影）
+const OCC_GHOST = 0.38;
+function drawOccPatch(ctx, x0, y0, x1, y1, footY, camX, camY) {
+    const bg = scene.bg, occ = bg && bg.occ && occData(bg.occ), img = bg && spriteImage(bg.src);
+    if (!occ || !img) return false;
+    const cx0 = Math.max(0, Math.floor((x0 + camX) / OCC_CELL)), cy0 = Math.max(0, Math.floor((y0 + camY) / OCC_CELL));
+    const cx1 = Math.min(occ.w - 1, Math.ceil((x1 + camX) / OCC_CELL)), cy1 = Math.min(occ.h - 1, Math.ceil((y1 + camY) / OCC_CELL));
+    const cw = cx1 - cx0 + 1, ch = cy1 - cy0 + 1;
+    if (cw <= 0 || ch <= 0) return false;
+    if (!occMaskCv) { occMaskCv = document.createElement('canvas'); occPatchCv = document.createElement('canvas'); }
+    const mg = occMaskCv.getContext('2d');
+    if (occMaskCv.width !== cw || occMaskCv.height !== ch) { occMaskCv.width = cw; occMaskCv.height = ch; }
+    const id = mg.createImageData(cw, ch);
+    let any = false;
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+        const v = occ.d[(cy0 + y) * occ.w + cx0 + x];
+        if (v && v - 1 > footY + 0.2) { id.data[(y * cw + x) * 4 + 3] = 255; any = true; }
+    }
+    if (!any) return false;
+    mg.putImageData(id, 0, 0);
+    const pw = cw * OCC_CELL, ph = ch * OCC_CELL, pg = occPatchCv.getContext('2d');
+    if (occPatchCv.width !== pw || occPatchCv.height !== ph) { occPatchCv.width = pw; occPatchCv.height = ph; }
+    pg.globalCompositeOperation = 'source-over';
+    pg.clearRect(0, 0, pw, ph);
+    pg.drawImage(img, cx0 * OCC_CELL, cy0 * OCC_CELL, pw, ph, 0, 0, pw, ph);
+    pg.globalCompositeOperation = 'destination-in';
+    pg.imageSmoothingEnabled = true;
+    pg.drawImage(occMaskCv, 0, 0, pw, ph);   // 遮罩放大時平滑＝邊緣柔和
+    pg.globalCompositeOperation = 'source-over';
+    ctx.drawImage(occPatchCv, cx0 * OCC_CELL - camX, cy0 * OCC_CELL - camY);
+    return true;
 }
 
 // ───────── 大地圖：小地圖＋進入區域的橫幅（第 45 節）─────────
