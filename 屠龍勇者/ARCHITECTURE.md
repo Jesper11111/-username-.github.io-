@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019d`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1650,3 +1650,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **PC 橫式外框**（版本 `20261019c`）：外框圖 `frame-pc-notop.jpg` 不變，換遮罩 `images/frame-pc-nopillar-mask.png`（`frame-pc-notop-mask.png` 複製後，原圖座標 x < 92、x ≥ 1908 在 y < 625 的 alpha 乘上 0，y 570～625 smoothstep 淡入），
   `#frame.pc #panel` 左右改成 0，大地圖延伸到左右邊。原遮罩檔留著不用。
   驗證：預覽窗格在大尺寸時截圖只截到局部（工具問題），改用 PowerShell 把外框＋新遮罩疊在沉眠龍窟圖上合成預覽，確認石柱消失、骷髏／法球／欄杆完整；頁面上元素位置（外框、地圖 1280×536、法球）正確；Console 無錯誤。
+- **骷髏去背**（版本 `20261019d`，使用者回報「畫面骷髏沒有去背景乾淨」）：石柱拿掉後，骷髏後面還有原圖的暗色階梯底，地圖下緣也切到骷髏頭頂。
+  - 手機：`images/frame-clean.png`（`frame-nopillar.png` 再處理）＝縮圖座標 y 440～650（欄杆以上）從頂端與中間黑帶開始 flood fill 亮度 < 56 的暗色像素改透明（邊緣 70%），只留骷髏、翅膀、法球；`border-image` 改用這張。
+    另外 `#frame::after` 把原圖 y 630～880 那段（`background-position-y: -630 × --s`、寬 100%）疊在地圖上面（z-index 2、不吃點擊），骷髏頭頂不會被地圖下緣切掉；PC 不顯示。
+  - PC：`frame-pc-nopillar-mask.png` 從 `frame-pc-notop-mask.png` 重新做：石柱清掉＋淡入（同上）、清掉頭頂旁邊的格紋殘邊 [92,560,128,628]／[1872,560,1908,628]，
+    再在兩個角落 [0,560,330,800]、[1670,560,1999,800] 從已透明處 flood fill 暗色（亮度 < 48），**只穿過 9×9 全暗的寬通道再往回長 4px**（肋骨縫太窄不會被挖空，骷髏保持實心）；網址改 `?v=2`。
+  - 一次性 PowerShell＋C# 產生，沒有留腳本；驗證用合成圖（外框＋遮罩疊在地圖上）與手機截圖。
