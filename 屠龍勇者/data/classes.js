@@ -78,13 +78,13 @@ const CLASSES = {
         base: { str: 12, dex: 15, con: 8, int: 10, wis: 11, cha: 9 },
         hp: [10, 12], mp: [3, 5], startHp: 12, startMp: 5, mr: 10, spDiv: 8, mpRegenK: 0.6,
         weapons: ['dagger', 'claw', 'dual'], shield: true, start: ['dagger', 'leatherArmor'],
-        // 人物模型 v5（2026-10-19 使用者給的新動作表，雙持火焰彎刀）：tools/cut-sprites.ps1 依 tools/sprite-src/darkelf-v5-*.json 切出（第 18 節；v4 圖檔留著）
+        // 人物模型（第一版，2026-10-19 使用者要求改回）：tools/cut-sprites.ps1 依 tools/sprite-src/darkelf-*.json 切出（原圖沒有背面，向上沿用側面格，第 18 節；v2～v5 圖檔留著）
         sprite: {
             drawH: 48, charH: 113,
-            walk:   { src: 'images/sprites/darkelf-v5-walk.png',   cellW: 88,  cellH: 117, frames: { down: 5, right: 5, up: 2 }, ms: 120 },
-            attack: { src: 'images/sprites/darkelf-v5-attack.png', cellW: 134, cellH: 116, frames: { down: 9, right: 9, up: 2 }, ms: 50 },
-            cast:   { src: 'images/sprites/darkelf-v5-cast.png',   cellW: 122, cellH: 85,  frames: { down: 6, right: 4, up: 2 }, ms: 90 },
-            hit:    { src: 'images/sprites/darkelf-v5-hit.png',    cellW: 88,  cellH: 116, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
+            walk:   { src: 'images/sprites/darkelf-walk.png',   cellW: 152, cellH: 117, frames: { down: 8, right: 7, up: 7 }, ms: 110 },
+            attack: { src: 'images/sprites/darkelf-attack.png', cellW: 252, cellH: 155, frames: { down: 7, right: 7, up: 5 }, ms: 55 },
+            cast:   { src: 'images/sprites/darkelf-cast.png',   cellW: 206, cellH: 112, frames: { down: 4, right: 4, up: 4 }, ms: 100 },
+            hit:    { src: 'images/sprites/darkelf-hit.png',    cellW: 154, cellH: 130, frames: { down: 3, right: 3, up: 3 }, ms: 90 },
         },
         art: 'images/classes/darkelf.jpg',
         hero: 'images/classes/hero/darkelf.png?v=2',   // 去背全身像（2026-10-16 新立繪，tools/stage/art-cut.ps1；沒寫的職業用 hero/職業.webp）
