@@ -15,7 +15,7 @@ const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵共用）
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵／腐朽礦坑上層・深層／沉眠龍窟共用，第 48、49 節）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
@@ -37,14 +37,14 @@ const ZONES = [
         desc: '世界樹守護的古老森林，遺跡間有樹精徘徊。',
     },
     {
-        id: 'gludio1', name: '腐朽礦坑・上層', icon: '⛏️', type: 'dungeon', lv: [15, 25], town: 'gludio', fee: 150,
+        id: 'gludio1', name: '腐朽礦坑・上層', icon: '⛏️', type: 'dungeon', bg: 'wild', lv: [15, 25], town: 'gludio', fee: 150,
         mons: ['gandiOrc', 'zombie', 'lycan', 'orcxOrc', 'stoneGolem'],
         drops: [{ id: 'silverSword', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
             { id: 'leatherGloves', p: 0.005 }, { id: 'ironBoots', p: 0.002 }, { id: 'crystalWand', p: 0.001 }, { id: 'silverDagger', p: 0.002 }],
         desc: '中級冒險者的修練場。',
     },
     {
-        id: 'sleepingCave', name: '沉眠龍窟', icon: '🦇', type: 'dungeon', scene: 'cave', lv: [18, 28], town: 'gludio', fee: 200,
+        id: 'sleepingCave', name: '沉眠龍窟', icon: '🦇', type: 'dungeon', scene: 'cave', bg: 'wild', lv: [18, 28], town: 'gludio', fee: 200,
         mons: ['lizardman', 'caveBat', 'darkElfScout', 'castor', 'drake'], rare: { id: 'wakingDrake', p: 0.006 },
         drops: [{ id: 'silverSword', p: 0.002 }, { id: 'ironHelm', p: 0.003 }, { id: 'chainMail', p: 0.002 }, { id: 'ironShield', p: 0.003 },
             { id: 'claw', p: 0.002 }, { id: 'dualBlade', p: 0.002 }, { id: 'spear', p: 0.003 }, { id: 'silverBullet', p: 0.05, n: [5, 15] }],
@@ -58,7 +58,7 @@ const ZONES = [
         desc: '海賊盤踞的廢墟要塞，據說藏著海賊王的寶藏。',
     },
     {
-        id: 'gludio2', name: '腐朽礦坑・深層', icon: '🔥', type: 'dungeon', lv: [24, 36], town: 'gludio', fee: 300,
+        id: 'gludio2', name: '腐朽礦坑・深層', icon: '🔥', type: 'dungeon', bg: 'wild', lv: [24, 36], town: 'gludio', fee: 300,
         mons: ['skeletonAxe', 'blackKnight', 'giantAnt', 'spartoi', 'ghast'], rare: { id: 'baphomet', p: 0.01 },
         drops: [{ id: 'katana', p: 0.0008 }, { id: 'twoHandSword', p: 0.002 }, { id: 'battleAxe', p: 0.002 }, { id: 'warHammer', p: 0.002 },
             { id: 'plateMail', p: 0.001 }, { id: 'mageRobe', p: 0.001 }, { id: 'longBow', p: 0.002 }, { id: 'rifle', p: 0.002 },
