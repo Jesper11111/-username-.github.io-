@@ -89,6 +89,20 @@ function bgmSettingsHtml() {
                 oninput="setBgmVol(this.value);$('bgm-vol-n').textContent=this.value"></label>`;
 }
 
+// 使用者操作當下（sfx.js 的 sfxGesture 呼叫）：手機規定 <audio> 第一次 play() 要在操作當下，
+// 標題畫面還不用放音樂時也先 play() 再立刻 pause()，之後進遊戲由計時器播放才不會被擋
+let bgmPrimed = false;
+function bgmGesture(activation) {
+    if (!sfxCtx || !bgmInit()) return;
+    if (!bgmPrimed && activation) {
+        bgmPrimed = true;
+        if (!bgmEl.src) bgmEl.src = BGM_LISTS.town[0];
+        const p = bgmEl.play();
+        bgmEl.pause();
+        if (p) p.catch(() => { });
+    }
+    bgmUpdate();
+}
+
 setInterval(bgmUpdate, 500);
 document.addEventListener('visibilitychange', bgmUpdate);
-document.addEventListener('pointerdown', () => setTimeout(bgmUpdate, 0), { capture: true });

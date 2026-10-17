@@ -66,7 +66,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261017g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261017h`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1465,5 +1465,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `sw.js`：`music/` 與帶 `Range` 的請求不經過 SW（`<audio>` 分段要檔回 206，`cache.put` 會丟錯讓播放失敗）；所以離線時沒有音樂。
 - **村莊音樂**（版本 `20261017d`）：使用者給 `城鎮音樂.mp4`（放在桌面 `屠龍勇者人物模組資料/`）→ `music/town1.m4a`（約 2.8MB、2:58），`player.loc.type === 'town'` 時循環播。
   換區（野外↔村莊）時先淡出 1.5 秒再換曲淡入（`bgmSwap`）；`bgmPos` 記每組播到哪，回到同一區從原位置繼續（本機伺服器不支援 Range，跳不過去會從頭播）。`bgmList`＝該播的組、`bgmCur`＝`<audio>` 目前載入的組。
+- **手機沒聲音修正**（版本 `20261017h`，使用者回報「手機玩遊戲沒有聽到背景音樂跟音效」，線上已是 `20261017g`）：
+  原本只在 `pointerdown` 解鎖，但手機觸控的 pointerdown **不算使用者操作**（瀏覽器規定觸控要 `touchend`／`pointerup`／`click`），所以 `AudioContext` 一直是 suspended、`sfx()` 全部不播；電腦滑鼠的 pointerdown 算，所以電腦正常。
+  改成 `sfxGesture` 聽 pointerdown／pointerup／touchend／click／keydown：`sfxUnlock` 在 `resume()` 之外再播一段無聲短音（舊版 iOS 要真的播過聲音才解鎖），並設 `navigator.audioSession.type = 'playback'`（iOS 17+，手機靜音鍵開著也出聲）；
+  `bgmGesture(activation)`：第一次真正的使用者操作（`navigator.userActivation.isActive`，沒有這個 API 時排除觸控 pointerdown）就對 `<audio>` play()＋pause() 一次，之後進野外／村莊由計時器播放才不會被手機擋。
+  驗證：手機模擬（Android UA、375 寬）點標題畫面後 AudioContext running、音檔 23 個載入、背景音樂已預備；建角進村莊自動播城鎮音樂，開關視窗有介面音效；Console 無錯誤。實機（iPhone／Android）尚待使用者確認。
 - 之後要加首領／龍穴音樂：在 `BGM_LISTS` 加一組、`bgmWant()` 回傳對應名稱即可。
 - 驗證：本機野外自動播放、回村莊 1.5 秒淡出暫停、回野外從原位置繼續、`playbackRate` 16 倍播完自動換下一首、關掉開關會停、Console 無錯誤（本機測試伺服器不支援 Range，拖曳進度會跳回 0，GitHub Pages 正常）。

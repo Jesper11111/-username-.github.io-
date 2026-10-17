@@ -42,12 +42,18 @@ function sfxUnlock() {
     if (!sfxCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
+        // iOS 17+：設成 playback，手機切到靜音（側邊靜音鍵）時網頁聲音照樣出來（跟影片一樣）；舊版 iOS 沒有這個 API
+        try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
         sfxCtx = new AC();
         sfxGain = sfxCtx.createGain();
         sfxGain.gain.value = sfxCfg.vol / 100;
         sfxGain.connect(sfxCtx.destination);
     }
-    if (sfxCtx.state === 'suspended') sfxCtx.resume();
+    if (sfxCtx.state !== 'running') {
+        sfxCtx.resume().catch(() => { });
+        // 舊版 iOS Safari：要在使用者操作當下真的播一個聲音才會解鎖，播一段無聲的極短音
+        try { const s = sfxCtx.createBufferSource(); s.buffer = sfxCtx.createBuffer(1, 1, 22050); s.connect(sfxCtx.destination); s.start(0); } catch (e) { }
+    }
 }
 function sfxLoad(name) {
     if (sfxBuf[name] || sfxLoading[name] || !sfxCtx) return;
@@ -103,8 +109,14 @@ function sfxSettingsHtml() {
 }
 
 // 第一次點擊／按鍵後才能出聲；之後所有按鈕點擊都有「喀」一聲（同一下已經播過介面音效，例如開視窗，就不重複）
-document.addEventListener('pointerdown', () => { sfxUnlock(); sfxPreload(); }, { capture: true });
-document.addEventListener('keydown', () => { sfxUnlock(); sfxPreload(); }, { capture: true });
+// 手機觸控要等手指「放開」（touchend／pointerup／click）才算使用者操作，pointerdown 不算——只聽 pointerdown 時手機一直沒聲音（2026-10-17）
+function sfxGesture(e) {
+    sfxUnlock(); sfxPreload();
+    // 這次是不是瀏覽器承認的「使用者操作」（觸控的 pointerdown 不算）
+    const act = navigator.userActivation ? navigator.userActivation.isActive : (e.type !== 'pointerdown' || e.pointerType === 'mouse');
+    if (typeof bgmGesture === 'function') bgmGesture(act);   // 背景音樂也要在使用者操作當下先播一次（bgm.js）
+}
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, sfxGesture, { capture: true, passive: true }));
 document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('button, .tab-btn, [onclick]');
     if (b && !b.disabled && performance.now() - sfxUiAt > 60) sfx('ui-click');
