@@ -49,8 +49,11 @@
 
 ## 6. 多個 AI 一起工作
 
-- Claude（Claude Code 桌面版）：能開瀏覽器實際玩、截圖、commit，目前負責指揮與驗收。
-- Gemini（Gemini CLI，自動讀 `GEMINI.md`）：Claude 透過 `.claude/gemini/ask.ps1` 呼叫（`prompt.txt` 進、`answer.txt` 出，模型寫在 `model.txt`）。
+- 每個 AI 都能**獨立**從修改走到 commit（`AGENTS.md` 第 4 節），不需要別的 AI 檢查。
+- Claude（Claude Code 桌面版）：能開瀏覽器實際玩、截圖、commit。
+- Gemini（Gemini CLI，自動讀 `GEMINI.md`）：使用者雙擊 `Gemini改遊戲.bat` 直接開（伺服器＋瀏覽器＋Gemini 一起啟動）；
+  Claude 也能透過 `.claude/gemini/ask.ps1` 呼叫（`prompt.txt` 進、`answer.txt` 出，模型寫在 `model.txt`）。
+- 給其他 AI 的壓縮版交接（整份貼上就能接手，人看不懂沒關係）：`AI_HANDOFF.min.md`。
   API 金鑰目前是免費層，Pro 模型（`gemini-3.1-pro-preview`）要在 Google AI Studio 為金鑰的專案開帳單才能用。
 - 換新的 AI 接手：在 `屠龍勇者/` 資料夾開啟它，第一句話說「先讀 AGENTS.md 和 HANDOFF.md，再告訴我你理解的現況」，確認它講對了再交代工作。
   如果新 AI 會自動讀別的檔名（例如 `.cursorrules`），在那個檔寫一行「請讀 AGENTS.md」即可。

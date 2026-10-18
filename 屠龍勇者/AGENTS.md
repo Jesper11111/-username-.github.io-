@@ -37,11 +37,23 @@
 - 不要使用或複製官方《天堂》／《天堂 M》《我獨自升級》等商業作品的圖片，只能用原創、使用者自己生成或免費授權（CC0 等）的素材。
 - 本機測試時不要讓測試角色上傳到線上（排行榜、雲端存檔）；會改數值的測試先備份 localStorage 的 `dragonSlayer_*` 存檔。
 
-## 4. 測試與發佈
+## 4. 測試與發佈（每個 AI 都要能獨立走完，不需要別的 AI 幫忙）
 
-- 本機伺服器：`.claude/launch.json` 的 `dragon`（port 8790；任何靜態伺服器在 `屠龍勇者/` 開都可以）。
-  改完要實際開遊戲：**Console 沒有錯誤**、實際走一次相關畫面，才算完成。
-- 發佈：GitHub Pages 直接發佈 repo 的 `main`，網址 `https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`，推上去約 1～2 分鐘上線。
-- 流程：改完並測過 → commit 到本機 `main`（訊息格式「黑暗大陸：做了什麼，版本號」）→ 請使用者在 **GitHub Desktop 按 Push origin**。
-  終端機沒有 git 憑證，AI 自己推不上去；使用者不習慣開 PR，直接 main 就好。
-- 沒辦法看畫面的 AI（只能改程式的）：改完**不要 commit**，回報「改了哪些檔案／哪幾行、新版本號、預期畫面變化、怎麼測」，交給能開瀏覽器的 AI 或使用者驗證。
+使用者會直接找你改遊戲，**沒有其他 AI 幫你檢查**，所以下面每一步都要自己做完：
+
+1. **改程式**（照第 1～3 節）。
+2. **自動檢查**：執行 `powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1`，
+   會檢查 JS 語法、所有 `?v=` 跟 `GAME_VERSION` 一致、每個 `data/*.js` 都有載入、沒有殘留衝突標記。
+   要看到 `ALL CHECKS PASSED` 才能往下；有 `[FAIL]` 就修到全部通過。
+3. **請使用者實際玩一次**：本機伺服器 `http://localhost:8790/`（使用者用 `Gemini改遊戲.bat` 開啟時已自動啟動並開好瀏覽器；
+   沒開的話執行 `powershell -NoProfile -ExecutionPolicy Bypass -File ..\tools\serve.ps1 -Root . -Port 8790`，它會一直執行，要另開視窗）。
+   能自己開瀏覽器的 AI 就自己測：**Console 沒有錯誤**、實際走一次相關畫面。
+   不能的話，給使用者「照著點」的步驟（格式見 `HANDOFF.md` 第 5 節），等使用者回報沒問題。有問題就修，回到第 2 步。
+4. **commit**：使用者說沒問題後，`git add` 這次改的檔案（不要用 `git add -A`），commit 到本機 `main`，訊息格式「黑暗大陸：做了什麼，版本號」。
+   `git` 不在 PATH 時用 `HANDOFF.md` 第 4 節的完整路徑。
+5. **請使用者推送**：告訴使用者「請在 GitHub Desktop 按 Push origin」。終端機沒有 git 憑證，AI 自己推不上去；使用者不開 PR，直接 main 就好。
+   GitHub Pages 發佈 `main`，網址 `https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`，推上去約 1～2 分鐘上線。
+6. **更新 `HANDOFF.md`**（現況的版本號、完成／新增的待辦）並一起 commit。
+
+- 不要 `git push --force`、`git reset --hard`、切換分支或刪除分支。
+- 改壞想還原：用 `git diff` 看改了什麼，`git checkout -- 檔名` 還原單一檔案（還原前先跟使用者確認）。
