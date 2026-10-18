@@ -712,10 +712,10 @@ function onDeath(killer) {
 // ───────── 自然回復與步行（主迴圈呼叫）─────────
 function regenTick() {
     const st = calcStats();
-    if (invWeight() > st.weightMax * WEIGHT_NO_REGEN) return;
+    const w = invWeight();
     const mul = player.loc.type === 'town' ? 3 : mapModOn('blight') ? 0.6 : 1;   // 地圖詞綴「枯竭」回復 -40%
-    player.hp = Math.min(st.maxHp, player.hp + Math.round(st.hpRegen * mul));
-    player.mp = Math.min(st.maxMp, player.mp + Math.round(st.mpRegen * mul));
+    if (w <= st.weightMax * WEIGHT_NO_REGEN) player.hp = Math.min(st.maxHp, player.hp + Math.round(st.hpRegen * mul));
+    if (w < st.weightMax * WEIGHT_NO_MP_REGEN) player.mp = Math.min(st.maxMp, player.mp + Math.round(st.mpRegen * mul));   // 回魔：負重 70% 以上才停（回血仍是超過 50% 停）
 }
 
 function walkTick() {

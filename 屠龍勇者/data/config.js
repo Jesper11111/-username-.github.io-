@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261019k';
+const GAME_VERSION = '20261019l';
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
 const SAVE_KEY = 'dragonSlayer_save_v2';   // 欄位 0；其他欄位是 SAVE_KEY + '_s' + 編號（save.js slotKey）
@@ -23,7 +23,8 @@ const BONUS_STAT_LEVEL = 51;      // 51 級起每升一級 +1 點能力
 const EXP_RATE = 1;               // 狩獵經驗倍率（像伺服器倍率；1 = 天堂原版）
 const POTION_CD_MS = 1000;        // 喝水間隔
 const WALK_HOME_MS = 15000;       // 步行回村時間
-const WEIGHT_NO_REGEN = 0.5;      // 負重超過 50% 不會自然回復
+const WEIGHT_NO_REGEN = 0.5;      // 負重超過 50% 不會自然回血
+const WEIGHT_NO_MP_REGEN = 0.7;   // 負重 70% 以上不會自然回魔（2026-10-19 使用者要求，原本跟回血一樣 50%）
 
 // 遊戲時鐘（毫秒）：主迴圈每次加上經過時間。增益、冷卻、喝水間隔、步行都用它，
 // 背景分頁被節流時才會跟戰鬥同步變慢。龍穴冷卻等「真實時間」則用 Date.now()。
