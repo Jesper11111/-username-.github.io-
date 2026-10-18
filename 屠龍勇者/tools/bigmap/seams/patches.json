@@ -1,0 +1,9 @@
+{
+  "note": "Seam patches for the big map (ARCHITECTURE.md section 58). Each patch = a 1024x1024 square of wild.jpg (map px, 1 tile = 32px). orient v = vertical seam at map x 'at', h = horizontal seam at map y 'at'; band = half width of the magenta area the AI repaints. Fixed images go to fixed/<id>.png|jpg|webp.",
+  "size": 1024,
+  "patches": [
+    { "id": "01-beach-pyramid", "x": 2392, "y": 1820, "orient": "v", "at": 2904, "band": 150, "note": "海灘（低語海岸）右邊 ↔ 金字塔（黃沙王陵）左邊" },
+    { "id": "02-beach-mine", "x": 1100, "y": 2280, "orient": "h", "at": 2800, "band": 150, "note": "海灘（低語海岸）下緣 ↔ 南排礦坑上層／沉眠龍窟上緣" },
+    { "id": "03-dunes-lava", "x": 3904, "y": 980, "orient": "v", "at": 4416, "band": 150, "note": "東邊沙丘（焦骨峽谷）↔ 熔火煉獄左邊" }
+  ]
+}

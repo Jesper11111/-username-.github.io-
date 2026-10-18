@@ -1716,3 +1716,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `regions` 加 熔火煉獄 [141,30,187,64]（出生 160,48 廣場中間）。
 - 驗證：永夜王都傳送到熔火煉獄 → 大地圖、出生在符文廣場、怪是火之精靈／熔岩高崙／火蜥蜴；往西走到 140,53 換成焦骨峽谷；Console 無錯誤。
 - 大地圖現在包含 11 個地圖（第 49 節的 10 個＋熔火煉獄；熔火煉獄原本的地監格子畫面不再用）。
+
+## 58. 大地圖接縫 AI 補畫（2026-10-19，工具階段；`tools/bigmap/seams/`、`build-map.ps1` 的 `Patch`）
+
+- 使用者嫌地圖銜接粗糙（各張 AI 圖直接貼上、邊緣霧狀淡入、畫風不同），選方案 D「AI 補畫接縫」（沒選 E 改磁磚地圖：要重做地圖系統與整套素材）。
+- `seams/patches.json`：每條接縫一筆 `{ id, x, y, orient: 'v'|'h', at, band, note }`，`x,y`＝1024×1024 方塊在大地圖的左上角（像素，1 格 32px），
+  `at`＝接縫所在的 x（垂直）或 y（水平），`band`＝洋紅色補畫區的半寬（目前 150）。試做 3 條：01 海灘↔金字塔、02 海灘↔南排礦坑／龍窟、03 東邊沙丘↔熔火煉獄。
+- `seams/seam-cut.ps1 [-Only id]`：從**沒貼補丁的底圖** `seams/base.jpg`（`build-map.ps1` 每次產生；沒有就用 `images/maps/wild.jpg`）切方塊，
+  輸出 `seams/todo/<id>.png`（接縫塗洋紅色，給生圖 AI）與 `<id>-orig.png`（原樣）。`base.jpg`、`todo/` 在 `.gitignore`。
+- 使用者把 AI 補好的圖放進 `seams/fixed/<id>.png|jpg|webp`（尺寸不拘，會縮成 1024），重跑 `build-map.ps1`：拼完先存 `base.jpg`，再把每張 fixed 用 `[BigMap]::Patch` 貼回——
+  補畫區（band＋24px）完全蓋上，往外 140px 平滑淡出，方塊沿接縫的兩端 110px 也淡出，AI 圖顏色略偏也不會出現硬邊。
+- 之後要做：補好的圖貼回後重跑 `build-occ.ps1`（遮擋深度圖）、用 `check-mask.ps1` 確認可走範圍（AI 可能把路畫成石頭）、`SCENE_BGS.wild.src`／`mini` 的 `?v=` 加 1 並換版本號。
+  其他接縫照效果再加進 `patches.json`。
