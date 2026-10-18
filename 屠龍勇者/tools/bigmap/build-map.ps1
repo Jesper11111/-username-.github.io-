@@ -55,6 +55,8 @@ public static class BigMap {
   }
   // seam patch (section 58): paste an AI-repainted square back. Fully opaque inside the band (+pad), smooth fade over 'fade' px
   // perpendicular to the seam, and fade at the two ends along the seam, so colour drift outside the band never shows a hard edge.
+  // (2026-10-19 tried a "fade zone only adds fix-orig" mode for overlapping patches: it left hard-edged fog blocks at the band edge,
+  //  so plain alpha blending is kept — overlapping patches looked fine with it.)
   public static void Patch(Bitmap map, Bitmap fix, int px, int py, bool vertical, int at, int band, int pad, int fade, int endFade) {
     int S = fix.Width;
     BitmapData dm; var bm = Bytes(map, out dm);
