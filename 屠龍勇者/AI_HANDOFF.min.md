@@ -18,7 +18,7 @@ R11 local test:don't upload test chars online;backup localStorage dragonSlayer_*
 R12 no force-push/reset --hard/branch switch
 ## WORKFLOW
 edit→`powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1`(node --check all js,?v==GAME_VERSION,all data/*.js loaded,no conflict markers;need "ALL CHECKS PASSED")→serve `powershell -NoProfile -ExecutionPolicy Bypass -File ..\tools\serve.ps1 -Root . -Port 8790`(blocking;own window)→http://localhost:8790/ Console 0 errors+walk the screen(no browser?→give user numbered click steps+ask F12 red text)→user OK→git commit main msg "黑暗大陸：<what>，<ver>"→tell user Push in GitHub Desktop
-launcher:`Gemini改遊戲.bat`(server+browser+gemini-cli auto_edit,PATH node+git)
+launcher:`Gemini改遊戲.bat`(server+browser+gemini-cli auto_edit,PATH node+git)|`ChatGPT改遊戲.bat`(same+codex cli 0.163,reads AGENTS.md)
 env:Win10 PS5.1|git NOT in PATH→C:\Users\User\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe(ver dir may change)|no push creds|node C:\Program Files\nodejs|NO python/ffmpeg→img tools=PowerShell+inline C#(scripts w/ non-ASCII need UTF-8 BOM;var名不可與param同名不分大小寫)|video→WinRT MediaTranscoder(§44.1)|test tip:preview not foreground→no rAF→call sceneUpdate(50) manually;fast-forward:gameNow+=100;huntTick(100)
 ## FILES(load order=§2,index.html bottom)
 config→classes→skills→items→spellbook→monsters→zones→quests→resonance→player→enchant→affix→craft→maps→combat→town→save→cloud→offline→ui→sfx→bgm→ui-create→ui-panels→codex→raid→clan→chat→rank→wb→market→vault→presence→ui-frame→icons→hotbar→ui-scene→pwa→main

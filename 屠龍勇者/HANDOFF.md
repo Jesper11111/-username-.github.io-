@@ -53,6 +53,8 @@
 - Claude（Claude Code 桌面版）：能開瀏覽器實際玩、截圖、commit。
 - Gemini（Gemini CLI，自動讀 `GEMINI.md`）：使用者雙擊 `Gemini改遊戲.bat` 直接開（伺服器＋瀏覽器＋Gemini 一起啟動）；
   Claude 也能透過 `.claude/gemini/ask.ps1` 呼叫（`prompt.txt` 進、`answer.txt` 出，模型寫在 `model.txt`）。
+- ChatGPT（OpenAI Codex CLI 0.163.0，npm 全域安裝，自動讀 `AGENTS.md`）：使用者雙擊 `ChatGPT改遊戲.bat`，第一次要用 ChatGPT 帳號登入。
+  桌面另有 `ChatGPT.lnk`（Edge App 視窗開 chatgpt.com，只能聊天、碰不到檔案）。Microsoft Store 版裝不了：Windows Update 服務被停用。
 - 給其他 AI 的壓縮版交接（整份貼上就能接手，人看不懂沒關係）：`AI_HANDOFF.min.md`。
   API 金鑰目前是免費層，Pro 模型（`gemini-3.1-pro-preview`）要在 Google AI Studio 為金鑰的專案開帳單才能用。
 - 換新的 AI 接手：在 `屠龍勇者/` 資料夾開啟它，第一句話說「先讀 AGENTS.md 和 HANDOFF.md，再告訴我你理解的現況」，確認它講對了再交代工作。
