@@ -69,7 +69,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019l`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019m`）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1717,7 +1717,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證：永夜王都傳送到熔火煉獄 → 大地圖、出生在符文廣場、怪是火之精靈／熔岩高崙／火蜥蜴；往西走到 140,53 換成焦骨峽谷；Console 無錯誤。
 - 大地圖現在包含 11 個地圖（第 49 節的 10 個＋熔火煉獄；熔火煉獄原本的地監格子畫面不再用）。
 
-## 58. 大地圖接縫 AI 補畫（2026-10-19，工具階段；`tools/bigmap/seams/`、`build-map.ps1` 的 `Patch`）
+## 58. 大地圖接縫 AI 補畫（2026-10-19，版本 `20261019m`；`tools/bigmap/seams/`、`build-map.ps1` 的 `Patch`）
 
 - 使用者嫌地圖銜接粗糙（各張 AI 圖直接貼上、邊緣霧狀淡入、畫風不同），選方案 D「AI 補畫接縫」（沒選 E 改磁磚地圖：要重做地圖系統與整套素材）。
 - `seams/patches.json`：每條接縫一筆 `{ id, x, y, orient: 'v'|'h', at, band, note }`，`x,y`＝1024×1024 方塊在大地圖的左上角（像素，1 格 32px），
@@ -1726,5 +1726,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   輸出 `seams/todo/<id>.png`（接縫塗洋紅色，給生圖 AI）與 `<id>-orig.png`（原樣）。`base.jpg`、`todo/` 在 `.gitignore`。
 - 使用者把 AI 補好的圖放進 `seams/fixed/<id>.png|jpg|webp`（尺寸不拘，會縮成 1024），重跑 `build-map.ps1`：拼完先存 `base.jpg`，再把每張 fixed 用 `[BigMap]::Patch` 貼回——
   補畫區（band＋24px）完全蓋上，往外 140px 平滑淡出，方塊沿接縫的兩端 110px 也淡出，AI 圖顏色略偏也不會出現硬邊。
-- 之後要做：補好的圖貼回後重跑 `build-occ.ps1`（遮擋深度圖）、用 `check-mask.ps1` 確認可走範圍（AI 可能把路畫成石頭）、`SCENE_BGS.wild.src`／`mini` 的 `?v=` 加 1 並換版本號。
-  其他接縫照效果再加進 `patches.json`。
+- 檢查工具：`seam-check.ps1`＝AI 圖縮成 1024 後跟原圖比對補畫區以外的亮度差，找 −24～24px 的最佳位移（要是 0,0，否則貼回去會重影）；
+  `seam-compare.ps1`＝輸出 `todo/<id>-compare.jpg` 修改前（base.jpg）／後（wild.jpg）並排。
+- **第一批完成（`20261019m`）**：使用者用 AI 生圖補好 3 條（2048×2048，存成 `.jfif`，已改名 `fixed/<id>.jpg`），對齊檢查位移都是 0,0（差異 3.5～8.8）。
+  可走範圍照 AI 新畫的東西補 3 個擋格（`walk.json` 與 `SCENE_BGS.wild.block` 同步）：金字塔左下碎石堆 [92,80,95,84]、森林小路大石 [49,84,50,85]、流進沙丘的熔岩 [138,43,140,46]；
+  可走 9515 格全部能從草原出生點走到。重跑 `build-occ.ps1`，`wild.jpg`／`wild-mini.jpg` 網址改 `?v=5`。
+  驗證：本機（`.claude/launch.json` 新增 `dragon-alt` port 8791，8790 被別的對話佔用時用）黃沙王陵 93,75、焦骨峽谷 136,49 截圖，接縫自然、遊戲程式全部載入；預覽瀏覽器註冊 SW 失敗是環境限制（與本次無關）。
+- 流程（之後補其他接縫）：`patches.json` 加一筆 → `seam-cut.ps1 -Only id` → 使用者 AI 補畫存 `fixed/` → `seam-check.ps1` → `build-map.ps1` → `seam-compare.ps1` 看效果
+  → `check-mask.ps1` 疊可走範圍找 AI 新畫的障礙、補擋格 → `build-occ.ps1` → 圖 `?v=` 加 1、換版本號。

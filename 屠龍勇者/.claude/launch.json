@@ -8,6 +8,12 @@
       "port": 8790
     },
     {
+      "name": "dragon-alt",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "..\\tools\\serve.ps1", "-Root", ".", "-Port", "8791"],
+      "port": 8791
+    },
+    {
       "name": "game",
       "runtimeExecutable": "powershell.exe",
       "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "..\\tools\\serve.ps1", "-Root", "..", "-Port", "8780"],
