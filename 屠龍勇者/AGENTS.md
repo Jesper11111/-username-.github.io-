@@ -50,7 +50,7 @@
    能自己開瀏覽器的 AI 就自己測：**Console 沒有錯誤**、實際走一次相關畫面。
    不能的話，給使用者「照著點」的步驟（格式見 `HANDOFF.md` 第 5 節），等使用者回報沒問題。有問題就修，回到第 2 步。
 4. **commit**：使用者說沒問題後，`git add` 這次改的檔案（不要用 `git add -A`），commit 到本機 `main`，訊息格式「黑暗大陸：做了什麼，版本號」。
-   `git` 不在 PATH 時用 `HANDOFF.md` 第 4 節的完整路徑。
+   `git` 找不到時用完整路徑 `C:\Program Files\Git\cmd\git.exe`（`HANDOFF.md` 第 4 節）。
 5. **請使用者推送**：告訴使用者「請在 GitHub Desktop 按 Push origin」。終端機沒有 git 憑證，AI 自己推不上去；使用者不開 PR，直接 main 就好。
    GitHub Pages 發佈 `main`，網址 `https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`，推上去約 1～2 分鐘上線。
 6. **更新 `HANDOFF.md`**（現況的版本號、完成／新增的待辦）並一起 commit。

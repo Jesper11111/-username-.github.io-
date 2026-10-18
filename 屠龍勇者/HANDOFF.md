@@ -30,7 +30,8 @@
 
 ## 4. 環境限制（Windows 10）
 
-- 沙盒 PowerShell 裡 `git` 不在 PATH，要用 `C:\Users\User\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe`（版本號資料夾可能變）。沒有推送憑證。
+- Git for Windows 2.55（2026-10-18 用 winget 安裝）：`C:\Program Files\Git\cmd\git.exe`，已在系統 PATH（新開的終端機才吃得到；舊視窗或 AI 的沙盒找不到就用完整路徑）。
+  終端機還沒登入 GitHub，推送仍由使用者在 GitHub Desktop 按 Push origin。
 - 有 Node（`C:\Program Files\nodejs`）；**沒有** Python、ffmpeg。圖片用 PowerShell 腳本處理（`tools/`），影片抽音軌用 WinRT MediaTranscoder（第 44.1 節）。
 - Supabase（雲端存檔、聊天、交易所……）的後台由使用者操作；`gm.html` 是管理頁。
 
