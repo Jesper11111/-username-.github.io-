@@ -1,6 +1,6 @@
 # Cut "please repaint" images for big-map seams (ARCHITECTURE.md section 58).
-# Reads patches.json, crops each 1024x1024 square from the UNPATCHED map (base.jpg, written by build-map.ps1;
-# falls back to images/maps/wild.jpg), paints the seam band magenta and writes:
+# Reads patches.json, crops each 1024x1024 square from the CURRENT (already patched) map images/maps/wild.jpg, so a new patch that
+# overlaps an earlier one shows the earlier fix (patches are pasted in list order; add new ones at the end). Paints the band magenta and writes:
 #   todo/<id>.png       -> give this to the image AI (magenta = repaint here)
 #   todo/<id>-orig.png  -> same crop without magenta (reference / for AIs that prefer "fix the seam" prompts)
 # Run from the game folder: powershell -ExecutionPolicy Bypass -File tools\bigmap\seams\seam-cut.ps1 [-Only 01-beach-pyramid]
@@ -11,8 +11,7 @@ $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $dir))
 $utf8 = New-Object System.Text.UTF8Encoding $false
 $cfg = [IO.File]::ReadAllText((Join-Path $dir 'patches.json'), $utf8) | ConvertFrom-Json
-$base = Join-Path $dir 'base.jpg'
-if (-not (Test-Path $base)) { $base = Join-Path $root 'images\maps\wild.jpg' }
+$base = Join-Path $root 'images\maps\wild.jpg'
 $map = [System.Drawing.Bitmap]::FromFile($base)
 $todo = Join-Path $dir 'todo'; New-Item -ItemType Directory -Force $todo | Out-Null
 $S = [int]$cfg.size
