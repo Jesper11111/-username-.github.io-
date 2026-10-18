@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- 本機版本 **`20261019o`**（大地圖接縫第三批 6 條，第 58 節；已 commit，待使用者 Push）。`20261019n` 已上線。
+- 本機版本 **`20261019q`**（圓形小地圖＋按 M／點小地圖開全世界地圖，第 59 節；已 commit，待使用者 Push）。`20261019o`（接縫 13 條全部補完）已上線。
 - 大地圖接縫：13 條全部補完。還有幾處淡淡的霧（綠洲兩個角、熔火煉獄上下緣、金字塔右緣）可再補，使用者想做再切圖。
 - 使用者存 AI 圖的習慣：存到 `images\maps\<id>.jfif`（或 `.png.jfif`），要搬到 `tools\bigmap\seams\fixed\<id>.jpg`（別留在 images，會被發佈）。
 - 網址：`https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`（repo `k559610142-art/-username-.github.io-`，GitHub Pages 發佈 `main`）。
