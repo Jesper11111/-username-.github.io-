@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- 線上版本 **`20261019k`**；本機 `main` 多一個 commit **`20261019l`**（負重 70% 以上不回魔，回血仍是超過 50% 不回；`config.js` 的 `WEIGHT_NO_MP_REGEN`、`combat.js` 的 `regenTick`），等使用者用 GitHub Desktop 推送。
+- 線上版本 **`20261019l`**（負重 70% 以上不回魔，回血仍是超過 50% 不回；`config.js` 的 `WEIGHT_NO_MP_REGEN`、`combat.js` 的 `regenTick`），本機 `main` 與 GitHub 同步。
 - 網址：`https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`（repo `k559610142-art/-username-.github.io-`，GitHub Pages 發佈 `main`）。
 - 已完成的系統（詳見 `ARCHITECTURE.md` 各節）：12 職業（都有人物模型與立繪）＋職業故事／任務線、天堂原版經驗表、衝裝、暗黑式詞綴、
   製作通貨、異界地圖 T1～T15、共鳴裝備、天堂式魔法 1～10 級＋魔法書、快捷欄、離線收益、多角色欄位、
