@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `AGENTS.md`、`HANDOFF.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作（換 AI 接手時靠這兩份，要保持最新）。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口，指向這兩份（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
 | `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（12 職業，含 `slayer` 種族剋制） |
