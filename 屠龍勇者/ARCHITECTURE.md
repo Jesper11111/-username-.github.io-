@@ -9,6 +9,7 @@
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -27,7 +28,8 @@
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
-| `data/save.js` | 存讀檔、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
+| `data/guard.js` | **防改檔**（第 60 節）：本機存檔加密＋簽章 `saveEncode`／`saveDecode`／`saveParse`／`saveFormatMigrate`、雲端存檔簽章 `guardCloudSig`／`guardSaveCanon`／`guardCheckCloud`、記憶體數值偽裝 `guardWrap`、改檔標記 `guardFlag`（`player.integrity`） |
+| `data/save.js` | 存讀檔（本機文字一律經過 guard.js 加解密）、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
 | `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
 | `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
@@ -56,11 +58,11 @@
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 60 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -69,7 +71,9 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019q`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019r`）。
+- **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
+  `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
   SW 依版本號快取 JS，**沒換版本號，已安裝 App 的玩家會一直跑舊程式**。
@@ -1209,7 +1213,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **管理頁** `屠龍勇者/gm.html`（網址 `<網站>/屠龍勇者/gm.html`，`noindex`）：用遊戲帳號登入（登入狀態存在 `dragonSlayer_gm_auth`，和遊戲分開）。
   分頁：⚠️ 可疑紀錄（可勾「顯示已處理」；每列：歷程／已處理／封鎖）、👥 玩家（搜尋 Email 或角色名；點角色看歷程）、⛔ 封鎖名單（解除封鎖）。
   歷程視窗：最近 80 筆上傳，列出總經驗、金幣、與上一筆的變化與間隔、異常標籤。封鎖原因玩家看得到。
-- **限制**：只能事後發現，擋不住「慢慢改」；存檔仍由玩家端產生。真正防止要把戰鬥搬到伺服器（之後的交易所前必做）。
+- **限制**：只能事後發現，擋不住「慢慢改」；存檔仍由玩家端產生。真正防止要把戰鬥搬到伺服器（之後的交易所前必做）。2026-10-19 補強見第 60 節（混淆、存檔加密簽章、雲端簽章、交易所門檻）。
 - **驗證**：本機 PostgreSQL 16（模擬 auth.uid／auth.jwt）：SQL 可重複執行；正常成長（Lv10→12、1 小時）不標記；
   改檔（Lv12→40、金幣 1 億、能力 50、強化 +20、萬能藥 9、時間快 1 小時）一次標出 6 種；新角色 0.5 小時 Lv.50 標記；格式錯誤只記 parse、存檔照常寫入；
   玩家讀不到歷程與異常；非管理者不能封鎖；被封鎖者不能上傳、不能建隊、看得到原因。
@@ -1223,7 +1227,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **頻道**：🌏 世界（所有登入玩家）、🐉 隊伍（`room:<隊伍id>`，只有團隊副本隊員；沒隊伍時按鈕鎖住，離開隊伍自動切回世界）。隊伍大廳有「💬 隊伍聊天」按鈕（`chatOpen('room')`）。
 - **入口**：右柱抽屜「💬 聊天」（`DRAWERS.right`）；需要雲端且已登入。
 - **聊天框**（2026-10-10，版本 `20261010k`，使用者反映「PC 版沒有聊天框」）：左下角的戰鬥訊息框 `#log-pop`（骷髏頭開關）改成兩個分頁「📜 戰鬥訊息／💬 聊天」（`setLogPopTab`，記在 `dragonSlayer_logTab`），PC 與手機共用。
-  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會每 4 秒抓新訊息。
+  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會抓新訊息（間隔見第 61 節）。
 - **PC 入口**：底部 12 格已滿，`PC_SLOTS` 在地圖左側加三顆圓鈕（`side: true`，有深色圓底）：🐉 團隊副本（y 170）、💬 聊天（y 236）、🏰 血盟（y 302；2026-10-11 拿掉上排框架後整排上移 130），x 104，寬高 58（原圖座標）。
 - **規則（伺服器）** `dragon_chat`：每則 1～100 字（控制字元換成空白、前後空白去掉）、每人 3 秒一則（trigger `too fast`）、伺服器時間；
   每次發言有 5% 機率順手刪掉 3 天前的訊息。RLS：世界頻道所有登入者可讀；隊伍頻道只有隊員（`raid_is_member`）可讀可寫；
@@ -1755,3 +1759,49 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **可見範圍** `scene.visX`（`sceneFrame` 每幀用 `getBoundingClientRect` 算）：手機版畫布比螢幕寬、左右各超出約 25px，小地圖與世界地圖照真正看得到的左右範圍排版；PC 橫式外框底部欄杆會蓋住畫布下緣，世界地圖底部多留 `H×0.17+14`。
 - 驗證：手機 375×812（小地圖完整、世界地圖完整、點低語海岸 → 關閉並走 31 步）、PC 1280×720（M 開、Esc 關、地圖不被外框蓋到）；Console 只有預覽環境註冊 SW 的已知訊息。
   中途發現瀏覽器會把同一個 `?v=` 的舊 JS 快取住，本機測試改 JS 後也要換版本號（`20261019p` 改成 `q` 才拿到新程式）。
+
+## 60. 防改檔第 2 波：交易所門檻、存檔加密簽章、雲端存檔簽章、記憶體偽裝、混淆（2026-10-19，版本 `20261019r`；`guard.js`、`tools/anticheat.sql`、`tools/build.js`）
+
+- 使用者要求（看到別的遊戲群組說「數據亂碼加密改檔直接讀檔案來」「交易所容易爆」）：問數值加密有沒有用 → 我建議四項 → 使用者「全改」（只改黑暗大陸；根目錄 `tools/build.js` 加一行呼叫已同意）。
+  **原則**：純前端擋不住會讀程式的人（repo 是公開的，原始碼與金鑰都看得到），目標是擋掉一般玩家的改法，並讓改過的存檔**碰不到交易所／共用倉庫**（會影響其他玩家的地方）。不擋單機遊玩、不刪檔。
+- **① 交易所門檻（伺服器，`anticheat.sql`）**：`dragon_market_hold(user)`＝帳號有 30 天內**未處理**的可疑紀錄（`dragon_flags`，排除 `gold_rate`、`parse`、`market_big`、`sig`）→ `market_list`／`market_buy`／`vault_put` 拒絕（`market hold`）。
+  管理頁把紀錄按「已處理」就恢復。單筆 ≥ 5,000 萬成交 → 買賣雙方各記一筆 `market_big`（只提醒）。三個函式在 `anticheat.sql` 重新定義（內容同原本再加檢查）。
+- **② 本機存檔加密＋簽章（`guard.js`）**：localStorage 存的是 `'DS1' + 初始值 8 位 + 簽章 28 位 + base64(XOR 後的 UTF-8)`。初始值由內容的雜湊算出（**同樣內容一定得到同樣文字**：cloud.js 用文字比對判斷本機有沒有變動），
+  金鑰流 mulberry32、雜湊 cyrb53。所有讀寫存檔的地方改用 `saveParse(raw)`／`saveEncode(text)`（save.js、cloud.js、raid.js）。
+  - 讀檔（`loadGame`）：簽章不符 → 照樣能玩，`guardFlag('本機存檔簽章不符')`；內容被改 → 解不出 JSON → 和原本一樣顯示存檔損毀。
+  - 舊的未加密存檔：啟動時 `saveFormatMigrate`（main.js）轉成加密並記 `dragonSlayer_sv`；之後再出現未加密的存檔＝被換過 → 照樣能玩、標記。
+    更新後一週內（`GUARD_SIG_GRACE` 2026-10-26 前）不標記：同一台裝置同時開著的舊版分頁會把存檔寫回未加密格式。
+  - 匯出碼也是 `DS1…`；匯入時簽章不符 → 標記。舊的 base64 匯出碼：存檔時間早於 `GUARD_SINCE`（2026-10-20）才不標記。
+- **③ 雲端存檔簽章（`guard.js` ＋ `anticheat.sql`）**：玩家可以拿自己的登入憑證直接呼叫 Supabase API 改 `dragon_saves`（RLS 允許改自己的列），交易所又是讀雲端存檔，所以要伺服器能驗：
+  - `cloudPushSlot` 上傳時 `data.sig = guardCloudSig(uid, slot, player)`＝SHA-256(`GUARD_SIG_KEY|帳號|欄位|等級|經驗|金幣|inv:…|st:…|eq:…`)，每件道具 `uid,id,n,ench,q,詞綴k:v/…`、裝備依欄位名排序（`guardSaveCanon`）。
+  - 伺服器 BEFORE trigger `dragon_saves_sig` 用 `dragon_save_sig()` 以同樣規則重算，結果存在新欄位 `dragon_saves.sig_ok`（玩家改不了）。不符 → 該角色不能上架、購買、存入共用倉庫（`save signature`），並記 `sig`（24 小時一筆，不用處理：送來簽章正確的存檔就自動恢復）。
+    沒有簽章的存檔（舊版遊戲）在 `dragon_sig_grace()`（2026-10-26 台灣時間）之前視為正常。
+  - 下載（`cloudSync`、`cloudUseCloudSlot`）時 `guardCheckCloud` 也驗（瀏覽器算不出 SHA-256＝不是 https 時跳過）：被改過（或寬限期後沒簽章）→ 在那份存檔記標記，避免「API 改完 → 遊戲下載 → 遊戲重新簽章」洗白。
+  - ⚠️ `GUARD_SIG_KEY`（guard.js）與 `dragon_sig_key()`（anticheat.sql）、`guardSaveCanon` 與 `dragon_save_canon()` 必須一致，改一邊就要改另一邊並請使用者重跑 SQL。數字以 `JSON.stringify` 的寫法比對（等於 jsonb `->>`），極小的小數（1e-7 這種）會對不上，目前存檔沒有這種值。
+- **④ 記憶體數值偽裝（`guardWrap`）**：`player.gold／exp／lv／statPoints／elixirs` 改成 getter／setter，數字拆成 64 位元兩半各 XOR 亂數存放＋另一組亂數的檢查碼，每次寫入換亂數。
+  修改器（GameGuardian、Cheat Engine）搜尋數值找不到；兩份對不上 → `guardFlag('記憶體數值被修改（欄位）')`。程式照舊寫 `player.gold += n`，`JSON.stringify` 照樣存出數字。
+  套用點：`applySaveData`（讀檔、匯入）、`createPlayer`、`offline.js` 試算後從快照還原。團隊副本、人物卡等暫時物件不套。
+- **標記**：`player.integrity = { flagged, reason, at }`（同一原因 24 小時一次）。存在存檔裡，上傳後 trigger `dragon_tamper_audit` 記 `tamper`（同一個 reason＋at 只記一次，管理者處理後不會重複出現）→ 觸發 ① 的交易所門檻。
+  gm.html 類別名稱多了 `tamper` 遊戲偵測到改檔、`market_big` 交易所大額交易。遊戲端錯誤訊息在 `marketErrText`（`market hold`、`save signature`，共用倉庫也用它）。
+- **⑤ 混淆（`tools/build.js`）**：做法同修仙（修仙 ARCHITECTURE.md 第 72 節）：40 支 JS 接成 `data/game.js` 包進 `(function(){…})()`＋terser，`onclick` 用到的 139 個函式與 `chatDraft` 掛回 window，其餘（`player`、`hunt`、`cloudSb`…）主控台碰不到；
+  `FORBIDDEN`（player、hunt、session、cloudSb、cloudUser）出現在事件字串會建置失敗。gm.html 的 config／classes／cloud 接成 `data/gm-lib.js`。dist 不含 `*.md`、`tools/`、`.claude/`、`.bat`、原始 `data/*.js`。
+  根目錄 `tools/build.js` 最後一行呼叫 `buildDragon(dist/屠龍勇者)`（修仙的建置結果不變，已比對 0 差異）。**網站要由 GitHub Actions 發佈 dist 才會是混淆版**（修仙第 72 節：Pages 來源設 GitHub Actions）。
+- **要使用者做的事**：發佈後到 Supabase SQL Editor 執行 `tools/anticheat.sql`（可重複執行；也附在 `supabase.sql` 最後）。沒執行前：遊戲照常、上傳多帶 `sig` 欄位也不影響，只是伺服器還不會檢查。
+- **驗證**：
+  - 本機 PostgreSQL 16（模擬 auth）：整份 `supabase.sql`＋`anticheat.sql` 可重複執行；被標記帳號買不到、處理後買得到；≥5000 萬記兩筆、小額不記；`gold_rate`／`market_big`／`sig` 不觸發門檻；tamper 同事件只記一次；
+    瀏覽器算的簽章＝資料庫算的（含小數、空裝備欄、詞綴）；遊戲 `cloudPushSlot` 送出的資料 `sig_ok=true`；直接改金幣 → `sig_ok=false`、上架與存入倉庫被擋、記 `sig`；寬限期內沒簽章放行；玩家不能呼叫內部函式。
+  - Playwright（開發版）：存檔是 `DS1…`、看不到明文；狩獵 600 秒、存讀檔數值一致；偽裝數值 16000 次讀寫（整數／小數／負數／大數）不誤判；匯出匯入通過、改過的匯出碼標記；舊存檔轉換不標記；換成未加密存檔、只改簽章 → 標記；改內容 → 存檔損毀；
+    下載被改的雲端存檔 → 標記、正確的不標記、寬限期前沒簽章不標記；離線試算後仍有偽裝。
+  - Playwright（`node tools/build.js` 後的 dist）：`typeof player` 為 undefined、`player.gold = …` 出現 ReferenceError；建角（按鈕）、11 個分頁、重新整理後繼續、實際狩獵 25 秒（金幣、經驗增加）、gm.html 開啟；畫面上所有 on* 事件的函式都在 window；Console 無錯誤。
+- **還沒做／限制**：離線收益的離開時間仍以玩家裝置時間計算（12 小時上限、伺服器 `clock` 規則會標記快 10 分鐘以上的存檔）；加速器（加快 `Date.now`）在伺服器 5～10 倍門檻以下抓不到；排行榜沒有排除 `sig_ok=false` 的存檔。
+
+## 61. 省 Supabase 傳輸量：聊天依活躍程度輪詢、交易所列表快取（2026-10-19，版本 `20261019r`；`chat.js`、`market.js`）
+
+- 使用者問交易所能容納多少人 → 免費方案最先碰到的是每月傳輸量（約 5GB，整個遊戲共用）→ 使用者要求先做不花錢的省流量。
+- **聊天**（`chat.js`）：原本就只抓比手上最新一則更新的訊息（`gt('id', 最後一則)`），不用改。改的是輪詢間隔：原本聊天分頁或左下角聊天框開著就固定每 4 秒抓，
+  玩家常開著聊天框掛機好幾小時。現在 `chatPollGap()`：最近 1 分鐘「有動靜」→ 4 秒（`CHAT_POLL_MS`）、1～5 分鐘 → 10 秒（`CHAT_POLL_IDLE_MS`）、更久 → 30 秒（`CHAT_POLL_AWAY_MS`）。
+  有動靜（`chatTouch`）＝收到別人的新訊息、自己按鍵打字或發送、打開聊天分頁／聊天框、切頻道。計時器每 2 秒檢查一次；從背景切回前景（visibilitychange）馬上抓一次。背景時照舊不抓。
+  估計：開著聊天框但沒人說話時，請求數約為原本的 1/7。
+- **交易所**（`market.js`）：購買頁列表快取 `marketCache`（key＝分類、搜尋字、排序、頁數），`MARKET_CACHE_MS` 60 秒內同樣條件直接用手上的資料（切分類、換排序、翻頁、切分頁回來都不重抓）。
+  自己購買、上架、下架後清空快取；購買頁新增「🔄」按鈕（`marketRefresh`）強制重抓。每 3 分鐘的入帳檢查若交易所開著會順便更新列表（那時快取已過期）。「我的上架」不快取。
+- **還可以省的**（沒做）：團隊副本大廳每 3 秒輪詢（只有在隊伍裡時）、世界首領分頁每 15 秒。

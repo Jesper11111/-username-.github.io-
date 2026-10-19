@@ -54,6 +54,7 @@ function continueGame() {
 
 window.addEventListener('DOMContentLoaded', () => {
     document.title = GAME_TITLE;
+    saveFormatMigrate();   // 舊的未加密存檔轉成加密格式（guard.js）
     ownerMigrate();   // 舊存檔補上 owner（save.js）
     showTitle();
     setInterval(gameTick, TICK_MS);

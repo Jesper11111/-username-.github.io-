@@ -10,6 +10,9 @@ const MARKET_CATS = [['', '全部'], ['weapon', '武器'], ['armor', '防具'], 
 
 let marketView = 'buy', marketCat = '', marketQ = '', marketSort = 'new', marketPage = 0;
 let marketRows = null, marketMine = null, marketBusy = false, marketErr = '', marketSellUid = null;
+// 購買頁的列表快取（省 Supabase 傳輸量）：同樣的分類／搜尋／排序／頁數 60 秒內不重抓；自己買、上架、下架後清掉，「🔄」強制重抓
+const MARKET_CACHE_MS = 60 * 1000;
+let marketCache = {};
 
 function marketErrText(e) {
     const m = String((e && e.message) || e || '');
@@ -18,6 +21,8 @@ function marketErrText(e) {
         'not enough gold': '金幣不足（以雲端存檔為準，剛賺的錢要等上傳）', 'no cloud save': '雲端還沒有這個角色的存檔',
         'not available': '這件商品已經賣出、下架或過期了', 'own listing': '不能買自己上架的東西', 'too many listings': `同時最多上架 ${MARKET_MAX} 件`,
         'already listed': '這件道具已經在上架中', 'bad price': '價格要在 1～20 億之間', 'not tradeable': '這件道具不能交易', banned: '帳號已停權',
+        'market hold': '帳號有待管理者確認的異常紀錄，暫時不能使用交易所與共用倉庫（確認沒問題後會自動恢復）',
+        'save signature': '雲端存檔驗證沒有通過：請重新整理（更新遊戲）後到設定按「☁️ 立即上傳」再試',
     };
     for (const k in map) if (m.includes(k)) return map[k];
     return cloudErrText(e);
@@ -87,12 +92,19 @@ async function marketDeliver(silent) {
 }
 
 // ───────── 讀資料 ─────────
-async function marketLoad() {
+async function marketLoad(force) {
     if (!isCloudConfigured() || !cloudLoggedIn()) return;
     marketErr = '';
     if (marketView === 'mine') await marketDeliver(true);   // 看「我的上架」時順便入帳
     try {
-        if (marketView === 'buy') marketRows = await marketRpc('market_browse', { p_cat: marketCat || null, p_q: marketQ.trim() || null, p_sort: marketSort, p_offset: marketPage * 50 });
+        if (marketView === 'buy') {
+            const key = JSON.stringify([marketCat, marketQ.trim(), marketSort, marketPage]), c = marketCache[key];
+            if (!force && c && Date.now() - c.t < MARKET_CACHE_MS) marketRows = c.rows;
+            else {
+                marketRows = await marketRpc('market_browse', { p_cat: marketCat || null, p_q: marketQ.trim() || null, p_sort: marketSort, p_offset: marketPage * 50 });
+                marketCache[key] = { t: Date.now(), rows: marketRows };
+            }
+        }
         else if (marketView === 'mine') marketMine = await marketRpc('market_mine');
     } catch (e) { marketErr = marketErrText(e); }
     marketRender();
@@ -104,6 +116,7 @@ function marketSetSort(s) { marketSort = s; marketPage = 0; marketLoad(); }
 function marketSearch() { marketQ = ((document.getElementById('market-q') || {}).value || ''); marketPage = 0; marketLoad(); }
 function marketSearchKey(ev) { ev.stopPropagation(); if (ev.key === 'Enter' && !ev.isComposing) marketSearch(); }
 function marketPageGo(d) { marketPage = Math.max(0, marketPage + d); marketLoad(); }
+function marketRefresh() { marketCache = {}; marketLoad(true); }
 
 // ───────── 購買 ─────────
 function marketInfo(id) {
@@ -132,6 +145,7 @@ async function marketBuy(id) {
         showToast(`買到了 ${res.name}！`);
     } catch (e) { showToast(marketErrText(e)); }
     marketBusy = false;
+    marketCache = {};
     marketLoad();
 }
 
@@ -161,6 +175,7 @@ async function marketListItem() {
             saveGame(); await cloudFlush(true); refreshUI();
             showToast('已上架');
             marketSellUid = null;
+            marketCache = {};
         } catch (e) { showToast(marketErrText(e)); }
         marketBusy = false;
         marketRender();
@@ -179,6 +194,7 @@ async function marketCancel(id) {
         showToast('已下架，道具回到背包');
     } catch (e) { showToast(marketErrText(e)); }
     marketBusy = false;
+    marketCache = {};
     marketLoad();
 }
 
@@ -211,7 +227,8 @@ function marketBuyHtml() {
         <div class="btn-row"><input type="text" id="market-q" placeholder="搜尋道具名稱" value="${esc(marketQ)}" onkeydown="marketSearchKey(event)" style="flex:1;min-width:0">
             <button class="mini" onclick="marketSearch()">搜尋</button>
             <select onchange="marketSetSort(this.value)"><option value="new" ${marketSort === 'new' ? 'selected' : ''}>最新</option>
-                <option value="price" ${marketSort === 'price' ? 'selected' : ''}>價格低→高</option><option value="price_desc" ${marketSort === 'price_desc' ? 'selected' : ''}>價格高→低</option></select></div>
+                <option value="price" ${marketSort === 'price' ? 'selected' : ''}>價格低→高</option><option value="price_desc" ${marketSort === 'price_desc' ? 'selected' : ''}>價格高→低</option></select>
+            <button class="mini secondary" onclick="marketRefresh()" title="重新整理">🔄</button></div>
         <div class="list">${rows}</div>${pager}
         <small class="muted">你的金幣：💰${fmt(player.gold)}。買到的道具直接放進目前角色的背包。</small></div>`;
 }
