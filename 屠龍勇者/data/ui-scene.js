@@ -443,27 +443,61 @@ function drawGlowArrow(ctx, cx, cy, ang, s, color, glow) {
     ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
     ctx.restore();
 }
-// 大地圖上的路引：地上一圈光暈＋往目標方向來回飄的箭頭＋地圖名與建議等級（等級太高顯示紅色）
-function drawGates(ctx, camX, camY, W, H) {
-    if (!scene.gates) return;
-    const pulse = 0.5 + 0.5 * Math.sin(gameNow / 300);
-    for (const g of scene.gates) {
-        const cx = g.x * TILE - camX + TILE / 2, cy = g.y * TILE - camY + TILE / 2 - g.stack * 44;
-        if (cx < -80 || cy < -60 || cx > W + 80 || cy > H + 60) continue;
-        const z = ZONE_BY_ID[g.to], hard = z && player.lv < z.lv[0] - 5;
-        const col = hard ? '#ff7a5a' : '#ffd86a';
-        ctx.fillStyle = hard ? `rgba(255,90,60,${0.12 + 0.12 * pulse})` : `rgba(255,210,90,${0.12 + 0.12 * pulse})`;
-        ctx.beginPath(); ctx.ellipse(cx, cy + 6, 22, 9, 0, 0, Math.PI * 2); ctx.fill();
-        const b = 5 * Math.sin(gameNow / 220);
-        drawGlowArrow(ctx, cx + Math.cos(g.ang) * b, cy + Math.sin(g.ang) * b, g.ang, 13, col, 10 + 10 * pulse);
-        if (z) {
-            ctx.textAlign = 'center';
-            drawLabel(ctx, z.name, cx, cy - 24, col);
-            ctx.font = '9px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-            const sub = `Lv.${z.lv[0]}～${z.lv[1]}`;
-            ctx.strokeText(sub, cx, cy - 12); ctx.fillStyle = '#e8dcc0'; ctx.fillText(sub, cx, cy - 12); ctx.lineWidth = 1;
+// 大地圖上的路引＝路邊木頭路牌（2026-10-19 使用者從 A～D 樣本選 D，第 63 節；以前是發光箭頭＋光暈＋等級）：
+// 只顯示「離開目前地圖」的出口；同一個地圖 4 格內的出口合成一根木柱，柱子立在最近的路邊（不能走的格子），每個出口一塊木板
+function gateSigns(zone) {
+    const bg = scene.bg, cache = bg._signs || (bg._signs = {});
+    if (cache[zone]) return cache[zone];
+    const list = [];
+    for (const g of scene.gates.filter(q => q.from === zone)) {
+        let s = list.find(p => Math.abs(p.gx - g.x) + Math.abs(p.gy - g.y) <= 4);
+        if (!s) list.push(s = { gx: g.x, gy: g.y, gates: [] });
+        s.gates.push(g);
+    }
+    for (const s of list) {
+        s.gx = s.gates.reduce((a, g) => a + g.x, 0) / s.gates.length; s.gy = s.gates.reduce((a, g) => a + g.y, 0) / s.gates.length;
+        const cx = Math.round(s.gx), cy = Math.round(s.gy);
+        let best = [cx, cy], bd = 1e9;   // 柱子：中心 2 格內最近的不能走的格子（路邊），沒有就立在中間
+        for (let y = cy - 2; y <= cy + 2; y++) for (let x = cx - 2; x <= cx + 2; x++) {
+            if (!scene.grid[y] || scene.grid[y][x] === undefined || scene.grid[y][x] === 0) continue;
+            const d = Math.hypot(x - s.gx, y - s.gy);
+            if (d < bd) { bd = d; best = [x, y]; }
+        }
+        s.x = best[0]; s.y = best[1];
+        // 木板方向：左右為主就做成尖頭木板，上下為主就寫 ↑ ↓（同一個目的地只留一塊）
+        s.boards = [];
+        for (const g of s.gates) {
+            if (s.boards.some(q => q.to === g.to)) continue;
+            const cx2 = Math.cos(g.ang), cy2 = Math.sin(g.ang);
+            s.boards.push({ to: g.to, dir: Math.abs(cx2) >= 0.5 ? (cx2 > 0 ? 'r' : 'l') : (cy2 < 0 ? 'u' : 'd') });
         }
     }
+    return (cache[zone] = list);
+}
+// 一根路牌：sx, sy＝柱子腳底（畫面座標）；木板由上往下排，等級比建議下限低 5 級以上的目的地用暗紅字
+function drawSignpost(ctx, sx, sy, boards) {
+    const bh = 14, step = 17, postH = 22 + boards.length * step;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy, 10, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5c3e24'; ctx.strokeStyle = '#28180c'; ctx.lineWidth = 1;
+    ctx.fillRect(sx - 2.5, sy - postH, 5, postH); ctx.strokeRect(sx - 2.5, sy - postH, 5, postH);
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    boards.forEach((b, i) => {
+        const z = ZONE_BY_ID[b.to], hard = z && player.lv < z.lv[0] - 5;
+        const txt = (b.dir === 'u' ? '↑ ' : b.dir === 'd' ? '↓ ' : '') + (z ? z.name : b.to);
+        const w = ctx.measureText(txt).width + 8, by = sy - postH + 4 + i * step;
+        const bx = b.dir === 'l' ? sx - w + 6 : b.dir === 'r' ? sx - 6 : sx - w / 2;
+        ctx.beginPath();
+        if (b.dir === 'r') { ctx.moveTo(bx, by); ctx.lineTo(bx + w, by); ctx.lineTo(bx + w + 6, by + bh / 2); ctx.lineTo(bx + w, by + bh); ctx.lineTo(bx, by + bh); }
+        else if (b.dir === 'l') { ctx.moveTo(bx, by); ctx.lineTo(bx + w, by); ctx.lineTo(bx + w, by + bh); ctx.lineTo(bx, by + bh); ctx.lineTo(bx - 6, by + bh / 2); }
+        else ctx.rect(bx, by, w, bh);
+        ctx.closePath();
+        const gr = ctx.createLinearGradient(0, by, 0, by + bh); gr.addColorStop(0, '#c49660'); gr.addColorStop(1, '#96683c');
+        ctx.fillStyle = gr; ctx.fill(); ctx.strokeStyle = '#3c2412'; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.fillStyle = hard ? '#8a1a0a' : '#301a0a';
+        ctx.fillText(txt, bx + w / 2 + (b.dir === 'r' ? 1 : b.dir === 'l' ? -1 : 0), by + bh / 2 + 0.5);
+    });
+    ctx.restore();
 }
 
 function freeTile(x, y) {
@@ -917,7 +951,6 @@ function sceneDraw(ctx, W, H) {
         ctx.strokeStyle = '#ff3a1a'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.75, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1;
     }
-    if (scene.gates && player.loc.type === 'zone') drawGates(ctx, camX, camY, W, H);   // 大地圖路引（畫在地上，角色會走在上面）
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
     if (player.loc.type === 'town' || (scene.bg && scene.bg.fieldNpcs)) scene.npcRects = [];
@@ -1053,6 +1086,11 @@ function sceneDraw(ctx, W, H) {
         labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - 26, camX, camY, n));
     } });
     // 野外 NPC（大地圖，第 55 節）：去背立繪腳底對齊格子、腳下陰影，名牌可點
+    // 大地圖路牌（第 63 節）：跟角色一起依 y 排序，走到路牌下面會被擋、走到前面會蓋住路牌
+    if (scene.gates && player.loc.type === 'zone') for (const s of gateSigns(player.loc.id)) {
+        const sx = s.x * TILE - camX + TILE / 2, sy = s.y * TILE - camY + TILE * 0.8;
+        if (sx > -160 && sx < W + 160 && sy > -40 && sy < H + 120) actors.push({ y: s.y, draw: () => drawSignpost(ctx, sx, sy, s.boards) });
+    }
     if (player.loc.type === 'zone' && scene.bg && scene.bg.fieldNpcs) for (const n of scene.bg.fieldNpcs) actors.push({ y: n.y, draw: () => {
         const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
         if (sx < -120 || sy < -160 || sx > W + 120 || sy > H + 60) return;

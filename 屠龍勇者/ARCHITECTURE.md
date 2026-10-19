@@ -105,7 +105,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019s`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019t`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1848,3 +1848,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   `src` 沒變的 `<img>` 留著同一個元素，不會重新載入。第一次（`el.dataset.html` 還沒有）直接 `innerHTML`。
 - 用在：`updateHuntLive` 的 `#hunt-buffs`（ui-panels.js）、`renderHotbar` 的 `set`（hotbar.js；PC `#hotbar` 與手機 `#skill-bar`）。這三個區塊不能再用別的方式直接改 `innerHTML`（`dataset.html` 會跟畫面對不上）。
 - 驗證（手機 375 寬）：喝綠水後 3.5 秒內狀態列秒數 5:00 → 4:56，圖示 `<img>` 與快捷欄 3 個圖示都是同一個元素；Console 無錯誤。
+
+## 63. 路引改成路邊木頭路牌（2026-10-19，版本 `20261019t`；`ui-scene.js` 的 `gateSigns`／`drawSignpost`）
+
+- 使用者嫌第 50 節的地圖指引箭頭太雜亂，要簡單一點。做了樣本圖並排（A 現在／B 簡約白線箭頭／C 深色小路牌／D 路邊木頭路牌，在沉眠龍窟洞口三岔路，PowerShell 疊在 `wild.jpg` 上畫），使用者選 **D**。
+- 規則：
+  - **只顯示離開目前地圖的出口**（以前兩邊的箭頭都畫，三岔路口一次 6 個）。
+  - `gateSigns(zone)`：目前地圖的路引（第 50 節 `bigMapGates` 算好的 `scene.gates`）4 格內的合成一根木柱；柱子立在路引中心 2 格內最近的「不能走的格子」（路邊），沒有就立在中間。
+    每個目的地一塊木板（同一個目的地只留一塊）：方向以左右為主＝尖頭木板指過去，以上下為主＝寫「↑ 地名」「↓ 地名」。結果存在 `SCENE_BGS.wild._signs[地圖]`。
+  - `drawSignpost(ctx, 腳底x, 腳底y, boards)`：腳下陰影＋深褐木柱＋淺木色漸層木板＋深褐字（10px 粗體），等級比目的地建議下限低 5 級以上用暗紅字。不發光、不晃動。
+  - 路牌加進角色／怪物的 y 排序（actors），角色走到路牌後面會被擋、走到前面會蓋住路牌。
+- 以前的 `drawGates`（地上光暈＋上下晃的發光箭頭＋地名＋等級）已刪除；**小地圖**上目前地圖出口的閃爍小箭頭不變（`drawGlowArrow` 仍在用）。
+- 驗證：手機畫面沉眠龍窟洞口外路牌「← 腐朽礦坑・上層／↑ 低語海岸」；11 個地圖的路牌分組都正確（例：焦骨峽谷 5 根、迷霧古林 7 根）；PC 模式繪製無錯誤；Console 無錯誤。
