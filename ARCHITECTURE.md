@@ -11,6 +11,7 @@
 package.json          建置工具相依（terser、acorn；node_modules/ 與 dist/ 在 .gitignore）。第 72 節
 .github/workflows/pages.yml  GitHub Actions：main 有新提交 → node tools/build.js → 發佈 dist/ 到 GitHub Pages（Pages 來源需設為 GitHub Actions，第 72 節）
 tools/build.js        建置：data/*.js 打包進同一個函式範圍＋terser 混淆 → dist/（遊戲資料不再是全域變數；只公開事件用到的函式，第 72 節）
+                      最後呼叫 屠龍勇者/tools/build.js 的 buildDragon，把黑暗大陸（另一款遊戲）也打包混淆進 dist/屠龍勇者/（2026-10-19；修仙的建置結果不變）
 CLAUDE.md             給 Claude 的工作規則（2026-10-03）：修改前先讀本檔、修改後同步更新本檔、回覆用繁體中文、驗證後自動開 PR 並合併進 main 發佈
 gm.html               戰力榜 GM 後台（第 50 節）：只有 Firestore admins 名單內的 Google 帳號能刪除／封鎖／審核守城榜；不是遊戲頁面，遊戲內沒有連結
                       （載入 data/config-realms、config-leaderboard、config-bounty、bounty、config-defense.js）
@@ -4026,6 +4027,7 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - terser：compress 2 輪＋mangle（函式範圍內名稱全換）、移除註解；1293 KB → 684 KB。HTML 註解一併移除。gm.html 的 data 腳本另接成 `data/gm-lib.js`（只壓縮，不包範圍，GM 頁內嵌程式要用全域名稱）。
   - 不複製到 dist：`*.md`、`tools/`、原始 `data/*.js`、`package*.json`、`.` 開頭的檔案。sw.js 照舊從 index.html 找 `data/…?v=` 預先快取（現在只有 game.js 一支）。pwa.js 的 `document.currentScript` 在 game.js 裡同樣取得版本號。
   - **開發與測試照舊用原始 index.html**（各檔分開、全域），Playwright 測試不用改；發佈前另外 `node tools/build.js`、在 `dist/` 開伺服器跑一次（掃描畫面上所有 on* 事件的函式都存在於 window）。
+  - 2026-10-19：`build()` 最後一行呼叫 `屠龍勇者/tools/build.js` 的 `buildDragon(dist/屠龍勇者)`，黑暗大陸用同樣方式打包混淆（細節在 `屠龍勇者/ARCHITECTURE.md` 第 58 節）；修仙的 dist 和改動前逐檔比對 0 差異。
 - **② 發佈（`.github/workflows/pages.yml`）**：main 有新提交 → checkout → `npm ci` → 建置 → `upload-pages-artifact`（dist）→ `deploy-pages`。
   **需要作者一次性設定**：GitHub 倉庫 Settings → Pages → Build and deployment → Source 選「**GitHub Actions**」。在那之前網站照舊直接提供原始檔（不混淆、但功能正常），Actions 的 deploy 步驟會失敗。
   配合「原始碼倉庫改私人」（需 GitHub Pro）就連原始碼也看不到。

@@ -18,6 +18,8 @@ function marketErrText(e) {
         'not enough gold': '金幣不足（以雲端存檔為準，剛賺的錢要等上傳）', 'no cloud save': '雲端還沒有這個角色的存檔',
         'not available': '這件商品已經賣出、下架或過期了', 'own listing': '不能買自己上架的東西', 'too many listings': `同時最多上架 ${MARKET_MAX} 件`,
         'already listed': '這件道具已經在上架中', 'bad price': '價格要在 1～20 億之間', 'not tradeable': '這件道具不能交易', banned: '帳號已停權',
+        'market hold': '帳號有待管理者確認的異常紀錄，暫時不能使用交易所與共用倉庫（確認沒問題後會自動恢復）',
+        'save signature': '雲端存檔驗證沒有通過：請重新整理（更新遊戲）後到設定按「☁️ 立即上傳」再試',
     };
     for (const k in map) if (m.includes(k)) return map[k];
     return cloudErrText(e);

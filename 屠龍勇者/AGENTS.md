@@ -28,6 +28,8 @@
 6. **改存檔結構**（`player` 的欄位）時，要把 `SAVE_SCHEMA` 加 1，並在 `save.js` 的 `migrateSave` 補上舊存檔轉換。這種改動風險高，先跟使用者確認。
 7. 時間相關（增益、冷卻、步行）用遊戲時鐘 `gameNow`，不要用 `Date.now()`（龍穴冷卻這類真實時間除外，見第 3 節）。
 8. 合併 git 衝突後，一定要搜尋整個資料夾有沒有殘留的 `<<<<<<<`，留著的話整個遊戲會載不起來。
+9. **防改檔**（`ARCHITECTURE.md` 第 58 節）：localStorage 的存檔是加密的，讀寫一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`（`guard.js`），不要直接 `JSON.parse`。
+   `player` 換成新物件時要 `guardWrap(player)`。上線版是混淆過的（`tools/build.js`），事件字串只能呼叫頂層函式。
 9. 程式風格跟周圍的程式一致：命名、註解的多寡、寫法都照原本的。只動這次任務需要的檔案，不要順手重構。
 
 ## 3. 禁止事項

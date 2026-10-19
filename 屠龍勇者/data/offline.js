@@ -57,7 +57,7 @@ function measureHunt(sampleMs) {
             kills: player.kills - before.kills,
         };
     } finally {
-        player = JSON.parse(snap);
+        player = guardWrap(JSON.parse(snap));   // 還原成新物件：重新套上數值偽裝（guard.js）
         hunt = saved.hunt; session = saved.session; walkHome = saved.walkHome; gameNow = saved.gameNow;
         gameLog.length = 0; gameLog.push(...saved.log); logSeq = saved.logSeq;
         SIM_MODE = false;

@@ -1,6 +1,7 @@
 // 屠龍勇者：存檔／讀檔／匯出匯入（依賴 config、player）
 // 存檔格式：{ schema, t, owner, ownerEmail, player }；改存檔結構時把 SAVE_SCHEMA +1，並在 migrateSave 補上轉換
 // owner（schema 4）：這個角色屬於哪個雲端帳號（uid；訪客建立的是空字串）。只存在本機，上傳雲端時拿掉（cloudPushSlot）
+// 本機文字是加密＋簽章過的（guard.js saveEncode／saveParse），讀寫存檔一律經過這兩個函式（ARCHITECTURE.md 第 58 節）
 
 let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用）
 
@@ -42,7 +43,7 @@ function readSlotSummary(i) {
     try {
         const raw = localStorage.getItem(slotKey(i));
         if (!raw) return null;
-        const data = JSON.parse(raw);
+        const data = saveParse(raw);
         if (!data || !data.player || !CLASSES[data.player.cls]) return { broken: true };
         const p = migrateSave(data), keep = player;
         let st;
@@ -72,7 +73,7 @@ function authUid() {
 }
 function saveOwnerOf(data) { return (data && data.owner) || ''; }
 function slotOwnerInfo(i) {
-    try { const d = JSON.parse(localStorage.getItem(slotKey(i))); return d ? { owner: saveOwnerOf(d), email: d.ownerEmail || '' } : null; } catch (e) { return null; }
+    try { const d = saveParse(localStorage.getItem(slotKey(i))); return d ? { owner: saveOwnerOf(d), email: d.ownerEmail || '' } : null; } catch (e) { return null; }
 }
 // 角色屬於別的帳號（而且這個瀏覽器正登入別的帳號）→ 不能進入
 function slotLocked(i) {
@@ -86,10 +87,10 @@ function ownerMigrate() {
         for (let i = 0; i < MAX_SLOTS; i++) {
             const raw = localStorage.getItem(slotKey(i));
             if (!raw) continue;
-            const d = JSON.parse(raw);
+            const d = saveParse(raw);
             if (!d || d.owner !== undefined) continue;
             d.owner = legacy;
-            localStorage.setItem(slotKey(i), JSON.stringify(d));
+            localStorage.setItem(slotKey(i), saveEncode(JSON.stringify(d)));
         }
     } catch (e) {}
 }
@@ -121,7 +122,7 @@ function saveGame(force) {
         }
     }
     const data = { schema: SAVE_SCHEMA, t: Date.now(), owner: playerOwner, ownerEmail: playerOwnerEmail, player };
-    try { localStorage.setItem(slotKey(currentSlot), JSON.stringify(data)); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
+    try { localStorage.setItem(slotKey(currentSlot), saveEncode(JSON.stringify(data))); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
     cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳（只上傳屬於目前帳號的角色）
 }
 
@@ -163,9 +164,11 @@ function migrateSave(data) {
 
 function loadGame() {
     try {
-        const raw = localStorage.getItem(slotKey(currentSlot));
-        if (!raw) return false;
-        return applySaveData(JSON.parse(raw));
+        const d = saveDecode(localStorage.getItem(slotKey(currentSlot)));
+        if (!d) return false;
+        if (!applySaveData(JSON.parse(d.text))) return false;
+        if (d.bad) guardFlag(d.bad);   // 簽章不符：照樣能玩，記標記（guard.js）
+        return true;
     } catch (e) {
         console.error('讀檔失敗', e);
         return false;
@@ -174,7 +177,7 @@ function loadGame() {
 
 function applySaveData(data) {
     if (!data || !data.player || !CLASSES[data.player.cls]) return false;
-    player = migrateSave(data);
+    player = guardWrap(migrateSave(data));   // 金幣、經驗等改成偽裝存放（guard.js）
     playerOwner = saveOwnerOf(data); playerOwnerEmail = data.ownerEmail || '';
     lastSaveAt = data.t || Date.now();
     return true;
@@ -187,15 +190,22 @@ function deleteSave(i = currentSlot) {
 }
 
 function exportSaveText() {
-    return btoa(unescape(encodeURIComponent(JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player }))));
+    return saveEncode(JSON.stringify({ schema: SAVE_SCHEMA, t: Date.now(), player }));   // 加密＋簽章（guard.js）
 }
 
 function importSaveText(text) {
     try {
-        const data = JSON.parse(decodeURIComponent(escape(atob(text.trim()))));
+        text = text.trim();
+        let data, bad = '';
+        if (text.slice(0, 3) === 'DS1') { const d = saveDecode(text); data = JSON.parse(d.text); bad = d.bad ? '匯入的存檔代碼被修改' : ''; }
+        else {   // 改版前的存檔代碼（base64 JSON，沒有簽章）：只接受改版前存的
+            data = JSON.parse(decodeURIComponent(escape(atob(text))));
+            if (data && (data.t || 0) >= GUARD_SINCE) bad = '匯入的存檔代碼沒有簽章';
+        }
         if (!data || typeof data !== 'object') return false;
         delete data.owner; delete data.ownerEmail;   // 匯入的存檔不帶別人的帳號：當作訪客角色，登入中就歸到目前帳號
         if (!applySaveData(data)) return false;
+        if (bad) guardFlag(bad);
         saveGame();
         return true;
     } catch (e) {

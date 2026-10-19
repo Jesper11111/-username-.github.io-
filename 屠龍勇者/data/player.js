@@ -45,6 +45,7 @@ function createPlayer(name, cls, stats) {
         created: Date.now(),
         skills: [],
     };
+    guardWrap(player);   // 金幣、經驗等偽裝存放（guard.js）
     // Lv.1 就能學的（法師、天使的 1 級魔法與惡魔的血之渴望等）直接學會，其他要魔法書
     player.skills = classSkillList(cls).filter(s => skillNeedLv(s, cls) <= 1).map(s => s.id);
     player.settings.bar = defaultBar(player);

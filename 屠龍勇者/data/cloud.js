@@ -262,7 +262,7 @@ function cloudCharId(data) {
 function cloudReadLocal(i) {
     const raw = cloudLs(slotKey(i));
     if (!raw) return null;
-    try { const data = JSON.parse(raw); return data && data.player ? { raw, data, id: cloudCharId(data), t: data.t || 0, owner: saveOwnerOf(data) } : null; }
+    try { const data = saveParse(raw); return data && data.player ? { raw, data, id: cloudCharId(data), t: data.t || 0, owner: saveOwnerOf(data) } : null; }
     catch (e) { return null; }
 }
 
@@ -275,6 +275,7 @@ async function cloudSync() {
         // 一定要限定自己的帳號：管理者帳號有「可以查看任何人的存檔」權限（dragon_saves_select_admin），不加條件會把所有玩家的角色當成自己的下載（2026-10-15）
         const { data: rows, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('slot, client_t, data').eq('user_id', cloudUser.id));
         if (error) throw error;
+        for (const r of rows || []) await guardCheckCloud(cloudUser.id, r.slot, r.data, r.client_t);   // 雲端存檔被改過 → 那份記上標記（guard.js）
         const uid = cloudUser.id, owner = cloudLs(CLOUD_OWNER_KEY);
         let playing = player ? currentSlot : -1;   // 遊戲中的角色本機為準，不覆蓋
         const cloud = [];
@@ -371,7 +372,7 @@ async function cloudSync() {
             return '';
         }
         // 寫進本機的文字：帶 owner＝目前帳號（雲端那份不含 owner）
-        const wantRaw = f => f ? (f.raw || JSON.stringify(Object.assign(cloudStripOwner(f.data), { owner: uid, ownerEmail: cloudUser.email || '' }))) : null;
+        const wantRaw = f => f ? (f.raw || saveEncode(JSON.stringify(Object.assign(cloudStripOwner(f.data), { owner: uid, ownerEmail: cloudUser.email || '' })))) : null;
         // 改寫本機前先備份整份
         let changed = false;
         for (let i = 0; i < MAX_SLOTS; i++) {
@@ -487,10 +488,12 @@ function cloudStripOwner(d) { const o = Object.assign({}, d); delete o.owner; de
 async function cloudPushSlot(i, overwrite) {
     const raw = cloudLs(slotKey(i));
     if (!raw) return true;
-    const full = JSON.parse(raw);
+    const full = saveParse(raw);
     if (saveOwnerOf(full) !== cloudUser.id) return true;   // 不是目前帳號的角色（別的帳號或還沒歸屬的訪客角色）一律不上傳
     const data = cloudStripOwner(full), p = data.player, t = data.t || 0;
     data.schema = SAVE_SCHEMA;   // 伺服器用它擋掉沒有角色歸屬的舊版遊戲（tools/client-version.sql）；從雲端下載後沒再存檔的舊格式也照樣上傳得了
+    data.sig = await guardCloudSig(cloudUser.id, i, p);   // 雲端存檔簽章，伺服器重算（guard.js、tools/anticheat.sql）
+    if (!data.sig) delete data.sig;
     const row = { slot: i, client_t: t, name: String(p.name || '').slice(0, 40), cls: p.cls, lv: p.lv | 0, data };
     const known = cloudKnown[i];
     let res;
@@ -515,7 +518,7 @@ function cloudIsTombErr(e) { return !!e && (e.hint === 'dragon_char_deleted' || 
 function cloudDropDeleted(i, inSync) {
     const raw = cloudLs(slotKey(i));
     let name = '';
-    try { name = JSON.parse(raw).player.name; } catch (e) { }
+    try { name = saveParse(raw).player.name; } catch (e) { }
     if (raw) cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser && cloudUser.id, saves: { [i]: raw } }));
     cloudLs(slotKey(i), null);
     cloudDirty.delete(i); delete cloudConflict[i];
@@ -563,10 +566,11 @@ async function cloudUseCloudSlot() {
         const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t, data').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
         if (error) throw error;
         if (!data) { showToast('雲端沒有這個角色'); return; }
+        await guardCheckCloud(cloudUser.id, i, data.data, data.client_t);
         cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
         hunt = null; session = null; walkHome = null;
         player = null;
-        cloudLs(slotKey(i), JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' })));
+        cloudLs(slotKey(i), saveEncode(JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' }))));
         cloudKnown[i] = data.client_t;
         delete cloudConflict[i];
         cloudDirty.delete(i);
@@ -624,7 +628,7 @@ function cloudDeleteSlot(i, raw) {
     delete cloudConflict[i];
     if (!raw) return;
     let d = null;
-    try { d = JSON.parse(raw); } catch (e) { return; }
+    try { d = saveParse(raw); } catch (e) { return; }
     const p = d && d.player, id = cloudCharId(d), owner = saveOwnerOf(d);
     if (!p || !p.created || !id) return;
     const me = cloudLoggedIn() ? cloudUser.id : '';
