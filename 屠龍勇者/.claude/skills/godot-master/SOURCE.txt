@@ -1,0 +1,4 @@
+source: https://github.com/thedivergentai/Game-Dev-Agentic-Skills/tree/main/skills/godot-master
+commit: db004d74c40686ca2f7a35fe067b119a9cda593e (2026-10-16)
+license: LGPL-3.0
+installed: 2026-10-18 by Claude (reviewed SKILL.md + scanned scripts)

@@ -1,7 +1,7 @@
 // 屠龍勇者：存檔／讀檔／匯出匯入（依賴 config、player）
 // 存檔格式：{ schema, t, owner, ownerEmail, player }；改存檔結構時把 SAVE_SCHEMA +1，並在 migrateSave 補上轉換
 // owner（schema 4）：這個角色屬於哪個雲端帳號（uid；訪客建立的是空字串）。只存在本機，上傳雲端時拿掉（cloudPushSlot）
-// 本機文字是加密＋簽章過的（guard.js saveEncode／saveParse），讀寫存檔一律經過這兩個函式（ARCHITECTURE.md 第 58 節）
+// 本機文字是加密＋簽章過的（guard.js saveEncode／saveParse），讀寫存檔一律經過這兩個函式（ARCHITECTURE.md 第 60 節）
 
 let lastSaveAt = 0;   // 讀到的存檔是什麼時候存的（離線收益用）
 

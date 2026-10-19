@@ -28,7 +28,7 @@
 6. **改存檔結構**（`player` 的欄位）時，要把 `SAVE_SCHEMA` 加 1，並在 `save.js` 的 `migrateSave` 補上舊存檔轉換。這種改動風險高，先跟使用者確認。
 7. 時間相關（增益、冷卻、步行）用遊戲時鐘 `gameNow`，不要用 `Date.now()`（龍穴冷卻這類真實時間除外，見第 3 節）。
 8. 合併 git 衝突後，一定要搜尋整個資料夾有沒有殘留的 `<<<<<<<`，留著的話整個遊戲會載不起來。
-9. **防改檔**（`ARCHITECTURE.md` 第 58 節）：localStorage 的存檔是加密的，讀寫一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`（`guard.js`），不要直接 `JSON.parse`。
+9. **防改檔**（`ARCHITECTURE.md` 第 60 節）：localStorage 的存檔是加密的，讀寫一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`（`guard.js`），不要直接 `JSON.parse`。
    `player` 換成新物件時要 `guardWrap(player)`。上線版是混淆過的（`tools/build.js`），事件字串只能呼叫頂層函式。
 9. 程式風格跟周圍的程式一致：命名、註解的多寡、寫法都照原本的。只動這次任務需要的檔案，不要順手重構。
 
@@ -47,12 +47,12 @@
 2. **自動檢查**：執行 `powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1`，
    會檢查 JS 語法、所有 `?v=` 跟 `GAME_VERSION` 一致、每個 `data/*.js` 都有載入、沒有殘留衝突標記。
    要看到 `ALL CHECKS PASSED` 才能往下；有 `[FAIL]` 就修到全部通過。
-3. **請使用者實際玩一次**：本機伺服器 `http://localhost:8790/`（使用者用 `Gemini改遊戲.bat` 開啟時已自動啟動並開好瀏覽器；
+3. **請使用者實際玩一次**：本機伺服器 `http://localhost:8790/`（使用者用 `Gemini改遊戲.bat`／`ChatGPT改遊戲.bat` 開啟時已自動啟動並開好瀏覽器；
    沒開的話執行 `powershell -NoProfile -ExecutionPolicy Bypass -File ..\tools\serve.ps1 -Root . -Port 8790`，它會一直執行，要另開視窗）。
    能自己開瀏覽器的 AI 就自己測：**Console 沒有錯誤**、實際走一次相關畫面。
    不能的話，給使用者「照著點」的步驟（格式見 `HANDOFF.md` 第 5 節），等使用者回報沒問題。有問題就修，回到第 2 步。
 4. **commit**：使用者說沒問題後，`git add` 這次改的檔案（不要用 `git add -A`），commit 到本機 `main`，訊息格式「黑暗大陸：做了什麼，版本號」。
-   `git` 不在 PATH 時用 `HANDOFF.md` 第 4 節的完整路徑。
+   `git` 找不到時用完整路徑 `C:\Program Files\Git\cmd\git.exe`（`HANDOFF.md` 第 4 節）。
 5. **請使用者推送**：告訴使用者「請在 GitHub Desktop 按 Push origin」。終端機沒有 git 憑證，AI 自己推不上去；使用者不開 PR，直接 main 就好。
    GitHub Pages 發佈 `main`，網址 `https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`，推上去約 1～2 分鐘上線。
 6. **更新 `HANDOFF.md`**（現況的版本號、完成／新增的待辦）並一起 commit。

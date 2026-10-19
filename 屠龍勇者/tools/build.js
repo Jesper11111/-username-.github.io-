@@ -1,4 +1,4 @@
-// 黑暗大陸：建置＋混淆（ARCHITECTURE.md 第 58 節）。做法和修仙的 tools/build.js 相同（修仙 ARCHITECTURE.md 第 72 節）：
+// 黑暗大陸：建置＋混淆（ARCHITECTURE.md 第 60 節）。做法和修仙的 tools/build.js 相同（修仙 ARCHITECTURE.md 第 72 節）：
 //   ① index.html 的 <script src="data/xxx.js?v=版本"> 依原順序接成一支 data/game.js，包進同一個函式範圍 (function(){ … })()：
 //      player 等遊戲資料不再是全域變數，主控台打 player.gold = … 會出現 player is not defined。
 //   ② HTML 與程式字串裡的事件（onclick="…" 等）用到的頂層函式／變數才掛回 window（等於「按按鈕」本來就能做的事）。

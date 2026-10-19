@@ -1,4 +1,4 @@
-// 黑暗大陸：防改檔（ARCHITECTURE.md 第 58 節；依賴 config）
+// 黑暗大陸：防改檔（ARCHITECTURE.md 第 60 節；依賴 config）
 // 純前端擋不住會讀程式的人，目標是擋掉一般玩家常用的三種改法，並讓改過的存檔碰不到交易所／共用倉庫：
 //   ① 本機存檔加密＋簽章（saveEncode／saveDecode）：localStorage 裡是亂碼，用存檔編輯器或手改文字 → 簽章不符 → 標記
 //   ② 雲端存檔簽章（guardCloudSig）：上傳時對等級、經驗、金幣、道具算 SHA-256，伺服器重算（tools/anticheat.sql），

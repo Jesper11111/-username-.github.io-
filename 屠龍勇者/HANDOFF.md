@@ -5,8 +5,10 @@
 
 ## 1. 現況
 
-- 版本 **`20261019m`**（防改檔第 2 波，第 58 節：交易所門檻、存檔加密簽章、雲端存檔簽章、記憶體偽裝、發佈版混淆；第 59 節：聊天依活躍程度輪詢、交易所列表快取，省 Supabase 傳輸量）。
+- 版本 **`20261019r`**（防改檔第 2 波，第 60 節：交易所門檻、存檔加密簽章、雲端存檔簽章、記憶體偽裝、發佈版混淆；第 61 節：聊天依活躍程度輪詢、交易所列表快取，省 Supabase 傳輸量）。前一版 `20261019q`（圓形小地圖＋按 M／點小地圖開全世界地圖，第 59 節）已上線。
 - Supabase 免費方案每月傳輸量約 5GB（整個遊戲共用），估計適合每天幾百人；人更多要考慮 Pro（每月 25 美元）。
+- 大地圖接縫：13 條全部補完。還有幾處淡淡的霧（綠洲兩個角、熔火煉獄上下緣、金字塔右緣）可再補，使用者想做再切圖。
+- 使用者存 AI 圖的習慣：存到 `images\maps\<id>.jfif`（或 `.png.jfif`），要搬到 `tools\bigmap\seams\fixed\<id>.jpg`（別留在 images，會被發佈）。
 - 網址：`https://k559610142-art.github.io/-username-.github.io-/屠龍勇者/`（repo `k559610142-art/-username-.github.io-`，GitHub Pages 發佈 `main`）。
 - 已完成的系統（詳見 `ARCHITECTURE.md` 各節）：12 職業（都有人物模型與立繪）＋職業故事／任務線、天堂原版經驗表、衝裝、暗黑式詞綴、
   製作通貨、異界地圖 T1～T15、共鳴裝備、天堂式魔法 1～10 級＋魔法書、快捷欄、離線收益、多角色欄位、
@@ -15,8 +17,8 @@
 
 ## 2. 待辦（使用者還沒叫做的不要自己開工，先問）
 
-- **使用者要做**：到 Supabase SQL Editor 執行 `tools/anticheat.sql`（第 58 節；沒執行前伺服器不檢查簽章與交易所門檻，遊戲照常）。
-- 防改檔還沒做的（第 58 節末）：離線收益改用伺服器時間、加速器偵測、排行榜排除簽章不符的存檔。使用者沒說要做就先不做。
+- **使用者要做**：到 Supabase SQL Editor 執行 `tools/anticheat.sql`（第 60 節；沒執行前伺服器不檢查簽章與交易所門檻，遊戲照常）。
+- 防改檔還沒做的（第 60 節末）：離線收益改用伺服器時間、加速器偵測、排行榜排除簽章不符的存檔。使用者沒說要做就先不做。
 
 - 大地圖第 3 期「獸潮」、第 4 期介面（第 45 節之後的規劃）。
 - 還沒有圖的怪物：火龍、永夜之塔怪約 30 隻、任務首領約 24 隻（使用者會提供動作表，切圖工具 `tools/monsters/cut-sheet.ps1`）。
@@ -27,6 +29,7 @@
 
 - 一律用**繁體中文**溝通；使用者不是工程師，說明用白話，少用術語。
 - 大改版喜歡**先做樣本並排讓他選**（例如「角色裝備」視窗是 Claude 和 Gemini 各做一版並排比較後選的）。
+- 負重：回血超過 50% 停、回魔 70% 以上才停（2026-10-19 使用者決定，回魔不照天堂原版）。
 - 數值上選「完全天堂原版」：經驗表 `EXP_RATE=1`、攻速依武器速度×職業係數÷加速藥水。
 - 人物模型：使用者自己用 AI 生成動作表給你切；黑暗妖精用**第一版**模型（`darkelf-*.png`），v2～v5 圖檔留著但不用，立繪用 v4。
 - 素材原檔在使用者桌面「屠龍勇者人物模組資料」資料夾。
@@ -35,7 +38,8 @@
 
 ## 4. 環境限制（Windows 10）
 
-- 沙盒 PowerShell 裡 `git` 不在 PATH，要用 `C:\Users\User\AppData\Local\GitHubDesktop\app-3.6.6\resources\app\git\cmd\git.exe`（版本號資料夾可能變）。沒有推送憑證。
+- Git for Windows 2.55（2026-10-18 用 winget 安裝）：`C:\Program Files\Git\cmd\git.exe`，已在系統 PATH（新開的終端機才吃得到；舊視窗或 AI 的沙盒找不到就用完整路徑）。
+  終端機還沒登入 GitHub，推送仍由使用者在 GitHub Desktop 按 Push origin。
 - 有 Node（`C:\Program Files\nodejs`）；**沒有** Python、ffmpeg。圖片用 PowerShell 腳本處理（`tools/`），影片抽音軌用 WinRT MediaTranscoder（第 44.1 節）。
 - Supabase（雲端存檔、聊天、交易所……）的後台由使用者操作；`gm.html` 是管理頁。
 
@@ -58,6 +62,8 @@
 - Claude（Claude Code 桌面版）：能開瀏覽器實際玩、截圖、commit。
 - Gemini（Gemini CLI，自動讀 `GEMINI.md`）：使用者雙擊 `Gemini改遊戲.bat` 直接開（伺服器＋瀏覽器＋Gemini 一起啟動）；
   Claude 也能透過 `.claude/gemini/ask.ps1` 呼叫（`prompt.txt` 進、`answer.txt` 出，模型寫在 `model.txt`）。
+- ChatGPT（OpenAI Codex CLI 0.163.0，npm 全域安裝，自動讀 `AGENTS.md`）：使用者雙擊 `ChatGPT改遊戲.bat`，第一次要用 ChatGPT 帳號登入。
+  桌面另有 `ChatGPT.lnk`（Edge App 視窗開 chatgpt.com，只能聊天、碰不到檔案）。Microsoft Store 版裝不了：Windows Update 服務被停用。
 - 給其他 AI 的壓縮版交接（整份貼上就能接手，人看不懂沒關係）：`AI_HANDOFF.min.md`。
   API 金鑰目前是免費層，Pro 模型（`gemini-3.1-pro-preview`）要在 Google AI Studio 為金鑰的專案開帳單才能用。
 - 換新的 AI 接手：在 `屠龍勇者/` 資料夾開啟它，第一句話說「先讀 AGENTS.md 和 HANDOFF.md，再告訴我你理解的現況」，確認它講對了再交代工作。

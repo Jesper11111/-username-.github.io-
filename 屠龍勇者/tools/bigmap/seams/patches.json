@@ -1,0 +1,19 @@
+{
+  "note": "Seam patches for the big map (ARCHITECTURE.md section 58). Each patch = a 1024x1024 square of wild.jpg (map px, 1 tile = 32px). orient v = vertical seam at map x 'at', h = horizontal seam at map y 'at'; band = half width of the magenta area the AI repaints. Fixed images go to fixed/<id>.png|jpg|webp.",
+  "size": 1024,
+  "patches": [
+    { "id": "01-beach-pyramid", "x": 2392, "y": 1820, "orient": "v", "at": 2904, "band": 150, "note": "海灘（低語海岸）右邊 ↔ 金字塔（黃沙王陵）左邊" },
+    { "id": "02-beach-mine", "x": 1100, "y": 2280, "orient": "h", "at": 2800, "band": 150, "note": "海灘（低語海岸）下緣 ↔ 南排礦坑上層／沉眠龍窟上緣" },
+    { "id": "03-dunes-lava", "x": 3904, "y": 980, "orient": "v", "at": 4416, "band": 150, "note": "東邊沙丘（焦骨峽谷）↔ 熔火煉獄左邊" },
+    { "id": "04-swamp-pond", "x": 1088, "y": 0, "orient": "v", "at": 1600, "band": 150, "note": "沼澤（紫霧遺跡）↔ 林間古泉" },
+    { "id": "06-village-meadow-w", "x": 640, "y": 888, "orient": "h", "at": 1400, "band": 150, "note": "廢棄村落（沉船海灣）下緣 ↔ 河畔草原上緣（西半）" },
+    { "id": "07-village-meadow-e", "x": 1640, "y": 888, "orient": "h", "at": 1400, "band": 150, "note": "廢棄村落下緣 ↔ 草原上緣（東半）" },
+    { "id": "08-meadow-oasis", "x": 1740, "y": 1250, "orient": "v", "at": 2252, "band": 150, "note": "河畔草原（迷霧古林）右邊 ↔ 骨骸綠洲（焦骨峽谷）左邊" },
+    { "id": "09-oasis-pyramid", "x": 3420, "y": 1546, "orient": "h", "at": 2058, "band": 150, "note": "骨骸綠洲下緣 ↔ 金字塔上緣" },
+    { "id": "10-meadow-beach", "x": 1260, "y": 1567, "orient": "h", "at": 2079, "band": 150, "note": "河畔草原下緣 ↔ 海灘（低語海岸）上緣" },
+    { "id": "11-mine-cave", "x": 1016, "y": 2560, "orient": "v", "at": 1528, "band": 150, "note": "礦坑上層 ↔ 沉眠龍窟" },
+    { "id": "12-cave-deep", "x": 2472, "y": 2560, "orient": "v", "at": 2984, "band": 150, "note": "沉眠龍窟 ↔ 礦坑深層" },
+    { "id": "13-pyramid-deep-w", "x": 3000, "y": 2293, "orient": "h", "at": 2805, "band": 150, "note": "金字塔下緣 ↔ 礦坑深層上緣（西半）" },
+    { "id": "14-pyramid-deep-e", "x": 3490, "y": 2293, "orient": "h", "at": 2805, "band": 150, "note": "金字塔下緣 ↔ 礦坑深層上緣（東半）" }
+  ]
+}

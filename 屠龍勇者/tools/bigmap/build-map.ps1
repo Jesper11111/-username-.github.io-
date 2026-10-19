@@ -53,6 +53,26 @@ public static class BigMap {
     }
     m.UnlockBits(d); return s.ToString();
   }
+  // seam patch (section 58): paste an AI-repainted square back. Fully opaque inside the band (+pad), smooth fade over 'fade' px
+  // perpendicular to the seam, and fade at the two ends along the seam, so colour drift outside the band never shows a hard edge.
+  // (2026-10-19 tried a "fade zone only adds fix-orig" mode for overlapping patches: it left hard-edged fog blocks at the band edge,
+  //  so plain alpha blending is kept — overlapping patches looked fine with it.)
+  public static void Patch(Bitmap map, Bitmap fix, int px, int py, bool vertical, int at, int band, int pad, int fade, int endFade) {
+    int S = fix.Width;
+    BitmapData dm; var bm = Bytes(map, out dm);
+    BitmapData df; var bf = Bytes(fix, out df);
+    for (int y=0;y<S;y++) for (int x=0;x<S;x++) {
+      int mx = px + x, my = py + y; if (mx < 0 || my < 0 || mx >= map.Width || my >= map.Height) continue;
+      double d = vertical ? Math.Abs(mx - at) : Math.Abs(my - at);
+      double a = d <= band + pad ? 1 : Math.Max(0, 1 - (d - band - pad) / fade);
+      int along = vertical ? y : x; int edge = Math.Min(along, S-1-along);
+      if (edge < endFade) a = Math.Min(a, (double)edge / endFade);
+      a = a*a*(3-2*a); if (a <= 0) continue;
+      int i = my*dm.Stride + mx*4, j = y*df.Stride + x*4;
+      for (int c=0;c<3;c++) bm[i+c] = (byte)(bm[i+c]*(1-a) + bf[j+c]*a + 0.5);
+    }
+    fix.UnlockBits(df); Put(map, dm, bm);
+  }
   // mask overlay for checking: blocked tiles tinted red, water blue
   public static void Overlay(Bitmap m, string mask, int tile) {
     var rows = mask.Trim().Split('\n');
@@ -124,6 +144,19 @@ $g.Dispose()
 foreach ($t in $tiles) { $t.Dispose() }
 $enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
 $ep = New-Object System.Drawing.Imaging.EncoderParameters 1; $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 82L
+# 2026-10-19 seam patches (section 58): keep the unpatched map for seams\seam-cut.ps1, then paste every seams\fixed\<id>.* that exists
+$seamDir = Join-Path $dir 'seams'
+$out.Save((Join-Path $seamDir 'base.jpg'), $enc, $ep)
+$seamCfg = [IO.File]::ReadAllText((Join-Path $seamDir 'patches.json'), (New-Object System.Text.UTF8Encoding $false)) | ConvertFrom-Json
+foreach ($p in $seamCfg.patches) {
+    $f = Get-ChildItem (Join-Path $seamDir 'fixed') -File -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $p.id } | Select-Object -First 1
+    if (-not $f) { continue }
+    $raw = [System.Drawing.Image]::FromFile($f.FullName); $S = [int]$seamCfg.size
+    $fix = New-Object System.Drawing.Bitmap $S, $S, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $fg = [System.Drawing.Graphics]::FromImage($fix); $fg.InterpolationMode = 'HighQualityBicubic'; $fg.DrawImage($raw, 0, 0, $S, $S); $fg.Dispose(); $raw.Dispose()
+    [BigMap]::Patch($out, $fix, [int]$p.x, [int]$p.y, ($p.orient -eq 'v'), [int]$p.at, [int]$p.band, 24, 140, 110); $fix.Dispose()
+    "seam patch $($p.id) <- $($f.Name)"
+}
 $out.Save((Join-Path $root 'images\maps\wild.jpg'), $enc, $ep)
 $mini = New-Object System.Drawing.Bitmap 400, 238; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 400, 238); $mg.Dispose()
 $mini.Save((Join-Path $root 'images\maps\wild-mini.jpg'), $enc, $ep); $mini.Dispose()

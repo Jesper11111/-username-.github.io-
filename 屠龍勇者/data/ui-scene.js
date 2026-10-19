@@ -101,7 +101,7 @@ const SCENE_BGS = {
     // 2026-10-18 使用者改成「5 個真的地圖合併」：海灘＝低語海岸、草原與古泉＝迷霧古林、廢村＝沉船海灣、沼澤＝紫霧遺跡；
     // 走進別區就自動換成那個地圖（怪物、等級、掉落跟著換，sceneEnterZone），這幾個地圖共用同一個畫面（sceneKey 'zone:wild'）
     wild: {
-        src: 'images/maps/wild.jpg?v=4', mini: 'images/maps/wild-mini.jpg?v=4', occ: 'images/maps/wild-occ.png', w: 188,   // 2026-10-19 往東加熔火煉獄（第 57 節），141 → 188 欄   // ?v=：圖改過就加 1（SW 會先給快取的舊圖）
+        src: 'images/maps/wild.jpg?v=7', mini: 'images/maps/wild-mini.jpg?v=7', occ: 'images/maps/wild-occ.png', w: 188,   // 2026-10-19 往東加熔火煉獄（第 57 節），141 → 188 欄   // ?v=：圖改過就加 1（SW 會先給快取的舊圖）
         h: 112, start: [63, 78], big: true,   // 2026-10-18 往南加一排（第 49 節）：腐朽礦坑・上層／沉眠龍窟／腐朽礦坑・深層，88 → 112 列
         // 野外 NPC（第 55 節）：站的格子不能走；點名牌對話（act 呼叫 ui-panels.js 的 openKeeper）；to＝要送去的地圖；front＝「飛到 NPC 面前」的落點
         fieldNpcs: [
@@ -145,6 +145,7 @@ const SCENE_BGS = {
             [153, 44, 168, 51], [151, 46, 170, 50], [155, 43, 165, 44],                           // 熔火煉獄：中間符文廣場
             [141, 39, 151, 43], [150, 41, 154, 45], [166, 38, 186, 43], [165, 41, 169, 45],     // 左上、右上遺跡平台與階梯
             [140, 51, 152, 57], [149, 50, 155, 53], [168, 51, 186, 57], [166, 50, 170, 53], [182, 46, 187, 52],   // 左下、右下岩地、右邊岩島（西邊接焦骨峽谷沙丘）
+            [36, 39, 44, 41], [70, 44, 73, 52],                                                  // 接縫補畫後：村落往草原的石板路、草原與骨骸地之間的空地（第 58 節）
         ],
         block: [
             [16, 8, 24, 9], [23, 10, 31, 12], [25, 13, 27, 15], [36, 16, 37, 18],
@@ -156,6 +157,9 @@ const SCENE_BGS = {
             [64, 94, 78, 103],                                                                         // 龍窟：沉睡的龍
             [111, 90, 126, 99], [127, 93, 132, 98], [134, 98, 140, 103], [94, 95, 107, 104], [118, 108, 121, 111],   // 礦坑深層（上層左右翻轉）
             [145, 49, 147, 52], [150, 51, 152, 54], [156, 43, 157, 46], [150, 38, 152, 41], [167, 39, 170, 43], [173, 51, 175, 54], [176, 51, 181, 52],   // 熔火煉獄：石柱、右下的熔岩溪
+            [92, 80, 95, 84], [49, 84, 50, 85], [138, 43, 140, 46],                                  // 接縫補畫後新畫的碎石堆、路上大石、流進沙丘的熔岩（第 58 節）
+            [57, 42, 58, 43], [58, 44, 61, 46], [61, 46, 63, 47],                                   // 接縫補畫第二批：草原上新畫的小溪（木橋可走）
+            [67, 66, 70, 67],                                                                        // 接縫補畫第三批：海灘上方新畫的小水窪
         ],
     },
 };
@@ -1176,37 +1180,57 @@ function drawOccPatch(ctx, x0, y0, x1, y1, footY, camX, camY) {
 }
 
 // ───────── 大地圖：小地圖＋進入區域的橫幅（第 45 節）─────────
-// 小地圖畫在右上角（畫面座標）：縮圖、鏡頭範圍白框、怪物紅點、角色亮點；點小地圖＝走過去（sceneClick → sceneMiniClick）
+// 小地圖（2026-10-19 使用者選樣本 B，第 59 節）：右上角圓形、跟著角色，顯示角色周圍 MINI_TILES 格（直接取大地圖原圖，比縮圖清楚）；
+// 怪物紅點、角色亮點，目前地圖的出口箭頭（太遠的貼在圓邊指方向）。點小地圖（或按 M）＝打開全世界地圖 drawWorldMap，點世界地圖＝走過去
+const MINI_TILES = 22;
 function drawBigMapHud(ctx, W, H, camX, camY) {
-    const bg = scene.bg, mapW = scene.mw * TILE, mapH = scene.mh * TILE;
-    const mw = Math.round(Math.min(128, W * 0.3)), mh = Math.round(mw * mapH / mapW);
-    const mx = W - mw - 8, my = W > H * 2 ? 40 : 8;   // PC 橫式外框上緣有裝飾，往下移
-    scene.miniRect = { x: mx, y: my, w: mw, h: mh };
-    const k = mw / mapW, img = bg.mini && spriteImage(bg.mini);
+    const bg = scene.bg;
+    if (walkHome) scene.worldOpen = false;
+    const [vx0, vx1] = scene.visX || [0, W];
+    const R = Math.round(Math.min(62, (vx1 - vx0) * 0.16)), cx = vx1 - R - 12, cy = (W > H * 2 ? 40 : 10) + R;   // PC 橫式外框上緣有裝飾，往下移
+    scene.miniRect = { cx, cy, r: R };
+    const img = spriteImage(bg.src), k = R / (MINI_TILES * TILE), s = MINI_TILES * TILE;
+    const pcx = (scene.pl.rx + 0.5) * TILE, pcy = (scene.pl.ry + 0.5) * TILE;
+    const at = (wx, wy) => [cx + (wx - pcx) * k, cy + (wy - pcy) * k];
     ctx.save();
-    ctx.fillStyle = 'rgba(10,12,10,0.75)'; ctx.fillRect(mx - 3, my - 3, mw + 6, mh + 6);
-    ctx.strokeStyle = '#a88b4a'; ctx.lineWidth = 1.5; ctx.strokeRect(mx - 3, my - 3, mw + 6, mh + 6);
-    if (img) { ctx.globalAlpha = 0.92; ctx.drawImage(img, mx, my, mw, mh); ctx.globalAlpha = 1; }
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1;
-    ctx.strokeRect(mx + Math.max(0, camX) * k, my + Math.max(0, camY) * k, Math.min(W, mapW) * k, Math.min(H, mapH) * k);
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = '#141210'; ctx.fill();
+    ctx.save(); ctx.clip();
+    if (img) ctx.drawImage(img, pcx - s, pcy - s, 2 * s, 2 * s, cx - R, cy - R, 2 * R, 2 * R);   // 超出原圖的部分瀏覽器自動裁掉
     for (const m of scene.mons) {
         if (m.dead) continue;
+        const [x, y] = at((m.rx + 0.5) * TILE, (m.ry + 0.5) * TILE);
+        if (Math.hypot(x - cx, y - cy) > R - 3) continue;
         ctx.fillStyle = m.inst ? '#ff5a3c' : '#e0705a';
-        ctx.fillRect(mx + (m.rx + 0.5) * TILE * k - 1, my + (m.ry + 0.5) * TILE * k - 1, 2.5, 2.5);
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
     }
-    // 路引：目前這個地圖往外的出口，閃爍的小箭頭
+    const vg = ctx.createRadialGradient(cx, cy, R * 0.62, cx, cy, R);   // 邊緣暗角，圖像自然融進圓框
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+    ctx.restore();
+    // 路引：目前這個地圖往外的出口；在圓外的貼在圓邊（R−7）指出方向
     if (scene.gates) {
-        const a = 0.55 + 0.45 * Math.sin(gameNow / 250);
-        ctx.globalAlpha = a;
-        for (const g of scene.gates) if (g.from === player.loc.id)
-            drawGlowArrow(ctx, mx + (g.x + 0.5) * TILE * k, my + (g.y + 0.5) * TILE * k, g.ang, 4.5, '#ffd86a', 6);
+        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(gameNow / 250);
+        for (const g of scene.gates) if (g.from === player.loc.id) {
+            let [x, y] = at((g.x + 0.5) * TILE, (g.y + 0.5) * TILE);
+            const d = Math.hypot(x - cx, y - cy), lim = R - 7;
+            if (d > lim) { x = cx + (x - cx) * lim / d; y = cy + (y - cy) * lim / d; }
+            drawGlowArrow(ctx, x, y, g.ang, 4.5, '#ffd86a', 6);
+        }
         ctx.globalAlpha = 1;
     }
-    const px = mx + (scene.pl.rx + 0.5) * TILE * k, py = my + (scene.pl.ry + 0.5) * TILE * k;
     ctx.fillStyle = '#7fe8ff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.textAlign = 'center';
-    if (scene.region) drawLabel(ctx, scene.region, mx + mw / 2, my + mh + 11, '#ffe7a8');
+    ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // 金色圓框＋北方 N＋右下角放大鈕
+    ctx.lineWidth = 4; ctx.strokeStyle = '#8a6630'; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = '#e6c882'; ctx.beginPath(); ctx.arc(cx, cy, R + 4, 0, Math.PI * 2); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    drawLabel(ctx, 'N', cx, cy - R - 1, '#f2d9a0');
+    const bx = cx + R * 0.72, by = cy + R * 0.72;
+    ctx.fillStyle = 'rgba(20,16,10,0.9)'; ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#e6c882'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.font = '11px sans-serif'; ctx.fillStyle = '#f2d9a0'; ctx.fillText('⤢', bx, by + 1);
+    if (scene.region) drawLabel(ctx, scene.region, cx, cy + R + 14, '#ffe7a8');
     // 進入新區域：上方中間顯示區域名稱 2.5 秒（淡入淡出）
     const t = gameNow - (scene.regionAt || -1e9);
     if (scene.region && t < 2500) {
@@ -1220,24 +1244,80 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
         ctx.globalAlpha = 1;
     }
     ctx.restore();
+    if (scene.worldOpen) drawWorldMap(ctx, W, H);
 }
-// 點小地圖：換算成格子，走到那裡（不能走的格子找附近最近能走的）；回傳 true＝點在小地圖上
+// 全世界地圖（點小地圖／按 M 打開）：整張大地圖縮到畫面內，標出各地圖名稱與建議等級（目前所在的亮色）、目前地圖的出口、角色位置；
+// 點地圖＝走過去並關閉，點外面／再按 M／Esc＝關閉。縮圖第一次打開時從原圖畫一次存起來（worldCache），之後每幀只貼這張
+let worldCache = null;
+function drawWorldMap(ctx, W, H) {
+    const mapW = scene.mw * TILE, mapH = scene.mh * TILE;
+    const [vx0, vx1] = scene.visX || [0, W], vw = vx1 - vx0, mid = (vx0 + vx1) / 2;
+    const pc = W > H * 2, top = pc ? 44 : 34, bot = pc ? H * 0.17 + 14 : 16;   // PC 橫式外框底部的欄杆會蓋住地圖下緣，留出來
+    const ww = Math.min(vw - 24, (H - top - bot) * mapW / mapH), wh = ww * mapH / mapW;
+    const wx = mid - ww / 2, wy = top + (H - top - bot - wh) / 2;
+    scene.worldRect = { x: wx, y: wy, w: ww, h: wh };
+    const k = ww / mapW, img = spriteImage(scene.bg.src);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 16px serif'; ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+    ctx.strokeText('— 世界地圖 —', mid, top - 18); ctx.fillStyle = '#f2d9a0'; ctx.fillText('— 世界地圖 —', mid, top - 18);
+    const dpr = window.devicePixelRatio || 1, cw = Math.round(ww * (scene.zoom || 1) * dpr);
+    if (img && (!worldCache || worldCache.width !== cw || worldCache.src !== scene.bg.src)) {
+        worldCache = document.createElement('canvas'); worldCache.width = cw; worldCache.height = Math.round(cw * mapH / mapW); worldCache.src = scene.bg.src;
+        const g2 = worldCache.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(img, 0, 0, worldCache.width, worldCache.height);
+    }
+    if (worldCache && img) ctx.drawImage(worldCache, wx, wy, ww, wh);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#8a6630'; ctx.strokeRect(wx - 2, wy - 2, ww + 4, wh + 4);
+    ctx.lineWidth = 1; ctx.strokeStyle = '#e6c882'; ctx.strokeRect(wx - 5, wy - 5, ww + 10, wh + 10);
+    // 地圖名稱（同一個地圖有兩區時各標一次）
+    for (const rg of scene.bg.regions || []) {
+        const z = ZONE_BY_ID[rg.zone]; if (!z) continue;
+        const x = wx + (rg.x + 0.5) * TILE * k, y = wy + (rg.y + 0.5) * TILE * k, here = rg.zone === player.loc.id;
+        const hard = z.lv && player.lv < z.lv[0] - 5;
+        drawLabel(ctx, z.name, x, y - 6, here ? '#7fe8ff' : hard ? '#ff9a7a' : '#ffe7a8');
+        if (z.lv) { ctx.font = '10px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`Lv.${z.lv[0]}～${z.lv[1]}`, x, y + 7); ctx.fillStyle = '#d8ccb0'; ctx.fillText(`Lv.${z.lv[0]}～${z.lv[1]}`, x, y + 7); }
+    }
+    if (scene.gates) {
+        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(gameNow / 250);
+        for (const g of scene.gates) if (g.from === player.loc.id) drawGlowArrow(ctx, wx + (g.x + 0.5) * TILE * k, wy + (g.y + 0.5) * TILE * k, g.ang, 5, '#ffd86a', 6);
+        ctx.globalAlpha = 1;
+    }
+    const px = wx + (scene.pl.rx + 0.5) * TILE * k, py = wy + (scene.pl.ry + 0.5) * TILE * k, pr = 4 + 1.5 * Math.sin(gameNow / 200);
+    ctx.fillStyle = 'rgba(127,232,255,0.35)'; ctx.beginPath(); ctx.arc(px, py, pr + 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7fe8ff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.font = '11px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
+    const tip = '點地圖走過去・點外面關閉', ty = Math.min(H - 8, wy + wh + 14);
+    ctx.strokeText(tip, mid, ty); ctx.fillStyle = '#d8ccb0'; ctx.fillText(tip, mid, ty);
+    ctx.restore();
+}
+// 點小地圖：打開世界地圖；世界地圖開著時：點地圖內＝換算成格子走過去（不能走的格子找附近最近能走的）並關閉，點外面＝關閉。回傳 true＝這次點擊已處理
 function sceneMiniClick(sx, sy) {
+    if (!(scene.bg && scene.bg.big)) return false;
+    if (scene.worldOpen) {
+        scene.worldOpen = false;
+        const w = scene.worldRect;
+        if (w && sx >= w.x && sy >= w.y && sx <= w.x + w.w && sy <= w.y + w.h)
+            sceneWalkNear(Math.floor((sx - w.x) / w.w * scene.mw), Math.floor((sy - w.y) / w.h * scene.mh));
+        return true;
+    }
     const r = scene.miniRect;
-    if (!r || !(scene.bg && scene.bg.big) || sx < r.x || sy < r.y || sx > r.x + r.w || sy > r.y + r.h) return false;
-    let tx = Math.floor((sx - r.x) / r.w * scene.mw), ty = Math.floor((sy - r.y) / r.h * scene.mh);
+    if (!r || Math.hypot(sx - r.cx, sy - r.cy) > r.r + 6) return false;
+    scene.worldOpen = true;
+    return true;
+}
+function sceneWalkNear(tx, ty) {
     if (scene.grid[ty] && scene.grid[ty][tx] !== 0) {
         let best = null, bd = 1e9;
         for (let y = Math.max(0, ty - 8); y <= Math.min(scene.mh - 1, ty + 8); y++) for (let x = Math.max(0, tx - 8); x <= Math.min(scene.mw - 1, tx + 8); x++) {
             const d = Math.hypot(x - tx, y - ty);
             if (scene.grid[y][x] === 0 && d < bd) { bd = d; best = [x, y]; }
         }
-        if (!best) return true;
+        if (!best) return;
         [tx, ty] = best;
     }
     sceneWalkTo(tx, ty);
     if (scene.pl.path.length) scene.manualUntil = gameNow + MANUAL_HOLD_MS + scene.pl.path.length * 1000 / PLAYER_SPEED;
-    return true;
 }
 // 大地圖換區：直接把所在地圖換成那個地圖（不重建畫面、不打斷正在打的怪；之後生的怪、掉落、經驗、任務、死亡回哪個村莊都照新地圖）
 function sceneEnterZone(id) {
@@ -1338,6 +1418,9 @@ function sceneFrame(ts) {
     // 手機外框拿掉拱門後地圖變高（2026-10-15）：再放大到地圖蓋滿整個畫面，不留上下黑邊
     const z = Math.max(clamp(W / (TILE * 28), 1, 1.3), H / (scene.mh * TILE), W / (scene.mw * TILE));
     scene.zoom = z;
+    // 畫布在畫面上真正看得到的左右範圍（手機版畫布比螢幕寬、左右各超出一點）：小地圖、世界地圖照這個排版（第 59 節）
+    const cr = cv.getBoundingClientRect();
+    scene.visX = [Math.max(0, -cr.left) / z, Math.min(W, window.innerWidth - cr.left) / z];
     ctx.setTransform(dpr * z, 0, 0, dpr * z, 0, 0);
     if (!document.hidden) { sceneUpdate(dt); sceneDraw(ctx, W / z, H / z); }
     sceneRaf = requestAnimationFrame(sceneFrame);
@@ -1420,12 +1503,14 @@ document.addEventListener('keydown', ev => {
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if (!scene || !player || !huntVisible() || walkHome) return;
     const barKey = BAR_KEYS.indexOf(k);   // 快捷欄：1～8、Q E R F Z X C V（hotbar.js）
-    if (!SCENE_KEY_DIRS[k] && barKey < 0) return;
+    const mapKey = scene.bg && scene.bg.big && player.loc.type === 'zone' && (k === 'm' || (k === 'Escape' && scene.worldOpen));   // M 開關世界地圖、Esc 關閉
+    if (!SCENE_KEY_DIRS[k] && barKey < 0 && !mapKey) return;
     const t = ev.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
     const dl = $('dialog-layer');
     if (dl && dl.classList.contains('active')) return;
     ev.preventDefault();
+    if (mapKey) { if (!ev.repeat) scene.worldOpen = k === 'm' ? !scene.worldOpen : false; return; }
     if (barKey >= 0) { if (!ev.repeat) barUse(barKey); return; }
     if (!sceneKeys.includes(k)) sceneKeys.push(k);
     scene.pl.path = scene.pl.path.slice(0, 1);   // 改用鍵盤：取消點地圖的路線（走完這一格）

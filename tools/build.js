@@ -119,7 +119,7 @@ async function build() {
         if (e.isDirectory()) copyDir(s, d); else fs.copyFileSync(s, d);
     }
     fs.writeFileSync(path.join(OUT, '.nojekyll'), '');
-    // 黑暗大陸（屠龍勇者/，另一款遊戲）：同樣打包＋混淆，覆蓋上面原樣複製過去的資料夾（屠龍勇者/tools/build.js、屠龍勇者/ARCHITECTURE.md 第 58 節）
+    // 黑暗大陸（屠龍勇者/，另一款遊戲）：同樣打包＋混淆，覆蓋上面原樣複製過去的資料夾（屠龍勇者/tools/build.js、屠龍勇者/ARCHITECTURE.md 第 60 節）
     await require(path.join(ROOT, '屠龍勇者', 'tools', 'build.js')).buildDragon(path.join(OUT, '屠龍勇者'));
     const kb = n => (n / 1024).toFixed(0) + ' KB';
     console.log(`建置完成 v=${ver}：${files.length} 支檔案 → data/game.js ${kb(min.code.length)}（原始 ${kb(bundle.length)}）；公開 ${fnExports.length} 個函式、${varExports.length} 個變數：${varExports.join(', ')}`);

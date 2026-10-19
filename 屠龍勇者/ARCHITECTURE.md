@@ -8,8 +8,8 @@
 | 檔案 | 內容 |
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
-| `Gemini改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（PATH 補 node、GitHub Desktop 的 git，`--approval-mode auto_edit`） |
-| `tools/build.js` | **發佈用建置＋混淆**（第 58 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -28,7 +28,7 @@
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
-| `data/guard.js` | **防改檔**（第 58 節）：本機存檔加密＋簽章 `saveEncode`／`saveDecode`／`saveParse`／`saveFormatMigrate`、雲端存檔簽章 `guardCloudSig`／`guardSaveCanon`／`guardCheckCloud`、記憶體數值偽裝 `guardWrap`、改檔標記 `guardFlag`（`player.integrity`） |
+| `data/guard.js` | **防改檔**（第 60 節）：本機存檔加密＋簽章 `saveEncode`／`saveDecode`／`saveParse`／`saveFormatMigrate`、雲端存檔簽章 `guardCloudSig`／`guardSaveCanon`／`guardCheckCloud`、記憶體數值偽裝 `guardWrap`、改檔標記 `guardFlag`（`player.integrity`） |
 | `data/save.js` | 存讀檔（本機文字一律經過 guard.js 加解密）、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
 | `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
@@ -58,7 +58,7 @@
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
-| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 58 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
+| `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 60 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
 
 ## 2. 載入順序與依賴
 
@@ -71,8 +71,8 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019m`）。
-- **防改檔（第 58 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019r`）。
+- **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
   整個遊戲載不起來（看起來像「存檔壞掉」，其實存檔還在），`20261009u` 修復時採用較新的 `20261009t` 那一邊。
@@ -113,7 +113,7 @@
 | 攻擊間隔 | **天堂式（2026-10-18，版本 `20261018i`）**：武器 spd × 職業動作係數 ÷ 綠水 1.33 ÷ 勇水 1.33（精靈餅乾 1.15）× (1−其他攻速，最多 30%)，最快 0.4 秒（`atkMs`）。見下方「攻速規則」 |
 | 施法間隔 | 攻擊魔法（`castSpell`）用 `castMs`：1.2 秒 − 綠水 0.3 − 慎重藥水 0.3（法師、魔鬥士、天使），最快 0.6 秒，不看武器 |
 | 回血／5 秒 | 1 + 等級/8 + max(0, 體質-12) + 增益；村莊 ×3；負重 > 50% 不回 |
-| 回魔／5 秒 | 1 + 等級/12 + (精神-10)×mpRegenK + 增益 |
+| 回魔／5 秒 | 1 + 等級/12 + (精神-10)×mpRegenK + 增益；村莊 ×3；**負重 70% 以上不回**（2026-10-19 版本 `20261019l` 使用者要求；`WEIGHT_NO_MP_REGEN` 0.7，原本跟回血一樣超過 50% 就停） |
 | 負重上限 | 1200 + (力量 + 體質) × 80 + 等級 × 20 + 裝備 `weight`（2026-10-16 起，版本 `20261016d`；原本 (力量 + 體質) × 100，1～50 級不會成長）。Gemini 提案、使用者選「A＋B」：公式加底值與等級成長（A），彈藥重量降為 1/5（箭／銀箭 0.02、子彈／銀子彈 0.03）＋腰帶加負重上限（B）：皮帶 +300、修羅腰帶 +500、泰坦腰帶 +800、巨人王腰帶 +1200（`weight` 在 `FX_KEYS`，道具說明與圖鑑顯示「負重上限 +N」） |
 | 爆擊 | 5% + 武器 + 增益（×1.5 傷害） |
 | 閃避 | (敏捷-12)×1% + 增益，上限 50% |
@@ -1213,7 +1213,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **管理頁** `屠龍勇者/gm.html`（網址 `<網站>/屠龍勇者/gm.html`，`noindex`）：用遊戲帳號登入（登入狀態存在 `dragonSlayer_gm_auth`，和遊戲分開）。
   分頁：⚠️ 可疑紀錄（可勾「顯示已處理」；每列：歷程／已處理／封鎖）、👥 玩家（搜尋 Email 或角色名；點角色看歷程）、⛔ 封鎖名單（解除封鎖）。
   歷程視窗：最近 80 筆上傳，列出總經驗、金幣、與上一筆的變化與間隔、異常標籤。封鎖原因玩家看得到。
-- **限制**：只能事後發現，擋不住「慢慢改」；存檔仍由玩家端產生。真正防止要把戰鬥搬到伺服器（之後的交易所前必做）。2026-10-19 補強見第 58 節（混淆、存檔加密簽章、雲端簽章、交易所門檻）。
+- **限制**：只能事後發現，擋不住「慢慢改」；存檔仍由玩家端產生。真正防止要把戰鬥搬到伺服器（之後的交易所前必做）。2026-10-19 補強見第 60 節（混淆、存檔加密簽章、雲端簽章、交易所門檻）。
 - **驗證**：本機 PostgreSQL 16（模擬 auth.uid／auth.jwt）：SQL 可重複執行；正常成長（Lv10→12、1 小時）不標記；
   改檔（Lv12→40、金幣 1 億、能力 50、強化 +20、萬能藥 9、時間快 1 小時）一次標出 6 種；新角色 0.5 小時 Lv.50 標記；格式錯誤只記 parse、存檔照常寫入；
   玩家讀不到歷程與異常；非管理者不能封鎖；被封鎖者不能上傳、不能建隊、看得到原因。
@@ -1227,7 +1227,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **頻道**：🌏 世界（所有登入玩家）、🐉 隊伍（`room:<隊伍id>`，只有團隊副本隊員；沒隊伍時按鈕鎖住，離開隊伍自動切回世界）。隊伍大廳有「💬 隊伍聊天」按鈕（`chatOpen('room')`）。
 - **入口**：右柱抽屜「💬 聊天」（`DRAWERS.right`）；需要雲端且已登入。
 - **聊天框**（2026-10-10，版本 `20261010k`，使用者反映「PC 版沒有聊天框」）：左下角的戰鬥訊息框 `#log-pop`（骷髏頭開關）改成兩個分頁「📜 戰鬥訊息／💬 聊天」（`setLogPopTab`，記在 `dragonSlayer_logTab`），PC 與手機共用。
-  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會抓新訊息（間隔見第 59 節）。
+  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會抓新訊息（間隔見第 61 節）。
 - **PC 入口**：底部 12 格已滿，`PC_SLOTS` 在地圖左側加三顆圓鈕（`side: true`，有深色圓底）：🐉 團隊副本（y 170）、💬 聊天（y 236）、🏰 血盟（y 302；2026-10-11 拿掉上排框架後整排上移 130），x 104，寬高 58（原圖座標）。
 - **規則（伺服器）** `dragon_chat`：每則 1～100 字（控制字元換成空白、前後空白去掉）、每人 3 秒一則（trigger `too fast`）、伺服器時間；
   每次發言有 5% 機率順手刪掉 3 天前的訊息。RLS：世界頻道所有登入者可讀；隊伍頻道只有隊員（`raid_is_member`）可讀可寫；
@@ -1721,7 +1721,46 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證：永夜王都傳送到熔火煉獄 → 大地圖、出生在符文廣場、怪是火之精靈／熔岩高崙／火蜥蜴；往西走到 140,53 換成焦骨峽谷；Console 無錯誤。
 - 大地圖現在包含 11 個地圖（第 49 節的 10 個＋熔火煉獄；熔火煉獄原本的地監格子畫面不再用）。
 
-## 58. 防改檔第 2 波：交易所門檻、存檔加密簽章、雲端存檔簽章、記憶體偽裝、混淆（2026-10-19，版本 `20261019l`；`guard.js`、`tools/anticheat.sql`、`tools/build.js`）
+## 58. 大地圖接縫 AI 補畫（2026-10-19，版本 `20261019m`～`20261019o`；`tools/bigmap/seams/`、`build-map.ps1` 的 `Patch`）
+
+- 使用者嫌地圖銜接粗糙（各張 AI 圖直接貼上、邊緣霧狀淡入、畫風不同），選方案 D「AI 補畫接縫」（沒選 E 改磁磚地圖：要重做地圖系統與整套素材）。
+- `seams/patches.json`：每條接縫一筆 `{ id, x, y, orient: 'v'|'h', at, band, note }`，`x,y`＝1024×1024 方塊在大地圖的左上角（像素，1 格 32px），
+  `at`＝接縫所在的 x（垂直）或 y（水平），`band`＝洋紅色補畫區的半寬（目前 150）。試做 3 條：01 海灘↔金字塔、02 海灘↔南排礦坑／龍窟、03 東邊沙丘↔熔火煉獄。
+- `seams/seam-cut.ps1 [-Only id]`：從**沒貼補丁的底圖** `seams/base.jpg`（`build-map.ps1` 每次產生；沒有就用 `images/maps/wild.jpg`）切方塊，
+  輸出 `seams/todo/<id>.png`（接縫塗洋紅色，給生圖 AI）與 `<id>-orig.png`（原樣）。`base.jpg`、`todo/` 在 `.gitignore`。
+- 使用者把 AI 補好的圖放進 `seams/fixed/<id>.png|jpg|webp`（尺寸不拘，會縮成 1024），重跑 `build-map.ps1`：拼完先存 `base.jpg`，再把每張 fixed 用 `[BigMap]::Patch` 貼回——
+  補畫區（band＋24px）完全蓋上，往外 140px 平滑淡出，方塊沿接縫的兩端 110px 也淡出，AI 圖顏色略偏也不會出現硬邊。
+- 檢查工具：`seam-check.ps1`＝AI 圖縮成 1024 後跟原圖比對補畫區以外的亮度差，找 −24～24px 的最佳位移（要是 0,0，否則貼回去會重影）；
+  `seam-compare.ps1`＝輸出 `todo/<id>-compare.jpg` 修改前（base.jpg）／後（wild.jpg）並排。
+- **第一批完成（`20261019m`）**：使用者用 AI 生圖補好 3 條（2048×2048，存成 `.jfif`，已改名 `fixed/<id>.jpg`），對齊檢查位移都是 0,0（差異 3.5～8.8）。
+  可走範圍照 AI 新畫的東西補 3 個擋格（`walk.json` 與 `SCENE_BGS.wild.block` 同步）：金字塔左下碎石堆 [92,80,95,84]、森林小路大石 [49,84,50,85]、流進沙丘的熔岩 [138,43,140,46]；
+  可走 9515 格全部能從草原出生點走到。重跑 `build-occ.ps1`，`wild.jpg`／`wild-mini.jpg` 網址改 `?v=5`。
+  驗證：本機（`.claude/launch.json` 新增 `dragon-alt` port 8791，8790 被別的對話佔用時用）黃沙王陵 93,75、焦骨峽谷 136,49 截圖，接縫自然、遊戲程式全部載入；預覽瀏覽器註冊 SW 失敗是環境限制（與本次無關）。
+- **第二批（`20261019n`）**：`patches.json` 加 04、06～14（05 雪原接雪地不明顯，拿掉）；`seam-cut.ps1` 改成從**已貼補丁的** `wild.jpg` 切（新補丁與舊的重疊時 AI 看得到舊的成果；補丁照清單順序貼，新的加在最後）。
+  使用者先補好 04 沼澤↔古泉、06／07 村落↔草原、08 草原↔綠洲（對齊 0,0；08 差異 12.3 較大但貼回後看不出邊）。
+  可走範圍：AI 在 07 草原上新畫一條小溪＋木橋 → 擋格 [57,42,58,43]、[58,44,61,46]、[61,46,63,47]（橋可走）；
+  06 森林被畫成往下的石板路 → 新增可走 [36,39,44,41]；08 草原與骨骸地之間那排樹被畫成空地 → 新增可走 [70,44,73,52]。可走 9548 格全部走得到。圖 `?v=6`。
+  另外 07／08 右上（綠洲左上角）與 08 右下（綠洲左下角）還留一點霧，之後可再加補丁。
+- **第三批（`20261019o`）**：09 綠洲↔金字塔、10 草原↔海灘、11 礦坑上層↔龍窟、12 龍窟↔礦坑深層、13／14 金字塔↔礦坑深層，全部對齊 0,0（差異 3.9～14.8）。
+  這批是在第二批貼回前切的，10 與 07／08 重疊。試過「淡出區只套 AI 的改變量（fix−orig）」避免舊霧蓋回，結果補畫區邊界出現方形硬邊霧塊，已撤掉；
+  維持一般 alpha 淡入，重疊處看起來正常。可走範圍只補 10 海灘上方新畫的小水窪 [67,66,70,67]（金字塔一帶新畫的城牆、碎石照使用者先前要求維持可走）；可走 9540 格全部走得到。圖 `?v=7`。
+  全部 13 條接縫完成；剩綠洲左上／左下角、熔火煉獄上下緣、金字塔右緣與沙漠填充圖的淡淡過渡，需要再加補丁。
+- 流程（之後補其他接縫）：`patches.json` 加一筆 → `seam-cut.ps1 -Only id` → 使用者 AI 補畫存 `fixed/` → `seam-check.ps1` → `build-map.ps1` → `seam-compare.ps1` 看效果
+  → `check-mask.ps1` 疊可走範圍找 AI 新畫的障礙、補擋格 → `build-occ.ps1` → 圖 `?v=` 加 1、換版本號。
+
+## 59. 圓形小地圖＋全世界地圖（2026-10-19，版本 `20261019q`；`ui-scene.js` 的 `drawBigMapHud`／`drawWorldMap`／`sceneMiniClick`／`sceneWalkNear`）
+
+- 使用者要小地圖「自然一點」，做了 3 種樣本（A 全世界縮圖柔化、B 圓形跟著角色、C 圓角方框邊緣淡出），使用者選 **B，點一下放大成全世界地圖**。
+- **小地圖**（大地圖才有）：右上角圓形，半徑 `min(62, 可見寬×0.16)`，以角色為中心顯示周圍 `MINI_TILES`（22）格，直接從大地圖原圖 `bg.src` 取那一塊（比以前的 `wild-mini.jpg` 清楚，`mini` 圖現在沒用到）；
+  圓內怪物紅點、邊緣徑向暗角、角色亮點；目前地圖的出口箭頭在圓外的貼在圓邊（R−7）指方向；金色雙圈＋上方「N」＋右下「⤢」放大鈕；下方顯示目前區域名。`scene.miniRect = { cx, cy, r }`。
+- **世界地圖**（`scene.worldOpen`）：點小地圖（圓內＋6px）或按 **M** 打開；畫面變暗、整張大地圖等比縮到可見範圍內（第一次打開時從原圖畫一次存成 `worldCache` canvas，尺寸變了才重畫），
+  標出每個區域（`SCENE_BGS.wild.regions` 的 x,y）的地圖名稱＋建議等級（目前所在亮藍、等級低 5 級以上紅色）、目前地圖的出口箭頭、角色位置（脈動光圈）。
+  **點地圖內＝走過去並關閉**（`sceneWalkNear`：不能走的格子找 8 格內最近能走的，沿用以前點小地圖的走法），點外面／再按 M／Esc＝關閉；步行回村時自動關閉。
+- **可見範圍** `scene.visX`（`sceneFrame` 每幀用 `getBoundingClientRect` 算）：手機版畫布比螢幕寬、左右各超出約 25px，小地圖與世界地圖照真正看得到的左右範圍排版；PC 橫式外框底部欄杆會蓋住畫布下緣，世界地圖底部多留 `H×0.17+14`。
+- 驗證：手機 375×812（小地圖完整、世界地圖完整、點低語海岸 → 關閉並走 31 步）、PC 1280×720（M 開、Esc 關、地圖不被外框蓋到）；Console 只有預覽環境註冊 SW 的已知訊息。
+  中途發現瀏覽器會把同一個 `?v=` 的舊 JS 快取住，本機測試改 JS 後也要換版本號（`20261019p` 改成 `q` 才拿到新程式）。
+
+## 60. 防改檔第 2 波：交易所門檻、存檔加密簽章、雲端存檔簽章、記憶體偽裝、混淆（2026-10-19，版本 `20261019r`；`guard.js`、`tools/anticheat.sql`、`tools/build.js`）
 
 - 使用者要求（看到別的遊戲群組說「數據亂碼加密改檔直接讀檔案來」「交易所容易爆」）：問數值加密有沒有用 → 我建議四項 → 使用者「全改」（只改黑暗大陸；根目錄 `tools/build.js` 加一行呼叫已同意）。
   **原則**：純前端擋不住會讀程式的人（repo 是公開的，原始碼與金鑰都看得到），目標是擋掉一般玩家的改法，並讓改過的存檔**碰不到交易所／共用倉庫**（會影響其他玩家的地方）。不擋單機遊玩、不刪檔。
@@ -1756,7 +1795,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - Playwright（`node tools/build.js` 後的 dist）：`typeof player` 為 undefined、`player.gold = …` 出現 ReferenceError；建角（按鈕）、11 個分頁、重新整理後繼續、實際狩獵 25 秒（金幣、經驗增加）、gm.html 開啟；畫面上所有 on* 事件的函式都在 window；Console 無錯誤。
 - **還沒做／限制**：離線收益的離開時間仍以玩家裝置時間計算（12 小時上限、伺服器 `clock` 規則會標記快 10 分鐘以上的存檔）；加速器（加快 `Date.now`）在伺服器 5～10 倍門檻以下抓不到；排行榜沒有排除 `sig_ok=false` 的存檔。
 
-## 59. 省 Supabase 傳輸量：聊天依活躍程度輪詢、交易所列表快取（2026-10-19，版本 `20261019m`；`chat.js`、`market.js`）
+## 61. 省 Supabase 傳輸量：聊天依活躍程度輪詢、交易所列表快取（2026-10-19，版本 `20261019r`；`chat.js`、`market.js`）
 
 - 使用者問交易所能容納多少人 → 免費方案最先碰到的是每月傳輸量（約 5GB，整個遊戲共用）→ 使用者要求先做不花錢的省流量。
 - **聊天**（`chat.js`）：原本就只抓比手上最新一則更新的訊息（`gt('id', 最後一則)`），不用改。改的是輪詢間隔：原本聊天分頁或左下角聊天框開著就固定每 4 秒抓，

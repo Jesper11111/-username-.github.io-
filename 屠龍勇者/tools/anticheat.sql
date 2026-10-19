@@ -1,4 +1,4 @@
--- 黑暗大陸：防改檔第 2 波（2026-10-19，ARCHITECTURE.md 第 58 節）。也附在 supabase.sql 最後；可單獨重複執行。
+-- 黑暗大陸：防改檔第 2 波（2026-10-19，ARCHITECTURE.md 第 60 節）。也附在 supabase.sql 最後；可單獨重複執行。
 -- ① 交易所門檻：帳號有「未處理」的嚴重可疑紀錄（dragon_flags）時，不能上架、不能購買（hint dragon_market_hold）。
 --    管理頁（gm.html）把該帳號的紀錄按「已處理」就恢復。金幣暴增（gold_rate，大量賣裝備也會觸發）、存檔格式（parse）、大額交易（market_big）不擋。
 -- ② 大額交易：單筆 ≥ 5,000 萬金幣成交時，買賣雙方各記一筆 market_big（只提醒管理者，不擋）。
