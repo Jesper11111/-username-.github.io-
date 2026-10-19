@@ -461,6 +461,7 @@ function playerAttackTurn(availableSkills, targets, tags, isExtra) {
         if (player.mp >= mpCost) {
             player.mp -= mpCost;
             usedSkill = true;
+            battleFxCast();   // 戰鬥面板施法動作（女角：劍指御劍、24 把飛劍，battle-fx.js；有冷卻，只影響畫面）
 
             let skillDmg = (skill.dmgType === 'mag' ? getMagAttack() * skill.mult : getPhysAttack() * skill.mult)
                 * getRootBonus().skillMult * (1 + (fx["法爆"] || 0));

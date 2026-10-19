@@ -52,7 +52,7 @@ images/               圖片素材
                       assassin.jpg 暗殺者（AMBUSH_IMG；玩家提供 687×1024 縮成 480×715、72KB）、demonic-cultivator.jpg 野外魔道修士（CULTIVATOR_IMGS；848×1264 縮成 480×715、73KB）、
                       heart-demon-male.jpg／heart-demon-female.jpg 男／女角渡劫心魔（config-tribulation.js 的 HEART_DEMON_IMGS，第 7 節；皆 480×715，80／75KB）
   equip/              角色裝備欄中間的人物正面圖（第 60 節）：hero-male.jpg 520×592／hero-female.jpg 520×459（玩家提供，縮小）
-  battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（2026-09-28 版本 `20260930w` 換成玩家提供的「站在飛劍上的背影」新圖：男 480×531、女 480×594（女圖原本四角有圓形玻璃框，裁掉兩側與上緣）；舊圖留在 hero-male-v1.jpg／hero-female-v1.jpg；版本 `20260930z` 起玩家要求「人物取完整、露出整把武器、貼左邊」：`.bf-hero` 改 `object-fit: contain` 靠左下、寬 44%（斜切線最左點，劍尖不會被切），上緣與右緣用 mask 淡出，後面墊 `#bf-hero-bg`＝同一張圖模糊放大（`updateBattleHero` 設背景）；呼吸動畫改為只上下浮動、前衝與閃避改為只平移，不再放大以免切到頭或劍尖），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）
+  battle/             戰場實況（第 59 節）：hero-male.jpg／hero-female.jpg 人物立繪（2026-09-28 版本 `20260930w` 換成玩家提供的「站在飛劍上的背影」新圖：男 480×531、女 480×594（女圖原本四角有圓形玻璃框，裁掉兩側與上緣）；舊圖留在 hero-male-v1.jpg／hero-female-v1.jpg；版本 `20260930z` 起玩家要求「人物取完整、露出整把武器、貼左邊」：`.bf-hero` 改 `object-fit: contain` 靠左下、寬 44%（斜切線最左點，劍尖不會被切），上緣與右緣用 mask 淡出，後面墊 `#bf-hero-bg`＝同一張圖模糊放大（`updateBattleHero` 設背景）；呼吸動畫改為只上下浮動、前衝與閃避改為只平移，不再放大以免切到頭或劍尖），emblem.jpg 金紅圓環徽章（從玩家提供的血條參考圖裁出 200×200，CSS 以 screen 混色去黑底）；cast-female.png 女角施法動作條（2026-10-19 玩家提供的 2000×496 八格白底圖，邊界洪水填充去背＋封閉白底去除＋每格只留最大主體，縮成 8 格 151×300＝1208×300 透明 PNG，740KB）、flying-sword.png 飛劍（玩家提供 2000×661 白底圖，亮色背景與淡色光暈一起去掉、光暈改由 CSS drop-shadow 補，裁切縮成 240×47，12KB；兩張都是 tools 外的一次性 System.Drawing 腳本，第 59 節）
   frames/             頭像光環 frame-01～25.png（透明 PNG，約 125～160px，由玩家提供的頭像框展示圖裁切去背），見第 32 節；frame-ys-*.png 7 個元神環（程式繪製，第 65 節）
   cover.jpg           主頁封面・橫式（1264x843），電腦與橫向螢幕使用
   cover-portrait.jpg  主頁封面・直式（960x1920），手機直向使用（由橫式圖重新構圖而成）
@@ -102,7 +102,7 @@ data/                 所有遊戲邏輯與資料，依「設定資料 / 執行�
                       （設定在 config-monsters.js：MONSTER_TYPES 五型態、FIELD_MONSTERS 圖鑑、FIELD_MONSTER_POOLS 各地圖組合；載入在 race.js 之後）
   race.js             種族剋制（第 62 節）：種族標籤文字、剋制加成 getRaceDmgBonus、斬妖錄擊殺數與天磯錄分頁、剋制法寶（法寶欄、掉落、合煉、千寶閣）（設定在 config-race.js，載入在 elements.js 之後）
   equip-compare.js    角色裝備視窗：人形裝備欄、部位換裝、裝備對比與穿上後試算（第 60 節）
-  battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏（第 59 節）
+  battle-fx.js        戰場實況的打擊感：人物立繪（依性別）、敵方爆擊血條（受擊殘影＋爆點）、飄字、爆擊震屏、女角施法動作與 24 把飛劍（第 59 節）
   ui.js               畫面渲染共用函式（頂部狀態列、戰鬥實況、日誌與日誌分頁（第 44 節）、彈窗開關與右上角 ✕（第 46 節））
   map.js / combat.js / leveling.js / tribulation.js
                       地圖切換、戰鬥 tick、境界與人物等級成長、渡劫
@@ -1651,7 +1651,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DQ`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DS`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3560,6 +3560,16 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   是這台裝置的偏好：存在 localStorage `xiuxian_battle_scene_hidden`（'1'＝收起），不寫進遊戲存檔；`DOMContentLoaded` 時 `applyBattleSceneHidden()` 套用。
   ⚠️ 手機版全域 `button` 樣式（寬 100%、padding 12px）會把按鈕撐滿整列蓋住標題，CSS 選擇器用 `#battle-panel .bf-scene-toggle` 並明確設 `left: auto; width: auto; margin: 0`。
   驗證（本機，手機 375×812）：按鈕在標題右側不擋字；收起後圖高 0、血條保留、`battleFxActive` false；再按恢復 145px；重新整理後維持收起；Console 無錯誤。
+- **女角施法動作：劍指御劍、24 把飛劍**（2026-10-19，版本 `20261005DS`；使用者提供 8 格施法圖與飛劍圖，選擇「女角主角施法」）：
+  - 觸發：`combat.js` 的 `playerAttackTurn` 扣完靈力、確定施展技能時呼叫 `battleFxCast()`（野外、懸賞對決、渡劫心魔都走這裡）。只影響畫面，傷害與飄字照舊立刻結算。
+  - 設定在 battle-fx.js 開頭：`BATTLE_HERO_CAST`（依性別；目前只有 `female`：動作條圖、格數 8、每格寬高比、飛劍圖與寬高比、飛劍數 24），男角沒有設定就不播；
+    `BATTLE_CAST_COOLDOWN_MS`（7 秒）＝兩次動畫的最短間隔（技能每回合 40% 機率，不節流會一直播）。對戰圖收起、分頁在背景（`battleFxActive`）或 `prefers-reduced-motion` 時不播。
+  - DOM：`#bf-hero-box` 內 `#bf-cast-sprite`（動作條背景圖 800% 寬，`background-position-x` 切格；`updateBattleHero` 換性別時先設好背景圖並預載飛劍圖）；`.bf-scene` 內 `#bf-swords`（飛劍層 z-index 4）與 `#bf-cast-burst`（分化光爆）。
+    `.bf-hero-box.bf-casting`：立繪、氣焰、粒子、武器火焰淡出，動作格淡入。
+  - `playHeroCast(cast)` 時間軸（`BATTLE_CAST_FRAMES`，毫秒）：0 起手 → 420 第 4 格長劍離手，一把領頭劍從手邊飛到身前 → 760 光爆、化出 24 把飛劍排成**兩層月牙劍牆**（內層 12、外層 12 錯開半格；圓心在角色胸口偏前 `sx + sw×0.62`，半徑為人物高 0.47／0.62 倍，劍尖朝敵方、隨弧度張開 0.3 倍）
+    → 1420 第 6 格劍指一點，外層先、由上往下每 30ms 射出一把，飛向敵方圖中央附近（左右 ±6%、高度 32～62% 隨機），飛行時 `.fly` 拖金紅光痕；第 1 把與第 13 把打到時敵方閃白（`bf-foe-hit`），最後一把打到時 `#bf-flash` 閃光 → 2650 換回立繪、清掉飛劍。
+    飛劍用 Web Animations（`element.animate`）移動；尺寸、半徑都以**立繪框高度**計算（窄畫面時人物縮小，劍陣跟著縮）。計時器存在 `battleCastTimers`，重播前先清掉。
+  - 驗證（本機）：手機 375×812 依時間點凍結動畫截圖，劍陣在身前不壓到身體、射出時拖光痕；播完立繪恢復、飛劍清空；冷卻中再呼叫不重播；建置版（dist）能進遊戲、施法圖已載入、無 JS 錯誤。
 
 ## 60. 角色裝備視窗改版：人形裝備欄＋裝備對比（`equip-compare.js`；2026-09-28，版本 `20260930n`）
 - 玩家反映：換裝很不方便、無法對照屬性；提供暗黑破壞神式的人形裝備欄參考圖，要求「選擇的裝備跟使用中的兩樣顯示，增加什麼減少什麼」。先做模板 `tools/裝備介面模板.html`（假資料）給玩家確認後實作。

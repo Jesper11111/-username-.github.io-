@@ -7,6 +7,13 @@
 const BATTLE_HERO_IMG = { male: "images/battle/hero-male.jpg", female: "images/battle/hero-female.jpg" };
 // 立繪上劍身的位置（圖片寬高的 %：護手 x1,y1 → 劍尖 x2,y2），武器火焰（buildBladeFire）沿這條線排（2026-09-28 依玩家提供的新立繪量測）
 const BATTLE_HERO_BLADE = { male: [72, 55, 95, 80], female: [66, 52, 93, 88] };
+// 施法動作（2026-10-19 使用者提供女角 8 格施法圖＋飛劍圖；playHeroCast）：施展技能時立繪換成動作格，
+//   劍指 → 長劍離手 → 化出 24 把飛劍在身前排成兩層月牙劍牆 → 劍指一點、飛劍依序射向敵方。男角沒有動作圖就不播
+//   frames＝動作條格數；frameRatio＝每格寬÷高；swordRatio＝飛劍圖寬÷高（劍尖朝右）；cooldown＝兩次施法動畫至少間隔幾毫秒（技能每回合 40% 機率，不節流會一直播）
+const BATTLE_HERO_CAST = {
+    female: { img: "images/battle/cast-female.png", frames: 8, frameRatio: 151 / 300, sword: "images/battle/flying-sword.png", swordRatio: 240 / 47, swords: 24 }
+};
+const BATTLE_CAST_COOLDOWN_MS = 7000;
 // 本命五行 → 屬性特效 class（index.html 的 .bf-hero-box.el-*：武器火焰顏色、氣焰、粒子、光暈）
 const BATTLE_HERO_ELEM_CLASS = { "金": "el-metal", "木": "el-wood", "水": "el-water", "火": "el-fire", "土": "el-earth" };
 const BATTLE_FX_MAX_FLOATS = 5;      // 每次更新最多幾個飄字（多的合併）
@@ -286,6 +293,9 @@ function updateBattleHero() {
         const bg = document.getElementById('bf-hero-bg');   // 立繪完整顯示後右側的空白：同一張圖模糊放大墊底
         if (bg) bg.style.backgroundImage = `url("${BATTLE_HERO_IMG[g]}")`;
         buildBladeFire(BATTLE_HERO_BLADE[g]);
+        const cast = BATTLE_HERO_CAST[g], sp = document.getElementById('bf-cast-sprite');   // 施法動作圖先載好，第一次施法才不會空白
+        if (sp) sp.style.backgroundImage = cast ? `url("${cast.img}")` : '';
+        if (cast) new Image().src = cast.sword;
     }
     // 本命五行（stats.js 的 getPlayerElement，裝備最多的五行）決定武器光色與屬性特效；沒有則為淡金
     const cls = BATTLE_HERO_ELEM_CLASS[getPlayerElement()] || 'el-none';
@@ -348,5 +358,106 @@ function layoutBattleHero() {
         line.setAttribute('x1', ((w + slant) / W * 100).toFixed(2));
         line.setAttribute('x2', (w / W * 100).toFixed(2));
     }
+}
+// ---- 施法動作：劍指御劍、24 把飛劍成陣射出（BATTLE_HERO_CAST；combat.js 施展技能時呼叫 battleFxCast）----
+// 只影響畫面：傷害照常由 battleFxHit 立刻飄字，飛劍約 1.4～2.4 秒後才打到敵方圖（敵方閃白）
+// 時間軸（毫秒）：0 起手 → 420 長劍離手飛到身前 → 760 化出 24 把飛劍排成兩層月牙劍牆 → 1420 劍指一點、依序射出 → 2650 換回立繪
+const BATTLE_CAST_FRAMES = [[0, 0], [1, 140], [2, 280], [3, 420], [4, 620], [5, 1400], [6, 1650], [7, 2350]];   // [第幾格, 幾毫秒切過去]
+const BATTLE_CAST_TOTAL_MS = 2650;
+let battleCastUntil = 0, battleCastTimers = [];
+function battleFxCast() {
+    if (!battleFxActive()) return;
+    const cast = BATTLE_HERO_CAST[player.gender === 'female' ? 'female' : 'male'];
+    if (!cast || Date.now() < battleCastUntil) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    battleCastUntil = Date.now() + BATTLE_CAST_COOLDOWN_MS;
+    playHeroCast(cast);
+}
+function playHeroCast(cast) {
+    const box = document.getElementById('bf-hero-box'), sp = document.getElementById('bf-cast-sprite');
+    const layer = document.getElementById('bf-swords'), scene = box && box.parentElement;
+    if (!box || !sp || !layer || !scene || !box.animate) return;
+    battleCastTimers.forEach(clearTimeout);
+    battleCastTimers = [];
+    layer.innerHTML = '';
+    const at = (ms, fn) => battleCastTimers.push(setTimeout(fn, ms));
+    const setFrame = k => { sp.style.backgroundPositionX = (k / (cast.frames - 1) * 100) + '%'; };
+    setFrame(0);
+    box.classList.add('bf-casting');
+    BATTLE_CAST_FRAMES.forEach(([k, ms]) => at(ms, () => setFrame(k)));
+
+    // 座標（中段圖片的 px）：動作格在立繪框內置中、高度填滿
+    const H = scene.clientHeight, W = scene.clientWidth;
+    const bw = box.offsetWidth, bh = box.offsetHeight, bx = box.offsetLeft, by = box.offsetTop;
+    const sw = bh * cast.frameRatio, sx = bx + (bw - sw) / 2;
+    const L = Math.max(26, bh * 0.3), T = L / cast.swordRatio;  // 飛劍長、寬（跟著人物大小，不跟中段高度：窄畫面時人物會縮小）
+    const pivot = { x: sx + sw * 0.62, y: by + bh * 0.44 };     // 月牙劍陣的圓心：角色胸口（劍排在圓弧上＝身前）
+    const hand = { x: sx + sw * 0.8, y: by + bh * 0.42 };       // 第 4 格長劍離手的位置
+    const core = { x: sx + sw * 0.95, y: by + bh * 0.36 };      // 長劍飛到身前、分化的位置
+    const split = parseFloat(scene.style.getPropertyValue('--s')) || W * 0.44;   // 左右分界（layoutBattleHero 設的立繪寬）
+    const foeX = split + (W - split) * 0.5;                                        // 敵方圖中央
+    const tf = (p, deg, s) => `translate(${(p.x - L / 2).toFixed(1)}px, ${(p.y - T / 2).toFixed(1)}px) rotate(${deg.toFixed(1)}deg) scale(${s})`;
+    const mk = () => {
+        const d = document.createElement('div');
+        d.className = 'bf-fsword';
+        d.style.width = L + 'px'; d.style.height = T + 'px';
+        d.style.backgroundImage = `url("${cast.sword}")`;
+        layer.appendChild(d);
+        return d;
+    };
+
+    // 1. 長劍離手：從手邊（劍尖朝上）飛到身前、轉成劍尖朝敵方，亮光一閃
+    at(420, () => {
+        const lead = mk();
+        lead.classList.add('lead');
+        lead.animate([
+            { transform: tf(hand, -90, 1), opacity: 0 },
+            { transform: tf(hand, -90, 1), opacity: 1, offset: 0.15 },
+            { transform: tf(core, 0, 1.15), opacity: 1, offset: 0.7 },
+            { transform: tf(core, 0, 1.3), opacity: 0 }
+        ], { duration: 520, easing: 'ease-out', fill: 'forwards' });
+        at(520, () => lead.remove());
+    });
+    // 2. 一化二十四：從身前散開成兩層月牙劍牆（內層 12、外層 12 錯開半格），劍尖都朝敵方、隨弧度微微張開
+    const n = cast.swords, inner = Math.ceil(n / 2), slots = [];
+    for (let i = 0; i < n; i++) {
+        const outer = i >= inner, j = outer ? i - inner : i, cnt = outer ? n - inner : inner;
+        const arc = -62 + 124 * (j + (outer ? 0.5 : 0)) / (cnt - (outer ? 0 : 1));
+        const r = (outer ? 0.62 : 0.47) * bh, a = arc * Math.PI / 180;
+        slots.push({ p: { x: pivot.x + r * Math.cos(a), y: pivot.y + r * Math.sin(a) * 0.82 }, deg: arc * 0.3 });
+    }
+    const swords = [];
+    at(760, () => {
+        const burst = document.getElementById('bf-cast-burst');   // 分化瞬間的光爆
+        if (burst) { burst.style.left = core.x + 'px'; burst.style.top = core.y + 'px'; restartAnim(burst, 'on'); }
+        slots.forEach((s, i) => {
+            const d = mk();
+            d.animate([
+                { transform: tf(core, 0, 0.3), opacity: 0 },
+                { transform: tf(s.p, s.deg, 1), opacity: 1 }
+            ], { duration: 380, delay: (i % inner) * 14, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'forwards' });
+            swords.push(d);
+        });
+    });
+    // 3. 劍指一點：外層先、由上往下依序射向敵方（各自偏一點，不會全部疊在同一點），打到時敵方閃白
+    at(1420, () => {
+        const order = swords.map((d, i) => i).sort((a, b) => (b >= inner) - (a >= inner) || slots[a].p.y - slots[b].p.y);
+        order.forEach((i, k) => {
+            const d = swords[i], s = slots[i];
+            const tgt = { x: foeX + (Math.random() - 0.5) * W * 0.12, y: H * (0.32 + Math.random() * 0.3) };
+            const aim = Math.atan2(tgt.y - s.p.y, tgt.x - s.p.x) * 180 / Math.PI;
+            const delay = k * 30;
+            at(1420 + delay, () => d.classList.add('fly'));
+            d.animate([
+                { transform: tf(s.p, s.deg, 1), opacity: 1 },
+                { transform: tf(s.p, aim, 1), opacity: 1, offset: 0.25 },
+                { transform: tf(tgt, aim, 1), opacity: 1, offset: 0.92 },
+                { transform: tf(tgt, aim, 0.6), opacity: 0 }
+            ], { duration: 330, delay, easing: 'ease-in', fill: 'forwards' });
+            if (k === 0 || k === Math.floor(n / 2)) at(1420 + delay + 300, () => restartAnim(document.getElementById('bf-foe'), 'bf-foe-hit', ['bf-evade']));
+            if (k === n - 1) at(1420 + delay + 300, () => restartAnim(document.getElementById('bf-flash'), 'on'));
+        });
+    });
+    at(BATTLE_CAST_TOTAL_MS, () => { box.classList.remove('bf-casting'); layer.innerHTML = ''; });
 }
 window.addEventListener('resize', () => { const b = document.getElementById('bf-hero-box'); if (b) { b.dataset.size = ''; layoutBattleHero(); } });
