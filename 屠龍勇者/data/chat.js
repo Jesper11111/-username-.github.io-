@@ -1,11 +1,14 @@
 // 屠龍勇者：聊天（ARCHITECTURE.md 第 32 節）
 // 依賴 cloud（cloudSb／cloudUser／cloudBan）、raid（raidRoom）、ui-panels（TABS／PANEL_FNS 在載入時加分頁）。
 // 頻道：world 世界、room:<隊伍id> 隊伍（只有團隊副本隊員）。資料在 Supabase dragon_chat；每則 1～100 字、每人 3 秒一則、保留 3 天（規則在 tools/supabase.sql）。
-// 聊天分頁開著時每 4 秒抓一次新訊息（只抓比手上最新一則更新的），沒開時不連網。
+// 聊天分頁（或左下角聊天框）開著時才抓新訊息（只抓比手上最新一則更新的），沒開時不連網。
+// 抓的間隔依活躍程度（省 Supabase 傳輸量，2026-10-19）：最近 1 分鐘有新訊息／自己打字／剛打開 → 4 秒；安靜 1～5 分鐘 → 10 秒；更久 → 30 秒。
 
 const CHAT_MAX_LEN = 100;
 const CHAT_COOLDOWN_MS = 3000;
 const CHAT_POLL_MS = 4000;
+const CHAT_POLL_IDLE_MS = 10000;
+const CHAT_POLL_AWAY_MS = 30000;
 const CHAT_SHOW = 60;          // 每個頻道畫面上留幾則
 
 let chatChannel = 'world';
@@ -16,6 +19,12 @@ let chatLoading = false;
 let chatErr = '';
 let chatMute = null;           // 自己被禁言：{ until, reason }
 let chatMuteChecked = false;
+let chatActiveAt = 0, chatPollAt = 0;   // 最近一次「有動靜」的時間、上次抓的時間
+function chatTouch() { chatActiveAt = Date.now(); }
+function chatPollGap() {
+    const idle = Date.now() - chatActiveAt;
+    return idle < 60 * 1000 ? CHAT_POLL_MS : idle < 5 * 60 * 1000 ? CHAT_POLL_IDLE_MS : CHAT_POLL_AWAY_MS;
+}
 const LOG_TAB_KEY = 'dragonSlayer_logTab';
 let logPopTab = 'log';      // 左下角訊息框：log 戰鬥訊息／chat 聊天
 try { if (localStorage.getItem(LOG_TAB_KEY) === 'chat') logPopTab = 'chat'; } catch (e) { }
@@ -28,11 +37,13 @@ function chatOpen(ch) {
     if (ch === 'room') ch = chatRoomChannel() || 'world';
     if (ch === 'clan') ch = clanChannel() || 'world';
     if (ch) chatChannel = ch;
+    chatTouch();
     switchTab('chat');
 }
 
 function chatSwitch(ch) {
     chatChannel = ch === 'room' ? (chatRoomChannel() || 'world') : ch === 'clan' ? (clanChannel() || 'world') : 'world';
+    chatTouch();
     if (tabOpen('chat')) renderPanel();
     renderPopChat();
     chatFetch();
@@ -45,7 +56,7 @@ function setLogPopTab(t) {
     logPopTab = t === 'chat' ? 'chat' : 'log';
     try { localStorage.setItem(LOG_TAB_KEY, logPopTab); } catch (e) { }
     syncLogPopTab();
-    if (logPopTab === 'chat') { renderPopChat(); chatFetch(); }
+    if (logPopTab === 'chat') { chatTouch(); renderPopChat(); chatFetch(); }
     else { lastLogRendered = 0; renderLogPop(); }
 }
 
@@ -96,11 +107,13 @@ async function chatFetch() {
     if (!chatValid(chatChannel)) chatChannel = 'world';   // 離開隊伍／血盟了
     const ch = chatChannel, list = chatMsgs[ch] || [];
     chatLoading = true;
+    chatPollAt = Date.now();
     try {
         let q = cloudSb.from('dragon_chat').select('id, user_id, name, cls, lv, text, at').eq('channel', ch);
         const rows = list.length
             ? await raidQ(q.gt('id', list[list.length - 1].id).order('id', { ascending: true }).limit(50))
             : (await raidQ(q.order('id', { ascending: false }).limit(CHAT_SHOW))).reverse();
+        if (rows.length && chatMsgs[ch]) chatTouch();   // 有人說話（不是第一次載入）：回到 4 秒
         if (rows.length || !chatMsgs[ch]) {
             chatMsgs[ch] = list.concat(rows).slice(-CHAT_SHOW);
             chatRenderList();
@@ -130,6 +143,7 @@ async function chatSend(inputId = 'chat-input') {
     chatLastSent = Date.now();
     try {
         await raidQ(cloudSb.from('dragon_chat').insert({ channel: chatChannel, user_id: cloudUser.id, name: player.name, cls: player.cls, lv: player.lv, text }));
+        chatTouch();
         if (inputId === 'chat-input') chatDraft = '';
         if (el) el.value = '';
         chatFetch();
@@ -146,6 +160,7 @@ async function chatSend(inputId = 'chat-input') {
 
 function chatKey(ev, inputId) {
     ev.stopPropagation();   // 打字時不要觸發地圖的 WASD／方向鍵移動
+    chatTouch();
     if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); chatSend(inputId || 'chat-input'); }
 }
 
@@ -203,9 +218,9 @@ function renderChat() {
         <small class="muted">${chatChannel === 'world' ? '所有玩家都看得到。' : chatChannel.startsWith('clan:') ? '只有血盟成員看得到。' : '只有隊伍裡的人看得到。'}每則最多 ${CHAT_MAX_LEN} 字、3 秒一則，訊息保留 3 天。請友善發言，管理者可以禁言。</small></div>`;
 }
 
-setInterval(() => {
-    if (typeof currentTab !== 'undefined' && (tabOpen('chat') || chatPopOpen()) && player && !document.hidden && !SIM_MODE) chatFetch();
-}, CHAT_POLL_MS);
+function chatShown() { return typeof currentTab !== 'undefined' && (tabOpen('chat') || chatPopOpen()) && player && !document.hidden && !SIM_MODE; }
+setInterval(() => { if (chatShown() && Date.now() - chatPollAt >= chatPollGap()) chatFetch(); }, 2000);
+document.addEventListener('visibilitychange', () => { if (chatShown()) chatFetch(); });   // 從背景切回來馬上抓一次
 
 TABS.chat = ['💬', '聊天'];
 PANEL_FNS.chat = renderChat;

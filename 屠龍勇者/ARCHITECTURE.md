@@ -71,7 +71,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019l`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019m`）。
 - **防改檔（第 58 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1227,7 +1227,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **頻道**：🌏 世界（所有登入玩家）、🐉 隊伍（`room:<隊伍id>`，只有團隊副本隊員；沒隊伍時按鈕鎖住，離開隊伍自動切回世界）。隊伍大廳有「💬 隊伍聊天」按鈕（`chatOpen('room')`）。
 - **入口**：右柱抽屜「💬 聊天」（`DRAWERS.right`）；需要雲端且已登入。
 - **聊天框**（2026-10-10，版本 `20261010k`，使用者反映「PC 版沒有聊天框」）：左下角的戰鬥訊息框 `#log-pop`（骷髏頭開關）改成兩個分頁「📜 戰鬥訊息／💬 聊天」（`setLogPopTab`，記在 `dragonSlayer_logTab`），PC 與手機共用。
-  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會每 4 秒抓新訊息。
+  聊天分頁 `renderPopChat` 畫在 `#pop-chat`（靜態元素，不隨分頁重畫），有頻道切換、訊息列表 `#pop-chat-list`、輸入框 `#pop-chat-input`；`chatRenderList` 同時更新兩個列表。框開著且在聊天分頁時也會抓新訊息（間隔見第 59 節）。
 - **PC 入口**：底部 12 格已滿，`PC_SLOTS` 在地圖左側加三顆圓鈕（`side: true`，有深色圓底）：🐉 團隊副本（y 170）、💬 聊天（y 236）、🏰 血盟（y 302；2026-10-11 拿掉上排框架後整排上移 130），x 104，寬高 58（原圖座標）。
 - **規則（伺服器）** `dragon_chat`：每則 1～100 字（控制字元換成空白、前後空白去掉）、每人 3 秒一則（trigger `too fast`）、伺服器時間；
   每次發言有 5% 機率順手刪掉 3 天前的訊息。RLS：世界頻道所有登入者可讀；隊伍頻道只有隊員（`raid_is_member`）可讀可寫；
@@ -1755,3 +1755,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
     下載被改的雲端存檔 → 標記、正確的不標記、寬限期前沒簽章不標記；離線試算後仍有偽裝。
   - Playwright（`node tools/build.js` 後的 dist）：`typeof player` 為 undefined、`player.gold = …` 出現 ReferenceError；建角（按鈕）、11 個分頁、重新整理後繼續、實際狩獵 25 秒（金幣、經驗增加）、gm.html 開啟；畫面上所有 on* 事件的函式都在 window；Console 無錯誤。
 - **還沒做／限制**：離線收益的離開時間仍以玩家裝置時間計算（12 小時上限、伺服器 `clock` 規則會標記快 10 分鐘以上的存檔）；加速器（加快 `Date.now`）在伺服器 5～10 倍門檻以下抓不到；排行榜沒有排除 `sig_ok=false` 的存檔。
+
+## 59. 省 Supabase 傳輸量：聊天依活躍程度輪詢、交易所列表快取（2026-10-19，版本 `20261019m`；`chat.js`、`market.js`）
+
+- 使用者問交易所能容納多少人 → 免費方案最先碰到的是每月傳輸量（約 5GB，整個遊戲共用）→ 使用者要求先做不花錢的省流量。
+- **聊天**（`chat.js`）：原本就只抓比手上最新一則更新的訊息（`gt('id', 最後一則)`），不用改。改的是輪詢間隔：原本聊天分頁或左下角聊天框開著就固定每 4 秒抓，
+  玩家常開著聊天框掛機好幾小時。現在 `chatPollGap()`：最近 1 分鐘「有動靜」→ 4 秒（`CHAT_POLL_MS`）、1～5 分鐘 → 10 秒（`CHAT_POLL_IDLE_MS`）、更久 → 30 秒（`CHAT_POLL_AWAY_MS`）。
+  有動靜（`chatTouch`）＝收到別人的新訊息、自己按鍵打字或發送、打開聊天分頁／聊天框、切頻道。計時器每 2 秒檢查一次；從背景切回前景（visibilitychange）馬上抓一次。背景時照舊不抓。
+  估計：開著聊天框但沒人說話時，請求數約為原本的 1/7。
+- **交易所**（`market.js`）：購買頁列表快取 `marketCache`（key＝分類、搜尋字、排序、頁數），`MARKET_CACHE_MS` 60 秒內同樣條件直接用手上的資料（切分類、換排序、翻頁、切分頁回來都不重抓）。
+  自己購買、上架、下架後清空快取；購買頁新增「🔄」按鈕（`marketRefresh`）強制重抓。每 3 分鐘的入帳檢查若交易所開著會順便更新列表（那時快取已過期）。「我的上架」不快取。
+- **還可以省的**（沒做）：團隊副本大廳每 3 秒輪詢（只有在隊伍裡時）、世界首領分頁每 15 秒。
