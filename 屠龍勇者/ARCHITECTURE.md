@@ -32,7 +32,41 @@
 | `data/save.js` | 存讀檔（本機文字一律經過 guard.js 加解密）、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
 | `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
 | `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
-| `data/ui.js` | `$`、`esc`、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
+| `data/ui.js` | `# 黑暗大陸（原名屠龍勇者）：架構文件
+
+以「天堂 1」為藍本的**自動掛機 RPG**（單機，存檔在瀏覽器；可選擇登入帳號把存檔同步到雲端，第 29 節）。與「凡塵修仙傳」同一個 repo，放在子資料夾 `屠龍勇者/`，
+網址 `<網站>/屠龍勇者/`。兩者完全獨立，不共用程式。修改前先讀本文件對應章節，修改後同步更新。
+
+## 1. 專案結構
+
+| 檔案 | 內容 |
+|---|---|
+| `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
+| `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
+| `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
+| `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
+| `data/classes.js` | `STAT_KEYS`、`STAT_NAMES`、創角規則、`CLASSES`（12 職業，含 `slayer` 種族剋制） |
+| `data/skills.js` | 共用魔法 1～10 級 `MAGIC`、各職業魔法上限 `MAGIC_CLASS`、職業專屬技能 `SKILLS[職業]`、索引 `SKILL_BY_ID`、`findSkill`／`skillNeedLv`／`classSkillList`（第 40 節） |
+| `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
+| `data/spellbook.js` | **魔法書**：每招一本 `book_技能id`（載入時併入 `ITEMS`，cat `book`）、商店價格／掉落、學習 `learnBook`／`bookLearnError`、說明 `bookInfoHtml`、掉落 `rollBookDrop`（第 40 節） |
+| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
+| `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
+| `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
+| `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
+| `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
+| `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
+| `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
+| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
+| `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
+| `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
+| `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
+| `data/guard.js` | **防改檔**（第 60 節）：本機存檔加密＋簽章 `saveEncode`／`saveDecode`／`saveParse`／`saveFormatMigrate`、雲端存檔簽章 `guardCloudSig`／`guardSaveCanon`／`guardCheckCloud`、記憶體數值偽裝 `guardWrap`、改檔標記 `guardFlag`（`player.integrity`） |
+| `data/save.js` | 存讀檔（本機文字一律經過 guard.js 加解密）、舊存檔補欄位（`migrateSave`）、匯出／匯入、`lastSaveAt`；**多角色欄位** `currentSlot`／`slotKey`／`readSlotSummary`（第 25 節） |
+| `data/cloud.js` | **帳號登入＋雲端存檔**（Supabase）：設定 `CLOUD_SUPABASE_URL`／`CLOUD_SUPABASE_KEY`（空＝不啟用）、`initCloud`、登入合併 `cloudSync`、上傳 `cloudMarkDirty`／`cloudFlush`／`cloudPushSlot`、衝突處理、登入對話框 `openCloudDialog`、設定區塊 `cloudSettingsHtml`（第 29 節） |
+| `data/offline.js` | 離線收益：快轉模擬量測效率 `measureHunt`、結算 `applyOffline`、報告 `showOfflineReport`（第 14 節） |
+、`esc`、`setHtmlStable`（只改有變的節點，第 62 節）、`showScreen`、`bar`、狀態列 `renderStatus`、`showToast`、`openDialog/gameAlert/gameConfirm` |
 | `data/sfx.js` | **音效**（第 44 節）：`SFX_DEFS`、`sfx(name, soft)`、`sfxHit(crit, ranged)`、設定區塊 `sfxSettingsHtml`／`setSfxOn`／`setSfxVol`；開關與音量存在 localStorage `dragonSlayer_sfx` |
 | `data/bgm.js` | **背景音樂**（第 44 節）：`BGM_LISTS`（野外 `field`、村莊 `town`）、`bgmUpdate`（每 0.5 秒依位置切換、淡入淡出）、設定列 `bgmSettingsHtml`／`setBgmOn`／`setBgmVol`；存在 localStorage `dragonSlayer_bgm` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
@@ -71,7 +105,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019r`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261019s`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1805,3 +1839,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **交易所**（`market.js`）：購買頁列表快取 `marketCache`（key＝分類、搜尋字、排序、頁數），`MARKET_CACHE_MS` 60 秒內同樣條件直接用手上的資料（切分類、換排序、翻頁、切分頁回來都不重抓）。
   自己購買、上架、下架後清空快取；購買頁新增「🔄」按鈕（`marketRefresh`）強制重抓。每 3 分鐘的入帳檢查若交易所開著會順便更新列表（那時快取已過期）。「我的上架」不快取。
 - **還可以省的**（沒做）：團隊副本大廳每 3 秒輪詢（只有在隊伍裡時）、世界首領分頁每 15 秒。
+
+## 62. 手機狀態欄一直閃：常更新的區塊改成只改有變的節點（2026-10-19，版本 `20261019s`；`ui.js` 的 `setHtmlStable`／`morphChildren`）
+
+- 使用者回報「手機版狀態欄會一直閃爍」。原因：地圖左上角狀態（`buffIconsHtml`，增益剩餘秒數每秒變）與快捷欄（`renderHotbar`，冷卻秒數、數量每 250ms 檢查）內容一變就整塊 `innerHTML` 重建，
+  裡面的圖示 `<img>` 每次都是新元素，手機重新解碼時會空白一下＝閃爍；剩 10 秒的閃爍動畫也一直從頭開始。
+- `setHtmlStable(el, html)`：內容跟上次一樣就不動；不一樣時把新 HTML 解析成 template，`morphChildren` 逐一比對節點：同種節點只改文字與屬性、種類不同才換掉、多的刪掉、少的補上。
+  `src` 沒變的 `<img>` 留著同一個元素，不會重新載入。第一次（`el.dataset.html` 還沒有）直接 `innerHTML`。
+- 用在：`updateHuntLive` 的 `#hunt-buffs`（ui-panels.js）、`renderHotbar` 的 `set`（hotbar.js；PC `#hotbar` 與手機 `#skill-bar`）。這三個區塊不能再用別的方式直接改 `innerHTML`（`dataset.html` 會跟畫面對不上）。
+- 驗證（手機 375 寬）：喝綠水後 3.5 秒內狀態列秒數 5:00 → 4:56，圖示 `<img>` 與快捷欄 3 個圖示都是同一個元素；Console 無錯誤。

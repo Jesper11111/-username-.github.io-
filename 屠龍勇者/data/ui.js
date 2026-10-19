@@ -7,6 +7,30 @@ function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// 常常重畫的小區塊（快捷欄、地圖左上角狀態）：只改真的不一樣的節點（文字、屬性、增減的節點）。
+// 2026-10-19 手機狀態欄一直閃：以前每次整塊 innerHTML，裡面的圖示 <img> 每秒被重建、手機重新解碼就閃；這樣 src 沒變的圖不會動
+function setHtmlStable(el, html) {
+    if (!el || el.dataset.html === html) return;
+    const t = document.createElement('template');
+    t.innerHTML = html;
+    if (el.dataset.html == null) el.innerHTML = html;   // 第一次直接放
+    else morphChildren(el, t.content);
+    el.dataset.html = html;
+}
+function morphChildren(oldP, newP) {
+    const oc = [...oldP.childNodes], nc = [...newP.childNodes];
+    for (let i = 0; i < nc.length; i++) {
+        const o = oc[i], n = nc[i];
+        if (!o) { oldP.appendChild(n.cloneNode(true)); continue; }
+        if (o.nodeType !== n.nodeType || o.nodeName !== n.nodeName) { oldP.replaceChild(n.cloneNode(true), o); continue; }
+        if (n.nodeType !== 1) { if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue; continue; }
+        for (const a of [...o.attributes]) if (!n.hasAttribute(a.name)) o.removeAttribute(a.name);
+        for (const a of n.attributes) if (o.getAttribute(a.name) !== a.value) o.setAttribute(a.name, a.value);
+        morphChildren(o, n);
+    }
+    for (let i = oc.length - 1; i >= nc.length; i--) oldP.removeChild(oc[i]);
+}
+
 function showScreen(name) {
     document.querySelectorAll('.screen').forEach(el => el.classList.toggle('active', el.id === 'screen-' + name));
 }

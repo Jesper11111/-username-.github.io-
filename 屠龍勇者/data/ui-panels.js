@@ -205,8 +205,8 @@ function updateHuntLive() {
     const buffs = $('hunt-buffs');
     if (buffs) {
         // 增益＋共鳴裝備：圖示＋剩餘時間（icons.js，2026-10-15 取代文字 chip；內容沒變就不重畫，點擊才不會被吃掉）
-        const html = buffIconsHtml();
-        if (buffs.dataset.html !== html) { buffs.dataset.html = html; buffs.innerHTML = html; }
+        // 秒數每秒變：用 setHtmlStable 只改文字，圖示不重建（2026-10-19 手機狀態欄一直閃，ui.js）
+        setHtmlStable(buffs, buffIconsHtml());
     }
     const ses = $('hunt-session');
     if (ses && !inTown()) {

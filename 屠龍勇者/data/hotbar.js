@@ -51,7 +51,7 @@ function renderHotbar() {
     const set = (el, html) => {
         if (!el) return;
         el.classList.toggle('editing', barEditMode);
-        if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }
+        setHtmlStable(el, html);   // 冷卻秒數、數量常變：只改變動的節點，圖示不重建（2026-10-19 手機一直閃，ui.js）
     };
     if (isPcFrame()) {
         set(pcBox, player.settings.bar.map((b, i) => barSlotHtml(i, 'abs', barPcPos(i))).join(''));
