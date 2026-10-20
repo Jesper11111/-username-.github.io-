@@ -2003,6 +2003,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 71. 五種 BOSS 專屬特效與遊戲內預覽（2026-10-20，版本 `20261020i`）
 
+- 2026-10-21 補齊 `20261020j` 已引用的 `images/vfx/boss-enchants.png`：使用者提供原圖，RGBA PNG 1374×1145，6 欄×5 列，每格 229×229；五列對應 BOSS_VFX_IDS 順序。bossVfxAtlas 共用載入，bossVfxSprite 播放與交淡六格；圖片載入失敗時回退程序動畫。本次僅補圖片與文件，未改 JS。圖片納入 Git 後隨 images 發佈。
+
 - 使用者選定先植入：蠻牛震擊、冰后寒獄、幽靈砲擊、死神收割、冥王追擊。以原創 Canvas 程序動畫實作，無新增圖片、無更動傷害／機率／費用／存檔結構。其他二十種保留原本火柱／冰晶／弧光等特效。
 - 新檔 data/boss-vfx.js，index 載入於 boss-enchant 後、player 前；BOSS_VFX_IDS 指定五種，bossVfxDuration／Point／Ellipse／Ray／Paint 為純繪圖函式。
 - 蠻牛：金棕色擴散衝擊波、分叉裂紋、碎石彈起。冰后：藍白法陣、九道冰刺、雪點，腳下冰霜跟隨存活敵人，持續至三秒結束。
