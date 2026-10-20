@@ -88,6 +88,7 @@ function usePotion(id) {
         player.buffs[d.buff] = { src: 'item', id, until: gameNow + d.sec * 1000 };
         addLog(`🧪 ${d.name}生效（${d.sec / 60} 分鐘）`, 'heal');
     }
+    worldVfxSupport({ name: d.name, heal: d.heal, fx: d.buff && BUFF_DEFS[d.buff] ? BUFF_DEFS[d.buff].fx : {} });
     return '';
 }
 
@@ -226,6 +227,7 @@ function bossSkillTick(dt) {
         hunt.tele = null;
         const m = t.mob;
         if (!hunt.mobs.includes(m)) return;
+        worldVfxBoss(t);
         const live = t.seenAt != null && t.seenAt >= t.until - 300;
         const dodged = live ? !!t.dodged : chance(player.settings.autoDodge ? 0.6 : 0.2);
         if (dodged) { addLog(`💨 你閃開了${m.name}的「${t.name}」！`, 'miss'); return; }
@@ -438,6 +440,7 @@ function castHeal(k, st) {
     player.hp = Math.min(st.maxHp, player.hp + v);
     addLog(`✨ ${k.name}：HP +${player.hp - before}`, 'heal');
     sfx('buff');
+    worldVfxSupport(k);
 }
 
 function castBuff(k) {
@@ -445,6 +448,7 @@ function castBuff(k) {
     player.buffs[k.group || k.id] = { src: 'skill', id: k.id, until: gameNow + k.sec * 1000 };
     addLog(`✨ 施放「${k.name}」`, 'heal');
     sfx('buff');
+    worldVfxSupport(k);
 }
 
 function magicDamage(base, spK, st, undeadMul, mon = hunt.mon) {
@@ -469,6 +473,7 @@ function castSpell(k, st) {
     });
     addLog(targets.length > 1 ? `🔮 ${k.name}（範圍）！${parts.join('、')} 傷害` : `🔮 ${k.name}！${hunt.mon.name}受到 ${parts[0].split(' ').pop()} 傷害`, 'magic');
     sfx(/冰|雪|霜|凍/.test(k.name) ? 'magic-ice' : 'magic-cast');
+    worldVfxSkill(k, hunt.mon);
     if (!k.id.startsWith('res_')) { resonanceOnHit(); bossEnchantHit(targets.find(m => m.hp > 0), st); }   // 攻擊魔法也算一次命中（法師拿共鳴魔杖）
 }
 
@@ -477,6 +482,7 @@ function doStrike(k, st) {
     if (bossAction) bossEnchantBegin();
     try {
         useSkillCost(k);
+        worldVfxSkill(k, hunt.mon);
         const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name, res: k.id.startsWith('res_') };
         const targets = mobTargets();
         const hit = k.aoe ? targets : [hunt.mon];
@@ -558,6 +564,7 @@ function physicalAttack(st, mult, opt, mon = hunt.mon) {
     if (!opt.res) { resonanceOnHit(); bossEnchantHit(mon, st); }   // 共鳴武器：觸發／累積共鳴值（共鳴技能本身的攻擊不算）
     addLog(`${label}${hits > 1 ? '連擊' : '攻擊'}，${mon.name}受到 ${total} 傷害${crit ? '（爆擊！）' : ''}`, crit ? 'crit' : '');
     sfxHit(crit, st.ranged);
+    worldVfxAttack(st, mon, crit);
     return true;
 }
 
@@ -567,7 +574,7 @@ function monsterAttack(st, mon) {
     if (magic) {
         dmg = rand(mon.magic.dmg[0], mon.magic.dmg[1]) * (1 - clamp(st.mr, 0, 150) / 200);
     } else {
-        if (chance(st.dodge)) { addLog(`你閃過了${mon.name}的攻擊`, 'miss'); sfx('block'); return; }
+        if (chance(st.dodge)) { addLog(`你閃過了${mon.name}的攻擊`, 'miss'); sfx('block'); worldVfxEmit('impact-2', null); return; }
         const hitChance = clamp(0.7 + (mon.hit - (10 - st.ac)) * 0.02, 0.05, 0.95);
         if (!chance(hitChance)) { addLog(`${mon.name}的攻擊落空`, 'miss'); return; }
         dmg = rand(mon.dmg[0], mon.dmg[1]);
@@ -581,6 +588,7 @@ function monsterAttack(st, mon) {
     }
     dmg = bossEnchantAbsorb(Math.max(0, Math.round(bossEnchantEnemyDamage(mon, dmg))));
     player.hp -= dmg;
+    worldVfxEnemy(mon, magic);
     addLog(magic ? `${mon.name}施放「${mon.magic.name}」，你受到 ${dmg} 傷害` : `${mon.name}攻擊，你受到 ${dmg} 傷害`, 'hurt');
     if (player.hp <= 0) { onDeath(mon); return; }
     if (dmg > 0) sfx('hurt');
@@ -588,6 +596,7 @@ function monsterAttack(st, mon) {
     if (st.counter && dmg > 0 && chance(st.counter)) {
         mon.hp -= dmg;
         addLog(`🛡️ 反擊！${mon.name}受到 ${dmg} 傷害`, 'crit');
+        worldVfxEmit('impact-3', mon);
         if (mon.hp <= 0) onKill(mon);
     }
 }
@@ -665,6 +674,7 @@ function rollDrops(mon, z) {
         const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
         addLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name}${n > 1 ? ' ×' + n : ''}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
         sfx(rare || (inst && inst.q) ? 'treasure' : 'loot-gold');
+        worldVfxLoot(mon, d, inst);
     };
     const qm = 1 + mapBonus();   // 地圖詞綴：掉落機率加成
     for (const dr of COMMON_DROPS) {

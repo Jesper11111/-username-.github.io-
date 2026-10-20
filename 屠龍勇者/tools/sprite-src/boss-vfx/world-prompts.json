@@ -1,0 +1,68 @@
+{
+  "generator": "OpenAI imagegen built-in",
+  "date": "2026-10-21",
+  "version": "20261021c",
+  "layout": "4 columns, 4 rows; each row a different effect, four animation frames",
+  "assets": [
+    {
+      "file": "images/vfx/world/weapon-glow.png",
+      "source": "exec-20c6c9f1-fb1d-43d7-bf32-b7ea685206a8.png",
+      "prompt": "Make an original dark fantasy isometric RPG VFX SPRITE ATLAS. TRUE TRANSPARENT RGBA ALPHA background. Square canvas EXACT 4 columns x4 rows. NO labels,text,gridlines,checkerboard,scenery or characters. IMPORTANT EACH ROW is a DIFFERENT effect as specified, with FOUR animation frames progressing left to right emerge,peak,disperse,fade. Each of sixteen cells equal sized, generous transparent gutters, consistent fixed scale and anchor in cell. Polished realistic painterly luminous VFX, readable small, NOT pixel art. Never duplicate rows. Four enchant-strength levels of slim diagonal blade-shaped light aura WITHOUT drawing a weapon: row1 pale silver soft shimmer; row2 bright gold sparks flowing along blade; row3 cyan electric aura; row4 brilliant violet gold particle aura. Thin shape oriented lower-left to upper-right at 45 degrees, not full-screen rings."
+    },
+    {
+      "file": "images/vfx/world/weapon-element.png",
+      "source": "exec-a317a54e-e6d4-4583-ae02-6028171e63ac.png",
+      "prompt": "Make an original dark fantasy isometric RPG VFX SPRITE ATLAS. TRUE TRANSPARENT RGBA ALPHA background. Square canvas EXACT 4 columns x4 rows. NO labels,text,gridlines,checkerboard,scenery or characters. IMPORTANT EACH ROW is a DIFFERENT effect as specified, with FOUR animation frames progressing left to right emerge,peak,disperse,fade. Each of sixteen cells equal sized, generous transparent gutters, consistent fixed scale and anchor in cell. Polished realistic painterly luminous VFX, readable small, NOT pixel art. Never duplicate rows. Four elemental weapon auras WITHOUT drawing weapon: row1 thin orange flame licking up a diagonal blade-shaped path; row2 thin blue ice frost motes along same path; row3 narrow cyan lightning along same path; row4 violet ghost wisps along same path. All diagonal lower-left to upper-right."
+    },
+    {
+      "file": "images/vfx/world/attack.png",
+      "source": "exec-d09b2be0-f240-4612-bffa-d157a9c55d17.png",
+      "prompt": "Make an original dark fantasy isometric RPG VFX SPRITE ATLAS. TRUE TRANSPARENT RGBA ALPHA background. Square canvas EXACT 4 columns x4 rows. NO labels,text,gridlines,checkerboard,scenery or characters. IMPORTANT EACH ROW is a DIFFERENT effect as specified, with FOUR animation frames progressing left to right emerge,peak,disperse,fade. Each of sixteen cells equal sized, generous transparent gutters, consistent fixed scale and anchor in cell. Polished realistic painterly luminous VFX, readable small, NOT pixel art. Never duplicate rows. Four normal attack animations: row1 silver curved sword slash trail; row2 heavy amber axe impact crescent with dust; row3 small gold white gun muzzle flash and a short bullet streak; row4 green gold arrow-shaped projectile with long airy trailing ribbon."
+    },
+    {
+      "file": "images/vfx/world/impact.png",
+      "source": "exec-11b9a2bc-7e25-4b4f-a084-0724261a8e8e.png",
+      "prompt": "Make an original dark fantasy isometric RPG VFX SPRITE ATLAS. TRUE TRANSPARENT RGBA ALPHA background. Square canvas EXACT 4 columns x4 rows. NO labels,text,gridlines,checkerboard,scenery or characters. IMPORTANT EACH ROW is a DIFFERENT effect as specified, with FOUR animation frames progressing left to right emerge,peak,disperse,fade. Each of sixteen cells equal sized, generous transparent gutters, consistent fixed scale and anchor in cell. Polished realistic painterly luminous VFX, readable small, NOT pixel art. Never duplicate rows. Four reaction animations: row1 bright orange white critical hit starburst with shattered luminous shards; row2 golden round shield silhouette impact ripple; row3 pale cyan evasive wind afterimage streak; row4 steel blue counterattack crossed slash spark."
+    },
+    {
+      "file": "images/vfx/world/class-a.png",
+      "source": "exec-f29c1fcc-dd9b-43f4-9183-ebb2b6e6cb19.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX atlas, transparent background TRUE RGBA alpha, no colored background no checkerboard no text labels grid lines scenery. Exactly FOUR columns and FOUR rows,16 equal cells square canvas. Each ROW is ONE different effect described below; four frames LEFT to RIGHT emerge,peak,disperse,fade; never repeat same effect on other rows. Consistent fixed camera orthographic isometric 3/4 top-down, each frame wholly inside its cell with generous empty gutters, identical ground anchor bottom center at 72% cell height. Painterly realistic polished luminous effects, readable at small size, NOT pixel art. Class skill effects FOUR rows: row1 KNIGHT silver blue CROSS-shaped sword energy cleave; row2 DARK ELF two violet black crescent blade afterimages; row3 ELF emerald spirit arrow burst with leaves; row4 DEMON crimson blood flame scythe arc. No characters or weapons except energy silhouettes."
+    },
+    {
+      "file": "images/vfx/world/class-b.png",
+      "source": "exec-27a78d35-084c-4f40-819f-8b16139b26c0.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX atlas, transparent background TRUE RGBA alpha, no colored background no checkerboard no text labels grid lines scenery. Exactly FOUR columns and FOUR rows,16 equal cells square canvas. Each ROW is ONE different effect described below; four frames LEFT to RIGHT emerge,peak,disperse,fade; never repeat same effect on other rows. Consistent fixed camera orthographic isometric 3/4 top-down, each frame wholly inside its cell with generous empty gutters, identical ground anchor bottom center at 72% cell height. Painterly realistic polished luminous effects, readable at small size, NOT pixel art. Class skill effects FOUR rows: row1 ROYAL majestic golden crown sigil radiating gold rays; row2 WARRIOR amber massive double axe energy shockwave; row3 GUNNER white blue explosive bullet barrage; row4 MAGIC FIGHTER violet gold enchanted sword lightning cross. No characters."
+    },
+    {
+      "file": "images/vfx/world/class-c.png",
+      "source": "exec-3a36c712-143d-4383-acd5-26ce5bf77aee.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX atlas, transparent background TRUE RGBA alpha, no colored background no checkerboard no text labels grid lines scenery. Exactly FOUR columns and FOUR rows,16 equal cells square canvas. Each ROW is ONE different effect described below; four frames LEFT to RIGHT emerge,peak,disperse,fade; never repeat same effect on other rows. Consistent fixed camera orthographic isometric 3/4 top-down, each frame wholly inside its cell with generous empty gutters, identical ground anchor bottom center at 72% cell height. Painterly realistic polished luminous effects, readable at small size, NOT pixel art. Class skill effects FOUR rows: row1 MAGE sapphire violet arcane starburst and magic rune; row2 PALADIN gold white holy cross slash and radiant ring; row3 ANGEL luminous white gold feather wing strike; row4 SHURA dark red multiple claw blade slashes with crimson sparks. No characters."
+    },
+    {
+      "file": "images/vfx/world/support.png",
+      "source": "exec-743d91e7-ff6c-4c5e-9956-8aa33b422727.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX atlas, transparent background TRUE RGBA alpha, no colored background no checkerboard no text labels grid lines scenery. Exactly FOUR columns and FOUR rows,16 equal cells square canvas. Each ROW is ONE different effect described below; four frames LEFT to RIGHT emerge,peak,disperse,fade; never repeat same effect on other rows. Consistent fixed camera orthographic isometric 3/4 top-down, each frame wholly inside its cell with generous empty gutters, identical ground anchor bottom center at 72% cell height. Painterly realistic polished luminous effects, readable at small size, NOT pixel art. Support spell effects FOUR rows: row1 emerald healing particles spiraling upward from a soft green ring; row2 blue mana rune and tiny sapphire particles rising; row3 airy pale mint speed wind ribbons circling feet; row4 translucent blue gold magical shield dome expanding."
+    },
+    {
+      "file": "images/vfx/world/status.png",
+      "source": "exec-a29e9038-ad5c-4105-aa38-208b3b7fbd5a.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX SPRITE ATLAS. Real transparent RGBA alpha background, NO solid background NO checkerboard NO text labels gridlines scenery. Square canvas exactly4 columns x4 rows16 equal cells. EACH ROW a DIFFERENT effect described below, four frames left to right emerge/charge,peak,disperse,fade. Consistent scale fixed camera isometric 3/4 top down, shared ground anchor bottom center at72% cell height, sprites fully within cells, plenty transparent margins. Painterly realistic high detail luminous game VFX, readable small NOT pixel art. Negative status effects FOUR rows: row1 poison sickly green low mist and bubbles; row2 burning orange little flames licking upward; row3 freezing blue ice crystals rising around ground ring; row4 stunning three little golden stars orbiting in a small horizontal halo. No characters."
+    },
+    {
+      "file": "images/vfx/world/boss.png",
+      "source": "exec-a0b2e489-613c-46ce-a1c7-d6d4a8c096a2.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX SPRITE ATLAS. Real transparent RGBA alpha background, NO solid background NO checkerboard NO text labels gridlines scenery. Square canvas exactly4 columns x4 rows16 equal cells. EACH ROW a DIFFERENT effect described below, four frames left to right emerge/charge,peak,disperse,fade. Consistent scale fixed camera isometric 3/4 top down, shared ground anchor bottom center at72% cell height, sprites fully within cells, plenty transparent margins. Painterly realistic high detail luminous game VFX, readable small NOT pixel art. Boss spell effects FOUR rows: row1 spectral red dragon head charging then cone of orange dragon breath; row2 brown gold ground fissure exploding into jagged earth shockwave; row3 blazing meteor falling diagonally into bright impact explosion; row4 expanding cyan frost shockwave with ice spikes. Each row four frames charge,impact,disperse,fade. No characters."
+    },
+    {
+      "file": "images/vfx/world/loot.png",
+      "source": "exec-1c70bd76-cdc0-495e-a413-43ed54df083b.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX SPRITE ATLAS. Real transparent RGBA alpha background, NO solid background NO checkerboard NO text labels gridlines scenery. Square canvas exactly4 columns x4 rows16 equal cells. EACH ROW a DIFFERENT effect described below, four frames left to right emerge/charge,peak,disperse,fade. Consistent scale fixed camera isometric 3/4 top down, shared ground anchor bottom center at72% cell height, sprites fully within cells, plenty transparent margins. Painterly realistic high detail luminous game VFX, readable small NOT pixel art. Loot beacon effects FOUR rows: row1 slim violet vertical equipment loot light column with sparkling base; row2 golden boss material ring with a short warm light plume; row3 emerald rare item twinkling star shower; row4 bright gold orange legendary loot column and rays. No items, no chests, only light effects."
+    },
+    {
+      "file": "images/vfx/world/progress.png",
+      "source": "exec-953f772a-1f5c-4446-a43d-4f884a68152d.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX SPRITE ATLAS. Real transparent RGBA alpha background, NO solid background NO checkerboard NO text labels gridlines scenery. Square canvas exactly4 columns x4 rows16 equal cells. EACH ROW a DIFFERENT effect described below, four frames left to right emerge/charge,peak,disperse,fade. Consistent scale fixed camera isometric 3/4 top down, shared ground anchor bottom center at72% cell height, sprites fully within cells, plenty transparent margins. Painterly realistic high detail luminous game VFX, readable small NOT pixel art. Progress celebration effects FOUR rows: row1 golden level-up circle at feet with upward rays; row2 violet gold breakthrough arcane circle opening with vertical energy; row3 white gold angel wings unfolding briefly then dissolving feathers; row4 small blue gold ascension star ring and rising motes. No characters."
+    }
+  ]
+}

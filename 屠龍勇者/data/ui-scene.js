@@ -955,6 +955,7 @@ function sceneDraw(ctx, W, H) {
     }
     if (inTownNow) for (const h of TOWN_HOUSES) drawHouse(ctx, h, camX, camY);
     drawBossEnchantEffects(ctx, camX, camY, 'ground');
+    drawWorldVfx(ctx, camX, camY, 'ground');
     // 首領大招紅圈：外圈閃爍、內圈隨蓄力時間長大，滿了就爆
     if (scene.tele && scene.tele.ref) {
         const c = scene.tele, t = c.ref, k = clamp((gameNow - t.start) / (t.until - t.start), 0, 1);
@@ -1068,6 +1069,7 @@ function sceneDraw(ctx, W, H) {
                 ctx.save();
                 if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
                 ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
+                drawWorldWeapon(ctx, px, py, pl.dir, pl.anim);
                 ctx.restore();
             };
             body();
@@ -1126,6 +1128,7 @@ function sceneDraw(ctx, W, H) {
     } else scene.moveMark = null;
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     drawBossEnchantEffects(ctx, camX, camY, 'front');
+    drawWorldVfx(ctx, camX, camY, 'front');
     labels.forEach(f => f());
     // 特效、飄字
     if (scene.moveMark) {   // 點地圖移動的目的地標記

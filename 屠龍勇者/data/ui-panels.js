@@ -874,6 +874,7 @@ function renderSettings() {
             <small class="muted">這台裝置的顯示設定，不影響存檔。PC 16:9 時，狩獵固定在左邊外框，其他頁面顯示在右側。</small>
         </div>
         ${sfxSettingsHtml()}
+        ${worldVfxSettingsHtml()}
         <div class="panel"><h4>💊 自動補給</h4>
             <small class="muted">要不要自動喝藥水、自動用瞬移卷軸，改在快捷欄：把道具放進格子、<b>往下拉</b>開啟自動（暖黃光框）。</small>
             ${num('potionPct', 'HP 低於 % 喝治癒藥水', 5, 95)}

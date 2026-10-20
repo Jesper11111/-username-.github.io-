@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="../">
+<title>黑暗大陸・十類視覺特效</title>
+<style>
+body{margin:0;background:#121116;color:#e1d7c5;font:15px sans-serif}header{padding:16px;position:sticky;top:0;background:#201d29;z-index:1}h1{font-size:20px;margin:0 0 10px}button,select{background:#413653;color:inherit;padding:7px;border:1px solid #8e739e;border-radius:5px}input{vertical-align:middle;width:160px}#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;padding:12px}article{background:#201d29;border:1px solid #4d4057;border-radius:8px;padding:8px}canvas{display:block;width:100%;height:auto}h2{font-size:15px;margin:5px}p{margin:8px 0 0;color:#c3b5cc}small{display:block;margin:5px;color:#c3b5cc}a{color:#e3c281}
+</style>
+<header><h1>十類視覺特效・48 款</h1><button id="play">暫停</button> <label>分類 <select id="group"><option value="">全部</option></select></label> <label>播放位置 <input id="age" type="range" min="0" max="2999" value="300"></label><p id="loaded">圖片載入中…</p><p>僅預覽圖片，不建立角色、不修改存檔、不連接雲端。<a href="tools/vfx-preview.html">BOSS 附魔 25 種</a></p></header>
+<main id="cards"></main>
+<script src="data/config.js?v=20261021c"></script>
+<script src="data/world-vfx.js?v=20261021c"></script>
+<script>
+let worldGalleryPlaying = true, worldGalleryStart = null;
+const worldGalleryGroups = [...new Set(Object.values(WORLD_VFX_GROUPS))];
+for (const name of worldGalleryGroups) { const option = document.createElement('option'); option.value = name; option.textContent = name; document.getElementById('group').append(option); }
+const worldGalleryCards = Object.keys(WORLD_VFX_DEFS).map(id => {
+    const d = WORLD_VFX_DEFS[id], card = document.createElement('article'), title = document.createElement('h2'), note = document.createElement('small'), canvas = document.createElement('canvas');
+    title.textContent = d.name; note.textContent = WORLD_VFX_GROUPS[d.sheet] + (d.previewOnly ? '・僅預覽，尚無對應玩法' : '');
+    canvas.width = 420; canvas.height = 260; card.append(title, canvas, note); document.getElementById('cards').append(card);
+    return { id, group: WORLD_VFX_GROUPS[d.sheet], card, ctx: canvas.getContext('2d') };
+});
+document.getElementById('group').addEventListener('change', () => { for (const c of worldGalleryCards) c.card.style.display = !document.getElementById('group').value || c.group === document.getElementById('group').value ? '' : 'none'; });
+document.getElementById('play').addEventListener('click', () => { worldGalleryPlaying = !worldGalleryPlaying; document.getElementById('play').textContent = worldGalleryPlaying ? '暫停' : '播放'; worldGalleryStart = null; });
+document.getElementById('age').addEventListener('input', () => { worldGalleryPlaying = false; document.getElementById('play').textContent = '播放'; });
+function worldGalleryDraw(now) {
+    if (worldGalleryStart === null) worldGalleryStart = now - Number(document.getElementById('age').value);
+    const elapsed = worldGalleryPlaying ? (now - worldGalleryStart) % 3000 : Number(document.getElementById('age').value);
+    if (worldGalleryPlaying) document.getElementById('age').value = Math.floor(elapsed);
+    for (const c of worldGalleryCards) if (c.card.style.display !== 'none') drawWorldVfxPreview(c.ctx, c.id, elapsed);
+    document.getElementById('loaded').textContent = '已載入 ' + Object.values(worldVfxImages).filter(im => im.complete && im.naturalWidth).length + '／12 張動畫圖集';
+    requestAnimationFrame(worldGalleryDraw);
+}
+requestAnimationFrame(worldGalleryDraw);
+</script>
+</html>
