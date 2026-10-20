@@ -1,6 +1,34 @@
 // 黑暗大陸：五種 BOSS 附魔特效（ARCHITECTURE.md 第 71 節）
 // 純 Canvas 繪製；預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
 const BOSS_VFX_IDS = ['towerBullHorn', 'towerIceCrown', 'pirateTreasure', 'towerDeathShard', 'towerKingSeal'];
+// 共用透明圖集只解碼一次；下載失敗時仍使用程序動畫。
+let bossVfxAtlas = null;
+function bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer) {
+    const row = BOSS_VFX_IDS.indexOf(f.id);
+    if (row < 0 || (f.id === 'pirateTreasure' && f.phase !== 'impact') || (f.id === 'towerKingSeal' && f.phase === 'slash')) return false;
+    if (layer !== (f.id === 'towerKingSeal' ? 'behind' : 'front')) return false;
+    if (!bossVfxAtlas) {
+        bossVfxAtlas = new Image();
+        bossVfxAtlas.src = 'images/vfx/boss-enchants.png?v=' + GAME_VERSION;
+    }
+    if (!bossVfxAtlas.complete || !bossVfxAtlas.naturalWidth) return false;
+    const duration = bossVfxDuration(f), k = elapsed / duration;
+    const progress = Math.min(5, k * 5), frame = Math.floor(progress), blend = progress - frame;
+    const sw = bossVfxAtlas.naturalWidth / 6, sh = bossVfxAtlas.naturalHeight / 5;
+    const p = bossVfxPoint(f.id === 'towerKingSeal' && f.origin ? f.origin : f.pos, camX, camY, tile);
+    const size = tile * (f.id === 'towerKingSeal' ? 5.4 : 6);
+    ctx.save();
+    const alpha = Math.min(1, elapsed / 60) * Math.min(1, (duration - elapsed) / 180);
+    ctx.globalAlpha = alpha * (1 - blend);
+    if (f.id === 'towerDeathShard' && f.execute) ctx.filter = 'hue-rotate(85deg) saturate(1.65)';
+    ctx.drawImage(bossVfxAtlas, frame * sw, row * sh, sw, sh, p.x - size / 2, p.y - size * .7, size, size);
+    if (blend > 0 && frame < 5) {
+        ctx.globalAlpha = alpha * blend;
+        ctx.drawImage(bossVfxAtlas, (frame + 1) * sw, row * sh, sw, sh, p.x - size / 2, p.y - size * .7, size, size);
+    }
+    ctx.restore();
+    return true;
+}
 function bossVfxDuration(f) {
     if (f.id === 'towerIceCrown') return 3000;
     if (f.id === 'pirateTreasure') return f.phase === 'impact' ? 900 : 1800;
@@ -19,6 +47,7 @@ function bossVfxRay(ctx, x, y, angle, length, color, width) {
 function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
     if (!f.pos || elapsed < 0 || elapsed >= bossVfxDuration(f) || f.done) return;
     if (layer === 'behind' && !(f.id === 'towerKingSeal' && f.phase !== 'slash')) return;
+    if (bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer)) return;
     const p = bossVfxPoint(f.pos, camX, camY, tile), x = p.x, y = p.y;
     const k = elapsed / bossVfxDuration(f), radius = tile * 2.5;
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
