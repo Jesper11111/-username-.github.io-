@@ -22,6 +22,14 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
     const p = bossVfxPoint(f.pos, camX, camY, tile), x = p.x, y = p.y;
     const k = elapsed / bossVfxDuration(f), radius = tile * 2.5;
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // 光暈獨立成層，透明邊緣不遮住地圖；只在爆發前段出現。
+    if (layer === 'front' && elapsed < 420 && !(f.id === 'pirateTreasure' && f.phase !== 'impact')) {
+        const flash = Math.pow(1 - elapsed / 420, 2);
+        const color = f.id === 'towerBullHorn' ? '255,195,95' : f.id === 'towerIceCrown' ? '130,225,255' : f.id === 'pirateTreasure' ? '130,255,220' : f.execute ? '230,55,85' : '180,135,255';
+        const glow = ctx.createRadialGradient(x, y - 10, 0, x, y - 10, tile * 1.8);
+        glow.addColorStop(0, 'rgba(' + color + ',' + flash * .65 + ')'); glow.addColorStop(1, 'rgba(' + color + ',0)');
+        ctx.fillStyle = glow; ctx.fillRect(x - tile * 1.8, y - 10 - tile * 1.8, tile * 3.6, tile * 3.6);
+    }
     if (f.id === 'towerBullHorn') {
         if (layer === 'ground') {
             ctx.globalAlpha = Math.pow(1 - k, .7) * .9;
@@ -35,6 +43,12 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
             }
         } else {
             ctx.globalAlpha = (1 - k) * .8;
+            // 一圈低矮塵霧在碎石後方擴散。
+            for (let i = 0; i < 8; i++) {
+                const a = i * Math.PI / 4, travel = radius * k;
+                ctx.fillStyle = 'rgba(181,139,83,' + (1 - k) * .22 + ')';
+                ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * travel, y + 5 + Math.sin(a) * travel * .5, 7 + k * 12, 3 + k * 5, 0, 0, Math.PI * 2); ctx.fill();
+            }
             for (let i = 0; i < 12; i++) {
                 const a = i * 2.399, travel = (10 + i % 4 * 7) * k;
                 const sx = x + Math.cos(a) * travel * 2, sy = y + Math.sin(a) * travel - Math.sin(k * Math.PI) * (12 + i % 3 * 6);
@@ -62,6 +76,8 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
                 const ht = (18 + i % 3 * 8) * rise;
                 ctx.fillStyle = i % 2 ? '#93dbf6' : '#d0f7ff'; ctx.beginPath(); ctx.moveTo(sx - 5, sy); ctx.lineTo(sx - 1, sy - ht); ctx.lineTo(sx + 6, sy); ctx.closePath(); ctx.fill();
                 ctx.strokeStyle = '#e4ffff'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = '#4886b5'; ctx.beginPath(); ctx.moveTo(sx - 1, sy - ht); ctx.lineTo(sx + 1, sy); ctx.lineTo(sx + 6, sy); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#f2ffff'; ctx.beginPath(); ctx.moveTo(sx - 1, sy - ht); ctx.lineTo(sx - 3, sy - 3); ctx.stroke();
             }
             for (let i = 0; i < 8; i++) { const a = i * 2.4; const sx = x + Math.cos(a) * radius * .7, sy = y - 8 - (elapsed / 70 + i * 9) % 45; ctx.fillStyle = '#d9fdff'; ctx.fillRect(sx, sy, 1.5, 1.5); }
         }
@@ -77,7 +93,7 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
             ctx.globalAlpha = (1 - k) * .7;
             bossVfxEllipse(ctx, x, y + 5, radius * Math.min(1, k * 3), radius * .5 * Math.min(1, k * 3), '#73e7d3', 3);
         } else {
-            ctx.globalAlpha = (1 - k) * .8;
+            ctx.globalAlpha = Math.pow(1 - k, 1.4) * .9;
             const g = ctx.createRadialGradient(x, y - 7, 1, x, y - 7, 25 + 25 * k);
             g.addColorStop(0, '#fff2bc'); g.addColorStop(.3, '#ffae51'); g.addColorStop(1, 'rgba(255,100,20,0)');
             ctx.fillStyle = g; ctx.fillRect(x - 55, y - 65, 110, 110);
@@ -92,6 +108,12 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
         const color = f.execute ? '#dd3d5b' : '#ae87ec';
         ctx.globalAlpha = Math.sin(Math.min(1, k * 1.25) * Math.PI) * .75;
         ctx.translate(x, y - 13); ctx.rotate(-.8 + k * 1.6);
+        // 三道逐漸淡出的刀鋒拖影。
+        for (let i = 3; i > 0; i--) {
+            ctx.save(); ctx.rotate(-i * .13); ctx.globalAlpha *= .22 / i;
+            ctx.strokeStyle = color; ctx.lineWidth = 5 + i * 2;
+            ctx.beginPath(); ctx.moveTo(18, -43); ctx.bezierCurveTo(62, -40, 66, 12, 18, 37); ctx.stroke(); ctx.restore();
+        }
         // 鐮刀長柄與弧形刀刃。
         ctx.strokeStyle = '#574968'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-32, 30); ctx.lineTo(20, -40); ctx.stroke();
         ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(18, -43); ctx.bezierCurveTo(62, -40, 66, 12, 18, 37); ctx.bezierCurveTo(49, 4, 36, -24, 18, -32); ctx.closePath(); ctx.fill();
@@ -106,6 +128,9 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
         if (f.phase === 'slash') {
             const sign = f.index % 2 ? -1 : 1;
             ctx.globalAlpha = (1 - k) * .85; ctx.translate(x, y - 13); ctx.scale(sign, 1); ctx.rotate(-.45 + f.index * .22);
+            // 寬幅紫色外光與金色刃心，共用命中事件，不多觸發傷害。
+            ctx.strokeStyle = 'rgba(141,82,230,.28)'; ctx.lineWidth = 15 * (1 - k) + 2;
+            ctx.beginPath(); ctx.moveTo(-37, -22); ctx.quadraticCurveTo(0, 25 + k * 12, 39, -8); ctx.stroke();
             ctx.strokeStyle = '#ba8eff'; ctx.lineWidth = 5 * (1 - k) + 1;
             ctx.beginPath(); ctx.moveTo(-37, -22); ctx.quadraticCurveTo(0, 25 + k * 12, 39, -8); ctx.stroke();
             ctx.strokeStyle = '#ffe1a0'; ctx.lineWidth = 1.5; ctx.stroke();
