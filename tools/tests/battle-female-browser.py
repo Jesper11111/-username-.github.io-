@@ -22,6 +22,15 @@ with sync_playwright() as p:
     assert page.locator('#bf-faxiang').count()==0
    page.evaluate("openYuanshenModal();document.getElementById('yuanshen-modal').style.display='none';updateBattleHero()")
    assert page.locator('#bf-faxiang').count()==0
+   # 回歸玩家紅圈：施法第7格的越界金光不可再繪入，髮絲主體仍有像素。
+   assert page.evaluate("""()=>{const f=battleFemaleRenderer.atlases.cast.frames[6],c=f.surface.getContext('2d');
+    const d=c.getImageData(0,0,Math.ceil(f.w*.1),Math.ceil(f.h*.33)).data;
+    return Array.from(d).every((v,i)=>i%4!==3||v===0);
+   }""")
+   assert page.evaluate("""()=>{const f=battleFemaleRenderer.atlases.cast.frames[6];
+    const d=f.surface.getContext('2d').getImageData(Math.ceil(f.w*.1),Math.ceil(f.h*.33),Math.ceil(f.w*.4),Math.ceil(f.h*.3)).data;
+    return Array.from(d).some((v,i)=>i%4===3&&v>140);
+   }""")
    canvas=page.locator('#bf-female-avatar')
    assert canvas.evaluate('(e)=>Math.abs(e.clientHeight/e.parentElement.clientHeight-.96)<.02')
    assert canvas.evaluate('(e)=>Math.abs(e.clientWidth/e.clientHeight-.8)<.03')

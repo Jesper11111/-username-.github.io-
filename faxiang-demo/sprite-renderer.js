@@ -21,7 +21,11 @@ window.SpriteRenderer = class {
   }
   const surface=document.createElement('canvas');surface.width=fw;surface.height=fh;
   const sc=surface.getContext('2d'),clean=sc.createImageData(fw,fh);
-  for(const at of main){const src=((y0+Math.floor(at/fw))*scan.width+x0+at%fw)*4;clean.data.set(pixels.subarray(src,src+4),at*4);}
+  // 施法第7格左上角有前一格劍氣，與髮絲相連，須以已量測角區排除。
+  const excludeCastCorner=kind==='cast'&&row===0&&col===6;
+  for(const at of main){
+   if(excludeCastCorner && at%fw<Math.ceil(fw*.1) && Math.floor(at/fw)<Math.ceil(fh*.33))continue;
+   const src=((y0+Math.floor(at/fw))*scan.width+x0+at%fw)*4;clean.data.set(pixels.subarray(src,src+4),at*4);}
   sc.putImageData(clean,0,0);
   const alphaAt=(xx,yy)=>clean.data[((yy-y0)*fw+xx-x0)*4+3];
   // Core body region excludes extended swords/ribbons; foot and crown stay stable across poses.
