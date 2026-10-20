@@ -377,7 +377,6 @@ const BATTLE_CAST_TOTAL_MS = 2650;
 let battleCastUntil = 0, battleCastTimers = [];
 function battleFxCast() {
     if (!battleFxActive()) return;
-    if (player.gender === 'female' && battleFemaleRenderer) { battleFemalePose('cast'); return; }
     const cast = BATTLE_HERO_CAST[player.gender === 'female' ? 'female' : 'male'];
     if (!cast || Date.now() < battleCastUntil) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -394,13 +393,18 @@ function playHeroCast(cast) {
     const at = (ms, fn) => battleCastTimers.push(setTimeout(fn, ms));
     const setFrame = k => { sp.style.backgroundPositionX = (k / (cast.frames - 1) * 100) + '%'; };
     setFrame(0);
-    box.classList.add('bf-casting');
-    BATTLE_CAST_FRAMES.forEach(([k, ms]) => at(ms, () => setFrame(k)));
+    const useNewAvatar = player.gender === 'female' && !!battleFemaleRenderer;
+    if (useNewAvatar) battleFemalePose('cast', BATTLE_CAST_TOTAL_MS);
+    else {
+        box.classList.add('bf-casting');
+        BATTLE_CAST_FRAMES.forEach(([k, ms]) => at(ms, () => setFrame(k)));
+    }
 
     // 座標（中段圖片的 px）：動作格在立繪框內置中、高度填滿
     const H = scene.clientHeight, W = scene.clientWidth;
     const bw = box.offsetWidth, bh = box.offsetHeight, bx = box.offsetLeft, by = box.offsetTop;
-    const sw = bh * cast.frameRatio, sx = bx + (bw - sw) / 2;
+    const avatar = useNewAvatar && document.getElementById('bf-female-avatar');
+    const sw = avatar ? avatar.offsetWidth : bh * cast.frameRatio, sx = bx + (bw - sw) / 2;
     const L = Math.max(26, bh * 0.3), T = L / cast.swordRatio;  // 飛劍長、寬（跟著人物大小，不跟中段高度：窄畫面時人物會縮小）
     const pivot = { x: sx + sw * 0.62, y: by + bh * 0.44 };     // 月牙劍陣的圓心：角色胸口（劍排在圓弧上＝身前）
     const hand = { x: sx + sw * 0.8, y: by + bh * 0.42 };       // 第 4 格長劍離手的位置
@@ -458,15 +462,15 @@ function playHeroCast(cast) {
             const tgt = { x: foeX + (Math.random() - 0.5) * W * 0.12, y: H * (0.32 + Math.random() * 0.3) };
             const aim = Math.atan2(tgt.y - s.p.y, tgt.x - s.p.x) * 180 / Math.PI;
             const delay = k * 30;
-            at(1420 + delay, () => d.classList.add('fly'));
+            at(delay, () => d.classList.add('fly'));
             d.animate([
                 { transform: tf(s.p, s.deg, 1), opacity: 1 },
                 { transform: tf(s.p, aim, 1), opacity: 1, offset: 0.25 },
                 { transform: tf(tgt, aim, 1), opacity: 1, offset: 0.92 },
                 { transform: tf(tgt, aim, 0.6), opacity: 0 }
             ], { duration: 330, delay, easing: 'ease-in', fill: 'forwards' });
-            if (k === 0 || k === Math.floor(n / 2)) at(1420 + delay + 300, () => restartAnim(document.getElementById('bf-foe'), 'bf-foe-hit', ['bf-evade']));
-            if (k === n - 1) at(1420 + delay + 300, () => restartAnim(document.getElementById('bf-flash'), 'on'));
+            if (k === 0 || k === Math.floor(n / 2)) at(delay + 300, () => restartAnim(document.getElementById('bf-foe'), 'bf-foe-hit', ['bf-evade']));
+            if (k === n - 1) at(delay + 300, () => restartAnim(document.getElementById('bf-flash'), 'on'));
         });
     });
     at(BATTLE_CAST_TOTAL_MS, () => { box.classList.remove('bf-casting'); layer.innerHTML = ''; });
@@ -495,17 +499,13 @@ const BattleSpriteRenderer = class {
 };
 
 // 純視覺：新版女角與常駐法相，不寫存檔、不參與戰鬥數值。
-const BATTLE_FEMALE_FAXIANG = {
- '金':'goddess.png','木':'wood-female.png','水':'water.png','火':'fire-female.png',
- '土':'earth-female.png',thunder:'thunder-female.png',wind:'wind-female.png'
-};
 let battleFemaleRenderer = null, battleFemaleLoading = false;
 let battleFemaleAction = { kind:'walk', start:0, until:0 };
-function battleFemalePose(kind) {
+function battleFemalePose(kind, duration = 800) {
     if (player.gender !== 'female' || !battleFemaleRenderer) return;
     const now = performance.now();
     if (kind === 'attack' && battleFemaleAction.kind === 'cast' && now < battleFemaleAction.until) return;
-    battleFemaleAction = {kind,start:now,until:now+(kind==='cast'?800:800)};
+    battleFemaleAction = {kind,start:now,until:now+duration};
 }
 function updateBattleFemaleAvatar() {
     const box=document.getElementById('bf-hero-box');
@@ -514,14 +514,9 @@ function updateBattleFemaleAvatar() {
     box.classList.toggle('bf-new-female',female);
     if (!female) return;
     const bg=document.getElementById('bf-hero-bg');if(bg)bg.style.backgroundImage='radial-gradient(ellipse at 40% 70%,#493729,#101725 75%)';
-    let deity=document.getElementById('bf-faxiang');
-    if (!deity) {
-        deity=document.createElement('img');deity.id='bf-faxiang';deity.alt='';deity.setAttribute('aria-hidden','true');
-        deity.onerror=()=>{deity.hidden=true;};box.prepend(deity);
-    }
-    const ys=getYuanshenInfo(),file=ys && BATTLE_FEMALE_FAXIANG[ys.elem || ys.affix];
-    const src=file?'faxiang-demo/assets/'+file:'';
-    if(deity.dataset.asset!==src){deity.dataset.asset=src;deity.hidden=!src;if(src)deity.src=src;else deity.removeAttribute('src');}
+    // 元神只決定屬性，不代表取得法相。專案尚無法相取得／裝備驗證流程，
+    // 正式戰場一律不載入法相；獨立演武場仍可預覽。不要用元神或前端自訂旗標授予。
+    document.getElementById('bf-faxiang')?.remove();
     if(battleFemaleLoading || battleFemaleRenderer) return;
     battleFemaleLoading=true;
     const host=document.createElement('div');host.id='bf-female-avatar';box.append(host);
@@ -538,7 +533,10 @@ function updateBattleFemaleAvatar() {
             const now=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
             const acting=now<battleFemaleAction.until;
             const kind=acting?battleFemaleAction.kind:'walk';
-            const frame=acting&&!reduced?Math.floor((now-battleFemaleAction.start)/100):0;
+            const elapsed=now-battleFemaleAction.start;
+            const frame=acting&&!reduced?(kind==='cast'
+                ? BATTLE_CAST_FRAMES.slice(0,7).filter(([,ms])=>elapsed>=ms).length-1
+                : Math.floor(elapsed/100)):0;
             renderer.draw(kind,frame,'side');
         },100);
     }).catch(()=>{host.remove();battleFemaleLoading=false;});

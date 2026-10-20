@@ -17,21 +17,32 @@ with sync_playwright() as p:
    page.evaluate("document.getElementById('title-screen').style.display='none';document.body.classList.remove('title-mode');player.gender='female';player.yuanshen={type:'holyBody'};updateBattleHero();document.getElementById('combat-visual-panel').style.display='block';for(let e=document.getElementById('combat-visual-panel');e;e=e.parentElement){if(getComputedStyle(e).display==='none')e.style.display='block'};layoutBattleHero()")
   page.wait_for_selector('.bf-avatar-ready',state='attached');page.wait_for_timeout(100)
   if not built:
-   for soul,file in [('holyBody','goddess.png'),('chaosBody','thunder-female.png'),('fanBody','wind-female.png')]:
+   for soul in ['holyBody','daoBody','doublePupil','tyrantBody','supremeBone','chaosBody','swordBody','bladeBody','fanBody','bowBody','fluteBody','brushBody']:
     page.evaluate('(s)=>{player.yuanshen={type:s};updateBattleHero()}',soul)
-    assert page.locator('#bf-faxiang').get_attribute('src').endswith(file)
-   page.evaluate("player.yuanshen={type:'holyBody'};updateBattleHero()")
-   assert page.locator('#bf-faxiang').evaluate('(e)=>getComputedStyle(e).opacity')=='0.45'
-   assert page.locator('#bf-faxiang').evaluate('(e)=>Math.abs(e.getBoundingClientRect().height/e.parentElement.getBoundingClientRect().height-.5)<.01')
+    assert page.locator('#bf-faxiang').count()==0
+   page.evaluate("openYuanshenModal();document.getElementById('yuanshen-modal').style.display='none';updateBattleHero()")
+   assert page.locator('#bf-faxiang').count()==0
+   canvas=page.locator('#bf-female-avatar')
+   assert canvas.evaluate('(e)=>Math.abs(e.clientHeight/e.parentElement.clientHeight-.96)<.02')
+   assert canvas.evaluate('(e)=>Math.abs(e.clientWidth/e.clientHeight-.8)<.03')
    page.evaluate("battleFemalePose('attack')");page.wait_for_timeout(900)
-   assert page.locator('#bf-faxiang').is_visible()
-   page.wait_for_timeout(11000);assert page.locator('#bf-faxiang').is_visible()
+   page.evaluate("battleCastUntil=0;battleFxCast()")
+   page.wait_for_timeout(850)
+   assert page.locator('#bf-swords .bf-fsword').count()>=24
+   assert page.evaluate("battleFemaleAction.kind==='cast' && performance.now()<battleFemaleAction.until")
+   page.evaluate("battleFxCast()")
+   page.wait_for_timeout(650)
+   assert page.locator('#bf-swords .fly').count()>0
+   page.wait_for_timeout(1300)
+   assert page.locator('#bf-swords .bf-fsword').count()==0
+   assert page.locator('#bf-faxiang').count()==0
    page.evaluate("player.gender='male';updateBattleHero()")
-   assert page.locator('#bf-faxiang').is_hidden() and page.locator('#bf-female-avatar').is_hidden()
+   assert page.locator('#bf-faxiang').count()==0 and page.locator('#bf-female-avatar').is_hidden()
    assert page.locator('#bf-hero').is_visible()
    page.evaluate("player.gender='female';player.yuanshen=null;updateBattleHero()")
-   assert page.locator('#bf-faxiang').is_hidden()
+   assert page.locator('#bf-faxiang').count()==0
+  assert page.locator('#bf-faxiang').count()==0
   assert not errors,errors
-  print('PASS',built,w,'sprite/fallback/gender/persistence/50%/45%/console')
+  print('PASS',built,w,'sprite/proportion/no-unearned-faxiang/gender/console')
   b.close()
 s.shutdown()
