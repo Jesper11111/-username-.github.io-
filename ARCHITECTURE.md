@@ -8,6 +8,7 @@
 ## 1. 專案結構
 
 ```
+faxiang-demo/        法相天地獨立原型與14款男女法相；不由正式首頁載入，詳見第80節
 package.json          建置工具相依（terser、acorn；node_modules/ 與 dist/ 在 .gitignore）。第 72 節
 .github/workflows/pages.yml  GitHub Actions：main 有新提交 → node tools/build.js → 發佈 dist/ 到 GitHub Pages（Pages 來源需設為 GitHub Actions，第 72 節）
 tools/build.js        建置：data/*.js 打包進同一個函式範圍＋terser 混淆 → dist/（遊戲資料不再是全域變數；只公開事件用到的函式，第 72 節）
@@ -4495,3 +4496,15 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   - 新增 `IG_AUDIT_RESET`（2）：`igAmnesty` 開頭對**所有存檔**一次性重設合理性檢查（`audit.max`＝目前進度、`used`＝0、`audit.reset`＝2），沒被標記但已在仙魔戰場累積大量進度的玩家之後也不會被標；重設過的不再重設。
   - 驗證（本機）：17:00 後的進度過快 → 解除；簽章不符 → 保留；未標記但 used 500 → 歸 0 不標記；已重設過的不動；重設後立刻存檔不會被標；Console 無錯誤。
 
+
+
+## 80. 法相天地獨立原型（2026-10-20）
+
+- 使用者授權上傳的獨立演武場位於 `faxiang-demo/`：`index.html` 是動畫演示、`gallery.html` 是14款法相圖鑑；沒有接入正式遊戲首頁、戰鬥、存檔或排行榜，不修改既有玩法與版面。
+- `faxiang-config.js` 定義7屬性（金木水火土雷風）、14款男女外觀與現有12元神id對應；`app.js` 管理四階段（800／1200／800／1000ms）及法陣、法相、玩家、前景四層。`sprite-renderer.js` 渲染女修圖集並校正腳底。
+- 最新規則：女玩家只能使用女性法相，男玩家只能使用男性法相。演武場的「玩家性別（預覽）」僅模擬角色，法相性別由 `playerGender` 推導，不提供獨立外觀性別選單。正式整合時應從遊戲 `player.gender` 及可信後端角色資料取得性別，不信任前端傳入的性別。
+- 女修走路6×3、攻擊8×3；施法7×3是三組前斜面招式，不是三方向施法。男角只有原遊戲靜態立繪，沒有虛構男性動畫素材。法相是透明PNG整圖動畫，並非肢體／髮絲／衣袖骨架動畫。
+- `assets/` 包含14款法相、女修3種圖集和男角立繪。法相均獨立美術；男女共用屬性、能力定位與展示時間，不另外疊加元神既有數值。
+- 此原型只展示外觀，不執行正式解鎖、冷卻、資源扣除或戰鬥加成，未實作後端權威API。進一步方案見 `faxiang-demo/ARCHITECTURE.md` 與 `法相設計.md`。
+- 檢查：Playwright／Chromium於1200×1000、390×844、320×700檢查14款外觀、玩家性別配對、12元神對應、四階段、手動攻擊消散、觸控、無橫向溢出與存檔隔離，頁面JS執行錯誤0。真機Safari／Android尚未驗證。
+- 本次不變更正式遊戲的 `?v=` 版本號；現行建置會複製獨立目錄，Pages上可直接開啟 `faxiang-demo/index.html` 與 `faxiang-demo/gallery.html`。離線單檔HTML與大型ZIP由 `package.py` 選擇產生，不提交到儲存庫。
