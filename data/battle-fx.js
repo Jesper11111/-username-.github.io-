@@ -136,6 +136,7 @@ function flushBattleFx() {
     }
     const heroEl = document.getElementById('bf-hero-box'), foeEl = document.getElementById('bf-foe');
     const foeHit = out.some(e => e.side === "foe" && e.kind !== "miss");
+    if (foeHit) battleFemalePose('attack');
     if (foeHit) restartAnim(heroEl, 'bf-lunge', ['bf-evade']);
     // 閃避動作（2026-09-28 玩家要求）：敵方閃掉我的攻擊 → 敵方圖往右閃；我閃掉敵方攻擊 → 立繪往左閃。閃避優先於受擊動作
     if (out.some(e => e.kind === "miss")) restartAnim(foeEl, 'bf-evade', ['bf-foe-hit']);
@@ -312,6 +313,7 @@ function updateBattleHero() {
         ysEl.className = 'bf-ys' + (ys ? ' on ' + ys.tier : '');
         if (ys) { const fx = getYuanshenFx(); ysEl.style.setProperty('--ysc', fx.color); ysEl.querySelector('.bf-ys-glyph').textContent = ys.icon; ysEl.title = ys.name; }
     }
+    updateBattleFemaleAvatar();
     layoutBattleHero();
 }
 
@@ -342,6 +344,14 @@ function layoutBattleHero() {
     if (!img || !box || !scene) return;
     const W = scene.clientWidth, H = scene.clientHeight;
     if (!W || !H) return;
+    if (box.classList.contains("bf-new-female")) {
+        const w=W*.44, slant=Math.min(W*.12,70);
+        box.style.width=w+"px";box.style.height=H+"px";
+        scene.style.setProperty("--s",w+"px");scene.style.setProperty("--slant",slant+"px");
+        const line=document.getElementById("bf-divider-line");
+        if(line){line.setAttribute("x1",(w+slant)/W*100);line.setAttribute("x2",w/W*100);}
+        box.dataset.size="";return;
+    }
     const r = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.9;
     let h = H * 0.96, w = h * r;
     if (w > W * 0.6) { w = W * 0.6; h = w / r; }
@@ -367,6 +377,7 @@ const BATTLE_CAST_TOTAL_MS = 2650;
 let battleCastUntil = 0, battleCastTimers = [];
 function battleFxCast() {
     if (!battleFxActive()) return;
+    if (player.gender === 'female' && battleFemaleRenderer) { battleFemalePose('cast'); return; }
     const cast = BATTLE_HERO_CAST[player.gender === 'female' ? 'female' : 'male'];
     if (!cast || Date.now() < battleCastUntil) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -461,3 +472,74 @@ function playHeroCast(cast) {
     at(BATTLE_CAST_TOTAL_MS, () => { box.classList.remove('bf-casting'); layer.innerHTML = ''; });
 }
 window.addEventListener('resize', () => { const b = document.getElementById('bf-hero-box'); if (b) { b.dataset.size = ''; layoutBattleHero(); } });
+
+'use strict';
+// Render-only adapter: keeps source images unchanged, aligns feet and normalizes body height.
+const BattleSpriteRenderer = class {
+ constructor(host){this.canvas=document.createElement('canvas');this.canvas.width=240;this.canvas.height=300;this.canvas.style.cssText='width:100%;height:100%;display:block';host.appendChild(this.canvas);this.ctx=this.canvas.getContext('2d');this.atlases={};this.ready=Promise.resolve();}
+ async load(kind,src,cols,rows,directional=true){const image=new Image();image.src=src;await image.decode();const atlas={image,src,cols,rows,directional,frames:[]};
+ const scan=document.createElement('canvas');scan.width=image.naturalWidth;scan.height=image.naturalHeight;const c=scan.getContext('2d',{willReadFrequently:true});c.drawImage(image,0,0);const pixels=c.getImageData(0,0,scan.width,scan.height).data;
+ for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+  const x0=Math.round(col*scan.width/cols),x1=Math.round((col+1)*scan.width/cols),y0=Math.round(row*scan.height/rows),y1=Math.round((row+1)*scan.height/rows);let bottom=y0,top=y1,left=x1,right=x0;
+  // Core body region excludes extended swords/ribbons; foot and crown stay stable across poses.
+  const counts=[];for(let yy=y0;yy<y1;yy++){let n=0;for(let xx=x0+Math.floor((x1-x0)*.25);xx<x0+Math.floor((x1-x0)*.75);xx++){const a=pixels[(yy*scan.width+xx)*4+3];if(a>140)n++;}counts.push(n);}
+  const threshold=Math.max(3,(x1-x0)*.045);for(let yy=y0;yy<y1;yy++)if(counts[yy-y0]>threshold){top=Math.min(top,yy);bottom=Math.max(bottom,yy);}
+  // Keep full cell so sword tips and magic remain visible. Shared scale per atlas avoids frame breathing.
+  if(top>=bottom){top=y0;bottom=y1-1;}
+  let footX=0,n=0;for(let yy=Math.max(top,bottom-10);yy<=bottom;yy++)for(let xx=x0;xx<x1;xx++)if(pixels[(yy*scan.width+xx)*4+3]>140){footX+=xx;n++;}
+  atlas.frames.push({x:x0,y:y0,w:x1-x0,h:y1-y0,top,bottom,footX:n?footX/n:(x0+x1)/2});
+ }
+ const heights=atlas.frames.map(f=>f.bottom-f.top).sort((a,b)=>a-b);atlas.bodyHeight=heights[Math.floor(heights.length/2)];this.atlases[kind]=atlas;return atlas;
+ }
+ draw(kind,frame,direction,variant=0){const a=this.atlases[kind];if(!a)return false;const row=a.directional?({front:0,side:1,back:2}[direction]??0):variant;const f=a.frames[Math.min(a.rows-1,row)*a.cols+frame%a.cols];const c=this.ctx;c.clearRect(0,0,240,300);const scale=235/a.bodyHeight;c.drawImage(a.image,f.x,f.y,f.w,f.h,120-(f.footX-f.x)*scale,288-(f.bottom-f.y)*scale,f.w*scale,f.h*scale);return true;}
+};
+
+// 純視覺：新版女角與常駐法相，不寫存檔、不參與戰鬥數值。
+const BATTLE_FEMALE_FAXIANG = {
+ '金':'goddess.png','木':'wood-female.png','水':'water.png','火':'fire-female.png',
+ '土':'earth-female.png',thunder:'thunder-female.png',wind:'wind-female.png'
+};
+let battleFemaleRenderer = null, battleFemaleLoading = false;
+let battleFemaleAction = { kind:'walk', start:0, until:0 };
+function battleFemalePose(kind) {
+    if (player.gender !== 'female' || !battleFemaleRenderer) return;
+    const now = performance.now();
+    if (kind === 'attack' && battleFemaleAction.kind === 'cast' && now < battleFemaleAction.until) return;
+    battleFemaleAction = {kind,start:now,until:now+(kind==='cast'?800:800)};
+}
+function updateBattleFemaleAvatar() {
+    const box=document.getElementById('bf-hero-box');
+    if (!box) return;
+    const female=player.gender==='female';
+    box.classList.toggle('bf-new-female',female);
+    if (!female) return;
+    const bg=document.getElementById('bf-hero-bg');if(bg)bg.style.backgroundImage='radial-gradient(ellipse at 40% 70%,#493729,#101725 75%)';
+    let deity=document.getElementById('bf-faxiang');
+    if (!deity) {
+        deity=document.createElement('img');deity.id='bf-faxiang';deity.alt='';deity.setAttribute('aria-hidden','true');
+        deity.onerror=()=>{deity.hidden=true;};box.prepend(deity);
+    }
+    const ys=getYuanshenInfo(),file=ys && BATTLE_FEMALE_FAXIANG[ys.elem || ys.affix];
+    const src=file?'faxiang-demo/assets/'+file:'';
+    if(deity.dataset.asset!==src){deity.dataset.asset=src;deity.hidden=!src;if(src)deity.src=src;else deity.removeAttribute('src');}
+    if(battleFemaleLoading || battleFemaleRenderer) return;
+    battleFemaleLoading=true;
+    const host=document.createElement('div');host.id='bf-female-avatar';box.append(host);
+    const renderer=new BattleSpriteRenderer(host);
+    Promise.all([
+        renderer.load('walk','faxiang-demo/assets/walk.png',6,3),
+        renderer.load('attack','faxiang-demo/assets/attack.png',8,3),
+        renderer.load('cast','faxiang-demo/assets/cast.png',7,3,false)
+    ]).then(()=>{
+        battleFemaleRenderer=renderer;box.classList.add('bf-avatar-ready');
+        renderer.draw('walk',0,'side');
+        setInterval(()=>{
+            if(player.gender!=='female' || !battleFxActive())return;
+            const now=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const acting=now<battleFemaleAction.until;
+            const kind=acting?battleFemaleAction.kind:'walk';
+            const frame=acting&&!reduced?Math.floor((now-battleFemaleAction.start)/100):0;
+            renderer.draw(kind,frame,'side');
+        },100);
+    }).catch(()=>{host.remove();battleFemaleLoading=false;});
+}

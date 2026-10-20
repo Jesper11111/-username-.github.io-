@@ -4521,3 +4521,12 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - `faxiang-demo/index.html` 新增 `#entry-note` 與 app.js 版本查詢字串；`package.py` 支援含版本號的script標籤，離線打包不漏掉新程式。
 - **離線首頁保護**：原 `sw.js` 把所有 `/index.html` 和以 `/` 結尾的子路徑都快取成根首頁；新增遊戲入口前修正為只讓SW根路徑與根 `index.html` 使用首頁快取鍵。法相與黑暗大陸子頁面分開快取，避免觀看法相後離線遊戲首頁被覆蓋。
 - 驗證工具：`tools/tests/faxiang-entry-cache.cjs` 檢查根首頁／法相／黑暗大陸快取隔離與離線取回；`tools/tests/faxiang-entry-browser.py` 檢查12元神×男女連結、未凝聚入口、新分頁、性別鎖定、預覽動畫與存檔隔離，並在原始碼及混淆版跑桌機／手機流程。
+
+
+## 82. 女角新版模組與常駐法相（2026-10-20，20261020FB）
+
+- 使用者確認：保留戰場高度，女性法相高度 50%、不透明度 45%，人物在前、法相在後，不自動消散。
+- `data/battle-fx.js` 新增 `BattleSpriteRenderer`（共用原型的足部對齊演算法）、`updateBattleFemaleAvatar`、`battleFemalePose`。由 `updateBattleHero` 更新；普攻／技能只觸發動畫，不改結算。
+- 待機使用走路圖首幀；普攻 8 幀，施法 7 幀；人物朝側面。素材僅首次女角顯示時載入，載入失敗保留舊立繪。背景分頁／隱藏戰場不繪製，減少動態效果時顯示靜態姿勢。
+- 凝聚元神後按 `getYuanshenInfo().elem` 顯示七屬性女性法相，無元神不顯示；轉世清空後移除。男角色保留原立繪與元神光暈。
+- `index.html` 增加女角分層樣式；素材引用既有 `faxiang-demo/assets`，不引入原型計時器或模擬解鎖，不增加存檔欄位與戰鬥加成。
