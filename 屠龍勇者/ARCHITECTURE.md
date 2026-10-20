@@ -105,7 +105,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020b`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1861,3 +1861,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 路牌加進角色／怪物的 y 排序（actors），角色走到路牌後面會被擋、走到前面會蓋住路牌。
 - 以前的 `drawGates`（地上光暈＋上下晃的發光箭頭＋地名＋等級）已刪除；**小地圖**上目前地圖出口的閃爍小箭頭不變（`drawGlowArrow` 仍在用）。
 - 驗證：手機畫面沉眠龍窟洞口外路牌「← 腐朽礦坑・上層／↑ 低語海岸」；11 個地圖的路牌分組都正確（例：焦骨峽谷 5 根、迷霧古林 7 根）；PC 模式繪製無錯誤；Console 無錯誤。
+
+## 64. 外框背景網址修復（2026-10-20，版本 20261020b）
+
+- 修正 20261020a 更新版本號時誤刪 CSS url() 結尾的問題：封面、手機外框與疊圖、PC 外框與遮罩共 6 處；恢復 border-image-source 的分號。避免背景與外框失效、畫面下半段黑色。
+- 更新版本號時只取代版本號本身，不可吞掉 CSS 的右括號與分號；除既有 check.ps1，也要檢查 CSS 圖片網址完整。
