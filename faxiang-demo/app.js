@@ -86,5 +86,19 @@ document.addEventListener('visibilitychange',()=>{paused=document.hidden;last=pe
 window.addEventListener('pagehide',()=>{alive=false;cancelAnimationFrame(frameId);observer.disconnect();for(const u of urls)URL.revokeObjectURL(u);});
 // Animation-only public interface. No damage or unlock authority lives here.
 window.FaxiangDemo=Object.freeze({summon,attack,dismiss,setType,snapshot:()=>({playerGender,faxiangGender:playerGender,variantName:variant().name,phase,elapsed,type,dir,x,y,scale,alpha,speed,action,assetsReady,frame:hero.dataset.frame,row:hero.dataset.row,motion:hero.dataset.motion}),destroy:()=>{alive=false;cancelAnimationFrame(frameId);observer.disconnect();for(const u of urls)URL.revokeObjectURL(u);}});
-resize();const params=new URLSearchParams(location.search);playerGender=params.get('playerGender')==='male'?'male':'female';$('#player-gender').value=playerGender;setType(params.get('faxiang')||'goddess');frameId=requestAnimationFrame(loop);
+resize();const params=new URLSearchParams(location.search);
+playerGender=params.get('playerGender')==='male'?'male':'female';$('#player-gender').value=playerGender;
+const gamePreview=params.get('from')==='game';
+const soulId=params.get('yuanshen');
+const entrySoul=Object.prototype.hasOwnProperty.call(window.FAXIANG_YUANSHEN,soulId)?window.FAXIANG_YUANSHEN[soulId]:null;
+setType(entrySoul?entrySoul.faxiang:params.get('faxiang')||'goddess');
+if(gamePreview){
+ $('#player-gender').parentElement.style.display='none';$('#player-gender').disabled=true;
+ $('#yuanshen').disabled=true;
+ if(entrySoul){$('#yuanshen').value=params.get('yuanshen');$('#type').disabled=true;}
+ else $('#yuanshen').options[0].textContent='尚未凝聚元神';
+ const note=$('#entry-note');note.hidden=false;
+ note.textContent=entrySoul?'目前角色的'+entrySoul.name+'對應法相（僅供外觀預覽）。':'目前尚未凝聚元神，可先預覽同性別法相；此預覽不代表解鎖或取得能力。';
+}
+frameId=requestAnimationFrame(loop);
 })();

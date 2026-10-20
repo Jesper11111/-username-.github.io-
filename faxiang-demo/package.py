@@ -1,10 +1,10 @@
 from pathlib import Path
-import base64,json,zipfile
+import base64,json,zipfile,re
 root=Path(__file__).resolve().parent
 
 def embed(html,scripts):
  for script in scripts:
-  html=html.replace(f'<script src="{script}"></script>','<script>'+(root/script).read_text()+'</script>')
+  html=re.sub(r'<script src="'+re.escape(script)+r'(?:\?[^"]*)?"></script>',lambda _: '<script>'+(root/script).read_text()+'</script>',html)
  assets={}
  for f in (root/'assets').iterdir():
   path='assets/'+f.name

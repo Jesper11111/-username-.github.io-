@@ -103,6 +103,16 @@ function yuanshenCostRows() {
         return `<div class="ys-cost${ok ? ' ok' : ''}"><span>${c.icon} ${c.name}</span><b>${have.toWan()} / ${c.n.toWan()}</b></div>`;
     }).join('');
 }
+// 唯讀外觀預覽：不讀寫存檔、不授予法相能力；在新分頁保留目前遊戲。
+function getFaxiangTiandiPreviewUrl() {
+    const url = new URL('faxiang-demo/index.html', document.baseURI);
+    url.searchParams.set('from', 'game');
+    url.searchParams.set('playerGender', player.gender === 'female' ? 'female' : 'male');
+    const y = getYuanshenInfo();
+    if (y) url.searchParams.set('yuanshen', y.id);
+    return url.href;
+}
+
 function openYuanshenModal() {
     const box = document.getElementById('yuanshen-body');
     if (!box) return;
@@ -131,6 +141,8 @@ function openYuanshenModal() {
             <p class="ys-note">⚠️ 凝聚後：金丹、元嬰加成保留；先天資質鎖定不能再重測；轉世時元神消散。</p>
             <button class="sys-btn ys-go" ${c && realmOk && costOk ? '' : 'disabled'} onclick="condenseYuanshen()">🔮 凝聚元神</button>`;
     }
+    html += `<a class="ys-faxiang-link" href="${getFaxiangTiandiPreviewUrl()}" target="_blank" rel="noopener noreferrer">✦ 查看法相天地</a>
+        <p class="ys-note">另開外觀預覽，遊戲會保留在目前分頁；此預覽不提供戰鬥加成。</p>`;
     box.innerHTML = html + `<button class="close-btn" onclick="closeModal('yuanshen-modal')">關閉</button>`;
     document.getElementById('yuanshen-modal').style.display = 'flex';
 }

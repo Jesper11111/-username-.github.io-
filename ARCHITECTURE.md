@@ -8,7 +8,7 @@
 ## 1. 專案結構
 
 ```
-faxiang-demo/        法相天地獨立原型與14款男女法相；不由正式首頁載入，詳見第80節
+faxiang-demo/        法相天地獨立原型與14款男女法相；元神視窗可開啟，詳見第80／81節
 package.json          建置工具相依（terser、acorn；node_modules/ 與 dist/ 在 .gitignore）。第 72 節
 .github/workflows/pages.yml  GitHub Actions：main 有新提交 → node tools/build.js → 發佈 dist/ 到 GitHub Pages（Pages 來源需設為 GitHub Actions，第 72 節）
 tools/build.js        建置：data/*.js 打包進同一個函式範圍＋terser 混淆 → dist/（遊戲資料不再是全域變數；只公開事件用到的函式，第 72 節）
@@ -1652,7 +1652,7 @@ combatTick() 每秒執行 [combat.js]
 （以 8 種舊存檔形態測試目前程式皆可正常讀取；移除 `#age-display` 即可重現同一錯誤。）
 
 ### 1. 發佈版本號（防止新舊檔案混用）
-- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261005DS`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
+- `index.html` 的每個 `<script src="data/xxx.js?v=版本">` 都帶 `?v=`（目前 `20261020FA`，gm.html 同；2026-10-01 起 Service Worker 也以這個版本號區分快取，換版本號＝玩家下次開啟時自動換新快取，第 64 節）。
 - **每次推上 GitHub Pages 前，把所有 `?v=` 全部取代成新值**（例：日期＋序號）。新 index.html 會指向新網址的 JS，不會再拿到快取的舊檔。**gm.html 也有 `?v=`（2026-09-28 起），要一起改。**
 - 新增 `data/*.js` 時也要記得帶上 `?v=`。
 - **2026-10-03 起（第 72 節）**：網站可改由 GitHub Actions 發佈建置後的 `dist/`：`index.html` 的 data 腳本被換成單一 `data/game.js?v=版本`、gm.html 換成 `data/gm-lib.js?v=版本`，版本號沿用 index.html 的 `?v=`（所有 `?v=` 必須一致，否則建置失敗）。
@@ -3814,6 +3814,8 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
   `gameConfirm`（有取消鈕的）出現後 `GAME_DIALOG_GUARD_MS`（400ms）內不接受「確定」；`gameAlert` 不受影響。所有用 gameConfirm 的地方（轉世、守城離開以外的確認等）一起受惠。
   驗證：點「凝聚元神」→ 確認框停住等玩家 → 按確定 → 凝聚動畫、彩虹字「癸水天元神」；資質視窗顯示鎖定說明、沒有重測按鈕。
 
+- **查看法相天地入口**（2026-10-20，版本 `20261020FA`）：`openYuanshenModal()` 在關閉按鈕前顯示 `.ys-faxiang-link`，以原生連結在新分頁開啟預覽；`getFaxiangTiandiPreviewUrl()` 只傳角色性別與已凝聚元神id，不修改存檔、材料或能力。未凝聚者仍可觀看同性別法相，預覽頁會明確說明未解鎖。見第81節。
+
 ## 66. 《天堂2》式戰鬥（防禦點數、暴擊 ×2；2026-10-03 起分期施工，版本 `20261005j`）
 
 - **規劃**（使用者 2026-10-03 定案「我要天堂二的方案」）：比較《天堂》1、2 代後選 2 代（同為乘法系統，接得上現有數值）。分期：
@@ -4500,11 +4502,22 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 
 ## 80. 法相天地獨立原型（2026-10-20）
 
-- 使用者授權上傳的獨立演武場位於 `faxiang-demo/`：`index.html` 是動畫演示、`gallery.html` 是14款法相圖鑑；沒有接入正式遊戲首頁、戰鬥、存檔或排行榜，不修改既有玩法與版面。
+- 使用者授權上傳的獨立演武場位於 `faxiang-demo/`：`index.html` 是動畫演示、`gallery.html` 是14款法相圖鑑；僅由元神視窗「查看法相天地」入口開啟，不接入戰鬥、存檔或排行榜，不修改既有玩法。
 - `faxiang-config.js` 定義7屬性（金木水火土雷風）、14款男女外觀與現有12元神id對應；`app.js` 管理四階段（800／1200／800／1000ms）及法陣、法相、玩家、前景四層。`sprite-renderer.js` 渲染女修圖集並校正腳底。
 - 最新規則：女玩家只能使用女性法相，男玩家只能使用男性法相。演武場的「玩家性別（預覽）」僅模擬角色，法相性別由 `playerGender` 推導，不提供獨立外觀性別選單。正式整合時應從遊戲 `player.gender` 及可信後端角色資料取得性別，不信任前端傳入的性別。
 - 女修走路6×3、攻擊8×3；施法7×3是三組前斜面招式，不是三方向施法。男角只有原遊戲靜態立繪，沒有虛構男性動畫素材。法相是透明PNG整圖動畫，並非肢體／髮絲／衣袖骨架動畫。
 - `assets/` 包含14款法相、女修3種圖集和男角立繪。法相均獨立美術；男女共用屬性、能力定位與展示時間，不另外疊加元神既有數值。
 - 此原型只展示外觀，不執行正式解鎖、冷卻、資源扣除或戰鬥加成，未實作後端權威API。進一步方案見 `faxiang-demo/ARCHITECTURE.md` 與 `法相設計.md`。
 - 檢查：Playwright／Chromium於1200×1000、390×844、320×700檢查14款外觀、玩家性別配對、12元神對應、四階段、手動攻擊消散、觸控、無橫向溢出與存檔隔離，頁面JS執行錯誤0。真機Safari／Android尚未驗證。
-- 本次不變更正式遊戲的 `?v=` 版本號；現行建置會複製獨立目錄，Pages上可直接開啟 `faxiang-demo/index.html` 與 `faxiang-demo/gallery.html`。離線單檔HTML與大型ZIP由 `package.py` 選擇產生，不提交到儲存庫。
+- 獨立原型初次上傳未變更正式版本；遊戲入口版已更新為 `20261020FA`（第81節）。現行建置會複製獨立目錄，Pages上可直接開啟 `faxiang-demo/index.html` 與 `faxiang-demo/gallery.html`。離線單檔HTML與大型ZIP由 `package.py` 選擇產生，不提交到儲存庫。
+
+
+## 81. 元神視窗「查看法相天地」按鈕（2026-10-20，版本 `20261020FA`）
+
+- `data/yuanshen.js` 新增純讀取 `getFaxiangTiandiPreviewUrl()`；`openYuanshenModal()` 在所有元神狀態顯示「✦ 查看法相天地」，使用 `target="_blank" rel="noopener noreferrer"`，保留原遊戲分頁。只增加元神彈窗入口，不改洞府與戰場配置。
+- `index.html` 新增 `.ys-faxiang-link` 的全寬按鈕樣式，最小觸控高度44px，支援鍵盤焦點。`index.html`／`gm.html` 所有 `?v=` 同步改為 `20261020FA`。
+- 導向 `faxiang-demo/index.html?from=game&playerGender=...&yuanshen=...`：依 `player.gender` 決定男／女相，已凝聚元神直接套用12元神對照表；未凝聚時不傳id，允許同性別預覽並顯示「尚未凝聚，預覽不代表解鎖或取得能力」。
+- `faxiang-demo/app.js` 的遊戲入口模式隱藏並停用玩家性別選擇、停用元神模擬選單；已有元神時也停用屬性切換。獨立演武場模式維持原本的測試選單。這些都是外觀預覽，不作為後端授權或能力來源。
+- `faxiang-demo/index.html` 新增 `#entry-note` 與 app.js 版本查詢字串；`package.py` 支援含版本號的script標籤，離線打包不漏掉新程式。
+- **離線首頁保護**：原 `sw.js` 把所有 `/index.html` 和以 `/` 結尾的子路徑都快取成根首頁；新增遊戲入口前修正為只讓SW根路徑與根 `index.html` 使用首頁快取鍵。法相與黑暗大陸子頁面分開快取，避免觀看法相後離線遊戲首頁被覆蓋。
+- 驗證工具：`tools/tests/faxiang-entry-cache.cjs` 檢查根首頁／法相／黑暗大陸快取隔離與離線取回；`tools/tests/faxiang-entry-browser.py` 檢查12元神×男女連結、未凝聚入口、新分頁、性別鎖定、預覽動畫與存檔隔離，並在原始碼及混淆版跑桌機／手機流程。

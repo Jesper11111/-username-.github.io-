@@ -55,7 +55,8 @@ self.addEventListener('fetch', event => {
 async function networkFirst(req, url) {
     const cache = await caches.open(CORE);
     // 首頁（/ 或 index.html，可能帶 ?reload= 之類的參數）統一存成 ./index.html
-    const isIndex = url.pathname.endsWith('/') || /\/index\.html$/i.test(url.pathname);
+    const rootPath = new URL('./', self.location).pathname;
+    const isIndex = url.pathname === rootPath || url.pathname === rootPath + 'index.html';
     const key = isIndex ? './index.html' : url.pathname;
     try {
         const res = await fetch(url.href, { cache: 'no-cache', credentials: 'same-origin' });
