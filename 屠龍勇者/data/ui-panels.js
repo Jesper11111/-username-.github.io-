@@ -153,7 +153,7 @@ function renderLogPop() {
     if (!pop || !player) return;
     pop.classList.toggle('open', logDrawerOpen);
     if (btn) btn.classList.toggle('open', logDrawerOpen);
-    // 狩獵畫面看得到時，抽屜貼在操作列（回家卷軸、步行回村）上方，不蓋住按鈕；其他分頁用 CSS 預設位置
+    // 狩獵畫面看得到時，抽屜貼在操作列（回家卷軸）上方，不蓋住按鈕；其他分頁用 CSS 預設位置
     const ctrl = document.querySelector('#panel .hunt-ctrl'), fr = $('frame');
     if (logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
         pop.style.bottom = Math.round(fr.getBoundingClientRect().bottom - ctrl.getBoundingClientRect().top + 4) + 'px';
@@ -166,7 +166,7 @@ function renderLogPop() {
 }
 
 function huntButtonsHtml() {
-    // PC 橫式外框：地圖、村莊、回家卷軸、步行回村都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與永夜之塔上下樓
+    // PC 橫式外框：地圖、回家卷軸都在底部格子，不顯示操作框（2026-10-09 使用者要求）；只留取消步行與永夜之塔上下樓
     if (isPcFrame()) {
         if (inTown()) return '';
         if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
@@ -178,7 +178,6 @@ function huntButtonsHtml() {
     const z = currentZone();
     // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
     let h = `<button class="secondary" onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>`;
-    h += `<button class="secondary" onclick="walkHomeBtn()">🚶 步行回村</button>`;
     // 手機沒有右鍵：編輯模式下點格子＝更換／清空（hotbar.js）
     h += `<button class="${barEditMode ? 'bar-edit-on' : 'secondary'}" onclick="toggleBarEdit()">${barEditMode ? '✔ 完成' : '✎ 編輯快捷欄'}</button>`;
     if (z && z.type === 'tower') {
@@ -729,7 +728,7 @@ function renderTown() {
     if (!inTown()) {
         return `<div class="panel notice">目前在${zoneTitle()}，回到村莊才能使用商店、倉庫等設施。
             <div class="btn-row"><button onclick="homeScrollBtn()">📜 回家卷軸（${countItem('homeScroll')}）</button>
-            <button class="secondary" onclick="walkHomeBtn();switchTab('hunt')">🚶 步行回村</button></div></div>`;
+            </div></div>`;
     }
     if (townNpcNow) {   // NPC 專用對話框：只顯示這位 NPC 的功能（2026-10-12 使用者要求）
         const say = NPC_LINES[townSub] || '';

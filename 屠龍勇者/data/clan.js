@@ -87,12 +87,14 @@ async function clanDo(fn, args, okMsg) {
 
 // ───────── 動作 ─────────
 async function clanCreate() {
+    if (!player || player.cls !== 'royal') { showToast('只有王族才能建立血盟'); return; }
     const name = ((document.getElementById('clan-name') || {}).value || '').trim();
     const mode = (document.getElementById('clan-mode') || {}).value || 'approve';
     if (name.length < 2 || name.length > 12) { showToast('血盟名稱要 2～12 個字'); return; }
     if (player.lv < CLAN_MIN_LV) { showToast(`要 Lv.${CLAN_MIN_LV} 以上才能建立血盟`); return; }
     if (player.gold < CLAN_COST) { showToast(`金幣不足（建立血盟要 ${fmt(CLAN_COST)}）`); return; }
     gameConfirm('建立血盟', `花費 ${fmt(CLAN_COST)} 金幣建立血盟「${name}」？`, async () => {
+        if (!player || player.cls !== 'royal') { showToast('只有王族才能建立血盟'); return; }
         if (await clanDo('clan_create', Object.assign({ p_name: name, p_icon: clanNewIcon, p_mode: mode }, clanMeArgs()), `🏰 血盟「${name}」成立了！`)) {
             player.gold -= CLAN_COST;
             addLog(`🏰 建立血盟「${name}」（-${fmt(CLAN_COST)} 金幣）`, 'sys');
@@ -157,7 +159,7 @@ function clanListHtml() {
         return `<div class="list-row"><div><b>${esc(c.icon)} ${esc(c.name)}</b><small>${c.member_count}/${CLAN_MAX} 人｜${c.join_mode === 'open' ? '自由加入' : '需審核'}${applied(c.id) ? '｜<span class="warn">申請中</span>' : ''}${c.notice ? '｜' + esc(c.notice.slice(0, 40)) : ''}</small></div>${btn}</div>`;
     }).join('') || '<small class="muted">還沒有血盟，成為第一個盟主吧！</small>';
     const icons = CLAN_ICONS.map((ic, i) => `<button class="chip-btn ${clanNewIcon === ic ? 'active' : ''}" onclick="clanPickIcon(${i})">${ic}</button>`).join('');
-    const can = player.lv >= CLAN_MIN_LV;
+    const can = player.cls === 'royal' && player.lv >= CLAN_MIN_LV;
     return `<div class="panel"><h4>🏰 血盟</h4><small class="muted">和朋友組成血盟：有專屬聊天頻道與公告；團隊副本裡同血盟 2 人以上，經驗與金幣各 +${CLAN_RAID_BONUS * 100}%。一個帳號同時只能加入一個血盟。</small></div>
         <div class="panel"><h4>📋 血盟列表 <button class="mini secondary" onclick="clanLoad()">重新整理</button></h4>
             <input type="text" id="clan-search" placeholder="搜尋血盟名稱" value="${esc(clanQuery)}" oninput="clanSearch(this.value)" style="width:100%;margin-bottom:8px">
@@ -167,7 +169,7 @@ function clanListHtml() {
             <div class="chips">${icons}</div>
             <label class="set-row"><span>加入方式</span><select id="clan-mode"><option value="approve">需要審核</option><option value="open">自由加入</option></select></label>
             <button onclick="clanCreate()" ${can ? '' : 'disabled'}>建立（💰${fmt(CLAN_COST)}）</button></div>
-            <small class="muted">${can ? '' : `<span class="bad">需要 Lv.${CLAN_MIN_LV}</span>｜`}建立後你就是盟主，可以任命副盟主幫忙審核。</small></div>`;
+            <small class="muted">${can ? '' : `<span class="bad">需要王族 Lv.${CLAN_MIN_LV}</span>｜`}建立後你就是盟主，可以任命副盟主幫忙審核。</small></div>`;
 }
 
 function clanHomeHtml() {
