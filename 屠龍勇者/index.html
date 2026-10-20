@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <script>/* 網址列帶有登入憑證（#access_token＝舊版 Google 登入／確認信）：一開頁就清掉、不使用，避免網址被複製分享後別人用你的帳號登入（ARCHITECTURE.md 第 29 節「登入安全」） */
 (function () { if (/(^#|&)(access_token|refresh_token|provider_token)=/.test(location.hash)) history.replaceState(history.state, '', location.pathname + location.search); })();</script>
+<!-- Google Analytics 4（串流「我的網站」G-TM576GBMKF，整個 github.io 網站共用）：只統計造訪，不送遊戲資料 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TM576GBMKF"></script>
+<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-TM576GBMKF');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>黑暗大陸</title>
 <link rel="manifest" href="manifest.json">

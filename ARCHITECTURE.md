@@ -4579,3 +4579,11 @@ App 內建瀏覽器隱藏約 2 分鐘後降到每分鐘約 31 次（半速）；
 - 玩家紅圈對應 `cast.png` 第一列第7格：前一格劍氣跨入左上角，且與本格髮絲相連，因此最大連通區仍保留它。
 - `BattleSpriteRenderer.load` 與預覽 `SpriteRenderer.load` 僅對施法第一列第7格排除左上角已量測範圍（格寬10%、格高33%），再以清理表面量測腳部錨點。其他格、人物比例、原圖、戰鬥與飛劍觸發條件不變。
 - 測試覆蓋該範圍無可見像素、相鄰髮絲仍保留及施法7格逐格視覺檢查；仍走原本成功技能施放→24把飛劍流程。
+
+## 90. Google Analytics 4 造訪統計（2026-10-20）
+
+- 使用者在 GA 建立網頁串流「我的網站」（`https://k559610142-art.github.io/-username-.github.io-/`，評估 ID `G-TM576GBMKF`），整個 github.io 網站共用同一個串流。
+- `index.html` 的 `<head>` 一開頭（charset 後）放官方 gtag 程式碼；`屠龍勇者/index.html` 也放同一段（見該資料夾 ARCHITECTURE.md 第 70 節）。`gm.html` 不放（GM 後台不計入造訪）。
+- 只送 GA 預設的頁面瀏覽／工作階段，不送任何遊戲或存檔資料。gtag 腳本 src 不是 `data/*.js`，`tools/build.js` 不會把它包進混淆檔，發佈版照原樣保留。
+- 只改 HTML、沒改 JS，所以不用換 `?v=`；`sw.js` 只處理同源請求，不攔 googletagmanager.com，index 本來就網路優先，上線後立即生效。
+- 要看數據：GA 主控台 → 報表 →「即時」可看到目前在線；一般報表約 24～48 小時才出現。

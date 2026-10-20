@@ -1993,3 +1993,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 使用者指定 BOSS 材料及永夜之魂單次只掉一個。monsters.js 中全部 BOSS 材料的 n 統一 [1,1]，包括四大龍鱗、永夜之魂與十王專屬材料，共 26 種。
 - 每種材料仍各自獨立以 0.1% 判定，不受異界加成；本次調整成功時的數量，不改成互斥抽選。團隊副本沿用相同掉落表。其他裝備／通貨數量、既有持有材料及附魔費用不變。
 - 已驗證 26 種材料的機率與數量，附魔整合測試及 check.ps1 通過；尚未發布。
+
+## 70. Google Analytics 4 造訪統計（2026-10-20）
+
+- 與凡塵修仙傳共用 GA 串流「我的網站」（評估 ID `G-TM576GBMKF`，根目錄 ARCHITECTURE.md 第 90 節），在 GA 報表可用網頁路徑 `/-username-.github.io-/屠龍勇者/` 區分兩款遊戲。
+- `index.html` 的 gtag 程式碼**必須放在清除 `#access_token` 那段腳本之後**：先清網址列的登入憑證，GA 才記錄網址，避免憑證被送到 Google。
+- 只送預設頁面瀏覽，不送存檔／帳號資料；只改 HTML，不換 `?v=`；`sw.js` 只處理同源請求，不影響。gm.html 不放。
