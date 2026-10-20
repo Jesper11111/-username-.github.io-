@@ -26,7 +26,18 @@ with sync_playwright() as p:
    assert canvas.evaluate('(e)=>Math.abs(e.clientHeight/e.parentElement.clientHeight-.96)<.02')
    assert canvas.evaluate('(e)=>Math.abs(e.clientWidth/e.clientHeight-.8)<.03')
    page.evaluate("battleFemalePose('attack')");page.wait_for_timeout(900)
+   # 普攻不得觸發；靈力不足的技能也不得觸發。測試限定的亂數只固定技能分支。
    page.evaluate("battleCastUntil=0;playerAttackTurn([],[{hp:1e12,attrs:{},status:newStatus()}],[]);flushBattleFx()")
+   page.wait_for_timeout(850)
+   assert page.locator('#bf-swords .bf-fsword').count()==0
+   page.evaluate("""()=>{const rng=Math.random;const mp=player.mp;try{Math.random=()=>.1;player.mp=0;
+    playerAttackTurn([{name:'測試技能',mpCost:10,mult:1,type:'single',msg:'測試',dmgType:'mag'}],[{hp:1e12,attrs:{},status:newStatus()}],[]);flushBattleFx();
+   }finally{Math.random=rng;player.mp=mp;}}""")
+   page.wait_for_timeout(850)
+   assert page.locator('#bf-swords .bf-fsword').count()==0
+   page.evaluate("""()=>{const rng=Math.random;const mp=player.mp;try{Math.random=()=>.1;player.mp=1000;battleCastUntil=0;
+    playerAttackTurn([{name:'測試技能',mpCost:10,mult:1,type:'single',msg:'測試',dmgType:'mag'}],[{hp:1e12,attrs:{},status:newStatus()}],[]);flushBattleFx();
+   }finally{Math.random=rng;player.mp=mp;}}""")
    page.wait_for_timeout(850)
    assert page.locator('#bf-swords .bf-fsword').count()>=24
    assert page.evaluate("battleFemaleAction.kind==='cast' && performance.now()<battleFemaleAction.until")

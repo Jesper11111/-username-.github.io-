@@ -12,3 +12,5 @@
 5. **建置與防竄改（`ARCHITECTURE.md` 第 72 節）**：網站可由 GitHub Actions 發佈 `tools/build.js` 建置的混淆版（所有 `data/*.js` 包進同一個函式範圍）。
    事件字串（`onclick="…"`、config 的 `action`／`openFn`）只能呼叫頂層函式，不要直接寫 `player`；不要用 `window.某函式 = …` 替換遊戲函式。
    發佈前除了原本的測試，再跑 `npm ci && node tools/build.js`，在 `dist/` 開伺服器確認遊戲能進、Console 無錯誤。
+
+6. **GitHub Desktop同步偏好（使用者2026-10-20）**：之後每次修改完成並驗證，統一提交至本儲存庫，沿用工作分支→PR→main流程，回報版本與提交。使用者自行在GitHub Desktop按Fetch origin，再於出現Pull origin時拉回本地資料夾；不要只交付ZIP或宣稱已直接寫入使用者電腦。

@@ -136,7 +136,7 @@ function flushBattleFx() {
     }
     const heroEl = document.getElementById('bf-hero-box'), foeEl = document.getElementById('bf-foe');
     const foeHit = out.some(e => e.side === "foe" && e.kind !== "miss");
-    if (foeHit) { battleFxCast(); battleFemalePose('attack'); }
+    if (foeHit) battleFemalePose('attack');
     if (foeHit) restartAnim(heroEl, 'bf-lunge', ['bf-evade']);
     // 閃避動作（2026-09-28 玩家要求）：敵方閃掉我的攻擊 → 敵方圖往右閃；我閃掉敵方攻擊 → 立繪往左閃。閃避優先於受擊動作
     if (out.some(e => e.kind === "miss")) restartAnim(foeEl, 'bf-evade', ['bf-foe-hit']);
