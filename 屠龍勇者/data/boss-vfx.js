@@ -1,31 +1,38 @@
 // 黑暗大陸：五種 BOSS 附魔特效（ARCHITECTURE.md 第 71 節）
 // 純 Canvas 繪製；預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
 const BOSS_VFX_IDS = ['towerBullHorn', 'towerIceCrown', 'pirateTreasure', 'towerDeathShard', 'towerKingSeal'];
-// 共用透明圖集只解碼一次；下載失敗時仍使用程序動畫。
-let bossVfxAtlas = null;
+// 五套原圖各自快取；下載失敗時仍使用程序動畫。
+const BOSS_VFX_SHEETS = {
+    towerBullHorn: 'bull', towerIceCrown: 'ice', pirateTreasure: 'ghost',
+    towerDeathShard: 'death', towerKingSeal: 'king'
+};
+const bossVfxImages = {};
 function bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer) {
-    const row = BOSS_VFX_IDS.indexOf(f.id);
-    if (row < 0 || (f.id === 'pirateTreasure' && f.phase !== 'impact') || (f.id === 'towerKingSeal' && f.phase === 'slash')) return false;
+    const sheet = BOSS_VFX_SHEETS[f.id];
+    if (!sheet || (f.id === 'towerKingSeal' && f.phase === 'slash')) return false;
     if (layer !== (f.id === 'towerKingSeal' ? 'behind' : 'front')) return false;
-    if (!bossVfxAtlas) {
-        bossVfxAtlas = new Image();
-        bossVfxAtlas.src = 'images/vfx/boss-enchants.png?v=' + GAME_VERSION;
+    if (!bossVfxImages[sheet]) {
+        bossVfxImages[sheet] = new Image();
+        bossVfxImages[sheet].src = 'images/vfx/' + sheet + '.png?v=' + GAME_VERSION;
     }
-    if (!bossVfxAtlas.complete || !bossVfxAtlas.naturalWidth) return false;
+    const atlas = bossVfxImages[sheet];
+    if (!atlas.complete || !atlas.naturalWidth) return false;
     const duration = bossVfxDuration(f), k = elapsed / duration;
-    const progress = Math.min(5, k * 5), frame = Math.floor(progress), blend = progress - frame;
-    const sw = bossVfxAtlas.naturalWidth / 6, sh = bossVfxAtlas.naturalHeight / 5;
+    let start = 0, count = 16, progress = k;
+    if (f.id === 'towerDeathShard') { start = f.execute ? 8 : 0; count = 8; }
+    if (f.id === 'pirateTreasure') {
+        start = f.phase === 'impact' ? 4 : 0; count = f.phase === 'impact' ? 12 : 4;
+        if (f.phase !== 'impact') progress = Math.min(1, elapsed / 800);
+    }
+    const frame = start + Math.min(count - 1, Math.floor(progress * count));
+    const sw = atlas.naturalWidth / 4, sh = atlas.naturalHeight / 4;
     const p = bossVfxPoint(f.id === 'towerKingSeal' && f.origin ? f.origin : f.pos, camX, camY, tile);
     const size = tile * (f.id === 'towerKingSeal' ? 5.4 : 6);
+    const height = size * sh / sw;
     ctx.save();
     const alpha = Math.min(1, elapsed / 60) * Math.min(1, (duration - elapsed) / 180);
-    ctx.globalAlpha = alpha * (1 - blend);
-    if (f.id === 'towerDeathShard' && f.execute) ctx.filter = 'hue-rotate(85deg) saturate(1.65)';
-    ctx.drawImage(bossVfxAtlas, frame * sw, row * sh, sw, sh, p.x - size / 2, p.y - size * .7, size, size);
-    if (blend > 0 && frame < 5) {
-        ctx.globalAlpha = alpha * blend;
-        ctx.drawImage(bossVfxAtlas, (frame + 1) * sw, row * sh, sw, sh, p.x - size / 2, p.y - size * .7, size, size);
-    }
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(atlas, (frame % 4) * sw, Math.floor(frame / 4) * sh, sw, sh, p.x - size / 2, p.y - height * .7, size, height);
     ctx.restore();
     return true;
 }
