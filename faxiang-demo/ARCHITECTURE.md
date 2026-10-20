@@ -102,3 +102,8 @@ gallery.html 增加全部／男性／女性篩選；URL 支援 ?faxiang=wood&gen
 元神視窗新增「查看法相天地」連結，新分頁開啟本目錄的index.html。from=game時讀取playerGender與yuanshen，套用元神對應法相、停用性別／元神模擬控制；已有元神時固定該屬性。沒有元神時提供同性別外觀預覽並顯示未解鎖說明。預覽不載入正式遊戲模組，不讀寫正式存檔，不提供能力或後端授權。
 
 app.js帶?v=20261020FA以更新快取。package.py支援含查詢字串的腳本標籤。根目錄SW已修正子頁面首頁快取混用。
+
+
+## 12. 動畫格外來碎片修正（20261020FE）
+
+SpriteRenderer在記憶體中以alpha連通區隔離本格角色，排除相鄰格跨入的腳與飄帶；不變更來源圖檔、公開介面或遊戲存檔。正式戰場BattleSpriteRenderer採相同裁切。index.html的sprite-renderer.js使用版本查詢字串以更新快取。

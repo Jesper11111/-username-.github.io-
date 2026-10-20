@@ -26,7 +26,7 @@ with sync_playwright() as p:
    assert canvas.evaluate('(e)=>Math.abs(e.clientHeight/e.parentElement.clientHeight-.96)<.02')
    assert canvas.evaluate('(e)=>Math.abs(e.clientWidth/e.clientHeight-.8)<.03')
    page.evaluate("battleFemalePose('attack')");page.wait_for_timeout(900)
-   page.evaluate("battleCastUntil=0;battleFxCast()")
+   page.evaluate("battleCastUntil=0;playerAttackTurn([],[{hp:1e12,attrs:{},status:newStatus()}],[]);flushBattleFx()")
    page.wait_for_timeout(850)
    assert page.locator('#bf-swords .bf-fsword').count()>=24
    assert page.evaluate("battleFemaleAction.kind==='cast' && performance.now()<battleFemaleAction.until")
