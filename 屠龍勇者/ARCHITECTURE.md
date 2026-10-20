@@ -7,6 +7,8 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/vfx/` 新增二十套 PNG、`tools/vfx-preview.html`、`tools/sprite-src/boss-vfx/generated-prompts.json` | 其餘二十種附魔的原創透明動畫、隔離的 25 種並排預覽、生成提示詞與來源紀錄（第 73 節）。tools 不發佈 |
+| `images/vfx/bull.png`、`ice.png`、`ghost.png`、`death.png`、`king.png` | 五套 BOSS 附魔動畫，各 4×4 格；死神上下各八格對應紫／紅色，幽靈前四格預警、後十二格爆炸（第 72 節）。原圖保存於 `tools/sprite-src/boss-vfx/` |
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
 | `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：42 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
@@ -108,7 +110,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021b`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2018,3 +2020,45 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 村莊鍛造師 → BOSS 附魔 → 五個「特效預覽」按鈕。openBossEnchantPreview 開啟 Canvas 循環預覽；死神每輪切換一般／斬殺色。bossVfxPreviewRun 與 canvas.isConnected 防止切換／關閉後繼續繪圖。drawBossVfxPreview 只畫示範剪影，不生成角色、不扣道具、不讀寫存檔、不連雲端。
 - tools/test-boss-enchant.js 擴充：全部五種動畫在邊界時刻的 Canvas 指令有限座標／透明度／save-restore、預覽前後玩家完全相同、砲擊傷害與事件同步、四連斬時序、斬殺條件快照、冰霜跟隨、前後景呼叫。既有 25 附魔功能與離線／副本模擬仍執行。
 - 驗證：五種特效與既有附魔整合測試通過，check.ps1 顯示 ALL CHECKS PASSED；42 支腳本實際混淆建置通過。尚待使用者手機／PC 實際觀感驗收，未完成瀏覽器截圖或裝置效能量測。
+
+## 72. 五套獨立附魔動畫圖（2026-10-21，版本 `20261021a`）
+
+- 使用者指定五套原圖各配自己的代表特效：bull→蠻牛震擊、ice→冰后寒獄、ghost→幽靈砲擊、death→死神收割、king→冥王追擊。原圖均有透明度，直接複製使用，未採用生成或去背後版本。原始檔永久保留於 tools/sprite-src/boss-vfx/。
+- BOSS_VFX_SHEETS 對應檔名、bossVfxImages 各圖快取。bossVfxSprite 依各圖自然尺寸切 4×4 格、保留每格寬高比；載入失敗仍回退原程序動畫。舊 boss-enchants.png 保留但不再引用。
+- 蠻牛與冰后各十六格按原特效期間播放；幽靈前四格在 800ms 預警播放，真正 impact 事件後播放後十二格；死神一般播放上半八格紫色、低血量播放下半八格紅色，不再調色模擬。冥王十六格幻影在人物後方，保留各次真實傷害事件產生的前景斬光；原本目標死亡停止後續命中的規則不變。
+- 僅調整繪圖，技能傷害、機率、費用、存檔及 script 載入順序不變。
+- tools/test-boss-enchant.js 增加真實 PNG 尺寸與成功載入分支測試，驗證切格不越界、比例、紫紅分段及預警／爆炸分段。附魔整合測試與 check.ps1 全通過。本機 Node 預覽伺服器已啟動 8790；瀏覽器工具發生 session 錯誤，未完成實際畫面與 Console 驗證，待使用者驗收後 commit。
+
+## 73. 全部 25 種附魔專屬圖片動畫（2026-10-21，版本 `20261021b`）
+
+- 使用者要求剩餘二十種程式特效也改成圖片動畫。使用內建 imagegen 各自產生二十張原創 RGBA 透明 PNG，皆為 4×4 十六格；不使用商業作品素材。提示詞、輸出來源名稱與對應路徑保存於 tools/sprite-src/boss-vfx/generated-prompts.json。沿用先前五張使用者原圖，不覆寫素材。
+- BOSS_VFX_SHEETS 擴充至二十五種、BOSS_VFX_IDS 由該表產生。bossVfxImages 仍按需快取，不一次下載所有圖。全部 25 種在村莊鍛造師 BOSS 附魔均可無消耗預覽；按鈕區限高 180px 並可捲動。script 載入順序不變，沒有新增遊戲資料 JS。
+- 新二十種各播放十六格，保持原先一般特效 1400ms。混沌裂爆例外：前四格配合 1000ms 蓄力，bossEnchantTick 真正觸發 impact 後才播後十二格，預覽使用同樣分段。原五種時序、紫紅雙色與冥王前後景不變。圖片未載好／失敗時保留程序動畫備援。
+- bossEnchantOnHit 將原本傷害中心 center 同步傳給繪圖，地龍震怒畫在角色周圍；不改傷害範圍、數值、機率、費用、技能冷卻或 SAVE_SCHEMA。
+
+| 附魔 | 圖片（images/vfx/） | 外觀 |
+|---|---|---|
+| 古樹荊棘 | treant.png | 翡翠荊棘根藤牢籠 |
+| 裂地岩刺 | rock-spikes.png | 裂地岩錐與碎石 |
+| 地獄火柱 | hell-pillar.png | 橙紅火柱與地面法陣 |
+| 噬魂黑炎 | soul-flame.png | 紫黑火焰吞噬靈魂 |
+| 疾風連刃 | gale-blades.png | 三道翠綠風刃 |
+| 冥界封咒 | nether-seal.png | 金色封印與青色幽冥鎖鏈 |
+| 冰王碎晶 | ice-shards.png | 藍白冰晶爆裂 |
+| 煉獄火域 | inferno-field.png | 環形熔岩火域 |
+| 遺忘烙印 | forgotten-mark.png | 古代遺物與紫色烙印 |
+| 巨人崩擊 | giant-smash.png | 巨石靈拳砸地 |
+| 地龍震怒 | earth-dragon.png | 翡翠龍影與岩鱗護罩 |
+| 水龍海嘯 | water-dragon.png | 藍龍浪潮與水珠 |
+| 風龍風暴 | wind-dragon.png | 綠龍旋風與風刃 |
+| 火龍吐息 | fire-dragon.png | 赤龍錐形烈焰 |
+| 女妖哀嚎 | banshee.png | 女妖面孔與聲波環 |
+| 炎魔爆燃 | flame-burst.png | 熔火核心爆裂 |
+| 死亡纏繞 | death-coils.png | 骷髏與紫綠死靈纏繞 |
+| 墮天裁決 | fallen-judgment.png | 黑羽雙翼與金紫裁決劍 |
+| 混沌裂爆 | chaos-burst.png | 紫色晶核蓄力後爆裂 |
+| 深淵侵蝕 | abyss.png | 深淵之眼與暗影觸鬚 |
+
+- 新增隔離預覽頁 tools/vfx-preview.html，載入 config 和 boss-vfx，不載入 main、save、cloud；vfxGalleryDraw 只畫二十五張 Canvas，可暫停及調播放位置。不建立角色、不讀寫存檔、不連雲端，tools 排除於發佈包。獨立 BOSS_ENCHANTS 名稱表僅供該工具頁使用。
+- 驗證：25 附魔功能／副本／離線模擬、25 種無消耗預覽與備援動畫、25 張真實 PNG 分格與比例、混沌 999ms 不爆炸／1000ms 實際傷害與圖片事件同步、地龍中心全部通過；20 張新增圖皆有透明角落。check.ps1 顯示 ALL CHECKS PASSED，實際 42 檔混淆建置成功，26 張 PNG（含保留的舊共用圖）完整進發佈包。
+- 瀏覽器隔離預覽已載入 25／25 圖片；以未登入的全新本機角色實際進村莊鍛造師，逐一點開 25 個預覽並核對標題，金幣仍 300。兩頁 Console 無 error／warn，測試角色未登入／未上傳；待使用者實玩與觀感驗收後 commit，再由使用者 Push origin。

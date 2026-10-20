@@ -1,0 +1,131 @@
+{
+  "generator": "OpenAI imagegen built-in",
+  "date": "2026-10-21",
+  "version": "20261021b",
+  "layout": {
+    "columns": 4,
+    "rows": 4
+  },
+  "assets": [
+    {
+      "id": "treantHeart",
+      "file": "images/vfx/treant.png",
+      "source": "exec-e1c6745e-3f31-49bf-944a-592a8e17e712.png",
+      "prompt": "Create a production game VFX ANIMATION SPRITE SHEET for an original dark fantasy isometric RPG. TRANSPARENT BACKGROUND real alpha, no ground scenery, no solid background, no checkerboard. Exactly FOUR columns and FOUR rows, 16 equally sized cells, all frames fully contained within their cells with generous transparent gutters, no lines, no labels, no text, no UI. Canvas square, preferably 1024x1024. Each cell fixed camera orthographic isometric 3/4 top-down view, identical size and bottom-center ground anchor at 72% cell height. Read left to right then top to bottom: frames 1-4 emerge/charge, frames 5-8 powerful climax, frames 9-12 disperse, frames 13-16 fade to almost transparent wisps. Smooth coherent single animation, handcrafted painterly realistic high detail spell effect sprites, rich luminous colors, visually readable at 150px, NOT pixel art. No franchise imagery. The subject is ONLY this effect: Ancient Tree Thorns: emerald living thorn roots erupting in a circular binding cage, woody bark vines and vivid green sap sparks."
+    },
+    {
+      "id": "drakeFang",
+      "file": "images/vfx/rock-spikes.png",
+      "source": "exec-df588c67-e5f4-4921-af17-ae3098249ca5.png",
+      "prompt": "Create a production game VFX ANIMATION SPRITE SHEET for an original dark fantasy isometric RPG. TRANSPARENT BACKGROUND real alpha, no ground scenery, no solid background, no checkerboard. Exactly FOUR columns and FOUR rows, 16 equally sized cells, all frames fully contained within their cells with generous transparent gutters, no lines, no labels, no text, no UI. Canvas square, preferably 1024x1024. Each cell fixed camera orthographic isometric 3/4 top-down view, identical size and bottom-center ground anchor at 72% cell height. Read left to right then top to bottom: frames 1-4 emerge/charge, frames 5-8 powerful climax, frames 9-12 disperse, frames 13-16 fade to almost transparent wisps. Smooth coherent single animation, handcrafted painterly realistic high detail spell effect sprites, rich luminous colors, visually readable at 150px, NOT pixel art. No franchise imagery. The subject is ONLY this effect: Earth Piercing Spikes: jagged slate stone spikes thrust upward from fractured earth, sharp gray rock shards and amber dust, no bull."
+    },
+    {
+      "id": "baphometHorn",
+      "file": "images/vfx/hell-pillar.png",
+      "source": "exec-bef3bd79-7031-45a0-b881-71db4c3d3c85.png",
+      "prompt": "Create a production game VFX ANIMATION SPRITE SHEET for an original dark fantasy isometric RPG. TRANSPARENT BACKGROUND real alpha, no ground scenery, no solid background, no checkerboard. Exactly FOUR columns and FOUR rows, 16 equally sized cells, all frames fully contained within their cells with generous transparent gutters, no lines, no labels, no text, no UI. Canvas square, preferably 1024x1024. Each cell fixed camera orthographic isometric 3/4 top-down view, identical size and bottom-center ground anchor at 72% cell height. Read left to right then top to bottom: frames 1-4 emerge/charge, frames 5-8 powerful climax, frames 9-12 disperse, frames 13-16 fade to almost transparent wisps. Smooth coherent single animation, handcrafted painterly realistic high detail spell effect sprites, rich luminous colors, visually readable at 150px, NOT pixel art. No franchise imagery. The subject is ONLY this effect: Hellfire Pillar: vertical infernal orange crimson pillar of fire erupting from a fiery pentagonal rune, roaring flame and ash, no character."
+    },
+    {
+      "id": "demonHeart",
+      "file": "images/vfx/soul-flame.png",
+      "source": "exec-f827ca53-c2cd-4bec-8180-05499d713214.png",
+      "prompt": "Create a production game VFX ANIMATION SPRITE SHEET for an original dark fantasy isometric RPG. TRANSPARENT BACKGROUND real alpha, no ground scenery, no solid background, no checkerboard. Exactly FOUR columns and FOUR rows, 16 equally sized cells, all frames fully contained within their cells with generous transparent gutters, no lines, no labels, no text, no UI. Canvas square, preferably 1024x1024. Each cell fixed camera orthographic isometric 3/4 top-down view, identical size and bottom-center ground anchor at 72% cell height. Read left to right then top to bottom: frames 1-4 emerge/charge, frames 5-8 powerful climax, frames 9-12 disperse, frames 13-16 fade to almost transparent wisps. Smooth coherent single animation, handcrafted painterly realistic high detail spell effect sprites, rich luminous colors, visually readable at 150px, NOT pixel art. No franchise imagery. The subject is ONLY this effect: Soul Devouring Black Flame: black violet fire with luminous magenta edges coiling around an eerie pale soul wisp, curling dark flames, rich dark visible silhouette."
+    },
+    {
+      "id": "wyvernWing",
+      "file": "images/vfx/gale-blades.png",
+      "source": "exec-442b278a-0c7c-4136-b931-cee24924c671.png",
+      "prompt": "Create an original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equally sized cells, square canvas. True transparent alpha background NO colored background NO checkerboard NO text NO grid lines NO scenery. Each frame entirely inside its cell with transparent gutters. Fixed orthographic 3/4 top down isometric view, ground anchor at bottom center 72% cell height, consistent scale. Reading order left to right top to bottom: 4 frames emerge, 4 climax, 4 disperse, 4 fade to wisps. Smooth coherent animation, painterly detailed realistic luminous fantasy game sprites, NOT pixel art. Only this effect: Three mint emerald crescent wind blades slicing in rapid succession, silver cutting edges and air ribbons"
+    },
+    {
+      "id": "osirisSeal",
+      "file": "images/vfx/nether-seal.png",
+      "source": "exec-a04d3ecc-678a-49dd-9f5c-5833af121c83.png",
+      "prompt": "Create an original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equally sized cells, square canvas. True transparent alpha background NO colored background NO checkerboard NO text NO grid lines NO scenery. Each frame entirely inside its cell with transparent gutters. Fixed orthographic 3/4 top down isometric view, ground anchor at bottom center 72% cell height, consistent scale. Reading order left to right top to bottom: 4 frames emerge, 4 climax, 4 disperse, 4 fade to wisps. Smooth coherent animation, painterly detailed realistic luminous fantasy game sprites, NOT pixel art. Only this effect: Antique gold and dark turquoise occult funerary seal surrounded by spectral chains and abstract glyphs"
+    },
+    {
+      "id": "frostCrystal",
+      "file": "images/vfx/ice-shards.png",
+      "source": "exec-9116061c-7a04-44eb-a5de-5f5328e310e9.png",
+      "prompt": "Create an original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equally sized cells, square canvas. True transparent alpha background NO colored background NO checkerboard NO text NO grid lines NO scenery. Each frame entirely inside its cell with transparent gutters. Fixed orthographic 3/4 top down isometric view, ground anchor at bottom center 72% cell height, consistent scale. Reading order left to right top to bottom: 4 frames emerge, 4 climax, 4 disperse, 4 fade to wisps. Smooth coherent animation, painterly detailed realistic luminous fantasy game sprites, NOT pixel art. Only this effect: Icy cyan crystal spear cluster bursts outward, six sharp blue crystal shards and frost mist, brilliant icy core"
+    },
+    {
+      "id": "ifritFlame",
+      "file": "images/vfx/inferno-field.png",
+      "source": "exec-7b2e238e-7958-4b25-84c3-f6b69a3714e8.png",
+      "prompt": "Create an original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equally sized cells, square canvas. True transparent alpha background NO colored background NO checkerboard NO text NO grid lines NO scenery. Each frame entirely inside its cell with transparent gutters. Fixed orthographic 3/4 top down isometric view, ground anchor at bottom center 72% cell height, consistent scale. Reading order left to right top to bottom: 4 frames emerge, 4 climax, 4 disperse, 4 fade to wisps. Smooth coherent animation, painterly detailed realistic luminous fantasy game sprites, NOT pixel art. Only this effect: Low wide circular lava field with glowing orange cracks and red flames around its rim, ember showers"
+    },
+    {
+      "id": "forgottenRelic",
+      "file": "images/vfx/forgotten-mark.png",
+      "source": "exec-04757e31-e9f3-4d3d-a4a5-802a0896f0da.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX ANIMATION sprite sheet. Square canvas, exactly FOUR columns FOUR rows =16 equal cells. TRUE TRANSPARENT ALPHA background no colored background no checkerboard no text no grid lines no scenery. Every sprite entirely inside its cell with transparent gutters, consistent fixed camera 3/4 top down isometric, ground center anchor at 72% cell height. Read left to right then top to bottom: 4 frames emerge,4 climax,4 disperse,4 fade to wisps. Smooth coherent animation, painterly realistic detailed luminous spell effect sprites, NOT pixel art. Only this effect: Ancient cracked bronze relic rune floating above a violet branded target circle, magenta chains, pulsing forgotten sigil"
+    },
+    {
+      "id": "giantSoul",
+      "file": "images/vfx/giant-smash.png",
+      "source": "exec-2a5a5f86-ae87-4316-8032-f15b72ca8709.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX ANIMATION sprite sheet. Square canvas, exactly FOUR columns FOUR rows =16 equal cells. TRUE TRANSPARENT ALPHA background no colored background no checkerboard no text no grid lines no scenery. Every sprite entirely inside its cell with transparent gutters, consistent fixed camera 3/4 top down isometric, ground center anchor at 72% cell height. Read left to right then top to bottom: 4 frames emerge,4 climax,4 disperse,4 fade to wisps. Smooth coherent animation, painterly realistic detailed luminous spell effect sprites, NOT pixel art. Only this effect: Massive translucent ancient stone fist smashing down into ground, heavy brown gray rocks flying outward, golden impact burst"
+    },
+    {
+      "id": "antharasScale",
+      "file": "images/vfx/earth-dragon.png",
+      "source": "exec-38fb3e45-e411-4665-98a6-7a2fd6ac78fe.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX ANIMATION sprite sheet. Square canvas, exactly FOUR columns FOUR rows =16 equal cells. TRUE TRANSPARENT ALPHA background no colored background no checkerboard no text no grid lines no scenery. Every sprite entirely inside its cell with transparent gutters, consistent fixed camera 3/4 top down isometric, ground center anchor at 72% cell height. Read left to right then top to bottom: 4 frames emerge,4 climax,4 disperse,4 fade to wisps. Smooth coherent animation, painterly realistic detailed luminous spell effect sprites, NOT pixel art. Only this effect: Spectral jade earth dragon head rising over a circular barrier of stone dragon scales, earth tremor and protective green dome"
+    },
+    {
+      "id": "fafurionScale",
+      "file": "images/vfx/water-dragon.png",
+      "source": "exec-e79403f0-e6b9-4f9b-bca9-d2f9d1380854.png",
+      "prompt": "Create an original dark fantasy isometric RPG VFX ANIMATION sprite sheet. Square canvas, exactly FOUR columns FOUR rows =16 equal cells. TRUE TRANSPARENT ALPHA background no colored background no checkerboard no text no grid lines no scenery. Every sprite entirely inside its cell with transparent gutters, consistent fixed camera 3/4 top down isometric, ground center anchor at 72% cell height. Read left to right then top to bottom: 4 frames emerge,4 climax,4 disperse,4 fade to wisps. Smooth coherent animation, painterly realistic detailed luminous spell effect sprites, NOT pixel art. Only this effect: Spectral sapphire water dragon head formed from a cresting circular tidal wave, turquoise foam and luminous blue healing droplets"
+    },
+    {
+      "id": "lindviorScale",
+      "file": "images/vfx/wind-dragon.png",
+      "source": "exec-060f3951-9b28-44eb-9c47-7b77370883e0.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equal cells, square canvas. True transparent alpha background NO solid colored background NO checkerboard NO labels text grid lines or scenery. Fixed orthographic isometric 3/4 top down, consistent scale, ground anchor bottom center at 72% cell height. All sprites fully inside their cell with transparent gutters. Reading left to right top to bottom: frames1-4 emerge,5-8 climax,9-12 disperse,13-16 nearly transparent fading wisps. Smooth coherent animation, painterly detailed realistic luminous effect art NOT pixel art. Only this effect: Spectral pale emerald dragon head swirling within a compact tornado, FIVE distinct white green cutting wind ribbons and spiral particles"
+    },
+    {
+      "id": "valakasScale",
+      "file": "images/vfx/fire-dragon.png",
+      "source": "exec-47030f8d-31de-4120-b662-ae418f384315.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equal cells, square canvas. True transparent alpha background NO solid colored background NO checkerboard NO labels text grid lines or scenery. Fixed orthographic isometric 3/4 top down, consistent scale, ground anchor bottom center at 72% cell height. All sprites fully inside their cell with transparent gutters. Reading left to right top to bottom: frames1-4 emerge,5-8 climax,9-12 disperse,13-16 nearly transparent fading wisps. Smooth coherent animation, painterly detailed realistic luminous effect art NOT pixel art. Only this effect: Spectral crimson dragon head exhaling a broad cone of blazing orange gold fire, molten embers and rolling red flame, isolated effect"
+    },
+    {
+      "id": "towerBansheeTear",
+      "file": "images/vfx/banshee.png",
+      "source": "exec-bdcb4b64-df16-49c0-8c9b-d50c3d0fdaf0.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equal cells, square canvas. True transparent alpha background NO solid colored background NO checkerboard NO labels text grid lines or scenery. Fixed orthographic isometric 3/4 top down, consistent scale, ground anchor bottom center at 72% cell height. All sprites fully inside their cell with transparent gutters. Reading left to right top to bottom: frames1-4 emerge,5-8 climax,9-12 disperse,13-16 nearly transparent fading wisps. Smooth coherent animation, painterly detailed realistic luminous effect art NOT pixel art. Only this effect: Spectral pale lavender female ghost face with flowing hair screaming inside expanding violet soundwave rings, eerie cold wisps"
+    },
+    {
+      "id": "towerFlameCore",
+      "file": "images/vfx/flame-burst.png",
+      "source": "exec-fef44fdd-73fa-495f-b1ae-8e2d0013585a.png",
+      "prompt": "Original dark fantasy isometric RPG game VFX animation sprite sheet. Exactly 4 columns and 4 rows, 16 equal cells, square canvas. True transparent alpha background NO solid colored background NO checkerboard NO labels text grid lines or scenery. Fixed orthographic isometric 3/4 top down, consistent scale, ground anchor bottom center at 72% cell height. All sprites fully inside their cell with transparent gutters. Reading left to right top to bottom: frames1-4 emerge,5-8 climax,9-12 disperse,13-16 nearly transparent fading wisps. Smooth coherent animation, painterly detailed realistic luminous effect art NOT pixel art. Only this effect: Fiery orange molten demonic core cracking open and exploding into radial red fire bloom with black cinders and sharp flaming shards"
+    },
+    {
+      "id": "towerLichCrystal",
+      "file": "images/vfx/death-coils.png",
+      "source": "exec-36071c69-1395-47e3-b6cf-fb3d3abbe618.png",
+      "prompt": "Create original dark fantasy isometric RPG game VFX ANIMATION SPRITE SHEET. Exactly FOUR columns and FOUR rows =16 equal cells, square canvas. Real TRANSPARENT ALPHA background NO solid background NO checkerboard NO text labels grid lines scenery. All sprite effects wholly inside their cells with transparent gutters. Identical orthographic isometric 3/4 top-down fixed camera and scale, ground anchor at bottom center 72% cell height. Left to right then top to bottom:4 frames emerge or charge,4 climax,4 disperse,4 fade out. Coherent animation, painterly realistic high detail luminous fantasy magic, NOT pixel art. Only this effect: Sickly green and amethyst necromantic tendrils spiral upward around a small spectral skull, dark binding coils and curse motes"
+    },
+    {
+      "id": "towerFallenFeather",
+      "file": "images/vfx/fallen-judgment.png",
+      "source": "exec-8814e74f-255f-487d-92e7-65a68d716e6d.png",
+      "prompt": "Create original dark fantasy isometric RPG game VFX ANIMATION SPRITE SHEET. Exactly FOUR columns and FOUR rows =16 equal cells, square canvas. Real TRANSPARENT ALPHA background NO solid background NO checkerboard NO text labels grid lines scenery. All sprite effects wholly inside their cells with transparent gutters. Identical orthographic isometric 3/4 top-down fixed camera and scale, ground anchor at bottom center 72% cell height. Left to right then top to bottom:4 frames emerge or charge,4 climax,4 disperse,4 fade out. Coherent animation, painterly realistic high detail luminous fantasy magic, NOT pixel art. Only this effect: Black feathered spectral wings framing a descending golden violet sword of judgment, bright vertical impact and scattered black feathers"
+    },
+    {
+      "id": "towerChaosCore",
+      "file": "images/vfx/chaos-burst.png",
+      "source": "exec-a786a148-610f-45b7-af8e-bc57cb2358de.png",
+      "prompt": "Create original dark fantasy isometric RPG game VFX ANIMATION SPRITE SHEET. Exactly FOUR columns and FOUR rows =16 equal cells, square canvas. Real TRANSPARENT ALPHA background NO solid background NO checkerboard NO text labels grid lines scenery. All sprite effects wholly inside their cells with transparent gutters. Identical orthographic isometric 3/4 top-down fixed camera and scale, ground anchor at bottom center 72% cell height. Left to right then top to bottom:4 frames emerge or charge,4 climax,4 disperse,4 fade out. Coherent animation, painterly realistic high detail luminous fantasy magic, NOT pixel art. Only this effect: Unstable violet crimson void orb with fractured black crystal shell charging then violent radial purple white explosion with fading shards; FIRST ROW 4 charge-only frames, next 12 frames explosion and fade"
+    },
+    {
+      "id": "towerAbyssEye",
+      "file": "images/vfx/abyss.png",
+      "source": "exec-996f12a8-8d2d-46bd-9f3f-c47005814349.png",
+      "prompt": "Create original dark fantasy isometric RPG game VFX ANIMATION SPRITE SHEET. Exactly FOUR columns and FOUR rows =16 equal cells, square canvas. Real TRANSPARENT ALPHA background NO solid background NO checkerboard NO text labels grid lines scenery. All sprite effects wholly inside their cells with transparent gutters. Identical orthographic isometric 3/4 top-down fixed camera and scale, ground anchor at bottom center 72% cell height. Left to right then top to bottom:4 frames emerge or charge,4 climax,4 disperse,4 fade out. Coherent animation, painterly realistic high detail luminous fantasy magic, NOT pixel art. Only this effect: Eerie violet teal abyssal eye opening above a dark indigo puddle, slow curling shadow tentacles and corrosive luminous purple motes"
+    }
+  ]
+}

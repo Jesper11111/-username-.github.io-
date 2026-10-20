@@ -258,7 +258,7 @@ function bossEnchantOnHit(mon, st) {
     player.cds._bossEnchant = gameNow + r.cd * 1000;
     const base = bossEnchantBase(st), center = bossEnchantCenter(mon, r.selfArea);
     const targets = r.area || r.splash ? bossEnchantTargets(mon, center, r.cap) : [mon];
-    bossEnchantVisual(id, mon, { phase: 'start', targets, execute: !!(r.execute && mon.hp < mon.maxHp * .25) });
+    bossEnchantVisual(id, mon, { phase: 'start', pos: center, targets, execute: !!(r.execute && mon.hp < mon.maxHp * .25) });
     if (r.delay) rt.jobs.push({ type: 'blast', id, mon, center, base, at: gameNow + r.delay });
     else if (r.hits) {
         const list = r.spread ? bossEnchantTargets(mon, null, 5) : [mon];

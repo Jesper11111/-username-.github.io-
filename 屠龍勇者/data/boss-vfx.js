@@ -1,11 +1,18 @@
-// 黑暗大陸：五種 BOSS 附魔特效（ARCHITECTURE.md 第 71 節）
-// 純 Canvas 繪製；預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
-const BOSS_VFX_IDS = ['towerBullHorn', 'towerIceCrown', 'pirateTreasure', 'towerDeathShard', 'towerKingSeal'];
-// 五套原圖各自快取；下載失敗時仍使用程序動畫。
+// 黑暗大陸：25 種 BOSS 附魔圖片特效（ARCHITECTURE.md 第 73 節）
+// 預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
+// 各圖按需載入並快取；下載失敗時仍使用程序動畫。
 const BOSS_VFX_SHEETS = {
+    treantHeart: 'treant', drakeFang: 'rock-spikes', baphometHorn: 'hell-pillar',
+    demonHeart: 'soul-flame', wyvernWing: 'gale-blades', osirisSeal: 'nether-seal',
+    frostCrystal: 'ice-shards', ifritFlame: 'inferno-field', forgottenRelic: 'forgotten-mark',
+    giantSoul: 'giant-smash', antharasScale: 'earth-dragon', fafurionScale: 'water-dragon',
+    lindviorScale: 'wind-dragon', valakasScale: 'fire-dragon', towerBansheeTear: 'banshee',
+    towerFlameCore: 'flame-burst', towerLichCrystal: 'death-coils',
+    towerFallenFeather: 'fallen-judgment', towerChaosCore: 'chaos-burst', towerAbyssEye: 'abyss',
     towerBullHorn: 'bull', towerIceCrown: 'ice', pirateTreasure: 'ghost',
     towerDeathShard: 'death', towerKingSeal: 'king'
 };
+const BOSS_VFX_IDS = Object.keys(BOSS_VFX_SHEETS);
 const bossVfxImages = {};
 function bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer) {
     const sheet = BOSS_VFX_SHEETS[f.id];
@@ -20,9 +27,9 @@ function bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer) {
     const duration = bossVfxDuration(f), k = elapsed / duration;
     let start = 0, count = 16, progress = k;
     if (f.id === 'towerDeathShard') { start = f.execute ? 8 : 0; count = 8; }
-    if (f.id === 'pirateTreasure') {
+    if (f.id === 'pirateTreasure' || f.id === 'towerChaosCore') {
         start = f.phase === 'impact' ? 4 : 0; count = f.phase === 'impact' ? 12 : 4;
-        if (f.phase !== 'impact') progress = Math.min(1, elapsed / 800);
+        if (f.phase !== 'impact') progress = Math.min(1, elapsed / (f.id === 'pirateTreasure' ? 800 : 1000));
     }
     const frame = start + Math.min(count - 1, Math.floor(progress * count));
     const sw = atlas.naturalWidth / 4, sh = atlas.naturalHeight / 4;
@@ -39,8 +46,9 @@ function bossVfxSprite(ctx, f, elapsed, camX, camY, tile, layer) {
 function bossVfxDuration(f) {
     if (f.id === 'towerIceCrown') return 3000;
     if (f.id === 'pirateTreasure') return f.phase === 'impact' ? 900 : 1800;
+    if (f.id === 'towerChaosCore') return f.phase === 'impact' ? 1400 : 2000;
     if (f.id === 'towerKingSeal') return f.phase === 'slash' ? 340 : 1200;
-    return BOSS_VFX_IDS.includes(f.id) ? 1100 : 1400;
+    return f.id === 'towerBullHorn' || f.id === 'towerDeathShard' ? 1100 : 1400;
 }
 function bossVfxPoint(p, camX, camY, tile) { return { x: (p.x + .5) * tile - camX, y: (p.y + .5) * tile - camY }; }
 function bossVfxEllipse(ctx, x, y, rx, ry, color, width) {
@@ -187,7 +195,7 @@ function bossVfxPaint(ctx, f, elapsed, camX, camY, tile, layer) {
             ctx.strokeStyle = '#b697f1'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(49, -65); ctx.lineTo(62, -84); ctx.stroke();
         }
     } else if (layer === 'front') {
-        // 其他二十種沿用原本的火柱、冰晶、弧光與技能名。
+        // 圖片尚未載入時，保留火柱、冰晶、弧光與技能名作備援。
         const r = BOSS_ENCHANTS[f.id], fire = /火|炎|燃/.test(r.name), ice = /冰|寒/.test(r.name), wind = /風/.test(r.name);
         const color = ice ? '#a5edff' : fire ? '#ff9a46' : wind ? '#8effc0' : r.kind === 'physical' ? '#ffd37a' : '#c5a0ff';
         ctx.globalAlpha = Math.max(0, 1 - k); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
@@ -216,7 +224,7 @@ function drawBossEnchantEffects(ctx, camX, camY, layer) {
 // 遊戲內無消耗預覽：只畫示範場景，沒有角色生成、傷害、物品或存檔修改。
 let bossVfxPreviewRun = 0;
 function bossVfxPreviewButtons() {
-    return '<div class="btn-row">' + BOSS_VFX_IDS.map(id => '<button class="secondary mini" onclick="openBossEnchantPreview(\'' + id + '\')">▶ ' + esc(BOSS_ENCHANTS[id].name) + '</button>').join('') + '</div>';
+    return '<div class="btn-row" style="max-height:180px;overflow-y:auto">' + BOSS_VFX_IDS.map(id => '<button class="secondary mini" onclick="openBossEnchantPreview(\'' + id + '\')">▶ ' + esc(BOSS_ENCHANTS[id].name) + '</button>').join('') + '</div>';
 }
 function openBossEnchantPreview(id) {
     if (!BOSS_VFX_IDS.includes(id)) return;
@@ -242,7 +250,8 @@ function drawBossVfxPreview(ctx, id, elapsed, execute) {
     ctx.clearRect(0, 0, 420, 280); ctx.fillStyle = '#17151b'; ctx.fillRect(0, 0, 420, 280);
     for (let y = 0; y < 280; y += 24) for (let x = -(y % 48); x < 420; x += 48) { ctx.strokeStyle = '#302c35'; ctx.lineWidth = 1; ctx.strokeRect(x, y, 48, 24); }
     const pass = layer => {
-        if (id === 'pirateTreasure' && elapsed >= 800) bossVfxPaint(ctx, { ...f, phase: 'impact' }, elapsed - 800, 0, 0, tile, layer);
+        const delay = id === 'pirateTreasure' ? 800 : id === 'towerChaosCore' ? 1000 : 0;
+        if (delay && elapsed >= delay) bossVfxPaint(ctx, { ...f, phase: 'impact' }, elapsed - delay, 0, 0, tile, layer);
         else bossVfxPaint(ctx, f, elapsed, 0, 0, tile, layer);
         if (id === 'towerKingSeal') for (let i = 0; i < 4; i++) bossVfxPaint(ctx, { ...f, phase: 'slash', index: i }, elapsed - Math.max(TICK_MS, Math.ceil(i * 250 / TICK_MS) * TICK_MS), 0, 0, tile, layer);
     };

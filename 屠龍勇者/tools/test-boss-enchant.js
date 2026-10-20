@@ -128,7 +128,7 @@ player = ally; gameNow += 5001; assert.equal(bossEnchantDebuffValue(mobs[0], 'ma
 mobs = testFight(w, 'antharasScale'); bossEnchantOnHit(mobs[0], calcStats()); gameNow += 4001; assert.equal(bossEnchantAbsorb(100), 100);
 chance = oldChance;
 
-// 五種新特效：Canvas 指令、預覽不變更存檔、實際命中時間與斬殺顏色快照。
+// 全部附魔特效：Canvas 指令、預覽不變更存檔、實際命中時間與斬殺顏色快照。
 let canvasDepth = 0, canvasCalls = 0;
 const paint = new Proxy({}, {
     get(o, k) {
@@ -164,8 +164,50 @@ for (const low of [false, true]) {
 }
 w = testPlayer(); mobs = testFight(w, 'towerIceCrown'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) }; bossEnchantOnHit(mobs[0], calcStats()); scene.mons[0].x = 8;
 gameNow += 200; drawBossEnchantEffects(paint, 0, 0, 'ground'); assert.equal(scene.bossEnchantFx[0].frost[0].x, 8);
-assert(bossVfxPreviewButtons().includes('openBossEnchantPreview')); assert(renderBossEnchantForge().includes('不消耗材料'));
+assert.equal(BOSS_VFX_IDS.length, 25);
+assert.deepEqual(BOSS_VFX_IDS.slice().sort(), Object.keys(BOSS_ENCHANTS).sort());
+assert.equal(new Set(Object.values(BOSS_VFX_SHEETS)).size, 25);
+assert.equal((bossVfxPreviewButtons().match(/onclick=/g) || []).length, 25);
+assert(renderBossEnchantForge().includes('不消耗材料'));
+// 混沌裂爆的爆炸畫面與實際延遲傷害同步；地龍動畫以玩家為中心。
+w = testPlayer(); mobs = testFight(w, 'towerChaosCore'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
+hp = mobs[0].hp; bossEnchantOnHit(mobs[0], calcStats());
+gameNow += 999; bossEnchantTick(calcStats()); assert.equal(mobs[0].hp, hp);
+assert(!scene.bossEnchantFx.some(f => f.phase === 'impact'));
+gameNow++; bossEnchantTick(calcStats()); assert(mobs[0].hp < hp);
+assert(scene.bossEnchantFx.find(f => f.phase === 'start').done);
+assert(scene.bossEnchantFx.some(f => f.phase === 'impact' && f.at === gameNow));
+w = testPlayer(); mobs = testFight(w, 'antharasScale'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
+bossEnchantOnHit(mobs[0], calcStats()); assert.equal(scene.bossEnchantFx[0].pos.x, 3); assert.equal(scene.bossEnchantFx[0].pos.y, 6);
 SIM_MODE = true; chance = oldChance;
-console.log('PASS：五種特效 Canvas 指令、前後景圖層、無消耗預覽、砲擊 800ms 同步、四連斬命中同步、斬殺顏色快照與冰霜跟隨。');
+console.log('PASS：25 種特效預覽、備援 Canvas、無消耗、砲擊／裂爆傷害同步、地龍中心、四連斬與斬殺色。');
 console.log('PASS：25 技能傷害／範圍／延遲、全費用、材料消耗、封魂往返防重複、舊新存檔、共鳴隔離、每次行動只抽一次、換武器冷卻、控場／護盾、UI／圖鑑。');
 `, ctx);
+
+// 載入成功的圖片分支：使用真實 PNG 尺寸，驗證各格不越界、死神雙色及砲擊分段。
+const spriteContext = vm.createContext({ console, assert, GAME_VERSION: 'test', Image: function () {} });
+vm.runInContext(fs.readFileSync(path.join(root, 'data/boss-vfx.js'), 'utf8'), spriteContext);
+const sheetNames = vm.runInContext('Object.values(BOSS_VFX_SHEETS)', spriteContext);
+spriteContext.sizes = Object.fromEntries(sheetNames.map(name => {
+    const png = fs.readFileSync(path.join(root, 'images/vfx', name + '.png'));
+    return [name, { complete: true, naturalWidth: png.readUInt32BE(16), naturalHeight: png.readUInt32BE(20) }];
+}));
+vm.runInContext(String.raw`
+Object.assign(bossVfxImages, sizes);
+for (const id of BOSS_VFX_IDS) for (const execute of [false, true]) for (const phase of ['start', 'impact']) {
+    const f = { id, execute, phase, pos: { x: 7, y: 5 }, origin: { x: 3, y: 6 } };
+    for (const age of [0, 100, 400, 799, bossVfxDuration(f) - 1]) {
+        const calls = [], paint = { save() {}, restore() {}, drawImage(...args) { calls.push(args); } };
+        assert(bossVfxSprite(paint, f, age, 0, 0, 32, id === 'towerKingSeal' ? 'behind' : 'front'));
+        assert.equal(calls.length, 1);
+        const [atlas, x, y, w, h, dx, dy, dw, dh] = calls[0];
+        assert([x, y, w, h, dx, dy, dw, dh].every(Number.isFinite));
+        assert(x >= 0 && y >= 0 && x + w <= atlas.naturalWidth + .001 && y + h <= atlas.naturalHeight + .001);
+        assert(Math.abs(dw / dh - w / h) < .001);
+        const frame = Math.round(y / h) * 4 + Math.round(x / w);
+        if (id === 'towerDeathShard') assert(execute ? frame >= 8 : frame < 8);
+        if (id === 'pirateTreasure' || id === 'towerChaosCore') assert(phase === 'impact' ? frame >= 4 : frame < 4);
+    }
+}
+console.log('PASS：25 套真實 PNG、4×4 分格邊界、比例、死神紫紅分段、砲擊／裂爆預警與爆炸分段。');
+`, spriteContext);
