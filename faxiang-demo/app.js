@@ -100,5 +100,8 @@ if(gamePreview){
  const note=$('#entry-note');note.hidden=false;
  note.textContent=entrySoul?'目前角色的'+entrySoul.name+'對應法相（僅供外觀預覽）。':'目前尚未凝聚元神，可先預覽同性別法相；此預覽不代表解鎖或取得能力。';
 }
+// 關閉頁面：新分頁可直接關；瀏覽器不允許關閉（PWA／直接開啟）時改回遊戲首頁
+$('#close-page').textContent=gamePreview?'✕ 返回遊戲':'✕ 關閉';
+$('#close-page').addEventListener('click',()=>{try{window.close();}catch(e){}setTimeout(()=>{if(!window.closed)location.href=new URL('../index.html',location.href).href;},300);});
 frameId=requestAnimationFrame(loop);
 })();
