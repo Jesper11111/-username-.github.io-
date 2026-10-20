@@ -89,7 +89,7 @@
 | `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
-| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節；12 個地圖合併、6016×4768＝188×149 格，第 67 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 60 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -1891,3 +1891,25 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 使用者指定全部 BOSS 材料統一 0.1%。config.js 新增 BOSS_MATERIAL_DROP_P = 0.001，monsters.js 的 16 種既有材料及十王專屬材料共 26 種皆引用此值。
 - combat.js 的 rollDrops 對首領 material 固定使用此機率，不乘異界掉落加成；團隊副本沿用 rollDrops，每人各自判定。掉落成功後數量維持原設定，非每千次保底。其他類別掉落不變。
 - codexSources 顯示材料掉落率 0.1%；既有材料、配方及存檔結構不變。
+
+## 67. 低語墓窟併入大地圖（礦坑上層南邊；2026-10-20，版本 `20261020e`）
+
+- 使用者給一張 1254×1254 的地下墓穴俯視圖（中央圓形祭壇廣場、北邊神殿、X 形石橋通往四周墓室、南邊長階梯，四周懸崖黑霧），說「新增低語墓穴地圖」。
+  問過後決定：當**低語墓窟** `islandDungeon`（Lv.8～18，怪物、掉落、任務都不變）的地圖、**併入大地圖**、放在**腐朽礦坑・上層正南方（往下加一排）**、接縫之後由使用者用 AI 補畫。
+- 素材：原圖是 webp（System.Drawing 讀不了），用 WPF `BitmapDecoder`（Windows 內建 WebP 解碼）轉成 `tools/bigmap/crypt.jpg`。
+- `build-map.ps1`：畫布高 3584 → **4768（149 列）**；墓窟畫成 1280×1280（40×40 格，原圖約 1.02 倍）放在 (160, 3488)＝格子 x 5～44、列 109～148，上緣與礦坑上層下緣重疊 3 格（兩邊各自淡入）。
+  region 清單多了選填的第 7、8 欄＝寬高（墓窟是正方形）。南排三張原本寫 `$H - $RH`，改成固定 `$SouthRowY = 2793`。新多出的一排其他地方由填充補（西邊森林、東南沙漠）。小地圖改 400×317。圖 `?v=8`、`h: 149`；`wild.jpg` 約 4.6MB。
+  ⚠️ PowerShell 變數不分大小寫：第一版用 `$SY` 被森林填充迴圈的 `$sy` 蓋掉、礦坑畫到北邊；`$rw`／`$rh` 也會蓋掉 `$RW`／`$RH`，已改名。比對舊圖：列 0～3380 像素完全相同，只有礦坑最下緣 200px 因為現在要淡入而改變。
+- 可走範圍（`walk.json` 同步抄進 `SCENE_BGS.wild`）：礦坑上層的 walk 從 [0,88,47,111] 改成到 **108 列**（下面是墓窟），擋格 [20,108,23,111] 改 [20,108,23,108]。墓窟：
+  北邊兩個出口 [8,108,10,110]（左上房間）、[41,108,43,110]（右上寶物房）；左上房間 [8,111,14,113]＋西北石橋（階梯狀 6 段）接廣場；神殿平台 [19,113,29,114]＋北階梯 [24,115,25,118]；
+  中央圓形廣場（列 120～128 依圓形逐列）；西邊骨龕房 [7,119,14,122]＋西南石橋＋墓園 [6,127,18,138]；東北石橋＋右上寶物房 [36,111,43,114]；東邊石棺廳 [35,120,43,123]＋[37,124,43,129]；
+  東南石橋＋圓形墓室 [37,134,42,139]；往南中軸路 [24,127,26,148]＋階梯平台 [21,142,29,143]。
+  擋格：神殿石棺與雕像、廣場北邊雕像 [24,119,25,119]、中央祭壇 [23,122,26,126]、廣場兩側雕像、骨龕房石棺、寶箱、石棺廳三組石棺、墓園枯樹與鐵欄、圓形墓室石棺與石柱。
+  可走 10065 格全部能從草原出生點走到（墓窟 856 格）。整個新的一排 [0,109,187,148] 加進 `noocc`（墓窟很暗，不當成樹冠遮擋），重跑 `build-occ.ps1`。
+- `regions`：礦坑上層 rect 改 [0,88,47,108]；最後加 低語墓窟 [0,109,47,148]（中心 25,124、出生 25,128＝廣場南邊）。路牌自動產生 2 根：(7,111)、(42,112) 都是「↑ 腐朽礦坑・上層」。
+- `zones.js`：`islandDungeon` 加 `bg: wild`（原本的地監格子畫面不再用）。大地圖現在包含 **12 個地圖**（第 57 節的 11 個＋低語墓窟）。
+- 接縫（第 58 節的流程）：`patches.json` 加 15／16 礦坑上層下緣↔墓窟上緣（西半／東半，水平，at 3530、band 90，**兩個出口要畫成往下的石階**）、17 墓窟左邊↔森林（at 190、band 90）、18 墓窟右邊↔森林（at 1420、band 60）；
+  補畫區刻意窄（band 150 會把神殿和左上房間一起重畫掉）。已切好 `seams/todo/15～18*.png`，等使用者 AI 補畫存進 `seams/fixed/` 再重跑 `build-map.ps1`（AI 新畫的障礙要補擋格，圖 `?v=` 加 1）。
+  另外修正 `seam-cut.ps1` 第 22 行兩個敘述黏在同一行（存 orig 圖與 `$g = …`）的語法錯誤，以前那版跑不起來。
+- 驗證（本機）：從低語港傳送到低語墓窟 → 大地圖、出生在廣場南邊、區域「低語墓窟」、怪是侏儒戰士等墓窟的怪；從墓窟走西北出口到礦坑上層（地圖換 gludio1）、再走東北出口回墓窟（換回 islandDungeon）；
+  掛機 20 秒有擊殺、怪全部生在墓窟範圍（418 次取樣 0 次在外面）；手機 375×812 世界地圖看得到低語墓窟與兩個出口；`node tools/build.js` 的 dist 能建角、傳送到墓窟、畫面正常。Console 只有預覽環境註冊 SW 的已知訊息。

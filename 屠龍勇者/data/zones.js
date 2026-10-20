@@ -15,14 +15,14 @@ const TOWN_TRAVEL_FEE = 200; // 村莊間傳送：每差一級 200 金幣
 // rare：稀有首領出現機率；drops：地圖專屬掉落
 const ZONES = [
     {
-        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵／腐朽礦坑上層・深層／沉眠龍窟／熔火煉獄共用，第 48、49、57 節）
+        id: 'island', name: '低語海岸', icon: '🏝️', type: 'field', bg: 'wild', lv: [1, 10], town: 'talking', fee: 0,   // bg：大地圖（ui-scene.js SCENE_BGS.wild，第 45、47 節；低語海岸／迷霧古林／沉船海灣／紫霧遺跡／焦骨峽谷／永凍荒原／黃沙王陵／腐朽礦坑上層・深層／沉眠龍窟／熔火煉獄／低語墓窟共用，第 48、49、57、67 節）
         mons: ['goblin', 'dwarf', 'wolf', 'orc', 'floatingEye', 'skeleton'],
         drops: [{ id: 'dagger', p: 0.01 }, { id: 'shortSword', p: 0.008 }, { id: 'leatherCap', p: 0.01 }, { id: 'leatherArmor', p: 0.008 },
             { id: 'woodShield', p: 0.008 }, { id: 'leatherBoots', p: 0.008 }, { id: 'shortBow', p: 0.005 }, { id: 'arrow', p: 0.1, n: [5, 15] }],
         desc: '新手冒險者的起點。',
     },
     {
-        id: 'islandDungeon', name: '低語墓窟', icon: '🕳️', type: 'dungeon', lv: [8, 18], town: 'talking', fee: 50,
+        id: 'islandDungeon', name: '低語墓窟', icon: '🕳️', type: 'dungeon', bg: 'wild', lv: [8, 18], town: 'talking', fee: 50,   // bg：2026-10-20 改用大地圖（礦坑上層南邊的地下墓穴，第 67 節；原本的地監格子畫面不再用）
         mons: ['dwarfWarrior', 'orcArcher', 'skeletonArcher', 'orcWarrior', 'ghoul'],
         drops: [{ id: 'longSword', p: 0.004 }, { id: 'mace', p: 0.004 }, { id: 'handAxe', p: 0.004 }, { id: 'ironHelm', p: 0.003 },
             { id: 'scaleMail', p: 0.002 }, { id: 'cloak', p: 0.004 }, { id: 'matchlock', p: 0.003 }, { id: 'oakWand', p: 0.003 },

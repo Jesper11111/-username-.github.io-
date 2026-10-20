@@ -19,7 +19,8 @@ $magenta = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArg
 foreach ($p in $cfg.patches) {
     if ($Only -and $p.id -ne $Only) { continue }
     $crop = $map.Clone((New-Object System.Drawing.Rectangle ([int]$p.x), ([int]$p.y), $S, $S), [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
-    $crop.Save((Join-Path $todo "$($p.id)-orig.png"), [System.Drawing.Imaging.ImageFormat]::Png)    $g = [System.Drawing.Graphics]::FromImage($crop)
+    $crop.Save((Join-Path $todo "$($p.id)-orig.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+    $g = [System.Drawing.Graphics]::FromImage($crop)
     $b = [int]$p.band
     if ($p.orient -eq 'v') { $g.FillRectangle($magenta, ([int]$p.at - [int]$p.x - $b), 0, 2 * $b, $S) }
     else { $g.FillRectangle($magenta, 0, ([int]$p.at - [int]$p.y - $b), $S, 2 * $b) }

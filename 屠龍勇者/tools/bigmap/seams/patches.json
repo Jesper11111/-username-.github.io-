@@ -14,6 +14,10 @@
     { "id": "11-mine-cave", "x": 1016, "y": 2560, "orient": "v", "at": 1528, "band": 150, "note": "礦坑上層 ↔ 沉眠龍窟" },
     { "id": "12-cave-deep", "x": 2472, "y": 2560, "orient": "v", "at": 2984, "band": 150, "note": "沉眠龍窟 ↔ 礦坑深層" },
     { "id": "13-pyramid-deep-w", "x": 3000, "y": 2293, "orient": "h", "at": 2805, "band": 150, "note": "金字塔下緣 ↔ 礦坑深層上緣（西半）" },
-    { "id": "14-pyramid-deep-e", "x": 3490, "y": 2293, "orient": "h", "at": 2805, "band": 150, "note": "金字塔下緣 ↔ 礦坑深層上緣（東半）" }
+    { "id": "14-pyramid-deep-e", "x": 3490, "y": 2293, "orient": "h", "at": 2805, "band": 150, "note": "金字塔下緣 ↔ 礦坑深層上緣（東半）" },
+    { "id": "15-mine-crypt-w", "x": 0, "y": 3018, "orient": "h", "at": 3530, "band": 90, "note": "礦坑上層下緣 ↔ 低語墓窟上緣（西半；左上角出口 x8～10 要畫成往下的石階）" },
+    { "id": "16-mine-crypt-e", "x": 576, "y": 3018, "orient": "h", "at": 3530, "band": 90, "note": "礦坑上層下緣 ↔ 低語墓窟上緣（東半；右上角出口 x41～43 要畫成往下的石階）" },
+    { "id": "17-crypt-forest-w", "x": 0, "y": 3700, "orient": "v", "at": 190, "band": 90, "note": "低語墓窟左邊 ↔ 森林" },
+    { "id": "18-crypt-forest-e", "x": 908, "y": 3700, "orient": "v", "at": 1420, "band": 60, "note": "低語墓窟右邊 ↔ 森林" }
   ]
 }

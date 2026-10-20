@@ -1,7 +1,7 @@
 ﻿# Build the big field map (ARCHITECTURE.md section 45).
 # Sources in this folder (2000x989 each, user-generated): swamp / pond-snow / village / meadow / beach / oasis / pyramid = regions,
 #   forest + pond = forest filler, pond-snow right half = snow filler, oasis / pyramid edges = desert filler.
-# Output: images/maps/wild.jpg (6016x3584 = 188x112 tiles of 32px; lava.jpg added east 2026-10-19; east part added 2026-10-18: snow, oasis, pyramid; south row: mine.jpg x2 + dragon-cave.jpg), images/maps/wild-mini.jpg (minimap), tools/bigmap/auto-mask.txt
+# Output: images/maps/wild.jpg (6016x4768 = 188x149 tiles of 32px; crypt.jpg (Whisper Crypt, 1280x1280) added below the mine upper 2026-10-20; lava.jpg added east 2026-10-19; east part added 2026-10-18: snow, oasis, pyramid; south row: mine.jpg x2 + dragon-cave.jpg), images/maps/wild-mini.jpg (minimap), tools/bigmap/auto-mask.txt
 #         (per-tile guess: '.' walkable, '#' blocked; Claude then hand-edits it into data/bigmap.js) and tools/bigmap/mask-check.jpg.
 # Run from the game folder: powershell -ExecutionPolicy Bypass -File tools\bigmap\build-map.ps1
 $ErrorActionPreference = 'Stop'
@@ -87,7 +87,8 @@ public static class BigMap {
   }
 }
 '@
-$W = 6016; $H = 3584; $RW = 1600; $RH = 791; $F = 112
+$W = 6016; $H = 4768; $RW = 1600; $RH = 791; $F = 112
+$SouthRowY = 2793   # south row (mines / dragon cave) top; was $H - $RH before the crypt row was added below it (2026-10-20). PowerShell names are case-insensitive: not $SY ($sy is used by the filler loop)
 $out = New-Object System.Drawing.Bitmap $W, $H
 $g = [System.Drawing.Graphics]::FromImage($out); $g.Clear([System.Drawing.Color]::FromArgb(28, 36, 27))
 $g.InterpolationMode = 'HighQualityBicubic'
@@ -127,18 +128,21 @@ $regions = @(
     @('oasis.jpg', 2240, 1300, 0.92, 0.9), @('pyramid.jpg', 2904, 2025, 0.92, 0.9),
     @('meadow.jpg', 664, 1342, 0.8, 0.78), @('beach.jpg', 1304, 2025, 1, 1),
     # 2026-10-18 south row (section 49): mine upper / dragon cave / mine deep (same picture as upper, mirrored and darker; kept apart so the copy is not obvious)
-    @('mine.jpg', 0, ($H - $RH), 1, 1), @('dragon-cave.jpg', 1456, ($H - $RH), 1, 1), @('mine.jpg', 2912, ($H - $RH), 0.8, 0.88, 'flip'),
+    @('mine.jpg', 0, $SouthRowY, 1, 1), @('dragon-cave.jpg', 1456, $SouthRowY, 1, 1), @('mine.jpg', 2912, $SouthRowY, 0.8, 0.88, 'flip'),
     # 2026-10-19 east (section 57): lava field = fireCave, right of the dunes / oasis (tiles 138..187, rows ~34..59)
-    @('lava.jpg', 4416, 1100, 0.95, 0.95)
+    @('lava.jpg', 4416, 1100, 0.95, 0.95),
+    # 2026-10-20 (section 67): Whisper Crypt = islandDungeon, square 1254 source drawn at 1280x1280 (40x40 tiles), centred under the mine upper (tiles 5..44, rows 109..148)
+    @('crypt.jpg', 160, 3488, 1, 1, '', 1280, 1280)
 )
 foreach ($r in $regions) {
     $src = [System.Drawing.Bitmap]::FromFile((Join-Path $dir $r[0]))
     if ($r.Count -gt 5 -and $r[5] -eq 'flip') { $src.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX) }
     $x = [int]$r[1]; $y = [int]$r[2]
+    $regW = if ($r.Count -gt 7) { [int]$r[6] } else { $RW }; $regH = if ($r.Count -gt 7) { [int]$r[7] } else { $RH }   # optional size (crypt is square); not $rw/$rh, they would overwrite $RW/$RH
     $fl = if ($x -le 0) { 0 } else { $F }; $ft = if ($y -le 0) { 0 } else { $F }
-    $fr = if ($x + $RW -ge $W) { 0 } else { $F }; $fb = if ($y + $RH -ge $H) { 0 } else { $F }
-    $im = [BigMap]::Region($src, $RW, $RH, [double]$r[3], [double]$r[4], $fl, $ft, $fr, $fb); $src.Dispose()
-    $g.DrawImage($im, $x, $y, $RW, $RH); $im.Dispose()
+    $fr = if ($x + $regW -ge $W) { 0 } else { $F }; $fb = if ($y + $regH -ge $H) { 0 } else { $F }
+    $im = [BigMap]::Region($src, $regW, $regH, [double]$r[3], [double]$r[4], $fl, $ft, $fr, $fb); $src.Dispose()
+    $g.DrawImage($im, $x, $y, $regW, $regH); $im.Dispose()
 }
 $g.Dispose()
 foreach ($t in $tiles) { $t.Dispose() }
@@ -158,7 +162,7 @@ foreach ($p in $seamCfg.patches) {
     "seam patch $($p.id) <- $($f.Name)"
 }
 $out.Save((Join-Path $root 'images\maps\wild.jpg'), $enc, $ep)
-$mini = New-Object System.Drawing.Bitmap 400, 238; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 400, 238); $mg.Dispose()
+$mini = New-Object System.Drawing.Bitmap 400, 317; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 400, 317); $mg.Dispose()
 $mini.Save((Join-Path $root 'images\maps\wild-mini.jpg'), $enc, $ep); $mini.Dispose()
 $mask = [BigMap]::Mask($out, 32)
 [IO.File]::WriteAllText((Join-Path $dir 'auto-mask.txt'), $mask)
