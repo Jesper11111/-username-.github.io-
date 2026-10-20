@@ -661,7 +661,10 @@ function rollDrops(mon, z) {
         if (chance(dr.p * qm)) give(dr.id, dr.n);
     }
     if (!mon.boss || mon.towerFloor) for (const dr of (z.drops || [])) if (chance(dr.p * qm)) give(dr.id, dr.n);
-    for (const dr of mon.drops) if (chance(dr.p * (dr.p >= 1 ? 1 : qm))) give(dr.id, dr.n);
+    for (const dr of mon.drops) {
+        const material = mon.boss && ITEMS[dr.id] && ITEMS[dr.id].cat === 'material';
+        if (chance(material ? BOSS_MATERIAL_DROP_P : dr.p * (dr.p >= 1 ? 1 : qm))) give(dr.id, dr.n);
+    }
     // 製作通貨（craft.js）：一般怪 3%、首領 60%
     if (chance((mon.boss ? CURRENCY_BOSS_P : CURRENCY_DROP_P) * qm)) give(rollCurrency(), mon.boss ? [1, 3] : null);
     // 隨機裝備掉落（至少魔法品質）：一般怪 1.5%、首領 50%、精英怪必掉

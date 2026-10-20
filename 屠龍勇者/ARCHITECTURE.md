@@ -17,7 +17,7 @@
 | `data/skills.js` | 共用魔法 1～10 級 `MAGIC`、各職業魔法上限 `MAGIC_CLASS`、職業專屬技能 `SKILLS[職業]`、索引 `SKILL_BY_ID`、`findSkill`／`skillNeedLv`／`classSkillList`（第 40 節） |
 | `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
 | `data/spellbook.js` | **魔法書**：每招一本 `book_技能id`（載入時併入 `ITEMS`，cat `book`）、商店價格／掉落、學習 `learnBook`／`bookLearnError`、說明 `bookInfoHtml`、掉落 `rollBookDrop`（第 40 節） |
-| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
+| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、專屬材料索引 `TOWER_BOSS_MATERIALS`、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
@@ -51,7 +51,7 @@
 | `data/skills.js` | 共用魔法 1～10 級 `MAGIC`、各職業魔法上限 `MAGIC_CLASS`、職業專屬技能 `SKILLS[職業]`、索引 `SKILL_BY_ID`、`findSkill`／`skillNeedLv`／`classSkillList`（第 40 節） |
 | `data/items.js` | `WEAPON_TYPES`、`SLOTS`、`BUFF_DEFS`、`ITEMS`（武器／防具／藥水／卷軸／彈藥／材料）、`RECIPES`、`isStackable`、`sellPriceOf` |
 | `data/spellbook.js` | **魔法書**：每招一本 `book_技能id`（載入時併入 `ITEMS`，cat `book`）、商店價格／掉落、學習 `learnBook`／`bookLearnError`、說明 `bookInfoHtml`、掉落 `rollBookDrop`（第 40 節） |
-| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
+| `data/monsters.js` | `monBase` 等級基準數值、`MONSTERS`、永夜之塔主題與首領、專屬材料索引 `TOWER_BOSS_MATERIALS`、`buildMonster/makeMonster/makeTowerMonster`、`COMMON_DROPS` |
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
@@ -105,7 +105,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020d`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1866,3 +1866,28 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - 修正 20261020a 更新版本號時誤刪 CSS url() 結尾的問題：封面、手機外框與疊圖、PC 外框與遮罩共 6 處；恢復 border-image-source 的分號。避免背景與外框失效、畫面下半段黑色。
 - 更新版本號時只取代版本號本身，不可吞掉 CSS 的右括號與分號；除既有 check.ps1，也要檢查 CSS 圖片網址完整。
+
+## 65. 永夜之塔十王專屬材料（2026-10-20，版本 `20261020c`）
+
+- items.js 新增十種 material；可堆疊，重量 1、回收價 2,000 金幣，暫無鍛造配方。舊永夜之魂與持有物保留，不改存檔結構。
+- monsters.js 新增 TOWER_BOSS_MATERIALS，順序與 TOWER_BOSSES 對應；守關首領原掉落不變，額外掉落其專屬材料 1～2 個（掉落率依第 66 節改為 0.1%）。普通塔怪不掉此材料。
+- codex.js 的 codexSources 登記每種材料的樓層與首領名稱；載入順序不變。
+
+| 樓層 | 首領 | 材料 | ID |
+|---|---|---|---|
+| 10F | 巨大牛人 | 巨大牛人之角 | towerBullHorn |
+| 20F | 黑暗女妖 | 黑暗女妖之淚 | towerBansheeTear |
+| 30F | 炎魔之影 | 炎魔之影核心 | towerFlameCore |
+| 40F | 冰之女王 | 冰之女王冠冕碎片 | towerIceCrown |
+| 50F | 巫妖王 | 巫妖王命匣碎片 | towerLichCrystal |
+| 60F | 墮落的大天使 | 墮落大天使之羽 | towerFallenFeather |
+| 70F | 混沌之主 | 混沌之主核心 | towerChaosCore |
+| 80F | 深淵領主 | 深淵領主之眼 | towerAbyssEye |
+| 90F | 死神 | 死神鐮刃碎片 | towerDeathShard |
+| 100F | 冥法軍王 | 冥法軍王之印 | towerKingSeal |
+
+## 66. BOSS 材料統一極低掉落率（2026-10-20，版本 `20261020d`）
+
+- 使用者指定全部 BOSS 材料統一 0.1%。config.js 新增 BOSS_MATERIAL_DROP_P = 0.001，monsters.js 的 16 種既有材料及十王專屬材料共 26 種皆引用此值。
+- combat.js 的 rollDrops 對首領 material 固定使用此機率，不乘異界掉落加成；團隊副本沿用 rollDrops，每人各自判定。掉落成功後數量維持原設定，非每千次保底。其他類別掉落不變。
+- codexSources 顯示材料掉落率 0.1%；既有材料、配方及存檔結構不變。

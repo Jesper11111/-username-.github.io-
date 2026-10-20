@@ -67,8 +67,9 @@ function codexSources(id) {
     if (!codexSrcCache) {
         const S = codexSrcCache = {};
         const add = (k, s) => { (S[k] = S[k] || []).push(s); };
-        for (const m in MONSTERS) for (const dr of MONSTERS[m].drops || []) add(dr.id, '掉落：' + MONSTERS[m].name);
-        add('towerSoul', '掉落：永夜之塔每 10 層首領');
+        for (const m in MONSTERS) for (const dr of MONSTERS[m].drops || []) add(dr.id, '掉落：' + MONSTERS[m].name + (MONSTERS[m].boss && ITEMS[dr.id] && ITEMS[dr.id].cat === 'material' ? `（${BOSS_MATERIAL_DROP_P * 100}%）` : ''));
+        add('towerSoul', `掉落：永夜之塔每 10 層首領（${BOSS_MATERIAL_DROP_P * 100}%）`);
+        TOWER_BOSS_MATERIALS.forEach((id, g) => add(id, `掉落：永夜之塔 ${g * 10 + 10}F・${TOWER_BOSSES[g]}（${BOSS_MATERIAL_DROP_P * 100}%）`));
         TOWER_BOSS_DROPS.forEach((ids, g) => ids.forEach(i => add(i, `掉落：永夜之塔 ${g * 10 + 10}F 首領`)));
         for (const dr of COMMON_DROPS) add(dr.id, '掉落：一般怪物' + (dr.minLv ? `（Lv.${dr.minLv} 以上地圖）` : ''));
         for (const r of RECIPES) add(r.out, '鍛造：' + Object.keys(r.need).map(k => `${ITEMS[k].name}×${r.need[k]}`).join('、') + `＋💰${fmt(r.gold)}`);
