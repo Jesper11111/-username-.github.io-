@@ -645,7 +645,9 @@ function sceneUpdate(dt) {
     for (const m of scene.mons) {
         if (m.dead) { m.dying -= dt; continue; }
         if (m === scene.engaged && (pl.path.length || !m.inst)) continue;   // 目標：角色走過去時站著等，角色停下（遠程）時自己走過來
-        m.cd -= dt;
+        const enchantMove = m.inst ? bossEnchantMoveFactor(m.inst) : 1;
+        if (!enchantMove || (m.inst && m.inst.stunUntil > gameNow)) continue;
+        m.cd -= dt * enchantMove;
         if (m.inst) {   // 圍上來的怪：一格一格走到角色旁邊
             if (m.cd > 0) continue;
             m.cd = 300;
@@ -1161,6 +1163,7 @@ function sceneDraw(ctx, W, H) {
         ctx.fillText(f.text, f.x - camX, sy);
         ctx.globalAlpha = 1; ctx.lineWidth = 1;
     }
+    drawBossEnchantEffects(ctx, camX, camY);
     // 狀態字（停止、步行回村）
     let msg = '';
     if (walkHome) msg = `🚶 步行回${TOWNS[walkHome.town].name}…${Math.ceil((walkHome.until - gameNow) / 1000)} 秒`;

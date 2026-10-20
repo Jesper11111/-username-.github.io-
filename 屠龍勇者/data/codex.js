@@ -81,6 +81,7 @@ function codexSources(id) {
         list.push(`掉落：Lv.${need} 以上的怪物 ${MAP_DROP_P * 100}%、異界裡 ${MAP_DROP_IN_MAP_P * 100}%（T${Math.max(1, d.tier - 1)}～T${Math.min(MAP_TIERS, d.tier + 1)} 異界）`);
         if (d.tier > 1) list.push(`通關獎勵：T${Math.max(1, d.tier - 2)}～T${d.tier} 異界首領`);
     }
+    if (d.soulEnchant) list.push('封存：村莊鍛造師使用永夜之魂 ×1＋500,000 金幣，取出武器的「' + BOSS_ENCHANTS[d.soulEnchant].name + '」附魔');
     if (d.cat === 'currency') list.push(`掉落：所有怪物 ${Math.round(CURRENCY_DROP_P * 100)}%（首領 ${Math.round(CURRENCY_BOSS_P * 100)}%，${CURRENCY[id].w < 3 ? '稀有' : '常見'}）`);
     if (d.price) {
         const t = Object.values(TOWNS).find(t => t.tier === d.tier);

@@ -524,6 +524,8 @@ function itemDescHtml(inst) {
     if (d.cat === 'ammo') L.push(`傷害 +${d.dmg}${d.silver ? '，對不死系額外傷害' : ''}`);
     if (d.classes) L.push(`限定：${d.classes.map(c => CLASSES[c].name).join('、')}`);
     if (d.desc) L.push(d.desc);
+    const bossHtml = bossEnchantItemHtml(inst);
+    if (bossHtml) L.push(bossHtml);
     if (d.res) L.push(resonanceHtml(d));   // 共鳴武器（resonance.js）
     if (d.cat === 'book') L.push(bookInfoHtml(d));   // 魔法書：技能內容、能不能學（spellbook.js）
     if (inst.q) {   // 暗黑式詞綴
@@ -600,6 +602,7 @@ function openItemDialog(uid) {
     if (d.cat === 'map') {
         if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
     }
+    if (d.soulEnchant) btns.push({ text: '🔮 選擇武器裝回', onClick: () => openBossSoulPicker(uid) });
     if (d.cat === 'potion') btns.push({ text: '使用', onClick: () => { const e = usePotion(inst.id); if (e) showToast(e); refreshUI(); } });
     if (d.scroll === 'enchant') btns.push({ text: '選擇裝備', onClick: () => openEnchantPicker(uid) });
     if (d.scroll === 'tele') btns.push({ text: '使用', onClick: quickTele });   // 2026-10-18 第 51 節
@@ -770,12 +773,12 @@ function shortDesc(d) {
 function shopInfo(id) { openDialog(ITEMS[id].name, itemDescHtml({ id, n: 1, ench: 0 }), [{ text: '關閉', cls: 'secondary' }]); }
 
 // 一鍵賣出：背包裡品質低於 level 的一般貨裝備（沒強化、不含稀有基底的普通品質；規則同戰利品過濾）
-function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level) && !(x.ench > 0)); }
+function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level) && !(x.ench > 0) && !x.bossEnchant); }
 function bulkSellBtn(level) {
     const list = bulkSellList(level);
     if (!list.length) { showToast('沒有符合的裝備'); return; }
     const total = list.reduce((a, x) => a + instSellPrice(x) * x.n, 0);
-    gameConfirm('一鍵賣出', `賣出 ${list.length} 件${level >= 2 ? '普通與魔法' : '普通'}裝備，共 💰${fmt(total)}？\n（已強化的裝備不會賣）`, () => {
+    gameConfirm('一鍵賣出', `賣出 ${list.length} 件${level >= 2 ? '普通與魔法' : '普通'}裝備，共 💰${fmt(total)}？\n（已強化或有 BOSS 附魔的裝備不會賣）`, () => {
         for (const x of list) removeInst(x.uid);
         player.gold += total;
         showToast(`賣出 ${list.length} 件（+${fmt(total)}）`);
@@ -797,7 +800,7 @@ function renderSell() {
 function sellBtn(uid, all) {
     const it = findInv(uid);
     if (!it) return;
-    const valuable = (it.ench || 0) > 0 || !!it.q || instSellPrice(it) >= 5000;
+    const valuable = !!it.bossEnchant || (it.ench || 0) > 0 || !!it.q || instSellPrice(it) >= 5000;
     if (valuable) gameConfirm('確認賣出', `確定賣出 ${itemName(it)}${all && it.n > 1 ? ' ×' + it.n : ''}？`, () => sellItem(uid, all), '賣出');
     else sellItem(uid, all);
 }
@@ -842,7 +845,8 @@ function renderMapForge() {
 }
 
 function renderCraft() {
-    const tabs = `<div class="chips">${[['gear', '🔨 裝備鍛造'], ['mod', '🔮 裝備改造'], ['map', '🗺️ 地圖打造']].map(([k, n]) => `<button class="chip-btn ${craftMode === k ? 'active' : ''}" onclick="setCraftMode('${k}')">${n}</button>`).join('')}</div>`;
+    const tabs = `<div class="chips">${[['gear', '🔨 裝備鍛造'], ['mod', '🔮 裝備改造'], ['map', '🗺️ 地圖打造'], ['boss', '🔱 BOSS 附魔']].map(([k, n]) => `<button class="chip-btn ${craftMode === k ? 'active' : ''}" onclick="setCraftMode('${k}')">${n}</button>`).join('')}</div>`;
+    if (craftMode === 'boss') return tabs + renderBossEnchantForge();
     if (craftMode === 'map') return tabs + renderMapForge();
     if (craftMode === 'mod') return tabs + renderGearForge();
     return tabs + `<div class="list">` + RECIPES.map((r, i) => {

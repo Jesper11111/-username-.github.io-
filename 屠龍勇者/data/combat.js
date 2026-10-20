@@ -146,6 +146,9 @@ function huntTick(dt) {
     const st = calcStats();
     autoSupport(st);
     if (!player.hunting || !hunt || hunt.state !== 'fight') return;
+    bossEnchantTick(st);
+    reapMobs();
+    if (!fightAlive()) return;
     hunt.pCd -= dt;
     if (hunt.pCd <= 0) {
         hunt.pCd = st.atkMs;
@@ -164,7 +167,7 @@ function huntTick(dt) {
         if (m.hp <= 0 || !hunt.mobs.includes(m)) continue;
         m.atkCd -= dt;
         if (m.atkCd > 0) continue;
-        m.atkCd = m === hunt.mon ? m.spd : m.spd * MOB_SIDE_SLOW;
+        m.atkCd = (m === hunt.mon ? m.spd : m.spd * MOB_SIDE_SLOW) * bossEnchantAttackFactor(m);
         if (gameNow >= m.stunUntil) monsterAttack(calcStats(), m);
         if (!fightAlive()) return;
     }
@@ -229,6 +232,7 @@ function bossSkillTick(dt) {
         const st = calcStats();
         let dmg = Math.round(rand(m.dmg[0], m.dmg[1]) * TELE_MUL) - st.reduce;
         dmg = Math.max(1, dmg);
+        dmg = bossEnchantAbsorb(Math.max(1, Math.round(bossEnchantEnemyDamage(m, dmg))));
         player.hp -= dmg;
         addLog(`💥 ${m.name}的「${t.name}」命中！你受到 ${dmg} 傷害`, 'hurt');
         if (player.hp <= 0) onDeath(m);
@@ -320,6 +324,7 @@ function rememberMapBoss() {
     if (b && inMapRun()) player.mapRun.bossHp = b.hp;
 }
 function leaveFight(searchMs) {
+    hunt.bossEnchantRuntime = null; hunt.bossEnchantAction = null;
     rememberMapBoss();
     hunt.mon = null; hunt.mobs = []; hunt.tele = null; hunt.state = 'search'; hunt.timer = searchMs;
 }
@@ -340,6 +345,7 @@ function mobTargets() {
 }
 
 function spawnMonster() {
+    hunt.bossEnchantRuntime = null; hunt.bossEnchantAction = null;
     const z = currentZone();
     // 異界地圖：怪物清空後出現異界首領
     const mapBossUp = inMapRun() && player.mapRun.left <= 0;
@@ -463,30 +469,34 @@ function castSpell(k, st) {
     });
     addLog(targets.length > 1 ? `🔮 ${k.name}（範圍）！${parts.join('、')} 傷害` : `🔮 ${k.name}！${hunt.mon.name}受到 ${parts[0].split(' ').pop()} 傷害`, 'magic');
     sfx(/冰|雪|霜|凍/.test(k.name) ? 'magic-ice' : 'magic-cast');
-    if (!k.id.startsWith('res_')) resonanceOnHit();   // 攻擊魔法也算一次命中（法師拿共鳴魔杖）
+    if (!k.id.startsWith('res_')) { resonanceOnHit(); bossEnchantHit(targets.find(m => m.hp > 0), st); }   // 攻擊魔法也算一次命中（法師拿共鳴魔杖）
 }
 
 function doStrike(k, st) {
-    useSkillCost(k);
-    const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name, res: k.id.startsWith('res_') };
-    const targets = mobTargets();
-    const hit = k.aoe ? targets : [hunt.mon];
-    if (k.aoe && targets.length > 1) addLog(`💥 ${k.name}（範圍）`, 'magic');
-    for (let i = 0; i < (k.hits || 1); i++) {
-        // 分散：每一發打不同的怪；範圍：每一發打全部
-        const list = k.spread ? [targets[i % targets.length]] : hit;
-        for (const m of list) if (!physicalAttack(st, k.mult, opt, m)) return;
-        if (!hunt || !hunt.mon) return;
-    }
-    if (k.magic) {
-        for (const m of hit) {
-            const d = magicDamage(k.magic.dmg, k.magic.spK, st, 0, m);
-            m.hp -= d;
-            lifeSteal(d, st);
-            addLog(`⚡ ${k.name}的魔力，${m.name}受到 ${d} 傷害`, 'magic');
+    const bossAction = !k.id.startsWith('res_');
+    if (bossAction) bossEnchantBegin();
+    try {
+        useSkillCost(k);
+        const opt = { ignoreAc: k.ignoreAc, undeadMul: k.undeadMul, label: k.name, res: k.id.startsWith('res_') };
+        const targets = mobTargets();
+        const hit = k.aoe ? targets : [hunt.mon];
+        if (k.aoe && targets.length > 1) addLog(`💥 ${k.name}（範圍）`, 'magic');
+        for (let i = 0; i < (k.hits || 1); i++) {
+            // 分散：每一發打不同的怪；範圍：每一發打全部
+            const list = k.spread ? [targets[i % targets.length]] : hit;
+            for (const m of list) if (!physicalAttack(st, k.mult, opt, m)) return;
+            if (!hunt || !hunt.mon) return;
         }
-    }
-    if (k.stun) for (const m of hit) { m.stunUntil = gameNow + k.stun; addLog(`${m.name}被暈眩了`, 'magic'); }
+        if (k.magic) {
+            for (const m of hit) {
+                const d = magicDamage(k.magic.dmg, k.magic.spK, st, 0, m);
+                m.hp -= d;
+                lifeSteal(d, st);
+                addLog(`⚡ ${k.name}的魔力，${m.name}受到 ${d} 傷害`, 'magic');
+            }
+        }
+        if (k.stun) for (const m of hit) { m.stunUntil = gameNow + k.stun; addLog(`${m.name}被暈眩了`, 'magic'); }
+    } finally { if (bossAction) bossEnchantEnd(st); }
 }
 
 function pickAmmo(type, mon = hunt.mon) {
@@ -545,7 +555,7 @@ function physicalAttack(st, mult, opt, mon = hunt.mon) {
     mon.hp -= total;
     lifeSteal(total, st);
     if (st.weapon && st.weapon.drain) player.mp = Math.min(st.maxMp, player.mp + rand(st.weapon.drain[0], st.weapon.drain[1]));
-    if (!opt.res) resonanceOnHit();   // 共鳴武器：觸發／累積共鳴值（共鳴技能本身的攻擊不算）
+    if (!opt.res) { resonanceOnHit(); bossEnchantHit(mon, st); }   // 共鳴武器：觸發／累積共鳴值（共鳴技能本身的攻擊不算）
     addLog(`${label}${hits > 1 ? '連擊' : '攻擊'}，${mon.name}受到 ${total} 傷害${crit ? '（爆擊！）' : ''}`, crit ? 'crit' : '');
     sfxHit(crit, st.ranged);
     return true;
@@ -569,6 +579,7 @@ function monsterAttack(st, mon) {
         player.mp -= a;
         dmg -= a;
     }
+    dmg = bossEnchantAbsorb(Math.max(0, Math.round(bossEnchantEnemyDamage(mon, dmg))));
     player.hp -= dmg;
     addLog(magic ? `${mon.name}施放「${mon.magic.name}」，你受到 ${dmg} 傷害` : `${mon.name}攻擊，你受到 ${dmg} 傷害`, 'hurt');
     if (player.hp <= 0) { onDeath(mon); return; }

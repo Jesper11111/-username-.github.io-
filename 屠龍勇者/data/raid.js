@@ -81,7 +81,7 @@ function raidSimulate(def, list, opts = {}) {
     try {
         const n = list.length, boss = opts.boss || raidBoss(def, n);
         const limit = opts.limitMs || RAID_LIMIT_MS;
-        if (boss.atkCd == null) boss.atkCd = boss.spd;
+        if (boss.atkCd == null) boss.atkCd = boss.spd * bossEnchantAttackFactor(boss);
         if (boss.stunUntil == null) boss.stunUntil = 0;
         const ms = list.map((x, i) => {
             const p = migrateSave({ player: JSON.parse(JSON.stringify(x.snap)) });
@@ -117,6 +117,10 @@ function raidSimulate(def, list, opts = {}) {
                 if (!player.hunting || !hunt) continue;   // 彈藥用完等：停在旁邊
                 const st = calcStats();
                 autoSupport(st);
+                const enchantBefore = boss.hp;
+                bossEnchantTick(st);
+                m.dmg += Math.max(0, enchantBefore - boss.hp);
+                if (boss.hp <= 0) break;
                 hunt.pCd -= TICK_MS;
                 if (hunt.pCd <= 0) {
                     hunt.pCd = st.atkMs;
@@ -178,6 +182,7 @@ function raidSimulate(def, list, opts = {}) {
                         let d = rand(base[0], base[1]) * RAID_BREATH_MUL * (1 - clamp(st.mr, 0, 150) / 200);
                         d = Math.max(0, Math.round(d - st.reduce));
                         if (st.absorb && player.mp > 0) { const a = Math.min(player.mp, Math.floor(d * st.absorb)); player.mp -= a; d -= a; }
+                        d = bossEnchantAbsorb(Math.max(0, Math.round(bossEnchantEnemyDamage(boss, d))));
                         player.hp -= d;
                         hit++;
                         if (player.hp <= 0) down(m, `「${name}」`);

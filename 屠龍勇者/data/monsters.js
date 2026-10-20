@@ -44,7 +44,7 @@ const MONSTERS = {
     baphomet: {
         name: '巴風特', icon: '🐐', lv: 38, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -10, expMul: 15, goldMul: 10,
         magic: { p: 0.2, dmg: [60, 100], name: '地獄之火' },
-        drops: [{ id: 'baphometHorn', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'katana', p: 0.05 }, { id: 'bWeaponScroll', p: 0.05 }, { id: 'bArmorScroll', p: 0.08 }, { id: 'elixir', p: 0.03 }],
+        drops: [{ id: 'baphometHorn', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'katana', p: 0.05 }, { id: 'bWeaponScroll', p: 0.05 }, { id: 'bArmorScroll', p: 0.08 }, { id: 'elixir', p: 0.03 }],
     },
     // 暮光法師塔
     hellhound:      { name: '地獄犬',       icon: '🐕', lv: 36, large: true, magic: { p: 0.2, dmg: [30, 50], name: '火焰吐息' } },
@@ -55,7 +55,7 @@ const MONSTERS = {
     demon: {
         name: '惡魔', icon: '😈', lv: 50, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
         magic: { p: 0.25, dmg: [90, 150], name: '黑暗之火' },
-        drops: [{ id: 'demonHeart', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'demonAxe', p: 0.04 }, { id: 'manaWand', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'bArmorScroll', p: 0.1 }, { id: 'elixir', p: 0.04 }],
+        drops: [{ id: 'demonHeart', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'demonAxe', p: 0.04 }, { id: 'manaWand', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'bArmorScroll', p: 0.1 }, { id: 'elixir', p: 0.04 }],
     },
     // 黃沙王陵
     mummy:          { name: '木乃伊',     icon: '🧟', lv: 44, undead: true, hpMul: 1.2 },
@@ -65,7 +65,7 @@ const MONSTERS = {
     osiris: {
         name: '歐西里斯', icon: '🏺', lv: 60, boss: true, undead: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -15, expMul: 15, goldMul: 10,
         magic: { p: 0.25, dmg: [120, 190], name: '冥界審判' },
-        drops: [{ id: 'osirisSeal', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'darkClaw', p: 0.04 }, { id: 'darkDual', p: 0.04 }, { id: 'elvenBow', p: 0.05 }, { id: 'bWeaponScroll', p: 0.08 }, { id: 'bArmorScroll', p: 0.12 }, { id: 'elixir', p: 0.05 }],
+        drops: [{ id: 'osirisSeal', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'darkClaw', p: 0.04 }, { id: 'darkDual', p: 0.04 }, { id: 'elvenBow', p: 0.05 }, { id: 'bWeaponScroll', p: 0.08 }, { id: 'bArmorScroll', p: 0.12 }, { id: 'elixir', p: 0.05 }],
     },
     // 迷霧古林
     werewolf:       { name: '狼人',       icon: '🐺', lv: 11, spd: 1300 },
@@ -75,7 +75,7 @@ const MONSTERS = {
     elderTreant: {
         name: '古老樹精', icon: '🌲', lv: 24, boss: true, large: true, hpMul: 10, dmgMul: 1.4, acAdd: -8, expMul: 12, goldMul: 8,
         magic: { p: 0.2, dmg: [30, 50], name: '荊棘纏繞' },
-        drops: [{ id: 'treantHeart', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'elvenBow', p: 0.03 }, { id: 'crystalWand', p: 0.05 }, { id: 'bArmorScroll', p: 0.04 }],
+        drops: [{ id: 'treantHeart', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'elvenBow', p: 0.03 }, { id: 'crystalWand', p: 0.05 }, { id: 'bArmorScroll', p: 0.04 }],
     },
     // 沉眠龍窟
     lizardman:      { name: '邪惡蜥蜴',       icon: '🦎', lv: 19 },
@@ -86,7 +86,7 @@ const MONSTERS = {
     wakingDrake: {
         name: '甦醒的地龍', icon: '🐊', lv: 33, boss: true, large: true, hpMul: 11, dmgMul: 1.5, acAdd: -10, expMul: 14, goldMul: 9,
         magic: { p: 0.2, dmg: [45, 80], name: '岩石吐息' },
-        drops: [{ id: 'drakeFang', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'katana', p: 0.04 }, { id: 'bWeaponScroll', p: 0.04 }, { id: 'bArmorScroll', p: 0.06 }],
+        drops: [{ id: 'drakeFang', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'katana', p: 0.04 }, { id: 'bWeaponScroll', p: 0.04 }, { id: 'bArmorScroll', p: 0.06 }],
     },
     // 沉船海灣
     pirate:         { name: '海賊',           icon: '🏴‍☠️', lv: 27 },
@@ -96,7 +96,7 @@ const MONSTERS = {
     pirateKing: {
         name: '海賊王・德雷克', icon: '☠️', lv: 43, boss: true, hpMul: 12, dmgMul: 1.6, acAdd: -10, expMul: 15, goldMul: 12,
         magic: { p: 0.2, dmg: [60, 100], name: '砲擊' },
-        drops: [{ id: 'pirateTreasure', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'rifle', p: 0.06 }, { id: 'trident', p: 0.05 }, { id: 'hasteBoots', p: 0.015 }, { id: 'bWeaponScroll', p: 0.05 }],
+        drops: [{ id: 'pirateTreasure', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'rifle', p: 0.06 }, { id: 'trident', p: 0.05 }, { id: 'hasteBoots', p: 0.015 }, { id: 'bWeaponScroll', p: 0.05 }],
     },
     // 焦骨峽谷
     dvLizard:       { name: '蜥蜴人戰士',     icon: '🦎', lv: 37, acAdd: -3 },
@@ -106,7 +106,7 @@ const MONSTERS = {
     wyvern: {
         name: '巨大飛龍', icon: '🐲', lv: 55, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
         magic: { p: 0.25, dmg: [100, 170], name: '烈焰俯衝' },
-        drops: [{ id: 'wyvernWing', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'powerGloves', p: 0.05 }, { id: 'knightShield', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'elixir', p: 0.04 }],
+        drops: [{ id: 'wyvernWing', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'powerGloves', p: 0.05 }, { id: 'knightShield', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'elixir', p: 0.04 }],
     },
     // 永凍荒原
     snowWolf:       { name: '冰原狼',         icon: '🐺', lv: 47, spd: 1200 },
@@ -116,7 +116,7 @@ const MONSTERS = {
     iceGiantKing: {
         name: '冰之巨人王', icon: '❄️', lv: 65, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -15, expMul: 15, goldMul: 10,
         magic: { p: 0.25, dmg: [140, 220], name: '暴風雪' },
-        drops: [{ id: 'frostCrystal', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'mrCloak', p: 0.05 }, { id: 'conRing', p: 0.03 }, { id: 'elixir', p: 0.05 }],
+        drops: [{ id: 'frostCrystal', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'mrCloak', p: 0.05 }, { id: 'conRing', p: 0.03 }, { id: 'elixir', p: 0.05 }],
     },
     // 熔火煉獄
     salamander:     { name: '火蜥蜴',         icon: '🦎', lv: 56, magic: { p: 0.2, dmg: [50, 80], name: '火焰噴吐' } },
@@ -126,7 +126,7 @@ const MONSTERS = {
     ifrit: {
         name: '伊弗利特', icon: '👺', lv: 73, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -18, expMul: 15, goldMul: 10,
         magic: { p: 0.3, dmg: [170, 260], name: '地獄烈焰' },
-        drops: [{ id: 'ifritFlame', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'demonAxe', p: 0.04 }, { id: 'dkFlameSword', p: 0.015 }, { id: 'titanBelt', p: 0.03 }, { id: 'elixir', p: 0.06 }],
+        drops: [{ id: 'ifritFlame', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'demonAxe', p: 0.04 }, { id: 'dkFlameSword', p: 0.015 }, { id: 'titanBelt', p: 0.03 }, { id: 'elixir', p: 0.06 }],
     },
     // 紫霧遺跡
     ancientGiant:   { name: '古代巨人',       icon: '🗿', lv: 63, large: true, hpMul: 1.5, spd: 1900 },
@@ -136,7 +136,7 @@ const MONSTERS = {
     forgottenKing: {
         name: '遺忘之王', icon: '👑', lv: 81, boss: true, undead: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -20, expMul: 15, goldMul: 10,
         magic: { p: 0.3, dmg: [200, 300], name: '遺忘詛咒' },
-        drops: [{ id: 'forgottenRelic', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'tsurugi', p: 0.04 }, { id: 'windBow', p: 0.015 }, { id: 'magicSniper', p: 0.02 }, { id: 'elixir', p: 0.08 }],
+        drops: [{ id: 'forgottenRelic', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'tsurugi', p: 0.04 }, { id: 'windBow', p: 0.015 }, { id: 'magicSniper', p: 0.02 }, { id: 'elixir', p: 0.08 }],
     },
     // 泰坦墓穴
     giantSkeleton:  { name: '巨人骷髏',       icon: '💀', lv: 74, undead: true, large: true, hpMul: 1.3 },
@@ -146,32 +146,32 @@ const MONSTERS = {
     giantKingSpirit: {
         name: '巨人王的亡魂', icon: '👻', lv: 92, boss: true, undead: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -25, expMul: 15, goldMul: 10,
         magic: { p: 0.3, dmg: [240, 360], name: '亡魂哀嚎' },
-        drops: [{ id: 'giantSoul', p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, { id: 'windBow', p: 0.03 }, { id: 'dkFlameSword', p: 0.03 }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'elixir', p: 0.15 }],
+        drops: [{ id: 'giantSoul', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'windBow', p: 0.03 }, { id: 'dkFlameSword', p: 0.03 }, { id: 'iceQueenStaff', p: 0.03 }, { id: 'elixir', p: 0.15 }],
     },
     // 四大龍（數值寫死）
     antharas: {
         name: '地龍・格爾莫斯', icon: '🐲', lv: 62, boss: true, dragon: true, large: true,
         hp: 9000, ac: -50, hit: 70, dmg: [45, 95], spd: 1900, exp: 600000, gold: [20000, 30000], mr: 50,
         magic: { p: 0.25, dmg: [120, 200], name: '大地震動' },
-        drops: [{ id: 'antharasScale', p: BOSS_MATERIAL_DROP_P, n: [2, 3] }, { id: 'elixir', p: 0.3 }, { id: 'bWeaponScroll', p: 0.3 }, { id: 'bArmorScroll', p: 0.4 }, { id: 'knightShield', p: 0.2 }],
+        drops: [{ id: 'antharasScale', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'elixir', p: 0.3 }, { id: 'bWeaponScroll', p: 0.3 }, { id: 'bArmorScroll', p: 0.4 }, { id: 'knightShield', p: 0.2 }],
     },
     fafurion: {
         name: '水龍・瑟拉恩', icon: '🐉', lv: 72, boss: true, dragon: true, large: true,
         hp: 14000, ac: -60, hit: 82, dmg: [55, 115], spd: 1800, exp: 1500000, gold: [30000, 45000], mr: 60,
         magic: { p: 0.3, dmg: [150, 250], name: '海嘯' },
-        drops: [{ id: 'fafurionScale', p: BOSS_MATERIAL_DROP_P, n: [2, 3] }, { id: 'iceQueenStaff', p: 0.15 }, { id: 'elixir', p: 0.35 }, { id: 'bWeaponScroll', p: 0.35 }, { id: 'bArmorScroll', p: 0.45 }],
+        drops: [{ id: 'fafurionScale', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'iceQueenStaff', p: 0.15 }, { id: 'elixir', p: 0.35 }, { id: 'bWeaponScroll', p: 0.35 }, { id: 'bArmorScroll', p: 0.45 }],
     },
     lindvior: {
         name: '風龍・維斯塔爾', icon: '🐉', lv: 82, boss: true, dragon: true, large: true,
         hp: 20000, ac: -70, hit: 95, dmg: [65, 130], spd: 1700, exp: 3500000, gold: [45000, 60000], mr: 65,
         magic: { p: 0.3, dmg: [180, 300], name: '暴風' },
-        drops: [{ id: 'lindviorScale', p: BOSS_MATERIAL_DROP_P, n: [2, 3] }, { id: 'windBow', p: 0.2 }, { id: 'magicSniper', p: 0.15 }, { id: 'elixir', p: 0.4 }, { id: 'bWeaponScroll', p: 0.4 }, { id: 'bArmorScroll', p: 0.5 }],
+        drops: [{ id: 'lindviorScale', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'windBow', p: 0.2 }, { id: 'magicSniper', p: 0.15 }, { id: 'elixir', p: 0.4 }, { id: 'bWeaponScroll', p: 0.4 }, { id: 'bArmorScroll', p: 0.5 }],
     },
     valakas: {
         name: '火龍・莫爾加斯', icon: '🔥', lv: 92, boss: true, dragon: true, large: true,
         hp: 28000, ac: -80, hit: 108, dmg: [80, 160], spd: 1700, exp: 8000000, gold: [60000, 90000], mr: 70,
         magic: { p: 0.35, dmg: [220, 360], name: '煉獄火焰' },
-        drops: [{ id: 'valakasScale', p: BOSS_MATERIAL_DROP_P, n: [2, 3] }, { id: 'dkFlameSword', p: 0.2 }, { id: 'elixir', p: 0.5 }, { id: 'bWeaponScroll', p: 0.5 }, { id: 'bArmorScroll', p: 0.6 }],
+        drops: [{ id: 'valakasScale', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'dkFlameSword', p: 0.2 }, { id: 'elixir', p: 0.5 }, { id: 'bWeaponScroll', p: 0.5 }, { id: 'bArmorScroll', p: 0.6 }],
     },
 };
 
@@ -237,7 +237,7 @@ function makeTowerMonster(floor, isBoss) {
             name: `${TOWER_BOSSES[g]}（${floor}F）`, baseName: TOWER_BOSSES[g], icon: TOWER_ICONS[g], lv: lv + 3, boss: true, large: true, towerFloor: floor,
             hpMul: 10, dmgMul: 1.5, acAdd: -10, expMul: 20, goldMul: 10,
             magic: { p: 0.25, dmg: [lv * 1.5, lv * 2.5].map(Math.round), name: '首領之怒' },
-            drops: [{ id: 'towerSoul', p: BOSS_MATERIAL_DROP_P, n: [3, 5] }, { id: TOWER_BOSS_MATERIALS[g], p: BOSS_MATERIAL_DROP_P, n: [1, 2] }, ...TOWER_BOSS_DROPS[g].map(id => ({ id, p: 0.12 })),
+            drops: [{ id: 'towerSoul', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: TOWER_BOSS_MATERIALS[g], p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, ...TOWER_BOSS_DROPS[g].map(id => ({ id, p: 0.12 })),
                 { id: 'elixir', p: 0.05 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'bArmorScroll', p: 0.1 }],
         });
     }

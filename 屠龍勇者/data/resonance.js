@@ -278,7 +278,7 @@ function resonanceHtml(d) {
 }
 // 狩獵畫面增益列：身上每件共鳴裝備的狀態（冷卻倒數／觸發機率／共鳴值）
 function resonanceChip() {
-    return resItemIds().map(id => {
+    return bossEnchantChip() + resItemIds().map(id => {
         const r = ITEMS[id].res, on = resCls(r).includes(player.cls) ? ' ✦' : '';
         const left = Math.ceil(((player.cds['res_' + id] || 0) - gameNow) / 1000);
         let s;

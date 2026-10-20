@@ -157,6 +157,11 @@ function migrateSave(data) {
     // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
     const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => AFFIXES[a.k]); };
     [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
+    // schema 5：舊武器維持無附魔；不合法的附魔不帶入戰鬥。封魂石由靜態 id 保留技能。
+    for (const it of [...p.inv, ...p.storage, ...Object.values(p.equip)]) {
+        if (it.bossEnchant && (ITEMS[it.id].cat !== 'weapon' || !BOSS_ENCHANTS[it.bossEnchant])) delete it.bossEnchant;
+    }
+    if (p.cds._bossEnchant != null && !Number.isFinite(p.cds._bossEnchant)) delete p.cds._bossEnchant;
     if (p.loc.type === 'zone' && !ZONE_BY_ID[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     if (p.loc.type === 'town' && !TOWNS[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     return p;

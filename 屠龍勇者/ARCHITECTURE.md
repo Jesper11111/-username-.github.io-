@@ -9,7 +9,7 @@
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
-| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：41 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -21,6 +21,7 @@
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
+| `data/boss-enchant.js` | **BOSS 附魔／封魂**：25 種 `BOSS_ENCHANTS`、25 種技能封魂石、鍛造入口、直接附魔與封魂移轉、獨立傷害／控場／護盾／延遲事件／原創程序特效（第 68 節）；載入時依賴 items、monsters |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
@@ -43,7 +44,7 @@
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
-| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：40 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：41 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -96,16 +97,17 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
+- boss-enchant 在 resonance 後、player 前載入；載入時使用 ITEMS、TOWER_BOSS_MATERIALS，產生 25 種 soul_材料id 封魂石。玩家、戰鬥與介面只在執行期使用。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
 - 新檔案依它「載入時」需要的東西插入；只在執行期用到的不影響順序。
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020h`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1922,3 +1924,72 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 可走 10026 格全部走得到（墓窟 817 格）。神殿後牆上方被畫出一個像門洞的黑色開口，不能走（使用者知道，沒有要求重畫）。
   驗證：本機從墓窟廣場走西邊石階上到礦坑（9,105）、走回廣場、再走東邊石階上到礦坑（42,105），地圖依序切換；角色站在西邊石階上截圖，路牌「腐朽礦坑・上層」在石階旁；dist 版進墓窟正常；Console 只有預覽環境註冊 SW 的已知訊息。
   走石階時路徑會沿著礦坑第 108 列斜切，可能在交界來回切換一次地圖（訊息「📍 進入」多一則），不影響遊戲。
+
+## 68. BOSS 附魔與永夜之魂封存（2026-10-20，版本 `20261020g`，schema 5）
+
+### 使用者核定與費用
+
+- 25 種戰鬥附魔＋永夜之魂封存。每把武器限一種，消耗對應材料 ×1，100% 成功；全職業可用，武器本身職業限制不變。
+- 一般地區 BOSS：1,000,000；塔 10～50F：2,000,000；塔 60～100F：4,000,000；四龍：5,000,000。封魂、裝回各 500,000 金幣。
+- 封魂消耗永夜之魂 ×1，移除武器附魔，新增「技能名封魂石」；裝回消耗對應封魂石 ×1，最後一個用完即從背包移除。原武器強化、詞綴、共鳴保留。
+- 覆蓋前提示原技能會消失；要保留先封魂。確認時檢查原角色、武器目前附魔、地點、金幣與材料，操作同步完成，重複確認不會再次移轉。
+
+### 入口、儲存及相容性
+
+- 村莊鍛造師 → BOSS 附魔 → 選擇背包或裝備中武器 → 展開技能預覽 → 材料附魔／封魂石裝回；已有附魔時可封存。背包封魂石亦有「選擇武器裝回」按鈕，限村莊。
+- 武器實體新增 bossEnchant（材料 id），角色共用冷卻為 player.cds._bossEnchant；不因換武器重置。schema 5 遷移保留舊裝備，移除非武器或未定義的附魔值；封魂石使用靜態 soul_材料id，cat material，可按技能堆疊，重量 1、回收價 0。
+- 存檔完整保存欄位；交易所與共用倉庫沿用整個實體移轉。雲端簽章格式與 SQL 不動（目前 guardItemCanon 不包含新增 bossEnchant 欄位，未宣稱已具伺服器端附魔防改檔驗證）。
+- 物品說明顯示技能、機率、冷卻、傷害與費用；圖鑑列封魂來源。一鍵賣出排除附魔武器，單件賣出要確認。
+
+### 戰鬥規則與實作
+
+- B = round(等級 + max(武器小大型平均骰值＋傷害加成, SP×3))，最低 1。物理附魔扣除 max(0,-怪物AC/5)，岩刺忽略其中 15%；魔法受 MR 減傷。第一版無暴擊、吸血、職業剋制再乘及連鎖觸發。
+- 普攻命中、直接攻擊魔法或物理技能命中觸發；物理範圍／多段技能以 bossEnchantBegin／Hit／End 集中為一次抽選，共鳴技能不進附魔入口。
+- 範圍以當時位置半徑 2.5 格、最多五個存活戰鬥目標；離線／副本無地圖座標時用當前戰鬥目標集合。火域、砲擊、裂爆固定在觸發時的位置，離開可避開。冥王追擊每 250ms 一擊、目標死後停止。
+- bossEnchantRuntime 放 hunt，記錄 owner、武器 uid／附魔 id、延遲／持續事件、護盾；bossEnchantTick 依 gameNow 推進。換武器、離戰、換怪群會清除短期效果，冷卻保留。
+- 減益存在怪物 bossEnchantDebuffs，同類取較強而非累加；綁定施放者與武器。BOSS 免定身／暈眩，緩速上限此技能 10%，降低傷害／攻速／治療量效果減半。烙印強化目標後續受到的附魔傷害，共享首領時隊友也受益，取最高值不疊加；不強化普通／職業技能。
+- bossEnchantMoveFactor 接入怪物移動；bossEnchantAttackFactor 接入怪物普攻間隔；bossEnchantEnemyDamage／Absorb 接入一般攻擊、首領紅圈、團戰吐息。bossEnchantEnemyHeal 提供減療入口，目前沒有怪物主動治療招式，不影響脫戰重置。
+- huntTick 及 raidSimulate 每步推進附魔事件，正常擊殺照原流程結算；副本持續傷害計入施放者輸出。
+- drawBossEnchantEffects：原創畫布圓陣、火柱、冰晶、風刃／幻影抽象弧線、技能名；最多六個短期特效。技能不鎖角色動畫；SIM_MODE 不畫。狩獵狀態列沿 resonanceChip 顯示附魔冷卻。
+
+### 25 種技能資料
+
+| 材料 ID | 技能 | 機率 | 冷卻 | 傷害類型 | 效果 |
+|---|---|---|---|---|---|
+| treantHeart | 古樹荊棘 | 8% | 8 秒 | 魔法 | 主目標 90% B、附近各 45% B；一般怪定身 1 秒，BOSS 緩速 10%／2 秒。 |
+| drakeFang | 裂地岩刺 | 7% | 7 秒 | 物理 | 主目標 150% B、另外最多兩個目標各 50% B；忽略此次正數物理減傷量的 15%。 |
+| baphometHorn | 地獄火柱 | 6% | 9 秒 | 魔法 | 主目標 180% B、附近各 70% B。 |
+| pirateTreasure | 幽靈砲擊 | 6% | 10 秒 | 物理 | 0.8 秒後砲擊原位置，範圍各 120% B；敵人離開範圍可避開。 |
+| demonHeart | 噬魂黑炎 | 7% | 9 秒 | 魔法 | 立即 60% B，之後 4 秒每秒 40% B；目標存活至燃燒結束時回復自身 HP 2%。 |
+| wyvernWing | 疾風連刃 | 8% | 7 秒 | 物理 | 三道風刃各 60% B，優先分散；只有一個目標時集中。 |
+| osirisSeal | 冥界封咒 | 8% | 10 秒 | 魔法 | 主目標 130% B；造成傷害降低 8%／4 秒，BOSS 降低 4%。 |
+| frostCrystal | 冰王碎晶 | 7% | 8 秒 | 魔法 | 主目標 170% B；攻擊速度降低 12%／3 秒，BOSS 降低 6%。 |
+| ifritFlame | 煉獄火域 | 6% | 12 秒 | 魔法 | 原位置留下火域 4 秒，每秒範圍各 40% B；離開火域不受傷。 |
+| forgottenRelic | 遺忘烙印 | 7% | 10 秒 | 魔法 | 主目標 140% B；之後 5 秒受到附魔傷害提高 12%，不提高普攻或職業技能；團隊共享首領時隊友也受益，同類取最高。 |
+| giantSoul | 巨人崩擊 | 5% | 12 秒 | 物理 | 主目標 260% B、附近各 80% B；一般怪暈眩 0.8 秒，BOSS 免疫。 |
+| antharasScale | 地龍震怒 | 6% | 14 秒 | 物理 | 自身周圍各 130% B；獲得 HP 上限 5% 護盾／4 秒，不疊加。 |
+| fafurionScale | 水龍海嘯 | 6% | 14 秒 | 魔法 | 範圍各 140% B；自身接著 3 秒每秒回復 HP 上限 1%。 |
+| lindviorScale | 風龍風暴 | 7% | 12 秒 | 物理 | 五道風刃各 45% B，優先分散；只有一個目標時集中。 |
+| valakasScale | 火龍吐息 | 5% | 15 秒 | 魔法 | 範圍立即各 120% B，之後 3 秒每秒 30% B，不疊層。 |
+| towerBullHorn | 蠻牛震擊 | 8% | 8 秒 | 物理 | 主目標 140% B、附近各 60% B；一般怪暈眩 0.5 秒，BOSS 免疫。 |
+| towerBansheeTear | 女妖哀嚎 | 7% | 10 秒 | 魔法 | 範圍各 80% B；造成傷害降低 6%／3 秒，BOSS 降低 3%。 |
+| towerFlameCore | 炎魔爆燃 | 7% | 9 秒 | 魔法 | 範圍立即各 60% B，之後 4 秒每秒 25% B，燃燒跟隨敵人、不疊層。 |
+| towerIceCrown | 冰后寒獄 | 7% | 10 秒 | 魔法 | 範圍各 110% B；移動速度降低 30%／3 秒，BOSS 降低 10%。 |
+| towerLichCrystal | 死亡纏繞 | 7% | 9 秒 | 魔法 | 立即 90% B，之後 5 秒每秒 30% B；治療效果降低 30%，BOSS 降低 15%，不影響脫戰回血。 |
+| towerFallenFeather | 墮天裁決 | 6% | 10 秒 | 魔法 | 主目標 210% B、附近各 50% B。 |
+| towerChaosCore | 混沌裂爆 | 6% | 13 秒 | 魔法 | 1 秒後在原位置爆炸，範圍各 170% B；敵人離開範圍可避開。 |
+| towerAbyssEye | 深淵侵蝕 | 10% | 4 秒 | 魔法 | 每層每秒 12% B，持續 10 秒；同一施放者最多三層，各自計時。 |
+| towerDeathShard | 死神收割 | 7% | 10 秒 | 物理 | 主目標 150% B；命中時 HP 低於 25% 改為 300% B，並非直接處決。 |
+| towerKingSeal | 冥王追擊 | 6% | 12 秒 | 魔法 | 1 秒內追擊主目標四次，每次 65% B；目標死亡後停止，不轉移。 |
+
+### 檢查與待驗收
+
+- tools/test-boss-enchant.js：不讀寫玩家存檔、不連雲端；涵蓋 25 種技能、全費用、材料／封魂石消耗、重複確認、品質保留、舊新存檔、每次行動只抽一次、共鳴隔離、冷卻、護盾、控場、位置閃避、圖鑑／介面、25 種副本模擬、25 種離線量測還原與團隊烙印。
+- 專案 check.ps1 通過 ALL CHECKS PASSED（此執行環境的 PowerShell 原生程序未設定 LASTEXITCODE，先初始化為 0；另直接執行 Node 檢查）。實際 buildDragon 混淆建置通過。
+- 尚待使用者實際手機／PC 畫面、材料附魔→封魂→換武器裝回的操作驗收，以及長時間各職業數值平衡；未發布。
+
+## 69. BOSS 材料單次數量固定一個（2026-10-20，版本 `20261020h`）
+
+- 使用者指定 BOSS 材料及永夜之魂單次只掉一個。monsters.js 中全部 BOSS 材料的 n 統一 [1,1]，包括四大龍鱗、永夜之魂與十王專屬材料，共 26 種。
+- 每種材料仍各自獨立以 0.1% 判定，不受異界加成；本次調整成功時的數量，不改成互斥抽選。團隊副本沿用相同掉落表。其他裝備／通貨數量、既有持有材料及附魔費用不變。
+- 已驗證 26 種材料的機率與數量，附魔整合測試及 check.ps1 通過；尚未發布。
