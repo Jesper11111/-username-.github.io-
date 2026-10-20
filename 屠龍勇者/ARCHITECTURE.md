@@ -9,7 +9,7 @@
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
-| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：41 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：42 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -21,6 +21,7 @@
 | `data/zones.js` | `TOWNS`（4 村）、`ZONES`（狩獵地圖＋龍穴）、`ZONE_BY_ID`、`DRAGON_IDS` |
 | `data/quests.js` | `CLASS_STORIES` 職業故事、`CLASS_QUESTS` 職業任務線、任務獎勵裝備（併入 `ITEMS`）、任務邏輯（第 13 節） |
 | `data/resonance.js` | **共鳴裝備**：`RESONANCE`（31 把武器＋23 件防具／飾品的專屬特效，寫進 `ITEMS[id].res`）、新裝備 `RESONANCE_NEW_ITEMS`／`RESONANCE_ARMOR_ITEMS`、首領／龍／塔掉落與神話配方、戰鬥觸發 `resonanceOnHit`／`resonanceOnHurt`／`resonanceFlush`／`resonanceReady`／`castResonance`、介面 `resonanceHtml`／`resonanceChip`（第 27、28 節） |
+| `data/boss-vfx.js` | **BOSS 特效**：五種專屬 Canvas 動畫、地面／人物後方／前景分層、鍛造無消耗預覽（第 71 節），載入於 boss-enchant 之後 |
 | `data/boss-enchant.js` | **BOSS 附魔／封魂**：25 種 `BOSS_ENCHANTS`、25 種技能封魂石、鍛造入口、直接附魔與封魂移轉、獨立傷害／控場／護盾／延遲事件／原創程序特效（第 68 節）；載入時依賴 items、monsters |
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
@@ -44,7 +45,7 @@
 |---|---|
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
 | `Gemini改遊戲.bat`、`ChatGPT改遊戲.bat` | 雙擊啟動：本機伺服器 8790＋開瀏覽器＋Gemini CLI（`--approval-mode auto_edit`）／OpenAI Codex CLI（自動讀 `AGENTS.md`）；PATH 補 node、npm、GitHub Desktop 的 git |
-| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：41 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
+| `tools/build.js` | **發佈用建置＋混淆**（第 60 節）：42 支 `data/*.js` 接成一支 `data/game.js` 包進函式範圍＋terser 混淆、gm.html 用的接成 `data/gm-lib.js`。由根目錄 `tools/build.js`（GitHub Actions）呼叫 `buildDragon`，開發與測試照舊用原始檔 |
 | `tools/check.ps1` | 改完的自動檢查：JS 語法（`node --check`）、`index.html` 所有 `?v=` 等於 `GAME_VERSION`、每個 `data/*.js` 都有載入、沒有衝突標記；通過印 `ALL CHECKS PASSED` |
 | `index.html` | 版面、全部 CSS、三個畫面（title／create／game）、`<script>` 載入 |
 | `data/config.js` | 版本號、存檔 key、各種常數、遊戲時鐘 `gameNow`、`rand/chance/clamp/fmt`、**天堂經驗表** `expToNext`／`huntExpRate`／`deathLossRate`、經驗倍率 `EXP_RATE`、離線收益常數、`SIM_MODE` |
@@ -97,7 +98,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -107,7 +108,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020h`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261020i`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1999,3 +2000,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 與凡塵修仙傳共用 GA 串流「我的網站」（評估 ID `G-TM576GBMKF`，根目錄 ARCHITECTURE.md 第 90 節），在 GA 報表可用網頁路徑 `/-username-.github.io-/屠龍勇者/` 區分兩款遊戲。
 - `index.html` 的 gtag 程式碼**必須放在清除 `#access_token` 那段腳本之後**：先清網址列的登入憑證，GA 才記錄網址，避免憑證被送到 Google。
 - 只送預設頁面瀏覽，不送存檔／帳號資料；只改 HTML，不換 `?v=`；`sw.js` 只處理同源請求，不影響。gm.html 不放。
+
+## 71. 五種 BOSS 專屬特效與遊戲內預覽（2026-10-20，版本 `20261020i`）
+
+- 使用者選定先植入：蠻牛震擊、冰后寒獄、幽靈砲擊、死神收割、冥王追擊。以原創 Canvas 程序動畫實作，無新增圖片、無更動傷害／機率／費用／存檔結構。其他二十種保留原本火柱／冰晶／弧光等特效。
+- 新檔 data/boss-vfx.js，index 載入於 boss-enchant 後、player 前；BOSS_VFX_IDS 指定五種，bossVfxDuration／Point／Ellipse／Ray／Paint 為純繪圖函式。
+- 蠻牛：金棕色擴散衝擊波、分叉裂紋、碎石彈起。冰后：藍白法陣、九道冰刺、雪點，腳下冰霜跟隨存活敵人，持續至三秒結束。
+- 幽靈砲擊：先畫青色落點圈，bossEnchantTick 真正執行 800ms 延遲傷害時發出 impact 事件，移除預警並畫爆炸、幽靈煙塵與碎片；不以繪圖時間自行造成傷害。
+- 死神：大型鐮刀、兜帽殘影，execute 在傷害前依實際斬殺條件快照，只有低於 25% HP 時使用暗紅色，其他為紫色。
+- 冥王：帶王冠、面甲、肩甲及靈劍的半透明幻影放在角色後方；四次斬光由各 hit 工作真正造成傷害前發出 slash（index 0～3），目標死亡不再出光。100ms 步進時命中為 100／300／500／800ms。
+- bossEnchantVisual 接受 options（phase、pos、targets、index、execute），畫面事件最多十六個，不寫入存檔，SIM_MODE 不生成。
+- sceneDraw 依序：地面特效→首領紅圈→冥王背後幻影→人物怪物→前景特效→名字／血條→飄字；不加入震屏、不鎖人物動作。
+- 村莊鍛造師 → BOSS 附魔 → 五個「特效預覽」按鈕。openBossEnchantPreview 開啟 Canvas 循環預覽；死神每輪切換一般／斬殺色。bossVfxPreviewRun 與 canvas.isConnected 防止切換／關閉後繼續繪圖。drawBossVfxPreview 只畫示範剪影，不生成角色、不扣道具、不讀寫存檔、不連雲端。
+- tools/test-boss-enchant.js 擴充：全部五種動畫在邊界時刻的 Canvas 指令有限座標／透明度／save-restore、預覽前後玩家完全相同、砲擊傷害與事件同步、四連斬時序、斬殺條件快照、冰霜跟隨、前後景呼叫。既有 25 附魔功能與離線／副本模擬仍執行。
+- 驗證：五種特效與既有附魔整合測試通過，check.ps1 顯示 ALL CHECKS PASSED；42 支腳本實際混淆建置通過。尚待使用者手機／PC 實際觀感驗收，未完成瀏覽器截圖或裝置效能量測。

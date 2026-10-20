@@ -954,6 +954,7 @@ function sceneDraw(ctx, W, H) {
         scene.npcRects = scene.bg.hot.map(h => ({ x0: (h.r[0] - ox) * kx, y0: (h.r[1] - oy) * ky, x1: (h.r[2] - ox) * kx, y1: (h.r[3] - oy) * ky, npc: { act: h.act } }));
     }
     if (inTownNow) for (const h of TOWN_HOUSES) drawHouse(ctx, h, camX, camY);
+    drawBossEnchantEffects(ctx, camX, camY, 'ground');
     // 首領大招紅圈：外圈閃爍、內圈隨蓄力時間長大，滿了就爆
     if (scene.tele && scene.tele.ref) {
         const c = scene.tele, t = c.ref, k = clamp((gameNow - t.start) / (t.until - t.start), 0, 1);
@@ -965,6 +966,7 @@ function sceneDraw(ctx, W, H) {
         ctx.strokeStyle = '#ff3a1a'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.75, 0, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1;
     }
+    drawBossEnchantEffects(ctx, camX, camY, 'behind');
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
     if (player.loc.type === 'town' || (scene.bg && scene.bg.fieldNpcs)) scene.npcRects = [];
@@ -1123,6 +1125,7 @@ function sceneDraw(ctx, W, H) {
         ctx.globalAlpha = 1; ctx.lineWidth = 1;
     } else scene.moveMark = null;
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
+    drawBossEnchantEffects(ctx, camX, camY, 'front');
     labels.forEach(f => f());
     // 特效、飄字
     if (scene.moveMark) {   // 點地圖移動的目的地標記
@@ -1163,7 +1166,6 @@ function sceneDraw(ctx, W, H) {
         ctx.fillText(f.text, f.x - camX, sy);
         ctx.globalAlpha = 1; ctx.lineWidth = 1;
     }
-    drawBossEnchantEffects(ctx, camX, camY);
     // 狀態字（停止、步行回村）
     let msg = '';
     if (walkHome) msg = `🚶 步行回${TOWNS[walkHome.town].name}…${Math.ceil((walkHome.until - gameNow) / 1000)} 秒`;

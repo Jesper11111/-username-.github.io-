@@ -127,5 +127,45 @@ const before = mobs[0].hp; bossEnchantDamage(mobs[0], 100, 'towerKingSeal'); ass
 player = ally; gameNow += 5001; assert.equal(bossEnchantDebuffValue(mobs[0], 'mark'), 0);
 mobs = testFight(w, 'antharasScale'); bossEnchantOnHit(mobs[0], calcStats()); gameNow += 4001; assert.equal(bossEnchantAbsorb(100), 100);
 chance = oldChance;
+
+// 五種新特效：Canvas 指令、預覽不變更存檔、實際命中時間與斬殺顏色快照。
+let canvasDepth = 0, canvasCalls = 0;
+const paint = new Proxy({}, {
+    get(o, k) {
+        if (k in o) return o[k];
+        if (k === 'save') return () => { canvasDepth++; };
+        if (k === 'restore') return () => { assert(canvasDepth > 0, 'Canvas restore 不平衡'); canvasDepth--; };
+        if (k === 'createLinearGradient' || k === 'createRadialGradient') return (...args) => { args.forEach(n => assert(Number.isFinite(n))); return { addColorStop() {} }; };
+        return (...args) => { for (const n of args) if (typeof n === 'number') assert(Number.isFinite(n), '非有限畫布座標'); canvasCalls++; };
+    },
+    set(o, k, v) { if (k === 'globalAlpha') assert(v >= 0 && v <= 1, '透明度超界'); o[k] = v; return true; }
+});
+const beforePreview = JSON.stringify(player);
+for (const id of BOSS_VFX_IDS) for (const t of [0, 100, 300, 500, 799, 800, 900, 1099, 1200, 1400, 2999, 3000, 3999]) {
+    for (const execute of [false, true]) drawBossVfxPreview(paint, id, t, execute);
+    assert.equal(canvasDepth, 0);
+}
+assert.equal(JSON.stringify(player), beforePreview); assert(canvasCalls > 1000);
+SIM_MODE = false; chance = () => true;
+w = testPlayer(); mobs = testFight(w, 'pirateTreasure'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
+let hp = mobs[0].hp; bossEnchantOnHit(mobs[0], calcStats());
+assert.equal(scene.bossEnchantFx[0].phase, 'start'); assert.equal(mobs[0].hp, hp);
+gameNow += 799; bossEnchantTick(calcStats()); assert.equal(mobs[0].hp, hp); assert(!scene.bossEnchantFx.some(f => f.phase === 'impact'));
+gameNow++; bossEnchantTick(calcStats()); assert(mobs[0].hp < hp); assert(scene.bossEnchantFx.some(f => f.phase === 'impact' && f.at === gameNow)); assert(scene.bossEnchantFx[0].done);
+w = testPlayer(); mobs = testFight(w, 'towerKingSeal'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
+bossEnchantOnHit(mobs[0], calcStats());
+for (const dt of [100, 200, 200, 300]) { gameNow += dt; bossEnchantTick(calcStats()); }
+let slashes = scene.bossEnchantFx.filter(f => f.phase === 'slash'); assert.equal(slashes.length, 4); assert.equal(slashes.map(f => f.index).join(','), '0,1,2,3');
+assert.equal(slashes.map(f => f.at - 10000).join(','), '100,300,500,800');
+for (const low of [false, true]) {
+    w = testPlayer(); mobs = testFight(w, 'towerDeathShard'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) }; mobs[0].hp = low ? 24000 : 26000;
+    bossEnchantOnHit(mobs[0], calcStats()); assert.equal(scene.bossEnchantFx[0].execute, low);
+    gameNow += 100; drawBossEnchantEffects(paint, 0, 0, 'ground'); drawBossEnchantEffects(paint, 0, 0, 'front'); assert.equal(canvasDepth, 0);
+}
+w = testPlayer(); mobs = testFight(w, 'towerIceCrown'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) }; bossEnchantOnHit(mobs[0], calcStats()); scene.mons[0].x = 8;
+gameNow += 200; drawBossEnchantEffects(paint, 0, 0, 'ground'); assert.equal(scene.bossEnchantFx[0].frost[0].x, 8);
+assert(bossVfxPreviewButtons().includes('openBossEnchantPreview')); assert(renderBossEnchantForge().includes('不消耗材料'));
+SIM_MODE = true; chance = oldChance;
+console.log('PASS：五種特效 Canvas 指令、前後景圖層、無消耗預覽、砲擊 800ms 同步、四連斬命中同步、斬殺顏色快照與冰霜跟隨。');
 console.log('PASS：25 技能傷害／範圍／延遲、全費用、材料消耗、封魂往返防重複、舊新存檔、共鳴隔離、每次行動只抽一次、換武器冷卻、控場／護盾、UI／圖鑑。');
 `, ctx);

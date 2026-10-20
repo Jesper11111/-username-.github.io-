@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261020h';
+const GAME_VERSION = '20261020i';
 const BOSS_MATERIAL_DROP_P = 0.001; // BOSS 材料固定掉落率 0.1%，不受異界掉落加成影響
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴

@@ -88,7 +88,7 @@ function renderBossEnchantForge() {
         (slotOfEquipped(x.uid) ? ' <small class="good">裝備中</small>' : '') + '<small>目前附魔：' +
         (BOSS_ENCHANTS[x.bossEnchant] ? esc(BOSS_ENCHANTS[x.bossEnchant].name) : '無') + '</small></div><button onclick="openBossEnchantWeapon(' + x.uid + ')">選擇</button></div>').join('');
     return '<div class="panel"><h4>🔱 BOSS 附魔與封魂</h4><p>每把武器限一種附魔，必定成功。更換會覆蓋原附魔；想保留請先封魂。</p>' +
-        '<small>一般 BOSS：100 萬｜塔 10～50F：200 萬｜塔 60～100F：400 萬｜四龍：500 萬。封魂、裝回各 50 萬。</small></div><div class="list">' +
+        '<small>一般 BOSS：100 萬｜塔 10～50F：200 萬｜塔 60～100F：400 萬｜四龍：500 萬。封魂、裝回各 50 萬。</small><h4>🎬 特效預覽（不消耗材料）</h4>' + bossVfxPreviewButtons() + '</div><div class="list">' +
         (rows || '<p class="muted">背包與身上沒有武器。</p>') + '</div>';
 }
 function openBossEnchantWeapon(uid) {
@@ -258,13 +258,14 @@ function bossEnchantOnHit(mon, st) {
     player.cds._bossEnchant = gameNow + r.cd * 1000;
     const base = bossEnchantBase(st), center = bossEnchantCenter(mon, r.selfArea);
     const targets = r.area || r.splash ? bossEnchantTargets(mon, center, r.cap) : [mon];
+    bossEnchantVisual(id, mon, { phase: 'start', targets, execute: !!(r.execute && mon.hp < mon.maxHp * .25) });
     if (r.delay) rt.jobs.push({ type: 'blast', id, mon, center, base, at: gameNow + r.delay });
     else if (r.hits) {
         const list = r.spread ? bossEnchantTargets(mon, null, 5) : [mon];
         for (let i = 0; i < r.hits; i++) {
             const target = r.spread ? list[i % list.length] : mon;
             if (r.spread) bossEnchantDamage(target, base * r.hit, id);
-            else rt.jobs.push({ type: 'hit', id, mon: target, base: base * r.hit, at: gameNow + i * 250 });
+            else rt.jobs.push({ type: 'hit', id, mon: target, base: base * r.hit, index: i, at: gameNow + i * 250 });
         }
     } else {
         for (const m of targets) {
@@ -287,7 +288,6 @@ function bossEnchantOnHit(mon, st) {
     if (r.regen) rt.jobs.push({ type: 'regen', id, base: Math.max(1, Math.round(st.maxHp * r.regen)), left: r.healTicks, at: gameNow + 1000 });
     addLog('🔱 發動附魔「' + r.name + '」', 'magic');
     sfx(/冰|寒/.test(r.name) ? 'magic-ice' : 'magic-cast');
-    bossEnchantVisual(id, mon);
 }
 function bossEnchantTick(st) {
     const rt = bossEnchantRuntime();
@@ -295,9 +295,11 @@ function bossEnchantTick(st) {
     for (const job of rt.jobs.slice()) {
         while (job.at <= gameNow && rt.jobs.includes(job)) {
             if (job.type === 'blast' || job.type === 'field') {
+                if (job.type === 'blast') bossEnchantVisual(job.id, job.mon, { phase: 'impact', pos: job.center });
                 for (const m of bossEnchantTargets(job.mon, job.center, 5)) bossEnchantDamage(m, job.base * (job.type === 'blast' ? BOSS_ENCHANTS[job.id].area : 1), job.id);
             } else if (job.type === 'regen') player.hp = Math.min(st.maxHp, player.hp + job.base);
             else if (job.mon.hp > 0 && hunt.mobs.includes(job.mon)) {
+                if (job.type === 'hit' && job.id === 'towerKingSeal') bossEnchantVisual(job.id, job.mon, { phase: 'slash', index: job.index });
                 bossEnchantDamage(job.mon, job.base, job.id);
                 if (job.type === 'dot' && job.left === 1 && job.mon.hp > 0 && BOSS_ENCHANTS[job.id].finishHeal) player.hp = Math.min(st.maxHp, player.hp + Math.max(1, Math.round(st.maxHp * BOSS_ENCHANTS[job.id].finishHeal)));
             } else { rt.jobs.splice(rt.jobs.indexOf(job), 1); break; }
@@ -306,46 +308,19 @@ function bossEnchantTick(st) {
         }
     }
 }
-function bossEnchantVisual(id, mon) {
+function bossEnchantVisual(id, mon, options = {}) {
     if (SIM_MODE || typeof scene === 'undefined' || !scene) return;
     if (!scene.bossEnchantFx) scene.bossEnchantFx = [];
-    scene.bossEnchantFx.push({ id, pos: bossEnchantPosition(mon), at: gameNow });
-    if (scene.bossEnchantFx.length > 6) scene.bossEnchantFx.shift();
+    const phase = options.phase || 'start';
+    if (phase === 'impact') for (const f of scene.bossEnchantFx) if (f.id === id && f.phase === 'start') f.done = true;
+    scene.bossEnchantFx.push({ id, phase, pos: options.pos || bossEnchantPosition(mon),
+        origin: scene.pl ? { x: scene.pl.x, y: scene.pl.y } : null, targets: options.targets,
+        index: options.index || 0, execute: !!options.execute, at: gameNow });
+    if (scene.bossEnchantFx.length > 16) scene.bossEnchantFx.shift();
 }
 function bossEnchantChip() {
     const w = bossEnchantCurrent();
     if (!w) return '';
     const left = Math.ceil(Math.max(0, (player.cds._bossEnchant || 0) - gameNow) / 1000);
     return '<span class="chip res-chip" title="' + esc(BOSS_ENCHANT_TEXT[w.bossEnchant]) + '">🔱 ' + esc(BOSS_ENCHANTS[w.bossEnchant].name) + ' ' + (left ? left + '秒' : '待命') + '</span>';
-}
-
-// 原創程序特效：圓陣、火柱、冰晶、風刃與追擊幻影；沿用畫布，不載入額外圖片。
-function drawBossEnchantEffects(ctx, camX, camY) {
-    if (!scene || !scene.bossEnchantFx) return;
-    scene.bossEnchantFx = scene.bossEnchantFx.filter(f => gameNow - f.at < 1400);
-    for (const f of scene.bossEnchantFx) {
-        if (!f.pos) continue;
-        const r = BOSS_ENCHANTS[f.id], age = (gameNow - f.at) / 1400;
-        const x = (f.pos.x + .5) * TILE - camX, y = (f.pos.y + .5) * TILE - camY;
-        const ice = /冰|寒/.test(r.name), fire = /火|炎|燃/.test(r.name), wind = /風/.test(r.name);
-        const color = ice ? '#a5edff' : fire ? '#ff9a46' : wind ? '#8effc0' : r.kind === 'physical' ? '#ffd37a' : '#c5a0ff';
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, 1 - age);
-        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(x, y + 5, 18 + age * 42, 8 + age * 18, 0, 0, Math.PI * 2); ctx.stroke();
-        if (fire || /裁決/.test(r.name)) {
-            const g = ctx.createLinearGradient(x, y - 72, x, y + 8);
-            g.addColorStop(0, 'transparent'); g.addColorStop(1, color);
-            ctx.fillStyle = g; ctx.fillRect(x - 9, y - 72, 18, 80);
-        } else if (ice) {
-            for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 32, y + Math.sin(a) * 24); ctx.stroke(); }
-        } else if (r.hits) {
-            for (let i = 0; i < r.hits; i++) { ctx.beginPath(); ctx.arc(x, y - 10, 18 + i * 5, age * 5 + i, age * 5 + i + 1.3); ctx.stroke(); }
-        } else {
-            ctx.beginPath(); ctx.moveTo(x - 22, y - 25); ctx.lineTo(x, y + 4); ctx.lineTo(x + 20, y - 35); ctx.stroke();
-        }
-        ctx.fillStyle = color; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(r.name, x, y - 38 - age * 18);
-        ctx.restore();
-    }
 }
