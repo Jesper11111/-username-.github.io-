@@ -17,7 +17,8 @@ const TABS = {
 };
 
 function enterGame() {
-    lootLog.length = 0; lastLootRendered = -1;
+    lootLog.length = 0; lootLogSeq = 0; lastLootRendered = -1;
+    syncLogPopTab();
     showScreen('game');
     openTabs = []; currentTab = 'hunt';
     layoutFrame();

@@ -97,6 +97,7 @@
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節；12 個地圖合併、6016×4768＝188×149 格，第 67 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
 | `tools/test-shop-buy.js` | 自訂購買數量隔離測試：整數／金額驗證、金幣與負重、裝備逐件建立、離村拒絕舊視窗（第 75 節；不發佈） |
 | `tools/test-log-drawer.js` | 訊息框定位回歸測試：PC 頂端樓層按鈕不推高訊息框、手機避開操作列（第 76 節；不發佈） |
+| `tools/test-loot-log.js` | 掉落紀錄隔離整合測試：實際掉落／超重／自動賣出／任務／地圖、分頁與模擬隔離（第 77 節；不發佈） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 60 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -113,7 +114,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021i`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -408,6 +409,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 - 狩獵畫面（`renderHunt` → `huntViewHtml`）中間是 `<canvas id="scene-canvas">`，下方是操作按鈕、補給／效率；戰鬥訊息改到左下骷髏頭的抽屜。
 - **戰鬥訊息抽屜**（2026-10-09 改版）：開關是外框**左下、紅球下方的骷髏頭** `#skull-log`（手機原圖 x 15～120、y 1870～1985；PC 原圖 x 5～100、y 1010～1110，右下角有 📜 小標，打開時發金光）。
   點了 `toggleLogDrawer()` 讓 `#log-pop`（`index.html` 的靜態元素，不隨分頁重畫）從下往上滑出，顯示最近 30 行（`#hunt-log`），右上 ✕ 或再點骷髏頭收回。
+  20261021h 新增第三分頁「🎁 掉落紀錄」，獨立顯示最近 120 筆本次遊戲打怪道具／自動賣出，詳第 77 節。
   `renderLogPop()` 由 `renderStatus()` 每 250ms 呼叫：切換開關樣式、有新訊息才重畫；手機狩獵畫面看得到時把抽屜貼在操作列（`.hunt-ctrl`）上方，不蓋住按鈕，其他分頁用 CSS 預設位置。PC 自 20261021g 固定用左下 CSS 定位，不跟隨頂端樓層按鈕（第 76 節）。
   開關狀態存這台裝置的 `localStorage`（key `dragonSlayer_logOpen`），不進存檔。原本操作列裡的把手、最新一行與「💀 點下方骷髏頭…」虛線提示框都已移除。
   進入遊戲後一律顯示這個畫面；「地圖」（傳送清單）只在按右柱抽屜或村莊傳送師時才打開，不會自動彈出。
@@ -2122,3 +2124,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - tools/test-log-drawer.js 隔離 DOM 回歸通過：PC 頂端操作列不影響定位、清除舊位置、手機避開操作列、關閉及切頁恢復 CSS；不讀寫真實存檔、不連雲端。
 - 使用者另指定左側系統按鈕擋住地名／buff。ui-frame.js 的 PC_SLOTS 六顆 side 按鈕由原圖 y 38／104／170／236／302／368，統一下移 222 至 260／326／392／458／524／590，尺寸、順序與功能不變；整排位於增益圖示下方，底端 y 648 仍在血球與底部列上方。第 19、32 節記載的舊 y 值由此取代。
 - 最終 g 版瀏覽器本機 PC 1280×720：第一顆系統按鈕 top 169px（原 27px），地名及 buff 區 top 51px 留出空間，訊息框 x 59／y 320，Console 無 error／warn；既有未登入測試角色金幣與藥水不變。check.ps1 與定位回歸測試通過。永夜之塔的頂端操作列以隔離 DOM 測試驗證，仍待使用者實際在塔內驗收。
+
+## 77. 獨立掉落紀錄分頁（2026-10-21，版本 `20261021h`）
+
+- 使用者指定左下訊息框「聊天」右邊新增「🎁 掉落紀錄」。index.html 新增 lp-tab-loot／hunt-loot；標題分頁可換行以容納窄畫面。chat.js 的 logPopTab／setLogPopTab／syncLogPopTab 擴充 loot，沿用本機 dragonSlayer_logTab 記住分頁；不觸發聊天輪詢。
+- player.js 新全域 lootLog、addLootLog(msg, cls)。20261021i 依使用者更正，掉落／自動賣出只寫 lootLog，不再重複寫入 gameLog；獨立編號 lootLogSeq，保留最近 120 筆，攻擊洗頻不影響；SIM_MODE 不寫獨立紀錄。只存在記憶體，重新進入角色（enterGame）清空；不改 player 存檔或 SAVE_SCHEMA。
+- combat 的成功入袋與戰利品過濾自動賣出改用 addLootLog；前者明列 ×數量並保留品質／詞綴，超重未取得不記。giveMap（隨機地圖／異界通關獎勵）、questOnKill 的收集任務道具亦接入。商店／倉庫／交易所／任務回報獎勵不混入打怪掉落，不更改掉率／亂數／數值。
+- ui-panels.js 新 lastLootRendered、renderLootLog：依最後掉落編號更新靜態 hunt-loot、自動捲到底，所有文字 esc；無紀錄時說明本次遊戲與 120 筆限制。renderLogPop 沿用定位並依分頁選擇渲染，enterGame 同步三分頁顯示。
+- tools/test-loot-log.js 整合測試通過：真實掉落／數量、超重排除、自動賣出、傳說、地圖、任務、戰鬥洗頻獨立、120 筆上限、SIM 隔離、HTML 跳脫、三分頁與重新進入清空。瀏覽器既有未登入角色實際切換三分頁，掉落空狀態／聊天登入提示／戰鬥紀錄互不混入，Console 無 error／warn；未修改或上傳角色數值。
