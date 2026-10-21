@@ -153,9 +153,9 @@ function renderLogPop() {
     if (!pop || !player) return;
     pop.classList.toggle('open', logDrawerOpen);
     if (btn) btn.classList.toggle('open', logDrawerOpen);
-    // 狩獵畫面看得到時，抽屜貼在操作列（回家卷軸）上方，不蓋住按鈕；其他分頁用 CSS 預設位置
+    // PC 固定在左下；手機狩獵時貼在底部操作列上方，其他分頁用 CSS 預設位置
     const ctrl = document.querySelector('#panel .hunt-ctrl'), fr = $('frame');
-    if (logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
+    if (!isPcFrame() && logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
         pop.style.bottom = Math.round(fr.getBoundingClientRect().bottom - ctrl.getBoundingClientRect().top + 4) + 'px';
     } else pop.style.bottom = '';
     const logBox = $('hunt-log');

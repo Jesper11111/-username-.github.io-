@@ -95,6 +95,8 @@
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節；12 個地圖合併、6016×4768＝188×149 格，第 67 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
+| `tools/test-shop-buy.js` | 自訂購買數量隔離測試：整數／金額驗證、金幣與負重、裝備逐件建立、離村拒絕舊視窗（第 75 節；不發佈） |
+| `tools/test-log-drawer.js` | 訊息框定位回歸測試：PC 頂端樓層按鈕不推高訊息框、手機避開操作列（第 76 節；不發佈） |
 | `sounds/` | 音效 mp3（23 個，Freesound CC0＋Mixkit 免費授權），來源與用途在 `sounds/CREDITS.md`（第 44 節） |
 | `music/` | 背景音樂 m4a（AAC 128kbps）：`field1.m4a`／`field2.m4a`＝使用者給的「遊戲音樂」「遊戲音樂2」（野外）、`town1.m4a`＝「城鎮音樂」（村莊）（第 44 節） |
 | `tools/` | 開發工具（遊戲不載入）：`supabase.sql` 雲端存檔與團隊副本的資料表、RLS 規則（貼到 Supabase SQL Editor，第 29 節）；`anticheat.sql` 交易所門檻＋雲端存檔簽章＋改檔標記（第 60 節，也附在 `supabase.sql` 最後）；`client-version.sql` 擋舊版遊戲上傳（第 29 節「刪除角色」，也附在 `supabase.sql` 最後）；`vault.sql` 共用倉庫／鑽石／離線掛機（第 38 節）；`wipe.sql` 正式上線刪檔用（第 37 節）；`cut-sprites.ps1` 切人物動作表、`sprite-src/` 原圖與裁切規格（第 18.1 節）；`stage/npc-cut.ps1` 野外 NPC 去背（第 55 節）；`cut-icons.ps1` 切技能圖示大圖、`icon-src/` 原圖（第 41 節）；`bigmap/` 大地圖的原圖（含南排 `mine.jpg` 礦坑、`dragon-cave.jpg` 龍窟）、拼圖 `build-map.ps1`、可走範圍與遮擋設定 `walk.json`、檢查圖 `check-mask.ps1`、遮擋深度圖 `build-occ.ps1`（第 45、46 節） |
@@ -111,7 +113,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021f`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -406,7 +408,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 - 狩獵畫面（`renderHunt` → `huntViewHtml`）中間是 `<canvas id="scene-canvas">`，下方是操作按鈕、補給／效率；戰鬥訊息改到左下骷髏頭的抽屜。
 - **戰鬥訊息抽屜**（2026-10-09 改版）：開關是外框**左下、紅球下方的骷髏頭** `#skull-log`（手機原圖 x 15～120、y 1870～1985；PC 原圖 x 5～100、y 1010～1110，右下角有 📜 小標，打開時發金光）。
   點了 `toggleLogDrawer()` 讓 `#log-pop`（`index.html` 的靜態元素，不隨分頁重畫）從下往上滑出，顯示最近 30 行（`#hunt-log`），右上 ✕ 或再點骷髏頭收回。
-  `renderLogPop()` 由 `renderStatus()` 每 250ms 呼叫：切換開關樣式、有新訊息才重畫；狩獵畫面看得到時把抽屜貼在操作列（`.hunt-ctrl`）上方，不蓋住按鈕，其他分頁用 CSS 預設位置。
+  `renderLogPop()` 由 `renderStatus()` 每 250ms 呼叫：切換開關樣式、有新訊息才重畫；手機狩獵畫面看得到時把抽屜貼在操作列（`.hunt-ctrl`）上方，不蓋住按鈕，其他分頁用 CSS 預設位置。PC 自 20261021f 固定用左下 CSS 定位，不跟隨頂端樓層按鈕（第 76 節）。
   開關狀態存這台裝置的 `localStorage`（key `dragonSlayer_logOpen`），不進存檔。原本操作列裡的把手、最新一行與「💀 點下方骷髏頭…」虛線提示框都已移除。
   進入遊戲後一律顯示這個畫面；「地圖」（傳送清單）只在按右柱抽屜或村莊傳送師時才打開，不會自動彈出。
 - **只負責畫面**：戰鬥結果仍由 `combat.js` 決定（尋怪 0.6～1.6 秒、命中、傷害），所以離線收益與平衡模擬都不受影響。
@@ -2111,3 +2113,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - index.html 的 PC #overlay 頂端從原圖 y 300（多視窗 120）移到 y 40，底端仍 y 816，單視窗高度 516→776（約增加五成）；地圖、商店等標準分頁及二／三視窗皆適用。原有 sticky 標題、各自捲動、關閉鍵與人物大面板規則保留；手機樣式不變。
 - 新增開發工具 tools/test-shop-buy.js（遊戲及發佈包不載入）：隔離角色、禁止寫存檔／連線，驗證自訂 37 個、逐件裝備、金幣／負重限制、最大購買量、非法輸入／金額溢位、離村後拒絕舊視窗。
 - 瀏覽器以既有未登入的本機測試角色確認商店輸入 37 顯示總價 740、最多 15 個；輸入 0 購買提示修正，金幣仍 300、藥水仍 30，未執行有效扣款。PC 地圖面板已實際加高，三視窗並排各有關閉鍵，地圖／技能可捲動；Console 無 error／warn。有效扣款由隔離 VM 測試驗證，待使用者實玩驗收後 commit。
+- tools/test-shop-buy.js 與 check.ps1 全通過（ALL CHECKS PASSED）；實際 43 支腳本混淆建置完成，合併後 JS 語法通過。
+
+## 76. 戰鬥訊息框固定左下（2026-10-21，版本 `20261021f`）
+
+- 使用者確認要修正左下骷髏頭的戰鬥訊息框。renderLogPop 原先不分畫面模式，會把訊息框貼在 hunt-ctrl 上方；PC 永夜之塔上下樓／取消步行按鈕在左上，使訊息框被推高，甚至超出畫面。
+- PC 不再寫入依操作列推算的 bottom，並清除舊的 inline bottom，回用既有左下 CSS（原圖 left 92、bottom 290、width 760、height 330）；手機仍貼在底部操作列上方。僅修定位，不改聊天入口、面板高度、戰鬥及存檔。
+- tools/test-log-drawer.js 隔離 DOM 回歸通過：PC 頂端操作列不影響定位、清除舊位置、手機避開操作列、關閉及切頁恢復 CSS；不讀寫真實存檔、不連雲端。
