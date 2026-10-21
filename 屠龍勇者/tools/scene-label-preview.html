@@ -1,0 +1,16 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>怪物腳下名稱檢查</title>
+<style>body{background:#171b20;color:#eee;font:16px sans-serif;margin:20px}main{display:flex;gap:14px;flex-wrap:wrap}canvas{width:340px;height:300px;border:1px solid #997744}h2{color:#edcc84}</style>
+<h2>怪物名稱與等級・移到腳下</h2><p>實際遊戲繪圖函式，血條保持上方；不載入存檔或雲端。</p><main id="examples"></main><pre id="result"></pre>
+<script>
+(async()=>{
+const files=['config','classes','skills','items','spellbook','monsters','zones','quests','resonance','boss-enchant','boss-vfx','world-vfx','player','guard','affix','maps','combat','ui','presence','ui-scene'];
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='../data/'+f+'.js?v=20261021k';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('測試玩家','knight',CLASSES.knight.base);player.loc={type:'zone',id:'tower',floor:100};player.hunting=true;
+const samples=[['一般怪','skeleton','骷髏士兵',false,false],['精英','tombGuardian','墓穴守衛',false,true],['首領','none','冥法軍王（100F）',true,false]];
+for(const[title,mid,name,boss,elite]of samples){const box=document.createElement('section');box.innerHTML='<h3>'+title+'</h3><canvas width="340" height="300"></canvas>';document.getElementById('examples').append(box);}
+function draw(){let i=0;for(const[title,mid,name,boss,elite]of samples){buildScene();scene.bg=null;scene.gates=null;scene.mons=[];scene.pl.x=scene.pl.rx=14;scene.pl.y=scene.pl.ry=14;scene.pl.path=[];
+const m={x:14,rx:14,y:13,ry:13,mid,icon:boss?'👑':'💀',face:'down',atk:0,inst:{name,lv:boss?92:50,hp:80,maxHp:100,boss,elite}};scene.mons=[m];scene.engaged=m;
+sceneDraw(document.querySelectorAll('canvas')[i++].getContext('2d'),340,300);}}
+draw();setInterval(draw,500);document.getElementById('result').textContent='三種怪物皆使用 sceneDraw；名稱位於腳底下方 16px。';
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>

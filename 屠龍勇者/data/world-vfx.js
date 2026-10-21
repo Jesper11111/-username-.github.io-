@@ -121,7 +121,7 @@ function worldVfxLoot(mon, item, inst) {
 }
 // 武器區域以原角色格子的比例定義，再依該格的實際像素／色彩裁切；不再把光圈掛在估算手邊。
 const WORLD_WEAPON_AREAS = {
-    royal: { tone:'steel', walk:[[[.08,.48,.27,.5]],[[.5,.5,.49,.46]],[[.02,.45,.25,.43],[.74,.45,.25,.43]]] },
+    royal: { tone:'steel', walk:[[[.30,.65,.21,.99,.025]],[[.5,.5,.49,.46]],[[.02,.45,.25,.43],[.74,.45,.25,.43]]] },
     knight: { tone:'steel', walk:[[[.06,.46,.3,.52]],[[.5,.5,.49,.45]],[[.65,.46,.34,.47]]] },
     mage: { tone:'blue', walk:[[[.65,.08,.34,.68]],[[.58,.4,.41,.5]],[[.64,.02,.35,.6]]] },
     elf: { tone:'wood', walk:[[[.08,.57,.85,.23]],[[.35,.36,.62,.47]],[[.58,.48,.4,.37]]], attack:[[[.66,.12,.22,.69]],[[.65,.1,.29,.68]],[[.57,.12,.29,.64]]] },
@@ -142,7 +142,7 @@ function worldWeaponPixel(tone, r, g, b) {
     if (tone === 'blue') return steel || (b > 80 && b > r * 1.18 && g > 45);
     if (tone === 'purple') return r > 65 && b > 85 && b > g * 1.2;
     if (tone === 'red') return r > 95 && r > g * 1.45 && r > b * 1.12;
-    if (tone === 'wood') return r > 65 && g > 50 && r > b * 1.15;
+    if (tone === 'wood') return r > 65 && g > 50 && r >= g * .97 && r > b * 1.15;
     return (b > 95 && b > r * 1.15) || (r > 110 && r > b * 1.25);
 }
 function worldWeaponMask(info, dir) {
@@ -163,7 +163,11 @@ function worldWeaponMask(info, dir) {
     if (info.action === 'hit') areas = [[0,.35,.35,.56],[.65,.28,.35,.6]];
     for (let y=0;y<a.cellH;y++) for (let x=0;x<a.cellW;x++) {
         const i=(y*a.cellW+x)*4, u=(x+.5)/a.cellW, v=(y+.5)/a.cellH;
-        const inside=areas.some(q=>u>=q[0]&&v>=q[1]&&u<=q[0]+q[2]&&v<=q[1]+q[3]);
+        const inside=areas.some(q=>{
+            if(q.length===4)return u>=q[0]&&v>=q[1]&&u<=q[0]+q[2]&&v<=q[1]+q[3];
+            const dx=q[2]-q[0],dy=q[3]-q[1],t=Math.max(0,Math.min(1,((u-q[0])*dx+(v-q[1])*dy)/(dx*dx+dy*dy)));
+            return Math.hypot(u-q[0]-t*dx,v-q[1]-t*dy)<=q[4];
+        });
         if (!inside || !worldWeaponPixel(spec.tone,im.data[i],im.data[i+1],im.data[i+2])) im.data[i+3]=0;
         im.data[i]=im.data[i+1]=im.data[i+2]=255;
     }

@@ -36,6 +36,8 @@ function codexGradeOf(id) {
 }
 function codexIdOf(d) { return Object.keys(ITEMS).find(k => ITEMS[k] === d); }
 function codexIcon(d) {
+    const id = codexIdOf(d);
+    if (id) return itemIconHtml(id);
     if (d.cat === 'weapon') return CODEX_WEAPON_ICONS[d.type] || '⚔️';
     if (d.cat === 'armor') return CODEX_SLOT_ICONS[d.slot] || '🛡️';
     if (d.cat === 'currency') return CURRENCY[codexIdOf(d)].icon;

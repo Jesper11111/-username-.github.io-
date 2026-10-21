@@ -1,0 +1,2181 @@
+{
+  "total": 255,
+  "batches": [
+    {
+      "id": "items-01",
+      "items": [
+        {
+          "id": "dagger",
+          "name": "匕首",
+          "cat": "weapon",
+          "type": "dagger",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "silverDagger",
+          "name": "銀匕首",
+          "cat": "weapon",
+          "type": "dagger",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "darkDagger",
+          "name": "暗影匕首",
+          "cat": "weapon",
+          "type": "dagger",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "shortSword",
+          "name": "短劍",
+          "cat": "weapon",
+          "type": "sword",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "longSword",
+          "name": "長劍",
+          "cat": "weapon",
+          "type": "sword",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "silverSword",
+          "name": "銀長劍",
+          "cat": "weapon",
+          "type": "sword",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "katana",
+          "name": "武士刀",
+          "cat": "weapon",
+          "type": "sword",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "tsurugi",
+          "name": "瑟魯基之劍",
+          "cat": "weapon",
+          "type": "sword",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "dragonSlayer",
+          "name": "屠龍劍",
+          "cat": "weapon",
+          "type": "sword",
+          "desc": "傳說中斬殺巨龍的劍，對龍族傷害 ×1.5",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "twoHandSword",
+          "name": "雙手劍",
+          "cat": "weapon",
+          "type": "twohand",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "dkFlameSword",
+          "name": "死亡騎士的烈炎之劍",
+          "cat": "weapon",
+          "type": "twohand",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "handAxe",
+          "name": "手斧",
+          "cat": "weapon",
+          "type": "axe",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "battleAxe",
+          "name": "巨斧",
+          "cat": "weapon",
+          "type": "axe",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "demonAxe",
+          "name": "惡魔之斧",
+          "cat": "weapon",
+          "type": "axe",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "spear",
+          "name": "長矛",
+          "cat": "weapon",
+          "type": "spear",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "trident",
+          "name": "三叉戟",
+          "cat": "weapon",
+          "type": "spear",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-02",
+      "items": [
+        {
+          "id": "mace",
+          "name": "釘錘",
+          "cat": "weapon",
+          "type": "blunt",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "warHammer",
+          "name": "戰錘",
+          "cat": "weapon",
+          "type": "blunt",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "holyMace",
+          "name": "聖光之錘",
+          "cat": "weapon",
+          "type": "blunt",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "shortBow",
+          "name": "短弓",
+          "cat": "weapon",
+          "type": "bow",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "longBow",
+          "name": "長弓",
+          "cat": "weapon",
+          "type": "bow",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elvenBow",
+          "name": "精靈之弓",
+          "cat": "weapon",
+          "type": "bow",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "windBow",
+          "name": "風之弓",
+          "cat": "weapon",
+          "type": "bow",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "matchlock",
+          "name": "火繩槍",
+          "cat": "weapon",
+          "type": "gun",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "rifle",
+          "name": "來福槍",
+          "cat": "weapon",
+          "type": "gun",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "magicSniper",
+          "name": "魔導狙擊槍",
+          "cat": "weapon",
+          "type": "gun",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "oakWand",
+          "name": "橡木魔杖",
+          "cat": "weapon",
+          "type": "staff",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "crystalWand",
+          "name": "水晶魔杖",
+          "cat": "weapon",
+          "type": "staff",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "manaWand",
+          "name": "瑪那魔杖",
+          "cat": "weapon",
+          "type": "staff",
+          "desc": "攻擊命中時吸取 MP",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "iceQueenStaff",
+          "name": "冰之女王魔杖",
+          "cat": "weapon",
+          "type": "staff",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "claw",
+          "name": "鋼爪",
+          "cat": "weapon",
+          "type": "claw",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "darkClaw",
+          "name": "暗黑鋼爪",
+          "cat": "weapon",
+          "type": "claw",
+          "res": true,
+          "existing": true
+        }
+      ]
+    },
+    {
+      "id": "items-03",
+      "items": [
+        {
+          "id": "dualBlade",
+          "name": "雙刀",
+          "cat": "weapon",
+          "type": "dual",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "reaperScythe",
+          "name": "收割者鐮刀",
+          "cat": "weapon",
+          "type": "scythe",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "boneScythe",
+          "name": "骨鐮",
+          "cat": "weapon",
+          "type": "scythe",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "abyssScythe",
+          "name": "深淵鐮刀",
+          "cat": "weapon",
+          "type": "scythe",
+          "desc": "吸血 +3%",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "darkDual",
+          "name": "暗黑雙刀",
+          "cat": "weapon",
+          "type": "dual",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "royalSword",
+          "name": "王者之劍",
+          "cat": "weapon",
+          "type": "sword",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "royalKingSword",
+          "name": "君主之劍",
+          "cat": "weapon",
+          "type": "sword",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "knightSword",
+          "name": "紅騎士之劍",
+          "cat": "weapon",
+          "type": "twohand",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "knightOathSword",
+          "name": "誓約之劍",
+          "cat": "weapon",
+          "type": "twohand",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "mageStaff",
+          "name": "智慧之杖",
+          "cat": "weapon",
+          "type": "staff",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mageArchStaff",
+          "name": "大賢者之杖",
+          "cat": "weapon",
+          "type": "staff",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "elfBow",
+          "name": "妖精女王之弓",
+          "cat": "weapon",
+          "type": "bow",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elfWorldBow",
+          "name": "世界樹之弓",
+          "cat": "weapon",
+          "type": "bow",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "darkElfClaw",
+          "name": "淬毒鋼爪",
+          "cat": "weapon",
+          "type": "claw",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "darkDualBlades",
+          "name": "夜影雙刀",
+          "cat": "weapon",
+          "type": "dual",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "shuraClaw",
+          "name": "鬼刃之爪",
+          "cat": "weapon",
+          "type": "claw",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-04",
+      "items": [
+        {
+          "id": "shuraDualBlades",
+          "name": "阿修羅雙刀",
+          "cat": "weapon",
+          "type": "dual",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "warAxe",
+          "name": "遠古戰斧",
+          "cat": "weapon",
+          "type": "axe",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "warTitanAxe",
+          "name": "泰坦巨斧",
+          "cat": "weapon",
+          "type": "axe",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "gunRifle",
+          "name": "精工火槍",
+          "cat": "weapon",
+          "type": "gun",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "gunDragonGun",
+          "name": "屠龍之槍",
+          "cat": "weapon",
+          "type": "gun",
+          "desc": "對龍族傷害 ×1.3",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "mfSword",
+          "name": "符文之劍",
+          "cat": "weapon",
+          "type": "sword",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mfHolySword",
+          "name": "魔導聖劍",
+          "cat": "weapon",
+          "type": "sword",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "palHammer",
+          "name": "光明之錘",
+          "cat": "weapon",
+          "type": "blunt",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "palJudgeHammer",
+          "name": "審判之錘",
+          "cat": "weapon",
+          "type": "blunt",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "angelStaff",
+          "name": "聖光之杖",
+          "cat": "weapon",
+          "type": "staff",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "angelSpear",
+          "name": "熾天使之槍",
+          "cat": "weapon",
+          "type": "spear",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "demonScythe",
+          "name": "魂之鐮",
+          "cat": "weapon",
+          "type": "scythe",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "demonDeathScythe",
+          "name": "冥界之鐮",
+          "cat": "weapon",
+          "type": "scythe",
+          "desc": "吸血 +5%",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "pirateCannon",
+          "name": "海賊王的火砲",
+          "cat": "weapon",
+          "type": "gun",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "wyvernSpear",
+          "name": "飛龍之矛",
+          "cat": "weapon",
+          "type": "spear",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "ifritClaw",
+          "name": "伊弗利特之爪",
+          "cat": "weapon",
+          "type": "claw",
+          "res": true,
+          "existing": true
+        }
+      ]
+    },
+    {
+      "id": "items-05",
+      "items": [
+        {
+          "id": "earthRender",
+          "name": "大地裂斧",
+          "cat": "weapon",
+          "type": "axe",
+          "desc": "以地龍格爾莫斯的力量鍛成",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "tidalStaff",
+          "name": "潮汐之杖",
+          "cat": "weapon",
+          "type": "staff",
+          "desc": "以水龍瑟拉恩的力量鍛成",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "galeBow",
+          "name": "颶風之弓",
+          "cat": "weapon",
+          "type": "bow",
+          "desc": "以風龍維斯塔爾的力量鍛成",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "infernoBlade",
+          "name": "熾焰魔劍",
+          "cat": "weapon",
+          "type": "twohand",
+          "desc": "以火龍莫爾加斯的力量鍛成",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "leatherCap",
+          "name": "皮帽",
+          "cat": "armor",
+          "slot": "helm",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "ironHelm",
+          "name": "鋼盔",
+          "cat": "armor",
+          "slot": "helm",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "knightHelm",
+          "name": "騎士頭盔",
+          "cat": "armor",
+          "slot": "helm",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "magicHelm",
+          "name": "魔法頭盔",
+          "cat": "armor",
+          "slot": "helm",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "leatherArmor",
+          "name": "皮甲",
+          "cat": "armor",
+          "slot": "armor",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "scaleMail",
+          "name": "鱗甲",
+          "cat": "armor",
+          "slot": "armor",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "chainMail",
+          "name": "鍊甲",
+          "cat": "armor",
+          "slot": "armor",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "plateMail",
+          "name": "板甲",
+          "cat": "armor",
+          "slot": "armor",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mageRobe",
+          "name": "法師長袍",
+          "cat": "armor",
+          "slot": "armor",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elvenMail",
+          "name": "精靈鍊甲",
+          "cat": "armor",
+          "slot": "armor",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "dragonScaleMail",
+          "name": "龍鱗鎧",
+          "cat": "armor",
+          "slot": "armor",
+          "desc": "以四大龍的鱗片打造，減傷 3",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "woodShield",
+          "name": "木盾",
+          "cat": "armor",
+          "slot": "shield",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-06",
+      "items": [
+        {
+          "id": "ironShield",
+          "name": "鋼盾",
+          "cat": "armor",
+          "slot": "shield",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "knightShield",
+          "name": "騎士盾",
+          "cat": "armor",
+          "slot": "shield",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "tshirt",
+          "name": "T恤",
+          "cat": "armor",
+          "slot": "tshirt",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "cloak",
+          "name": "斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "protectCloak",
+          "name": "保護者斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "mrCloak",
+          "name": "抗魔斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "leatherGloves",
+          "name": "皮手套",
+          "cat": "armor",
+          "slot": "gloves",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "powerGloves",
+          "name": "力量手套",
+          "cat": "armor",
+          "slot": "gloves",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "leatherBoots",
+          "name": "皮靴",
+          "cat": "armor",
+          "slot": "boots",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "ironBoots",
+          "name": "鋼靴",
+          "cat": "armor",
+          "slot": "boots",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "hasteBoots",
+          "name": "速度之靴",
+          "cat": "armor",
+          "slot": "boots",
+          "desc": "穿上就有加速效果",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "mrAmulet",
+          "name": "抗魔項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "strAmulet",
+          "name": "力量項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "strRing",
+          "name": "力量戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "dexRing",
+          "name": "敏捷戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "conRing",
+          "name": "體質戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-07",
+      "items": [
+        {
+          "id": "intRing",
+          "name": "智力戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "protectRing",
+          "name": "守護戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "belt",
+          "name": "皮帶",
+          "cat": "armor",
+          "slot": "belt",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "titanBelt",
+          "name": "泰坦腰帶",
+          "cat": "armor",
+          "slot": "belt",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "royalCloak",
+          "name": "王族斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "royalAmulet",
+          "name": "王族項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "knightCloak",
+          "name": "紅騎士斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "knightRing",
+          "name": "騎士之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mageCloak",
+          "name": "法師斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mageAmulet",
+          "name": "魔力項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elfCloak",
+          "name": "精靈斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elfRing",
+          "name": "森林之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "darkCloak",
+          "name": "暗影斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "darkRing",
+          "name": "暗殺者之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "shuraBelt",
+          "name": "修羅腰帶",
+          "cat": "armor",
+          "slot": "belt",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "shuraRing",
+          "name": "戰神之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-08",
+      "items": [
+        {
+          "id": "warCloak",
+          "name": "戰士斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "warAmulet",
+          "name": "狂戰士項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "gunCloak",
+          "name": "槍手斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "gunRing",
+          "name": "鷹眼之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mfCloak",
+          "name": "魔鬥斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "mfAmulet",
+          "name": "元素項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "palCloak",
+          "name": "聖騎士斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "palAmulet",
+          "name": "聖徽",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "angelCloak",
+          "name": "天使羽衣",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "angelAmulet",
+          "name": "光環",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "demonCloak",
+          "name": "深淵披風",
+          "cat": "armor",
+          "slot": "cloak",
+          "desc": "吸血 +3%",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "demonRing",
+          "name": "惡魔之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "wolfAmulet",
+          "name": "狼王牙項鍊",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "pirateRing",
+          "name": "海賊王的戒指",
+          "cat": "armor",
+          "slot": "ring",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "frostShield",
+          "name": "寒冰之盾",
+          "cat": "armor",
+          "slot": "shield",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "wyvernHelm",
+          "name": "飛龍頭盔",
+          "cat": "armor",
+          "slot": "helm",
+          "res": true,
+          "existing": true
+        }
+      ]
+    },
+    {
+      "id": "items-09",
+      "items": [
+        {
+          "id": "flameGloves",
+          "name": "炎魔手套",
+          "cat": "armor",
+          "slot": "gloves",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "archmageHat",
+          "name": "大賢者頭冠",
+          "cat": "armor",
+          "slot": "helm",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "phoenixMail",
+          "name": "不死鳥之鎧",
+          "cat": "armor",
+          "slot": "armor",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "shadowCloak",
+          "name": "夜影斗篷",
+          "cat": "armor",
+          "slot": "cloak",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "giantBelt",
+          "name": "巨人王腰帶",
+          "cat": "armor",
+          "slot": "belt",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "angelRing",
+          "name": "天使之戒",
+          "cat": "armor",
+          "slot": "ring",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "abyssAmulet",
+          "name": "深淵之眼",
+          "cat": "armor",
+          "slot": "amulet",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "earthGuard",
+          "name": "大地守護者之盾",
+          "cat": "armor",
+          "slot": "shield",
+          "desc": "以地龍格爾莫斯的鱗甲鍛成",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "tideHeart",
+          "name": "潮汐之心",
+          "cat": "armor",
+          "slot": "amulet",
+          "desc": "水龍瑟拉恩的心臟結晶",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "galeBoots",
+          "name": "風神之靴",
+          "cat": "armor",
+          "slot": "boots",
+          "desc": "以風龍維斯塔爾的羽翼鍛成，穿上就有加速效果",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "dragonHeartRing",
+          "name": "火龍之心",
+          "cat": "armor",
+          "slot": "ring",
+          "desc": "火龍莫爾加斯的心臟結晶",
+          "res": true,
+          "existing": true
+        },
+        {
+          "id": "redPotion",
+          "name": "治癒藥水",
+          "cat": "potion",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "orangePotion",
+          "name": "強力治癒藥水",
+          "cat": "potion",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "whitePotion",
+          "name": "終極治癒藥水",
+          "cat": "potion",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "ancientPotion",
+          "name": "古代終極治癒藥水",
+          "cat": "potion",
+          "tier": 4,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "greenPotion",
+          "name": "自我加速藥水",
+          "cat": "potion",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-10",
+      "items": [
+        {
+          "id": "homeScroll",
+          "name": "回家卷軸",
+          "cat": "scroll",
+          "desc": "立即回到該地區的村莊",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "teleScroll",
+          "name": "瞬間移動卷軸",
+          "cat": "scroll",
+          "desc": "脫離目前的戰鬥（可在設定中自動使用）",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "reviveScroll",
+          "name": "復活卷軸",
+          "cat": "scroll",
+          "desc": "死亡時自動使用，不損失經驗",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "weaponScroll",
+          "name": "對武器施法的卷軸",
+          "cat": "scroll",
+          "desc": "武器 +1，超過安定值可能蒸發",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "armorScroll",
+          "name": "對盔甲施法的卷軸",
+          "cat": "scroll",
+          "desc": "防具 +1，超過安定值可能蒸發",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "bWeaponScroll",
+          "name": "祝福的對武器施法的卷軸",
+          "cat": "scroll",
+          "desc": "安定值以下 +1～3",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "bArmorScroll",
+          "name": "祝福的對盔甲施法的卷軸",
+          "cat": "scroll",
+          "desc": "安定值以下 +1～3",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "cWeaponScroll",
+          "name": "詛咒的對武器施法的卷軸",
+          "cat": "scroll",
+          "desc": "武器 -1",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "cArmorScroll",
+          "name": "詛咒的對盔甲施法的卷軸",
+          "cat": "scroll",
+          "desc": "防具 -1",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "arrow",
+          "name": "箭",
+          "cat": "ammo",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "silverArrow",
+          "name": "銀箭",
+          "cat": "ammo",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "bullet",
+          "name": "子彈",
+          "cat": "ammo",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "silverBullet",
+          "name": "銀子彈",
+          "cat": "ammo",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "elixir",
+          "name": "萬能藥",
+          "cat": "elixir",
+          "desc": "永久提升一項能力值 +1（最多 5 瓶）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "baphometHorn",
+          "name": "巴風特之角",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "demonHeart",
+          "name": "惡魔之心",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-11",
+      "items": [
+        {
+          "id": "osirisSeal",
+          "name": "歐西里斯的封印",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerSoul",
+          "name": "永夜之魂",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerBullHorn",
+          "name": "巨大牛人之角",
+          "cat": "material",
+          "desc": "永夜之塔 10F・巨大牛人的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerBansheeTear",
+          "name": "黑暗女妖之淚",
+          "cat": "material",
+          "desc": "永夜之塔 20F・黑暗女妖的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerFlameCore",
+          "name": "炎魔之影核心",
+          "cat": "material",
+          "desc": "永夜之塔 30F・炎魔之影的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerIceCrown",
+          "name": "冰之女王冠冕碎片",
+          "cat": "material",
+          "desc": "永夜之塔 40F・冰之女王的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerLichCrystal",
+          "name": "巫妖王命匣碎片",
+          "cat": "material",
+          "desc": "永夜之塔 50F・巫妖王的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerFallenFeather",
+          "name": "墮落大天使之羽",
+          "cat": "material",
+          "desc": "永夜之塔 60F・墮落的大天使的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerChaosCore",
+          "name": "混沌之主核心",
+          "cat": "material",
+          "desc": "永夜之塔 70F・混沌之主的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerAbyssEye",
+          "name": "深淵領主之眼",
+          "cat": "material",
+          "desc": "永夜之塔 80F・深淵領主的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerDeathShard",
+          "name": "死神鐮刃碎片",
+          "cat": "material",
+          "desc": "永夜之塔 90F・死神的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "towerKingSeal",
+          "name": "冥法軍王之印",
+          "cat": "material",
+          "desc": "永夜之塔 100F・冥法軍王的專屬材料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "treantHeart",
+          "name": "古樹之心",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "drakeFang",
+          "name": "地龍之牙",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "pirateTreasure",
+          "name": "海賊的寶箱",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "wyvernWing",
+          "name": "飛龍之翼",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-12",
+      "items": [
+        {
+          "id": "frostCrystal",
+          "name": "寒冰結晶",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "ifritFlame",
+          "name": "伊弗利特之焰",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "forgottenRelic",
+          "name": "遺忘的聖物",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "giantSoul",
+          "name": "巨人之魂",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "antharasScale",
+          "name": "地龍之鱗",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "fafurionScale",
+          "name": "水龍之鱗",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "lindviorScale",
+          "name": "風龍之鱗",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "valakasScale",
+          "name": "火龍之鱗",
+          "cat": "material",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_treantHeart",
+          "name": "古樹荊棘封魂石",
+          "cat": "material",
+          "desc": "封存「古樹荊棘」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_drakeFang",
+          "name": "裂地岩刺封魂石",
+          "cat": "material",
+          "desc": "封存「裂地岩刺」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_baphometHorn",
+          "name": "地獄火柱封魂石",
+          "cat": "material",
+          "desc": "封存「地獄火柱」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_pirateTreasure",
+          "name": "幽靈砲擊封魂石",
+          "cat": "material",
+          "desc": "封存「幽靈砲擊」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_demonHeart",
+          "name": "噬魂黑炎封魂石",
+          "cat": "material",
+          "desc": "封存「噬魂黑炎」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_wyvernWing",
+          "name": "疾風連刃封魂石",
+          "cat": "material",
+          "desc": "封存「疾風連刃」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_osirisSeal",
+          "name": "冥界封咒封魂石",
+          "cat": "material",
+          "desc": "封存「冥界封咒」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_frostCrystal",
+          "name": "冰王碎晶封魂石",
+          "cat": "material",
+          "desc": "封存「冰王碎晶」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-13",
+      "items": [
+        {
+          "id": "soul_ifritFlame",
+          "name": "煉獄火域封魂石",
+          "cat": "material",
+          "desc": "封存「煉獄火域」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_forgottenRelic",
+          "name": "遺忘烙印封魂石",
+          "cat": "material",
+          "desc": "封存「遺忘烙印」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_giantSoul",
+          "name": "巨人崩擊封魂石",
+          "cat": "material",
+          "desc": "封存「巨人崩擊」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_antharasScale",
+          "name": "地龍震怒封魂石",
+          "cat": "material",
+          "desc": "封存「地龍震怒」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_fafurionScale",
+          "name": "水龍海嘯封魂石",
+          "cat": "material",
+          "desc": "封存「水龍海嘯」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_lindviorScale",
+          "name": "風龍風暴封魂石",
+          "cat": "material",
+          "desc": "封存「風龍風暴」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_valakasScale",
+          "name": "火龍吐息封魂石",
+          "cat": "material",
+          "desc": "封存「火龍吐息」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerBullHorn",
+          "name": "蠻牛震擊封魂石",
+          "cat": "material",
+          "desc": "封存「蠻牛震擊」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerBansheeTear",
+          "name": "女妖哀嚎封魂石",
+          "cat": "material",
+          "desc": "封存「女妖哀嚎」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerFlameCore",
+          "name": "炎魔爆燃封魂石",
+          "cat": "material",
+          "desc": "封存「炎魔爆燃」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerIceCrown",
+          "name": "冰后寒獄封魂石",
+          "cat": "material",
+          "desc": "封存「冰后寒獄」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerLichCrystal",
+          "name": "死亡纏繞封魂石",
+          "cat": "material",
+          "desc": "封存「死亡纏繞」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerFallenFeather",
+          "name": "墮天裁決封魂石",
+          "cat": "material",
+          "desc": "封存「墮天裁決」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerChaosCore",
+          "name": "混沌裂爆封魂石",
+          "cat": "material",
+          "desc": "封存「混沌裂爆」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerAbyssEye",
+          "name": "深淵侵蝕封魂石",
+          "cat": "material",
+          "desc": "封存「深淵侵蝕」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "soul_towerDeathShard",
+          "name": "死神收割封魂石",
+          "cat": "material",
+          "desc": "封存「死神收割」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-14",
+      "items": [
+        {
+          "id": "soul_towerKingSeal",
+          "name": "冥王追擊封魂石",
+          "cat": "material",
+          "desc": "封存「冥王追擊」的力量。在村莊鍛造師裝回武器，費用 500,000 金幣，成功後消耗此石。",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_royal_0",
+          "name": "王族紋章碎片",
+          "cat": "quest",
+          "desc": "任務道具：王族的信物",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_royal_2",
+          "name": "諸侯誓約書",
+          "cat": "quest",
+          "desc": "任務道具：諸侯的誓約",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_knight_0",
+          "name": "骷髏的頭骨",
+          "cat": "quest",
+          "desc": "任務道具：見習騎士的試煉",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_knight_2",
+          "name": "父親的戰記殘頁",
+          "cat": "quest",
+          "desc": "任務道具：父親的遺志",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_mage_0",
+          "name": "魔力結晶",
+          "cat": "quest",
+          "desc": "任務道具：魔力結晶",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_mage_2",
+          "name": "封印石碎片",
+          "cat": "quest",
+          "desc": "任務道具：暮光法師塔的封印",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_elf_0",
+          "name": "被污染的樹液",
+          "cat": "quest",
+          "desc": "任務道具：森林的哀鳴",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_elf_2",
+          "name": "世界樹種子",
+          "cat": "quest",
+          "desc": "任務道具：世界樹的種子",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_darkelf_0",
+          "name": "情報捲軸",
+          "cat": "quest",
+          "desc": "任務道具：暗殺者的資格",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_darkelf_2",
+          "name": "教團成員名冊",
+          "cat": "quest",
+          "desc": "任務道具：叛徒的名單",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_shura_2",
+          "name": "戰魂結晶",
+          "cat": "quest",
+          "desc": "任務道具：修羅之魂",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_warrior_0",
+          "name": "妖魔的獠牙",
+          "cat": "quest",
+          "desc": "任務道具：公會的入門",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_warrior_2",
+          "name": "部落圖騰碎片",
+          "cat": "quest",
+          "desc": "任務道具：部落的遺物",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_gunner_0",
+          "name": "硫磺石",
+          "cat": "quest",
+          "desc": "任務道具：火藥原料",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_gunner_2",
+          "name": "堅硬的鱗片",
+          "cat": "quest",
+          "desc": "任務道具：龍鱗研究",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-15",
+      "items": [
+        {
+          "id": "q_magicfighter_0",
+          "name": "符文石",
+          "cat": "quest",
+          "desc": "任務道具：魔力迴路",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_magicfighter_2",
+          "name": "劍聖手記",
+          "cat": "quest",
+          "desc": "任務道具：劍聖的手記",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_paladin_0",
+          "name": "不死者的灰燼",
+          "cat": "quest",
+          "desc": "任務道具：淨化不死者",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_paladin_2",
+          "name": "聖殿遺物",
+          "cat": "quest",
+          "desc": "任務道具：聖物的回歸",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_angel_0",
+          "name": "天使的羽毛",
+          "cat": "quest",
+          "desc": "任務道具：失落的羽毛",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_angel_2",
+          "name": "天界之門碎片",
+          "cat": "quest",
+          "desc": "任務道具：天界之門的碎片",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_demon_0",
+          "name": "迷途的靈魂",
+          "cat": "quest",
+          "desc": "任務道具：靈魂的代價",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "q_demon_2",
+          "name": "血之契約書",
+          "cat": "quest",
+          "desc": "任務道具：血之契約書",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curAug",
+          "name": "點化石",
+          "cat": "currency",
+          "desc": "製作通貨：普通 → 魔法（1～2 條詞綴）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curAlt",
+          "name": "重鑄石",
+          "cat": "currency",
+          "desc": "製作通貨：重新擲魔法裝備的全部詞綴",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curTemper",
+          "name": "淬鍊石",
+          "cat": "currency",
+          "desc": "製作通貨：詞綴種類不變，重新擲數值（傳說也能用）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curRegal",
+          "name": "晉升石",
+          "cat": "currency",
+          "desc": "製作通貨：魔法 → 稀有，保留原詞綴再加 1 條",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curChaos",
+          "name": "混沌石",
+          "cat": "currency",
+          "desc": "製作通貨：重新擲稀有裝備的全部詞綴（3～4 條）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curAnnul",
+          "name": "剝離石",
+          "cat": "currency",
+          "desc": "製作通貨：隨機移除一條詞綴（魔法、稀有）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curChance",
+          "name": "命運石",
+          "cat": "currency",
+          "desc": "製作通貨：普通 → 隨機品質（魔法 75%、稀有 21%、傳說 4%）",
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "curOracle",
+          "name": "神諭石",
+          "cat": "currency",
+          "desc": "製作通貨：稀有裝備再加 1 條詞綴（最多 6 條）",
+          "res": false,
+          "existing": false
+        }
+      ]
+    },
+    {
+      "id": "items-16",
+      "items": [
+        {
+          "id": "map1",
+          "name": "異界地圖 T1",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「低語海岸」的異界。",
+          "tier": 1,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map2",
+          "name": "異界地圖 T2",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「低語墓窟」的異界。",
+          "tier": 2,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map3",
+          "name": "異界地圖 T3",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「迷霧古林」的異界。",
+          "tier": 3,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map4",
+          "name": "異界地圖 T4",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「腐朽礦坑・上層」的異界。",
+          "tier": 4,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map5",
+          "name": "異界地圖 T5",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「沉眠龍窟」的異界。",
+          "tier": 5,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map6",
+          "name": "異界地圖 T6",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「腐朽礦坑・深層」的異界。",
+          "tier": 6,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map7",
+          "name": "異界地圖 T7",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「沉船海灣」的異界。",
+          "tier": 7,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map8",
+          "name": "異界地圖 T8",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「暮光法師塔」的異界。",
+          "tier": 8,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map9",
+          "name": "異界地圖 T9",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「焦骨峽谷」的異界。",
+          "tier": 9,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map10",
+          "name": "異界地圖 T10",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「黃沙王陵」的異界。",
+          "tier": 10,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map11",
+          "name": "異界地圖 T11",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「永凍荒原」的異界。",
+          "tier": 11,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map12",
+          "name": "異界地圖 T12",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「熔火煉獄」的異界。",
+          "tier": 12,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map13",
+          "name": "異界地圖 T13",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「紫霧遺跡」的異界。",
+          "tier": 13,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map14",
+          "name": "異界地圖 T14",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「泰坦墓穴」的異界。",
+          "tier": 14,
+          "res": false,
+          "existing": false
+        },
+        {
+          "id": "map15",
+          "name": "異界地圖 T15",
+          "cat": "map",
+          "desc": "放進「異界裝置」開啟「泰坦墓穴」的異界（強化 ×1.4）。",
+          "tier": 15,
+          "res": false,
+          "existing": false
+        }
+      ]
+    }
+  ]
+}

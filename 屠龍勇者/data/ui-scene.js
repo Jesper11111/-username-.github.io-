@@ -1044,7 +1044,7 @@ function sceneDraw(ctx, W, H) {
             if (drawOccPatch(ctx, sx - 28, sy - (big ? 44 : 30), sx + 28, sy + 14, m.ry, camX, camY) && m === scene.engaged) { ctx.globalAlpha = OCC_GHOST * a; body(); }
         }
         ctx.globalAlpha = 1;
-        // 圍上來的怪都有血條；名字只標在目標（避免擠在一起），目標腳下加紅圈
+        // 圍上來的怪都有血條；名字標在腳下，避開玩家頭上的名稱，目標腳下加紅圈
         if (m.inst && !m.dead) {
             const tgt = m === scene.engaged;
             const w = big ? 46 : 32, pct = clamp(m.inst.hp / m.inst.maxHp, 0, 1), by = Math.min(sy - (big ? 44 : 30), top);
@@ -1053,7 +1053,7 @@ function sceneDraw(ctx, W, H) {
             labels.push(() => {
                 ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
                 ctx.fillStyle = tgt ? '#d64036' : '#b0702c'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
-                if (tgt || m.inst.elite) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, by - 8, m.inst.boss ? '#ff8a6a' : m.inst.elite ? '#ffd34d' : '#e8e0cc');
+                if (tgt || m.inst.elite) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, sy + 29, m.inst.boss ? '#ff8a6a' : m.inst.elite ? '#ffd34d' : '#e8e0cc');
             });
         }
     };

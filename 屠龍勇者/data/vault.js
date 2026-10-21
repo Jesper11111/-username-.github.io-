@@ -90,7 +90,7 @@ function vaultHtml() {
     if (!cloudLoggedIn()) return `<div class="panel notice">共用倉庫要登入帳號才能使用（同帳號的所有角色共用）。<div class="btn-row"><button onclick="openCloudDialog()">☁️ 登入／註冊</button></div></div>`;
     if (cloudBan) return '<p class="bad">帳號已停權。</p>';
     if (!vaultData) return `<p class="muted">${vaultErr ? esc(vaultErr) : '讀取中…'}</p>`;
-    const row = (x, btn) => `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
+    const row = (x, btn) => `<div class="list-row"><div>${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
     const items = vaultData.items.map(v => row(v.item, `<button class="mini" onclick="vaultTake(${v.id})" ${vaultBusy ? 'disabled' : ''}>取出</button>`)).join('') || '<p class="muted">共用倉庫是空的</p>';
     const inv = sortedInv(player.inv).filter(marketTradeable).map(x => row(x, `<button class="mini" onclick="vaultPut(${x.uid})" ${vaultBusy ? 'disabled' : ''}>存入</button>`)).join('') || '<p class="muted">背包沒有可以存的道具</p>';
     return `<div class="panel"><b>🏦 帳號共用倉庫</b>（${vaultData.items.length}／${VAULT_MAX} 格）　💎 鑽石 ${fmt(diaCount || 0)}

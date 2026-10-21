@@ -361,7 +361,7 @@ function charGearHtml() {
         const it = player.equip[slot];
         if (!it) return `<div class="cv-slot empty"><span class="cv-ico">${CHAR_SLOT_EMOJI[slot]}</span><div class="cv-info"><small>${SLOTS[slot]}</small><span class="cv-n muted">未裝備</span></div></div>`;
         const d = ITEMS[it.id], q = CHAR_Q_CLS[it.q] || '';
-        const ico = typeof RES_IMG !== 'undefined' && RES_IMG[it.id] ? imgIconHtml('sk/' + RES_IMG[it.id]) : CHAR_SLOT_EMOJI[slot];
+        const ico = itemIconHtml(it.id);
         // 名稱只顯示裝備本名（品質看顏色），完整名稱（傳說・血月 …）放 title，免得窄格子只看到前綴
         return `<button class="cv-slot" onclick="openItemDialog(${it.uid})" title="${esc(itemName(it))}"><span class="cv-ico ${q}">${ico}${it.ench ? `<b class="cv-en">${it.ench > 0 ? '+' : ''}${it.ench}</b>` : ''}</span>
             <div class="cv-info"><small>${SLOTS[slot]}</small><span class="cv-n ${q}">${esc(d.name)}</span><span class="cv-a">${charGearBrief(d, it)}</span></div></button>`;
@@ -459,7 +459,7 @@ function renderBag() {
         else rows.push({ x, n: x.n });
     }
     h += `<div class="list">` + (rows.map(({ x, n }) => `<button class="item-row" onclick="openItemDialog(${x.uid})">
-            <span class="${itemClass(x)}">${esc(itemName(x))}</span><span class="muted">${n > 1 ? '×' + fmt(n) : ''}</span></button>`).join('')
+            <span class="item-face">${itemIconHtml(x.id)}<span class="${itemClass(x)}">${esc(itemName(x))}</span></span><span class="muted">${n > 1 ? '×' + fmt(n) : ''}</span></button>`).join('')
         || '<p class="muted">沒有道具</p>') + `</div>`;
     return h;
 }
@@ -495,7 +495,8 @@ function bagTidy() {
 }
 
 function itemDescHtml(inst) {
-    if (ITEMS[inst.id].cat === 'map') return mapDescHtml(inst);   // 異界地圖（maps.js）
+    const art = `<div class="item-art">${itemIconHtml(inst.id)}</div>`;
+    if (ITEMS[inst.id].cat === 'map') return art + mapDescHtml(inst);   // 異界地圖（maps.js）
     const d = ITEMS[inst.id], L = [], ench = inst.ench || 0;
     let kind = CAT_NAMES[d.cat];
     if (d.cat === 'weapon') kind = WEAPON_TYPES[d.type].name + (WEAPON_TYPES[d.type].two ? '（雙手）' : '');
@@ -545,7 +546,7 @@ function itemDescHtml(inst) {
         for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);
     }
     L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(instSellPrice(inst))}</small>`);
-    return L.join('<br>');
+    return art + L.join('<br>');
 }
 
 // ───────── 裝備比較（背包裝備 vs 裝備中）─────────
@@ -768,7 +769,7 @@ function renderShop() {
         const d = ITEMS[id];
         const usable = !d.classes || d.classes.includes(player.cls);
         const qty = isStackable(d) ? [1, 10, 100] : [1];
-        return `<div class="list-row ${usable ? '' : 'locked'}"><div onclick="shopInfo('${id}')" class="clickable"><b>${d.name}</b><small>💰 ${fmt(d.price)}｜${shortDesc(d)}</small></div>
+        return `<div class="list-row ${usable ? '' : 'locked'}"><div onclick="shopInfo('${id}')" class="clickable">${itemThumbHtml(id)}<b>${d.name}</b><small>💰 ${fmt(d.price)}｜${shortDesc(d)}</small></div>
             <div class="qty-btns">${qty.map(n => `<button class="mini" onclick="buyItem('${id}',${n})" ${player.gold < d.price * n ? 'disabled' : ''}>×${n}</button>`).join('')}<button class="mini secondary" onclick="openShopBuy('${id}')">自訂</button></div></div>`;
     }).join('') + `</div>`;
 }
@@ -804,7 +805,7 @@ function renderSell() {
     return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small>
         <div class="btn-row"><button class="secondary" onclick="bulkSellBtn(1)" ${n1 ? '' : 'disabled'}>🪙 賣出普通裝備（${n1}）</button>
         <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div></div><div class="list">` + (list.map(x =>
-        `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
+        `<div class="list-row"><div>${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
         <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
         || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
 }
@@ -818,7 +819,7 @@ function sellBtn(uid, all) {
 }
 
 function renderStorage() {
-    const row = (x, btn) => `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
+    const row = (x, btn) => `<div class="list-row"><div>${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
     const inv = sortedInv(player.inv).map(x => row(x, `<button class="mini" onclick="depositItem(${x.uid})">存入</button>`)).join('') || '<p class="muted">背包是空的</p>';
     const sto = sortedInv(player.storage).map(x => row(x, `<button class="mini" onclick="withdrawItem(${x.uid})">取出</button>`)).join('') || '<p class="muted">倉庫是空的</p>';
     const tabs = `<div class="chips"><button class="chip-btn ${storageMode === 'char' ? 'active' : ''}" onclick="setStorageMode('char')">📦 角色倉庫</button><button class="chip-btn ${storageMode === 'vault' ? 'active' : ''}" onclick="setStorageMode('vault')">🏦 帳號共用倉庫</button></div>`;
@@ -833,7 +834,7 @@ function setCraftMode(m) { craftMode = m; renderPanel(); }
 function renderGearForge() {
     const curs = CURRENCY_IDS.filter(c => countItem(c) > 0).map(c => `${CURRENCY[c].icon}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
     const gear = x => ['weapon', 'armor'].includes(ITEMS[x.id].cat);
-    const row = (x, where) => `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b><small>${where}${x.af && x.af.length ? '　詞綴 ' + x.af.length + ' 條' : ''}</small></div>
+    const row = (x, where) => `<div class="list-row"><div>${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b><small>${where}${x.af && x.af.length ? '　詞綴 ' + x.af.length + ' 條' : ''}</small></div>
         <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;
     const worn = SLOT_KEYS.filter(k => player.equip[k] && gear(player.equip[k])).map(k => row(player.equip[k], '裝備中・' + SLOTS[k])).join('');
     const bag = sortedInv(player.inv).filter(gear).map(x => row(x, '背包')).join('');
@@ -847,7 +848,7 @@ function renderMapForge() {
     const curs = Object.keys(MAP_CURRENCY).filter(c => countItem(c) > 0).map(c => `${CURRENCY[c] ? CURRENCY[c].icon : ''}${ITEMS[c].name}×${fmt(countItem(c))}`).join('　');
     const list = groupMaps(maps).map(({ x, count }) => {
         const mods = x.mm || [];
-        return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${count > 1 ? ` <span class="muted">×${count}</span>` : ''}
+        return `<div class="list-row"><div>${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${count > 1 ? ` <span class="muted">×${count}</span>` : ''}
             <small>${mapZoneFor(ITEMS[x.id].tier).name}${mods.length ? '　' + mods.map(k => MAP_MODS[k].icon + MAP_MODS[k].name).join('、') + `　<span class="good">獎勵 +${Math.round(mapBonusOf(mods) * 100)}%</span>` : '　（普通）'}</small></div>
             <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;
     }).join('');
@@ -864,7 +865,7 @@ function renderCraft() {
     return tabs + `<div class="list">` + RECIPES.map((r, i) => {
         const miss = recipeMissing(r);
         const need = Object.keys(r.need).map(id => `${ITEMS[id].name}×${r.need[id]}`).join('、');
-        return `<div class="list-row"><div><b class="rare-item clickable" onclick="shopInfo('${r.out}')">${ITEMS[r.out].name}</b>
+        return `<div class="list-row"><div>${itemThumbHtml(r.out)}<b class="rare-item clickable" onclick="shopInfo('${r.out}')">${ITEMS[r.out].name}</b>
             <small>材料：${need}＋💰${fmt(r.gold)}</small>${miss.length ? `<small class="bad">缺少：${miss.join('、')}</small>` : ''}</div>
             <button onclick="craftItem(${i})" ${miss.length ? 'disabled' : ''}>鍛造</button></div>`;
     }).join('') + `</div>`;

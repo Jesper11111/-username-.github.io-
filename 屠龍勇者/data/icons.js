@@ -210,9 +210,9 @@ function skillIconHtml(s, frame) {
 // 外框用 CSS 漸層畫（.ico-img，顏色同 ICON_FRAMES），裡面放圖。藥水：勇水＝粉紅、綠水＝淺藍瓶轉綠、藍水＝深藍、慎重藥水＝紫
 const POTION_IMG = { brave: 'potion-brave', green: 'potion-green', blue: 'potion-blue', wisdom: 'potion-wisdom' };
 const ICON_IMG_VER = 1;   // 換圖時加一（瀏覽器快取）
-function imgIconHtml(file, frame) {
+function imgIconHtml(file, frame, ext = 'jpg') {
     const g = ICON_FRAMES[frame] || ['#5a5f68', '#22252b', '#0a0b0d'];
-    return `<span class="ico ico-img ${frame ? 'framed' : ''}" style="--f1:${g[0]};--f2:${g[1]};--f3:${g[2]}"><img src="images/icons/${file}.jpg?v=${ICON_IMG_VER}" alt="" draggable="false"></span>`;
+    return `<span class="ico ico-img ${frame ? 'framed' : ''}" style="--f1:${g[0]};--f2:${g[1]};--f3:${g[2]}"><img src="images/icons/${file}.${ext}?v=${ICON_IMG_VER}" alt="" draggable="false"></span>`;
 }
 function flaskSvg(kind, frame) { return imgIconHtml(POTION_IMG[kind] || POTION_IMG.blue, frame); }
 
@@ -222,12 +222,54 @@ const ITEM_ICON = {
     greenPotion: ['flask', 'green'], bravePotion: ['flask', 'brave'], elvenWafer: ['leaf', 'heal'], wisdomPotion: ['flask', 'wisdom'], bluePotion: ['flask', 'blue'],
     homeScroll: ['scroll', 'holy'], teleScroll: ['portal', 'arcane'],
 };
+// 原創道具圖（逐件按名稱設計）；魔法書沿用所屬技能圖，四種既有藥瓶保留。
+const ITEM_IMG = Object.fromEntries([
+    'dagger', 'silverDagger', 'darkDagger', 'shortSword', 'longSword', 'silverSword', 'katana', 'tsurugi',
+    'dragonSlayer', 'twoHandSword', 'dkFlameSword', 'handAxe', 'battleAxe', 'demonAxe', 'spear', 'trident',
+    'mace', 'warHammer', 'holyMace', 'shortBow', 'longBow', 'elvenBow', 'windBow', 'matchlock',
+    'rifle', 'magicSniper', 'oakWand', 'crystalWand', 'manaWand', 'iceQueenStaff', 'claw', 'darkClaw',
+    'dualBlade', 'reaperScythe', 'boneScythe', 'abyssScythe', 'darkDual', 'royalSword', 'royalKingSword', 'knightSword',
+    'knightOathSword', 'mageStaff', 'mageArchStaff', 'elfBow', 'elfWorldBow', 'darkElfClaw', 'darkDualBlades', 'shuraClaw',
+    'shuraDualBlades', 'warAxe', 'warTitanAxe', 'gunRifle', 'gunDragonGun', 'mfSword', 'mfHolySword', 'palHammer',
+    'palJudgeHammer', 'angelStaff', 'angelSpear', 'demonScythe', 'demonDeathScythe', 'pirateCannon', 'wyvernSpear', 'ifritClaw',
+    'earthRender', 'tidalStaff', 'galeBow', 'infernoBlade', 'leatherCap', 'ironHelm', 'knightHelm', 'magicHelm',
+    'leatherArmor', 'scaleMail', 'chainMail', 'plateMail', 'mageRobe', 'elvenMail', 'dragonScaleMail', 'woodShield',
+    'ironShield', 'knightShield', 'tshirt', 'cloak', 'protectCloak', 'mrCloak', 'leatherGloves', 'powerGloves',
+    'leatherBoots', 'ironBoots', 'hasteBoots', 'mrAmulet', 'strAmulet', 'strRing', 'dexRing', 'conRing',
+    'intRing', 'protectRing', 'belt', 'titanBelt', 'royalCloak', 'royalAmulet', 'knightCloak', 'knightRing',
+    'mageCloak', 'mageAmulet', 'elfCloak', 'elfRing', 'darkCloak', 'darkRing', 'shuraBelt', 'shuraRing',
+    'warCloak', 'warAmulet', 'gunCloak', 'gunRing', 'mfCloak', 'mfAmulet', 'palCloak', 'palAmulet',
+    'angelCloak', 'angelAmulet', 'demonCloak', 'demonRing', 'wolfAmulet', 'pirateRing', 'frostShield', 'wyvernHelm',
+    'flameGloves', 'archmageHat', 'phoenixMail', 'shadowCloak', 'giantBelt', 'angelRing', 'abyssAmulet', 'earthGuard',
+    'tideHeart', 'galeBoots', 'dragonHeartRing', 'redPotion', 'orangePotion', 'whitePotion', 'ancientPotion', 'greenPotion',
+    'homeScroll', 'teleScroll', 'reviveScroll', 'weaponScroll', 'armorScroll', 'bWeaponScroll', 'bArmorScroll', 'cWeaponScroll',
+    'cArmorScroll', 'arrow', 'silverArrow', 'bullet', 'silverBullet', 'elixir', 'baphometHorn', 'demonHeart',
+    'osirisSeal', 'towerSoul', 'towerBullHorn', 'towerBansheeTear', 'towerFlameCore', 'towerIceCrown', 'towerLichCrystal', 'towerFallenFeather',
+    'towerChaosCore', 'towerAbyssEye', 'towerDeathShard', 'towerKingSeal', 'treantHeart', 'drakeFang', 'pirateTreasure', 'wyvernWing',
+    'frostCrystal', 'ifritFlame', 'forgottenRelic', 'giantSoul', 'antharasScale', 'fafurionScale', 'lindviorScale', 'valakasScale',
+    'soul_treantHeart', 'soul_drakeFang', 'soul_baphometHorn', 'soul_pirateTreasure', 'soul_demonHeart', 'soul_wyvernWing', 'soul_osirisSeal', 'soul_frostCrystal',
+    'soul_ifritFlame', 'soul_forgottenRelic', 'soul_giantSoul', 'soul_antharasScale', 'soul_fafurionScale', 'soul_lindviorScale', 'soul_valakasScale', 'soul_towerBullHorn',
+    'soul_towerBansheeTear', 'soul_towerFlameCore', 'soul_towerIceCrown', 'soul_towerLichCrystal', 'soul_towerFallenFeather', 'soul_towerChaosCore', 'soul_towerAbyssEye', 'soul_towerDeathShard',
+    'soul_towerKingSeal', 'q_royal_0', 'q_royal_2', 'q_knight_0', 'q_knight_2', 'q_mage_0', 'q_mage_2', 'q_elf_0',
+    'q_elf_2', 'q_darkelf_0', 'q_darkelf_2', 'q_shura_2', 'q_warrior_0', 'q_warrior_2', 'q_gunner_0', 'q_gunner_2',
+    'q_magicfighter_0', 'q_magicfighter_2', 'q_paladin_0', 'q_paladin_2', 'q_angel_0', 'q_angel_2', 'q_demon_0', 'q_demon_2',
+    'curAug', 'curAlt', 'curTemper', 'curRegal', 'curChaos', 'curAnnul', 'curChance', 'curOracle',
+    'map1', 'map2', 'map3', 'map4', 'map5', 'map6', 'map7', 'map8',
+    'map9', 'map10', 'map11', 'map12', 'map13', 'map14', 'map15',
+].map(id => [id, id]));
 function itemIconOf(id) {
     if (ITEM_ICON[id]) return ITEM_ICON[id];
     const d = ITEMS[id] || {};
     return d.heal ? ['potion', 'blood'] : d.buff ? ['potion', 'arcane'] : d.cat === 'scroll' ? ['scroll', 'gray'] : ['star', 'gray'];
 }
-function itemIconHtml(id, frame) { const [sym, col] = itemIconOf(id); return sym === 'flask' ? flaskSvg(col, frame) : iconSvg(sym, col, frame); }
+function itemIconHtml(id, frame) {
+    if (ITEM_IMG[id]) return imgIconHtml('items/' + ITEM_IMG[id], frame, 'png');
+    const d = ITEMS[id];
+    if (d && d.cat === 'book' && SKILL_IMG[d.skill]) return imgIconHtml('sk/' + SKILL_IMG[d.skill], frame);
+    const [sym, col] = itemIconOf(id);
+    return sym === 'flask' ? flaskSvg(col, frame) : iconSvg(sym, col, frame);
+}
+function itemThumbHtml(id) { return `<span class="item-thumb" aria-hidden="true">${itemIconHtml(id)}</span>`; }
 
 // ───────── 地圖左上角狀態：增益與共鳴裝備改成圖示＋剩餘時間（2026-10-15）─────────
 function fmtBuffTime(sec) { return sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}秒`; }
