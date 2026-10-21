@@ -115,7 +115,7 @@ const ZONES = [
         desc: '巨人王長眠的地下陵墓，骨龍守護著最深處。',
     },
     {
-        id: 'tower', name: '永夜之塔', icon: '🏛️', type: 'tower', lv: [45, 90], town: 'aden', fee: 1000,
+        id: 'tower', name: '永夜之塔', icon: '🏛️', type: 'tower', lv: [61, 105], town: 'aden', fee: 1000,
         drops: [{ id: 'towerSoul', p: 0.02 }, { id: 'elixir', p: 0.0003 }, { id: 'bWeaponScroll', p: 0.001 }, { id: 'bArmorScroll', p: 0.0015 },
             { id: 'knightHelm', p: 0.0008 }, { id: 'knightShield', p: 0.0008 }, { id: 'holyMace', p: 0.0004 }, { id: 'tsurugi', p: 0.0002 }],
         desc: '共 100 層，每 10 層有守關首領，擊敗後才能往上 10 層。',

@@ -201,10 +201,15 @@ const MONSTER_TAGS = {
     '深淵魔物': ['demon'], '虛空行者': ['demon'], '深淵領主': ['demon'], '冥法親衛': ['human'], '冥法巫師': ['human'], '冥法軍王': ['human'],
 };
 
+// 難度調整（2026-10-21 使用者要求）：血量依等級倍率（不疊乘，取一個）：Lv49 以下 ×2、50～69 ×3、70 以上 ×5；首領（含龍、塔首領、任務首領）一律 ×5
+// 所有怪物傷害（普攻與魔法，含寫死數值的龍）×1.4
+const MON_DMG_MUL = 1.4;
+function monHpMul(lv, boss) { return boss ? 5 : lv >= 70 ? 5 : lv >= 50 ? 3 : 2; }
+
 function buildMonster(id, t) {
     const b = monBase(t.lv);
-    const dm = t.dmgMul || 1, gm = t.goldMul || 1;
-    const hp = t.hp || Math.round(b.hp * (t.hpMul || 1));
+    const dm = (t.dmgMul || 1) * MON_DMG_MUL, gm = t.goldMul || 1;
+    const hp = Math.round((t.hp || b.hp * (t.hpMul || 1)) * monHpMul(t.lv, t.boss));
     const tags = t.tags || MONSTER_TAGS[id] || MONSTER_TAGS[t.baseName || t.name] || [];
     return {
         human: tags.includes('human'), demon: tags.includes('demon'), holy: tags.includes('holy'),
@@ -212,13 +217,13 @@ function buildMonster(id, t) {
         hp, maxHp: hp,
         ac: t.ac != null ? t.ac : b.ac + (t.acAdd || 0),
         hit: t.hit != null ? t.hit : b.hit,
-        dmg: t.dmg || [Math.round(b.dmg[0] * dm), Math.round(b.dmg[1] * dm)],
+        dmg: (t.dmg || b.dmg).map(d => Math.round(d * (t.dmg ? MON_DMG_MUL : dm))),
         spd: t.spd || 1500,
         exp: t.exp || Math.round(b.exp * (t.expMul || 1)),
         gold: t.gold || [b.gold[0] * gm, b.gold[1] * gm],
         mr: t.mr != null ? t.mr : b.mr,
         large: !!t.large, undead: !!t.undead, boss: !!t.boss, dragon: !!t.dragon,
-        magic: t.magic || null, drops: t.drops || [], towerFloor: t.towerFloor || 0,
+        magic: t.magic ? { ...t.magic, dmg: t.magic.dmg.map(d => Math.round(d * MON_DMG_MUL)) } : null, drops: t.drops || [], towerFloor: t.towerFloor || 0,
     };
 }
 
@@ -231,7 +236,7 @@ function towerBossUp(floor) {
 }
 function makeTowerMonster(floor, isBoss) {
     const g = Math.min(9, Math.floor((floor - 1) / 10));
-    const lv = 44 + Math.round(floor * 0.45);
+    const lv = 60 + Math.round(floor * 0.45);   // 2026-10-21 使用者要求由 44 改 60
     if (isBoss) {
         return buildMonster('towerBoss' + floor, {
             name: `${TOWER_BOSSES[g]}（${floor}F）`, baseName: TOWER_BOSSES[g], icon: TOWER_ICONS[g], lv: lv + 3, boss: true, large: true, towerFloor: floor,
