@@ -11,7 +11,7 @@ for(const row of rows){
  for(const s of SLOT_KEYS)unequipSlot(s);const it=addItem(row.id,1);assert(equipItem(it.uid,true),row.id);
  assert(resItemIds().includes(row.id));assert(codexDetailHtml(row.id).includes(r.name));assert(resonanceHtml(d).includes(resTriggerText(r)));
  gameNow=100000;player.hp=1;player.hunting=true;
- const m=makeMonster('skeleton');m.hp=m.maxHp=10000000;hunt={state:'fight',mon:m,mobs:[m],warned:{}};
+ const m=makeMonster('skeleton'),m2=makeMonster('skeleton');m.hp=m.maxHp=m2.hp=m2.maxHp=10000000;hunt={state:'fight',mon:m,mobs:[m,m2],warned:{}};
  const st=calcStats(),mp=player.mp,before=m.hp;const originalChance=chance;chance=p=>p>0;
  if(r.trigger==='charge'){for(let i=1;i<r.n;i++)resonanceOnHit();assert(!(hunt.resPending||[]).includes(row.id));resonanceOnHit();assert(hunt.resPending.includes(row.id));assert.equal(resChargeMap()[row.id],0);assert(resonanceFlush(st));}
  else if(r.trigger==='proc'){resonanceOnHit();assert(hunt.resPending.includes(row.id));assert(resonanceFlush(st));}
@@ -20,6 +20,8 @@ for(const row of rows){
  if(r.kind==='strike'||r.kind==='spell')assert(m.hp<before,row.id+' 未造成傷害');
  if(r.kind==='heal')assert(player.hp>1,row.id+' 未治療');
  if(r.kind==='buff'){assert(player.buffs['res_'+row.id],row.id+' 未建立增益');const after=calcStats();for(const key of Object.keys(r.fx))assert.notEqual(after[key==='spdMul'?'atkMs':key],st[key==='spdMul'?'atkMs':key],row.id+' 增益未套用 '+key);}
+ if(r.aoe||r.spread)assert(m2.hp<10000000,'未命中其他目標 '+row.id);if(r.stun)assert.equal(m.stunUntil,gameNow+r.stun);
+ if(row.group==='weapon'){assert(WORLD_VFX_LEGEND_WEAPONS[row.id]);scene={pl:{rx:0,ry:0},mons:[{inst:m,rx:1,ry:0}],worldVfx:[]};SIM_MODE=false;worldVfxSkill({id:'res_'+row.id,name:r.name},m);SIM_MODE=true;assert.equal(scene.worldVfx.length,1);assert.equal(scene.worldVfx[0].id,WORLD_VFX_LEGEND_WEAPONS[row.id]);}
  assert.equal(player.mp,mp,'共鳴不應耗 MP '+row.id);chance=originalChance;
  const slot=SLOT_KEYS.find(s=>player.equip[s]&&player.equip[s].uid===it.uid);unequipSlot(slot);assert(!resItemIds().includes(row.id),'卸下仍啟動 '+row.id);
 }

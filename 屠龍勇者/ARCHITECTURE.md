@@ -94,6 +94,10 @@
 | `data/ui-frame.js` | 主畫面外框：畫面尺寸模式 `displayMode`／`setDisplayMode`、`layoutFrame` 縮放、左右柱抽屜、紅藍法球、底部 6 格快捷（第 15、16 節） |
 | `data/icons.js` | **圖示**（第 41 節）：原創 SVG 符號 `ICON_SYM`、`iconSvg`（B 款發光填色）、藥水瓶 `flaskSvg`、技能自動配圖 `buildSkillIconMap`／`skillIconHtml`、道具 `itemIconHtml`、地圖左上角狀態 `buffIconsHtml` |
 | `data/hotbar.js` | **快捷欄**（第 40 節）：格子 HTML `barSlotHtml`、`renderHotbar`（手機地圖下方兩排／PC 外框 `#hotbar`）、`barUse`／`barToggleAuto`／`openBarPicker`／`barPick`／`barPlaceSkill`／`resetSkillSlots`、點一下／往下拉／長按手勢 |
+| `data/scene-art.js` | 原創場景配置、16 分區行走區、4 城鎮／6 塔龍穴、塔怪圖片與地面光影（第 86 節） |
+| `data/world-atlas.js` | 獨立世界總覽與 23 地標；資訊、縮放、沿道路步行（第 86 節） |
+| `scene-art.css` | 世界總覽視窗樣式；下方骷髏造型沿用 index.html |
+| `images/maps/rework/`、`images/monsters/rework/`、`images/npc/rework/` | 本次原創場景／塔怪／城鎮 NPC 圖片；原稿及提示詞在 tools/scene-rework（第 86 節） |
 | `data/ui-scene.js` | 中間即時地圖：俯視格子地圖、角色上下左右尋怪、怪物遊走、傷害飄字、村莊建築（第 17 節） |
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
@@ -111,7 +115,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -121,7 +125,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021p`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022b`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -412,6 +416,8 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 - 全螢幕需要使用者點擊才能進入；重新整理後瀏覽器會退出全螢幕（版面仍是全螢幕模式，再點一次即可）。iPhone Safari 不支援，會提示改用「安裝到主畫面」。
 
 ## 17. 中間即時地圖（`ui-scene.js`）
+
+目前場景與世界總覽改用第 86 節；以下為原系統規格及歷程，舊素材全部保留。
 
 - 狩獵畫面（`renderHunt` → `huntViewHtml`）中間是 `<canvas id="scene-canvas">`，下方是操作按鈕、補給／效率；戰鬥訊息改到左下骷髏頭的抽屜。
 - **戰鬥訊息抽屜**（2026-10-09 改版）：開關是外框**左下、紅球下方的骷髏頭** `#skull-log`（手機原圖 x 15～120、y 1870～1985；PC 原圖 x 5～100、y 1010～1110，右下角有 📜 小標，打開時發金光）。
@@ -2272,3 +2278,41 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `makeTowerMonster`：`lv = 60 + round(樓層×0.45)`（1F Lv60～100F Lv105，守關首領再 +3 → 最高 Lv108），`zones.js` 永夜之塔顯示等級改 `[61, 105]`。
 - 例：哥布林 HP 12→24、獅身人面獸 508→1,524、奇美拉 1,221→6,104、巴風特 3,996→19,980、火龍 28,000→140,000；100F 守關冥法軍王 HP 92,000。
 - 不改存檔結構、經驗、金幣、掉落。
+
+
+## 86. 全套原創場景與獨立世界總覽（2026-10-22，版本 `20261022b`）
+
+- 使用者選 A 清晰度＋B 暗黑氣氛，並明確指定世界總覽、實際可行走的所有地區、四城鎮及塔／龍穴全套重製。52 份內建 imagegen 原創素材：14 地形、4 城鎮、6 塔／龍穴、21 塔怪動作圖集、6 NPC、1 世界總覽。原稿 src／每份完整提示詞 sources／plan.json 保留在 tools/scene-rework，不複製商業遊戲圖片、不覆寫舊素材。
+- **下方外框**：使用者補充要保留原本有骷髏雕飾、石框與法球的設計，已移除簡化 HUD 的 CSS；完整沿用 index.html 既有 frame-clean／frame-pc-notop 圖片與遮罩、紅藍球、狀態列、快捷欄和按鈕位置。scene-art.css 現只處理世界總覽。
+- 載入順序：hotbar → scene-art → ui-scene → world-atlas → pwa → main。scene-art 載入時只建立美術配置，執行時才引用玩家／場景；ui-scene 合併 SCENE_ART_BGS 與 SCENE_ART_MONSTERS；world-atlas 讀取已建立的場景資料。
+- 新全域：SCENE_ART_ROOT、SCENE_WORLD_TILES、SCENE_WORLD_WALK、SCENE_TOWN_ROLES、SCENE_ART_BGS、SCENE_DRAGON_BGS、SCENE_TOWER_ART、SCENE_ART_MONSTERS；sceneMonsterArt／drawSceneAtmosphere。地面暗角及局部暖光先畫，人物／攻擊警示／名稱／飄字後畫。gameNow 控制微光，不改戰鬥時序。
+- 世界仍 188×149 格、6016×4768 像素。每列四區，47 格寬；前三列各 37 格、末列 38 格。由北往南：紫霧／古林／雪原／霜峰；沉船／河畔／峽谷／煉獄；海岸／礦坑上層／王陵／泰坦；墓窟／龍窟／礦坑深層／南境林道。重複區域沿用同一狩獵 id 與怪物、掉落設定。
+- 每區中央清地＋五格寬十字道路，SCENE_WORLD_WALK 是行走唯一新來源。原 walk.json／wild-titan 等保留供歷史回復，不再與舊格子座標同步。新世界 9,786 個可走格全部連通；尋路上限改為全世界格數，避免遠程路線被舊 6,000 格上限中斷。泰坦出生 [164,92]；兩塔入口前方 [18,18]／[110,126]。
+- 四城鎮 30×18，各 6 位透明 NPC，n.img 繪圖、名字／功能仍取 TOWN_NPCS；只有名牌觸發設施，身體不觸發。塔與四龍各用原創 40×24 場景，出生 [20,9]，能看見上方建築與火光。副本數值、入場條件、費用沿用。
+- 塔內 20 種一般怪名稱映射 11 種圖集，十王各一張，共 21 張。每張 4×3、12 格：下／右／上走路各 2，攻擊各 2，左側鏡像。build-scenes.ps1 對透明內容統一縮放／腳底，成品 768×672，cw192/ch224；沿用原受擊、鏡像、死亡淡出與 y 排序。中文／半形樓層括號皆能解析。野外原有怪物圖片保留。
+- 世界總覽 ATLAS_POINTS 為 23 個地標（19 狩獵區＋4 城鎮），與實走圖分開使用 world-atlas.jpg。中文地名、建議等級、所在地、目的地選單及縮放按鈕可操作；全圖依視窗寬高等比容納，手機可放大捲動。城鎮地標是概略製圖位置；野外玩家位置依行走座標顯示。
+- world-atlas 全域函式：atlasPointName／ensureWorldAtlas／openWorldAtlas／closeWorldAtlas／toggleWorldAtlas／atlasZoom／atlasSelect／atlasWalkTo／syncWorldAtlas；狀態 atlasSelected／atlasScale／atlasStamp。按 M、點圓形小地圖都可開啟，含城鎮與副本；M／Esc／關閉鈕關閉。開地圖時不接收移動／快捷鍵，遊戲戰鬥時鐘照常。
+- 野外地標只呼叫 sceneWalkNear 產生實際路線，不直接修改玩家所在地或金幣；城鎮／龍穴不能免費傳送。兩塔只帶到既有傳送師面前，仍要交談入場。小地圖依背景圖片實際比例取樣，支援非世界場景。
+- 製作工具：prepare-plan.js 建立素材表；build-scenes.ps1 打包 JPG／透明 PNG，世界貼圖列高與格子完全對齊；prepare-preview.js 從正式頁生成隔離 preview.html，不載 main／PWA、以記憶體 localStorage 及禁止連外保護真實角色。test-scene-art.js 驗證全部場景、行走／出生／生怪／入口／圖集／無免費傳送；test-titan-map.js 改轉呼叫新的完整世界驗證；舊名稱工具補新依賴。
+- 外部於製作期間提交 6276cfa，含 r 版進度，本助手未提交。最終修正另用 20261022b 避免快取重用；SAVE_SCHEMA 維持 5，保留 q 版 HP／傷害倍率。
+
+## 87. 十二把傳說武器都有特殊技能（2026-10-22，版本 `20261022b`）
+
+- 使用者先要求檢查共鳴／專屬效果；初查 28 件只有 10 有共鳴。後續明確要求傳說武器要有特殊技能，因此保留原 5 把，於 RESONANCE 補其餘 7 把 tier3、各對應職業 1.3 倍共鳴；不另創主動學習技能、魔法書或存檔欄位。
+
+| 武器 | 新技能 | 觸發 | 基礎效果（職業加成前） |
+|---|---|---|---|
+| 蝕月雙刃 | 蝕月連舞 | 每命中 1 次共鳴值 +1，滿 12 點爆發 | 蝕月刃影連斬 4 下，每下 1.2 倍，分散斬向敵人 |
+| 羅剎滅魂爪 | 羅剎裂魂 | 攻擊命中時 12% 觸發 | 羅剎爪影連撕目標 3 下，每下 1.2 倍傷害 |
+| 星隕魔導槍 | 星隕轟擊 | 冷卻 12 秒，自動施放 | 範圍：1.8 倍砲擊，加上 35～65＋SP 的星隕魔法傷害 |
+| 雷霆符文劍 | 雷霆崩解 | 每命中 1 次共鳴值 +1，滿 12 點爆發 | 範圍：1.4 倍雷刃＋35～65＋SP×1.5 魔法傷害，暈眩 0.7 秒 |
+| 黎明裁決之錘 | 黎明審判 | 冷卻 12 秒，自動施放 | 範圍：80～125＋SP×2 神聖魔法傷害，對不死系 ×2 |
+| 熾天使之矛 | 熾天聖裁 | 冷卻 10 秒，自動施放 | 範圍：75～120＋SP×2.2 聖光傷害，對不死系 ×1.5 |
+| 煉獄噬魂鐮 | 煉獄收魂 | 每命中 1 次共鳴值 +1，滿 12 點爆發 | 範圍：1.5 倍鐮斬＋55～95＋SP×1.5 煉獄魔法傷害，可套用武器原有吸血 |
+
+- 共鳴沿用命中集氣／proc／cd、行動後排隊結算、不耗 MP、武器卸下停用、技能本身不遞迴集氣。槍與弓的物理攻擊仍依原規則耗彈；煉獄鐮保留原 4% 吸血。既有屬性、鍛造費用、持盾限制、五把舊共鳴倍率不改。新 res 裝備自動進既有 T11～15 異界首領共鳴掉落池，池總掉落率維持原設定。
+- 新全域 WORLD_VFX_LEGEND_WEAPONS 明確對應 12 把武器的既有原創圖集特效。worldVfxSkill 只對這些 res_id 解除忽略，共鳴技能出手會播放相符劍氣／爪影／星隕／雷刃／聖光／血焰，其餘共鳴照舊。沒有新增特效圖片或刪舊素材。
+- 圖鑑／道具介紹／共鳴狀態列自動顯示效果與條件。傳說共 28 件不變：12 武器全部有技能、3 防具＋2 飾品有既有共鳴，另 11 防具僅基礎屬性，兩系列仍沒有套裝加成。裝備品質與共鳴階級分別判定，四龍武器可標神話共鳴，裝備圖鑑品質仍傳說。
+- 工具 audit-legend-effects.js 隔離實測全部 17 件共鳴：觸發、冷卻、傷害、範圍／分散、暈眩、治療、增益、MP、卸下停用、12 特效及圖鑑；輸出 legend-effects-audit.json 與說明 LEGEND-EFFECTS.md。test-legend-equipment.js 更新新增武器必須有 res，防具沒有；原配方／穿戴測試仍保留。
+
+第 86～87 節最終驗證：check.ps1 ALL CHECKS PASSED；test-scene-art／test-legend-equipment／audit-legend-effects／test-world-vfx／test-legend-glow／test-item-art 皆通過；45 檔混淆建置、合併語法與新圖／CSS 打包通過。隔離瀏覽器 23 場景切換、PC 全圖／縮放／關閉、390px 手機全圖與放大皆正常，Console 無 error／warn；原骷髏石框已恢復。名稱仍在怪物腳下，與玩家名重疊時稍向側方避讓並以細線指向怪物。手機檢查頁 tools/scene-rework/phone.html。待使用者真實角色實玩驗收後才提交，未上傳測試角色。

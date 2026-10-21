@@ -1,4 +1,4 @@
-// 整套原創場景、世界配置與塔怪美術（僅畫面，版本 20261022a）。
+// 整套原創場景、世界配置與塔怪美術（僅畫面，版本 20261022b）。
 const SCENE_ART_ROOT = 'images/maps/rework/';
 const SCENE_WORLD_TILES = [
     ['forgottenIsle', '紫霧遺跡', 'swamp'], ['elvenForest', '迷霧古林', 'forest'], ['orenSnow', '永凍荒原', 'snow'], ['orenSnow', '霜峰山道', 'snow'],

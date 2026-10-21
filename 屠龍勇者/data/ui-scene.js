@@ -989,6 +989,7 @@ function sceneDraw(ctx, W, H) {
     drawBossEnchantEffects(ctx, camX, camY, 'behind');
     // 角色與怪物：依 y 由上往下畫（下面的蓋在上面的前面）；名字、血條最後統一畫在最上層
     const labels = [];
+    let playerLabelBox = null;
     if (player.loc.type === 'town' || (scene.bg && scene.bg.fieldNpcs)) scene.npcRects = [];
     const actorFont = '36px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
     const drawMon = m => {
@@ -1063,7 +1064,17 @@ function sceneDraw(ctx, W, H) {
             labels.push(() => {
                 ctx.fillStyle = '#000a'; ctx.fillRect(sx - w / 2, by, w, 5);
                 ctx.fillStyle = tgt ? '#d64036' : '#b0702c'; ctx.fillRect(sx - w / 2, by, w * pct, 5);
-                if (tgt || m.inst.elite) drawLabel(ctx, `${m.inst.name} Lv.${m.inst.lv}`, sx, sy + 29, m.inst.boss ? '#ff8a6a' : m.inst.elite ? '#ffd34d' : '#e8e0cc');
+                if (tgt || m.inst.elite) {
+                    const name = `${m.inst.name} Lv.${m.inst.lv}`, ly = sy + 29;
+                    ctx.font = 'bold 11px sans-serif';
+                    const width = ctx.measureText(name).width; let lx = sx;
+                    if (playerLabelBox && Math.abs(ly - playerLabelBox.y) < 15 && Math.abs(lx - playerLabelBox.x) < (width + playerLabelBox.w) / 2 + 6) {
+                        lx = playerLabelBox.x + (sx >= playerLabelBox.x ? 1 : -1) * ((width + playerLabelBox.w) / 2 + 10);
+                        lx = clamp(lx, width / 2 + 4, W - width / 2 - 4);
+                        ctx.strokeStyle = '#baa88488'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx, sy + 18); ctx.lineTo(lx, ly - 8); ctx.stroke();
+                    }
+                    drawLabel(ctx, name, lx, ly, m.inst.boss ? '#ff8a6a' : m.inst.elite ? '#ffd34d' : '#e8e0cc');
+                }
             });
         }
     };
@@ -1109,6 +1120,8 @@ function sceneDraw(ctx, W, H) {
             labelY = py - 32;
             if (drawOccPatch(ctx, px - 24, py - 30, px + 24, py + 16, pl.ry, camX, camY)) { ctx.globalAlpha = OCC_GHOST; body(); ctx.globalAlpha = 1; }
         }
+        ctx.font = 'bold 11px sans-serif';
+        playerLabelBox = { x: px, y: labelY, w: ctx.measureText(player.name).width };
         labels.push(() => drawLabel(ctx, player.name, px, labelY, '#9fe0ff'));
     };
     const actors = scene.mons.map(m => ({ y: m.ry, draw: () => drawMon(m) }));

@@ -27,11 +27,11 @@ function previewSetup(){
  const [type,id]=previewLoc.value.split(':');player.loc={type,id,floor:id==='tower'?100:undefined};player.hunting=false;hunt=null;scene=null;openTabs=[];currentTab='hunt';
  showScreen('game');layoutFrame();renderFrameNav();renderPanel();cancelAnimationFrame(sceneRaf);sceneRaf=0;buildScene();
  if(type==='zone'){
-  const z=currentZone(),names=id==='tower'?['冥法軍王','冥法親衛','冥法巫師','冥法親衛']:null;
-  const mids=z.mons||['skeleton'];
+  const z=currentZone(),names=id==='tower'?['冥法軍王','冥法親衛','冥法巫師','冥法親衛','冥法巫師']:null;
+  const mids=z.type==='dragon'?[z.boss]:z.mons||['skeleton'];
   const spots=[[0,-2],[-3,-1],[3,-1],[-2,2],[2,2]];
-  scene.mons=spots.map(([dx,dy],i)=>{const mid=names?'tower100':mids[i%mids.length],name=names?names[i%names.length]:MONSTERS[mid].name;
-   const inst={id:mid,name,lv:z.lv[0],hp:70,maxHp:100,boss:!!names&&i===0};
+  scene.mons=(z.type==='dragon'?spots.slice(0,1):spots).map(([dx,dy],i)=>{const mid=names?'tower100':mids[i%mids.length],name=names?names[i%names.length]:MONSTERS[mid].name;
+   const inst={id:mid,name,lv:names?makeTowerMonster(player.loc.floor,i===0).lv:z.lv[0],hp:70,maxHp:100,boss:(!!names&&i===0)||z.type==='dragon',dragon:z.type==='dragon'};
    return {x:scene.pl.x+dx,rx:scene.pl.x+dx,y:scene.pl.y+dy,ry:scene.pl.y+dy,mid,name,icon:MONSTERS[mid]?MONSTERS[mid].icon:'',face:'down',atk:0,inst};});scene.engaged=scene.mons[0];
  }
  SIM_MODE=false;renderStatus();SIM_MODE=true;previewPaint();
@@ -44,6 +44,6 @@ function previewPaint(){
 }
 previewLoc.addEventListener('change',previewSetup);$('preview-mode').addEventListener('change',()=>{displayMode=$('preview-mode').value;previewSetup();});
 $('preview-atlas').addEventListener('click',toggleWorldAtlas);$('preview-live').addEventListener('click',()=>{previewDynamic=true;scene.mons=[];startScene();});
-previewSetup();setInterval(()=>{gameNow+=100;previewPaint();},100);window.addEventListener('resize',()=>{layoutFrame();previewPaint();});
+previewSetup();if(previewParams.get('atlas')==='1')openWorldAtlas();setInterval(()=>{gameNow+=100;previewPaint();},100);window.addEventListener('resize',()=>{layoutFrame();previewPaint();});
 </script></body>`);
 fs.writeFileSync(path.join(__dirname,'preview.html'),html);console.log('Prepared isolated preview: tools/scene-rework/preview.html');
