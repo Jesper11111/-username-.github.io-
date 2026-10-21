@@ -36,13 +36,13 @@ const PC_SLOTS = [
     { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(10) },
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
-    // 多人功能（2026-10-10，底部格子已滿，放在地圖左側；第 32 節）
-    { icon: '👹', name: '世界首領', tab: 'wb', x: 104, y: 38, w: 58, h: 58, round: true, side: true },
-    { icon: '🏆', name: '排行榜', tab: 'rank', x: 104, y: 104, w: 58, h: 58, round: true, side: true },
-    { icon: '🐉', name: '團隊副本', tab: 'raid', x: 104, y: 170, w: 58, h: 58, round: true, side: true },
-    { icon: '💬', name: '聊天', tab: 'chat', x: 104, y: 236, w: 58, h: 58, round: true, side: true },
-    { icon: '🏰', name: '血盟', tab: 'clan', x: 104, y: 302, w: 58, h: 58, round: true, side: true },
-    { icon: '🏪', name: '交易所', tab: 'market', x: 104, y: 368, w: 58, h: 58, round: true, side: true },
+    // 多人功能放在地圖左側，從 y 260 起避開上方地名與增益（2026-10-21）
+    { icon: '👹', name: '世界首領', tab: 'wb', x: 104, y: 260, w: 58, h: 58, round: true, side: true },
+    { icon: '🏆', name: '排行榜', tab: 'rank', x: 104, y: 326, w: 58, h: 58, round: true, side: true },
+    { icon: '🐉', name: '團隊副本', tab: 'raid', x: 104, y: 392, w: 58, h: 58, round: true, side: true },
+    { icon: '💬', name: '聊天', tab: 'chat', x: 104, y: 458, w: 58, h: 58, round: true, side: true },
+    { icon: '🏰', name: '血盟', tab: 'clan', x: 104, y: 524, w: 58, h: 58, round: true, side: true },
+    { icon: '🏪', name: '交易所', tab: 'market', x: 104, y: 590, w: 58, h: 58, round: true, side: true },
 ];
 function isPcFrame() { return displayMode === 'pc'; }
 function currentSlotDefs() { return isPcFrame() ? PC_SLOTS : SLOT_DEFS; }
