@@ -217,7 +217,7 @@ function marketBuyHtml() {
     const cats = `<div class="chips">${MARKET_CATS.map(([c, n]) => `<button class="chip-btn ${marketCat === c ? 'active' : ''}" onclick="marketSetCat('${c}')">${n}</button>`).join('')}</div>`;
     const rows = marketRows === null ? '<p class="muted">讀取中…</p>' : marketRows.length ? marketRows.map(r => {
         const inst = Object.assign({ uid: 0 }, r.item);
-        return `<div class="list-row"><div class="clickable" onclick="marketInfo(${r.id})">${itemThumbHtml(inst.id)}<b class="${itemClass(inst)}">${esc(itemName(inst))}${r.n > 1 ? ' ×' + fmt(r.n) : ''}</b>
+        return `<div class="list-row"><div class="clickable item-info" onclick="marketInfo(${r.id})">${itemThumbHtml(inst.id)}<b class="${itemClass(inst)}">${esc(itemName(inst))}${r.n > 1 ? ' ×' + fmt(r.n) : ''}</b>
             <small>賣家 ${esc(r.seller_name || '?')}${r.is_mine ? '（你）' : ''}｜${agoText(Date.parse(r.listed_at))}上架</small></div>
             <button class="mini" onclick="marketInfo(${r.id})" ${r.is_mine ? 'disabled' : ''}>💰${fmt(r.price)}</button></div>`;
     }).join('') : '<p class="muted">沒有符合的商品。</p>';
@@ -258,7 +258,7 @@ function marketMineHtml() {
         const inst = Object.assign({ uid: 0 }, r.item), expired = r.state === 'active' && Date.parse(r.expires_at) <= now;
         const status = r.state === 'sold' ? `<span class="good">已賣給 ${esc(r.buyer_name || '玩家')}（實收 ${fmt(r.price - r.fee)}）</span>`
             : expired ? '<span class="warn">已過期，請取回</span>' : `上架中・剩 ${fmtDuration(Date.parse(r.expires_at) - now)}`;
-        return `<div class="list-row"><div>${itemThumbHtml(inst.id)}<b class="${itemClass(inst)}">${esc(itemName(inst))}${r.n > 1 ? ' ×' + fmt(r.n) : ''}</b><small>💰${fmt(r.price)}｜${status}</small></div>
+        return `<div class="list-row"><div class="item-info">${itemThumbHtml(inst.id)}<b class="${itemClass(inst)}">${esc(itemName(inst))}${r.n > 1 ? ' ×' + fmt(r.n) : ''}</b><small>💰${fmt(r.price)}｜${status}</small></div>
             ${r.state === 'active' ? `<button class="mini secondary" onclick="marketCancel(${r.id})">${expired ? '取回' : '下架'}</button>` : ''}</div>`;
     }).join('');
     return `<div class="panel"><div class="row-between"><small class="muted">賣出的金幣會自動加進目前的角色（打開交易所或登入時）。</small>

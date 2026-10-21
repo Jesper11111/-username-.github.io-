@@ -7,6 +7,10 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 256 張原創道具 PNG、16 張原始圖集＋精靈餅乾原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、403 件道具隔離圖庫與接線檢查（第 80 節）。tools 不發佈 |
+| `images/maps/wild-titan*`、`tools/bigmap/titan-tomb.png`、`tools/bigmap/titan-generated.json`、`tools/titan-map-preview.html`、`tools/test-titan-map.js` | 泰坦墓穴原創素材、新版世界／小地圖／遮擋、生成紀錄、隔離預覽及地圖連通測試（第 78 節） |
+| `tools/weapon-glow-preview.html`、`tools/inspect-weapon-sprites.ps1`、`tools/weapon-sprite-specs.json` | 十二職業逐格武器貼合預覽、透明度檢查與來源動作表檢視（第 79 節） |
+| `tools/scene-label-preview.html` | 使用實際 sceneDraw 預覽一般怪／精英／首領的腳下名稱，不載存檔及雲端（第 81 節） |
 | `data/world-vfx.js`、`images/vfx/world/`、`tools/world-vfx-preview.html`、`tools/test-world-vfx.js` | 十類 48 款視覺特效、十二張透明圖集、隔離並排預覽與測試（第 74 節）；生成紀錄在 `tools/sprite-src/boss-vfx/world-prompts.json` |
 | `images/vfx/` 新增二十套 PNG、`tools/vfx-preview.html`、`tools/sprite-src/boss-vfx/generated-prompts.json` | 其餘二十種附魔的原創透明動畫、隔離的 25 種並排預覽、生成提示詞與來源紀錄（第 73 節）。tools 不發佈 |
 | `images/vfx/bull.png`、`ice.png`、`ghost.png`、`death.png`、`king.png` | 五套 BOSS 附魔動畫，各 4×4 格；死神上下各八格對應紫／紅色，幽靈前四格預警、後十二格爆炸（第 72 節）。原圖保存於 `tools/sprite-src/boss-vfx/` |
@@ -114,7 +118,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021j`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021m`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -431,6 +435,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 - **首領大招紅圈**：`sceneTeleTick` 在 `hunt.tele` 出現時記下圓心（角色當下格子），每幀回報角色是否在圈外；畫半透明紅圈＋隨蓄力長大的內圈。
   設定開「自動閃避」時，0.35～0.9 秒反應後自動尋路走到圈外最近的空格（`scene.dodging`，閃避中不自動尋怪）；也可以自己點地面或用方向鍵躲。
 - **多怪顯示**：`hunt.mobs` 每隻都綁定一隻地圖怪（`m.inst`）；目標＝`scene.engaged`（腳下紅圈、名字＋紅血條），角色走到牠旁邊；
+  20261021m 起目標／精英名稱與等級在腳底下方 16px，血條仍在頭頂；名字／血條仍最後統一畫，不動玩家名稱與點怪判斷（第 81 節）。
   地圖上維持 10 隻怪（`MAP_MON_COUNT`）。其他圍上來的怪用 BFS 尋路每 0.3 秒走一格到角色旁邊（橘色血條、不標名字，避免擠在一起）；新加入的怪找 4 格內的地圖怪，沒有就在附近 2～4 格生一隻。
   每隻 HP 下降都飄傷害數字（爆擊大字只算目標）；訊息含「（範圍）」時所有圍上來的怪都爆特效（魔法紫色、物理橘色）；玩家受傷時隨機一隻貼身的怪做攻擊動作。
 - **打擊感**（2026-10-18，版本 `20261018e`，使用者要求「參考天堂經典版，怪物被打到身體稍微縮一下；爆擊字體紅色且放大」）：
@@ -2132,3 +2137,35 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - combat 的成功入袋與戰利品過濾自動賣出改用 addLootLog；前者明列 ×數量並保留品質／詞綴，超重未取得不記。giveMap（隨機地圖／異界通關獎勵）、questOnKill 的收集任務道具亦接入。商店／倉庫／交易所／任務回報獎勵不混入打怪掉落，不更改掉率／亂數／數值。
 - ui-panels.js 新 lastLootRendered、renderLootLog：依最後掉落編號更新靜態 hunt-loot、自動捲到底，所有文字 esc；無紀錄時說明本次遊戲與 120 筆限制。renderLogPop 沿用定位並依分頁選擇渲染，enterGame 同步三分頁顯示。
 - tools/test-loot-log.js 整合測試通過：真實掉落／數量、超重排除、自動賣出、傳說、地圖、任務、戰鬥洗頻獨立、120 筆上限、SIM 隔離、HTML 跳脫、三分頁與重新進入清空。瀏覽器既有未登入角色實際切換三分頁，掉落空狀態／聊天登入提示／戰鬥紀錄互不混入，Console 無 error／warn；未修改或上傳角色數值。
+
+## 78. 泰坦墓穴併入世界地圖（2026-10-21，版本 `20261021m`）
+
+- 使用者選擇由助手製作原創墓穴。內建 imagegen 生成 `tools/bigmap/titan-tomb.png`，提示詞在 `titan-generated.json`；世界東南原空白區新增 1504×1504 區塊，原點像素 [4512,2080]，格子範圍 [141,65,187,111]，整體仍 188×149 格（6016×4768）。
+- `giantTomb` 加 `bg:'wild'`，對應泰坦墓穴 Lv.72～88；世界分區中心 [164,88]、出生 [164,89]，西側連腐朽礦坑深層及金字塔南側通路。怪物、費用、掉落與建議等級維持原設定。
+- `SCENE_BGS.wild` 的 walk／block 與 `tools/bigmap/walk.json` 同步，新增 846 格可走地面，雕像／石棺／龍骨擋路；世界區名、小地圖與雙向路牌沿用既有系統。
+- 原 `wild.jpg`／mini／occ 保留，遊戲改讀新檔 `wild-titan.jpg`、`wild-titan-mini.jpg`、`wild-titan-occ.png`。`build-map.ps1`、`build-occ.ps1`、`check-mask.ps1` 新增可選 MapStem（預設仍 wild）；本次用 wild-titan，避免覆寫舊世界素材。
+- `tools/test-titan-map.js` 驗證 846 格與舊區連通、出生、200 次怪物分區取樣、雙向路牌、區域切換及原數值；隔離預覽 `tools/titan-map-preview.html`。
+
+## 79. 十二職業武器光效貼合（2026-10-21，版本 `20261021m`）
+
+- 使用者回報多職業光效偏離武器，要求全部檢查。常駐武器光由估算手邊的大圖集，改為目前角色動畫格的實際透明像素遮罩；共用 `WORLD_WEAPON_AREAS`、`worldWeaponPixel`、`worldWeaponMask`、`worldWeaponMasks`（最多 192 格快取）。
+- 每職業／方向指定武器所在範圍，搭配鋼鐵／金色／青藍／紫／紅／木色判別；王族正面用窄線段範圍避開白披風。攻擊／施法／受傷各選範圍，畫面看不見武器時不補浮空光圈。這是原圖局部像素辨識，身體與武器同色相接的地方仍可能需要依玩家實玩微調。
+- `sceneDraw` 把實際 image／sprite／row／frame／dw／dh／action 傳給 `drawWorldWeapon`，在同一個角色鏡像與遮擋流程內畫光，跟隨走路、出手及受傷。原四階強化色、附魔色與低畫質關閉設定保留；不動數值及人物原圖。
+- `tools/weapon-glow-preview.html` 左原圖、右 +15，含四動作與四朝向，全部 733 動畫格透明度檢查；`tools/inspect-weapon-sprites.ps1`／`weapon-sprite-specs.json` 為來源動作表檢視工具。先前檢查 733 格載入與遮罩透明度通過，實際手部位置仍待使用者驗收。
+
+## 80. 全遊戲原創道具圖片（2026-10-21，版本 `20261021m`）
+
+- 使用者提供 24 張道具總覽作風格參考，要求依名稱補武器、裝備與缺圖道具。全部新圖用內建 imagegen 原創生成，沒有裁用或複製商業遊戲參考圖。16 張 4×4 透明原稿共 255 格，再補一張精靈餅乾，存 `tools/icon-src/items/`；提示詞、來源及順序記在 `item-art-generated.json`、`item-art-single.json`、`item-art-batches.json`，盤點在 `item-art-inventory.json`。
+- `images/icons/items/<id>.png` 共 256 張，每張 128×128 透明 PNG，各 id 獨立圖片。涵蓋 68 武器、71 裝備、6 藥水／餅乾、9 卷軸、4 彈藥、1 萬能藥、51 材料／封魂石、23 任務道具、8 通貨及 15 異界地圖。144 魔法書沿用對應技能圖；勇敢／慎重／藍色藥水沿用原圖。全 403 件皆有圖片。
+- `icons.js` 新 `ITEM_IMG`（道具 id → 同名檔案）與 `itemThumbHtml(id)`；`imgIconHtml` 新可選 ext（預設 jpg），道具 PNG 用 png；`itemIconHtml` 先新圖，再魔法書技能圖，再原藥瓶／SVG 備援。新增道具未配置時仍可正常顯示備援。
+- 接入背包、角色裝備、商店、道具介紹、圖鑑、回收、角色／共用倉庫、交易所清單、鍛造及地圖改造。`codexIcon` 沿用資料物件找 id，再呼叫統一道具圖；已裝備共鳴狀態仍保留技能圖，方便區分增益與道具外觀。純圖片與介面，存檔 schema、裝備數值、價格、掉率皆不變。
+- `cut-item-art.ps1` 依 alpha 連通區辨識圖示與刀尖，分類到原 4×4 格，合併離散碎片後等比例縮至 112px、置中在 128px，避免生成圖微越格被裁斷；不覆寫已存在原稿與道具圖。`cut-single-item-art.ps1` 裁餅乾，`item-art-contact.ps1` 可產四張附名總覽。
+- `tools/test-item-art.js` 隔離載入真正遊戲檔，驗證全部 403 件圖片存在、256 新圖尺寸與內容不重複，並核對背包／商店／裝備／介紹／圖鑑 HTML 接線；`tools/item-art-preview.html` 可分類／名稱搜尋並列載入與缺圖數，不載存檔或雲端。
+
+## 81. 怪物名稱移到腳下（2026-10-21，版本 `20261021m`）
+
+第 78～81 節最終驗證：check.ps1 全通過；道具／購買／掉落／訊息框／地圖／48 特效回歸通過；43 檔混淆建置與合併 JS 語法通過、256 張新圖進發佈包。瀏覽器圖庫 403／403、裝備 71／71、缺圖 0；背包／商店／角色裝備隔離預覽正常，Console 無 error／warn；十二職業最終 733 格遮罩透明度及載入錯誤 0。真實角色戰鬥與所有職業位置仍由使用者實玩驗收。
+
+- 使用者回報怪物名字與玩家名稱重疊。`sceneDraw` 的怪物名稱／等級統一畫在 sy+29，即腳底 sy+13 下方 16px；包含目標、精英、首領與 emoji 備用外觀。
+- 血條留頭頂，玩家名稱位置、名稱顏色、只有目標／精英顯名、怪物點選範圍、戰鬥及數值不變。名稱與血條仍最後疊畫在人物／前景特效上。
+- `tools/scene-label-preview.html` 使用真正 sceneDraw 顯示三種怪物與相鄰玩家，已確認名稱位於下方；僅隔離記憶體角色，不讀寫真實存檔、不接雲端。

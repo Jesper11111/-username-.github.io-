@@ -222,8 +222,9 @@ const ITEM_ICON = {
     greenPotion: ['flask', 'green'], bravePotion: ['flask', 'brave'], elvenWafer: ['leaf', 'heal'], wisdomPotion: ['flask', 'wisdom'], bluePotion: ['flask', 'blue'],
     homeScroll: ['scroll', 'holy'], teleScroll: ['portal', 'arcane'],
 };
-// 原創道具圖（逐件按名稱設計）；魔法書沿用所屬技能圖，四種既有藥瓶保留。
+// 原創道具圖（逐件按名稱設計）；魔法書沿用所屬技能圖，勇敢／慎重／藍水原圖保留。
 const ITEM_IMG = Object.fromEntries([
+    'elvenWafer',
     'dagger', 'silverDagger', 'darkDagger', 'shortSword', 'longSword', 'silverSword', 'katana', 'tsurugi',
     'dragonSlayer', 'twoHandSword', 'dkFlameSword', 'handAxe', 'battleAxe', 'demonAxe', 'spear', 'trident',
     'mace', 'warHammer', 'holyMace', 'shortBow', 'longBow', 'elvenBow', 'windBow', 'matchlock',

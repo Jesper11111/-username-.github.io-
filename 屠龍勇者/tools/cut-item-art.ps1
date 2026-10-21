@@ -1,5 +1,4 @@
 # 依透明連通區分出道具，避免生成圖示略越格時裁掉刀尖；只寫新道具圖，不修改原稿。
-param([switch]$ReplaceGenerated)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
@@ -9,7 +8,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 public static class ItemArtCutter {
- public static string Cut(string source,string[] outputs,bool replace) {
+ public static string Cut(string source,string[] outputs) {
   using(var im=new Bitmap(source)) {
    int w=im.Width,h=im.Height; var rect=new Rectangle(0,0,w,h);
    var data=im.LockBits(rect,ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
@@ -27,7 +26,7 @@ public static class ItemArtCutter {
    }
    var counts=new List<string>();
    for(int cell=0;cell<outputs.Length;cell++) {
-    if(System.IO.File.Exists(outputs[cell])&&!replace)throw new Exception("Already exists: "+outputs[cell]);
+    if(System.IO.File.Exists(outputs[cell]))continue;
     var group=groups[cell];if(group.Count<120)throw new Exception("Empty item cell "+cell+" in "+source);
     int x0=w,y0=h,x1=0,y1=0;foreach(int p in group){int x=p%w,y=p/w;x0=Math.Min(x0,x);y0=Math.Min(y0,y);x1=Math.Max(x1,x);y1=Math.Max(y1,y);}
     int bw=x1-x0+1,bh=y1-y0+1;
@@ -57,5 +56,5 @@ foreach($entry in $art){
  if(!(Test-Path -LiteralPath $localSource)){Copy-Item -LiteralPath $entry.source -Destination $localSource}
  $batch=$batches | Where-Object id -eq $entry.id
  [string[]]$outputs=@($batch.items | ForEach-Object {Join-Path $outputDir ($_.id+'.png')})
- Write-Output ($entry.id+' '+[ItemArtCutter]::Cut($localSource,$outputs,[bool]$ReplaceGenerated))
+ Write-Output ($entry.id+' '+[ItemArtCutter]::Cut($localSource,$outputs))
 }

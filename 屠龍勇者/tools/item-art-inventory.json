@@ -632,7 +632,7 @@
     "cat": "potion",
     "tier": 1,
     "res": false,
-    "existing": false
+    "existing": true
   },
   {
     "id": "bravePotion",
@@ -648,7 +648,7 @@
     "cat": "potion",
     "tier": 2,
     "res": false,
-    "existing": true
+    "existing": false
   },
   {
     "id": "wisdomPotion",

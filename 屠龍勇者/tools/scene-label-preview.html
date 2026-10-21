@@ -4,7 +4,7 @@
 <script>
 (async()=>{
 const files=['config','classes','skills','items','spellbook','monsters','zones','quests','resonance','boss-enchant','boss-vfx','world-vfx','player','guard','affix','maps','combat','ui','presence','ui-scene'];
-for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='../data/'+f+'.js?v=20261021k';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='../data/'+f+'.js?v=20261021m';s.onload=resolve;s.onerror=reject;document.head.append(s);});
 SIM_MODE=true;createPlayer('測試玩家','knight',CLASSES.knight.base);player.loc={type:'zone',id:'tower',floor:100};player.hunting=true;
 const samples=[['一般怪','skeleton','骷髏士兵',false,false],['精英','tombGuardian','墓穴守衛',false,true],['首領','none','冥法軍王（100F）',true,false]];
 for(const[title,mid,name,boss,elite]of samples){const box=document.createElement('section');box.innerHTML='<h3>'+title+'</h3><canvas width="340" height="300"></canvas>';document.getElementById('examples').append(box);}
