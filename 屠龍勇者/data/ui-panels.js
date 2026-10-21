@@ -757,7 +757,7 @@ function renderShop() {
         const usable = !d.classes || d.classes.includes(player.cls);
         const qty = isStackable(d) ? [1, 10, 100] : [1];
         return `<div class="list-row ${usable ? '' : 'locked'}"><div onclick="shopInfo('${id}')" class="clickable"><b>${d.name}</b><small>💰 ${fmt(d.price)}｜${shortDesc(d)}</small></div>
-            <div class="qty-btns">${qty.map(n => `<button class="mini" onclick="buyItem('${id}',${n})" ${player.gold < d.price * n ? 'disabled' : ''}>×${n}</button>`).join('')}</div></div>`;
+            <div class="qty-btns">${qty.map(n => `<button class="mini" onclick="buyItem('${id}',${n})" ${player.gold < d.price * n ? 'disabled' : ''}>×${n}</button>`).join('')}<button class="mini secondary" onclick="openShopBuy('${id}')">自訂</button></div></div>`;
     }).join('') + `</div>`;
 }
 
