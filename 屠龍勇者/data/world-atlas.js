@@ -2,10 +2,10 @@
 const ATLAS_POINTS = SCENE_WORLD_TILES.filter((r, i, a) => a.findIndex(q => q.zone === r.zone) === i).map(r => ({
     id: r.zone, kind: 'zone', x: (r.x + 0.5) / 188 * 100, y: (r.y + 0.5) / 149 * 100, target: r.start,
 })).concat([
-    { id: 'talking', kind: 'town', x: 10, y: 61 }, { id: 'gludio', kind: 'town', x: 35, y: 62 },
-    { id: 'giran', kind: 'town', x: 61, y: 40 }, { id: 'aden', kind: 'town', x: 84, y: 20 },
+    { id: 'talking', kind: 'town', x: 9, y: 55 }, { id: 'gludio', kind: 'town', x: 35, y: 55 },
+    { id: 'giran', kind: 'town', x: 54, y: 45 }, { id: 'aden', kind: 'town', x: 84, y: 20 },
     { id: 'tower', kind: 'zone', x: 7, y: 23, target: [18, 18] }, { id: 'ivory', kind: 'zone', x: 64, y: 95, target: [110, 126] },
-    { id: 'lairAntharas', kind: 'zone', x: 64, y: 65 }, { id: 'lairFafurion', kind: 'zone', x: 7, y: 44 },
+    { id: 'lairAntharas', kind: 'zone', x: 66, y: 72 }, { id: 'lairFafurion', kind: 'zone', x: 7, y: 44 },
     { id: 'lairLindvior', kind: 'zone', x: 86, y: 6 }, { id: 'lairValakas', kind: 'zone', x: 94, y: 44 },
 ]);
 let atlasSelected = null, atlasScale = 1, atlasStamp = '';
@@ -42,8 +42,10 @@ function toggleWorldAtlas() { if (scene && scene.worldOpen) closeWorldAtlas(); e
 function atlasZoom(step) {
     const root = $('world-atlas'); if (!root) return;
     atlasScale = step === 0 ? 1 : clamp(atlasScale + step * 0.35, 1, 2.75);
-    const paper = root.querySelector('.atlas-paper'); paper.style.width = atlasScale * 100 + '%';
-    root.classList.toggle('atlas-fit', step === 0);
+    const paper = root.querySelector('.atlas-paper'), view = root.querySelector('.atlas-scroll');
+    const fitWidth = Math.min(view.clientWidth, view.clientHeight * 188 / 149);
+    paper.style.width = Math.floor(fitWidth * atlasScale) + 'px';
+    root.classList.toggle('atlas-fit', atlasScale === 1 && step <= 0);
 }
 function atlasSelect(index) {
     const p = ATLAS_POINTS[index]; if (!p) return;

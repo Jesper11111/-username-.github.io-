@@ -9,7 +9,7 @@ for(const[,file]of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll
 }
 vm.runInContext(String.raw`
 SIM_MODE=true;createPlayer('場景隔離驗證','knight',CLASSES.knight.base);player.lv=85;
-assert.equal(GAME_VERSION,'20261021r');assert.equal(SAVE_SCHEMA,5);
+assert.equal(GAME_VERSION,'20261022a');assert.equal(SAVE_SCHEMA,5);
 const files=new Set(), regionIds=new Set();
 for(const z of ZONES){
  player.loc={type:'zone',id:z.id,floor:z.type==='tower'?70:undefined};buildScene();

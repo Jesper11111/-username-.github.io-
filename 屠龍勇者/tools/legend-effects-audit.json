@@ -1,0 +1,487 @@
+[
+  {
+    "id": "dragonSlayer",
+    "name": "屠龍劍",
+    "group": "weapon",
+    "slot": "sword",
+    "res": {
+      "name": "屠龍斬",
+      "tier": "傳說共鳴",
+      "trigger": "每命中 1 次共鳴值 +1，滿 20 點爆發",
+      "desc": "4.5 倍斬擊（對龍再 ×1.5）",
+      "classes": [
+        "騎士",
+        "王族"
+      ]
+    },
+    "passive": {
+      "hit": 5,
+      "dragon": 1.5,
+      "safe": 6,
+      "wt": 80,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "dragonScaleMail",
+    "name": "龍鱗鎧",
+    "group": "armor",
+    "slot": "armor",
+    "res": {
+      "name": "龍鱗",
+      "tier": "傳說共鳴",
+      "trigger": "被攻擊受傷時 8% 觸發",
+      "desc": "6 秒內減傷 10",
+      "classes": []
+    },
+    "passive": {
+      "ac": 10,
+      "mr": 20,
+      "reduce": 3,
+      "safe": 6,
+      "wt": 200,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "eclipseDual",
+    "name": "蝕月雙刃",
+    "group": "weapon",
+    "slot": "dual",
+    "res": null,
+    "passive": {
+      "hit": 6,
+      "crit": 0.06,
+      "safe": 6,
+      "wt": 45,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "rakshasaClaw",
+    "name": "羅剎滅魂爪",
+    "group": "weapon",
+    "slot": "claw",
+    "res": null,
+    "passive": {
+      "hit": 5,
+      "str": 2,
+      "safe": 6,
+      "wt": 40,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "starfallGun",
+    "name": "星隕魔導槍",
+    "group": "weapon",
+    "slot": "gun",
+    "res": null,
+    "passive": {
+      "hit": 9,
+      "dex": 2,
+      "safe": 6,
+      "wt": 95,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "thunderRuneSword",
+    "name": "雷霆符文劍",
+    "group": "weapon",
+    "slot": "sword",
+    "res": null,
+    "passive": {
+      "hit": 5,
+      "sp": 5,
+      "safe": 6,
+      "wt": 70,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "dawnJudgmentHammer",
+    "name": "黎明裁決之錘",
+    "group": "weapon",
+    "slot": "blunt",
+    "res": null,
+    "passive": {
+      "hit": 5,
+      "wis": 2,
+      "silver": true,
+      "safe": 6,
+      "wt": 100,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "seraphSpear",
+    "name": "熾天使之矛",
+    "group": "weapon",
+    "slot": "spear",
+    "res": null,
+    "passive": {
+      "hit": 6,
+      "sp": 5,
+      "safe": 6,
+      "wt": 65,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "infernalSoulScythe",
+    "name": "煉獄噬魂鐮",
+    "group": "weapon",
+    "slot": "scythe",
+    "res": null,
+    "passive": {
+      "hit": 5,
+      "lifesteal": 0.04,
+      "safe": 6,
+      "wt": 85,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "dragonWardHelm",
+    "name": "龍裔戰盔",
+    "group": "armor",
+    "slot": "helm",
+    "res": null,
+    "passive": {
+      "ac": 5,
+      "mr": 15,
+      "hp": 80,
+      "safe": 4,
+      "wt": 65,
+      "sell": 90000
+    }
+  },
+  {
+    "id": "dragonWingCloak",
+    "name": "龍翼守護披風",
+    "group": "armor",
+    "slot": "cloak",
+    "res": null,
+    "passive": {
+      "ac": 4,
+      "mr": 18,
+      "hp": 60,
+      "safe": 4,
+      "wt": 30,
+      "sell": 85000
+    }
+  },
+  {
+    "id": "dragonHeartTunic",
+    "name": "龍紋護心衣",
+    "group": "armor",
+    "slot": "tshirt",
+    "res": null,
+    "passive": {
+      "ac": 4,
+      "con": 2,
+      "hp": 100,
+      "safe": 4,
+      "wt": 25,
+      "sell": 80000
+    }
+  },
+  {
+    "id": "dragonFangGloves",
+    "name": "龍牙護手",
+    "group": "armor",
+    "slot": "gloves",
+    "res": null,
+    "passive": {
+      "ac": 4,
+      "str": 2,
+      "dmg": 2,
+      "safe": 4,
+      "wt": 40,
+      "sell": 85000
+    }
+  },
+  {
+    "id": "dragonWardBoots",
+    "name": "龍裔重靴",
+    "group": "armor",
+    "slot": "boots",
+    "res": null,
+    "passive": {
+      "ac": 5,
+      "mr": 12,
+      "hp": 80,
+      "reduce": 1,
+      "safe": 4,
+      "wt": 65,
+      "sell": 90000
+    }
+  },
+  {
+    "id": "starwindCrown",
+    "name": "星風法冠",
+    "group": "armor",
+    "slot": "helm",
+    "res": null,
+    "passive": {
+      "ac": 3,
+      "mr": 20,
+      "sp": 3,
+      "mp": 60,
+      "safe": 4,
+      "wt": 15,
+      "sell": 90000
+    }
+  },
+  {
+    "id": "starwindRobe",
+    "name": "星風法袍",
+    "group": "armor",
+    "slot": "armor",
+    "res": null,
+    "passive": {
+      "ac": 7,
+      "mr": 22,
+      "sp": 4,
+      "mp": 80,
+      "safe": 4,
+      "wt": 40,
+      "sell": 100000
+    }
+  },
+  {
+    "id": "starwindCloak",
+    "name": "星風披風",
+    "group": "armor",
+    "slot": "cloak",
+    "res": null,
+    "passive": {
+      "ac": 3,
+      "mr": 20,
+      "mpRegen": 3,
+      "safe": 4,
+      "wt": 12,
+      "sell": 85000
+    }
+  },
+  {
+    "id": "starwindShield",
+    "name": "星風法盾",
+    "group": "armor",
+    "slot": "shield",
+    "res": null,
+    "passive": {
+      "ac": 6,
+      "mr": 22,
+      "sp": 3,
+      "safe": 4,
+      "wt": 50,
+      "sell": 95000
+    }
+  },
+  {
+    "id": "starwindTunic",
+    "name": "星風符文內衣",
+    "group": "armor",
+    "slot": "tshirt",
+    "res": null,
+    "passive": {
+      "ac": 3,
+      "int": 2,
+      "mp": 80,
+      "safe": 4,
+      "wt": 10,
+      "sell": 80000
+    }
+  },
+  {
+    "id": "starwindGloves",
+    "name": "星風手套",
+    "group": "armor",
+    "slot": "gloves",
+    "res": null,
+    "passive": {
+      "ac": 3,
+      "int": 2,
+      "sp": 3,
+      "mpRegen": 2,
+      "safe": 4,
+      "wt": 12,
+      "sell": 85000
+    }
+  },
+  {
+    "id": "earthRender",
+    "name": "大地裂斧",
+    "group": "weapon",
+    "slot": "axe",
+    "res": {
+      "name": "地裂",
+      "tier": "神話共鳴",
+      "trigger": "每命中 1 次共鳴值 +1，滿 15 點爆發",
+      "desc": "範圍：2.5 倍並暈眩 2 秒",
+      "classes": [
+        "戰士",
+        "騎士"
+      ]
+    },
+    "passive": {
+      "hit": 4,
+      "safe": 6,
+      "wt": 140,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "tidalStaff",
+    "name": "潮汐之杖",
+    "group": "weapon",
+    "slot": "staff",
+    "res": {
+      "name": "海嘯",
+      "tier": "神話共鳴",
+      "trigger": "冷卻 8 秒，自動施放",
+      "desc": "範圍：海嘯淹沒所有敵人（魔法）",
+      "classes": [
+        "法師",
+        "天使"
+      ]
+    },
+    "passive": {
+      "sp": 9,
+      "safe": 6,
+      "wt": 30,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "galeBow",
+    "name": "颶風之弓",
+    "group": "weapon",
+    "slot": "bow",
+    "res": {
+      "name": "颶風",
+      "tier": "神話共鳴",
+      "trigger": "攻擊命中時 15% 觸發",
+      "desc": "颶風 4 箭分散射向敵人",
+      "classes": [
+        "妖精",
+        "槍手"
+      ]
+    },
+    "passive": {
+      "hit": 8,
+      "safe": 6,
+      "wt": 40,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "infernoBlade",
+    "name": "熾焰魔劍",
+    "group": "weapon",
+    "slot": "twohand",
+    "res": {
+      "name": "龍炎斬",
+      "tier": "神話共鳴",
+      "trigger": "攻擊命中時 12% 觸發",
+      "desc": "範圍：1.5 倍＋龍炎魔法傷害",
+      "classes": [
+        "騎士"
+      ]
+    },
+    "passive": {
+      "hit": 6,
+      "safe": 6,
+      "wt": 150,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "earthGuard",
+    "name": "大地守護者之盾",
+    "group": "armor",
+    "slot": "shield",
+    "res": {
+      "name": "大地震",
+      "tier": "神話共鳴",
+      "trigger": "被攻擊受傷時 12% 觸發",
+      "desc": "範圍：反擊 2 倍並暈眩 2 秒",
+      "classes": [
+        "騎士",
+        "聖騎士",
+        "戰士"
+      ]
+    },
+    "passive": {
+      "ac": 8,
+      "reduce": 4,
+      "safe": 4,
+      "wt": 160,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "tideHeart",
+    "name": "潮汐之心",
+    "group": "acc",
+    "slot": "amulet",
+    "res": {
+      "name": "潮汐之癒",
+      "tier": "神話共鳴",
+      "trigger": "冷卻 30 秒，自動施放",
+      "desc": "每 30 秒回復大量 HP",
+      "classes": []
+    },
+    "passive": {
+      "mr": 20,
+      "sp": 3,
+      "mpRegen": 3,
+      "safe": -1,
+      "wt": 5,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "galeBoots",
+    "name": "風神之靴",
+    "group": "armor",
+    "slot": "boots",
+    "res": {
+      "name": "風神",
+      "tier": "神話共鳴",
+      "trigger": "被攻擊受傷時 15% 觸發",
+      "desc": "5 秒內閃避 +40%、攻速 +20%",
+      "classes": []
+    },
+    "passive": {
+      "ac": 3,
+      "dodge": 0.08,
+      "haste": true,
+      "safe": 4,
+      "wt": 20,
+      "sell": 120000
+    }
+  },
+  {
+    "id": "dragonHeartRing",
+    "name": "火龍之心",
+    "group": "acc",
+    "slot": "ring",
+    "res": {
+      "name": "龍炎",
+      "tier": "神話共鳴",
+      "trigger": "攻擊命中時 8% 觸發",
+      "desc": "範圍：龍炎燒灼所有敵人（魔法）",
+      "classes": []
+    },
+    "passive": {
+      "str": 2,
+      "dmg": 3,
+      "safe": -1,
+      "wt": 2,
+      "sell": 120000
+    }
+  }
+]
