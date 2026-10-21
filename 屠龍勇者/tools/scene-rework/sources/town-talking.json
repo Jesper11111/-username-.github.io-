@@ -1,0 +1,9 @@
+{
+  "id": "town-talking",
+  "kind": "town",
+  "name": "低語港",
+  "prompt": "Original hand-painted pre-rendered-looking 2D isometric dark fantasy RPG game asset. Cohesive weathered stone, iron, wood and natural materials, readable midtones and clear paths, atmospheric deep shadows only around architecture, restrained warm torchlight and cool ambient fill. Crisp details at gameplay scale, no blur, no photo, no modern 3D perspective. No commercial game copies, logos, text, characters, monsters, HUD, frames or watermark. Landscape 5:3 village map viewed orthographically from above at 3/4 angle. A modest medieval fishing port, slate roofs, timber market stalls and harbor glimpsed along upper-left edge; earthy cobbles, blue-gray sea and warm lanterns. Exact layout: broad EMPTY central town square from x=8% to 92%, y=50% to 91%; an unobstructed horizontal street crosses the entire image at y=76%, and a vertical empty central street from top center to bottom center. All buildings, fountains, stalls, statues and trees must be OUTSIDE this clear square and streets, mainly top-left and top-right. Do not paint people. Six NPCs will be placed later along the front of the square. No text, signs with lettering, interface, people or sky.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-6824b310-566c-4e6b-9c6c-ecf560da8670.png",
+  "original": "tools/scene-rework/src/town-talking.png",
+  "tool": "built-in image_gen"
+}

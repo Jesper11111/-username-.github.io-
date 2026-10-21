@@ -186,6 +186,7 @@ const SCENE_BGS = {
         ],
     },
 };
+Object.assign(SCENE_BGS, SCENE_ART_BGS);
 // 各村莊用哪張背景圖（沒寫的用低語港 village）
 const TOWN_BG = { gludio: 'ash', giran: 'darkgold', aden: 'aden' };
 
@@ -292,7 +293,8 @@ const MON_SPRITES = {
     fafurion: { cw: 118, ch: 91, body: 74, n: [4, 4, 4, 8, 6, 8], size: 80 },
     lindvior: { cw: 128, ch: 105, body: 88, n: [4, 3, 4, 3, 6, 8], size: 80 },   // 風龍：側面走路 3 格、正面攻擊 3 格（原圖中間是大張立繪）
 };
-function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(`images/monsters/${mid}.png`) : null; }
+Object.assign(MON_SPRITES, SCENE_ART_MONSTERS);
+function monSpriteImg(mid) { return mid && MON_SPRITES[mid] ? spriteImage(MON_SPRITES[mid].src || `images/monsters/${mid}.png`) : null; }
 
 let scene = null;   // { key, grid, theme, pl:{x,y,rx,ry,path,dir,lunge}, mons:[], engaged, floats:[], ... }
 let sceneRaf = 0;
@@ -337,13 +339,15 @@ function themeFor() {
     if (player.loc.type === 'town') return { ...SCENE_THEMES.town, bg: TOWN_BG[player.loc.id] || 'village' };
     const z = currentZone();
     if (z.bg && SCENE_BGS[z.bg] && SCENE_BGS[z.bg].big) return { ...SCENE_THEMES.field, bg: z.bg };   // 大地圖（含地監黃沙王陵的外圍）
-    if (z.type === 'dragon') return SCENE_THEMES.dragon;
-    if (z.type === 'tower') return SCENE_THEMES.tower;
+    if (z.type === 'dragon') return { ...SCENE_THEMES.dragon, bg: SCENE_DRAGON_BGS[z.id] };
+    if (z.type === 'tower') return { ...SCENE_THEMES.tower, bg: 'art-tower' };
+    if (z.id === 'ivory') return { ...SCENE_THEMES.ivory, bg: 'art-ivory' };
     if (z.type === 'field') return z.bg ? { ...SCENE_THEMES.field, bg: z.bg } : SCENE_THEMES.field;   // z.bg：這張野外用自己的背景圖（大地圖）
     return SCENE_THEMES[z.scene] || SCENE_THEMES.dungeon;
 }
 
 function buildScene() {
+    closeWorldAtlas();
     const key = sceneKey(), theme = themeFor(), rnd = seededRand(hashStr(key));
     const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
     if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
@@ -351,6 +355,8 @@ function buildScene() {
     if (bg) { spriteImage(bg.src); if (bg.mini) spriteImage(bg.mini); if (bg.occ) occData(bg.occ); }
     const zz = player.loc.type === 'zone' ? currentZone() : null;
     if (zz && zz.mons) zz.mons.forEach(monSpriteImg);
+    if (zz && zz.type === 'tower') Object.keys(SCENE_ART_MONSTERS).forEach(monSpriteImg);
+    if (player.loc.type === 'town' && bg) townNpcList(bg).forEach(n => { if (n.img) spriteImage(n.img); });
     const mw = bg ? bg.w : MAP_W, mh = bg ? bg.h : MAP_H;
     // 大地圖：從村莊傳送過來時出生在這個地圖對應區域的 start
     const zr = bg && bg.regions && player.loc.type === 'zone' && bg.regions.find(r => r.zone === player.loc.id && r.start);
@@ -549,7 +555,7 @@ function findPath(sx, sy, tx, ty, adjacent) {
             if (prev.has(nk) || !freeTileFor(nx, ny, tx, ty)) continue;
             prev.set(nk, key(x, y));
             q.push([nx, ny]);
-            if (prev.size > (scene.bg && scene.bg.big ? 6000 : 1000)) return [];   // 大地圖：點小地圖可以走很遠
+            if (prev.size > (scene.bg && scene.bg.big ? scene.mw * scene.mh : 1000)) return [];   // 大地圖：點小地圖可以走很遠
         }
     }
     return [];
@@ -565,7 +571,8 @@ function visualMonster() {
     if (!z || z.type === 'dragon') return null;
     if (z.type === 'tower') {
         const g = Math.min(9, Math.floor((player.loc.floor - 1) / 10));
-        return { icon: TOWER_ICONS[g], name: TOWER_THEMES[g][0], mid: null };
+        const name = TOWER_THEMES[g][rand(0, TOWER_THEMES[g].length - 1)];
+        return { icon: TOWER_ICONS[g], name, mid: 'art-' + SCENE_TOWER_ART[name] };
     }
     let pool = z.mons.filter(id => MONSTERS[id].lv <= player.lv + 3);
     if (!pool.length) pool = [z.mons[0]];
@@ -965,6 +972,7 @@ function sceneDraw(ctx, W, H) {
         scene.npcRects = scene.bg.hot.map(h => ({ x0: (h.r[0] - ox) * kx, y0: (h.r[1] - oy) * ky, x1: (h.r[2] - ox) * kx, y1: (h.r[3] - oy) * ky, npc: { act: h.act } }));
     }
     if (inTownNow) for (const h of TOWN_HOUSES) drawHouse(ctx, h, camX, camY);
+    if (bgImg) drawSceneAtmosphere(ctx, W, H, camX, camY);
     drawBossEnchantEffects(ctx, camX, camY, 'ground');
     drawWorldVfx(ctx, camX, camY, 'ground');
     // 首領大招紅圈：外圈閃爍、內圈隨蓄力時間長大，滿了就爆
@@ -1002,26 +1010,28 @@ function sceneDraw(ctx, W, H) {
         const big = m.inst && (m.inst.boss || m.inst.dragon);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 11, big ? 16 : 11, 4, 0, 0, Math.PI * 2); ctx.fill();
-        const img = monSpriteImg(m.mid);
+        const art = sceneMonsterArt(m), img = monSpriteImg(art);
         let top = sy - (big ? 44 : 30);
         if (img) {
             // 方向：戰鬥中面向角色，遊走時看移動方向；左右用側面圖鏡像
             const fight = m.inst && !m.dead;
             const dx = fight ? pl.rx - m.rx : m.x - m.rx, dy = fight ? pl.ry - m.ry : m.y - m.ry;
             if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) m.face = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
-            const f = m.face || 'down', ms = MON_SPRITES[m.mid], row = { down: 0, right: 1, left: 1, up: 2 }[f] + (m.atk > 0 ? 3 : 0);
+            const f = m.face || 'down', ms = MON_SPRITES[art], row = { down: 0, right: 1, left: 1, up: 2 }[f] + (m.atk > 0 ? 3 : 0);
             const dh = (ms.size || (big ? 62 : 42)) * ms.ch / ms.body, dw = ms.cw * dh / ms.ch;
             const moving = !fight && (Math.abs(m.x - m.rx) + Math.abs(m.y - m.ry)) > 0.02;
             const n = ms.n[row];
             // 格：攻擊照出手進度播一次；走動時循環；站著停在第一格（只有 1 格的怪走動時上下輕晃）
             const fr = m.atk > 0 ? Math.min(n - 1, Math.floor((1 - m.atk / 380) * n)) : moving ? Math.floor(gameNow / 150) % n : 0;
             const bob = moving && n === 1 ? Math.abs(Math.sin(gameNow / 110)) * 2 : 0;
+            const frameX = ms.cols ? (row * 2 + fr) % ms.cols * ms.cw : fr * ms.cw;
+            const frameY = ms.cols ? Math.floor((row * 2 + fr) / ms.cols) * ms.ch : row * ms.ch;
             const body = () => {
                 ctx.save();
                 hurtFx();
                 if (f === 'left') { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.translate(-sx, 0); }
-                ctx.drawImage(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
-                if (flash > 0 && img.complete && img.naturalWidth) ctx.drawImage(hitFlashCanvas(img, fr * ms.cw, row * ms.ch, ms.cw, ms.ch, flash), sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+                ctx.drawImage(img, frameX, frameY, ms.cw, ms.ch, sx - dw / 2, sy + 13 - dh - bob, dw, dh);
+                if (flash > 0 && img.complete && img.naturalWidth) ctx.drawImage(hitFlashCanvas(img, frameX, frameY, ms.cw, ms.ch, flash), sx - dw / 2, sy + 13 - dh - bob, dw, dh);
                 ctx.restore();
             };
             body();
@@ -1107,6 +1117,13 @@ function sceneDraw(ctx, W, H) {
     if (player.loc.type === 'town') for (const n of townNpcList(scene.bg)) actors.push({ y: n.y, draw: () => {
         const sx = n.x * TILE - camX + TILE / 2, sy = n.y * TILE - camY + TILE / 2;
         if (n.painted) { labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - n.h * TILE, camX, camY, n)); return; }   // 圖上已畫好的人：只加名牌
+        if (n.img) {
+            const img = spriteImage(n.img), dh = n.h * TILE;
+            ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(sx, sy + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+            if (img) { const dw = dh * img.naturalWidth / img.naturalHeight; ctx.drawImage(img, sx - dw / 2, sy + 14 - dh, dw, dh); }
+            labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy + 8 - dh, camX, camY, n));
+            return;
+        }
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
         ctx.font = '28px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
@@ -1189,7 +1206,7 @@ function sceneDraw(ctx, W, H) {
         ctx.fillStyle = '#000a'; ctx.fillRect(W / 2 - 90, H - 34, 180, 24);
         ctx.fillStyle = '#ffe7a8'; ctx.fillText(msg, W / 2, H - 22);
     }
-    if (scene.bg && scene.bg.big) drawBigMapHud(ctx, W, H, camX, camY);
+    if (scene.bg) drawBigMapHud(ctx, W, H, camX, camY);
     scene.cam = { x: camX, y: camY };
 }
 
@@ -1254,7 +1271,7 @@ function drawOccPatch(ctx, x0, y0, x1, y1, footY, camX, camY) {
 const MINI_TILES = 22;
 function drawBigMapHud(ctx, W, H, camX, camY) {
     const bg = scene.bg;
-    if (walkHome) scene.worldOpen = false;
+    if (walkHome && scene.worldOpen) closeWorldAtlas();
     const [vx0, vx1] = scene.visX || [0, W];
     const R = Math.round(Math.min(62, (vx1 - vx0) * 0.16)), cx = vx1 - R - 12, cy = (W > H * 2 ? 40 : 10) + R;   // PC 橫式外框上緣有裝飾，往下移
     scene.miniRect = { cx, cy, r: R };
@@ -1265,7 +1282,10 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
     ctx.fillStyle = '#141210'; ctx.fill();
     ctx.save(); ctx.clip();
-    if (img) ctx.drawImage(img, pcx - s, pcy - s, 2 * s, 2 * s, cx - R, cy - R, 2 * R, 2 * R);   // 超出原圖的部分瀏覽器自動裁掉
+    if (img) {
+        const kx = img.naturalWidth / (scene.mw * TILE), ky = img.naturalHeight / (scene.mh * TILE);
+        ctx.drawImage(img, (pcx - s) * kx, (pcy - s) * ky, 2 * s * kx, 2 * s * ky, cx - R, cy - R, 2 * R, 2 * R);
+    }
     for (const m of scene.mons) {
         if (m.dead) continue;
         const [x, y] = at((m.rx + 0.5) * TILE, (m.ry + 0.5) * TILE);
@@ -1299,7 +1319,7 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
     ctx.fillStyle = 'rgba(20,16,10,0.9)'; ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#e6c882'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.font = '11px sans-serif'; ctx.fillStyle = '#f2d9a0'; ctx.fillText('⤢', bx, by + 1);
-    if (scene.region) drawLabel(ctx, scene.region, cx, cy + R + 14, '#ffe7a8');
+    drawLabel(ctx, scene.region || zoneTitle(), cx, cy + R + 14, '#ffe7a8');
     // 進入新區域：上方中間顯示區域名稱 2.5 秒（淡入淡出）
     const t = gameNow - (scene.regionAt || -1e9);
     if (scene.region && t < 2500) {
@@ -1317,63 +1337,13 @@ function drawBigMapHud(ctx, W, H, camX, camY) {
 }
 // 全世界地圖（點小地圖／按 M 打開）：整張大地圖縮到畫面內，標出各地圖名稱與建議等級（目前所在的亮色）、目前地圖的出口、角色位置；
 // 點地圖＝走過去並關閉，點外面／再按 M／Esc＝關閉。縮圖第一次打開時從原圖畫一次存起來（worldCache），之後每幀只貼這張
-let worldCache = null;
-function drawWorldMap(ctx, W, H) {
-    const mapW = scene.mw * TILE, mapH = scene.mh * TILE;
-    const [vx0, vx1] = scene.visX || [0, W], vw = vx1 - vx0, mid = (vx0 + vx1) / 2;
-    const pc = W > H * 2, top = pc ? 44 : 34, bot = pc ? H * 0.17 + 14 : 16;   // PC 橫式外框底部的欄杆會蓋住地圖下緣，留出來
-    const ww = Math.min(vw - 24, (H - top - bot) * mapW / mapH), wh = ww * mapH / mapW;
-    const wx = mid - ww / 2, wy = top + (H - top - bot - wh) / 2;
-    scene.worldRect = { x: wx, y: wy, w: ww, h: wh };
-    const k = ww / mapW, img = spriteImage(scene.bg.src);
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(0, 0, W, H);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 16px serif'; ctx.lineWidth = 4; ctx.strokeStyle = '#000';
-    ctx.strokeText('— 世界地圖 —', mid, top - 18); ctx.fillStyle = '#f2d9a0'; ctx.fillText('— 世界地圖 —', mid, top - 18);
-    const dpr = window.devicePixelRatio || 1, cw = Math.round(ww * (scene.zoom || 1) * dpr);
-    if (img && (!worldCache || worldCache.width !== cw || worldCache.src !== scene.bg.src)) {
-        worldCache = document.createElement('canvas'); worldCache.width = cw; worldCache.height = Math.round(cw * mapH / mapW); worldCache.src = scene.bg.src;
-        const g2 = worldCache.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(img, 0, 0, worldCache.width, worldCache.height);
-    }
-    if (worldCache && img) ctx.drawImage(worldCache, wx, wy, ww, wh);
-    ctx.lineWidth = 3; ctx.strokeStyle = '#8a6630'; ctx.strokeRect(wx - 2, wy - 2, ww + 4, wh + 4);
-    ctx.lineWidth = 1; ctx.strokeStyle = '#e6c882'; ctx.strokeRect(wx - 5, wy - 5, ww + 10, wh + 10);
-    // 地圖名稱（同一個地圖有兩區時各標一次）
-    for (const rg of scene.bg.regions || []) {
-        const z = ZONE_BY_ID[rg.zone]; if (!z) continue;
-        const x = wx + (rg.x + 0.5) * TILE * k, y = wy + (rg.y + 0.5) * TILE * k, here = rg.zone === player.loc.id;
-        const hard = z.lv && player.lv < z.lv[0] - 5;
-        drawLabel(ctx, z.name, x, y - 6, here ? '#7fe8ff' : hard ? '#ff9a7a' : '#ffe7a8');
-        if (z.lv) { ctx.font = '10px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(`Lv.${z.lv[0]}～${z.lv[1]}`, x, y + 7); ctx.fillStyle = '#d8ccb0'; ctx.fillText(`Lv.${z.lv[0]}～${z.lv[1]}`, x, y + 7); }
-    }
-    if (scene.gates) {
-        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(gameNow / 250);
-        for (const g of scene.gates) if (g.from === player.loc.id) drawGlowArrow(ctx, wx + (g.x + 0.5) * TILE * k, wy + (g.y + 0.5) * TILE * k, g.ang, 5, '#ffd86a', 6);
-        ctx.globalAlpha = 1;
-    }
-    const px = wx + (scene.pl.rx + 0.5) * TILE * k, py = wy + (scene.pl.ry + 0.5) * TILE * k, pr = 4 + 1.5 * Math.sin(gameNow / 200);
-    ctx.fillStyle = 'rgba(127,232,255,0.35)'; ctx.beginPath(); ctx.arc(px, py, pr + 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#7fe8ff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.font = '11px sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-    const tip = '點地圖走過去・點外面關閉', ty = Math.min(H - 8, wy + wh + 14);
-    ctx.strokeText(tip, mid, ty); ctx.fillStyle = '#d8ccb0'; ctx.fillText(tip, mid, ty);
-    ctx.restore();
-}
-// 點小地圖：打開世界地圖；世界地圖開著時：點地圖內＝換算成格子走過去（不能走的格子找附近最近能走的）並關閉，點外面＝關閉。回傳 true＝這次點擊已處理
+function drawWorldMap(ctx, W, H) { syncWorldAtlas(); }
 function sceneMiniClick(sx, sy) {
-    if (!(scene.bg && scene.bg.big)) return false;
-    if (scene.worldOpen) {
-        scene.worldOpen = false;
-        const w = scene.worldRect;
-        if (w && sx >= w.x && sy >= w.y && sx <= w.x + w.w && sy <= w.y + w.h)
-            sceneWalkNear(Math.floor((sx - w.x) / w.w * scene.mw), Math.floor((sy - w.y) / w.h * scene.mh));
-        return true;
-    }
+    if (!scene.bg) return false;
+    if (scene.worldOpen) return true;
     const r = scene.miniRect;
     if (!r || Math.hypot(sx - r.cx, sy - r.cy) > r.r + 6) return false;
-    scene.worldOpen = true;
-    return true;
+    openWorldAtlas(); return true;
 }
 function sceneWalkNear(tx, ty) {
     if (scene.grid[ty] && scene.grid[ty][tx] !== 0) {
@@ -1504,7 +1474,7 @@ function sceneClick(ev) {
     const cv = $('scene-canvas'), r = cv.getBoundingClientRect();
     const z = scene.zoom || 1;
     const wx = (ev.clientX - r.left) / z + scene.cam.x, wy = (ev.clientY - r.top) / z + scene.cam.y;
-    if (player.loc.type === 'zone' && !walkHome && sceneMiniClick((ev.clientX - r.left) / z, (ev.clientY - r.top) / z)) return;   // 大地圖小地圖
+    if (!walkHome && sceneMiniClick((ev.clientX - r.left) / z, (ev.clientY - r.top) / z)) return;   // 大地圖小地圖
     if (player.loc.type === 'zone') {
         const np = scene.bg && scene.bg.fieldNpcs && (scene.npcRects || []).find(p => wx >= p.x0 && wx <= p.x1 && wy >= p.y0 && wy <= p.y1);
         if (np) { np.npc.act(); return; }   // 野外 NPC 名牌（第 55 節）
@@ -1572,14 +1542,15 @@ document.addEventListener('keydown', ev => {
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if (!scene || !player || !huntVisible() || walkHome) return;
     const barKey = BAR_KEYS.indexOf(k);   // 快捷欄：1～8、Q E R F Z X C V（hotbar.js）
-    const mapKey = scene.bg && scene.bg.big && player.loc.type === 'zone' && (k === 'm' || (k === 'Escape' && scene.worldOpen));   // M 開關世界地圖、Esc 關閉
+    const mapKey = scene.bg && (k === 'm' || (k === 'Escape' && scene.worldOpen));   // M 開關世界地圖、Esc 關閉
     if (!SCENE_KEY_DIRS[k] && barKey < 0 && !mapKey) return;
     const t = ev.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
     const dl = $('dialog-layer');
     if (dl && dl.classList.contains('active')) return;
     ev.preventDefault();
-    if (mapKey) { if (!ev.repeat) scene.worldOpen = k === 'm' ? !scene.worldOpen : false; return; }
+    if (mapKey) { if (!ev.repeat) { if (k === 'm') toggleWorldAtlas(); else closeWorldAtlas(); } return; }
+    if (scene.worldOpen) return;
     if (barKey >= 0) { if (!ev.repeat) barUse(barKey); return; }
     if (!sceneKeys.includes(k)) sceneKeys.push(k);
     scene.pl.path = scene.pl.path.slice(0, 1);   // 改用鍵盤：取消點地圖的路線（走完這一格）

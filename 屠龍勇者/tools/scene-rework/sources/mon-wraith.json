@@ -1,0 +1,10 @@
+{
+  "id": "mon-wraith",
+  "kind": "monster",
+  "name": "虛空行者",
+  "boss": false,
+  "prompt": "Use case: stylized-concept. ONE original game-character animation sprite atlas, transparent RGBA PNG. Exact FOUR columns by THREE rows, 12 equal invisible cells, landscape 4:3. The SAME character in all cells, consistent body size and fixed feet baseline at 88% of each cell height, fully contained within central 75% of each cell, wide transparent gutters, no overlap or cropped weapons. A floating hooded void wraith, dark blue spectral ragged robes, thin arms, subdued violet core, no broad mist cloud. Cohesive hand-painted pre-rendered 2D gothic fantasy RPG sprite art, top-down 3/4 orthographic gameplay camera, readable silhouette, muted realistic materials, upper-left lighting. No ground or shadow, no background, no text, grid, labels, numbers, UI or logos. Exact row-major sequence: 1 walk step A facing front/down; 2 walk step B facing front/down; 3 walk step A facing screen RIGHT; 4 walk step B facing screen RIGHT; 5 walk step A showing back/up; 6 walk step B showing back/up; 7 attack wind-up facing front/down; 8 attack follow-through facing front/down; 9 attack wind-up facing screen RIGHT; 10 attack follow-through facing screen RIGHT; 11 attack wind-up showing back/up; 12 attack follow-through showing back/up. Keep character identity and weapon design identical across all twelve poses. Original design, no commercial copies.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-660e7725-c0e7-4681-bbb7-ac3237f1e394.png",
+  "original": "tools/scene-rework/src/mon-wraith.png",
+  "tool": "built-in image_gen"
+}

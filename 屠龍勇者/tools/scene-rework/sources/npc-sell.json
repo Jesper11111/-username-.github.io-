@@ -1,0 +1,9 @@
+{
+  "id": "npc-sell",
+  "kind": "npc",
+  "name": "回收",
+  "prompt": "Use case: stylized-concept. One original full-body NPC game sprite, transparent RGBA background, no ground or shadow, centered with generous empty margins. A stout medieval salvage merchant in dark green coat, leather tool belt and a small sack of scrap. Same cohesive hand-painted pre-rendered-looking 2D gothic medieval RPG sprite aesthetic, top-down 3/4 orthographic view, standing facing diagonally down-right, complete feet visible, readable at 48px. Original design; no text, UI, logos, checkerboard, border or commercial game copies.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-d5be213c-ab9e-4dc8-be27-68f6c93d7faa.png",
+  "original": "tools/scene-rework/src/npc-sell.png",
+  "tool": "built-in image_gen"
+}

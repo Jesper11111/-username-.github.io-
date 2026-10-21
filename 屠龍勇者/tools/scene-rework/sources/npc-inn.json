@@ -1,0 +1,9 @@
+{
+  "id": "npc-inn",
+  "kind": "npc",
+  "name": "旅館",
+  "prompt": "Use case: stylized-concept. One original full-body NPC game sprite, transparent RGBA background, no ground or shadow, centered with generous empty margins. A welcoming medieval innkeeper in cream blouse and burgundy vest, leather belt, holding a small lantern. Same cohesive hand-painted pre-rendered-looking 2D gothic medieval RPG sprite aesthetic, top-down 3/4 orthographic view, standing facing diagonally down-right, complete feet visible, readable at 48px. Original design; no text, UI, logos, checkerboard, border or commercial game copies.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-1a43086f-5664-4cf4-a489-d06d1cb6d60a.png",
+  "original": "tools/scene-rework/src/npc-inn.png",
+  "tool": "built-in image_gen"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "npc-forge",
+  "kind": "npc",
+  "name": "鍛造",
+  "prompt": "Use case: stylized-concept. One original full-body NPC game sprite, transparent RGBA background, no ground or shadow, centered with generous empty margins. A burly medieval blacksmith in soot-dark leather apron, short dark hair, holding a hammer at his side. Same cohesive hand-painted pre-rendered-looking 2D gothic medieval RPG sprite aesthetic, top-down 3/4 orthographic view, standing facing diagonally down-right, complete feet visible, readable at 48px. Original design; no text, UI, logos, checkerboard, border or commercial game copies.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-6270ff61-59b0-4cdd-9159-8e96aee9023c.png",
+  "original": "tools/scene-rework/src/npc-forge.png",
+  "tool": "built-in image_gen"
+}

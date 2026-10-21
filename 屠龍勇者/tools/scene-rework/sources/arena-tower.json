@@ -1,0 +1,9 @@
+{
+  "id": "arena-tower",
+  "kind": "arena",
+  "name": "永夜之塔",
+  "prompt": "Original hand-painted pre-rendered-looking 2D isometric dark fantasy RPG game asset. Cohesive weathered stone, iron, wood and natural materials, readable midtones and clear paths, atmospheric deep shadows only around architecture, restrained warm torchlight and cool ambient fill. Crisp details at gameplay scale, no blur, no photo, no modern 3D perspective. No commercial game copies, logos, text, characters, monsters, HUD, frames or watermark. Landscape 5:3 battle map. A ruined gothic tower great hall, broken columns around corners, stairs and large sealed gate along upper edge, faded crimson carpet at left edge, two warm braziers near upper corners, weathered gray flagstones. STRICT COMPOSITION: at least middle 80% width and 70% height are uninterrupted walkable flat stone ground. Every pillar, tall statue, pit, pool, obstacle and wall stays in the outside 10% border, except stairs at the very top. No painted grid. Top-down 3/4 orthographic camera, no sky. Empty environment only, no actors, dragons, HUD or text.",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-de1e9982-fce8-4c83-9049-65df84c3e06c.png",
+  "original": "tools/scene-rework/src/arena-tower.png",
+  "tool": "built-in image_gen"
+}
