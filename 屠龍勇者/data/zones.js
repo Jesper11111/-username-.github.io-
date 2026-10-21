@@ -108,7 +108,7 @@ const ZONES = [
         desc: '被時間遺忘的古文明廢墟，紫霧中徘徊著古代巨人。',
     },
     {
-        id: 'giantTomb', name: '泰坦墓穴', icon: '🪦', type: 'dungeon', scene: 'tomb', lv: [72, 88], town: 'aden', fee: 4000,
+        id: 'giantTomb', name: '泰坦墓穴', icon: '🪦', type: 'dungeon', scene: 'tomb', bg: 'wild', lv: [72, 88], town: 'aden', fee: 4000,
         mons: ['giantSkeleton', 'tombGuardian', 'necromancer', 'boneDragon'], rare: { id: 'giantKingSpirit', p: 0.006 },
         drops: [{ id: 'windBow', p: 0.0002 }, { id: 'dkFlameSword', p: 0.0002 }, { id: 'iceQueenStaff', p: 0.0002 }, { id: 'elixir', p: 0.0005 },
             { id: 'bWeaponScroll', p: 0.002 }],

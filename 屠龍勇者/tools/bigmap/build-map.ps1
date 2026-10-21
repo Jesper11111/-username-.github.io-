@@ -4,6 +4,7 @@
 # Output: images/maps/wild.jpg (6016x4768 = 188x149 tiles of 32px; crypt.jpg (Whisper Crypt, 1280x1280) added below the mine upper 2026-10-20; lava.jpg added east 2026-10-19; east part added 2026-10-18: snow, oasis, pyramid; south row: mine.jpg x2 + dragon-cave.jpg), images/maps/wild-mini.jpg (minimap), tools/bigmap/auto-mask.txt
 #         (per-tile guess: '.' walkable, '#' blocked; Claude then hand-edits it into data/bigmap.js) and tools/bigmap/mask-check.jpg.
 # Run from the game folder: powershell -ExecutionPolicy Bypass -File tools\bigmap\build-map.ps1
+param([ValidatePattern('^[a-z0-9-]+$')][string]$MapStem = 'wild')
 $ErrorActionPreference = 'Stop'
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent (Split-Path -Parent $dir)
@@ -132,7 +133,8 @@ $regions = @(
     # 2026-10-19 east (section 57): lava field = fireCave, right of the dunes / oasis (tiles 138..187, rows ~34..59)
     @('lava.jpg', 4416, 1100, 0.95, 0.95),
     # 2026-10-20 (section 67): Whisper Crypt = islandDungeon, square 1254 source drawn at 1280x1280 (40x40 tiles), centred under the mine upper (tiles 5..44, rows 109..148)
-    @('crypt.jpg', 160, 3488, 1, 1, '', 1280, 1280)
+    @('crypt.jpg', 160, 3488, 1, 1, '', 1280, 1280),
+    @('titan-tomb.png', 4512, 2080, 1, 1, '', 1504, 1504)
 )
 foreach ($r in $regions) {
     $src = [System.Drawing.Bitmap]::FromFile((Join-Path $dir $r[0]))
@@ -161,10 +163,10 @@ foreach ($p in $seamCfg.patches) {
     [BigMap]::Patch($out, $fix, [int]$p.x, [int]$p.y, ($p.orient -eq 'v'), [int]$p.at, [int]$p.band, 24, 140, 110); $fix.Dispose()
     "seam patch $($p.id) <- $($f.Name)"
 }
-$out.Save((Join-Path $root 'images\maps\wild.jpg'), $enc, $ep)
+$out.Save((Join-Path $root "images\maps\$MapStem.jpg"), $enc, $ep)
 $mini = New-Object System.Drawing.Bitmap 400, 317; $mg = [System.Drawing.Graphics]::FromImage($mini); $mg.InterpolationMode = 'HighQualityBicubic'; $mg.DrawImage($out, 0, 0, 400, 317); $mg.Dispose()
-$mini.Save((Join-Path $root 'images\maps\wild-mini.jpg'), $enc, $ep); $mini.Dispose()
+$mini.Save((Join-Path $root "images\maps\$MapStem-mini.jpg"), $enc, $ep); $mini.Dispose()
 $mask = [BigMap]::Mask($out, 32)
 [IO.File]::WriteAllText((Join-Path $dir 'auto-mask.txt'), $mask)
 $out.Dispose()
-"wild.jpg $([Math]::Round((Get-Item (Join-Path $root 'images\maps\wild.jpg')).Length / 1KB)) KB"
+"$MapStem.jpg $([Math]::Round((Get-Item (Join-Path $root "images\maps\$MapStem.jpg")).Length / 1KB)) KB"

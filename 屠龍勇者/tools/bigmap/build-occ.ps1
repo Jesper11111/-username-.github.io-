@@ -5,6 +5,7 @@
 #  - man-made props (tent, walls, wells...): polygons in walk.json "occluders" [{ "base": row, "poly": [[x,y],...] }] in tile units (32 px)
 # Also writes tools/bigmap/occ-check.jpg (occluders tinted by depth) for checking.
 # Run from the game folder: powershell -ExecutionPolicy Bypass -File tools\bigmap\build-occ.ps1
+param([ValidatePattern('^[a-z0-9-]+$')][string]$MapStem = 'wild')
 $ErrorActionPreference = 'Stop'
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent (Split-Path -Parent $dir)
@@ -81,11 +82,11 @@ public static class Occ {
 }
 '@
 $j = Get-Content (Join-Path $dir 'walk.json') -Raw | ConvertFrom-Json
-$img0 = [System.Drawing.Bitmap]::FromFile((Join-Path $root 'images\maps\wild.jpg')); $tw = $img0.Width / 32; $th = $img0.Height / 32; $img0.Dispose()
+$img0 = [System.Drawing.Bitmap]::FromFile((Join-Path $root "images\maps\$MapStem.jpg")); $tw = $img0.Width / 32; $th = $img0.Height / 32; $img0.Dispose()
 $blocked = New-Object 'bool[]' ($tw * $th); for ($i = 0; $i -lt $blocked.Length; $i++) { $blocked[$i] = $true }
 foreach ($r in $j.walk) { for ($y = $r[1]; $y -le $r[3]; $y++) { for ($x = $r[0]; $x -le $r[2]; $x++) { $blocked[$y * $tw + $x] = $false } } }
 foreach ($r in $j.block) { for ($y = $r[1]; $y -le $r[3]; $y++) { for ($x = $r[0]; $x -le $r[2]; $x++) { $blocked[$y * $tw + $x] = $true } } }
-$img = [System.Drawing.Bitmap]::FromFile((Join-Path $root 'images\maps\wild.jpg'))
+$img = [System.Drawing.Bitmap]::FromFile((Join-Path $root "images\maps\$MapStem.jpg"))
 $W = $img.Width / 4; $H = $img.Height / 4
 $o = [Occ]::Trees($img, $blocked, $tw, $th)
 foreach ($r in $j.noocc) { for ($cy = $r[1] * 8; $cy -lt ($r[3] + 1) * 8; $cy++) { for ($cx = $r[0] * 8; $cx -lt ($r[2] + 1) * 8; $cx++) { $o[$cy * $W + $cx] = 0 } } }
@@ -93,7 +94,7 @@ foreach ($p in $j.occluders) {
     $xs = [double[]]($p.poly | ForEach-Object { $_[0] }); $ys = [double[]]($p.poly | ForEach-Object { $_[1] })
     [Occ]::Poly($o, $W, $H, $xs, $ys, [int]$p.base)
 }
-[Occ]::Save($o, $W, $H, (Join-Path $root 'images\maps\wild-occ.png'))
+[Occ]::Save($o, $W, $H, (Join-Path $root "images\maps\$MapStem-occ.png"))
 [Occ]::Check($img, $o, $W, $H, (Join-Path $dir 'occ-check.jpg'))
 $img.Dispose()
 $n = ($o | Where-Object { $_ -gt 0 }).Count
