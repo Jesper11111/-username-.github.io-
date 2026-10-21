@@ -26,8 +26,8 @@ function chatPollGap() {
     return idle < 60 * 1000 ? CHAT_POLL_MS : idle < 5 * 60 * 1000 ? CHAT_POLL_IDLE_MS : CHAT_POLL_AWAY_MS;
 }
 const LOG_TAB_KEY = 'dragonSlayer_logTab';
-let logPopTab = 'log';      // 左下角訊息框：log 戰鬥訊息／chat 聊天
-try { if (localStorage.getItem(LOG_TAB_KEY) === 'chat') logPopTab = 'chat'; } catch (e) { }
+let logPopTab = 'log';      // 左下角訊息框：log 戰鬥訊息／chat 聊天／loot 掉落紀錄
+try { const t = localStorage.getItem(LOG_TAB_KEY); if (t === 'chat' || t === 'loot') logPopTab = t; } catch (e) { }
 
 function chatRoomChannel() { return raidRoom ? 'room:' + raidRoom.id : null; }
 function chatValid(c) { return c === 'world' || (c && (c === chatRoomChannel() || c === clanChannel())); }
@@ -53,21 +53,24 @@ function chatSwitch(ch) {
 function chatPopOpen() { return typeof logDrawerOpen !== 'undefined' && logDrawerOpen && logPopTab === 'chat'; }
 
 function setLogPopTab(t) {
-    logPopTab = t === 'chat' ? 'chat' : 'log';
+    logPopTab = t === 'chat' || t === 'loot' ? t : 'log';
     try { localStorage.setItem(LOG_TAB_KEY, logPopTab); } catch (e) { }
     syncLogPopTab();
     if (logPopTab === 'chat') { chatTouch(); renderPopChat(); chatFetch(); }
-    else { lastLogRendered = 0; renderLogPop(); }
+    else { lastLogRendered = 0; lastLootRendered = -1; renderLogPop(); }
 }
 
 function syncLogPopTab() {
-    const log = document.getElementById('hunt-log'), pc = document.getElementById('pop-chat');
-    if (!log || !pc) return;
-    log.classList.toggle('hidden', logPopTab === 'chat');
+    const log = document.getElementById('hunt-log'), pc = document.getElementById('pop-chat'), loot = document.getElementById('hunt-loot');
+    if (!log || !pc || !loot) return;
+    log.classList.toggle('hidden', logPopTab !== 'log');
     pc.classList.toggle('hidden', logPopTab !== 'chat');
+    loot.classList.toggle('hidden', logPopTab !== 'loot');
     const a = document.getElementById('lp-tab-log'), b = document.getElementById('lp-tab-chat');
     if (a) a.classList.toggle('on', logPopTab === 'log');
     if (b) b.classList.toggle('on', logPopTab === 'chat');
+    const c = document.getElementById('lp-tab-loot');
+    if (c) c.classList.toggle('on', logPopTab === 'loot');
 }
 
 function chatChipsHtml() {

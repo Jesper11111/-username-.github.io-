@@ -54,7 +54,7 @@ function makeMapItem(t, q) {
 function giveMap(t, q, why) {
     const x = makeMapItem(t, q);
     player.inv.push(x);
-    addLog(`🗺️ ${why || '獲得'} ${x.q ? `【${QUALITY[x.q].name}】` : ''}${itemName(x)}`, x.q === 'rare' ? 'rare' : 'loot');
+    addLootLog(`🗺️ ${why || '獲得'} ${x.q ? `【${QUALITY[x.q].name}】` : ''}${itemName(x)} ×1`, x.q === 'rare' ? 'rare' : 'loot');
     return x;
 }
 // 相同的地圖（同階、同品質、同詞綴、同名稱）在清單裡疊成一列「×N」（2026-10-16 使用者要求）；

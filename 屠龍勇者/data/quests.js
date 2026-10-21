@@ -476,7 +476,7 @@ function questOnKill(mon, z) {
         const have = countItem(g.item);
         if (have < g.n && chance(g.p)) {
             addItem(g.item, 1);
-            addLog(`📜 獲得任務道具「${g.itemName}」（${have + 1}/${g.n}）`, 'rare');
+            addLootLog(`📜 獲得任務道具「${g.itemName}」 ×1（${have + 1}/${g.n}）`, 'rare');
             if (have + 1 === g.n) addLog(`📜 任務目標達成！回村莊向${CLASS_STORIES[player.cls].npc}回報`, 'rare');
         }
     }

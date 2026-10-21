@@ -3,10 +3,17 @@ let player = null;
 
 // 遊戲訊息（狩獵畫面下方的紀錄）
 const gameLog = [];
+const lootLog = [];
 let logSeq = 0;
 function addLog(msg, cls = '') {
     gameLog.push({ seq: ++logSeq, msg, cls });
     if (gameLog.length > 120) gameLog.shift();
+}
+function addLootLog(msg, cls = 'loot') {
+    addLog(msg, cls);
+    if (SIM_MODE) return;
+    lootLog.push({ seq: logSeq, msg, cls });
+    if (lootLog.length > 120) lootLog.shift();
 }
 
 const DEFAULT_SETTINGS = {

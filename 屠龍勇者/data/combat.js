@@ -664,7 +664,7 @@ function rollDrops(mon, z) {
             const g = instSellPrice(rolled) * n;
             player.gold += g;
             if (session) session.gold += g;
-            addLog(`🪙 自動賣出 ${rolled.q ? `【${QUALITY[rolled.q].name}】` : ''}${itemName(rolled)}（+${fmt(g)}）`, 'loot');
+            addLootLog(`🪙 自動賣出 ${rolled.q ? `【${QUALITY[rolled.q].name}】` : ''}${itemName(rolled)}（+${fmt(g)}）`, 'loot');
             return;
         }
         if (invWeight() + d.wt * n > st.weightMax) { addLog(`⚠️ 負重已滿，${d.name}撿不起來`, 'warn'); return; }
@@ -672,7 +672,7 @@ function rollDrops(mon, z) {
         if (rolled && inst) for (const k of ['q', 'af', 'il', 'nm']) if (rolled[k] != null) inst[k] = rolled[k];
         const rare = ['weapon', 'armor', 'elixir'].includes(d.cat) || (d.cat === 'scroll' && d.bless === 1) || d.scroll === 'enchant';
         const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
-        addLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name}${n > 1 ? ' ×' + n : ''}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
+        addLootLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name} ×${n}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');
         sfx(rare || (inst && inst.q) ? 'treasure' : 'loot-gold');
         worldVfxLoot(mon, d, inst);
     };

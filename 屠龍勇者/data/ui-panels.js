@@ -4,6 +4,7 @@ let currentTab = 'hunt';
 let bagFilter = 'all';
 let townSub = 'shop';
 let lastLogRendered = 0;
+let lastLootRendered = -1;
 // 戰鬥訊息抽屜：預設收起，開關狀態記在這台裝置（不進存檔）
 const LOG_OPEN_KEY = 'dragonSlayer_logOpen';
 let logDrawerOpen = false;
@@ -16,6 +17,7 @@ const TABS = {
 };
 
 function enterGame() {
+    lootLog.length = 0; lastLootRendered = -1;
     showScreen('game');
     openTabs = []; currentTab = 'hunt';
     layoutFrame();
@@ -158,11 +160,20 @@ function renderLogPop() {
     if (!isPcFrame() && logDrawerOpen && ctrl && fr && ctrl.offsetParent) {
         pop.style.bottom = Math.round(fr.getBoundingClientRect().bottom - ctrl.getBoundingClientRect().top + 4) + 'px';
     } else pop.style.bottom = '';
+    if (logPopTab === 'loot') { renderLootLog(); return; }
     const logBox = $('hunt-log');
     if (!logDrawerOpen || !logBox || logPopTab === 'chat' || lastLogRendered === logSeq) return;
     lastLogRendered = logSeq;
     logBox.innerHTML = gameLog.slice(-30).map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('');
     logBox.scrollTop = logBox.scrollHeight;
+}
+
+function renderLootLog() {
+    const box = $('hunt-loot'), seq = lootLog.length ? lootLog[lootLog.length - 1].seq : 0;
+    if (!logDrawerOpen || !box || lastLootRendered === seq) return;
+    lastLootRendered = seq;
+    box.innerHTML = lootLog.length ? lootLog.map(l => `<div class="log-line ${l.cls}">${esc(l.msg)}</div>`).join('') : '<div class="muted">尚無掉落紀錄。顯示本次遊戲最近 120 筆打怪取得道具及自動賣出紀錄，重新進入角色會清空。</div>';
+    box.scrollTop = box.scrollHeight;
 }
 
 function huntButtonsHtml() {
