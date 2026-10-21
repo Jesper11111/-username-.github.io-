@@ -1,0 +1,75 @@
+{
+  "tool": "built-in image_gen",
+  "id": "hero-armor-01",
+  "source": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-171d1b29-9ac9-415f-92df-e2a2bbf4a424.png",
+  "saved": "tools/icon-src/items/hero-armor-01.png",
+  "items": [
+    {
+      "id": "duskWarHelm",
+      "name": "暮鋼戰盔",
+      "slot": "helm",
+      "art": "A dark tempered steel full war helmet, dusk violet trim, sturdy angular cheek guards, restrained crimson crest."
+    },
+    {
+      "id": "abyssGuardMail",
+      "name": "深淵守衛戰甲",
+      "slot": "armor",
+      "art": "A heavy blackened steel torso breastplate, layered pauldrons, deep teal abyss jewel, no body or mannequin."
+    },
+    {
+      "id": "moonveilCloak",
+      "name": "月影秘法披風",
+      "slot": "cloak",
+      "art": "A midnight blue flowing mage cloak, silver crescent clasp and subtle silver lunar embroidered hem."
+    },
+    {
+      "id": "dawnBastionShield",
+      "name": "黎明壁壘之盾",
+      "slot": "shield",
+      "art": "A broad sturdy kite shield in ivory and aged gold, rising sun emblem and reinforced steel rim."
+    },
+    {
+      "id": "frostMirrorShield",
+      "name": "霜鏡法盾",
+      "slot": "shield",
+      "art": "A distinct round crystalline ice mirror shield, polished icy blue face, silver snowflake rim and central pale sapphire."
+    },
+    {
+      "id": "runeSilkTunic",
+      "name": "符文絲織內衣",
+      "slot": "tshirt",
+      "art": "A light ivory short-sleeved silk undershirt, fitted inner garment, subtle blue rune stitch seams, no armor or body."
+    },
+    {
+      "id": "titanWeaveTunic",
+      "name": "泰坦紋戰衣",
+      "slot": "tshirt",
+      "art": "A rugged dark brown fitted sleeveless padded undershirt for beneath armor, bronze geometric giant-weave embroidery, no body."
+    },
+    {
+      "id": "bloodOathGauntlets",
+      "name": "血誓護手",
+      "slot": "gloves",
+      "art": "A matching pair of heavy black steel gauntlets, red oath gem knuckles and engraved blood-red accents."
+    },
+    {
+      "id": "astralWeaveGloves",
+      "name": "星紋秘法手套",
+      "slot": "gloves",
+      "art": "A matching pair of soft indigo mage gloves, tiny silver star embroidery and amethyst wrist clasps, visibly cloth not plate."
+    },
+    {
+      "id": "galeStalkerBoots",
+      "name": "疾風獵行靴",
+      "slot": "boots",
+      "art": "A matching pair of lightweight green-brown hunter leather boots, teal wing-shaped buckles, agile narrow profile."
+    },
+    {
+      "id": "stoneWardBoots",
+      "name": "磐岩守護戰靴",
+      "slot": "boots",
+      "art": "A matching pair of broad heavy gray stone-and-steel armored boots, bronze rivets and rugged angular protective plates."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE original dark fantasy RPG equipment icon atlas, transparent RGBA PNG, square canvas, EXACTLY 4 equal columns by 4 equal rows. Eleven icons ONLY in slots 1 through 11, slots 12 through 16 completely empty transparent. Each icon entirely contained within the central 65% of its own equal cell, generous empty transparent gutters on all sides. Do NOT expand the last row or reflow the grid. Crisp original hand-painted classic fantasy inventory art with realistic forged metal, cloth, leather, faceted gems; upper-left highlights, strong silhouettes readable at 36px. Similar visual family to original dark fantasy loot icons, no commercial game copies. NO text, numbers, labels, letters, border, square frames, UI, background, checkerboard, character, mannequin or watermark. Names are semantic art direction, never render text. Exact row-major slot order:\n1: 暮鋼戰盔. A dark tempered steel full war helmet, dusk violet trim, sturdy angular cheek guards, restrained crimson crest.\n2: 深淵守衛戰甲. A heavy blackened steel torso breastplate, layered pauldrons, deep teal abyss jewel, no body or mannequin.\n3: 月影秘法披風. A midnight blue flowing mage cloak, silver crescent clasp and subtle silver lunar embroidered hem.\n4: 黎明壁壘之盾. A broad sturdy kite shield in ivory and aged gold, rising sun emblem and reinforced steel rim.\n5: 霜鏡法盾. A distinct round crystalline ice mirror shield, polished icy blue face, silver snowflake rim and central pale sapphire.\n6: 符文絲織內衣. A light ivory short-sleeved silk undershirt, fitted inner garment, subtle blue rune stitch seams, no armor or body.\n7: 泰坦紋戰衣. A rugged dark brown fitted sleeveless padded undershirt for beneath armor, bronze geometric giant-weave embroidery, no body.\n8: 血誓護手. A matching pair of heavy black steel gauntlets, red oath gem knuckles and engraved blood-red accents.\n9: 星紋秘法手套. A matching pair of soft indigo mage gloves, tiny silver star embroidery and amethyst wrist clasps, visibly cloth not plate.\n10: 疾風獵行靴. A matching pair of lightweight green-brown hunter leather boots, teal wing-shaped buckles, agile narrow profile.\n11: 磐岩守護戰靴. A matching pair of broad heavy gray stone-and-steel armored boots, bronze rivets and rugged angular protective plates.\n12,13,14,15,16: EMPTY TRANSPARENT."
+}

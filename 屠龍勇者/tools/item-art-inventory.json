@@ -3446,5 +3446,93 @@
     "tier": 15,
     "res": false,
     "existing": false
+  },
+  {
+    "id": "duskWarHelm",
+    "name": "暮鋼戰盔",
+    "cat": "armor",
+    "slot": "helm",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "abyssGuardMail",
+    "name": "深淵守衛戰甲",
+    "cat": "armor",
+    "slot": "armor",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "moonveilCloak",
+    "name": "月影秘法披風",
+    "cat": "armor",
+    "slot": "cloak",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dawnBastionShield",
+    "name": "黎明壁壘之盾",
+    "cat": "armor",
+    "slot": "shield",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "frostMirrorShield",
+    "name": "霜鏡法盾",
+    "cat": "armor",
+    "slot": "shield",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "runeSilkTunic",
+    "name": "符文絲織內衣",
+    "cat": "armor",
+    "slot": "tshirt",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "titanWeaveTunic",
+    "name": "泰坦紋戰衣",
+    "cat": "armor",
+    "slot": "tshirt",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "bloodOathGauntlets",
+    "name": "血誓護手",
+    "cat": "armor",
+    "slot": "gloves",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "astralWeaveGloves",
+    "name": "星紋秘法手套",
+    "cat": "armor",
+    "slot": "gloves",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "galeStalkerBoots",
+    "name": "疾風獵行靴",
+    "cat": "armor",
+    "slot": "boots",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "stoneWardBoots",
+    "name": "磐岩守護戰靴",
+    "cat": "armor",
+    "slot": "boots",
+    "res": false,
+    "existing": false
   }
 ]

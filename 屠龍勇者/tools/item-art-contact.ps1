@@ -6,10 +6,11 @@ $items=@((Get-Content (Join-Path $PSScriptRoot 'item-art-batches.json') -Raw -En
 $items+=((Get-Content (Join-Path $PSScriptRoot 'item-art-inventory.json') -Raw -Encoding UTF8 | ConvertFrom-Json) | Where-Object id -eq 'elvenWafer')
 $font=New-Object System.Drawing.Font('Microsoft JhengHei',10)
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
-for($page=0;$page -lt 4;$page++){
+for($page=0;$page -lt [math]::Ceiling($items.Count/64);$page++){
  $bmp=New-Object System.Drawing.Bitmap(1024,1216)
  $g=[System.Drawing.Graphics]::FromImage($bmp);$g.Clear([System.Drawing.Color]::FromArgb(25,27,32))
  for($cell=0;$cell -lt 64;$cell++){
+  if($page*64+$cell -ge $items.Count){break}
   $it=$items[$page*64+$cell];$x=($cell%8)*128;$y=[math]::Floor($cell/8)*152
   $im=[System.Drawing.Image]::FromFile((Join-Path $projectRoot ('images\icons\items\'+$it.id+'.png')))
   $g.DrawImage($im,$x,$y,128,128);$im.Dispose()

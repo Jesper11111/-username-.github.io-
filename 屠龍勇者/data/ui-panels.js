@@ -520,6 +520,7 @@ function itemDescHtml(inst) {
         if (d.sp) L.push(`SP +${d.sp}`);
         STAT_KEYS.forEach(k => { if (d[k]) L.push(`${STAT_NAMES[k]} +${d[k]}`); });
         if (d.hp) L.push(`HP +${d.hp}`);
+        if (d.mp) L.push(`MP +${d.mp}`);
         if (d.weight) L.push(`負重上限 +${d.weight}`);
         if (d.reduce) L.push(`減傷 ${d.reduce}`);
         if (d.hit) L.push(`命中 +${d.hit}`);

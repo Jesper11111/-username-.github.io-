@@ -7,7 +7,8 @@
 
 | 檔案 | 內容 |
 |---|---|
-| `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 256 張原創道具 PNG、16 張原始圖集＋精靈餅乾原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、403 件道具隔離圖庫與接線檢查（第 80 節）。tools 不發佈 |
+| `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 267 張原創道具 PNG、17 張原始圖集＋精靈餅乾原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、414 件道具隔離圖庫與接線檢查（第 80、82 節）。tools 不發佈 |
+| `tools/hero-armor-art.json`、`tools/icon-src/items/hero-armor-01.png`、`tools/test-hero-armor.js` | 新增 11 件英雄防具的原創圖集／提示詞與隔離驗證（第 82 節） |
 | `images/maps/wild-titan*`、`tools/bigmap/titan-tomb.png`、`tools/bigmap/titan-generated.json`、`tools/titan-map-preview.html`、`tools/test-titan-map.js` | 泰坦墓穴原創素材、新版世界／小地圖／遮擋、生成紀錄、隔離預覽及地圖連通測試（第 78 節） |
 | `tools/weapon-glow-preview.html`、`tools/inspect-weapon-sprites.ps1`、`tools/weapon-sprite-specs.json` | 十二職業逐格武器貼合預覽、透明度檢查與來源動作表檢視（第 79 節） |
 | `tools/scene-label-preview.html` | 使用實際 sceneDraw 預覽一般怪／精英／首領的腳下名稱，不載存檔及雲端（第 81 節） |
@@ -118,7 +119,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021m`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021n`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2169,3 +2170,28 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 使用者回報怪物名字與玩家名稱重疊。`sceneDraw` 的怪物名稱／等級統一畫在 sy+29，即腳底 sy+13 下方 16px；包含目標、精英、首領與 emoji 備用外觀。
 - 血條留頭頂，玩家名稱位置、名稱顏色、只有目標／精英顯名、怪物點選範圍、戰鬥及數值不變。名稱與血條仍最後疊畫在人物／前景特效上。
 - `tools/scene-label-preview.html` 使用真正 sceneDraw 顯示三種怪物與相鄰玩家，已確認名稱位於下方；僅隔離記憶體角色，不讀寫真實存檔、不接雲端。
+
+## 82. 英雄防具七部位補齊（2026-10-21，版本 `20261021n`）
+
+- 使用者指定英雄防具每部位補 2 件，已有英雄的部位只增 1 件。以第 20 節的圖鑑品級為準：頭盔／盔甲／斗篷原各 1 件，新增各 1；盾牌／內衣／手套／長靴原各 0 件，新增各 2，合計新增 11 件，七部位各有 2 件英雄防具（共 14 件）。英雄飾品維持 4 件，武器維持 68 種。
+- 定義直接加入 `items.js` 的 ITEMS，沒有增加全域表或載入檔案。新物品皆 cat armor、safe 4、可強化，無職業限定／共鳴／額外技能。依下表區分近戰與法術選擇；數字為未強化基礎值。
+
+| id／名稱 | 部位 | 基礎屬性 | 重量 | 回收價 | 隨機掉落怪物等級 |
+|---|---|---|---:|---:|---:|
+| duskWarHelm／暮鋼戰盔 | 頭盔 | 防禦 4、MR 10、HP 50 | 60 | 36,000 | 60 起 |
+| abyssGuardMail／深淵守衛戰甲 | 盔甲 | 防禦 9、MR 8、HP 90、減傷 1 | 200 | 48,000 | 80 起 |
+| moonveilCloak／月影秘法披風 | 斗篷 | 防禦 2、MR 12、SP 2、回魔 2 | 12 | 36,000 | 60 起 |
+| dawnBastionShield／黎明壁壘之盾 | 盾牌 | 防禦 5、MR 12、HP 70 | 90 | 42,000 | 70 起 |
+| frostMirrorShield／霜鏡法盾 | 盾牌 | 防禦 4、MR 18、SP 2 | 65 | 45,000 | 75 起 |
+| runeSilkTunic／符文絲織內衣 | 內衣 | 防禦 2、MR 8、SP 1、MP 40 | 12 | 30,000 | 50 起 |
+| titanWeaveTunic／泰坦紋戰衣 | 內衣 | 防禦 3、體質 1、HP 70 | 20 | 36,000 | 60 起 |
+| bloodOathGauntlets／血誓護手 | 手套 | 防禦 3、力量 1、傷害 1、HP 30 | 30 | 36,000 | 60 起 |
+| astralWeaveGloves／星紋秘法手套 | 手套 | 防禦 2、智力 1、SP 2、回魔 1 | 15 | 39,000 | 65 起 |
+| galeStalkerBoots／疾風獵行靴 | 長靴 | 防禦 3、敏捷 1、命中 1、閃避 3% | 20 | 36,000 | 60 起 |
+| stoneWardBoots／磐岩守護戰靴 | 長靴 | 防禦 4、MR 8、HP 60、減傷 1 | 45 | 42,000 | 70 起 |
+
+- 全部無商店售價，回收價在 30,000～79,999 的英雄範圍。沿用 `randomEquipFor`（非限定、非共鳴、回收價 ≤ 怪物等級 ×600），自動進高等怪物的既有隨機裝備池；不新增指定怪物掉落表、配方或機率，原 1.5%／首領 50% 隨機裝備事件沿用。池擴大後各單品分攤機率隨候選數調整。圖鑑自動列出對應 Lv.50～80 起的來源；掉落時的魔法／稀有／傳說詞綴品質仍另擲，與圖鑑英雄品級分開。
+- `ui-panels.js itemDescHtml` 與 `codex.js codexDetailHtml` 補 MP 顯示，讓新內衣的 MP +40 可見；其餘屬性沿用既有計算、裝備限制、存檔及圖鑑，SAVE_SCHEMA 維持 5。舊存檔不需轉換，既有裝備數值不動。
+- `icons.js ITEM_IMG` 加 11 id；內建 imagegen 原創生成 4×4 圖集，前 11 格有圖、後 5 格透明；原稿 `tools/icon-src/items/hero-armor-01.png`，來源／提示詞／順序在 `tools/hero-armor-art.json` 並加入既有總清單。沿用透明連通區裁切成 11 張獨立 128×128 PNG，不覆寫舊圖。圖庫新增「英雄防具」分類，列部位；縮圖總覽改依件數自動增加頁數。
+- 當前總數：150 種裝備（68 武器＋53 防具＋29 飾品＝82 非武器裝備），全部 ITEMS 414 件；圖片 267 張新原創圖＋144 魔法書技能圖＋3 原藥水＝414。圖鑑英雄品級共 36 件（18 武器＋14 防具＋4 飾品）。
+- `tools/test-hero-armor.js` 隔離載入真正資料與函式，核對七部位各 2、原英雄飾品不變、11 件皆進實際掉落選池、圖鑑來源／MP、穿脫能力、盾牌與雙手武器互斥。`tools/test-item-art.js` 更新為 414 件／267 張；道具圖片、商店購買、掉落分流測試及 check.ps1 通過。瀏覽器英雄防具篩選 14 件／14 圖載入、缺圖 0；不讀寫真實角色、不連雲端。尚待使用者實玩驗收後提交。

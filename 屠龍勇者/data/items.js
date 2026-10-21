@@ -120,6 +120,18 @@ const ITEMS = {
     leatherBoots:  { name: '皮靴',     cat: 'armor', slot: 'boots', ac: 1, safe: 4, wt: 15, price: 80, tier: 1 },
     ironBoots:     { name: '鋼靴',     cat: 'armor', slot: 'boots', ac: 2, safe: 4, wt: 60, price: 700, tier: 2 },
     hasteBoots:    { name: '速度之靴', cat: 'armor', slot: 'boots', ac: 1, haste: true, safe: 4, wt: 20, sell: 15000, desc: '穿上就有加速效果' },
+    // ── 英雄防具：七個部位各兩件（其餘三件在 resonance.js）──
+    duskWarHelm:   { name: '暮鋼戰盔', cat: 'armor', slot: 'helm', ac: 4, mr: 10, hp: 50, safe: 4, wt: 60, sell: 36000, desc: '暮鋼鑄成的重盔，兼顧防禦、魔防與生命。' },
+    abyssGuardMail: { name: '深淵守衛戰甲', cat: 'armor', slot: 'armor', ac: 9, mr: 8, hp: 90, reduce: 1, safe: 4, wt: 200, sell: 48000, desc: '深淵守衛的厚重戰甲，適合承受近身攻擊。' },
+    moonveilCloak: { name: '月影秘法披風', cat: 'armor', slot: 'cloak', ac: 2, mr: 12, sp: 2, mpRegen: 2, safe: 4, wt: 12, sell: 36000, desc: '銀月符線編織的披風，強化法術與魔力回復。' },
+    dawnBastionShield: { name: '黎明壁壘之盾', cat: 'armor', slot: 'shield', ac: 5, mr: 12, hp: 70, safe: 4, wt: 90, sell: 42000, desc: '以黎明紋章守護持盾者，提升生命與魔防。' },
+    frostMirrorShield: { name: '霜鏡法盾', cat: 'armor', slot: 'shield', ac: 4, mr: 18, sp: 2, safe: 4, wt: 65, sell: 45000, desc: '寒霜晶面封存魔力，適合持杖與單手施法者。' },
+    runeSilkTunic: { name: '符文絲織內衣', cat: 'armor', slot: 'tshirt', ac: 2, mr: 8, sp: 1, mp: 40, safe: 4, wt: 12, sell: 30000, desc: '穿於盔甲內的輕薄符文絲衣，增加魔力與法術強度。' },
+    titanWeaveTunic: { name: '泰坦紋戰衣', cat: 'armor', slot: 'tshirt', ac: 3, con: 1, hp: 70, safe: 4, wt: 20, sell: 36000, desc: '以泰坦紋路補強的貼身戰衣，提升體質與生命。' },
+    bloodOathGauntlets: { name: '血誓護手', cat: 'armor', slot: 'gloves', ac: 3, str: 1, dmg: 1, hp: 30, safe: 4, wt: 30, sell: 36000, desc: '血紅誓紋刻入鋼鐵護手，強化力量與武器傷害。' },
+    astralWeaveGloves: { name: '星紋秘法手套', cat: 'armor', slot: 'gloves', ac: 2, int: 1, sp: 2, mpRegen: 1, safe: 4, wt: 15, sell: 39000, desc: '星紋絲線引導魔力，增加智力、法術強度與回魔。' },
+    galeStalkerBoots: { name: '疾風獵行靴', cat: 'armor', slot: 'boots', ac: 3, dex: 1, hit: 1, dodge: 0.03, safe: 4, wt: 20, sell: 36000, desc: '輕盈的獵行長靴，兼顧敏捷、命中與閃避。' },
+    stoneWardBoots: { name: '磐岩守護戰靴', cat: 'armor', slot: 'boots', ac: 4, mr: 8, hp: 60, reduce: 1, safe: 4, wt: 45, sell: 42000, desc: '磐岩護片穩固步伐，提升生命、防禦與減傷。' },
     // 飾品不可強化
     mrAmulet:      { name: '抗魔項鍊', cat: 'armor', slot: 'amulet', mr: 10, safe: -1, wt: 5, sell: 5000 },
     strAmulet:     { name: '力量項鍊', cat: 'armor', slot: 'amulet', str: 1, safe: -1, wt: 5, sell: 8000 },
