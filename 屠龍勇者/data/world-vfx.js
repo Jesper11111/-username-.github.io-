@@ -23,6 +23,14 @@ const WORLD_VFX_CLASS = {
     royal: 'class-b-0', warrior: 'class-b-1', gunner: 'class-b-2', magicfighter: 'class-b-3',
     mage: 'class-c-0', paladin: 'class-c-1', angel: 'class-c-2', shura: 'class-c-3'
 };
+// 原圖部分列距略有不同；只調整取樣範圍，避免把上一列的光芒切進下一種技能。
+const WORLD_VFX_ROW_CUTS = {
+    attack: [0,314,661,940,1254], boss: [0,314,641,952,1254],
+    'class-a': [0,314,619,940,1254], 'class-b': [0,332,643,940,1254], 'class-c': [0,314,627,924,1254],
+    impact: [0,314,627,940,1254], loot: [0,314,627,926,1254], progress: [0,314,631,946,1254],
+    status: [0,346,659,976,1254], support: [0,320,651,942,1254],
+    'weapon-element': [0,314,627,940,1254], 'weapon-glow': [0,314,627,938,1254]
+};
 const WORLD_VFX_DEFS = {};
 for (const sheet in WORLD_VFX_ROWS) WORLD_VFX_ROWS[sheet].forEach((name, row) => {
     const ground = ['loot', 'progress'].includes(sheet) || (sheet === 'support' && row === 2);
@@ -47,9 +55,10 @@ function worldVfxPaint(ctx, id, x, y, elapsed, size, alpha = 1, loop = false, an
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     const opacity = ctx.globalAlpha * alpha * fade;
     if (im) {
-        const w = im.naturalWidth / 4, h = im.naturalHeight / 4, height = size * h / w;
+        const cuts = WORLD_VFX_ROW_CUTS[d.sheet], w = im.naturalWidth / 4;
+        const top = cuts[d.row] / 1254 * im.naturalHeight, h = (cuts[d.row + 1] - cuts[d.row]) / 1254 * im.naturalHeight, height = size * h / w;
         const progress = k * (loop ? 4 : 3), frame = Math.min(3, Math.floor(progress)), mix = progress - frame;
-        const draw = (f, a) => { ctx.globalAlpha = opacity * a; ctx.drawImage(im, f * w, d.row * h, w, h, -size / 2, -height * .72, size, height); };
+        const draw = (f, a) => { ctx.globalAlpha = opacity * a; ctx.drawImage(im, f * w, top, w, h, -size / 2, -height * .72, size, height); };
         draw(frame, 1 - mix); if (mix > 0) draw(loop ? (frame + 1) % 4 : Math.min(3, frame + 1), mix);
     } else {
         ctx.globalAlpha = opacity * .45; ctx.strokeStyle = '#c1d8f2'; ctx.lineWidth = 1.5;
@@ -119,7 +128,7 @@ function drawWorldWeapon(ctx, x, y, dir, anim) {
     const d = dir === 'up' ? [-8, -18, -.6] : dir === 'down' ? [9, -7, .2] : [13, -11, -.15];
     const swing = anim && anim.name === 'attack' ? Math.sin(Math.min(1, anim.t / anim.dur) * Math.PI) * .35 : 0;
     ctx.save(); ctx.translate(x + d[0], y + d[1]); ctx.rotate(d[2] + swing);
-    if (power) worldVfxPaint(ctx, 'weapon-glow-' + (power >= 12 ? 3 : power >= 9 ? 2 : power >= 6 ? 1 : 0), 0, 0, gameNow, 22, .16 + Math.min(15, power) * .025, true);
+    if (power) worldVfxPaint(ctx, 'weapon-glow-' + (power >= 12 ? 3 : power >= 9 ? 2 : power >= 6 ? 1 : 0), 0, 0, gameNow, 22, (.16 + Math.min(15, power) * .025) * (1 + swing), true);
     if (element) {
         const name = (BOSS_ENCHANTS[element] || {}).name || '';
         const row = /火|炎|燃|吐息/.test(name) ? 0 : /冰|寒|水龍/.test(name) ? 1 : /風|震|雷/.test(name) ? 2 : 3;

@@ -9,7 +9,7 @@ body{margin:0;background:#121116;color:#e1d7c5;font:15px sans-serif}header{paddi
 </style>
 <header><h1>25 種附魔特效</h1><button id="play">暫停</button> <label>播放位置 <input id="age" type="range" min="0" max="3999" value="600"></label><p id="loaded">載入圖片中…</p><p>僅檢查繪圖，不建立角色、不讀寫存檔、不連接雲端。</p></header>
 <main id="cards"></main>
-<script src="data/config.js?v=20261021c"></script>
+<script src="data/config.js?v=20261021d"></script>
 <script>
 const BOSS_ENCHANTS = {
     treantHeart:{name:'古樹荊棘'},drakeFang:{name:'裂地岩刺'},baphometHorn:{name:'地獄火柱'},
@@ -22,7 +22,7 @@ const BOSS_ENCHANTS = {
     towerIceCrown:{name:'冰后寒獄'},pirateTreasure:{name:'幽靈砲擊'},towerDeathShard:{name:'死神收割'},towerKingSeal:{name:'冥王追擊'}
 };
 </script>
-<script src="data/boss-vfx.js?v=20261021c"></script>
+<script src="data/boss-vfx.js?v=20261021d"></script>
 <script>
 let vfxGalleryPlaying = true, vfxGalleryStart = null;
 const vfxGalleryCards = BOSS_VFX_IDS.map(id => {

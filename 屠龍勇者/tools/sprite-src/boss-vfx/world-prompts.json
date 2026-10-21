@@ -1,7 +1,7 @@
 {
   "generator": "OpenAI imagegen built-in",
   "date": "2026-10-21",
-  "version": "20261021c",
+  "version": "20261021d",
   "layout": "4 columns, 4 rows; each row a different effect, four animation frames",
   "assets": [
     {

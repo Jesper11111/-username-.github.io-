@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `data/world-vfx.js`、`images/vfx/world/`、`tools/world-vfx-preview.html`、`tools/test-world-vfx.js` | 十類 48 款視覺特效、十二張透明圖集、隔離並排預覽與測試（第 74 節）；生成紀錄在 `tools/sprite-src/boss-vfx/world-prompts.json` |
 | `images/vfx/` 新增二十套 PNG、`tools/vfx-preview.html`、`tools/sprite-src/boss-vfx/generated-prompts.json` | 其餘二十種附魔的原創透明動畫、隔離的 25 種並排預覽、生成提示詞與來源紀錄（第 73 節）。tools 不發佈 |
 | `images/vfx/bull.png`、`ice.png`、`ghost.png`、`death.png`、`king.png` | 五套 BOSS 附魔動畫，各 4×4 格；死神上下各八格對應紫／紅色，幽靈前四格預警、後十二格爆炸（第 72 節）。原圖保存於 `tools/sprite-src/boss-vfx/` |
 | `AGENTS.md`、`HANDOFF.md`、`AI_HANDOFF.min.md` | **給 AI 的文件**（遊戲不載入）：`AGENTS.md` 任何 AI 通用的工作規則與獨立發佈流程；`HANDOFF.md` 目前進度、待辦、使用者的決定、環境、常用操作；`AI_HANDOFF.min.md` 給其他 AI 的壓縮版全貌（規則＋檔案＋核心公式＋現況，整份貼給新 AI 即可接手）。換 AI 接手時靠這三份，要保持最新。`CLAUDE.md`／`GEMINI.md` 只是各 AI 自動讀的入口（`GEMINI.md` 用 `@./AGENTS.md` 匯入） |
@@ -100,7 +101,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → ui-scene → pwa → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -110,7 +111,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021d`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2062,3 +2063,42 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 新增隔離預覽頁 tools/vfx-preview.html，載入 config 和 boss-vfx，不載入 main、save、cloud；vfxGalleryDraw 只畫二十五張 Canvas，可暫停及調播放位置。不建立角色、不讀寫存檔、不連雲端，tools 排除於發佈包。獨立 BOSS_ENCHANTS 名稱表僅供該工具頁使用。
 - 驗證：25 附魔功能／副本／離線模擬、25 種無消耗預覽與備援動畫、25 張真實 PNG 分格與比例、混沌 999ms 不爆炸／1000ms 實際傷害與圖片事件同步、地龍中心全部通過；20 張新增圖皆有透明角落。check.ps1 顯示 ALL CHECKS PASSED，實際 42 檔混淆建置成功，26 張 PNG（含保留的舊共用圖）完整進發佈包。
 - 瀏覽器隔離預覽已載入 25／25 圖片；以未登入的全新本機角色實際進村莊鍛造師，逐一點開 25 個預覽並核對標題，金幣仍 300。兩頁 Console 無 error／warn，測試角色未登入／未上傳；待使用者實玩與觀感驗收後 commit，再由使用者 Push origin。
+
+## 74. 十類視覺特效與強化武器光效（2026-10-21，版本 `20261021d`）
+
+### 範圍與素材
+
+- 使用者要求十類全部製作，並明確選擇「只做視覺特效，缺少的機制先保留預覽」。新增十二張原創透明 RGBA PNG，位於 images/vfx/world/；每張四欄四列，每一列是一款特效的四格動畫，共 48 款。十二職業各一組代表特效，不宣稱每一招技能都有獨立圖片。
+- 使用內建 imagegen；完整提示詞及生成來源在 tools/sprite-src/boss-vfx/world-prompts.json，原始輸出仍保留於生成目錄。沒有使用官方作品圖，也沒有覆寫原有角色／25 附魔素材。
+- WORLD_VFX_ROW_CUTS 記錄原圖略有差異的列界，依原始 1254 高度等比取樣，避免相鄰列混入；WORLD_VFX_ROWS 的四列依左至右播放，worldVfxPaint 交淡相鄰格並保留透明度、長寬比與 Canvas 狀態。圖片按需快取，失敗退回淡色圓環。
+
+| 類型 | 圖集 | 四列內容／接法 |
+|---|---|---|
+| 武器強化 | weapon-glow.png | ＋1～5 銀白、＋6～8 金色、＋9～11 青藍、＋12～15 紫金；＋0 無強化光，等級越高越亮，出手時增亮 |
+| 附魔外觀 | weapon-element.png | 火焰、寒霜、雷光、幽冥；依目前武器 BOSS 附魔名稱分類 |
+| 普通攻擊 | attack.png | 刀劍殘影、斧／鈍器重擊、槍口火光、箭矢拖尾；命中時繪圖，遠程短距離插值不延遲傷害 |
+| 暴擊與防禦 | impact.png | 實際暴擊、閃避、反擊分別觸發；盾牌格擋僅預覽，沒有新增格擋機率 |
+| 職業技能 | class-a／b／c.png | 騎士／黑妖／妖精／惡魔、王族／戰士／槍手／魔鬥士、法師／聖騎士／天使／修羅；施放攻擊技能顯示，排除共鳴重複觸發 |
+| 治癒與增益 | support.png | 治癒、回魔、加速、護盾；技能與藥水的既有事件觸發，部分增益存續時有淡光 |
+| 負面狀態 | status.png | 燃燒依現有火焰持續傷害工作、冰霜依有效緩速、星環依暈眩顯示；中毒僅預覽，不憑名稱增加毒傷 |
+| 首領大招 | boss.png | 龍息、裂地、隕石、冰霜；首領紅圈保留且畫在蓄力圖上方，實際到期事件才出爆發。隕石／共用冰系法術也可用對應圖片，不新增首領招式 |
+| 稀有掉落 | loot.png | 裝備、首領材料、稀有道具、傳說品質；成功入袋後顯示，過濾自動賣／超重失敗不顯示。仍是自動拾取，沒有新增地上可撿道具 |
+| 升級與成長 | progress.png | 升級光陣、天使羽翼增益、51 級起能力點成長星環接既有事件；突破法陣僅預覽 |
+
+### 架構與效能
+
+- 新 data/world-vfx.js 於 boss-vfx 後、player 前載入；載入階段僅建立靜態表與讀本機顯示偏好，player／hunt／scene 在執行期使用。
+- 靜態全域：WORLD_VFX_ROWS、WORLD_VFX_GROUPS、WORLD_VFX_CLASS、WORLD_VFX_ROW_CUTS、WORLD_VFX_DEFS；快取／顯示狀態 worldVfxImages、worldVfxQuality、worldVfxPreviewRun。
+- 圖片／繪圖 helper：worldVfxImage、worldVfxPaint、worldVfxPosition；事件入口 worldVfxEmit、worldVfxAttack、worldVfxSkill、worldVfxSupport、worldVfxBoss、worldVfxEnemy、worldVfxLoot。設定與預覽入口 setWorldVfxQuality、worldVfxSettingsHtml、worldVfxPreviewButtons、openWorldVfxPreview、drawWorldVfxPreview。
+- scene.worldVfx 僅為瞬時繪圖佇列，綁角色 owner，使用 gameNow，換場重建 scene 即清除；SIM_MODE 不產生事件。低／中／高分別最多 8／16／24 個事件；常駐狀態另限 4／6 隻怪，低檔關閉武器及持續光效。
+- drawWorldVfx 的地面層在首領紅圈之前，前景在角色之後、名字血條之前。drawWorldWeapon 在 drawPlayer 的 body 內，跟著人物鏡像及遮擋；沿朝向和出手估算手邊掛點，尚待各職業、武器與動作的實玩精修，並非逐像素追蹤武器。
+- 只有 combat／player 的原事件增添純視覺呼叫，沒有改傷害、暴擊／閃避機率、掉落、強化機率、技能費用、冷卻或任何亂數流程。SAVE_SCHEMA 不變。
+- 設定 → 視覺特效有低／中／高及十類特效預覽，48 個按鈕可捲動；格擋、中毒、突破均明示僅預覽且 worldVfxEmit 拒絕其戰鬥事件。品質僅存在本機獨立 key dragonSlayer_vfxQuality，不新增 player 欄位。
+- tools/world-vfx-preview.html 載入 config／world-vfx，提供十類篩選、暫停與播放位置，不載 main／save／cloud。工具頁 worldGalleryDraw 只畫 Canvas，不建立角色、不修改存檔。tools 排除發佈，生成紀錄及測試也不發佈。
+
+### 驗證與待驗收
+
+- tools/test-world-vfx.js：48 款／10 類／12 職業與三款預覽限定、12 張真實 PNG、取樣邊界、有限座標／透明度／save-restore、預覽與常駐繪圖前後角色完全相同、SIM 隔離、事件上限／過期、普攻／暴擊／治癒／閃避／首領到期與掉落接線通過。25 附魔／副本／離線整合測試仍通過，check.ps1 顯示 ALL CHECKS PASSED。
+- 瀏覽器隔離頁 12／12 圖集載入；未登入的既有本機測試角色實際從設定逐一切換 48 款預覽，低／中／高按鈕切換正常，金幣 300 與藥水不變，Console 無 error／warn。沒有新增／上傳測試數值，也沒有動正式存檔。
+- c 版工作期間已被外部提交至 main／origin/main；列距修正及最終調整另更新 d，避免重用已提交的版本。待使用者確認畫面可接受後 commit，再由使用者 Push origin。
+- d 版實際 43 檔混淆建置成功，十二張新圖集全數進入發佈包，合併後 JS 語法通過；建置輸出保留在本機暫存目錄。最終隔離預覽頁 12／12 載入、Console 無 error／warn。
