@@ -8,6 +8,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
+| `tools/legend-glow-preview.html`、`tools/test-legend-glow.js` | 全部 28 件傳說裝備的呼吸光暈、背包／角色／鍛造隔離預覽與品級範圍驗證（第 84 節） |
 | `tools/legend-equipment-art.json`、`tools/legend-equipment-preview.html`、`tools/test-legend-equipment.js` | 十二職業傳說代表武器與兩套七部位防具、原創單件提示詞／來源、隔離介紹與鍛造測試（第 83 節） |
 | `tools/hero-armor-art.json`、`tools/icon-src/items/hero-armor-01.png`、`tools/test-hero-armor.js` | 新增 11 件英雄防具的原創圖集／提示詞與隔離驗證（第 82 節） |
 | `images/maps/wild-titan*`、`tools/bigmap/titan-tomb.png`、`tools/bigmap/titan-generated.json`、`tools/titan-map-preview.html`、`tools/test-titan-map.js` | 泰坦墓穴原創素材、新版世界／小地圖／遮擋、生成紀錄、隔離預覽及地圖連通測試（第 78 節） |
@@ -120,7 +121,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021o`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021p`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2248,3 +2249,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - test-legend-equipment.js 隔離驗證十二職業代表武器實際穿戴、兩套完整部位與防禦穿脫、18 件材料不足不扣款／成功鍛造扣料扣款、圖鑑來源／圖片與雙手武器持盾限制。既有英雄防具與全道具圖片測試更新總數。待使用者實玩驗收後才提交／推送。
 
 第 83 節驗證：test-legend-equipment／test-item-art／test-hero-armor／test-shop-buy／test-loot-log 全通過；check.ps1 ALL CHECKS PASSED（44 檔語法、43 script 版本一致）；最終混淆建置與合併 JS 語法通過、285 張 PNG 全數打包。瀏覽器隔離頁顯示 26／26 圖、缺圖 0，已打開雷霆符文劍介紹核對傷害／SP／安定與鍛造材料、關閉正常，Console 無 error／warn；兩系列七件並排預覽正確。未修改真實存檔、未上傳測試角色。本機待驗收，尚未 commit／Push。
+
+
+## 84. 全部傳說裝備呼吸光暈（2026-10-21，版本 `20261021p`）
+
+- 使用者看過四款樣本後選「呼吸光暈」，要求全部傳說裝備套用。以圖鑑固定品級為準：12 武器＋14 防具＋2 飾品共 28 件。只改道具圖示，不改角色身上武器特效；隨機詞綴 q=legend 與非裝備物品不因名稱或售價而誤套。
+- icons.js 的 itemIconHtml 統一檢查 ITEMS 類別為 weapon／armor 且 codexGradeOf(id).id 為 legend，原 PNG 透過 imgIconHtml(file, frame, ext, cls) 的新選用第四參數加 legend-glow class。舊呼叫全部相容，不新增全域表或改載入順序。沿用圖片與存檔，不修改數值或 SAVE_SCHEMA（維持 5）。
+- index.html 的 .ico-img.legend-glow 用暗金底、細金邊、靜態小範圍陰影及 img drop-shadow 保留裝備輪廓；::before 徑向金光用 legend-item-breathe 在 2.8 秒間緩慢改 opacity 與 transform，無 JS 計時器，沒有逐格替換圖片。prefers-reduced-motion: reduce 時停用動畫並保留柔光。透明原圖全部保留，圖示大小／點擊範圍與強化數字不動。
+- 因所有道具畫面都用 itemIconHtml／itemThumbHtml，背包、人物裝備、圖鑑清單／詳細、鍛造、回收、倉庫、交易所等一併套用；技能與左上共鳴狀態圖仍用原本技能圖。
+- tools/legend-glow-preview.html 載入真正遊戲圖示與 CSS，列全部 28 件的大小圖；可切實際背包／角色裝備／鍛造 HTML，並點圖鑑介紹。只用 SIM_MODE 記憶體角色，略過 main／pwa／cloud，不讀寫真實存檔、不上傳。
+- test-legend-glow.js 檢查全部 432 道具正確分類、28 件傳說完整覆蓋、背包與人物十件裝備、圖鑑／介紹／鍛造／小圖入口，另驗證技能、藥水、一般武器的傳說詞綴不誤套。待本機瀏覽器與使用者實玩確認，再依流程提交。
+
+第 84 節驗證：test-legend-glow／test-item-art／test-legend-equipment 全通過；check.ps1 ALL CHECKS PASSED（44 檔語法、43 script 版本一致）；最終發佈混淆建置與合併 JS 語法、呼吸光暈 CSS 打包通過。隔離瀏覽器 28 件大小圖共 56／56 正常、缺圖 0，所有 ::before 動畫名 legend-item-breathe／2.8s；角色十格正常，背包十八件傳說發光、長劍／皮甲／木盾不發光，實際圖鑑介紹開關正常，Console 無 error／warn。待使用者真實角色實玩後提交，本助手未 commit／Push。

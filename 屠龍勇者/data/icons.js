@@ -210,9 +210,9 @@ function skillIconHtml(s, frame) {
 // 外框用 CSS 漸層畫（.ico-img，顏色同 ICON_FRAMES），裡面放圖。藥水：勇水＝粉紅、綠水＝淺藍瓶轉綠、藍水＝深藍、慎重藥水＝紫
 const POTION_IMG = { brave: 'potion-brave', green: 'potion-green', blue: 'potion-blue', wisdom: 'potion-wisdom' };
 const ICON_IMG_VER = 1;   // 換圖時加一（瀏覽器快取）
-function imgIconHtml(file, frame, ext = 'jpg') {
+function imgIconHtml(file, frame, ext = 'jpg', cls = '') {
     const g = ICON_FRAMES[frame] || ['#5a5f68', '#22252b', '#0a0b0d'];
-    return `<span class="ico ico-img ${frame ? 'framed' : ''}" style="--f1:${g[0]};--f2:${g[1]};--f3:${g[2]}"><img src="images/icons/${file}.${ext}?v=${ICON_IMG_VER}" alt="" draggable="false"></span>`;
+    return `<span class="ico ico-img ${frame ? 'framed' : ''}${cls ? ' ' + cls : ''}" style="--f1:${g[0]};--f2:${g[1]};--f3:${g[2]}"><img src="images/icons/${file}.${ext}?v=${ICON_IMG_VER}" alt="" draggable="false"></span>`;
 }
 function flaskSvg(kind, frame) { return imgIconHtml(POTION_IMG[kind] || POTION_IMG.blue, frame); }
 
@@ -267,8 +267,10 @@ function itemIconOf(id) {
     return d.heal ? ['potion', 'blood'] : d.buff ? ['potion', 'arcane'] : d.cat === 'scroll' ? ['scroll', 'gray'] : ['star', 'gray'];
 }
 function itemIconHtml(id, frame) {
-    if (ITEM_IMG[id]) return imgIconHtml('items/' + ITEM_IMG[id], frame, 'png');
     const d = ITEMS[id];
+    // 依圖鑑的基底品級發光；詞綴品質另算，消耗品與技能圖不套用。
+    const glow = d && (d.cat === 'weapon' || d.cat === 'armor') && codexGradeOf(id).id === 'legend';
+    if (ITEM_IMG[id]) return imgIconHtml('items/' + ITEM_IMG[id], frame, 'png', glow ? 'legend-glow' : '');
     if (d && d.cat === 'book' && SKILL_IMG[d.skill]) return imgIconHtml('sk/' + SKILL_IMG[d.skill], frame);
     const [sym, col] = itemIconOf(id);
     return sym === 'flask' ? flaskSvg(col, frame) : iconSvg(sym, col, frame);
