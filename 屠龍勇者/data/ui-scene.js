@@ -161,7 +161,7 @@ const SCENE_BGS = {
             [150, 77, 157, 85], [148, 73, 156, 76], [152, 75, 154, 79], [155, 80, 162, 85],
             [174, 72, 181, 77], [174, 77, 178, 85], [168, 79, 175, 85],
             [148, 96, 156, 104], [151, 90, 154, 97], [155, 93, 162, 99],
-            [173, 93, 176, 98], [176, 97, 181, 106], [180, 90, 184, 102],
+            [170, 92, 174, 94], [173, 93, 176, 98], [176, 97, 181, 106], [180, 90, 184, 102],
         ],
         block: [
             [16, 8, 24, 9], [23, 10, 31, 12], [25, 13, 27, 15], [36, 16, 37, 18],
@@ -1080,7 +1080,7 @@ function sceneDraw(ctx, W, H) {
                 ctx.save();
                 if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
                 ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
-                drawWorldWeapon(ctx, px, py, pl.dir, pl.anim);
+                drawWorldWeapon(ctx, px, py, pl.dir, pl.anim, {image:img,sprite:anim,row:rowIdx,frame,dw,dh,action:playing?pl.anim.name:'walk'});
                 ctx.restore();
             };
             body();

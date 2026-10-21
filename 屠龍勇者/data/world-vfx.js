@@ -119,21 +119,85 @@ function worldVfxLoot(mon, item, inst) {
     if (pos && scene.worldVfx && scene.worldVfx.some(f => f.id === id && gameNow - f.at < 100 && Math.hypot(f.pos.x - pos.x, f.pos.y - pos.y) < .5)) return;
     worldVfxEmit(id, mon);
 }
-function drawWorldWeapon(ctx, x, y, dir, anim) {
+// 武器區域以原角色格子的比例定義，再依該格的實際像素／色彩裁切；不再把光圈掛在估算手邊。
+const WORLD_WEAPON_AREAS = {
+    royal: { tone:'steel', walk:[[[.08,.48,.27,.5]],[[.5,.5,.49,.46]],[[.02,.45,.25,.43],[.74,.45,.25,.43]]] },
+    knight: { tone:'steel', walk:[[[.06,.46,.3,.52]],[[.5,.5,.49,.45]],[[.65,.46,.34,.47]]] },
+    mage: { tone:'blue', walk:[[[.65,.08,.34,.68]],[[.58,.4,.41,.5]],[[.64,.02,.35,.6]]] },
+    elf: { tone:'wood', walk:[[[.08,.57,.85,.23]],[[.35,.36,.62,.47]],[[.58,.48,.4,.37]]], attack:[[[.66,.12,.22,.69]],[[.65,.1,.29,.68]],[[.57,.12,.29,.64]]] },
+    darkelf: { tone:'purple', walk:[[[.48,.48,.51,.45]],[[.48,.48,.51,.45]],[[.48,.48,.51,.45]]] },
+    shura: { tone:'red', walk:[[[.5,.49,.49,.45]],[[.5,.49,.49,.45]],[[.16,.48,.75,.39]]] },
+    warrior: { tone:'steel', walk:[[[.08,.52,.23,.43],[.69,.52,.25,.43]],[[.39,.57,.58,.39]],[[.16,.52,.2,.34],[.65,.52,.23,.34]]] },
+    gunner: { tone:'blue', walk:[[[.13,.48,.2,.36],[.67,.48,.2,.36]],[[.45,.47,.52,.38]],[[.14,.48,.2,.38],[.65,.48,.24,.38]]], attack:[[[.08,.22,.35,.36],[.58,.22,.35,.36]],[[.06,.12,.84,.3]],[[.23,.07,.55,.39]]] },
+    magicfighter: { tone:'arcane', walk:[[[.14,.38,.25,.36],[.64,.38,.25,.36]],[[.45,.36,.4,.4]],[[.12,.38,.23,.35],[.65,.38,.23,.35]]], attack:[[[.12,.22,.76,.47]],[[.3,.21,.6,.48]],[[.15,.18,.72,.49]]] },
+    paladin: { tone:'gold', walk:[[[.32,.52,.17,.44]],[[.5,.5,.47,.43]],[[.66,.5,.31,.43]]] },
+    angel: { tone:'gold', walk:[[[.12,.38,.22,.49]],[[.55,.28,.3,.56]],[[.64,.43,.31,.44]]] },
+    demon: { tone:'red', walk:[[[.07,.46,.34,.52]],[[.48,.45,.51,.5]],[[.64,.44,.34,.48]]] }
+};
+const worldWeaponMasks = new Map();
+function worldWeaponPixel(tone, r, g, b) {
+    const steel = Math.max(r,g,b) - Math.min(r,g,b) < 48 && (r+g+b)/3 > 95;
+    if (tone === 'steel') return steel;
+    if (tone === 'gold') return r > 100 && g > 65 && b < r * .85;
+    if (tone === 'blue') return steel || (b > 80 && b > r * 1.18 && g > 45);
+    if (tone === 'purple') return r > 65 && b > 85 && b > g * 1.2;
+    if (tone === 'red') return r > 95 && r > g * 1.45 && r > b * 1.12;
+    if (tone === 'wood') return r > 65 && g > 50 && r > b * 1.15;
+    return (b > 95 && b > r * 1.15) || (r > 110 && r > b * 1.25);
+}
+function worldWeaponMask(info, dir) {
+    const spec = WORLD_WEAPON_AREAS[player.cls];
+    if (!spec || !info || !info.image || !info.image.complete || !info.image.naturalWidth || !document.createElement) return null;
+    const a = info.sprite, key = player.cls + ':' + a.src + ':' + info.row + ':' + info.frame;
+    if (worldWeaponMasks.has(key)) return worldWeaponMasks.get(key);
+    const canvas = document.createElement('canvas'); canvas.width = a.cellW; canvas.height = a.cellH;
+    const g = canvas.getContext('2d', {willReadFrequently:true});
+    g.drawImage(info.image, info.frame*a.cellW, info.row*a.cellH, a.cellW, a.cellH, 0, 0, a.cellW, a.cellH);
+    const im = g.getImageData(0,0,a.cellW,a.cellH), di = dir === 'up' ? 2 : dir === 'down' ? 0 : 1;
+    let areas = spec.walk[di];
+    if (info.action === 'attack') areas = spec.attack ? spec.attack[di] : [
+        [0,.34,.35,.59],[.65,.23,.35,.7],[.2,0,.6,.28],[.22,.72,.56,.28]
+    ];
+    // 施法／受傷的角色格可能空手或帶全身法陣，僅保留手側可辨識的武器像素。
+    if (info.action === 'cast') areas = [[0,.17,.29,.59],[.71,.13,.29,.6]];
+    if (info.action === 'hit') areas = [[0,.35,.35,.56],[.65,.28,.35,.6]];
+    for (let y=0;y<a.cellH;y++) for (let x=0;x<a.cellW;x++) {
+        const i=(y*a.cellW+x)*4, u=(x+.5)/a.cellW, v=(y+.5)/a.cellH;
+        const inside=areas.some(q=>u>=q[0]&&v>=q[1]&&u<=q[0]+q[2]&&v<=q[1]+q[3]);
+        if (!inside || !worldWeaponPixel(spec.tone,im.data[i],im.data[i+1],im.data[i+2])) im.data[i+3]=0;
+        im.data[i]=im.data[i+1]=im.data[i+2]=255;
+    }
+    g.putImageData(im,0,0);
+    if (worldWeaponMasks.size >= 192) worldWeaponMasks.delete(worldWeaponMasks.keys().next().value);
+    worldWeaponMasks.set(key,canvas);
+    return canvas;
+}
+function drawWorldWeapon(ctx, x, y, dir, anim, info) {
     if (worldVfxQuality === 'low' || player.hp <= 0) return;
     const w = player.equip.weapon;
     if (!w) return;
     const power = Math.max(0, w.ench || 0), element = w.bossEnchant;
     if (!power && !element) return;
-    const d = dir === 'up' ? [-8, -18, -.6] : dir === 'down' ? [9, -7, .2] : [13, -11, -.15];
-    const swing = anim && anim.name === 'attack' ? Math.sin(Math.min(1, anim.t / anim.dur) * Math.PI) * .35 : 0;
-    ctx.save(); ctx.translate(x + d[0], y + d[1]); ctx.rotate(d[2] + swing);
-    if (power) worldVfxPaint(ctx, 'weapon-glow-' + (power >= 12 ? 3 : power >= 9 ? 2 : power >= 6 ? 1 : 0), 0, 0, gameNow, 22, (.16 + Math.min(15, power) * .025) * (1 + swing), true);
+    const mask = worldWeaponMask(info, dir);
+    if (!mask) return;
+    let color = ['#e5efff','#ffd56a','#72dfff','#c28bff'][power >= 12 ? 3 : power >= 9 ? 2 : power >= 6 ? 1 : 0];
     if (element) {
         const name = (BOSS_ENCHANTS[element] || {}).name || '';
         const row = /火|炎|燃|吐息/.test(name) ? 0 : /冰|寒|水龍/.test(name) ? 1 : /風|震|雷/.test(name) ? 2 : 3;
-        worldVfxPaint(ctx, 'weapon-element-' + row, 0, 0, gameNow, 25, .4, true);
+        if (!power || Math.sin(gameNow/700) > .35) color = ['#ff8a35','#8eeaff','#7ac8ff','#b278ff'][row];
     }
+    // 著色只在武器遮罩裡，外緣的小幅柔光也與同一格武器同步縮放／鏡像。
+    if (!mask.weaponTints) mask.weaponTints = {};
+    let tint = mask.weaponTints[color];
+    if (!tint) {
+        tint = document.createElement('canvas'); tint.width=mask.width; tint.height=mask.height;
+        const g=tint.getContext('2d'); g.drawImage(mask,0,0); g.globalCompositeOperation='source-in'; g.fillStyle=color; g.fillRect(0,0,tint.width,tint.height);
+        mask.weaponTints[color]=tint;
+    }
+    const swing = info.action === 'attack' ? .15 : 0;
+    ctx.save(); ctx.globalAlpha *= .28 + Math.min(15,power)*.023 + swing + Math.sin(gameNow/250)*.06;
+    ctx.shadowColor=color; ctx.shadowBlur=power>=12?3:power>=6?2:1;
+    ctx.drawImage(tint,x-info.dw/2,y+14-info.dh,info.dw,info.dh);
     ctx.restore();
 }
 function drawWorldVfx(ctx, camX, camY, layer) {

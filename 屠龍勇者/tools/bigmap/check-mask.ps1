@@ -1,11 +1,11 @@
 # Draw a walkability mask over images/maps/wild.jpg for checking (red = blocked, blue = water, grid every 10 tiles, numbers = tile index).
 # -Mask: a text file with one row per line ('.' walk, '#' block, '~' water). -Out: output jpg (scaled to -OutW px wide).
-param([string]$Mask, [string]$Out, [int]$OutW = 1600, [int]$X0 = 0, [int]$Y0 = 0, [int]$X1 = 100, [int]$Y1 = 88)
+param([string]$Mask, [string]$Out, [int]$OutW = 1600, [int]$X0 = 0, [int]$Y0 = 0, [int]$X1 = 100, [int]$Y1 = 88, [ValidatePattern('^[a-z0-9-]+$')][string]$MapStem = 'wild')
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent (Split-Path -Parent $dir)
 Add-Type -AssemblyName System.Drawing
 $T = 32
-$img = [System.Drawing.Bitmap]::FromFile((Join-Path $root 'images\maps\wild.jpg'))
+$img = [System.Drawing.Bitmap]::FromFile((Join-Path $root "images\maps\$MapStem.jpg"))
 $rows = (Get-Content $Mask) | Where-Object { $_ -match '^[.#~]+$' }
 $crop = New-Object System.Drawing.Rectangle ($X0 * $T), ($Y0 * $T), (($X1 - $X0) * $T), (($Y1 - $Y0) * $T)
 $k = $OutW / $crop.Width

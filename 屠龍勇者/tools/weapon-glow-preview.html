@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>十二職業武器貼合檢查</title>
+<style>body{margin:20px;background:#15191e;color:#eee;font:16px sans-serif}header{position:sticky;top:0;background:#15191eee;padding:12px;z-index:1}select,button{padding:8px;margin-right:8px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}article{background:#242b33;text-align:center;border:1px solid #59616a;border-radius:8px}canvas{width:100%;height:250px;object-fit:contain}h3{margin:10px}small{color:#ccd}</style>
+<header><h2>十二職業武器光效・原角色格子遮罩</h2><label>動作 <select id="action"><option value="walk">走路</option><option value="attack">攻擊</option><option value="cast">施法</option><option value="hit">受傷</option></select></label><label>朝向 <select id="dir"><option value="down">正面</option><option value="right">右側</option><option value="up">背面</option><option value="left">左側鏡像</option></select></label><button id="pause">暫停</button><label><input id="mask" type="checkbox">顯示遮罩</label><p>左：原圖　右：＋15 武器光。此頁不載入角色存檔或雲端。</p></header><main id="grid"></main>
+<button id="check">檢查十二職業全部動畫格</button><pre id="result"></pre>
+<script src="../data/config.js?v=20261021j"></script><script src="../data/classes.js?v=20261021j"></script><script src="../data/world-vfx.js?v=20261021j"></script>
+<script>
+let player={cls:'royal',hp:1,equip:{weapon:{ench:15}}},paused=false;gameNow=0;
+worldVfxQuality='high';const BOSS_ENCHANTS={}, imgs={};
+for(const[id,c]of Object.entries(CLASSES)){const el=document.createElement('article');el.innerHTML='<h3>'+c.name+'</h3><canvas width="360" height="250"></canvas><small></small>';el.dataset.cls=id;document.getElementById('grid').append(el);}
+document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'播放':'暫停';};
+document.getElementById('check').onclick=async()=>{paused=true;worldWeaponMasks.clear();document.getElementById('pause').textContent='播放';let count=0,failed=0;const lines=[];
+for(const[id,c]of Object.entries(CLASSES)){let frames=0,lit=0;player.cls=id;for(const[action,a]of Object.entries(c.sprite)){if(!a.src)continue;let im=imgs[a.src];if(!im){im=imgs[a.src]=new Image();im.src='../'+a.src;}if(!im.complete)await new Promise(r=>{im.onload=r;im.onerror=r;});if(!im.naturalWidth){failed++;continue;}
+for(const[dir,n]of Object.entries(a.frames))for(let f=0;f<n;f++){player.cls=id;const row={down:0,right:1,up:2}[dir],mask=worldWeaponMask({image:im,sprite:a,row,frame:f,action},dir),tmp=document.createElement('canvas');tmp.width=a.cellW;tmp.height=a.cellH;const g=tmp.getContext('2d');g.drawImage(im,f*a.cellW,row*a.cellH,a.cellW,a.cellH,0,0,a.cellW,a.cellH);const source=g.getImageData(0,0,a.cellW,a.cellH).data,out=mask.getContext('2d').getImageData(0,0,a.cellW,a.cellH).data;let pixels=0;for(let i=3;i<out.length;i+=4){if(out[i]>source[i])failed++;if(out[i])pixels++;}frames++;count++;if(pixels)lit++;}}
+lines.push(c.name+'：'+frames+' 格檢查，'+lit+' 格含可見武器光');}
+document.getElementById('result').textContent=lines.join('\n')+'\n總計 '+count+' 格，超出角色原圖透明度／載入錯誤：'+failed;};
+let last=0;function tick(t){if(!paused)gameNow+=Math.min(100,t-last);last=t;
+const action=document.getElementById('action').value,dir=document.getElementById('dir').value,d=dir==='left'?'right':dir,row={down:0,right:1,up:2}[d];
+for(const el of document.querySelectorAll('article')){player.cls=el.dataset.cls;const sp=CLASSES[player.cls].sprite,a=sp[action];if(!imgs[a.src]){imgs[a.src]=new Image();imgs[a.src].src='../'+a.src;}
+const img=imgs[a.src],cv=el.querySelector('canvas'),g=cv.getContext('2d');g.clearRect(0,0,360,250);if(!img.complete||!img.naturalWidth)continue;
+const frame=Math.floor(gameNow/a.ms)%a.frames[d],k=1.15,dw=a.cellW*k,dh=a.cellH*k,info={image:img,sprite:a,row,frame,dw,dh,action};
+for(const x of [90,270]){g.save();if(dir==='left'){g.translate(x*2,0);g.scale(-1,1);}g.drawImage(img,frame*a.cellW,row*a.cellH,a.cellW,a.cellH,x-dw/2,205+14-dh,dw,dh);if(x===270){if(document.getElementById('mask').checked){const m=worldWeaponMask(info,dir);if(m)g.drawImage(m,x-dw/2,205+14-dh,dw,dh);}else drawWorldWeapon(g,x,205,dir,{name:action},info);}g.restore();}el.querySelector('small').textContent=action+' '+d+' 第'+(frame+1)+'／'+a.frames[d]+'格';}
+requestAnimationFrame(tick);}requestAnimationFrame(tick);
+</script></html>
