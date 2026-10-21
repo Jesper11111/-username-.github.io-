@@ -62,6 +62,14 @@ const RESONANCE = {
     palJudgeHammer:  { tier: 3, cls: ['paladin'], trigger: 'cd', cd: 12, name: '神聖審判', kind: 'spell', dmg: [80, 130], spK: 2, undeadMul: 2, aoe: true, desc: '範圍：神聖魔法，對不死系 ×2' },
     angelSpear:      { tier: 3, cls: ['angel'], trigger: 'proc', p: 0.08, name: '天使之癒', kind: 'heal', heal: [80, 140], spK: 2, desc: '回復大量 HP' },
     demonDeathScythe:{ tier: 3, cls: ['demon'], trigger: 'charge', n: 12, name: '冥界之門', kind: 'strike', mult: 1.5, magic: { dmg: [60, 100], spK: 1.5 }, aoe: true, desc: '範圍：1.5 倍＋冥界魔法傷害' },
+    // 十二職業傳說代表武器補齊專屬共鳴（20261022a）；沿用命中、冷卻與職業加成規則。
+    eclipseDual: { tier: 3, cls: ['darkelf'], trigger: 'charge', n: 12, name: '蝕月連舞', kind: 'strike', mult: 1.2, hits: 4, spread: true, desc: '蝕月刃影連斬 4 下，每下 1.2 倍，分散斬向敵人' },
+    rakshasaClaw: { tier: 3, cls: ['shura'], trigger: 'proc', p: 0.12, name: '羅剎裂魂', kind: 'strike', mult: 1.2, hits: 3, desc: '羅剎爪影連撕目標 3 下，每下 1.2 倍傷害' },
+    starfallGun: { tier: 3, cls: ['gunner'], trigger: 'cd', cd: 12, name: '星隕轟擊', kind: 'strike', mult: 1.8, magic: { dmg: [35, 65], spK: 1 }, aoe: true, desc: '範圍：1.8 倍砲擊，加上 35～65＋SP 的星隕魔法傷害' },
+    thunderRuneSword: { tier: 3, cls: ['magicfighter'], trigger: 'charge', n: 12, name: '雷霆崩解', kind: 'strike', mult: 1.4, magic: { dmg: [35, 65], spK: 1.5 }, aoe: true, stun: 700, desc: '範圍：1.4 倍雷刃＋35～65＋SP×1.5 魔法傷害，暈眩 0.7 秒' },
+    dawnJudgmentHammer: { tier: 3, cls: ['paladin'], trigger: 'cd', cd: 12, name: '黎明審判', kind: 'spell', dmg: [80, 125], spK: 2, undeadMul: 2, aoe: true, desc: '範圍：80～125＋SP×2 神聖魔法傷害，對不死系 ×2' },
+    seraphSpear: { tier: 3, cls: ['angel'], trigger: 'cd', cd: 10, name: '熾天聖裁', kind: 'spell', dmg: [75, 120], spK: 2.2, undeadMul: 1.5, aoe: true, desc: '範圍：75～120＋SP×2.2 聖光傷害，對不死系 ×1.5' },
+    infernalSoulScythe: { tier: 3, cls: ['demon'], trigger: 'charge', n: 12, name: '煉獄收魂', kind: 'strike', mult: 1.5, magic: { dmg: [55, 95], spK: 1.5 }, aoe: true, desc: '範圍：1.5 倍鐮斬＋55～95＋SP×1.5 煉獄魔法傷害，可套用武器原有吸血' },
     // 神話共鳴（四大龍掉落或鍛造）
     earthRender:   { tier: 4, cls: ['warrior', 'knight'], trigger: 'charge', n: 15, name: '地裂', kind: 'strike', mult: 2.5, aoe: true, stun: 2000, desc: '範圍：2.5 倍並暈眩 2 秒' },
     tidalStaff:    { tier: 4, cls: ['mage', 'angel'], trigger: 'cd', cd: 8, name: '海嘯', kind: 'spell', dmg: [130, 200], spK: 3, aoe: true, desc: '範圍：海嘯淹沒所有敵人（魔法）' },

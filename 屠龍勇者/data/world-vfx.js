@@ -23,6 +23,11 @@ const WORLD_VFX_CLASS = {
     royal: 'class-b-0', warrior: 'class-b-1', gunner: 'class-b-2', magicfighter: 'class-b-3',
     mage: 'class-c-0', paladin: 'class-c-1', angel: 'class-c-2', shura: 'class-c-3'
 };
+const WORLD_VFX_LEGEND_WEAPONS = {
+    dragonSlayer: 'class-a-0', earthRender: 'boss-1', tidalStaff: 'class-c-0', galeBow: 'class-a-2', infernoBlade: 'class-a-3',
+    eclipseDual: 'class-a-1', rakshasaClaw: 'class-c-3', starfallGun: 'boss-2', thunderRuneSword: 'class-b-3',
+    dawnJudgmentHammer: 'class-c-1', seraphSpear: 'class-c-2', infernalSoulScythe: 'class-a-3',
+};
 // 原圖部分列距略有不同；只調整取樣範圍，避免把上一列的光芒切進下一種技能。
 const WORLD_VFX_ROW_CUTS = {
     attack: [0,314,661,940,1254], boss: [0,314,641,952,1254],
@@ -90,7 +95,12 @@ function worldVfxAttack(st, mon, crit) {
     if (crit) worldVfxEmit('impact-0', mon);
 }
 function worldVfxSkill(k, mon) {
-    if (SIM_MODE || String(k.id).startsWith('res_')) return;
+    if (SIM_MODE) return;
+    if (String(k.id).startsWith('res_')) {
+        const id = WORLD_VFX_LEGEND_WEAPONS[String(k.id).slice(4)];
+        if (id) worldVfxEmit(id, mon);
+        return;
+    }
     const id = /隕|流星/.test(k.name || '') ? 'boss-2' : k.kind === 'magic' && /冰|霜|雪|凍/.test(k.name || '') ? 'boss-3' : WORLD_VFX_CLASS[k.cls || player.cls];
     worldVfxEmit(id, mon);
 }

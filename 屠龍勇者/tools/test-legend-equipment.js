@@ -36,7 +36,7 @@ for(const slot of slots)assert.equal(legends.filter(id=>ITEMS[id].cat==='armor'&
 createPlayer('隔離傳說鍛造測試','knight',CLASSES.knight.base);player.loc={type:'town',id:Object.keys(TOWNS)[0]};
 for(const entry of legendSpec.items){
  const id=entry.id,d=ITEMS[id],matches=RECIPES.filter(r=>r.out===id);assert.equal(matches.length,1,id);
- const recipe=matches[0],idx=RECIPES.indexOf(recipe);assert(!d.res&&!d.classes&&!d.price);assert.equal(d.safe,d.cat==='weapon'?6:4);
+ const recipe=matches[0],idx=RECIPES.indexOf(recipe);assert.equal(!!d.res,d.cat==='weapon');assert(!d.classes&&!d.price);assert.equal(d.safe,d.cat==='weapon'?6:4);
  for(const [base,n]of Object.entries(recipe.need)){assert(ITEMS[base],base);assert(Number.isInteger(n)&&n>0);}
  assert(codexSources(id).some(s=>s.startsWith('鍛造：')),id+' 沒列鍛造來源');
  assert(!codexSources(id).some(s=>s.includes('隨機裝備')),id+' 錯列不可達掉落');

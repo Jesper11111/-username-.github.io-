@@ -4,7 +4,7 @@ const setup=fs.readFileSync(path.join(__dirname,'test-item-art.js'),'utf8').spli
 const run=String.raw`
 SIM_MODE=true;sfx=()=>{};refreshUI=()=>{};showToast=()=>{};gameAlert=()=>{};
 const rows=Object.keys(ITEMS).filter(id=>codexGradeOf(id).id==='legend').map(id=>{const d=ITEMS[id],r=d.res;return {id,name:d.name,group:codexGroup(d),slot:d.slot||d.type,res:r?{name:r.name,tier:RES_TIERS[r.tier].name,trigger:resTriggerText(r),desc:r.desc,classes:(r.cls||[]).map(c=>CLASSES[c].name)}:null,passive:Object.fromEntries(Object.entries(d).filter(([k,v])=>typeof v==='number'||typeof v==='boolean'))};});
-assert.equal(rows.length,28);assert.equal(rows.filter(x=>x.res).length,10);assert.equal(rows.filter(x=>!x.res).length,18);
+assert.equal(rows.length,28);assert(rows.filter(x=>x.group==='weapon').every(x=>x.res),'傳說武器必須有特殊技能');assert.equal(rows.filter(x=>x.res).length,17);assert.equal(rows.filter(x=>!x.res).length,11);
 for(const row of rows){
  const d=ITEMS[row.id],r=d.res;if(!r){assert.equal(resonanceHtml(d),'');continue;}
  const cls=r.cls?r.cls[0]:'knight';createPlayer('傳說效果隔離測試',cls,CLASSES[cls].base);
@@ -23,7 +23,7 @@ for(const row of rows){
  assert.equal(player.mp,mp,'共鳴不應耗 MP '+row.id);chance=originalChance;
  const slot=SLOT_KEYS.find(s=>player.equip[s]&&player.equip[s].uid===it.uid);unequipSlot(slot);assert(!resItemIds().includes(row.id),'卸下仍啟動 '+row.id);
 }
-this.legendEffectAudit=rows;console.log('PASS：28 傳說＝10 有共鳴、18 未設定；10 件實測命中集氣／機率觸發／受擊增益／冷卻、傷害或治療、不耗 MP、卸下停用、圖鑑說明一致。');
+this.legendEffectAudit=rows;console.log('PASS：28 傳說＝17 有共鳴、11 未設定；17 件實測命中集氣／機率觸發／受擊增益／冷卻、傷害或治療、不耗 MP、卸下停用、圖鑑說明一致。');
 `;
 const host={require,__dirname,console};
 vm.runInNewContext(setup+'\nvm.runInContext('+JSON.stringify(run)+',ctx);this.rows=ctx.legendEffectAudit;',host);
