@@ -1,0 +1,637 @@
+{
+  "id": "wolf-ranger-v1",
+  "name": "巡守妖魔神射（藍變）",
+  "status": "review-assets-only; not connected to transformation gameplay",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 256,
+  "cellH": 240,
+  "footAnchor": [
+    128,
+    200
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/wolf-ranger-v1/walk.png",
+      "cellW": 256,
+      "cellH": 240,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "source": "walk-generated-v2.png",
+      "sourceBodyHeight": [
+        292,
+        282,
+        306
+      ],
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "sourceRect": [
+            119,
+            32,
+            353,
+            340
+          ],
+          "sourceFoot": [
+            216,
+            336
+          ],
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "sourceRect": [
+            497,
+            32,
+            724,
+            337
+          ],
+          "sourceFoot": [
+            590,
+            336
+          ],
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "sourceRect": [
+            866,
+            34,
+            1106,
+            340
+          ],
+          "sourceFoot": [
+            970,
+            336
+          ],
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "sourceRect": [
+            1247,
+            34,
+            1467,
+            340
+          ],
+          "sourceFoot": [
+            1343,
+            336
+          ],
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "sourceRect": [
+            79,
+            360,
+            354,
+            653
+          ],
+          "sourceFoot": [
+            215,
+            648
+          ],
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "sourceRect": [
+            484,
+            360,
+            742,
+            653
+          ],
+          "sourceFoot": [
+            595,
+            648
+          ],
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "sourceRect": [
+            841,
+            361,
+            1117,
+            653
+          ],
+          "sourceFoot": [
+            978,
+            648
+          ],
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "sourceRect": [
+            1248,
+            361,
+            1505,
+            653
+          ],
+          "sourceFoot": [
+            1370,
+            648
+          ],
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "sourceRect": [
+            73,
+            669,
+            313,
+            989
+          ],
+          "sourceFoot": [
+            198,
+            986
+          ],
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "sourceRect": [
+            464,
+            672,
+            685,
+            983
+          ],
+          "sourceFoot": [
+            582,
+            984
+          ],
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "sourceRect": [
+            828,
+            670,
+            1065,
+            982
+          ],
+          "sourceFoot": [
+            962,
+            982
+          ],
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "sourceRect": [
+            1214,
+            670,
+            1447,
+            986
+          ],
+          "sourceFoot": [
+            1340,
+            984
+          ],
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/wolf-ranger-v1/attack.png",
+      "cellW": 256,
+      "cellH": 240,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "source": "attack-generated-v2.png",
+      "sourceBodyHeight": [
+        290,
+        290,
+        290
+      ],
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "sourceRect": [
+            86,
+            35,
+            319,
+            342
+          ],
+          "sourceFoot": [
+            198,
+            342
+          ],
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "sourceRect": [
+            471,
+            34,
+            711,
+            342
+          ],
+          "sourceFoot": [
+            584,
+            342
+          ],
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "sourceRect": [
+            854,
+            33,
+            1119,
+            380
+          ],
+          "sourceFoot": [
+            968,
+            342
+          ],
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "sourceRect": [
+            1240,
+            35,
+            1480,
+            342
+          ],
+          "sourceFoot": [
+            1354,
+            342
+          ],
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "sourceRect": [
+            79,
+            374,
+            340,
+            678
+          ],
+          "sourceFoot": [
+            200,
+            678
+          ],
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "sourceRect": [
+            436,
+            358,
+            765,
+            674
+          ],
+          "sourceFoot": [
+            570,
+            674
+          ],
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "sourceRect": [
+            836,
+            359,
+            1185,
+            684
+          ],
+          "sourceFoot": [
+            970,
+            674
+          ],
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "sourceRect": [
+            1252,
+            374,
+            1503,
+            678
+          ],
+          "sourceFoot": [
+            1365,
+            678
+          ],
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "sourceRect": [
+            54,
+            708,
+            326,
+            998
+          ],
+          "sourceFoot": [
+            205,
+            998
+          ],
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "sourceRect": [
+            433,
+            660,
+            719,
+            1004
+          ],
+          "sourceFoot": [
+            586,
+            1004
+          ],
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "sourceRect": [
+            797,
+            662,
+            1119,
+            1004
+          ],
+          "sourceFoot": [
+            970,
+            1004
+          ],
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "sourceRect": [
+            1241,
+            708,
+            1504,
+            1004
+          ],
+          "sourceFoot": [
+            1370,
+            1004
+          ],
+          "file": "frames/attack-up-04.png"
+        }
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/wolf-ranger-v1/cast.png",
+      "cellW": 256,
+      "cellH": 240,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "source": "cast-generated-v2.png",
+      "sourceBodyHeight": [
+        438,
+        428,
+        452
+      ],
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "sourceRect": [
+            114,
+            10,
+            442,
+            496
+          ],
+          "sourceFoot": [
+            277,
+            496
+          ],
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "sourceRect": [
+            499,
+            34,
+            1024,
+            496
+          ],
+          "sourceFoot": [
+            776,
+            496
+          ],
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "sourceRect": [
+            119,
+            517,
+            461,
+            983
+          ],
+          "sourceFoot": [
+            274,
+            982
+          ],
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "sourceRect": [
+            576,
+            523,
+            1024,
+            984
+          ],
+          "sourceFoot": [
+            760,
+            984
+          ],
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "sourceRect": [
+            95,
+            1009,
+            451,
+            1505
+          ],
+          "sourceFoot": [
+            275,
+            1506
+          ],
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "sourceRect": [
+            480,
+            1023,
+            1022,
+            1507
+          ],
+          "sourceFoot": [
+            771,
+            1508
+          ],
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/wolf-ranger-v1/hit.png",
+      "cellW": 256,
+      "cellH": 240,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "source": "hit-generated-v2.png",
+      "sourceBodyHeight": [
+        433,
+        430,
+        430
+      ],
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "sourceRect": [
+            146,
+            65,
+            512,
+            510
+          ],
+          "sourceFoot": [
+            289,
+            510
+          ],
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "sourceRect": [
+            635,
+            65,
+            978,
+            508
+          ],
+          "sourceFoot": [
+            776,
+            508
+          ],
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "sourceRect": [
+            141,
+            561,
+            518,
+            990
+          ],
+          "sourceFoot": [
+            302,
+            990
+          ],
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "sourceRect": [
+            643,
+            554,
+            967,
+            994
+          ],
+          "sourceFoot": [
+            789,
+            994
+          ],
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "sourceRect": [
+            65,
+            1047,
+            438,
+            1474
+          ],
+          "sourceFoot": [
+            284,
+            1474
+          ],
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "sourceRect": [
+            563,
+            1033,
+            923,
+            1474
+          ],
+          "sourceFoot": [
+            775,
+            1474
+          ],
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  }
+}

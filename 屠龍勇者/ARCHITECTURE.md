@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞；僅素材預覽，未接變身玩法（第 18.4 節） |
 | `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
 | `tools/legend-glow-preview.html`、`tools/test-legend-glow.js` | 全部 28 件傳說裝備的呼吸光暈、背包／角色／鍛造隔離預覽與品級範圍驗證（第 84 節） |
 | `tools/legend-equipment-art.json`、`tools/legend-equipment-preview.html`、`tools/test-legend-equipment.js` | 十二職業傳說代表武器與兩套七部位防具、原創單件提示詞／來源、隔離介紹與鍛造測試（第 83 節） |
@@ -879,6 +880,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 遊戲：`ui-scene.js` 的 `MON_SPRITES`（照 meta 抄：cw、ch、body、n、size）＋`monSpriteImg(mid)`；地圖怪 `m.mid`＝怪物 id（綁定戰鬥時改成 `inst.id`）。
   身高一般 42px、大型 62px（`size` 可覆寫）；方向＝戰鬥中面向角色、遊走看移動方向（`m.face`），向左用側面鏡像；出手時 `m.atk = 380` ms 照進度播攻擊列；走動時循環走路列（每格 150ms），只有 1 格的怪改成上下輕晃。
   74 張圖共約 2.5MB（G 表輸出後用 PIL `quantize(256)` 轉調色盤 PNG，約小 80%），進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
+
+### 18.4 變身動畫素材準備（2026-10-22，沿用 `20261022b`，未接入玩法）
+
+- 使用者提供「巡守妖魔神射（藍變）」原創人物立繪，授權由助手製作動畫所需分鏡；不是直接使用先前有假透明／混方向的 JPG 分鏡。
+- 內建 image_gen 產 4 動作初稿後，各針對步態、正面射箭方向、施法空手、受傷不拉弓重製；8 份 PNG 原稿、原參考立繪、完整 prompts.json／refinements.json 都保存在 `tools/sprite-src/morph/wolf-ranger-v1/`，不覆寫原圖。
+- `prepare.py`（Pillow＋NumPy）以 alpha 連通區切出整個人物，保留光效、等比縮放、人工腳點對齊；同動作／方向固定縮放，不做交叉淡化、人工重複格數或產生肢體補間。原稿 v2 四張選用，v1 留存。
+- 最終 `images/sprites/morph/wolf-ranger-v1/`：walk／attack 各 4×3＝12 格，cast／hit 各 2×3＝6 格，總共 36 張獨立 frames PNG、4 張動作圖集、contact.png、manifest.json、README.md；預覽用 WebP 另存。
+- 每格 256×240 真透明 RGBA；列順序 down／right／up，left＝right 鏡像。charH 160、建議 drawH 48；時間依序 130／140／220／150ms。施法／受傷只有 2 格，是基礎動作，需更細緻時再增加中間姿勢。
+- **腳底 anchor (128,200)**，下方 40px 留給向下箭光。未來變身 renderer 應畫在 `(腳底X−128k, 腳底Y−200k)`、k＝drawH／160；目前 renderer 用 cellH 當基準，不能未處理 anchor 就直接貼上職業資料，否則浮空。
+- 本次僅製作素材與本對話互動試播；未改 `classes.js`、SW 清單、GAME_VERSION、變身能力、選單或存檔。互動預覽位於本對話 visualizations 的 `wolf-ranger-v2-motion.html`，不加入遊戲 script。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 

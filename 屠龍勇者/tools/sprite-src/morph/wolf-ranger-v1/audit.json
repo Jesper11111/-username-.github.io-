@@ -1,0 +1,398 @@
+[
+  {
+    "action": "walk",
+    "dir": "down",
+    "frame": 0,
+    "bounds": [
+      75,
+      33,
+      203,
+      202
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "down",
+    "frame": 1,
+    "bounds": [
+      77,
+      33,
+      201,
+      200
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "down",
+    "frame": 2,
+    "bounds": [
+      71,
+      35,
+      203,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "down",
+    "frame": 3,
+    "bounds": [
+      75,
+      35,
+      196,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "right",
+    "frame": 0,
+    "bounds": [
+      51,
+      37,
+      207,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "right",
+    "frame": 1,
+    "bounds": [
+      65,
+      37,
+      211,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "right",
+    "frame": 2,
+    "bounds": [
+      50,
+      37,
+      207,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "right",
+    "frame": 3,
+    "bounds": [
+      59,
+      37,
+      205,
+      203
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "up",
+    "frame": 0,
+    "bounds": [
+      63,
+      34,
+      188,
+      201
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "up",
+    "frame": 1,
+    "bounds": [
+      66,
+      37,
+      182,
+      200
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "up",
+    "frame": 2,
+    "bounds": [
+      58,
+      37,
+      182,
+      200
+    ]
+  },
+  {
+    "action": "walk",
+    "dir": "up",
+    "frame": 3,
+    "bounds": [
+      62,
+      36,
+      184,
+      201
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "down",
+    "frame": 0,
+    "bounds": [
+      66,
+      31,
+      195,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "down",
+    "frame": 1,
+    "bounds": [
+      66,
+      30,
+      198,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "down",
+    "frame": 2,
+    "bounds": [
+      65,
+      30,
+      211,
+      221
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "down",
+    "frame": 3,
+    "bounds": [
+      65,
+      31,
+      197,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "right",
+    "frame": 0,
+    "bounds": [
+      61,
+      32,
+      205,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "right",
+    "frame": 1,
+    "bounds": [
+      54,
+      26,
+      236,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "right",
+    "frame": 2,
+    "bounds": [
+      54,
+      26,
+      247,
+      205
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "right",
+    "frame": 3,
+    "bounds": [
+      66,
+      32,
+      204,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "up",
+    "frame": 0,
+    "bounds": [
+      45,
+      40,
+      195,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "up",
+    "frame": 1,
+    "bounds": [
+      44,
+      10,
+      202,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "up",
+    "frame": 2,
+    "bounds": [
+      33,
+      11,
+      211,
+      200
+    ]
+  },
+  {
+    "action": "attack",
+    "dir": "up",
+    "frame": 3,
+    "bounds": [
+      57,
+      37,
+      202,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "down",
+    "frame": 0,
+    "bounds": [
+      68,
+      22,
+      188,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "down",
+    "frame": 1,
+    "bounds": [
+      27,
+      31,
+      219,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "right",
+    "frame": 0,
+    "bounds": [
+      70,
+      26,
+      198,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "right",
+    "frame": 1,
+    "bounds": [
+      59,
+      28,
+      226,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "up",
+    "frame": 0,
+    "bounds": [
+      64,
+      24,
+      190,
+      200
+    ]
+  },
+  {
+    "action": "cast",
+    "dir": "up",
+    "frame": 1,
+    "bounds": [
+      25,
+      28,
+      217,
+      199
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "down",
+    "frame": 0,
+    "bounds": [
+      75,
+      36,
+      210,
+      200
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "down",
+    "frame": 1,
+    "bounds": [
+      76,
+      36,
+      203,
+      200
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "right",
+    "frame": 0,
+    "bounds": [
+      68,
+      40,
+      208,
+      200
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "right",
+    "frame": 1,
+    "bounds": [
+      74,
+      36,
+      195,
+      200
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "up",
+    "frame": 0,
+    "bounds": [
+      47,
+      41,
+      186,
+      200
+    ]
+  },
+  {
+    "action": "hit",
+    "dir": "up",
+    "frame": 1,
+    "bounds": [
+      49,
+      36,
+      183,
+      200
+    ]
+  }
+]
