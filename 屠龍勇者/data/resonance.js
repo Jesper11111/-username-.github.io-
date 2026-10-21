@@ -82,9 +82,9 @@ const RESONANCE_ARMOR_ITEMS = {
     angelRing:    { name: '天使之戒',     cat: 'armor', slot: 'ring', wis: 1, mr: 5, hpRegen: 2, safe: -1, wt: 2, sell: 42000 },
     demonRing:    { name: '惡魔之戒',     cat: 'armor', slot: 'ring', str: 1, lifesteal: 0.03, safe: -1, wt: 2, sell: 42000 },
     abyssAmulet:  { name: '深淵之眼',     cat: 'armor', slot: 'amulet', crit: 0.05, mr: 5, safe: -1, wt: 5, sell: 50000 },
-    earthGuard:   { name: '大地守護者之盾', cat: 'armor', slot: 'shield', ac: 8, reduce: 4, safe: 4, wt: 160, sell: 120000, desc: '以地龍格爾莫斯的鱗甲鍛成' },
+    earthGuard:   { name: '大地守護者之盾', cat: 'armor', slot: 'shield', ac: 8, reduce: 4, safe: 4, wt: 160, sell: 120000, desc: '龍裔守護系列・盾牌。以地龍格爾莫斯的鱗甲鍛成' },
     tideHeart:    { name: '潮汐之心',     cat: 'armor', slot: 'amulet', mr: 20, sp: 3, mpRegen: 3, safe: -1, wt: 5, sell: 120000, desc: '水龍瑟拉恩的心臟結晶' },
-    galeBoots:    { name: '風神之靴',     cat: 'armor', slot: 'boots', ac: 3, dodge: 0.08, haste: true, safe: 4, wt: 20, sell: 120000, desc: '以風龍維斯塔爾的羽翼鍛成，穿上就有加速效果' },
+    galeBoots:    { name: '風神之靴',     cat: 'armor', slot: 'boots', ac: 3, dodge: 0.08, haste: true, safe: 4, wt: 20, sell: 120000, desc: '星風秘法系列・長靴。以風龍維斯塔爾的羽翼鍛成，穿上就有加速效果' },
     dragonHeartRing: { name: '火龍之心',   cat: 'armor', slot: 'ring', str: 2, dmg: 3, safe: -1, wt: 2, sell: 120000, desc: '火龍莫爾加斯的心臟結晶' },
 };
 Object.assign(ITEMS, RESONANCE_ARMOR_ITEMS);

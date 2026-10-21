@@ -3534,5 +3534,149 @@
     "slot": "boots",
     "res": false,
     "existing": false
+  },
+  {
+    "id": "eclipseDual",
+    "name": "蝕月雙刃",
+    "cat": "weapon",
+    "type": "dual",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "rakshasaClaw",
+    "name": "羅剎滅魂爪",
+    "cat": "weapon",
+    "type": "claw",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starfallGun",
+    "name": "星隕魔導槍",
+    "cat": "weapon",
+    "type": "gun",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "thunderRuneSword",
+    "name": "雷霆符文劍",
+    "cat": "weapon",
+    "type": "sword",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dawnJudgmentHammer",
+    "name": "黎明裁決之錘",
+    "cat": "weapon",
+    "type": "blunt",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "seraphSpear",
+    "name": "熾天使之矛",
+    "cat": "weapon",
+    "type": "spear",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "infernalSoulScythe",
+    "name": "煉獄噬魂鐮",
+    "cat": "weapon",
+    "type": "scythe",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dragonWardHelm",
+    "name": "龍裔戰盔",
+    "cat": "armor",
+    "slot": "helm",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dragonWingCloak",
+    "name": "龍翼守護披風",
+    "cat": "armor",
+    "slot": "cloak",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dragonHeartTunic",
+    "name": "龍紋護心衣",
+    "cat": "armor",
+    "slot": "tshirt",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dragonFangGloves",
+    "name": "龍牙護手",
+    "cat": "armor",
+    "slot": "gloves",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "dragonWardBoots",
+    "name": "龍裔重靴",
+    "cat": "armor",
+    "slot": "boots",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindCrown",
+    "name": "星風法冠",
+    "cat": "armor",
+    "slot": "helm",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindRobe",
+    "name": "星風法袍",
+    "cat": "armor",
+    "slot": "armor",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindCloak",
+    "name": "星風披風",
+    "cat": "armor",
+    "slot": "cloak",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindShield",
+    "name": "星風法盾",
+    "cat": "armor",
+    "slot": "shield",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindTunic",
+    "name": "星風符文內衣",
+    "cat": "armor",
+    "slot": "tshirt",
+    "res": false,
+    "existing": false
+  },
+  {
+    "id": "starwindGloves",
+    "name": "星風手套",
+    "cat": "armor",
+    "slot": "gloves",
+    "res": false,
+    "existing": false
   }
 ]

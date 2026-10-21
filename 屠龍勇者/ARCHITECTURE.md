@@ -7,7 +7,8 @@
 
 | 檔案 | 內容 |
 |---|---|
-| `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 267 張原創道具 PNG、17 張原始圖集＋精靈餅乾原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、414 件道具隔離圖庫與接線檢查（第 80、82 節）。tools 不發佈 |
+| `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
+| `tools/legend-equipment-art.json`、`tools/legend-equipment-preview.html`、`tools/test-legend-equipment.js` | 十二職業傳說代表武器與兩套七部位防具、原創單件提示詞／來源、隔離介紹與鍛造測試（第 83 節） |
 | `tools/hero-armor-art.json`、`tools/icon-src/items/hero-armor-01.png`、`tools/test-hero-armor.js` | 新增 11 件英雄防具的原創圖集／提示詞與隔離驗證（第 82 節） |
 | `images/maps/wild-titan*`、`tools/bigmap/titan-tomb.png`、`tools/bigmap/titan-generated.json`、`tools/titan-map-preview.html`、`tools/test-titan-map.js` | 泰坦墓穴原創素材、新版世界／小地圖／遮擋、生成紀錄、隔離預覽及地圖連通測試（第 78 節） |
 | `tools/weapon-glow-preview.html`、`tools/inspect-weapon-sprites.ps1`、`tools/weapon-sprite-specs.json` | 十二職業逐格武器貼合預覽、透明度檢查與來源動作表檢視（第 79 節） |
@@ -119,7 +120,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021n`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261021o`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2195,3 +2196,55 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `icons.js ITEM_IMG` 加 11 id；內建 imagegen 原創生成 4×4 圖集，前 11 格有圖、後 5 格透明；原稿 `tools/icon-src/items/hero-armor-01.png`，來源／提示詞／順序在 `tools/hero-armor-art.json` 並加入既有總清單。沿用透明連通區裁切成 11 張獨立 128×128 PNG，不覆寫舊圖。圖庫新增「英雄防具」分類，列部位；縮圖總覽改依件數自動增加頁數。
 - 當前總數：150 種裝備（68 武器＋53 防具＋29 飾品＝82 非武器裝備），全部 ITEMS 414 件；圖片 267 張新原創圖＋144 魔法書技能圖＋3 原藥水＝414。圖鑑英雄品級共 36 件（18 武器＋14 防具＋4 飾品）。
 - `tools/test-hero-armor.js` 隔離載入真正資料與函式，核對七部位各 2、原英雄飾品不變、11 件皆進實際掉落選池、圖鑑來源／MP、穿脫能力、盾牌與雙手武器互斥。`tools/test-item-art.js` 更新為 414 件／267 張；道具圖片、商店購買、掉落分流測試及 check.ps1 通過。瀏覽器英雄防具篩選 14 件／14 圖載入、缺圖 0；不讀寫真實角色、不連雲端。尚待使用者實玩驗收後提交。
+
+
+## 83. 十二職業傳說武器與兩套傳說防具（2026-10-21，版本 `20261021o`）
+
+- 使用者要求每職業一種傳說武器、防具一共兩套。沿用第 20 節圖鑑品級（回收價至少 80,000），保留原 5 把傳說武器，新增 7 把，十二職業各有一把不同且可實際穿戴的代表武器。沒有新增職業獨佔限制，相容武器類型的其他職業也可使用；既有共鳴特效與數值不變。
+
+| 職業 | 代表武器 id／名稱 |
+|---|---|
+| 王族 | dragonSlayer／屠龍劍 |
+| 騎士 | infernoBlade／熾焰魔劍 |
+| 法師 | tidalStaff／潮汐之杖 |
+| 妖精 | galeBow／颶風之弓 |
+| 黑暗妖精 | eclipseDual／蝕月雙刃 |
+| 修羅 | rakshasaClaw／羅剎滅魂爪 |
+| 戰士 | earthRender／大地裂斧 |
+| 槍手 | starfallGun／星隕魔導槍 |
+| 魔鬥士 | thunderRuneSword／雷霆符文劍 |
+| 聖騎士 | dawnJudgmentHammer／黎明裁決之錘 |
+| 天使 | seraphSpear／熾天使之矛 |
+| 惡魔 | infernalSoulScythe／煉獄噬魂鐮 |
+
+- 防具採兩個系列，每系列頭盔／盔甲／斗篷／盾牌／內衣／手套／長靴各 1 件；不是新增套裝加成玩法。龍裔守護偏生命／防禦／力量，星風秘法偏魔防／魔力／法術。保留既有龍鱗鎧、大地守護者之盾、風神之靴的屬性與共鳴，只補系列說明；其餘新增 11 件，傳說七部位各 2 件，共 14 件。飾品不變。雙手武器不能持盾、修羅／槍手／惡魔不能用盾等既有規則保留。
+
+| 新增 id／名稱 | 種類 | 未強化基礎屬性 | 重量 | 回收價 |
+|---|---|---|---:|---:|
+| eclipseDual／蝕月雙刃 | 雙刀 | 傷害 25／24、命中 6、爆擊 6% | 45 | 100,000 |
+| rakshasaClaw／羅剎滅魂爪 | 鋼爪 | 傷害 27／26、命中 5、力量 2 | 40 | 100,000 |
+| starfallGun／星隕魔導槍 | 槍 | 傷害 28／30、命中 9、敏捷 2 | 95 | 100,000 |
+| thunderRuneSword／雷霆符文劍 | 單手劍 | 傷害 25／27、命中 5、SP 5 | 70 | 100,000 |
+| dawnJudgmentHammer／黎明裁決之錘 | 鈍器 | 傷害 26／29、命中 5、精神 2 | 100 | 100,000 |
+| seraphSpear／熾天使之矛 | 矛 | 傷害 25／30、命中 6、SP 5 | 65 | 100,000 |
+| infernalSoulScythe／煉獄噬魂鐮 | 鐮刀 | 傷害 30／33、命中 5、吸血 4% | 85 | 100,000 |
+| dragonWardHelm／龍裔戰盔 | 頭盔 | 防禦 5、MR 15、HP 80 | 65 | 90,000 |
+| dragonWingCloak／龍翼守護披風 | 斗篷 | 防禦 4、MR 18、HP 60 | 30 | 85,000 |
+| dragonHeartTunic／龍紋護心衣 | 內衣 | 防禦 4、體質 2、HP 100 | 25 | 80,000 |
+| dragonFangGloves／龍牙護手 | 手套 | 傷害 2、防禦 4、力量 2 | 40 | 85,000 |
+| dragonWardBoots／龍裔重靴 | 長靴 | 防禦 5、MR 12、HP 80、減傷 1 | 65 | 90,000 |
+| starwindCrown／星風法冠 | 頭盔 | 防禦 3、SP 3、MR 20、MP 60 | 15 | 90,000 |
+| starwindRobe／星風法袍 | 盔甲 | 防禦 7、SP 4、MR 22、MP 80 | 40 | 100,000 |
+| starwindCloak／星風披風 | 斗篷 | 防禦 3、MR 20、回魔 3 | 12 | 85,000 |
+| starwindShield／星風法盾 | 盾牌 | 防禦 6、SP 3、MR 22 | 50 | 95,000 |
+| starwindTunic／星風符文內衣 | 內衣 | 防禦 3、智力 2、MP 80 | 10 | 80,000 |
+| starwindGloves／星風手套 | 手套 | 防禦 3、智力 2、SP 3、回魔 2 | 12 | 85,000 |
+
+- 新增 18 定義直接放 items.js 的 ITEMS，武器 safe 6、防具 safe 4，無新全域資料或 script 載入調整。全部有對應原創 128×128 透明 PNG，ITEM_IMG 登記新 id，沿用背包／角色／圖鑑／鍛造等統一入口。
+- **取得方式**：18 件皆加入 RECIPES；武器用既有基底＋對應龍鱗 ×5＋高階材料，手續費 80,000；防具用既有基底＋龍鱗 ×4＋高階材料，手續費 60,000。精確配方在 items.js／legend-equipment-art.json 與圖鑑來源。不增怪物掉落、不改既有掉落率；回收價超過現有隨機掉落等級上限，因此沒有誤列「隨機裝備」。保留原有五武器／三防具的既有取得方式。
+- 圖片逐件由 built-in image_gen 原創產生，原稿 tools/icon-src/items/<id>.png，提示詞及來源保存在 legend-equipment-art.json／item-art-single.json；沒有裁用商業參考圖、不覆寫舊素材。cut-single-item-art.ps1 依透明內容置中縮成 128×128，總清單與縮圖工具同步納入。
+- 工具頁 legend-equipment-preview.html 顯示 12 職業武器與兩套防具，使用真正 selectCodex／codexDetailHtml 檢查介紹與來源；僅隔離 SIM_MODE 記憶體角色、不讀寫存檔或接雲端。item-art-preview.html 新增「傳說武器／傳說防具」分類。
+- 當前 168 種裝備＝75 武器＋64 防具＋29 飾品（93 非武器裝備），ITEMS 432；圖鑑傳說共 28＝12 武器＋14 防具＋2 飾品。新原創圖片 285＋144 魔法書技能圖＋3 既有藥水＝432。SAVE_SCHEMA 維持 5。
+- test-legend-equipment.js 隔離驗證十二職業代表武器實際穿戴、兩套完整部位與防禦穿脫、18 件材料不足不扣款／成功鍛造扣料扣款、圖鑑來源／圖片與雙手武器持盾限制。既有英雄防具與全道具圖片測試更新總數。待使用者實玩驗收後才提交／推送。
+
+第 83 節驗證：test-legend-equipment／test-item-art／test-hero-armor／test-shop-buy／test-loot-log 全通過；check.ps1 ALL CHECKS PASSED（44 檔語法、43 script 版本一致）；最終混淆建置與合併 JS 語法通過、285 張 PNG 全數打包。瀏覽器隔離頁顯示 26／26 圖、缺圖 0，已打開雷霆符文劍介紹核對傷害／SP／安定與鍛造材料、關閉正常，Console 無 error／warn；兩系列七件並排預覽正確。未修改真實存檔、未上傳測試角色。本機待驗收，尚未 commit／Push。

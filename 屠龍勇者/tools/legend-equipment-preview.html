@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><base href="../"><title>傳說武器與兩套防具</title>
+<style>body{margin:20px;background:#16191f;color:#e8dfcd;font:15px sans-serif;height:auto!important;overflow:auto!important}header{padding:10px}h1,h2{color:#efc36e}#legend-preview{max-width:1200px;margin:auto;padding-bottom:30px}.legend-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.legend-item{padding:12px;text-align:center;background:#25221e;border:1px solid #7d6339;border-radius:8px}.legend-item .ico{display:block;width:78px;height:78px;margin:auto}.legend-item img{width:100%;height:100%;object-fit:contain}.legend-item small{display:block;margin:6px;color:#bbb3a3}.legend-item button{padding:6px 10px}#status{color:#b7d4c5}</style>
+<div id="legend-preview"><header><h1>傳說武器與兩套防具</h1><p>十二職業各一把代表武器；龍裔守護與星風秘法各七件。點「裝備介紹」檢查實際圖鑑屬性及鍛造來源。</p><p id="status">載入中…</p></header><div id="legend-content"></div></div><div id="dialog-layer"></div>
+<script>
+function previewLegendDetail(id){const sim=SIM_MODE;try{SIM_MODE=false;selectCodex(id);}finally{SIM_MODE=sim;}}
+(async()=>{
+const index=await(await fetch('index.html')).text();
+const css=document.createElement('style');css.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(css);
+for(const[,file,ver]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g)){
+ if(/\/(main|pwa|cloud)\.js$/.test(file))continue;
+ await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=file+'?v='+ver;s.onload=resolve;s.onerror=reject;document.head.append(s);});
+}
+SIM_MODE=true;sfx=()=>{};createPlayer('隔離傳說裝備預覽','knight',CLASSES.knight.base);
+const spec=await(await fetch('tools/legend-equipment-art.json')).json();
+const card=(id,label)=>'<article class="legend-item">'+itemIconHtml(id)+'<b>'+esc(ITEMS[id].name)+'</b><small>'+esc(label)+'・'+codexKind(ITEMS[id])+'</small><button onclick="previewLegendDetail(\''+id+'\')">裝備介紹</button></article>';
+document.getElementById('legend-content').innerHTML='<h2>十二職業代表武器</h2><div class="legend-cards">'+Object.entries(spec.weapons).map(([cls,id])=>card(id,CLASSES[cls].name)).join('')+'</div>'+Object.entries(spec.sets).map(([name,ids])=>'<h2>'+esc(name)+'（七部位）</h2><div class="legend-cards">'+ids.map(id=>card(id,name)).join('')+'</div>').join('');
+const imgs=Array.from(document.querySelectorAll('.legend-item img'));
+await Promise.all(imgs.map(im=>im.complete?Promise.resolve():new Promise(r=>{im.onload=r;im.onerror=r;})));
+document.getElementById('status').textContent='版本 '+GAME_VERSION+'｜26 件傳說裝備｜圖片 '+imgs.filter(im=>im.naturalWidth).length+'/26｜缺圖 '+imgs.filter(im=>!im.naturalWidth).length+'｜隔離記憶體預覽，不讀寫存檔／不上傳。';
+})().catch(e=>{document.getElementById('status').textContent=e.stack;console.error(e);});
+</script></html>
+

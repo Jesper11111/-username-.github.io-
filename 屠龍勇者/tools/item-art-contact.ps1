@@ -3,7 +3,8 @@ $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $items=@((Get-Content (Join-Path $PSScriptRoot 'item-art-batches.json') -Raw -Encoding UTF8 | ConvertFrom-Json).batches.items)
-$items+=((Get-Content (Join-Path $PSScriptRoot 'item-art-inventory.json') -Raw -Encoding UTF8 | ConvertFrom-Json) | Where-Object id -eq 'elvenWafer')
+$singleIds=@((Get-Content (Join-Path $PSScriptRoot 'item-art-single.json') -Raw -Encoding UTF8 | ConvertFrom-Json).images.id)
+$items+=((Get-Content (Join-Path $PSScriptRoot 'item-art-inventory.json') -Raw -Encoding UTF8 | ConvertFrom-Json) | Where-Object { $_.id -in $singleIds })
 $font=New-Object System.Drawing.Font('Microsoft JhengHei',10)
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 for($page=0;$page -lt [math]::Ceiling($items.Count/64);$page++){

@@ -224,6 +224,7 @@ const ITEM_ICON = {
 };
 // 原創道具圖（逐件按名稱設計）；魔法書沿用所屬技能圖，勇敢／慎重／藍水原圖保留。
 const ITEM_IMG = Object.fromEntries([
+    'eclipseDual', 'rakshasaClaw', 'starfallGun', 'thunderRuneSword', 'dawnJudgmentHammer', 'seraphSpear', 'infernalSoulScythe', 'dragonWardHelm', 'dragonWingCloak', 'dragonHeartTunic', 'dragonFangGloves', 'dragonWardBoots', 'starwindCrown', 'starwindRobe', 'starwindCloak', 'starwindShield', 'starwindTunic', 'starwindGloves',
     'duskWarHelm', 'abyssGuardMail', 'moonveilCloak', 'dawnBastionShield', 'frostMirrorShield', 'runeSilkTunic',
     'titanWeaveTunic', 'bloodOathGauntlets', 'astralWeaveGloves', 'galeStalkerBoots', 'stoneWardBoots',
     'elvenWafer',
