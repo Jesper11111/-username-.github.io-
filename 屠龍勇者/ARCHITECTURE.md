@@ -9,6 +9,8 @@
 |---|---|
 | `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者透明素材／原稿／提示詞；m02 專屬圖，g 版新增 12 格 attack-v2（第 18.5、88 節） |
 | `images/sprites/morph/hellfire-archer-v1/`、`tools/sprite-src/morph/hellfire-archer-v1/` | 冥火骷髏神射 36 格透明人物／3 獨立箭矢、原圖／補畫原稿／提示詞／整理腳本；m03 專屬圖，20261022j 接入（第 18.6、88 節） |
+| `images/sprites/morph/sky-valkyrie-v1/`、`tools/sprite-src/morph/sky-valkyrie-v1/` | 蒼穹女武神・艾爾72格外觀試播、金甲／光翼原創分鏡、來源／提示詞／整理腳本（第18.7節）；未接入m04 |
+| `tools/hellfire-attack-preview.html`、`tools/test-hellfire-attack.js` | 紫變新版攻擊的實際renderer隔離預覽與四方向命中／MISS回歸（第18.6節） |
 | `tools/moon-attack-preview.html`、`tools/test-moon-attack.js`、`tools/sprite-src/morph/update-motion-previews.py` | 紅變實際 renderer 隔離試播、命中／MISS 動作回歸、嵌入式動畫試播素材更新工具（第 18.5 節） |
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
 | `tools/MORPH-DESIGN.md` | 使用者給的 30 種變身設計稿（名稱、系別、階級、外觀與特效重點），做變身圖時照這份（第 88 節） |
@@ -131,7 +133,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022j`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022k`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -913,6 +915,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 原圖／透明原稿／補畫／完整 prompts.json／prepare.py 保存在 tools/sprite-src/morph/hellfire-archer-v1/；輸出 images/sprites/morph/hellfire-archer-v1/，4 動作圖集／WebP、36 單格、3 projectile PNG、contact.png、逐格來源 manifest.json。walk／attack 每向4格，cast／hit 每向2格，時間130／140／220／150ms。
 - 格子 **320×280**、腳底 **[160,240]**、charH160、drawH48；列 down／right／up，左鏡像。多留上方火焰空間，不能套紅變 240 高格子的參數。原圖射箭仍以持弓與光效變化為主，未假稱補齊新的射箭肢體動作。
 - 本對話 hellfire-archer-motion.html 提供四向／四動作與播放／逐格。manifest 的 level／effects 留 null；當時未接入；**20261022j 已接入**（`MORPHS.hellfireArcher`，第 88 節）。
+
+- **20261022k 攻擊修正**：使用者回報03仍沒有攻擊動作，原圖大多只維持瞄準。內建image_gen重畫三向各4格低持弓／拉弓／放箭／收弓；原稿 attack-motion-v2-generated.png、初稿及完整 attack-motion-v2-prompts.json 留存。prepare-attack-v2.py共用sky-valkyrie-v1/prepare.py的透明分格／註冊函式，輸出attack-v2.png、attack-v2-frames/、attack-v2-manifest.json，保留舊attack.png。MORPHS.hellfireArcher.attack及SW改用新檔名；320×280／腳底[160,240]／charH160／4×140ms不變，不調整數值／觸發邏輯或schema。
+- tools/test-hellfire-attack.js隔離驗證m03四方向命中／MISS、受傷不打斷、到期恢復職業圖、圖集尺寸與離線清單。tools/hellfire-attack-preview.html用實際sceneReadEvents／sceneDraw，不讀寫真實存檔或雲端；本對話hellfire-archer-motion.html同步新攻擊。
+
+### 18.7 蒼穹女武神・艾爾（神話）動畫樣本（2026-10-22，與`20261022k`同次）
+
+- 使用者提供4.jpg立繪，要求由助手製作並看流暢度／質感。先做外觀及試播；維持金白戰甲、金色神弓、四片光羽、懸浮輪廓。內建image_gen新增三向移動8／射箭8／施法4／受傷4，共72格，左側鏡像；移動羽翼升降，射箭含抬弓、拉弦、釋放與收勢，採實際分鏡而非複製格或淡化補間。
+- tools/sprite-src/morph/sky-valkyrie-v1/保存reference.jpg、六份最終／一份移動初稿PNG、完整prompts.json及walk-prompts.json、prepare.py／audit.json、preview.py。移動初稿方向格數與間距不齊，已另畫正／右／背三份8格；初稿保留而不接用。
+- images/sprites/morph/sky-valkyrie-v1/有72單格PNG、walk／attack／cast／hit四圖集、WebP備用縮圖／原尺寸透明AVIF試播、各動作總覽及逐格來源manifest。正式格子384×320、腳底[192,270]、charH160、drawH48；列down／right／up。時間80／70／110／80ms（每向8／8／4／4格），射箭共560ms。
+- 本對話sky-valkyrie-motion.html內嵌AVIF保持清晰度，雙欄四方向，四動作／播放／暫停／逐格，檔案小於1MB。不加入遊戲script；**未接m04專屬外觀、不改等級／能力／消耗或存檔**。翼尖／衣甲仍可能有逐格繪製差異，待使用者看實際循環驗收。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2393,6 +2405,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **20261022g：m02 攻擊換用 attack-v2.png**。修正原四格皆拉弓而看不到出手的素材問題；三向各準備／拉弓／放箭／收弓，左鏡像，規格與時間維持不變；第18.5節。未改等級、能力、消耗或 schema。
 - **20261022i：測試期間暫時拿掉變身等級限制**（使用者要求方便測試）。`items.js` 的 `MORPH_LV_FREE = true`＋`morphLvOk(f)`，`usePotion` 與選單的鎖定都改用它；選單提示改成「測試中：暫不限等級」，卡片仍顯示原本的需求等級。**正式開放前把 `MORPH_LV_FREE` 改回 false** 即恢復 Lv.15／35／52／70 限制。
 - **20261022j：03 冥火骷髏神射接上專屬圖**（使用者要求）。`MORPHS.hellfireArcher`：格子 **320×280**、腳底 **(160,240)**（上方多留火焰空間，和 02 的 240 高格子不同），walk／attack 4 格、cast／hit 2 格，130／140／220／150ms；m03 加 sprite，`sw.js` 預快取四張圖集。驗證：Lv.1 測試角色（等級限制已暫拿掉）選 m03 → 外觀冥火骷髏神射、四張圖集 1280×840／640×840 載入、攻擊 560ms、野外放大腳踩影子；test-moon-attack 回歸通過；Console 無錯誤。
+- **20261022k：03射箭動作重製**。attack-v2.png改成低持弓→拉弓→放箭→收弓；規格與560ms總時間不變，新檔名避開舊PNG快取。04女武神另有72格試播素材，尚未接入m04；第18.6、18.7節。
 
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 

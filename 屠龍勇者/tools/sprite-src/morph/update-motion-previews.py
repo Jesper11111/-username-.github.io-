@@ -12,12 +12,12 @@ for ident,name,h in [('moon-ranger','月光精靈巡林者',240),('hellfire-arch
     src = ROOT/'images/sprites/morph'/(ident+'-v1')
     sources = {}
     for action in ['walk','attack','cast','hit']:
-        file = 'attack-v2-preview.webp' if ident=='moon-ranger' and action=='attack' else action+'-preview.webp'
+        file = 'attack-v2-preview.webp' if action=='attack' else action+'-preview.webp'
         sources[action] = 'data:image/webp;base64,'+base64.b64encode((src/file).read_bytes()).decode()
     html = re.sub(r'  const sources=.*?;\n',lambda _: '  const sources='+json.dumps(sources,separators=(',',':'))+';\n',template)
     html = html.replace('moon-ranger-motion',ident+'-motion').replace('月光精靈巡林者',name)
     html = html.replace("let action='walk'", "let action='attack'")
-    html = html.replace('version:1','version:2' if ident=='moon-ranger' else 'version:1')
+    html = html.replace('version:1','version:2')
     if h!=240:
         html = '\n'.join(line if 'const sources=' in line else line.replace('240','280') for line in html.split('\n'))
     out = VIS/(ident+'-motion.html')

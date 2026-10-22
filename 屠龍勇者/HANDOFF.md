@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022k：03冥火骷髏神射攻擊修正**。使用者回報與紅變相同，原圖幾乎只維持瞄準。內建image_gen新畫三向12格低持弓／拉弓／放箭／收弓，MORPHS.hellfireArcher.attack及SW改用attack-v2.png；維持320×280／腳底[160,240]／charH160／4×140ms，原圖／舊圖集留存。原稿／完整提示詞／prepare-attack-v2.py在tools/sprite-src/morph/hellfire-archer-v1/，共用sky-valkyrie-v1/prepare.py的打包函式；第18.6、88節。未改能力／消耗／schema。
+- **同次04女武神72格樣本待驗收**：使用者給4.jpg，要求助手製作較流暢且有質感的動畫。金白戰甲／四片金翼／神弓／懸浮，移動與射箭8格、施法受傷4格，三向共72格、左鏡像。images/sprites/morph/sky-valkyrie-v1/正式格384×320／腳底[192,270]／charH160；時間80／70／110／80ms。來源／提示詞／整理腳本在tools/sprite-src/morph/sky-valkyrie-v1/。先看本對話sky-valkyrie-motion.html，**未接m04或改玩法數值**；第18.7節。翼尖／衣甲仍有逐格繪製差異，需看動態驗收。
+- **k版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022k）；test-moon-attack與test-hellfire-attack皆通過；72女武神及12新版紫變格皆非重複RGBA、透明留邊、圖集逐格對應。瀏覽器紫變實際sceneReadEvents／sceneDraw四向攻擊正常、Console無error／warn；女武神四動作、AVIF載入、播放／暫停／逐格／鏡像正常，Console無error／warn。兩份試播皆小於1MB，未寫真實存檔／雲端，未commit／Push；待使用者驗收。
+
 - **20261022j：03 冥火骷髏神射接上專屬變身圖**（hellfire-archer-v1，格子 320×280、腳底 160,240，第 88 節）；目前專屬圖 m01～m03，其餘 27 種統一外觀。
 - **20261022i：變身等級限制暫時拿掉**（使用者要求方便測試，`MORPH_LV_FREE = true`）。**待辦：正式開放前改回 false。**
 - **20261022h：喝水延遲統一 0.8 秒**（使用者選；天堂官方秒數查不到）。藥水類手動、自動共用 `potReadyAt`，喝完 0.8 秒內再喝回「喝水延遲中」不扣藥；卷軸不受影響。第 89 節。
@@ -99,6 +103,8 @@
   大地圖（多張真地圖拼接、遮擋、交界路引、瞬移卷軸、傳送師）、防改檔（伺服器可疑紀錄、存檔加密簽章、雲端簽章、交易所門檻、混淆）。
 
 ## 2. 待辦（使用者還沒叫做的不要自己開工，先問）
+
+- **k版03待實玩**：Ctrl+F5 → 變形卷軸選03冥火骷髏神射 → 打怪，確認低持弓、拉弓、放箭、收弓，四方向可見；隔離頁http://localhost:8790/tools/hellfire-attack-preview.html可點攻擊與方向，不讀真實角色／雲端。04先看本對話72格試播並決定是否接入；未獲實玩驗收前不commit／Push。
 
 - **20261022g 紅變攻擊待實玩**：本機 Ctrl+F5 → 變形卷軸選月光精靈巡林者 → 打怪，確認有抬弓／放箭／收弓，切四方向核對。隔離頁 http://localhost:8790/tools/moon-attack-preview.html 可點方向及「攻擊一次」，使用真實 sceneReadEvents／sceneDraw，不載真實存檔或雲端。使用者驗收後才 commit；紫變先看本對話試播，尚未接上遊戲 m03。
 

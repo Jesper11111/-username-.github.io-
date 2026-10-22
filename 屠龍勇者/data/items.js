@@ -66,7 +66,7 @@ const MORPHS = {
     hellfireArcher: {
         name: '冥火骷髏神射', drawH: 48, charH: 160, foot: [160, 240],
         walk:   { src: 'images/sprites/morph/hellfire-archer-v1/walk.png',   cellW: 320, cellH: 280, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
-        attack: { src: 'images/sprites/morph/hellfire-archer-v1/attack.png', cellW: 320, cellH: 280, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        attack: { src: 'images/sprites/morph/hellfire-archer-v1/attack-v2.png', cellW: 320, cellH: 280, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
         cast:   { src: 'images/sprites/morph/hellfire-archer-v1/cast.png',   cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/hellfire-archer-v1/hit.png',    cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },

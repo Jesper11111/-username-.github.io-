@@ -1,0 +1,223 @@
+{
+  "src": "images/sprites/morph/hellfire-archer-v1/attack-v2.png",
+  "cellW": 320,
+  "cellH": 280,
+  "frames": {
+    "down": 4,
+    "right": 4,
+    "up": 4
+  },
+  "ms": 140,
+  "phases": [
+    "ready",
+    "draw",
+    "release",
+    "recover"
+  ],
+  "cells": [
+    {
+      "direction": "down",
+      "frame": 0,
+      "file": "attack-v2-frames/attack-down-01.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        0,
+        0,
+        384,
+        348
+      ],
+      "sourceFoot": [
+        200,
+        343
+      ],
+      "sourceBodyHeight": 300
+    },
+    {
+      "direction": "down",
+      "frame": 1,
+      "file": "attack-v2-frames/attack-down-02.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        384,
+        0,
+        768,
+        348
+      ],
+      "sourceFoot": [
+        555,
+        343
+      ],
+      "sourceBodyHeight": 278
+    },
+    {
+      "direction": "down",
+      "frame": 2,
+      "file": "attack-v2-frames/attack-down-03.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        768,
+        0,
+        1152,
+        348
+      ],
+      "sourceFoot": [
+        956,
+        343
+      ],
+      "sourceBodyHeight": 280
+    },
+    {
+      "direction": "down",
+      "frame": 3,
+      "file": "attack-v2-frames/attack-down-04.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        1152,
+        0,
+        1536,
+        348
+      ],
+      "sourceFoot": [
+        1352,
+        343
+      ],
+      "sourceBodyHeight": 280
+    },
+    {
+      "direction": "right",
+      "frame": 0,
+      "file": "attack-v2-frames/attack-right-01.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        0,
+        348,
+        384,
+        678
+      ],
+      "sourceFoot": [
+        200,
+        672
+      ],
+      "sourceBodyHeight": 288
+    },
+    {
+      "direction": "right",
+      "frame": 1,
+      "file": "attack-v2-frames/attack-right-02.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        384,
+        348,
+        768,
+        678
+      ],
+      "sourceFoot": [
+        557,
+        672
+      ],
+      "sourceBodyHeight": 269
+    },
+    {
+      "direction": "right",
+      "frame": 2,
+      "file": "attack-v2-frames/attack-right-03.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        768,
+        348,
+        1152,
+        678
+      ],
+      "sourceFoot": [
+        966,
+        672
+      ],
+      "sourceBodyHeight": 269
+    },
+    {
+      "direction": "right",
+      "frame": 3,
+      "file": "attack-v2-frames/attack-right-04.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        1152,
+        348,
+        1536,
+        678
+      ],
+      "sourceFoot": [
+        1370,
+        672
+      ],
+      "sourceBodyHeight": 268
+    },
+    {
+      "direction": "up",
+      "frame": 0,
+      "file": "attack-v2-frames/attack-up-01.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        0,
+        678,
+        384,
+        1024
+      ],
+      "sourceFoot": [
+        208,
+        994
+      ],
+      "sourceBodyHeight": 290
+    },
+    {
+      "direction": "up",
+      "frame": 1,
+      "file": "attack-v2-frames/attack-up-02.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        384,
+        678,
+        768,
+        1024
+      ],
+      "sourceFoot": [
+        620,
+        994
+      ],
+      "sourceBodyHeight": 276
+    },
+    {
+      "direction": "up",
+      "frame": 2,
+      "file": "attack-v2-frames/attack-up-03.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        768,
+        678,
+        1152,
+        1024
+      ],
+      "sourceFoot": [
+        1034,
+        994
+      ],
+      "sourceBodyHeight": 267
+    },
+    {
+      "direction": "up",
+      "frame": 3,
+      "file": "attack-v2-frames/attack-up-04.png",
+      "source": "attack-motion-v2-generated.png",
+      "sourceRect": [
+        1152,
+        678,
+        1536,
+        1024
+      ],
+      "sourceFoot": [
+        1400,
+        994
+      ],
+      "sourceBodyHeight": 276
+    }
+  ]
+}

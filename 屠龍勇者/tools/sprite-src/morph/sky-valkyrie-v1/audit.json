@@ -1,0 +1,1658 @@
+[
+  {
+    "direction": "down",
+    "frame": 0,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      444,
+      444
+    ],
+    "sourceFoot": [
+      211,
+      435
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-01.png",
+    "bounds": [
+      120,
+      80,
+      271,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      444,
+      0,
+      887,
+      444
+    ],
+    "sourceFoot": [
+      657,
+      435
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-02.png",
+    "bounds": [
+      107,
+      96,
+      284,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      887,
+      0,
+      1330,
+      444
+    ],
+    "sourceFoot": [
+      1110,
+      435
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-03.png",
+    "bounds": [
+      95,
+      110,
+      288,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      1330,
+      0,
+      1774,
+      444
+    ],
+    "sourceFoot": [
+      1550,
+      435
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-04.png",
+    "bounds": [
+      96,
+      110,
+      290,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 4,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      0,
+      444,
+      444,
+      887
+    ],
+    "sourceFoot": [
+      211,
+      861
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-05.png",
+    "bounds": [
+      113,
+      112,
+      281,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 5,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      444,
+      444,
+      887,
+      887
+    ],
+    "sourceFoot": [
+      657,
+      861
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-06.png",
+    "bounds": [
+      107,
+      94,
+      287,
+      273
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 6,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      887,
+      444,
+      1330,
+      887
+    ],
+    "sourceFoot": [
+      1110,
+      861
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-07.png",
+    "bounds": [
+      113,
+      88,
+      276,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 7,
+    "source": "walk-down-generated.png",
+    "sourceRect": [
+      1330,
+      444,
+      1774,
+      887
+    ],
+    "sourceFoot": [
+      1550,
+      861
+    ],
+    "sourceBodyHeight": 367,
+    "file": "frames/walk-down-08.png",
+    "bounds": [
+      111,
+      88,
+      273,
+      274
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      444,
+      444
+    ],
+    "sourceFoot": [
+      244,
+      458
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-01.png",
+    "bounds": [
+      99,
+      55,
+      271,
+      264
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      444,
+      0,
+      887,
+      444
+    ],
+    "sourceFoot": [
+      686,
+      458
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-02.png",
+    "bounds": [
+      87,
+      56,
+      268,
+      264
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      887,
+      0,
+      1330,
+      444
+    ],
+    "sourceFoot": [
+      1130,
+      458
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-03.png",
+    "bounds": [
+      81,
+      77,
+      275,
+      263
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      1330,
+      0,
+      1774,
+      444
+    ],
+    "sourceFoot": [
+      1570,
+      458
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-04.png",
+    "bounds": [
+      77,
+      85,
+      275,
+      263
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 4,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      0,
+      444,
+      444,
+      887
+    ],
+    "sourceFoot": [
+      244,
+      871
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-05.png",
+    "bounds": [
+      90,
+      106,
+      274,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 5,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      444,
+      444,
+      887,
+      887
+    ],
+    "sourceFoot": [
+      686,
+      871
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-06.png",
+    "bounds": [
+      85,
+      104,
+      272,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 6,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      887,
+      444,
+      1330,
+      887
+    ],
+    "sourceFoot": [
+      1130,
+      871
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-07.png",
+    "bounds": [
+      88,
+      81,
+      274,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 7,
+    "source": "walk-right-generated.png",
+    "sourceRect": [
+      1330,
+      444,
+      1774,
+      887
+    ],
+    "sourceFoot": [
+      1570,
+      871
+    ],
+    "sourceBodyHeight": 335,
+    "file": "frames/walk-right-08.png",
+    "bounds": [
+      98,
+      66,
+      276,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      444,
+      444
+    ],
+    "sourceFoot": [
+      234,
+      447
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-01.png",
+    "bounds": [
+      107,
+      65,
+      266,
+      268
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      444,
+      0,
+      887,
+      444
+    ],
+    "sourceFoot": [
+      668,
+      447
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-02.png",
+    "bounds": [
+      88,
+      82,
+      293,
+      269
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      887,
+      0,
+      1330,
+      444
+    ],
+    "sourceFoot": [
+      1111,
+      447
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-03.png",
+    "bounds": [
+      88,
+      110,
+      293,
+      268
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      1330,
+      0,
+      1774,
+      444
+    ],
+    "sourceFoot": [
+      1558,
+      447
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-04.png",
+    "bounds": [
+      90,
+      110,
+      292,
+      269
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 4,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      0,
+      444,
+      444,
+      887
+    ],
+    "sourceFoot": [
+      234,
+      865
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-05.png",
+    "bounds": [
+      109,
+      110,
+      262,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 5,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      444,
+      444,
+      887,
+      887
+    ],
+    "sourceFoot": [
+      668,
+      865
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-06.png",
+    "bounds": [
+      88,
+      110,
+      293,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 6,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      887,
+      444,
+      1330,
+      887
+    ],
+    "sourceFoot": [
+      1111,
+      865
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-07.png",
+    "bounds": [
+      103,
+      85,
+      283,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 7,
+    "source": "walk-up-generated.png",
+    "sourceRect": [
+      1330,
+      444,
+      1774,
+      887
+    ],
+    "sourceFoot": [
+      1558,
+      865
+    ],
+    "sourceBodyHeight": 346,
+    "file": "frames/walk-up-08.png",
+    "bounds": [
+      102,
+      75,
+      278,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      272,
+      252
+    ],
+    "sourceFoot": [
+      132,
+      249
+    ],
+    "sourceBodyHeight": 205,
+    "file": "frames/attack-down-01.png",
+    "bounds": [
+      112,
+      81,
+      290,
+      269
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      0,
+      543,
+      252
+    ],
+    "sourceFoot": [
+      391,
+      249
+    ],
+    "sourceBodyHeight": 205,
+    "file": "frames/attack-down-02.png",
+    "bounds": [
+      108,
+      78,
+      284,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      0,
+      814,
+      252
+    ],
+    "sourceFoot": [
+      661,
+      249
+    ],
+    "sourceBodyHeight": 205,
+    "file": "frames/attack-down-03.png",
+    "bounds": [
+      111,
+      77,
+      293,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      0,
+      1086,
+      252
+    ],
+    "sourceFoot": [
+      944,
+      249
+    ],
+    "sourceBodyHeight": 205,
+    "file": "frames/attack-down-04.png",
+    "bounds": [
+      109,
+      78,
+      294,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 4,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      252,
+      272,
+      495
+    ],
+    "sourceFoot": [
+      132,
+      492
+    ],
+    "sourceBodyHeight": 207,
+    "file": "frames/attack-down-05.png",
+    "bounds": [
+      106,
+      84,
+      300,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 5,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      252,
+      543,
+      495
+    ],
+    "sourceFoot": [
+      391,
+      492
+    ],
+    "sourceBodyHeight": 207,
+    "file": "frames/attack-down-06.png",
+    "bounds": [
+      107,
+      84,
+      310,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 6,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      252,
+      814,
+      495
+    ],
+    "sourceFoot": [
+      661,
+      492
+    ],
+    "sourceBodyHeight": 207,
+    "file": "frames/attack-down-07.png",
+    "bounds": [
+      114,
+      84,
+      300,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 7,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      252,
+      1086,
+      495
+    ],
+    "sourceFoot": [
+      944,
+      492
+    ],
+    "sourceBodyHeight": 207,
+    "file": "frames/attack-down-08.png",
+    "bounds": [
+      106,
+      85,
+      279,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      495,
+      272,
+      734
+    ],
+    "sourceFoot": [
+      132,
+      728
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-01.png",
+    "bounds": [
+      114,
+      86,
+      279,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      495,
+      543,
+      734
+    ],
+    "sourceFoot": [
+      391,
+      728
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-02.png",
+    "bounds": [
+      110,
+      85,
+      290,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      495,
+      814,
+      734
+    ],
+    "sourceFoot": [
+      661,
+      728
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-03.png",
+    "bounds": [
+      123,
+      85,
+      298,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      495,
+      1086,
+      734
+    ],
+    "sourceFoot": [
+      944,
+      728
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-04.png",
+    "bounds": [
+      113,
+      85,
+      287,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 4,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      734,
+      272,
+      972
+    ],
+    "sourceFoot": [
+      132,
+      966
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-05.png",
+    "bounds": [
+      114,
+      86,
+      303,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 5,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      734,
+      543,
+      972
+    ],
+    "sourceFoot": [
+      391,
+      966
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-06.png",
+    "bounds": [
+      113,
+      86,
+      313,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 6,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      734,
+      814,
+      972
+    ],
+    "sourceFoot": [
+      661,
+      966
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-07.png",
+    "bounds": [
+      122,
+      86,
+      310,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 7,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      734,
+      1086,
+      972
+    ],
+    "sourceFoot": [
+      944,
+      966
+    ],
+    "sourceBodyHeight": 202,
+    "file": "frames/attack-right-08.png",
+    "bounds": [
+      120,
+      86,
+      286,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      972,
+      272,
+      1205
+    ],
+    "sourceFoot": [
+      132,
+      1200
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-01.png",
+    "bounds": [
+      111,
+      80,
+      297,
+      273
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      972,
+      543,
+      1205
+    ],
+    "sourceFoot": [
+      391,
+      1200
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-02.png",
+    "bounds": [
+      106,
+      80,
+      306,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      972,
+      814,
+      1205
+    ],
+    "sourceFoot": [
+      661,
+      1200
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-03.png",
+    "bounds": [
+      117,
+      80,
+      318,
+      274
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      972,
+      1086,
+      1205
+    ],
+    "sourceFoot": [
+      944,
+      1200
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-04.png",
+    "bounds": [
+      108,
+      80,
+      300,
+      274
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 4,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      0,
+      1205,
+      272,
+      1448
+    ],
+    "sourceFoot": [
+      132,
+      1430
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-05.png",
+    "bounds": [
+      114,
+      82,
+      309,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 5,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      272,
+      1205,
+      543,
+      1448
+    ],
+    "sourceFoot": [
+      391,
+      1430
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-06.png",
+    "bounds": [
+      109,
+      82,
+      319,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 6,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      543,
+      1205,
+      814,
+      1448
+    ],
+    "sourceFoot": [
+      661,
+      1430
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-07.png",
+    "bounds": [
+      120,
+      82,
+      318,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 7,
+    "source": "attack-generated.png",
+    "sourceRect": [
+      814,
+      1205,
+      1086,
+      1448
+    ],
+    "sourceFoot": [
+      944,
+      1430
+    ],
+    "sourceBodyHeight": 192,
+    "file": "frames/attack-up-08.png",
+    "bounds": [
+      104,
+      86,
+      294,
+      274
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      384,
+      341
+    ],
+    "sourceFoot": [
+      184,
+      334
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-down-01.png",
+    "bounds": [
+      106,
+      75,
+      276,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      384,
+      0,
+      768,
+      341
+    ],
+    "sourceFoot": [
+      580,
+      334
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-down-02.png",
+    "bounds": [
+      89,
+      71,
+      285,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      768,
+      0,
+      1152,
+      341
+    ],
+    "sourceFoot": [
+      958,
+      334
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-down-03.png",
+    "bounds": [
+      89,
+      71,
+      299,
+      272
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      1152,
+      0,
+      1536,
+      341
+    ],
+    "sourceFoot": [
+      1345,
+      334
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-down-04.png",
+    "bounds": [
+      92,
+      77,
+      284,
+      272
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      0,
+      341,
+      384,
+      683
+    ],
+    "sourceFoot": [
+      205,
+      671
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-right-01.png",
+    "bounds": [
+      100,
+      73,
+      254,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      384,
+      341,
+      768,
+      683
+    ],
+    "sourceFoot": [
+      590,
+      671
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-right-02.png",
+    "bounds": [
+      89,
+      71,
+      250,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      768,
+      341,
+      1152,
+      683
+    ],
+    "sourceFoot": [
+      970,
+      671
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-right-03.png",
+    "bounds": [
+      84,
+      71,
+      267,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      1152,
+      341,
+      1536,
+      683
+    ],
+    "sourceFoot": [
+      1353,
+      671
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-right-04.png",
+    "bounds": [
+      100,
+      71,
+      262,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      0,
+      683,
+      384,
+      1024
+    ],
+    "sourceFoot": [
+      209,
+      1007
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-up-01.png",
+    "bounds": [
+      83,
+      74,
+      289,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      384,
+      683,
+      768,
+      1024
+    ],
+    "sourceFoot": [
+      590,
+      1007
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-up-02.png",
+    "bounds": [
+      87,
+      74,
+      297,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      768,
+      683,
+      1152,
+      1024
+    ],
+    "sourceFoot": [
+      976,
+      1007
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-up-03.png",
+    "bounds": [
+      75,
+      74,
+      294,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "source": "cast-generated.png",
+    "sourceRect": [
+      1152,
+      683,
+      1536,
+      1024
+    ],
+    "sourceFoot": [
+      1359,
+      1007
+    ],
+    "sourceBodyHeight": 265,
+    "file": "frames/cast-up-04.png",
+    "bounds": [
+      82,
+      74,
+      284,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      384,
+      341
+    ],
+    "sourceFoot": [
+      207,
+      351
+    ],
+    "sourceBodyHeight": 280,
+    "file": "frames/hit-down-01.png",
+    "bounds": [
+      99,
+      75,
+      274,
+      265
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      384,
+      0,
+      768,
+      341
+    ],
+    "sourceFoot": [
+      584,
+      351
+    ],
+    "sourceBodyHeight": 280,
+    "file": "frames/hit-down-02.png",
+    "bounds": [
+      106,
+      75,
+      286,
+      264
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      768,
+      0,
+      1152,
+      341
+    ],
+    "sourceFoot": [
+      961,
+      351
+    ],
+    "sourceBodyHeight": 280,
+    "file": "frames/hit-down-03.png",
+    "bounds": [
+      95,
+      120,
+      290,
+      264
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      1152,
+      0,
+      1536,
+      341
+    ],
+    "sourceFoot": [
+      1360,
+      351
+    ],
+    "sourceBodyHeight": 280,
+    "file": "frames/hit-down-04.png",
+    "bounds": [
+      81,
+      75,
+      258,
+      265
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      0,
+      341,
+      384,
+      683
+    ],
+    "sourceFoot": [
+      211,
+      685
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-right-01.png",
+    "bounds": [
+      90,
+      70,
+      266,
+      269
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      384,
+      341,
+      768,
+      683
+    ],
+    "sourceFoot": [
+      590,
+      685
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-right-02.png",
+    "bounds": [
+      97,
+      76,
+      262,
+      268
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      768,
+      341,
+      1152,
+      683
+    ],
+    "sourceFoot": [
+      975,
+      685
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-right-03.png",
+    "bounds": [
+      87,
+      120,
+      272,
+      268
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      1152,
+      341,
+      1536,
+      683
+    ],
+    "sourceFoot": [
+      1365,
+      685
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-right-04.png",
+    "bounds": [
+      99,
+      70,
+      269,
+      269
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      0,
+      683,
+      384,
+      1024
+    ],
+    "sourceFoot": [
+      212,
+      1007
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-up-01.png",
+    "bounds": [
+      102,
+      81,
+      292,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      384,
+      683,
+      768,
+      1024
+    ],
+    "sourceFoot": [
+      595,
+      1007
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-up-02.png",
+    "bounds": [
+      108,
+      86,
+      293,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      768,
+      683,
+      1152,
+      1024
+    ],
+    "sourceFoot": [
+      981,
+      1007
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-up-03.png",
+    "bounds": [
+      87,
+      116,
+      276,
+      268
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "source": "hit-generated.png",
+    "sourceRect": [
+      1152,
+      683,
+      1536,
+      1024
+    ],
+    "sourceFoot": [
+      1375,
+      1007
+    ],
+    "sourceBodyHeight": 275,
+    "file": "frames/hit-up-04.png",
+    "bounds": [
+      76,
+      81,
+      274,
+      272
+    ]
+  }
+]
