@@ -12,6 +12,7 @@
 | `images/sprites/morph/sky-valkyrie-v1/`、`tools/sprite-src/morph/sky-valkyrie-v1/` | 蒼穹女武神・艾爾72格外觀、金甲／光翼原創分鏡、來源／提示詞／整理腳本（第18.7節）；20261022l接入m04 |
 | `images/sprites/morph/dwarf-gunner-v1/`、`tools/sprite-src/morph/dwarf-gunner-v1/` | 05矮人蒸氣火銃兵36格透明分鏡／4圖集、立繪／原表／去背初稿／補畫／提示詞／整理腳本（第18.8節）；m05專屬外觀 |
 | `tools/dwarf-morph-preview.html`、`tools/test-dwarf-morph.js` | 05真實卷軸／renderer隔離預覽與卷軸扣量、四向動作、到期／其他變身回歸（第18.8節） |
+| `images/sprites/morph/brudika-shadow-v1/`、`tools/sprite-src/morph/brudika-shadow-v1/`、`tools/brudika-morph-preview.html`、`tools/test-brudika-morph.js` | 10布魯迪卡之影36格透明動畫、原稿／提示詞／腳點註冊、真實renderer隔離頁與卷軸回歸（第18.9、88節） |
 | `tools/hellfire-attack-preview.html`、`tools/test-hellfire-attack.js` | 紫變新版攻擊的實際renderer隔離預覽與四方向命中／MISS回歸（第18.6節） |
 | `tools/moon-attack-preview.html`、`tools/test-moon-attack.js`、`tools/sprite-src/morph/update-motion-previews.py` | 紅變實際 renderer 隔離試播、命中／MISS 動作回歸、嵌入式動畫試播素材更新工具（第 18.5 節） |
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
@@ -135,7 +136,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022m`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022n`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -936,6 +937,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - images/sprites/morph/dwarf-gunner-v1/：36單格RGBA PNG、4動作PNG圖集／AVIF／WebP、動作與完整總覽、逐格來源manifest。正式格384×320、腳底[192,270]、charH160、drawH48；列down／right／up。時間130／140／220／150ms（4／4／2／2格），開火560ms；四張PNG加入SW預快取。
 - 本對話dwarf-gunner-motion.html為四向四動作試播，內嵌原尺寸透明AVIF、可播放／暫停／逐格，小於1MB。tools/dwarf-morph-preview.html使用真實usePotion／sceneReadEvents／sceneDraw、不讀寫真實存檔或雲端；test-dwarf-morph.js檢查卷軸扣量、上次選擇、四向命中／MISS、施法與受傷、到期及其他變身回歸。
 - 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022m），上述Node測試、36格非重複RGBA／透明留邊與圖集逐格比對通過。瀏覽器四動作及逐格／播放正常，真實renderer四向開火560ms、0～3格均有畫出；兩頁Console無error／warn。待使用者實際角色驗收，未commit／Push。
+
+### 18.9 布魯迪卡之影（10紫變）專屬外觀（2026-10-22，版本`20261022n`）
+
+- 使用者提供10.jpg立繪與10-1／10-2／10-3.jfif要求新增變身；原後兩張只有走路為背面，攻擊／施法／受傷仍是正面，也缺右側動作。內建image_gen依銀髮／紫黑甲／雙刀／紫色蝠翼補畫三向36格，背向全程維持背影；左向鏡像。雙刀包含蓄勢→第一刀揮斬→交叉追斬→收勢。
+- tools/sprite-src/morph/brudika-shadow-v1/保留四份原圖、三向生成PNG及兩份初稿、完整prompts.json／extraction-prompt.json、registration.json腳點資料與prepare.py／audit.json／preview.py。整理腳本共用sky-valkyrie-v1的透明分格與註冊函式，保留alpha、對齊腳點，不覆寫原始素材。
+- images/sprites/morph/brudika-shadow-v1/有36獨立RGBA格、4張正式PNG圖集、透明AVIF試播、總覽與manifest。每格384×320、腳底[192,270]、charH160、drawH48；walk／attack每向4格、cast／hit各2格，時間130／140／220／150ms；攻擊560ms。
+- m10.sprite接MORPHS.brudikaShadow，SW預載四圖集；沿用既有紫變雙刀等級／能力／卷軸消耗，MORPH_LV_FREE測試設定及schema不變。專屬外觀現為m01～m05及m10六種，其餘24種統一。
+- 本對話brudika-shadow-motion.html提供四向／四動作、播放／暫停／逐格，小於1MB。tools/brudika-morph-preview.html用真實usePotion／sceneReadEvents／sceneDraw，不載存檔或雲端；test-brudika-morph.js檢查卷軸扣量、上次選擇、四向命中／MISS、受傷不打斷攻擊、施法／受傷、到期／其他變身回歸與圖集／SW。
+- 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022n）、上述Node測試及36格獨立RGBA／透明留邊／圖集逐格比對通過；瀏覽器四動作、播放／逐格及左右鏡像正常，真實renderer四向攻擊560ms、第0～3格均畫出，Console無error／warn。待使用者實際角色驗收，未commit／Push。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2407,7 +2417,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 增益紀錄 `player.buffs.morph = { src: 'item', id: 'polyScroll', form, until }`；`buffFx` 有 `form` 就回傳 `MORPH_BY_ID[form].fx`（`BUFF_DEFS.morph.fx` 是空的），`buffName` 顯示「變身：對象名」（左上角增益列的提示）。
   再讀一張會換成新對象並重新計時；死亡清除增益時一起解除；不改存檔結構（`SAVE_SCHEMA` 仍 5），上次選的對象存在 `player.settings.lastMorph`。
 - 快捷欄可放、可設自動：自動時用 `lastMorph`（效果沒了就再讀一張）；還沒選過任何對象時不能開自動（提示先點一下選擇）。
-- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01～m05有自己的圖，其餘25種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
+- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01～m05及m10有自己的圖，其餘24種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
 - 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
 - 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
 - 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。
@@ -2420,6 +2430,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **20261022l：04 蒼穹女武神・艾爾接上專屬圖**（使用者要求）。`MORPHS.skyValkyrie`：格子 **384×320**、腳底 **(192,270)**，walk／attack 每向 **8 格**（80／70ms）、cast／hit 4 格（110／80ms），射箭總長仍 560ms；m04 加 sprite，`sw.js` 預快取四張圖集（各約 3072×960／1536×960）。設計上離地微浮，所以腳在影子上方一點。驗證：選 m04 → 外觀女武神、四圖集尺寸正確、攻擊 560ms、野外放大位置正確；test-moon-attack／test-hellfire-attack 回歸通過；Console 無錯誤。
 
 - **20261022m：05矮人蒸氣火銃兵接上專屬圖**。MORPHS.dwarfGunner、m05.sprite、SW四張圖集，384×320／腳底[192,270]／charH160／drawH48。walk及attack4格、cast及hit2格，130／140／220／150ms；藍變槍手既有能力與測試等級開關不變，第18.8節。
+
+- **20261022n：10布魯迪卡之影接上專屬圖**。MORPHS.brudikaShadow、m10.sprite、SW四圖集；三向36格／左鏡像，384×320／腳底[192,270]、4／4／2／2格，130／140／220／150ms。既有紫變雙刀能力與測試等級開關不變，第18.9節。
 
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 

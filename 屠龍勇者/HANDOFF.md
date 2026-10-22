@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022n：10布魯迪卡之影（紫變）**。使用者給10.jpg與三張jfif要求新增變身；原後兩張只有走路為背影，其他動作仍正面，且缺側面。內建image_gen補畫三向36格，雙刀蓄勢／第一刀／交叉斬／收勢，左向鏡像；正式素材images/sprites/morph/brudika-shadow-v1/，四原圖／五份生成PNG／提示詞／整理腳本在tools/sprite-src/morph/brudika-shadow-v1/。384×320／腳底[192,270]／charH160／drawH48，時間130／140／220／150ms。m10接MORPHS.brudikaShadow及SW四圖集，沿用既有能力／等級設定，不改schema。專屬外觀6種，其餘24種統一；第18.9、88節。試播brudika-shadow-motion.html；tools/brudika-morph-preview.html、test-brudika-morph.js隔離檢查，未commit／Push。
+- **n版待使用者實玩**：Ctrl+F5→背包使用變形卷軸→雙刀→10布魯迪卡之影，走動及四向打怪，確認雙刀出手、翼尖與腳底；若正常再commit及請使用者Push origin。
+- **n版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022n）、test-brudika-morph.js及git diff --check通過。36格獨立RGBA、透明留邊／圖集逐格比對通過；瀏覽器試播四動作切換／播放／逐格、左右鏡像正常；真實卷軸及renderer四向攻擊560ms，第0～3格均畫出，交叉斬畫面已留存。兩頁Console無error／warn，未讀寫真實存檔或雲端。暫時出現瀏覽器檢查頁未附加問題，重用既有分頁導航後已恢復並完成截圖；未commit／Push。
+
 - **本機待驗收20261022m：05矮人蒸氣火銃兵**。使用者給5.jpg／5-1.jpg要求新增變身；m05接MORPHS.dwarfGunner與SW四圖集，沿用既有藍變槍手等級／能力，測試不限等級開關不變。現m01～m05專屬外觀，其餘25種統一。36格（walk／attack每向4、cast／hit各2），384×320／腳底[192,270]／charH160／drawH48，時間130／140／220／150ms。原圖背面攻擊正面化、側面施法缺格與白煙跨格已補畫，實際開火含低持槍／舉槍／後座／收槍。第18.8、88節。
 - **05來源與試播**：images/sprites/morph/dwarf-gunner-v1/有正式單格／圖集／manifest；tools/sprite-src/morph/dwarf-gunner-v1/保留原圖、初次去背、五份正式生成PNG、全部內建image_gen提示詞／整理腳本。原去背白煙跨格會被切平，因此最終36格都用獨立補畫分鏡，初稿保留不用。試播dwarf-gunner-motion.html在本對話visualizations；真實卷軸／renderer隔離頁tools/dwarf-morph-preview.html；test-dwarf-morph.js通過卷軸扣量／到期／四向動作／其他變身回歸。未commit／Push。
 - **m版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022m）、test-dwarf-morph.js通過；36格皆獨立RGBA、透明留邊，圖集逐格一致。瀏覽器試播四動作及播放／暫停／逐格正常；真實renderer四向開火560ms，實際觀察第0～3格及開火後座畫面，兩頁Console無error／warn。未讀寫真實存檔或上傳雲端，待使用者Ctrl+F5→變形卷軸→槍手→05試玩驗收，未commit／Push。
