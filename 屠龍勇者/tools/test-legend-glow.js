@@ -26,6 +26,6 @@ for(const id of ['dragonSlayer','dragonWardHelm','dragonScaleMail','dragonWingCl
 assert.equal(count(charGearHtml()),10);
 const ordinary=addItem('longSword',1);ordinary.q='legend';assert(!hasGlow(itemDescHtml(ordinary)),'詞綴傳說不應誤當傳說基底');
 assert(count(renderCraft())>=18,'鍛造圖示未統一套光暈');
-console.log('PASS：全部 432 道具分類正確；28 件傳說 12／14／2 全發光；背包、角色十格、圖鑑、介紹、小圖與鍛造正常，技能／藥水／非傳說基底不誤套。');
+console.log('PASS：全部 433 道具分類正確；28 件傳說 12／14／2 全發光；背包、角色十格、圖鑑、介紹、小圖與鍛造正常，技能／藥水／非傳說基底不誤套。');
 `;
 vm.runInNewContext(setup+'\nvm.runInContext('+JSON.stringify(run)+',ctx);',{require,__dirname,console});

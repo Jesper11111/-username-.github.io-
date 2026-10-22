@@ -346,11 +346,20 @@ function themeFor() {
     return SCENE_THEMES[z.scene] || SCENE_THEMES.dungeon;
 }
 
+// 目前人物外觀：變身中（變形卷軸，第 88 節）用變身的圖，否則用職業模型
+function playerMorph() {
+    const b = player.buffs.morph, d = b && b.until > gameNow && ITEMS[b.id];
+    return (d && MORPHS[(MORPH_BY_ID[b.form] || {}).sprite || d.morph]) || null;   // 外觀統一：變身對象沒有自己的圖就用卷軸的
+}
+function playerSprite() { return playerMorph() || CLASSES[player.cls].sprite; }
+function preloadSprite(sp) { if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); }); }
+function scenePreloadMorph() { preloadSprite(playerMorph()); }
+
 function buildScene() {
     closeWorldAtlas();
     const key = sceneKey(), theme = themeFor(), rnd = seededRand(hashStr(key));
-    const sp = CLASSES[player.cls].sprite;   // 先載入這個職業所有動作圖
-    if (sp) ['walk', 'attack', 'cast', 'hit'].forEach(a => { if (sp[a]) spriteImage(sp[a].src); });
+    preloadSprite(CLASSES[player.cls].sprite);   // 先載入這個職業所有動作圖
+    scenePreloadMorph();
     const bg = theme.bg ? SCENE_BGS[theme.bg] : null;
     if (bg) { spriteImage(bg.src); if (bg.mini) spriteImage(bg.mini); if (bg.occ) occData(bg.occ); }
     const zz = player.loc.type === 'zone' ? currentZone() : null;
@@ -857,7 +866,7 @@ function hitFlashCanvas(img, fx, fy, fw, fh, a) {
 // 從 HP 變化與遊戲訊息產生傷害數字、MISS、特效
 // 人物動作：attack 攻擊、cast 施法、hit 受傷（播完回到走路／站立）；攻擊與施法不會被受傷打斷
 function playAnim(name) {
-    const sp = CLASSES[player.cls].sprite;
+    const sp = playerSprite();
     if (!sp || !sp[name]) return;
     const cur = scene.pl.anim;
     if (name === 'hit' && cur && cur.name !== 'hit' && cur.t < cur.dur) return;
@@ -901,7 +910,7 @@ function sceneReadEvents() {
             const crit = m === e && scene.critNext;
             addFloat(m.rx, m.ry, '-' + fmt(m.lastHp - hp), crit ? '#ff3b2f' : '#ffffff', false, crit);
             monHurt(m, crit);
-            if (m === e) { scene.critNext = false; if (!CLASSES[player.cls].sprite) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 }; }
+            if (m === e) { scene.critNext = false; if (!playerSprite()) pl.lunge = { dx: e.x - pl.x, dy: e.y - pl.y, t: 0 }; }
             dealt = true;
         }
         m.lastHp = hp;
@@ -1084,7 +1093,7 @@ function sceneDraw(ctx, W, H) {
         const bob = pl.path.length ? Math.sin(gameNow / 90) * 2 : 0;
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath(); ctx.ellipse(px, py + 12, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-        const sp = CLASSES[player.cls].sprite;
+        const sp = playerSprite(), morph = sp && sp.foot;
         // 目前動作：攻擊／施法／受傷播放中就用它，否則走路（停下來用中間那格當站立）
         const playing = pl.anim && pl.anim.t < pl.anim.dur && sp && sp[pl.anim.name] && spriteImage(sp[pl.anim.name].src);
         const anim = playing ? sp[pl.anim.name] : sp && sp.walk;
@@ -1097,17 +1106,19 @@ function sceneDraw(ctx, W, H) {
             if (playing) frame = Math.min(n - 1, Math.floor(pl.anim.t / anim.ms));
             else frame = pl.path.length ? Math.floor(scene.walkClock / anim.ms) % n : Math.floor(n / 2);
             const k = sp.drawH / sp.charH, dw = anim.cellW * k, dh = anim.cellH * k;
+            // 變身圖有腳底位置 foot；職業模型的腳底就是格子底部
+            const dx = morph ? px - sp.foot[0] * k : px - dw / 2, dy = morph ? py + 14 - sp.foot[1] * k : py + 14 - dh;
             const body = () => {
                 ctx.save();
                 if (pl.dir === 'left') { ctx.translate(px, 0); ctx.scale(-1, 1); ctx.translate(-px, 0); }
-                ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, px - dw / 2, py + 14 - dh, dw, dh);
-                drawWorldWeapon(ctx, px, py, pl.dir, pl.anim, {image:img,sprite:anim,row:rowIdx,frame,dw,dh,action:playing?pl.anim.name:'walk'});
+                ctx.drawImage(img, frame * anim.cellW, rowIdx * anim.cellH, anim.cellW, anim.cellH, dx, dy, dw, dh);
+                if (!morph) drawWorldWeapon(ctx, px, py, pl.dir, pl.anim, {image:img,sprite:anim,row:rowIdx,frame,dw,dh,action:playing?pl.anim.name:'walk'});
                 ctx.restore();
             };
             body();
             labelY = py + 14 - sp.drawH - 6;
             // 走到樹、帳篷後面：被蓋住的部分再疊一層半透明身影，不會完全看不到自己
-            if (drawOccPatch(ctx, px - dw / 2, py + 14 - dh, px + dw / 2, py + 16, pl.ry, camX, camY)) { ctx.globalAlpha = OCC_GHOST; body(); ctx.globalAlpha = 1; }
+            if (drawOccPatch(ctx, dx, dy, dx + dw, py + 16, pl.ry, camX, camY)) { ctx.globalAlpha = OCC_GHOST; body(); ctx.globalAlpha = 1; }
         } else {
             const body = () => {
                 ctx.font = '40px "Segoe UI Emoji","Apple Color Emoji",sans-serif';

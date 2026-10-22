@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm');
 const root=path.resolve(__dirname,'..'),setup=fs.readFileSync(path.join(__dirname,'test-item-art.js'),'utf8').split('const art=')[0];
 const run=String.raw`
 const ids=heroArmorIds;
-assert.equal(ids.length,11);assert.equal(Object.keys(ITEMS).length,432);
+assert.equal(ids.length,11);assert.equal(Object.keys(ITEMS).length,433);
 assert.equal(Object.values(ITEMS).filter(d=>d.cat==='weapon').length,75);
 assert.equal(Object.values(ITEMS).filter(d=>d.cat==='armor').length,93);
 for(const slot of ['helm','armor','cloak','shield','tshirt','gloves','boots']){

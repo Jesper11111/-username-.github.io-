@@ -75,9 +75,16 @@ function changeFloor(delta) {
 }
 
 // ───────── 藥水 ─────────
-function usePotion(id) {
+// form：變形卷軸選的變身對象（MORPH_FORMS）；沒給就用上次選的（快捷欄自動使用）
+function usePotion(id, form) {
     const d = ITEMS[id];
     if (d.classes && !d.classes.includes(player.cls)) return '你的職業無法使用';
+    let mf = null;
+    if (d.morph) {
+        mf = MORPH_BY_ID[form || player.settings.lastMorph];
+        if (!mf) return '請先選擇變身對象';
+        if (player.lv < mf.lv) return `${mf.name}需要 Lv.${mf.lv}`;
+    }
     if (!consumeItem(id)) return '沒有這個道具';
     if (d.heal) {
         const st = calcStats(), before = player.hp;
@@ -86,9 +93,13 @@ function usePotion(id) {
     }
     if (d.buff) {
         player.buffs[d.buff] = { src: 'item', id, until: gameNow + d.sec * 1000 };
-        addLog(`🧪 ${d.name}生效（${d.sec / 60} 分鐘）`, 'heal');
+        if (mf) {
+            player.buffs[d.buff].form = player.settings.lastMorph = mf.id;
+            addLog(`📜 ${d.name}：變身成${mf.name}（${d.sec / 60} 分鐘）`, 'heal');
+            if (typeof scenePreloadMorph === 'function') scenePreloadMorph();
+        } else addLog(`🧪 ${d.name}生效（${d.sec / 60} 分鐘）`, 'heal');
     }
-    worldVfxSupport({ name: d.name, heal: d.heal, fx: d.buff && BUFF_DEFS[d.buff] ? BUFF_DEFS[d.buff].fx : {} });
+    worldVfxSupport({ name: d.name, heal: d.heal, fx: mf ? mf.fx : d.buff && BUFF_DEFS[d.buff] ? BUFF_DEFS[d.buff].fx : {} });
     return '';
 }
 

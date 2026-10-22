@@ -4,7 +4,7 @@ const spec=JSON.parse(fs.readFileSync(path.join(__dirname,'legend-equipment-art.
 const setup=fs.readFileSync(path.join(__dirname,'test-item-art.js'),'utf8').split('const art=')[0];
 const run=String.raw`
 SIM_MODE=true;sfx=()=>{};refreshUI=()=>{};showToast=()=>{};gameAlert=()=>{};
-assert.equal(Object.keys(ITEMS).length,432);
+assert.equal(Object.keys(ITEMS).length,433);
 assert.equal(Object.values(ITEMS).filter(d=>d.cat==='weapon').length,75);
 assert.equal(Object.values(ITEMS).filter(d=>d.cat==='armor').length,93);
 const legends=Object.keys(ITEMS).filter(id=>codexGradeOf(id).id==='legend');

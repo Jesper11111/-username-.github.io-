@@ -41,7 +41,35 @@ const BUFF_DEFS = {
     brave:  { name: '勇敢', fx: { brave: true } },
     wisdom: { name: '慎重', fx: { sp: 2, mpRegen: 2, wise: true } },   // wise：施法間隔 −0.3 秒（法師、魔鬥士、天使的「勇水」）
     blue:   { name: '藍水', fx: { mpRegen: 4 } },
+    morph:  { name: '變身', fx: {} },   // 變形卷軸（第 88 節）：實際效果看選的變身對象 MORPH_FORMS
 };
+
+// 變身外觀（變形卷軸的 morph 欄位；ui-scene.js 的 playerSprite 在變身中改用這組圖）
+// 格式同 classes.js 的 sprite，多一個 foot：腳底在格子裡的位置（素材下方留了箭光空間，不能用格子底部當腳底）
+const MORPHS = {
+    wolfRanger: {
+        name: '巡守妖魔神射', drawH: 48, charH: 160, foot: [128, 200],
+        walk:   { src: 'images/sprites/morph/wolf-ranger-v1/walk.png',   cellW: 256, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/wolf-ranger-v1/attack.png', cellW: 256, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/wolf-ranger-v1/cast.png',   cellW: 256, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/wolf-ranger-v1/hit.png',    cellW: 256, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
+};
+
+// 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。
+// 外觀目前統一用卷軸的 morph（巡守妖魔神射）；之後有新圖時在這裡加 sprite: 'MORPHS 的 key' 即可
+const MORPH_FORMS = [
+    { id: 'skeleton',    name: '骷髏',         lv: 1,  fx: { hit: 1, dmg: 1 },                                   desc: '命中 +1、傷害 +1' },
+    { id: 'orcArcher',   name: '妖魔弓箭手',   lv: 10, fx: { hit: 2, spdMul: 0.05 },                             desc: '命中 +2、攻速 +5%' },
+    { id: 'werewolf',    name: '狼人',         lv: 15, fx: { dmg: 2, spdMul: 0.06, dodge: 0.02 },                desc: '傷害 +2、攻速 +6%、閃避 +2%' },
+    { id: 'spartoi',     name: '史巴托',       lv: 25, fx: { hit: 2, dmg: 2, ac: 1, spdMul: 0.08 },              desc: '命中 +2、傷害 +2、防禦 +1、攻速 +8%' },
+    { id: 'wolfRanger',  name: '巡守妖魔神射', lv: 30, fx: { hit: 3, dmg: 2, spdMul: 0.1 },                      desc: '命中 +3、傷害 +2、攻速 +10%' },
+    { id: 'blackKnight', name: '黑騎士',       lv: 40, fx: { dmg: 3, ac: 3, hp: 60, spdMul: 0.1 },               desc: '傷害 +3、防禦 +3、HP +60、攻速 +10%' },
+    { id: 'frostWitch',  name: '冰霜女巫',     lv: 45, fx: { sp: 3, mpRegen: 3, mr: 10 },                        desc: 'SP +3、回魔 +3、MR +10（適合施法職業）' },
+    { id: 'deathKnight', name: '死亡騎士',     lv: 52, fx: { hit: 5, dmg: 5, ac: 2, spdMul: 0.15 },              desc: '命中 +5、傷害 +5、防禦 +2、攻速 +15%' },
+    { id: 'baphomet',    name: '巴風特',       lv: 60, fx: { hit: 6, dmg: 6, crit: 0.03, hp: 100, spdMul: 0.18 }, desc: '命中 +6、傷害 +6、爆擊 +3%、HP +100、攻速 +18%' },
+];
+const MORPH_BY_ID = Object.fromEntries(MORPH_FORMS.map(f => [f.id, f]));
 
 // cat：weapon／armor／potion／scroll／ammo／elixir／material
 // 武器 dmg:[對小型, 對大型] 最大傷害（最小 1）；safe 安定值（-1 不可強化）
@@ -177,6 +205,7 @@ const ITEMS = {
     homeScroll:    { name: '回家卷軸',     cat: 'scroll', scroll: 'home', wt: 1, price: 40, tier: 1, desc: '立即回到該地區的村莊' },
     teleScroll:    { name: '瞬間移動卷軸', cat: 'scroll', scroll: 'tele', wt: 1, price: 60, tier: 1, desc: '脫離目前的戰鬥（可在設定中自動使用）' },
     reviveScroll:  { name: '復活卷軸',     cat: 'scroll', scroll: 'revive', wt: 1, price: 3000, tier: 3, desc: '死亡時自動使用，不損失經驗' },
+    polyScroll:    { name: '變形卷軸',     cat: 'scroll', buff: 'morph', morph: 'wolfRanger', sec: 1800, wt: 1, price: 500, tier: 1, desc: '使用後選擇變身對象，變身 30 分鐘；等級越高能變的越強（死亡解除）' },
     // 2026-10-18 起商店不賣（只有怪物掉落），回收價維持原本的 30%
     weaponScroll:  { name: '對武器施法的卷軸', cat: 'scroll', scroll: 'enchant', target: 'weapon', bless: 0, wt: 1, sell: 2400, desc: '武器 +1，超過安定值可能蒸發' },
     armorScroll:   { name: '對盔甲施法的卷軸', cat: 'scroll', scroll: 'enchant', target: 'armor', bless: 0, wt: 1, sell: 1200, desc: '防具 +1，超過安定值可能蒸發' },

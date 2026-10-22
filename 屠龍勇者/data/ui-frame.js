@@ -198,6 +198,7 @@ function quickHeal() {
 }
 
 function quickPotion(id) {
+    if (ITEMS[id].morph) { openMorphPicker(); return; }   // 變形卷軸：先選變身對象
     const err = usePotion(id);
     if (err) showToast(err === '沒有這個道具' ? `沒有${ITEMS[id].name}` : err);
 }

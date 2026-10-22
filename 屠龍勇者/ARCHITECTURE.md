@@ -7,7 +7,8 @@
 
 | 檔案 | 內容 |
 |---|---|
-| `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞；僅素材預覽，未接變身玩法（第 18.4 節） |
+| `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
+| `images/icons/items/polyScroll.png`、`tools/make-poly-icon.ps1` | 變形卷軸道具圖（羊皮紙卷軸＋變身人物第一格合成，128×128；第 88 節） |
 | `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
 | `tools/legend-glow-preview.html`、`tools/test-legend-glow.js` | 全部 28 件傳說裝備的呼吸光暈、背包／角色／鍛造隔離預覽與品級範圍驗證（第 84 節） |
 | `tools/legend-equipment-art.json`、`tools/legend-equipment-preview.html`、`tools/test-legend-equipment.js` | 十二職業傳說代表武器與兩套七部位防具、原創單件提示詞／來源、隔離介紹與鍛造測試（第 83 節） |
@@ -126,7 +127,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022d`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -312,7 +313,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 
 ## 11. 尚未實作（之後可做）
 
-寵物／召喚（妖精、王族）、死亡降級、血盟、變身卷軸、新地圖的職業任務與材料配方、更多野外背景圖、音效與怪物圖片。
+寵物／召喚（妖精、王族）、死亡降級、血盟、新地圖的職業任務與材料配方、更多野外背景圖、音效與怪物圖片。
 
 ## 12. PWA（可安裝的 App 版）
 
@@ -881,7 +882,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   身高一般 42px、大型 62px（`size` 可覆寫）；方向＝戰鬥中面向角色、遊走看移動方向（`m.face`），向左用側面鏡像；出手時 `m.atk = 380` ms 照進度播攻擊列；走動時循環走路列（每格 150ms），只有 1 格的怪改成上下輕晃。
   74 張圖共約 2.5MB（G 表輸出後用 PIL `quantize(256)` 轉調色盤 PNG，約小 80%），進野外時只載入該地圖的怪，也在 `sw.js` 預先快取。
 
-### 18.4 變身動畫素材準備（2026-10-22，沿用 `20261022b`，未接入玩法）
+### 18.4 變身動畫素材準備（2026-10-22，沿用 `20261022b`；`20261022c` 起由變形卷軸接入玩法，第 88 節）
 
 - 使用者提供「巡守妖魔神射（藍變）」原創人物立繪，授權由助手製作動畫所需分鏡；不是直接使用先前有假透明／混方向的 JPG 分鏡。
 - 內建 image_gen 產 4 動作初稿後，各針對步態、正面射箭方向、施法空手、受傷不拉弓重製；8 份 PNG 原稿、原參考立繪、完整 prompts.json／refinements.json 都保存在 `tools/sprite-src/morph/wolf-ranger-v1/`，不覆寫原圖。
@@ -2327,3 +2328,31 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 工具 audit-legend-effects.js 隔離實測全部 17 件共鳴：觸發、冷卻、傷害、範圍／分散、暈眩、治療、增益、MP、卸下停用、12 特效及圖鑑；輸出 legend-effects-audit.json 與說明 LEGEND-EFFECTS.md。test-legend-equipment.js 更新新增武器必須有 res，防具沒有；原配方／穿戴測試仍保留。
 
 第 86～87 節最終驗證：check.ps1 ALL CHECKS PASSED；test-scene-art／test-legend-equipment／audit-legend-effects／test-world-vfx／test-legend-glow／test-item-art 皆通過；45 檔混淆建置、合併語法與新圖／CSS 打包通過。隔離瀏覽器 23 場景切換、PC 全圖／縮放／關閉、390px 手機全圖與放大皆正常，Console 無 error／warn；原骷髏石框已恢復。名稱仍在怪物腳下，與玩家名重疊時稍向側方避讓並以細線指向怪物。手機檢查頁 tools/scene-rework/phone.html。待使用者真實角色實玩驗收後才提交，未上傳測試角色。
+
+## 88. 變形卷軸（2026-10-22，版本 `20261022c` 加入、`20261022d` 改成天堂式選變身對象；`items.js` 的 `MORPHS`／`MORPH_FORMS`、`ui-panels.js` 的 `openMorphPicker`、`ui-scene.js` 的 `playerSprite`）
+
+- 使用者先要求「新增道具 變形卷軸」（c 版：讀了固定變成巡守妖魔神射），再要求「變身卷軸用統一外觀，點選後跳出變身選項，參考天堂變身卷軸設計」（d 版）。
+- 道具 `polyScroll` 只有一種：卷軸類、`buff: 'morph'`、`morph: 'wolfRanger'`（統一外觀用的圖）、30 分鐘（`sec` 1800）、重 1、售價 500、tier 1（每個村莊都買得到），所有職業都能用。
+- **選變身對象**（參考天堂：讀卷軸後選要變的怪物，等級到了才能變，越高級越強）：背包「使用」、快捷欄點一下、`quickPotion` 都改成開 `openMorphPicker` 視窗，列出 `MORPH_FORMS` 9 種（名稱、需求等級、效果）；等級不夠的變灰不能點；目前變身中的那個金框、上次選的標「上次」。
+  點選 → `morphPick(id)` → `usePotion('polyScroll', id)`；等級不夠或沒選對象時**不扣卷軸**。變身中視窗多一個「解除變身」（`morphCancel`，不扣卷軸）。
+
+| 對象 | 需求 | 效果 |
+|---|---|---|
+| 骷髏 | Lv.1 | 命中 +1、傷害 +1 |
+| 妖魔弓箭手 | Lv.10 | 命中 +2、攻速 +5% |
+| 狼人 | Lv.15 | 傷害 +2、攻速 +6%、閃避 +2% |
+| 史巴托 | Lv.25 | 命中 +2、傷害 +2、防禦 +1、攻速 +8% |
+| 巡守妖魔神射 | Lv.30 | 命中 +3、傷害 +2、攻速 +10% |
+| 黑騎士 | Lv.40 | 傷害 +3、防禦 +3、HP +60、攻速 +10% |
+| 冰霜女巫 | Lv.45 | SP +3、回魔 +3、MR +10（施法職業用） |
+| 死亡騎士 | Lv.52 | 命中 +5、傷害 +5、防禦 +2、攻速 +15% |
+| 巴風特 | Lv.60 | 命中 +6、傷害 +6、爆擊 +3%、HP +100、攻速 +18% |
+
+- 攻速走 `spdMul`，跟其他攻速合計最多 30%。數值是助手先定的，使用者可再調。
+- 增益紀錄 `player.buffs.morph = { src: 'item', id: 'polyScroll', form, until }`；`buffFx` 有 `form` 就回傳 `MORPH_BY_ID[form].fx`（`BUFF_DEFS.morph.fx` 是空的），`buffName` 顯示「變身：對象名」（左上角增益列的提示）。
+  再讀一張會換成新對象並重新計時；死亡清除增益時一起解除；不改存檔結構（`SAVE_SCHEMA` 仍 5），上次選的對象存在 `player.settings.lastMorph`。
+- 快捷欄可放、可設自動：自動時用 `lastMorph`（效果沒了就再讀一張）；還沒選過任何對象時不能開自動（提示先點一下選擇）。
+- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（目前 9 種全部是巡守妖魔神射的圖）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
+- 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
+- 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
+- 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。

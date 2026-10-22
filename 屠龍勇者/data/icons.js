@@ -246,7 +246,7 @@ const ITEM_IMG = Object.fromEntries([
     'angelCloak', 'angelAmulet', 'demonCloak', 'demonRing', 'wolfAmulet', 'pirateRing', 'frostShield', 'wyvernHelm',
     'flameGloves', 'archmageHat', 'phoenixMail', 'shadowCloak', 'giantBelt', 'angelRing', 'abyssAmulet', 'earthGuard',
     'tideHeart', 'galeBoots', 'dragonHeartRing', 'redPotion', 'orangePotion', 'whitePotion', 'ancientPotion', 'greenPotion',
-    'homeScroll', 'teleScroll', 'reviveScroll', 'weaponScroll', 'armorScroll', 'bWeaponScroll', 'bArmorScroll', 'cWeaponScroll',
+    'homeScroll', 'teleScroll', 'reviveScroll', 'polyScroll', 'weaponScroll', 'armorScroll', 'bWeaponScroll', 'bArmorScroll', 'cWeaponScroll',
     'cArmorScroll', 'arrow', 'silverArrow', 'bullet', 'silverBullet', 'elixir', 'baphometHorn', 'demonHeart',
     'osirisSeal', 'towerSoul', 'towerBullHorn', 'towerBansheeTear', 'towerFlameCore', 'towerIceCrown', 'towerLichCrystal', 'towerFallenFeather',
     'towerChaosCore', 'towerAbyssEye', 'towerDeathShard', 'towerKingSeal', 'treantHeart', 'drakeFang', 'pirateTreasure', 'wyvernWing',

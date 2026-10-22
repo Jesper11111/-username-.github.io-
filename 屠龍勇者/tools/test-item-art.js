@@ -8,7 +8,7 @@ for(const[,file]of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll
  if(file==='data/main.js'||file==='data/pwa.js')continue;vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx,{filename:file});
 }
 const art=vm.runInContext(`Object.keys(ITEMS).map(id=>({id,html:itemIconHtml(id),fresh:!!ITEM_IMG[id]}))`,ctx),hashes=new Set();
-assert.equal(art.length,432);assert.equal(art.filter(x=>x.fresh).length,285);
+assert.equal(art.length,433);assert.equal(art.filter(x=>x.fresh).length,286);
 for(const {id,html,fresh}of art){const match=html.match(/<img src="([^"?]+)/);assert(match,'道具缺圖：'+id);const file=path.join(root,match[1]);assert(fs.existsSync(file),'檔案不存在：'+file);
  if(fresh){const bytes=fs.readFileSync(file);assert.equal(bytes.readUInt32BE(16),128);assert.equal(bytes.readUInt32BE(20),128);const hash=crypto.createHash('sha256').update(bytes).digest('hex');assert(!hashes.has(hash),'新圖重複：'+id);hashes.add(hash);}
 }
@@ -18,4 +18,4 @@ assert(charGearHtml().includes('images/icons/items/'));assert(itemDescHtml({id:'
 assert(codexDetailHtml('longSword').includes('items/longSword.png'));assert(itemIconHtml('elvenWafer').includes('items/elvenWafer.png'));
 assert(itemIconHtml('bravePotion').includes('potion-brave.jpg'));assert(itemIconHtml('wisdomPotion').includes('potion-wisdom.jpg'));
 assert(itemIconHtml('bluePotion').includes('potion-blue.jpg'));`,ctx);
-console.log('PASS：432 件道具皆有有效圖片；285 張新 PNG 各 128×128、不重複；背包／商店／裝備／詳細圖鑑接線正常。');
+console.log('PASS：433 件道具皆有有效圖片；286 張新 PNG 各 128×128、不重複；背包／商店／裝備／詳細圖鑑接線正常。');

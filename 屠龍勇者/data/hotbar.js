@@ -90,6 +90,7 @@ function barToggleAuto(i) {
     if (!b || !b.id) return;
     if (!barCanAuto(b.id)) { showToast(b.id === 'homeScroll' ? '回家卷軸不能設自動（自動回家在「設定」裡）' : '這個不能自動使用'); return; }
     if (SKILL_BY_ID[b.id] && !hasSkill(b.id)) { showToast('還沒學會這個技能'); return; }
+    if (!b.a && ITEMS[b.id] && ITEMS[b.id].morph && !player.settings.lastMorph) { showToast('先點一下選擇變身對象，自動會沿用上次選的'); return; }
     b.a = b.a ? 0 : 1;
     showToast(`${barName(b.id)}：自動${b.a ? '開啟' : '關閉'}`, 1200);
     saveGame();

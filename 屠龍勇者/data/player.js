@@ -150,10 +150,14 @@ function unequipSlot(slot) {
 function buffActive(key) { const b = player.buffs[key]; return !!(b && b.until > gameNow); }
 function buffFx(b) {
     if (b.src === 'skill') { const s = findSkill(b.id); return s ? s.fx : null; }
+    if (b.form) return (MORPH_BY_ID[b.form] || {}).fx || null;   // 變形卷軸：看選的變身對象
     const d = ITEMS[b.id];
     return d && BUFF_DEFS[d.buff] ? BUFF_DEFS[d.buff].fx : null;
 }
-function buffName(b) { return b.src === 'skill' ? (findSkill(b.id) || {}).name : ITEMS[b.id].short || ITEMS[b.id].name; }
+function buffName(b) {
+    if (b.form && MORPH_BY_ID[b.form]) return `變身：${MORPH_BY_ID[b.form].name}`;
+    return b.src === 'skill' ? (findSkill(b.id) || {}).name : ITEMS[b.id].short || ITEMS[b.id].name;
+}
 function cleanBuffs() {
     const now = gameNow;
     for (const k in player.buffs) if (player.buffs[k].until <= now) delete player.buffs[k];
