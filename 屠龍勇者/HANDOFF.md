@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261023a：共用倉庫防複製 v2（第 93 節）——SQL 已由使用者在 Supabase 執行成功（2026-10-23），遊戲已 commit 待 Push**。使用者要求檢查倉庫複製（管理頁已有 vault_dupe +8 雙刀），選「伺服器存入時直接扣雲端存檔＋舊存檔不能蓋回」。新 tools/vault-v2.sql（vault_put2／vault_take2 直接改雲端存檔、dragon_vault_seq＋上傳守衛、停用舊 vault_put／vault_take）、vault.js／cloud.js／save.js 改用新流程、存檔外層 vaultSeq。只讀查帳 tools/vault-audit.sql。test-vault-v2（PGlite）與 test-vault-v2-client（真實遊戲＋PGlite 端到端）通過、既有回歸與 check.ps1 通過、混淆建置通過。**部署順序：使用者先在 Supabase 執行 vault-v2.sql，再 commit／Push 遊戲**（反過來的話新版找不到 vault_put2，共用倉庫暫時不能用）。待辦：wipe.sql 補 dragon_vault_seq、交易所 market_list 同樣只檢查不扣除。
+
 - **20261022z：子彈改 2 金幣＝5 發**（銀子彈同比例；每 100 個：箭 10、銀箭 40、子彈 40、銀子彈 100）。y 版未推，z 一起推。
 - **20261022y：彈藥每次 100 個一單位＋降價**（第 92 節；x 版沒推，直接併入 y）。使用者要求：箭 1 元＝10 支、子彈 1 元＝5 發（z 版已改），銀箭／銀子彈同比例。town.js 新增 shopUnit／shopCost／shopPriceText，彈藥快捷鍵 ×100／×1000／×10000，自訂數量須為 100 倍數。回收價：銀箭由 1 變 0（箭／子彈原本就 0）。test-shop-buy.js 與 check.ps1 通過、瀏覽器確認；已 commit 到本機 main，待使用者 Push 與線上 Ctrl+F5 確認。
 

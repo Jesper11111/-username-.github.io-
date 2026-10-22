@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -147,7 +148,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022z`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023a`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1534,6 +1535,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `vault_take(slot, id|null, gold|null)`：存檔金幣 ≥ 100；道具標 `taken_at`、金幣扣掉，寫進 `dragon_vault_out`。`vaultDeliver` 讀 `vault_pending(slot)` 交貨（道具用 `marketGiveItem` 保留詞綴、拿新 uid），
     扣 100 手續費、`player.vaultGot` 記已入帳編號 → 存檔上傳後 `vault_ack`。進入角色時也會補交貨。
   - 防複製 trigger `dragon_vault_audit`：存入超過 1 分鐘的裝備（有 ench）又出現在原欄位存檔的背包／角色倉庫／身上 → `dragon_flags` `vault_dupe`（管理頁「共用倉庫疑似複製道具」）。
+  - **⚠️ 2026-10-23 起改用 v2（第 93 節）**：上面的 vault_put／vault_take 只檢查不扣除，可複製道具／金幣，已停用；存取改為 vault_put2／vault_take2。
 - **驗證**：本機 PostgreSQL（每日只送一次、掉落上限、非最後角色被拒、重複結算 too_short、存入不在存檔／重複／金幣不足被拒、取出不夠手續費被拒、交貨與確認、非管理者不能發放、不能直接讀表、裝備複製標記）；
   Playwright 以假伺服器測：沒登入無離線收益、登入離開 2 小時扣 4 顆、非最後角色提示、首領 +3、存入道具扣 100、存金幣 1000 扣 1100、取回道具扣 100 且強化值保留、取金幣 600 實得 500；Console 無錯誤。
 
@@ -2526,3 +2528,25 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `buyItem` 數量不是單位倍數就提示「○○每次以 100 個為單位購買」不扣款；`shopBuyLimit` 以「一單位」計算金幣／負重上限避免小數誤差，回傳單位倍數；自訂視窗 `min`／`step`／預設值 100，預覽非倍數顯示「請輸入 100 的倍數」。彈藥快捷鍵 ×100／×1000／×10000，其他可堆疊道具仍 ×1／×10／×100。
 - 回收價沿用 `sellPriceOf`＝`floor(price×0.3)`：箭、子彈原本就是 0，銀箭由 1 變 0，銀子彈仍 0（floor(1×0.3)）。不改存檔、掉落、後端掉寶目錄（目錄不含價格）。
 - `tools/test-shop-buy.js` 新增：1、150 個被拒、300 箭扣 30 金且金幣為整數、每 100 個價格、金幣只夠 250 個時上限 200、預覽提示、對話框 step、列表按鈕；check.ps1 ALL CHECKS PASSED。瀏覽器以未登入暫時角色確認列表顯示「💰 10／100 個」等、輸入 300 總價 30，測試資料已清掉；Console 只有本機預覽 Service Worker 註冊失敗的既有訊息。
+
+## 93. 共用倉庫防複製 v2（2026-10-23，版本 `20261023a`；`vault.js` 的 `vaultOp`／`vaultEnvelope`、`cloud.js` 的 `cloudVaultAdopt`／`cloudFetchSlot`、`tools/vault-v2.sql`）
+
+- **起因**：使用者要求檢查倉庫複製；管理頁已出現 `vault_dupe`（存入後 +8 雙刀仍留在角色身上）。v1（第 38 節）的 `vault_put` 只**檢查**雲端存檔有沒有這件道具／金幣，扣除由遊戲事後自己做並上傳：
+  ① 金幣存入沒有重複檢查，直接呼叫 API 同一筆錢能存很多次；② 存入後在遊戲上傳前斷線／關網頁，或還原舊存檔，東西同時在角色和倉庫；③ 可堆疊道具取出後同 uid 能再存；④ 倉庫存的是玩家送來的 `p_item`，可偽造強化／詞綴。
+- **使用者選的修法**：伺服器存取時直接改雲端存檔＋舊存檔不能蓋回。
+- **SQL（`tools/vault-v2.sql`，接在 supabase／vault／anticheat 之後，可重跑）**：
+  - `dragon_vault_seq(user_id, char_id=created|cls, seq)`：每個角色的倉庫存取序號。trigger `dragon_vault_save_guard`：玩家（authenticated）上傳的存檔外層 `vaultSeq` 必須**等於**伺服器序號，否則拒收（`vault seq conflict`、hint `dragon_vault_seq`）；比較小＝舊存檔，比較大＝偽造。管理者在 SQL Editor 改不受影響。
+  - `vault_put2(slot, uid, n, gold, name)`／`vault_take2(slot, id, gold)`：鎖住存檔列（`dragon_vault_row`：登入、停權、交易所門檻、簽章、手續費），在同一筆交易裡改 `data.player`：存道具＝從 inv 拿掉（可堆疊可存一部分），倉庫存的是**雲端存檔裡那一件**；存金幣＝扣金額＋100；取道具＝裝備給 `nextUid` 新 uid、可堆疊（沒有 `ench` 欄位）併入同名那疊；取金幣＝加金額－100。
+  - `dragon_vault_commit`（內部）：序號 +1、`data.vaultSeq`、`data.t` 與 `client_t` 換成伺服器毫秒時間、有 `sig` 就用 `dragon_save_sig` 重算（`sig_ok` 保持 true）。回傳 `{seq, t}`＋增減（`gold` 是對角色金幣的增減，含手續費；存道具回 `n`、取道具回 `item`）。
+  - 舊 `vault_put`／`vault_take` 改成直接拋 `vault client outdated`（hint `dragon_vault_old`），舊版遊戲更新前不能用共用倉庫；`vault_pending`／`vault_ack`／`vaultDeliver` 保留，補交 v1 時取出還沒入帳的。
+  - **部署順序**：先執行 SQL，再發佈遊戲（執行後到新版上線前，舊版只是暫時不能存取共用倉庫；沒用過 v2 的角色序號是 0，舊版照常上傳）。
+- **遊戲端**：
+  - 存檔外層新增 `vaultSeq`（不改 player、`SAVE_SCHEMA` 仍 5）。`saveGame` 呼叫 `vaultEnvelope`：取本機上一份同角色的序號與 `vaultLive`（這次遊戲最新）較大者。`lootApply`、`raid.js` 改寫存檔時保留外層欄位。
+  - `vaultOp(fn, args, apply)`：先 `saveGame`＋`cloudFlush(true)`（沒傳完就中止）→ `vaultRpcBusy` 期間 `cloudFlushRun` 不上傳目前角色 → RPC → 同一個同步段落裡 `apply(r)`（照伺服器回傳的增減改本機；存道具只扣存進去的數量）、記 `vaultLive`、`cloudKnown[slot] = r.t`、`saveGame` → 上傳。中途換角色就不套用（那格本機序號舊，下次上傳改用雲端）。
+  - `cloudPushSlot` 收到序號錯誤 → `cloudVaultAdopt(i)`：標 `cloudConflict[i]='vault'` 停止上傳，`cloudFetchSlot` 下載雲端那格（改寫前備份到 `CLOUD_BAK_KEY`），正在玩就 `continueGame` 並提示「已載入雲端進度」。`cloudUseCloudSlot` 也改用 `cloudFetchSlot`。
+- **查帳**：`tools/vault-audit.sql`（只讀）：①倉庫裡且原角色存檔還有同一件（複製品還在）②倉庫金幣大於帳號角色金幣合計的帳號 ③歷來 `vault_dupe`。v1 金幣存入沒有紀錄，②只能當線索。
+- **測試**：`tools/test-vault-v2.js`（隔離 PGlite 載正式 SQL，含掉寶已啟用）：舊 RPC 停用、內部函式不能直接呼叫、金幣真的扣不能重複存、舊存檔／偽造序號被拒、倉庫存的是存檔那件、部分存入、取出新 uid／併疊、簽章 `sig_ok`、`lootCursor` 不變。
+  `tools/test-vault-v2-client.js`：真實遊戲程式＋假 Supabase 接 PGlite 端到端：存裝備／藥水／金幣本機與雲端一致；把存入前的本機存檔放回去後上傳被拒、自動改用雲端，金幣只扣一次；取出入帳後照常上傳；伺服器重算的簽章與 `guardCloudSig` 一致，不誤記改檔。
+  既有 server-loot 三測試、shop-buy、loot-log 回歸通過；check.ps1 ALL CHECKS PASSED；混淆建置 46 支→435 KB 語法通過；瀏覽器載入無新錯誤（只有本機預覽 Service Worker 註冊失敗的既有訊息）。
+- **部署**：2026-10-23 使用者已在 Supabase 執行 vault-v2.sql 成功，遊戲 20261023a 隨後推送。
+- **限制／待辦**：`wipe.sql` 白名單還沒加 `dragon_vault_seq`（留著無害：角色 id 含建立時間，新角色不會撞到）；交易所 `market_list` 也是「只檢查不扣除」的同一種寫法，之後可比照處理。

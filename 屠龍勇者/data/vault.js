@@ -15,6 +15,7 @@ function vaultErrText(e) {
     if (m.includes('vault full')) return `共用倉庫滿了（最多 ${VAULT_MAX} 格）`;
     if (m.includes('already stored')) return '這件道具已經存進共用倉庫了';
     if (m.includes('bad amount')) return '金額不正確';
+    if (m.includes('vault client outdated')) return '遊戲版本太舊，請重新整理（更新遊戲）後再使用共用倉庫';
     if (m.includes('not enough gold')) return `金幣不足（每次收 ${VAULT_FEE} 金幣手續費，以雲端存檔為準）`;
     return marketErrText(e);
 }
@@ -111,20 +112,47 @@ async function vaultRun(fn) {
     await vaultLoad();
 }
 
+// ───────── 防複製 v2（2026-10-23，第 93 節；tools/vault-v2.sql）─────────
+// 存入／取出由伺服器在同一筆交易裡直接改雲端存檔，序號 vaultSeq（存檔外層）+1；舊存檔的序號不對，伺服器拒收（hint dragon_vault_seq），
+// 這時遊戲改用雲端進度（cloud.js cloudVaultAdopt）。本機只照伺服器回傳的增減做一樣的修改，並把新序號寫進存檔。
+let vaultLive = null;          // { char, seq }：這次遊戲中最新的倉庫序號（saveGame 用）
+let vaultRpcBusy = false;      // 伺服器正在改雲端存檔：這段時間不上傳目前的角色（cloudFlushRun）
+function vaultEnvelope(data, previous) {
+    const ch = lootChar(data.player);
+    const prev = previous && lootChar(previous.player) === ch ? Number(previous.vaultSeq) || 0 : 0;   // 改用雲端進度後，本機那份可能比 vaultLive 新
+    data.vaultSeq = Math.max(prev, vaultLive && vaultLive.char === ch ? vaultLive.seq : 0);
+    return data;
+}
+// fn＝vault_put2／vault_take2；apply(r) 照伺服器回傳修改本機角色。修改與存檔在同一個同步段落，中間不會插入別的存檔
+async function vaultOp(fn, args, apply) {
+    saveGame();
+    if (!await cloudFlush(true)) throw Error('雲端存檔還沒上傳完成，請稍後再試');
+    const who = player, slot = currentSlot, ch = lootChar();
+    vaultRpcBusy = true;
+    try {
+        const r = await marketRpc(fn, Object.assign({ p_slot: slot }, args));
+        if (player !== who || currentSlot !== slot) return;   // 中途換了角色：那個欄位的本機存檔序號是舊的，下次上傳會改用雲端進度
+        apply(r);
+        vaultLive = { char: ch, seq: r.seq };
+        cloudKnown[slot] = r.t;   // 伺服器已把 client_t 換成 r.t
+        saveGame();
+    } finally { vaultRpcBusy = false; }
+    await cloudFlush(true);
+    refreshUI();
+}
+
 function vaultPut(uid) {
     const inst = findInv(uid);
     if (!inst || !marketTradeable(inst)) return;
     if (player.gold < VAULT_FEE) { showToast(`金幣不足，存入要 💰${VAULT_FEE} 手續費`); return; }
-    const name = itemName(inst) + (inst.n > 1 ? ' ×' + inst.n : '');
-    gameConfirm('存入共用倉庫', `把「${name}」存進帳號共用倉庫？\n手續費 💰${VAULT_FEE}。`, () => vaultRun(async () => {
-        const item = JSON.parse(JSON.stringify(inst));
-        saveGame(); await cloudFlush(true);
-        await marketRpc('vault_put', { p_slot: currentSlot, p_item: item, p_gold: null, p_name: name });
-        removeInst(inst.uid);   // 伺服器收下後才從背包拿走
-        player.gold -= VAULT_FEE;
-        addLog(`🏦 存入共用倉庫：${name}（手續費 ${VAULT_FEE}）`, 'sys');
-        saveGame(); await cloudFlush(true); refreshUI();
-    }), '存入');
+    const name = itemName(inst) + (inst.n > 1 ? ' ×' + inst.n : ''), n = inst.n || 1;
+    gameConfirm('存入共用倉庫', `把「${name}」存進帳號共用倉庫？\n手續費 💰${VAULT_FEE}。`, () => vaultRun(() =>
+        vaultOp('vault_put2', { p_uid: uid, p_n: n, p_gold: null, p_name: name }, r => {
+            const cur = findInv(uid);   // 等待伺服器時可能又撿到同一種（疊加），只扣存進去的數量
+            if (cur) { if (cur.n > r.n) cur.n -= r.n; else removeInst(uid); }
+            player.gold += r.gold;
+            addLog(`🏦 存入共用倉庫：${name}（手續費 ${VAULT_FEE}）`, 'sys');
+        })), '存入');
 }
 
 function vaultGold(dir) {
@@ -132,26 +160,30 @@ function vaultGold(dir) {
     if (n < 1) { showToast('請輸入金額'); return; }
     if (dir > 0) {
         if (player.gold < n + VAULT_FEE) { showToast(`金幣不足（存入 ${fmt(n)}＋手續費 ${VAULT_FEE}）`); return; }
-        vaultRun(async () => {
-            saveGame(); await cloudFlush(true);
-            await marketRpc('vault_put', { p_slot: currentSlot, p_item: null, p_gold: n, p_name: null });
-            player.gold -= n + VAULT_FEE;
+        vaultRun(() => vaultOp('vault_put2', { p_uid: null, p_n: null, p_gold: n, p_name: null }, r => {
+            player.gold += r.gold;
             addLog(`🏦 存入共用倉庫：金幣 ${fmt(n)}（手續費 ${VAULT_FEE}）`, 'sys');
-            saveGame(); await cloudFlush(true); refreshUI();
-        });
+        }));
     } else {
         if (vaultData && n > vaultData.gold) { showToast('共用倉庫的金幣不夠'); return; }
         if (player.gold < VAULT_FEE) { showToast(`金幣不足，取出要 💰${VAULT_FEE} 手續費`); return; }
-        vaultRun(async () => { saveGame(); await cloudFlush(true); await marketRpc('vault_take', { p_slot: currentSlot, p_id: null, p_gold: n }); await vaultDeliver(); });
+        vaultRun(() => vaultOp('vault_take2', { p_id: null, p_gold: n }, r => {
+            player.gold += r.gold;
+            addLog(`🏦 從共用倉庫取出：金幣 ${fmt(n)}（手續費 ${VAULT_FEE}）`, 'loot');
+        }));
     }
 }
 
 function vaultTake(id) {
     if (player.gold < VAULT_FEE) { showToast(`金幣不足，取出要 💰${VAULT_FEE} 手續費`); return; }
-    vaultRun(async () => { saveGame(); await cloudFlush(true); await marketRpc('vault_take', { p_slot: currentSlot, p_id: id, p_gold: null }); await vaultDeliver(); });
+    vaultRun(() => vaultOp('vault_take2', { p_id: id, p_gold: null }, r => {
+        marketGiveItem(r.item);
+        player.gold += r.gold;
+        addLog(`🏦 從共用倉庫取出：${r.name || itemName(r.item)}（手續費 ${VAULT_FEE}）`, 'loot');
+    }));
 }
 
-// 交貨：伺服器記帳的取出（這個角色欄位）→ 加進角色、扣手續費；player.vaultGot 記已入帳編號，ack 沒送到也不會重複領
+// 交貨（v1 舊流程，只補交 v2 之前取出還沒入帳的）：伺服器記帳的取出（這個角色欄位）→ 加進角色、扣手續費；player.vaultGot 記已入帳編號，ack 沒送到也不會重複領
 let vaultDeliverBusy = false;
 async function vaultDeliver() {
     if (!vaultOnline() || !player || vaultDeliverBusy) return;

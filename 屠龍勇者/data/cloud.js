@@ -466,6 +466,7 @@ async function cloudFlushRun() {
     let ok = true;
     for (const i of [...cloudDirty]) {
         if (cloudConflict[i]) { ok = false; continue; }
+        if (typeof vaultRpcBusy !== 'undefined' && vaultRpcBusy && i === currentSlot) { ok = false; continue; }   // 伺服器正在改這個角色的雲端存檔（共用倉庫，vault.js）
         try {
             const r = await cloudPushSlot(i, false);
             if (r) cloudDirty.delete(i); else ok = false;
@@ -508,6 +509,7 @@ async function cloudPushSlot(i, overwrite) {
         if (!res.error && (!res.data || !res.data.length)) return cloudOnConflict(i);
     }
     if (res.error && cloudIsTombErr(res.error)) { cloudDropDeleted(i); return true; }
+    if (res.error && cloudIsVaultSeqErr(res.error)) return cloudVaultAdopt(i);
     if (res.error) throw res.error;
     cloudKnown[i] = t;
     delete cloudConflict[i];
@@ -561,24 +563,49 @@ async function cloudUseLocalSlot() {
     renderCloudEntry();
 }
 
+// 把雲端的這個欄位寫進本機（改寫前備份）。回傳是否有下載到
+async function cloudFetchSlot(i) {
+    const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t, data').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
+    if (error) throw error;
+    if (!data) return false;
+    await guardCheckCloud(cloudUser.id, i, data.data, data.client_t);
+    cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
+    if (player && i === currentSlot) { hunt = null; session = null; walkHome = null; player = null; }
+    cloudLs(slotKey(i), saveEncode(JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' }))));
+    cloudKnown[i] = data.client_t;
+    delete cloudConflict[i];
+    cloudDirty.delete(i);
+    return true;
+}
+
 async function cloudUseCloudSlot() {
     const i = currentSlot;
     try {
-        const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t, data').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
-        if (error) throw error;
-        if (!data) { showToast('雲端沒有這個角色'); return; }
-        await guardCheckCloud(cloudUser.id, i, data.data, data.client_t);
-        cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
-        hunt = null; session = null; walkHome = null;
-        player = null;
-        cloudLs(slotKey(i), saveEncode(JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' }))));
-        cloudKnown[i] = data.client_t;
-        delete cloudConflict[i];
-        cloudDirty.delete(i);
+        if (!await cloudFetchSlot(i)) { showToast('雲端沒有這個角色'); return; }
         continueGame();
         showToast('☁️ 已載入雲端進度');
     } catch (e) { showToast('☁️ 下載失敗：' + cloudErrText(e)); }
     renderCloudEntry();
+}
+
+// 共用倉庫序號不符（tools/vault-v2.sql）：本機是存取共用倉庫之前的舊進度（斷線、別台裝置、還原備份），不能蓋掉雲端 → 改用雲端進度
+function cloudIsVaultSeqErr(e) { return !!e && (e.hint === 'dragon_vault_seq' || /vault seq conflict/.test(e.message || '')); }
+function cloudVaultAdopt(i) {
+    if (cloudConflict[i] === 'vault') return false;
+    cloudConflict[i] = 'vault';   // 下載完成前不再上傳這一格
+    setTimeout(async () => {
+        const playing = player && i === currentSlot;
+        try {
+            if (!await cloudFetchSlot(i)) delete cloudConflict[i];
+            else if (!playing) cloudRefreshScreen();
+            else {
+                continueGame();
+                gameAlert('☁️ 已載入雲端進度', '這個角色在帳號共用倉庫有比較新的存取紀錄（可能在別台裝置、或存取時斷線），這台的進度比較舊，已改用雲端的進度，避免道具重複。');
+            }
+        } catch (e) { delete cloudConflict[i]; showToast('☁️ 下載失敗：' + cloudErrText(e)); }
+        renderCloudEntry();
+    }, 0);
+    return false;
 }
 
 // ───────── 刪除角色（ARCHITECTURE.md 第 29 節「刪除角色」）─────────

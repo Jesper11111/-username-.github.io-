@@ -1,5 +1,5 @@
 // 屠龍勇者：存檔／讀檔／匯出匯入（依賴 config、player）
-// 存檔格式：{ schema, t, owner, ownerEmail, player, lootProtocol?, lootCursor? }；player結構改動需SAVE_SCHEMA＋migrateSave
+// 存檔格式：{ schema, t, owner, ownerEmail, player, lootProtocol?, lootCursor?, vaultSeq? }；player結構改動需SAVE_SCHEMA＋migrateSave
 // owner（schema 4）：這個角色屬於哪個雲端帳號（uid；訪客建立的是空字串）。只存在本機，上傳雲端時拿掉（cloudPushSlot）
 // 本機文字是加密＋簽章過的（guard.js saveEncode／saveParse），讀寫存檔一律經過這兩個函式（ARCHITECTURE.md 第 60 節）
 
@@ -125,6 +125,7 @@ function saveGame(force) {
     let previous = null;
     try { const raw = localStorage.getItem(slotKey(currentSlot)); if (raw) previous = saveParse(raw); } catch (e) {}
     lootEnvelope(data, previous);
+    vaultEnvelope(data, previous);   // 共用倉庫序號（vault.js，第 93 節）
     try { localStorage.setItem(slotKey(currentSlot), saveEncode(JSON.stringify(data))); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
     cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳（只上傳屬於目前帳號的角色）
 }
