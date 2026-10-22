@@ -2548,5 +2548,5 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **測試**：`tools/test-vault-v2.js`（隔離 PGlite 載正式 SQL，含掉寶已啟用）：舊 RPC 停用、內部函式不能直接呼叫、金幣真的扣不能重複存、舊存檔／偽造序號被拒、倉庫存的是存檔那件、部分存入、取出新 uid／併疊、簽章 `sig_ok`、`lootCursor` 不變。
   `tools/test-vault-v2-client.js`：真實遊戲程式＋假 Supabase 接 PGlite 端到端：存裝備／藥水／金幣本機與雲端一致；把存入前的本機存檔放回去後上傳被拒、自動改用雲端，金幣只扣一次；取出入帳後照常上傳；伺服器重算的簽章與 `guardCloudSig` 一致，不誤記改檔。
   既有 server-loot 三測試、shop-buy、loot-log 回歸通過；check.ps1 ALL CHECKS PASSED；混淆建置 46 支→435 KB 語法通過；瀏覽器載入無新錯誤（只有本機預覽 Service Worker 註冊失敗的既有訊息）。
-- **部署**：2026-10-23 使用者已在 Supabase 執行 vault-v2.sql 成功，遊戲 20261023a 隨後推送。
+- **部署**：2026-10-23 使用者已在 Supabase 執行 vault-v2.sql 成功，遊戲 20261023a 已推上線，使用者實測共用倉庫存取正常。
 - **限制／待辦**：`wipe.sql` 白名單還沒加 `dragon_vault_seq`（留著無害：角色 id 含建立時間，新角色不會撞到）；交易所 `market_list` 也是「只檢查不扣除」的同一種寫法，之後可比照處理。
