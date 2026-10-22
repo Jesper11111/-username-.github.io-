@@ -62,11 +62,19 @@ const MORPHS = {
         cast:   { src: 'images/sprites/morph/moon-ranger-v1/cast.png',   cellW: 320, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/moon-ranger-v1/hit.png',    cellW: 320, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },
+    // 03 冥火骷髏神射：格子 320×280（上方多留火焰空間），腳底 (160,240)
+    hellfireArcher: {
+        name: '冥火骷髏神射', drawH: 48, charH: 160, foot: [160, 240],
+        walk:   { src: 'images/sprites/morph/hellfire-archer-v1/walk.png',   cellW: 320, cellH: 280, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/hellfire-archer-v1/attack.png', cellW: 320, cellH: 280, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/hellfire-archer-v1/cast.png',   cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/hellfire-archer-v1/hit.png',    cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
 };
 
 // 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。2026-10-22 使用者給的 30 種，設計稿在 tools/MORPH-DESIGN.md。
 // 階級決定需求等級與基礎加成，系別決定偏重（弓槍命中、雙刀閃避、雙手劍傷害、單手劍攻速、法杖施法、拳套爆擊、鋼爪吸血、劍盾防禦）。
-// 外觀：有專屬圖的（m01 巡守妖魔神射、m02 月光精靈巡林者）用自己的，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
+// 外觀：有專屬圖的（m01 巡守妖魔神射、m02 月光精靈巡林者、m03 冥火骷髏神射）用自己的，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
 const MORPH_TIERS = {
     blue:   { name: '藍變', grade: '稀有', lv: 15, color: '#6aa8ff', hit: 2, dmg: 2, spd: 0.06 },
     red:    { name: '紅變', grade: '英雄', lv: 35, color: '#ff6a6a', hit: 3, dmg: 3, spd: 0.10 },
@@ -90,7 +98,7 @@ const MORPH_GROUPS = {
     shield: { name: '劍盾系', weapon: '單手劍＋盾', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg - 1, ac: [2, 3, 4, 6][k - 1], hp: [40, 80, 120, 200][k - 1], spdMul: t.spd - 0.03 }) },
 };
 const MORPH_FORMS = [
-    ['m01', '巡守妖魔神射', 'bow', 'blue', 'wolfRanger'], ['m02', '月光精靈巡林者', 'bow', 'red', 'moonRanger'], ['m03', '冥火骷髏神射', 'bow', 'purple'], ['m04', '蒼穹女武神・艾爾', 'bow', 'gold'],
+    ['m01', '巡守妖魔神射', 'bow', 'blue', 'wolfRanger'], ['m02', '月光精靈巡林者', 'bow', 'red', 'moonRanger'], ['m03', '冥火骷髏神射', 'bow', 'purple', 'hellfireArcher'], ['m04', '蒼穹女武神・艾爾', 'bow', 'gold'],
     ['m05', '矮人蒸氣火銃兵', 'gun', 'blue'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
     ['m08', '沉默洞穴刺客', 'dual', 'blue'], ['m09', '赤影暗殺者', 'dual', 'red'], ['m10', '布魯迪卡之影', 'dual', 'purple'], ['m11', '深淵雙刃魔神', 'dual', 'gold'],
     ['m12', '鋼鐵狂戰士', 'great', 'blue'], ['m13', '冥皇處刑者', 'great', 'red'], ['m14', '煉獄魔劍尊・巴拉卡', 'great', 'purple'],
