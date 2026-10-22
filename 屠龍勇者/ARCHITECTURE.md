@@ -147,7 +147,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022u`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022v`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -164,6 +164,7 @@
 
 ## 4. 角色與職業
 
+- 新角色出生金幣為2,000（20261022v，使用者指定；createPlayer原300改2000），所有職業共用；既有角色金幣不補發、不改存檔schema。
 - 能力值：力量／敏捷／體質／智力／精神／魅力。創角總點數 75，職業有最低值（`base`），單項上限 18。
 - 51 級起每升一級 +1 點（`statPoints`），單項上限 `STAT_CAP` 35；萬能藥每瓶 +1，最多 5 瓶。
 - 升級 HP／MP：職業 `hp/mp` 範圍 + 體質／精神加成（`(值-10)/2`）。升級時 HP／MP 全滿。

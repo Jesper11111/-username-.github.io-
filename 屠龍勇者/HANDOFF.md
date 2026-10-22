@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022v：出生金幣2,000**。使用者指定玩家出生金幣2000，createPlayer由300改為2000，十二職業共用；既有角色不補發、不改schema。index.html所有?v=與GAME_VERSION更新v，保留u版公告移除。待使用者Ctrl+F5新建角色確認後提交／請Push。
+
 - **本機待驗收20261022u：移除封測公告**。使用者截圖要求移除「封測中：正式上線時會刪除所有角色與資料（帳號保留）」。config.js的TEST_NOTICE設空，沿用showTitle隱藏公告；index.html所有?v=與GAME_VERSION更新u。沒有啟動WIPE或改動存檔／正式資料庫。待使用者Ctrl+F5確認標題畫面無公告後才提交與請Push。
 
 - **洗白缺表錯誤已修正、待重新安排執行**：使用者截圖回報42P01 public.dragon_save_dev不存在，前次交易未完成；不能當作正式洗白成功。tools/wipe.sql現在固定24表白名單、to_regclass只收集存在的附加表並NOTICE略過缺表，同次TRUNCATE RESTRICT保持原子性；缺核心dragon_saves或其他錯誤仍拒絕。隔離測試新增缺三附加表可清除、清單外外鍵使整筆回滾皆通過。WIPE.id仍未啟動；勿讓使用者以為SQL成功就完成本機舊角色清除，仍須配合停機與新版發布。

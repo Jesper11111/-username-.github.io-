@@ -38,7 +38,7 @@ function wisMpBonus(wis) { return Math.max(0, Math.floor((wis - 10) / 2)); }
 function createPlayer(name, cls, stats) {
     const c = CLASSES[cls];
     player = {
-        name, cls, lv: 1, exp: 0, gold: 300,
+        name, cls, lv: 1, exp: 0, gold: 2000,
         stats: { ...stats }, statPoints: 0, elixirs: 0,
         baseHp: c.startHp + conHpBonus(stats.con), baseMp: c.startMp + wisMpBonus(stats.wis),
         hp: 1, mp: 0,
