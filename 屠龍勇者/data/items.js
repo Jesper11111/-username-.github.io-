@@ -78,11 +78,19 @@ const MORPHS = {
         cast:   { src: 'images/sprites/morph/sky-valkyrie-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 110 },
         hit:    { src: 'images/sprites/morph/sky-valkyrie-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 80 },
     },
+    // 05 矮人蒸氣火銃兵：留出完整白蒸氣、槍管與開火空間，腳底 (192,270)
+    dwarfGunner: {
+        name: '矮人蒸氣火銃兵', drawH: 48, charH: 160, foot: [192, 270],
+        walk:   { src: 'images/sprites/morph/dwarf-gunner-v1/walk.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/dwarf-gunner-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/dwarf-gunner-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/dwarf-gunner-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
 };
 
 // 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。2026-10-22 使用者給的 30 種，設計稿在 tools/MORPH-DESIGN.md。
 // 階級決定需求等級與基礎加成，系別決定偏重（弓槍命中、雙刀閃避、雙手劍傷害、單手劍攻速、法杖施法、拳套爆擊、鋼爪吸血、劍盾防禦）。
-// 外觀：有專屬圖的（m01 巡守妖魔神射、m02 月光精靈巡林者、m03 冥火骷髏神射、m04 蒼穹女武神・艾爾）用自己的，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
+// 外觀：m01～m05 用各自的專屬圖，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
 const MORPH_TIERS = {
     blue:   { name: '藍變', grade: '稀有', lv: 15, color: '#6aa8ff', hit: 2, dmg: 2, spd: 0.06 },
     red:    { name: '紅變', grade: '英雄', lv: 35, color: '#ff6a6a', hit: 3, dmg: 3, spd: 0.10 },
@@ -107,7 +115,7 @@ const MORPH_GROUPS = {
 };
 const MORPH_FORMS = [
     ['m01', '巡守妖魔神射', 'bow', 'blue', 'wolfRanger'], ['m02', '月光精靈巡林者', 'bow', 'red', 'moonRanger'], ['m03', '冥火骷髏神射', 'bow', 'purple', 'hellfireArcher'], ['m04', '蒼穹女武神・艾爾', 'bow', 'gold', 'skyValkyrie'],
-    ['m05', '矮人蒸氣火銃兵', 'gun', 'blue'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
+    ['m05', '矮人蒸氣火銃兵', 'gun', 'blue', 'dwarfGunner'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
     ['m08', '沉默洞穴刺客', 'dual', 'blue'], ['m09', '赤影暗殺者', 'dual', 'red'], ['m10', '布魯迪卡之影', 'dual', 'purple'], ['m11', '深淵雙刃魔神', 'dual', 'gold'],
     ['m12', '鋼鐵狂戰士', 'great', 'blue'], ['m13', '冥皇處刑者', 'great', 'red'], ['m14', '煉獄魔劍尊・巴拉卡', 'great', 'purple'],
     ['m15', '亞丁榮耀劍士', 'sword', 'blue'], ['m16', '烈焰死亡騎士', 'sword', 'red'], ['m17', '雷霆黑騎士統領', 'sword', 'purple'], ['m18', '神聖裁決劍聖', 'sword', 'gold'],

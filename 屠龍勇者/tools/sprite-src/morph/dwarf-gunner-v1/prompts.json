@@ -1,0 +1,28 @@
+{
+  "tool": "built-in image_gen",
+  "jobs": [
+    {
+      "key": "dwarf-extract",
+      "prompt": "Edit target: user supplied6-column x6-row pixel RPG dwarf gunner sprite sheet. Only extract the existing art from the baked-in white/gray checkerboard. Preserve ALL original bodies, original positions, exact poses, tiny brass armor details, brown beard, boiler pipes, gun barrels, white steam, smoke, orange muzzle flames and blue aura. Do NOT invent frames, redesign or reorder, do not put labels or title. Preserve six columns and six rows including the unusual side muzzle-flash-only space and the incorrect front-facing pair in the third row (we will replace them separately). Output actual transparent RGBA alpha, no checkerboard, no white backdrop. Important: WHITE STEAM must remain visible and semitransparent; remove ONLY background gray/white squares, never the steam cloud. Entire original canvas contents retained, don't trim feet or gun/steam tips. No contact shadows or new background.",
+      "refs": [
+        "C:/Users/User/Desktop/變身人物/5-1.jpg"
+      ]
+    },
+    {
+      "key": "dwarf-attack",
+      "prompt": "Use case: identity-preserve. Reference1 is the SAME dwarf from user portrait, reference2 is pixel sprite style only (old aiming-only poses are the bug). Make a production game ATTACK animation, exactly TWELVE full-body sprites laid out FOUR COLUMNS x THREE ROWS, landscape1536x1024. Row1 FRONT three-quarter toward viewer, row2 RIGHT SIDE profile, row3 BACK away without showing face/beard/chest. All4 sprites in BACK row must be back view with boiler dominant and gun muzzle firing away/up-right. Exact identity: SHORT STOCKY male dwarf, broad brown beard, iron helmet with brass band and round brass goggles, black iron and brass heavy shoulder armor, brown trousers, knee plates, heavy brass boots, huge steam boiler backpack with copper pipe and short white steam puffs, long wood-stock iron blunderbuss with brass accents. Crisp detailed classic2D PIXEL RPG sprites, black pixel outlines and brass highlights matching supplied sprites, NOT realistic3D or smooth oil painting. Four physically distinct phases in each row: column1 READY, gun held low angled30deg down across waist, stock below shoulder; column2 AIM, both arms raise gun HORIZONTAL to SHOULDER, cheek near stock and drawing elbow back; column3 FIRE / RECOIL, orange muzzle flash, gun kicks BACK into shoulder and muzzle lifts slightly, torso leans back and elbows flex; column4 RECOVER/RELOAD, gun LOWERED to waist, forehand shifts toward breech and elbows DOWN while torso settles. Silhouettes1/4 must NOT be permanent aiming; show real arm/body/gun motion. Keep gun attached to both hands in all frames, no floating weapons, no extra guns, no detached limbs, hands consistent. Boots stay planted on common baseline, body/helmet/boiler same scale. Full body, COMPLETE barrel, muzzle flash and white steam inside their own equal cells with padding; no overlap or clipped tips. Compact flashes only, no giant projectile-only cells or blue aura hiding arms. Real transparent alpha with no labels, titles, words, grids, checkerboard, background, floor, shadows or scenery.",
+      "refs": [
+        "C:/Users/User/Desktop/變身人物/5.jpg",
+        "C:/Users/User/Desktop/變身人物/5-1.jpg"
+      ]
+    },
+    {
+      "key": "dwarf-side-cast",
+      "prompt": "Use case: identity-preserve. Make TWO full-body animation sprites on one row, two equal cells in landscape1536x1024, exact same short stocky DWARF STEAM GUNNER as user references: brown beard, black iron helmet with brass band and goggles, heavy black/brass pauldrons, brown trousers and brass boots, steam boiler backpack/copper pipes. Classic detailed2D PIXEL RPG sprite, black pixel outlines, same costume/proportions as small reference sheet, not3D or oil painting. BOTH sprites RIGHT SIDE PROFILE looking right. First pose CHANNEL: gun lowered in left hand, right hand near boiler valve at chest gathering a small blue steam orb, torso slightly braced. Second pose RELEASE: gun still low, right open palm raised to shoulder and boiler vents bright blue steam upward behind him, compact blue aura (not flames) from below. Distinct elbow/hand poses, no gunshot or muzzle flash. Same boot baseline/body scale, show complete guns, feet, pipes and WHITE steam; wide transparent margins. Only two whole characters, no text/title, no checkerboard, background, shadows or floor; actual transparent RGBA alpha.",
+      "refs": [
+        "C:/Users/User/Desktop/變身人物/5.jpg",
+        "C:/Users/User/Desktop/變身人物/5-1.jpg"
+      ]
+    }
+  ]
+}

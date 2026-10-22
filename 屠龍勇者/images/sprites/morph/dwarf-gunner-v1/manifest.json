@@ -1,0 +1,843 @@
+{
+  "id": "dwarf-gunner-v1",
+  "name": "矮人蒸氣火銃兵（藍變）",
+  "form": "m05",
+  "status": "game-appearance",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/dwarf-gunner-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            384,
+            346
+          ],
+          "sourceFoot": [
+            212,
+            342
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            384,
+            0,
+            768,
+            346
+          ],
+          "sourceFoot": [
+            574,
+            342
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            0,
+            2
+          ],
+          "sourceRect": [
+            768,
+            0,
+            1152,
+            346
+          ],
+          "sourceFoot": [
+            966,
+            342
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            0,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            346
+          ],
+          "sourceFoot": [
+            1388,
+            342
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            1,
+            0
+          ],
+          "sourceRect": [
+            0,
+            346,
+            384,
+            678
+          ],
+          "sourceFoot": [
+            218,
+            660
+          ],
+          "sourceBodyHeight": 251,
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            1,
+            1
+          ],
+          "sourceRect": [
+            384,
+            346,
+            768,
+            678
+          ],
+          "sourceFoot": [
+            584,
+            660
+          ],
+          "sourceBodyHeight": 251,
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            1,
+            2
+          ],
+          "sourceRect": [
+            768,
+            346,
+            1152,
+            678
+          ],
+          "sourceFoot": [
+            964,
+            660
+          ],
+          "sourceBodyHeight": 251,
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            1,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            346,
+            1536,
+            678
+          ],
+          "sourceFoot": [
+            1388,
+            660
+          ],
+          "sourceBodyHeight": 251,
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            2,
+            0
+          ],
+          "sourceRect": [
+            0,
+            678,
+            384,
+            1024
+          ],
+          "sourceFoot": [
+            223,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            2,
+            1
+          ],
+          "sourceRect": [
+            384,
+            678,
+            768,
+            1024
+          ],
+          "sourceFoot": [
+            594,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            2,
+            2
+          ],
+          "sourceRect": [
+            768,
+            678,
+            1152,
+            1024
+          ],
+          "sourceFoot": [
+            981,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "walk-generated.png",
+          "sourceCell": [
+            2,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            678,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1408,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/dwarf-gunner-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            384,
+            346
+          ],
+          "sourceFoot": [
+            185,
+            324
+          ],
+          "sourceBodyHeight": 232,
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            384,
+            0,
+            768,
+            346
+          ],
+          "sourceFoot": [
+            565,
+            324
+          ],
+          "sourceBodyHeight": 232,
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            0,
+            2
+          ],
+          "sourceRect": [
+            768,
+            0,
+            1200,
+            346
+          ],
+          "sourceFoot": [
+            955,
+            324
+          ],
+          "sourceBodyHeight": 232,
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            0,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            346
+          ],
+          "sourceFoot": [
+            1380,
+            324
+          ],
+          "sourceBodyHeight": 232,
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            1,
+            0
+          ],
+          "sourceRect": [
+            0,
+            346,
+            384,
+            678
+          ],
+          "sourceFoot": [
+            193,
+            660
+          ],
+          "sourceBodyHeight": 249,
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            1,
+            1
+          ],
+          "sourceRect": [
+            384,
+            346,
+            768,
+            678
+          ],
+          "sourceFoot": [
+            569,
+            660
+          ],
+          "sourceBodyHeight": 249,
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            1,
+            2
+          ],
+          "sourceRect": [
+            768,
+            346,
+            1200,
+            678
+          ],
+          "sourceFoot": [
+            955,
+            660
+          ],
+          "sourceBodyHeight": 249,
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            1,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            346,
+            1536,
+            678
+          ],
+          "sourceFoot": [
+            1381,
+            660
+          ],
+          "sourceBodyHeight": 249,
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            2,
+            0
+          ],
+          "sourceRect": [
+            0,
+            678,
+            384,
+            1024
+          ],
+          "sourceFoot": [
+            210,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            2,
+            1
+          ],
+          "sourceRect": [
+            384,
+            678,
+            768,
+            1024
+          ],
+          "sourceFoot": [
+            595,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            2,
+            2
+          ],
+          "sourceRect": [
+            768,
+            678,
+            1200,
+            1024
+          ],
+          "sourceFoot": [
+            985,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "attack-generated.png",
+          "sourceCell": [
+            2,
+            3
+          ],
+          "sourceRect": [
+            1152,
+            678,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1408,
+            998
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-up-04.png"
+        }
+      ],
+      "phases": [
+        "ready",
+        "aim",
+        "fire-recoil",
+        "recover"
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/dwarf-gunner-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "cast-front-back-generated.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "sourceFoot": [
+            350,
+            617
+          ],
+          "sourceBodyHeight": 440,
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "cast-front-back-generated.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            627,
+            0,
+            1254,
+            627
+          ],
+          "sourceFoot": [
+            936,
+            617
+          ],
+          "sourceBodyHeight": 440,
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "side-cast-generated.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            768,
+            1024
+          ],
+          "sourceFoot": [
+            400,
+            932
+          ],
+          "sourceBodyHeight": 550,
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "side-cast-generated.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            768,
+            0,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1164,
+            932
+          ],
+          "sourceBodyHeight": 550,
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "cast-front-back-generated.png",
+          "sourceCell": [
+            1,
+            0
+          ],
+          "sourceRect": [
+            0,
+            627,
+            627,
+            1254
+          ],
+          "sourceFoot": [
+            330,
+            1188
+          ],
+          "sourceBodyHeight": 415,
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "cast-front-back-generated.png",
+          "sourceCell": [
+            1,
+            1
+          ],
+          "sourceRect": [
+            627,
+            627,
+            1254,
+            1254
+          ],
+          "sourceFoot": [
+            930,
+            1188
+          ],
+          "sourceBodyHeight": 415,
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/dwarf-gunner-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            512,
+            562
+          ],
+          "sourceFoot": [
+            320,
+            536
+          ],
+          "sourceBodyHeight": 330,
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            512,
+            0,
+            1024,
+            562
+          ],
+          "sourceFoot": [
+            805,
+            536
+          ],
+          "sourceBodyHeight": 330,
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            1,
+            0
+          ],
+          "sourceRect": [
+            0,
+            562,
+            512,
+            1024
+          ],
+          "sourceFoot": [
+            339,
+            1005
+          ],
+          "sourceBodyHeight": 345,
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            1,
+            1
+          ],
+          "sourceRect": [
+            512,
+            562,
+            1024,
+            1024
+          ],
+          "sourceFoot": [
+            831,
+            1005
+          ],
+          "sourceBodyHeight": 345,
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            2,
+            0
+          ],
+          "sourceRect": [
+            0,
+            1024,
+            512,
+            1536
+          ],
+          "sourceFoot": [
+            340,
+            1455
+          ],
+          "sourceBodyHeight": 335,
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "hit-generated.png",
+          "sourceCell": [
+            2,
+            1
+          ],
+          "sourceRect": [
+            512,
+            1024,
+            1024,
+            1536
+          ],
+          "sourceFoot": [
+            839,
+            1455
+          ],
+          "sourceBodyHeight": 335,
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Original files and initial extraction preserved",
+    "All final actions redrawn to avoid cross-cell steam clipping",
+    "Original back attack pair faces front; replaced",
+    "Side casting supplied only one pose; replaced by two",
+    "Projectile-only source space is never a character frame"
+  ]
+}

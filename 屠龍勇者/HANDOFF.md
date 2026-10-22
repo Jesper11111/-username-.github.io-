@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022m：05矮人蒸氣火銃兵**。使用者給5.jpg／5-1.jpg要求新增變身；m05接MORPHS.dwarfGunner與SW四圖集，沿用既有藍變槍手等級／能力，測試不限等級開關不變。現m01～m05專屬外觀，其餘25種統一。36格（walk／attack每向4、cast／hit各2），384×320／腳底[192,270]／charH160／drawH48，時間130／140／220／150ms。原圖背面攻擊正面化、側面施法缺格與白煙跨格已補畫，實際開火含低持槍／舉槍／後座／收槍。第18.8、88節。
+- **05來源與試播**：images/sprites/morph/dwarf-gunner-v1/有正式單格／圖集／manifest；tools/sprite-src/morph/dwarf-gunner-v1/保留原圖、初次去背、五份正式生成PNG、全部內建image_gen提示詞／整理腳本。原去背白煙跨格會被切平，因此最終36格都用獨立補畫分鏡，初稿保留不用。試播dwarf-gunner-motion.html在本對話visualizations；真實卷軸／renderer隔離頁tools/dwarf-morph-preview.html；test-dwarf-morph.js通過卷軸扣量／到期／四向動作／其他變身回歸。未commit／Push。
+- **m版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022m）、test-dwarf-morph.js通過；36格皆獨立RGBA、透明留邊，圖集逐格一致。瀏覽器試播四動作及播放／暫停／逐格正常；真實renderer四向開火560ms，實際觀察第0～3格及開火後座畫面，兩頁Console無error／warn。未讀寫真實存檔或上傳雲端，待使用者Ctrl+F5→變形卷軸→槍手→05試玩驗收，未commit／Push。
+
 - **20261022l：04 蒼穹女武神・艾爾接上專屬變身圖**（sky-valkyrie-v1，384×320、腳底 192,270、8 格動作，第 88 節）；目前專屬圖 m01～m04，其餘 26 種統一外觀。
 - **本機待驗收20261022k：03冥火骷髏神射攻擊修正**。使用者回報與紅變相同，原圖幾乎只維持瞄準。內建image_gen新畫三向12格低持弓／拉弓／放箭／收弓，MORPHS.hellfireArcher.attack及SW改用attack-v2.png；維持320×280／腳底[160,240]／charH160／4×140ms，原圖／舊圖集留存。原稿／完整提示詞／prepare-attack-v2.py在tools/sprite-src/morph/hellfire-archer-v1/，共用sky-valkyrie-v1/prepare.py的打包函式；第18.6、88節。未改能力／消耗／schema。
 - **同次04女武神72格樣本待驗收**：使用者給4.jpg，要求助手製作較流暢且有質感的動畫。金白戰甲／四片金翼／神弓／懸浮，移動與射箭8格、施法受傷4格，三向共72格、左鏡像。images/sprites/morph/sky-valkyrie-v1/正式格384×320／腳底[192,270]／charH160；時間80／70／110／80ms。來源／提示詞／整理腳本在tools/sprite-src/morph/sky-valkyrie-v1/。先看本對話sky-valkyrie-motion.html，**未接m04或改玩法數值**；第18.7節。翼尖／衣甲仍有逐格繪製差異，需看動態驗收。
@@ -104,6 +108,8 @@
   大地圖（多張真地圖拼接、遮擋、交界路引、瞬移卷軸、傳送師）、防改檔（伺服器可疑紀錄、存檔加密簽章、雲端簽章、交易所門檻、混淆）。
 
 ## 2. 待辦（使用者還沒叫做的不要自己開工，先問）
+
+- **m版05待實玩**：Ctrl+F5 → 變形卷軸 → 槍手 → 05矮人蒸氣火銃兵 → 確認矮人／鍋爐／白蒸氣、走路與開火後座／收槍，轉四方向後再施法／受傷。隔離頁http://localhost:8790/tools/dwarf-morph-preview.html可檢查真實圖集；看本對話試播四動作。使用者實玩確認後才commit指定檔案，再請其GitHub Desktop Push origin。
 
 - **k版03待實玩**：Ctrl+F5 → 變形卷軸選03冥火骷髏神射 → 打怪，確認低持弓、拉弓、放箭、收弓，四方向可見；隔離頁http://localhost:8790/tools/hellfire-attack-preview.html可點攻擊與方向，不讀真實角色／雲端。04先看本對話72格試播並決定是否接入；未獲實玩驗收前不commit／Push。
 
