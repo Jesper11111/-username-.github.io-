@@ -1,0 +1,31 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><base href="../"><title>魔龍變身攻擊檢查</title>
+<style>body{background:#1c2225;color:#eee;font:16px sans-serif;margin:20px}canvas{width:min(100%,960px);height:auto}button,select{font:inherit;padding:8px;margin:6px}#result{white-space:pre-wrap}</style>
+<h2>裂空魔龍爪皇・變身檢查</h2>
+<label>方向 <select id="direction"><option value="right">右側</option><option value="down">正面</option><option value="up">背面</option><option value="left">左側</option></select></label>
+<button id="attack" disabled>攻擊一次</button><p id="result">載入中</p><p id="record"></p><canvas width="640" height="300" aria-label="實際遊戲繪圖函式播放魔龍變身攻擊"></canvas>
+<script>
+(async()=>{
+const files=['config','classes','skills','items','spellbook','monsters','zones','quests','resonance','boss-enchant','boss-vfx','world-vfx','player','guard','affix','maps','combat','ui','presence','scene-art','ui-scene','world-atlas'];
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='data/'+f+'.js?v=20261022o';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('魔龍變身測試','darkelf',CLASSES.darkelf.base);player.lv=55;
+addItem('polyScroll',1);const morphError=usePotion('polyScroll','m27');if(morphError)throw Error(morphError);player.loc={type:'zone',id:'tower',floor:10};buildScene();
+scene.bg=null;scene.gates=null;scene.pl.dir='right';scene.pl.path=[];
+const m={x:scene.pl.x+1,y:scene.pl.y,rx:scene.pl.rx+1,ry:scene.pl.ry,mid:'skeleton',lastHp:100,inst:{name:'測試骷髏',hp:100,maxHp:100,lv:10}};
+scene.mons=[m];scene.engaged=m;scene.lastPlayerHp=player.hp;
+const button=document.getElementById('attack'),result=document.getElementById('result'),cv=document.querySelector('canvas');
+await Promise.all(['walk','attack','cast','hit'].map(a=>new Promise((resolve,reject)=>{const im=new Image();im.onload=resolve;im.onerror=reject;im.src=MORPHS.riftDragon[a].src;})));
+MORPHS.riftDragon.drawH=96;
+button.disabled=false;
+const seen=new Set();
+button.onclick=()=>{seen.clear();cv.dataset.frames='';m.inst.hp-=1;sceneReadEvents();const a=scene.pl.anim;document.getElementById('record').textContent='觸發紀錄：'+(a?a.name+'／'+a.dur+'ms':'沒有動作')+'；目標HP '+m.inst.hp;};
+document.getElementById('direction').onchange=e=>{scene.pl.dir=e.target.value;};
+let prev=0;
+function draw(t){const dt=prev?Math.min(100,t-prev):0;prev=t;if(scene.pl.anim)scene.pl.anim.t+=dt;
+sceneDraw(cv.getContext('2d'),640,300);
+const a=scene.pl.anim;const active=a&&a.t<a.dur;
+if(active){seen.add(Math.min(3,Math.floor(a.t/140)));cv.dataset.frames=Array.from(seen).join(',');}
+result.textContent=active?'攻擊：'+['蓄勢','前爪揮擊','交叉重爪','收勢'][Math.min(3,Math.floor(a.t/140))]:'站立・點「攻擊一次」播放';
+cv.dataset.animation=active?'attack':'idle';requestAnimationFrame(draw);}
+requestAnimationFrame(draw);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>

@@ -1,0 +1,698 @@
+{
+  "id": "rift-dragon-v1",
+  "name": "裂空魔龍爪皇（紫變）",
+  "form": "m27",
+  "status": "game-appearance",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/rift-dragon-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            384,
+            348
+          ],
+          "sourceFoot": [
+            218,
+            340
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            384,
+            0,
+            768,
+            348
+          ],
+          "sourceFoot": [
+            610,
+            340
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            768,
+            0,
+            1152,
+            348
+          ],
+          "sourceFoot": [
+            994,
+            341
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            348
+          ],
+          "sourceFoot": [
+            1378,
+            341
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            384,
+            346
+          ],
+          "sourceFoot": [
+            205,
+            328
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            384,
+            0,
+            768,
+            346
+          ],
+          "sourceFoot": [
+            605,
+            326
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            768,
+            0,
+            1152,
+            346
+          ],
+          "sourceFoot": [
+            995,
+            329
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            346
+          ],
+          "sourceFoot": [
+            1380,
+            328
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            384,
+            344
+          ],
+          "sourceFoot": [
+            188,
+            328
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            384,
+            0,
+            768,
+            344
+          ],
+          "sourceFoot": [
+            582,
+            333
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            768,
+            0,
+            1152,
+            344
+          ],
+          "sourceFoot": [
+            970,
+            331
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            344
+          ],
+          "sourceFoot": [
+            1353,
+            332
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/rift-dragon-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            348,
+            384,
+            671
+          ],
+          "sourceFoot": [
+            181,
+            655
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            384,
+            348,
+            790,
+            671
+          ],
+          "sourceFoot": [
+            564,
+            655
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            790,
+            348,
+            1175,
+            671
+          ],
+          "sourceFoot": [
+            966,
+            660
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1175,
+            348,
+            1536,
+            671
+          ],
+          "sourceFoot": [
+            1378,
+            660
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            346,
+            384,
+            672
+          ],
+          "sourceFoot": [
+            179,
+            652
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            384,
+            346,
+            806,
+            672
+          ],
+          "sourceFoot": [
+            561,
+            651
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            806,
+            346,
+            1184,
+            672
+          ],
+          "sourceFoot": [
+            981,
+            652
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1184,
+            346,
+            1536,
+            672
+          ],
+          "sourceFoot": [
+            1380,
+            654
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            344,
+            384,
+            671
+          ],
+          "sourceFoot": [
+            187,
+            653
+          ],
+          "sourceBodyHeight": 265,
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            384,
+            344,
+            778,
+            671
+          ],
+          "sourceFoot": [
+            568,
+            647
+          ],
+          "sourceBodyHeight": 265,
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            778,
+            344,
+            1168,
+            671
+          ],
+          "sourceFoot": [
+            968,
+            657
+          ],
+          "sourceBodyHeight": 265,
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1168,
+            344,
+            1536,
+            671
+          ],
+          "sourceFoot": [
+            1355,
+            656
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-up-04.png"
+        }
+      ],
+      "phases": [
+        "windup",
+        "forward-claw",
+        "cross-claw",
+        "recover"
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/rift-dragon-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            671,
+            384,
+            1024
+          ],
+          "sourceFoot": [
+            187,
+            988
+          ],
+          "sourceBodyHeight": 285,
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            384,
+            671,
+            790,
+            1024
+          ],
+          "sourceFoot": [
+            578,
+            981
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            672,
+            384,
+            1024
+          ],
+          "sourceFoot": [
+            205,
+            982
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            384,
+            672,
+            808,
+            1024
+          ],
+          "sourceFoot": [
+            591,
+            979
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            671,
+            384,
+            1024
+          ],
+          "sourceFoot": [
+            191,
+            989
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            384,
+            671,
+            780,
+            1024
+          ],
+          "sourceFoot": [
+            584,
+            980
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/rift-dragon-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            790,
+            671,
+            1152,
+            1024
+          ],
+          "sourceFoot": [
+            978,
+            987
+          ],
+          "sourceBodyHeight": 268,
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1152,
+            671,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1378,
+            989
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            808,
+            672,
+            1152,
+            1024
+          ],
+          "sourceFoot": [
+            982,
+            982
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1152,
+            672,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1380,
+            981
+          ],
+          "sourceBodyHeight": 242,
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            780,
+            671,
+            1152,
+            1024
+          ],
+          "sourceFoot": [
+            968,
+            986
+          ],
+          "sourceBodyHeight": 250,
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1152,
+            671,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1356,
+            990
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Original four reference files preserved",
+    "Supplied sheets mix dragon and silver-haired elf; do not use for runtime",
+    "All directional actions redrawn from dragon portrait",
+    "Left direction mirrors right"
+  ]
+}

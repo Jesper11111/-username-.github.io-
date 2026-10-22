@@ -94,11 +94,19 @@ const MORPHS = {
         cast:   { src: 'images/sprites/morph/brudika-shadow-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/brudika-shadow-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },
+    // 27 裂空魔龍爪皇：龍翼、腕鏈與巨爪留邊，腳底 (192,270)
+    riftDragon: {
+        name: '裂空魔龍爪皇', drawH: 48, charH: 160, foot: [192, 270],
+        walk:   { src: 'images/sprites/morph/rift-dragon-v1/walk.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/rift-dragon-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/rift-dragon-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/rift-dragon-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
 };
 
 // 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。2026-10-22 使用者給的 30 種，設計稿在 tools/MORPH-DESIGN.md。
 // 階級決定需求等級與基礎加成，系別決定偏重（弓槍命中、雙刀閃避、雙手劍傷害、單手劍攻速、法杖施法、拳套爆擊、鋼爪吸血、劍盾防禦）。
-// 外觀：m01～m05、m10 用各自的專屬圖，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
+// 外觀：m01～m05、m10、m27 用各自的專屬圖，其餘統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
 const MORPH_TIERS = {
     blue:   { name: '藍變', grade: '稀有', lv: 15, color: '#6aa8ff', hit: 2, dmg: 2, spd: 0.06 },
     red:    { name: '紅變', grade: '英雄', lv: 35, color: '#ff6a6a', hit: 3, dmg: 3, spd: 0.10 },
@@ -129,7 +137,7 @@ const MORPH_FORMS = [
     ['m15', '亞丁榮耀劍士', 'sword', 'blue'], ['m16', '烈焰死亡騎士', 'sword', 'red'], ['m17', '雷霆黑騎士統領', 'sword', 'purple'], ['m18', '神聖裁決劍聖', 'sword', 'gold'],
     ['m19', '象牙塔高階秘術師', 'staff', 'blue'], ['m20', '深淵羊魔・巴風特使徒', 'staff', 'red'], ['m21', '大魔導士・巴列斯真身', 'staff', 'purple'],
     ['m22', '修羅破戒僧', 'fist', 'blue'], ['m23', '熔岩碎骨鬥士', 'fist', 'red'], ['m24', '霸天雷神拳皇', 'fist', 'purple'],
-    ['m25', '荒野血狼狂戰', 'claw', 'blue'], ['m26', '暗夜血族撕裂者', 'claw', 'red'], ['m27', '裂空魔龍爪皇', 'claw', 'purple'],
+    ['m25', '荒野血狼狂戰', 'claw', 'blue'], ['m26', '暗夜血族撕裂者', 'claw', 'red'], ['m27', '裂空魔龍爪皇', 'claw', 'purple', 'riftDragon'],
     ['m28', '風木鐵壁重裝兵', 'shield', 'blue'], ['m29', '薔薇聖殿十字軍', 'shield', 'red'], ['m30', '不滅黃金守護神・宙斯盾', 'shield', 'gold'],
 ].map(([id, name, group, tier, sprite]) => {
     const t = MORPH_TIERS[tier], fx = MORPH_GROUPS[group].fx(t, MORPH_TIER_K[tier]);

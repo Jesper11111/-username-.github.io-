@@ -5,6 +5,11 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022o：27裂空魔龍爪皇（紫變）**。使用者給立繪與三張jfif；實際都在桌面「變身人物」，原訊息jfif路徑缺資料夾。分鏡混銀髮人形／持刀與龍頭，依27.jpg龍頭巨爪立繪用內建image_gen補畫三向36格／左鏡像，走路／鋼爪揮擊／施法／受傷。MORPHS.riftDragon與m27.sprite／SW四圖集接入，紫變鋼爪既有能力／等級與測試不限等級開關不變，schema不變。384×320／腳底[192,270]／charH160／drawH48，130／140／220／150ms；第18.10、88節。現7專屬外觀、23統一；素材images/sprites/morph/rift-dragon-v1/，四原圖／提示詞／整理腳本tools/sprite-src/morph/rift-dragon-v1/，試播rift-dragon-motion.html，隔離檢查tools/rift-dragon-morph-preview.html／test-rift-dragon-morph.js。未commit／Push。
+- **o版待實玩**：Ctrl+F5→變形卷軸→鋼爪→27裂空魔龍爪皇，走動及四向打怪，確認龍頭、巨爪出手與翼尖／腳底；使用者確認後才commit及請Push origin。
+- **使用者再次要求27加入卷軸**：已確認o版MORPH_FORMS有m27／riftDragon、openMorphPicker在鋼爪組列出且有卷軸可選；隔離實測真正morphPick('m27')扣一張並套專屬外觀通過。程式已完成，沒有重複新增或換版；仍是本機o版待實玩、未發布。
+- **o版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022o）、test-rift-dragon-morph.js與git diff --check通過；36格獨立RGBA、透明留邊及圖集逐格對應通過。瀏覽器四動作切換／播放／逐格／鏡像正常，真實卷軸／renderer四向攻擊560ms、第0～3格均畫出，鋼爪出手畫面已留存；兩頁Console無error／warn。未讀寫真實存檔或上傳雲端，未commit／Push。
+
 - **本機待驗收20261022n：10布魯迪卡之影（紫變）**。使用者給10.jpg與三張jfif要求新增變身；原後兩張只有走路為背影，其他動作仍正面，且缺側面。內建image_gen補畫三向36格，雙刀蓄勢／第一刀／交叉斬／收勢，左向鏡像；正式素材images/sprites/morph/brudika-shadow-v1/，四原圖／五份生成PNG／提示詞／整理腳本在tools/sprite-src/morph/brudika-shadow-v1/。384×320／腳底[192,270]／charH160／drawH48，時間130／140／220／150ms。m10接MORPHS.brudikaShadow及SW四圖集，沿用既有能力／等級設定，不改schema。專屬外觀6種，其餘24種統一；第18.9、88節。試播brudika-shadow-motion.html；tools/brudika-morph-preview.html、test-brudika-morph.js隔離檢查，未commit／Push。
 - **n版待使用者實玩**：Ctrl+F5→背包使用變形卷軸→雙刀→10布魯迪卡之影，走動及四向打怪，確認雙刀出手、翼尖與腳底；若正常再commit及請使用者Push origin。
 - **n版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022n）、test-brudika-morph.js及git diff --check通過。36格獨立RGBA、透明留邊／圖集逐格比對通過；瀏覽器試播四動作切換／播放／逐格、左右鏡像正常；真實卷軸及renderer四向攻擊560ms，第0～3格均畫出，交叉斬畫面已留存。兩頁Console無error／warn，未讀寫真實存檔或雲端。暫時出現瀏覽器檢查頁未附加問題，重用既有分頁導航後已恢復並完成截圖；未commit／Push。
