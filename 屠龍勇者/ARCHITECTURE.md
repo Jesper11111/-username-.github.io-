@@ -8,6 +8,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
+| `tools/MORPH-DESIGN.md` | 使用者給的 30 種變身設計稿（名稱、系別、階級、外觀與特效重點），做變身圖時照這份（第 88 節） |
 | `images/icons/items/polyScroll.png`、`tools/make-poly-icon.ps1` | 變形卷軸道具圖（羊皮紙卷軸＋變身人物第一格合成，128×128；第 88 節） |
 | `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
 | `tools/legend-glow-preview.html`、`tools/test-legend-glow.js` | 全部 28 件傳說裝備的呼吸光暈、背包／角色／鍛造隔離預覽與品級範圍驗證（第 84 節） |
@@ -127,7 +128,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022e`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2336,23 +2337,34 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **選變身對象**（參考天堂：讀卷軸後選要變的怪物，等級到了才能變，越高級越強）：背包「使用」、快捷欄點一下、`quickPotion` 都改成開 `openMorphPicker` 視窗，列出 `MORPH_FORMS` 9 種（名稱、需求等級、效果）；等級不夠的變灰不能點；目前變身中的那個金框、上次選的標「上次」。
   點選 → `morphPick(id)` → `usePotion('polyScroll', id)`；等級不夠或沒選對象時**不扣卷軸**。變身中視窗多一個「解除變身」（`morphCancel`，不扣卷軸）。
 
-| 對象 | 需求 | 效果 |
+- **20261022e 改成使用者給的 30 種**（設計稿 `tools/MORPH-DESIGN.md`；原本 9 種骷髏～巴風特移除，舊存檔的 `lastMorph`／變身中的舊 id 查不到時當成沒選、沒加成，不會壞）。
+  資料在 `items.js`：`MORPH_FORMS` 只寫 `[id, 名稱, 系別, 階級, 專屬圖]`，加成由 `MORPH_TIERS`（階級）＋`MORPH_GROUPS`（系別）算出，說明文字由 `morphFxText` 產生。選單依系別分組、標建議武器（只是提示，不限制武器），卡片左邊框與名稱用階級顏色。
+
+| 階級 | 需求 | 基礎（命中／傷害／攻速） | 顏色 |
+|---|---|---|---|
+| 藍變・稀有 | Lv.15 | +2／+2／+6% | 藍 |
+| 紅變・英雄 | Lv.35 | +3／+3／+10% | 紅 |
+| 紫變・傳說 | Lv.52 | +5／+5／+15% | 紫 |
+| 金變・神話 | Lv.70 | +7／+7／+20% | 金 |
+
+| 系別（建議武器） | 偏重（k＝階數 1～4） | 對象 |
 |---|---|---|
-| 骷髏 | Lv.1 | 命中 +1、傷害 +1 |
-| 妖魔弓箭手 | Lv.10 | 命中 +2、攻速 +5% |
-| 狼人 | Lv.15 | 傷害 +2、攻速 +6%、閃避 +2% |
-| 史巴托 | Lv.25 | 命中 +2、傷害 +2、防禦 +1、攻速 +8% |
-| 巡守妖魔神射 | Lv.30 | 命中 +3、傷害 +2、攻速 +10% |
-| 黑騎士 | Lv.40 | 傷害 +3、防禦 +3、HP +60、攻速 +10% |
-| 冰霜女巫 | Lv.45 | SP +3、回魔 +3、MR +10（施法職業用） |
-| 死亡騎士 | Lv.52 | 命中 +5、傷害 +5、防禦 +2、攻速 +15% |
-| 巴風特 | Lv.60 | 命中 +6、傷害 +6、爆擊 +3%、HP +100、攻速 +18% |
+| 弓手（弓） | 命中 +k | 01 巡守妖魔神射、02 月光精靈巡林者、03 冥火骷髏神射、04 蒼穹女武神・艾爾 |
+| 槍手（槍） | 命中 +k、傷害 +1、攻速 −2% | 05 矮人蒸氣火銃兵、06 暗影海盜雙槍客、07 魔導審判狙擊手 |
+| 雙刀（雙刀） | 閃避 1%＋k% | 08 沉默洞穴刺客、09 赤影暗殺者、10 布魯迪卡之影、11 深淵雙刃魔神 |
+| 雙手劍（雙手劍） | 傷害 +k+1、爆擊 k%、攻速 −2% | 12 鋼鐵狂戰士、13 冥皇處刑者、14 煉獄魔劍尊・巴拉卡 |
+| 單手劍（單手劍） | 命中 +1、攻速 +3% | 15 亞丁榮耀劍士、16 烈焰死亡騎士、17 雷霆黑騎士統領、18 神聖裁決劍聖 |
+| 法杖（魔杖） | 不加傷害攻速：命中 +k、SP／回魔 2/3/4/6、MR 5k | 19 象牙塔高階秘術師、20 深淵羊魔・巴風特使徒、21 大魔導士・巴列斯真身 |
+| 拳套（空手） | 爆擊 1%＋k% | 22 修羅破戒僧、23 熔岩碎骨鬥士、24 霸天雷神拳皇 |
+| 鋼爪（鋼爪） | 爆擊 k%、吸血 k% | 25 荒野血狼狂戰、26 暗夜血族撕裂者、27 裂空魔龍爪皇 |
+| 劍盾（單手劍＋盾） | 傷害 −1、防禦 2/3/4/6、HP 40/80/120/200、攻速 −3% | 28 風木鐵壁重裝兵、29 薔薇聖殿十字軍、30 不滅黃金守護神・宙斯盾 |
 
 - 攻速走 `spdMul`，跟其他攻速合計最多 30%。數值是助手先定的，使用者可再調。
 - 增益紀錄 `player.buffs.morph = { src: 'item', id: 'polyScroll', form, until }`；`buffFx` 有 `form` 就回傳 `MORPH_BY_ID[form].fx`（`BUFF_DEFS.morph.fx` 是空的），`buffName` 顯示「變身：對象名」（左上角增益列的提示）。
   再讀一張會換成新對象並重新計時；死亡清除增益時一起解除；不改存檔結構（`SAVE_SCHEMA` 仍 5），上次選的對象存在 `player.settings.lastMorph`。
 - 快捷欄可放、可設自動：自動時用 `lastMorph`（效果沒了就再讀一張）；還沒選過任何對象時不能開自動（提示先點一下選擇）。
-- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（目前 9 種全部是巡守妖魔神射的圖）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
+- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01 巡守妖魔神射有自己的圖，其餘 29 種也先用它）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
 - 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
 - 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
 - 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。
+- 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。

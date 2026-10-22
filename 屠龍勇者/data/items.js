@@ -56,19 +56,49 @@ const MORPHS = {
     },
 };
 
-// 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。
-// 外觀目前統一用卷軸的 morph（巡守妖魔神射）；之後有新圖時在這裡加 sprite: 'MORPHS 的 key' 即可
+// 變形卷軸可選的變身對象（參考天堂：讀卷軸後選對象，等級到了才能變，越高級越強）。2026-10-22 使用者給的 30 種，設計稿在 tools/MORPH-DESIGN.md。
+// 階級決定需求等級與基礎加成，系別決定偏重（弓槍命中、雙刀閃避、雙手劍傷害、單手劍攻速、法杖施法、拳套爆擊、鋼爪吸血、劍盾防禦）。
+// 外觀目前統一用卷軸的 morph（巡守妖魔神射）；有新圖時在 MORPHS 加一組，該對象加 sprite: 'key' 即可
+const MORPH_TIERS = {
+    blue:   { name: '藍變', grade: '稀有', lv: 15, color: '#6aa8ff', hit: 2, dmg: 2, spd: 0.06 },
+    red:    { name: '紅變', grade: '英雄', lv: 35, color: '#ff6a6a', hit: 3, dmg: 3, spd: 0.10 },
+    purple: { name: '紫變', grade: '傳說', lv: 52, color: '#c08bff', hit: 5, dmg: 5, spd: 0.15 },
+    gold:   { name: '金變', grade: '神話', lv: 70, color: '#ffd56a', hit: 7, dmg: 7, spd: 0.20 },
+};
+const MORPH_TIER_K = { blue: 1, red: 2, purple: 3, gold: 4 };
+// 系別：weapon＝建議武器（只是提示，不限制）；fx(t, k) 依階級 t 與階數 k（1～4）算加成
+const MORPH_GROUPS = {
+    bow:    { name: '弓手系', weapon: '弓',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg, spdMul: t.spd }) },
+    gun:    { name: '槍手系', weapon: '槍',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg + 1, spdMul: t.spd - 0.02 }) },
+    dual:   { name: '雙刀系', weapon: '雙刀',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, dodge: 0.01 + k * 0.01 }) },
+    great:  { name: '雙手劍系', weapon: '雙手劍', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg + k + 1, spdMul: t.spd - 0.02, crit: k * 0.01 }) },
+    sword:  { name: '單手劍系', weapon: '單手劍', fx: (t, k) => ({ hit: t.hit + 1, dmg: t.dmg, spdMul: t.spd + 0.03 }) },
+    staff:  { name: '法杖系', weapon: '魔杖',   fx: (t, k) => ({ hit: k, sp: [2, 3, 4, 6][k - 1], mpRegen: [2, 3, 4, 6][k - 1], mr: k * 5 }) },
+    fist:   { name: '拳套系', weapon: '空手',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, crit: 0.01 + k * 0.01 }) },
+    claw:   { name: '鋼爪系', weapon: '鋼爪',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, crit: k * 0.01, lifesteal: k * 0.01 }) },
+    shield: { name: '劍盾系', weapon: '單手劍＋盾', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg - 1, ac: [2, 3, 4, 6][k - 1], hp: [40, 80, 120, 200][k - 1], spdMul: t.spd - 0.03 }) },
+};
 const MORPH_FORMS = [
-    { id: 'skeleton',    name: '骷髏',         lv: 1,  fx: { hit: 1, dmg: 1 },                                   desc: '命中 +1、傷害 +1' },
-    { id: 'orcArcher',   name: '妖魔弓箭手',   lv: 10, fx: { hit: 2, spdMul: 0.05 },                             desc: '命中 +2、攻速 +5%' },
-    { id: 'werewolf',    name: '狼人',         lv: 15, fx: { dmg: 2, spdMul: 0.06, dodge: 0.02 },                desc: '傷害 +2、攻速 +6%、閃避 +2%' },
-    { id: 'spartoi',     name: '史巴托',       lv: 25, fx: { hit: 2, dmg: 2, ac: 1, spdMul: 0.08 },              desc: '命中 +2、傷害 +2、防禦 +1、攻速 +8%' },
-    { id: 'wolfRanger',  name: '巡守妖魔神射', lv: 30, fx: { hit: 3, dmg: 2, spdMul: 0.1 },                      desc: '命中 +3、傷害 +2、攻速 +10%' },
-    { id: 'blackKnight', name: '黑騎士',       lv: 40, fx: { dmg: 3, ac: 3, hp: 60, spdMul: 0.1 },               desc: '傷害 +3、防禦 +3、HP +60、攻速 +10%' },
-    { id: 'frostWitch',  name: '冰霜女巫',     lv: 45, fx: { sp: 3, mpRegen: 3, mr: 10 },                        desc: 'SP +3、回魔 +3、MR +10（適合施法職業）' },
-    { id: 'deathKnight', name: '死亡騎士',     lv: 52, fx: { hit: 5, dmg: 5, ac: 2, spdMul: 0.15 },              desc: '命中 +5、傷害 +5、防禦 +2、攻速 +15%' },
-    { id: 'baphomet',    name: '巴風特',       lv: 60, fx: { hit: 6, dmg: 6, crit: 0.03, hp: 100, spdMul: 0.18 }, desc: '命中 +6、傷害 +6、爆擊 +3%、HP +100、攻速 +18%' },
-];
+    ['m01', '巡守妖魔神射', 'bow', 'blue', 'wolfRanger'], ['m02', '月光精靈巡林者', 'bow', 'red'], ['m03', '冥火骷髏神射', 'bow', 'purple'], ['m04', '蒼穹女武神・艾爾', 'bow', 'gold'],
+    ['m05', '矮人蒸氣火銃兵', 'gun', 'blue'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
+    ['m08', '沉默洞穴刺客', 'dual', 'blue'], ['m09', '赤影暗殺者', 'dual', 'red'], ['m10', '布魯迪卡之影', 'dual', 'purple'], ['m11', '深淵雙刃魔神', 'dual', 'gold'],
+    ['m12', '鋼鐵狂戰士', 'great', 'blue'], ['m13', '冥皇處刑者', 'great', 'red'], ['m14', '煉獄魔劍尊・巴拉卡', 'great', 'purple'],
+    ['m15', '亞丁榮耀劍士', 'sword', 'blue'], ['m16', '烈焰死亡騎士', 'sword', 'red'], ['m17', '雷霆黑騎士統領', 'sword', 'purple'], ['m18', '神聖裁決劍聖', 'sword', 'gold'],
+    ['m19', '象牙塔高階秘術師', 'staff', 'blue'], ['m20', '深淵羊魔・巴風特使徒', 'staff', 'red'], ['m21', '大魔導士・巴列斯真身', 'staff', 'purple'],
+    ['m22', '修羅破戒僧', 'fist', 'blue'], ['m23', '熔岩碎骨鬥士', 'fist', 'red'], ['m24', '霸天雷神拳皇', 'fist', 'purple'],
+    ['m25', '荒野血狼狂戰', 'claw', 'blue'], ['m26', '暗夜血族撕裂者', 'claw', 'red'], ['m27', '裂空魔龍爪皇', 'claw', 'purple'],
+    ['m28', '風木鐵壁重裝兵', 'shield', 'blue'], ['m29', '薔薇聖殿十字軍', 'shield', 'red'], ['m30', '不滅黃金守護神・宙斯盾', 'shield', 'gold'],
+].map(([id, name, group, tier, sprite]) => {
+    const t = MORPH_TIERS[tier], fx = MORPH_GROUPS[group].fx(t, MORPH_TIER_K[tier]);
+    for (const k in fx) if (!fx[k]) delete fx[k];
+    return { id, name, group, tier, lv: t.lv, fx, desc: morphFxText(fx), ...(sprite ? { sprite } : {}) };
+});
+function morphFxText(fx) {
+    const pct = v => `${Math.round(v * 100)}%`;
+    const L = { hit: ['命中', v => v], dmg: ['傷害', v => v], spdMul: ['攻速', pct], dodge: ['閃避', pct], crit: ['爆擊', pct], lifesteal: ['吸血', pct],
+        ac: ['防禦', v => v], hp: ['HP', v => v], sp: ['SP', v => v], mpRegen: ['回魔', v => v], mr: ['MR', v => v] };
+    return Object.keys(L).filter(k => fx[k]).map(k => `${L[k][0]} ${fx[k] > 0 ? '+' : ''}${L[k][1](fx[k])}`).join('、');
+}
 const MORPH_BY_ID = Object.fromEntries(MORPH_FORMS.map(f => [f.id, f]));
 
 // cat：weapon／armor／potion／scroll／ammo／elixir／material
