@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者（紅變）36 格透明外觀與試播素材、原圖／去背原稿／提示詞及裁切規格；等級與能力待定，未加入選單（第 18.5 節） |
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
 | `tools/MORPH-DESIGN.md` | 使用者給的 30 種變身設計稿（名稱、系別、階級、外觀與特效重點），做變身圖時照這份（第 88 節） |
 | `images/icons/items/polyScroll.png`、`tools/make-poly-icon.ps1` | 變形卷軸道具圖（羊皮紙卷軸＋變身人物第一格合成，128×128；第 88 節） |
@@ -892,6 +893,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 每格 256×240 真透明 RGBA；列順序 down／right／up，left＝right 鏡像。charH 160、建議 drawH 48；時間依序 130／140／220／150ms。施法／受傷只有 2 格，是基礎動作，需更細緻時再增加中間姿勢。
 - **腳底 anchor (128,200)**，下方 40px 留給向下箭光。未來變身 renderer 應畫在 `(腳底X−128k, 腳底Y−200k)`、k＝drawH／160；目前 renderer 用 cellH 當基準，不能未處理 anchor 就直接貼上職業資料，否則浮空。
 - 本次僅製作素材與本對話互動試播；未改 `classes.js`、SW 清單、GAME_VERSION、變身能力、選單或存檔。互動預覽位於本對話 visualizations 的 `wolf-ranger-v2-motion.html`，不加入遊戲 script。
+
+### 18.5 月光精靈巡林者（紅變）外觀素材（2026-10-22，沿用 `20261022e`，未接入玩法）
+
+- 使用者提供立繪與 36 格 JPG，並選擇「先完成外觀素材與試播，等級及能力稍後決定」。不新增 MORPH_FORMS、不改變形卷軸、數值、存檔或 SW。
+- `tools/sprite-src/morph/moon-ranger-v1/` 保留 reference.jpg、sheet-original.jpg；內建 image_gen 去掉白底與標題，保留銀髮／銀甲／紅綠魔法，透明原稿為 sheet-transparent.png，提示詞 prompts.json。prepare.py 依人物框分格、隔開鄰格、等比縮放與腳底對齊，原圖不覆寫。
+- `images/sprites/morph/moon-ranger-v1/`：walk／attack 各 12 格，cast／hit 各 6 格，共 36 單格 PNG、4 動作 PNG 圖集、輕量 WebP、contact.png 總覽與 manifest.json。每格 320×240、charH160、drawH48、腳底 anchor [160,200]；列 down／right／up，左側鏡像。每格 130／140／220／150ms。
+- 保留原圖姿勢，走路步幅變化小，部分攻擊／施法以特效變化為主；沒有新增插值動作。等級與能力在 manifest 留 null；未寫入遊戲資料。原版側面放箭上弓尖貼格邊，已用內建 image_gen 修補 2 格，原稿 bow-repair-generated.png／提示詞 bow-repair-prompt.json 留存，prepare.py 依 source 覆寫這兩個輸出格、維持共同腳點及身高。
+- 本對話互動預覽 moon-ranger-motion.html 提供四向鏡像、四動作、播放／暫停／逐格；不加入遊戲 script，GAME_VERSION 不變。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 

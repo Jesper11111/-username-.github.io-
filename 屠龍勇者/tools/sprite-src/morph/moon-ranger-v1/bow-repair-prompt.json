@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "precise-object-edit",
+  "prompt": "Precise repair edit. Image 1 is the edit target: TWO side-facing attack sprite frames of a silver-haired female elf ranger, two equal columns on transparent background. Image 2 is a supporting reference for her INTACT silver recurve bow, especially the upper curved tip. In image 1 both upper bow tips were cut off by a cropping boundary. Restore ONLY those two missing upper bow tips as smooth complete silver recurve arcs matching image 2, with no flat cut ends. Ensure each entire bow AND arrow tip fits fully inside its own half-canvas with transparent space above and to the right. Preserve the two characters' exact identity, green cloak, silver armor, hair, poses, relative scale, foot positions, arrow effects and arrangement; do NOT redesign or add more figures, do NOT change the pose or costume. Keep true transparent RGBA background. No text, label, grid, shadow, ground, checkerboard or colored matte. Two frames in ONE row, equal-sized cells, clean margins, whole bodies visible.",
+  "cells": [
+    "attack-right-03",
+    "attack-right-04"
+  ]
+}
