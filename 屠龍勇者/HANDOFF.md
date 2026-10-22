@@ -5,6 +5,7 @@
 
 ## 1. 現況
 
+- **20261022l：04 蒼穹女武神・艾爾接上專屬變身圖**（sky-valkyrie-v1，384×320、腳底 192,270、8 格動作，第 88 節）；目前專屬圖 m01～m04，其餘 26 種統一外觀。
 - **本機待驗收20261022k：03冥火骷髏神射攻擊修正**。使用者回報與紅變相同，原圖幾乎只維持瞄準。內建image_gen新畫三向12格低持弓／拉弓／放箭／收弓，MORPHS.hellfireArcher.attack及SW改用attack-v2.png；維持320×280／腳底[160,240]／charH160／4×140ms，原圖／舊圖集留存。原稿／完整提示詞／prepare-attack-v2.py在tools/sprite-src/morph/hellfire-archer-v1/，共用sky-valkyrie-v1/prepare.py的打包函式；第18.6、88節。未改能力／消耗／schema。
 - **同次04女武神72格樣本待驗收**：使用者給4.jpg，要求助手製作較流暢且有質感的動畫。金白戰甲／四片金翼／神弓／懸浮，移動與射箭8格、施法受傷4格，三向共72格、左鏡像。images/sprites/morph/sky-valkyrie-v1/正式格384×320／腳底[192,270]／charH160；時間80／70／110／80ms。來源／提示詞／整理腳本在tools/sprite-src/morph/sky-valkyrie-v1/。先看本對話sky-valkyrie-motion.html，**未接m04或改玩法數值**；第18.7節。翼尖／衣甲仍有逐格繪製差異，需看動態驗收。
 - **k版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022k）；test-moon-attack與test-hellfire-attack皆通過；72女武神及12新版紫變格皆非重複RGBA、透明留邊、圖集逐格對應。瀏覽器紫變實際sceneReadEvents／sceneDraw四向攻擊正常、Console無error／warn；女武神四動作、AVIF載入、播放／暫停／逐格／鏡像正常，Console無error／warn。兩份試播皆小於1MB，未寫真實存檔／雲端，未commit／Push；待使用者驗收。
