@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **2026-10-22 狀態校正（Claude）**：t～w 版程式都已 commit 並推上 origin/main（線上 20261022w，含 data/loot.js）；下面 t／u／v／w 條目寫的「未commit／待Push」已過時。後端掉寶 SQL 已安裝但 **enabled=false 尚未啟用**，下一步由使用者在 Supabase 執行 `update public.dragon_loot_config set enabled = true where id = 1;` 再 `select public.loot_status();`，之後少量角色實玩驗證（tools/SERVER-LOOT.md 第 3、4 步）。啟用後舊版客戶端（t 以前）會被擋上傳。
+
 - **本機待驗收20261022w：變形卷軸暫停商店購買**。使用者指定先無法購買；shopItemIds排除polyScroll，所有村莊商店不列出，buyItem／openShopBuy與自訂購買沿用同一檢查。已有卷軸照常使用，原定價／回收價／交易所不改，不改schema或正式SQL。index.html所有?v=與GAME_VERSION更新w；待使用者Ctrl+F5確認商店卷軸分類後提交／請Push。
 
 - **本機待驗收20261022v：出生金幣2,000**。使用者指定玩家出生金幣2000，createPlayer由300改為2000，十二職業共用；既有角色不補發、不改schema。index.html所有?v=與GAME_VERSION更新v，保留u版公告移除。待使用者Ctrl+F5新建角色確認後提交／請Push。
