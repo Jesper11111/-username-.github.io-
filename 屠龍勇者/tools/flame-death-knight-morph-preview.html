@@ -7,7 +7,7 @@
 (async()=>{
 const index=await(await fetch('index.html')).text(),style=document.createElement('style');style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
 const files=[...index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=[^"]+"/g)].map(m=>m[1]).filter(f=>!['data/main.js','data/pwa.js'].includes(f));
-for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261022r';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261022s&preview=motion-v2';s.onload=resolve;s.onerror=reject;document.head.append(s);});
 SIM_MODE=true;createPlayer('死亡騎士變身測試','darkelf',CLASSES.darkelf.base);player.lv=55;
 addItem('polyScroll',5);const morphError=usePotion('polyScroll','m16');if(morphError)throw Error(morphError);player.loc={type:'zone',id:'tower',floor:10};buildScene();
 scene.bg=null;scene.gates=null;scene.pl.dir='right';scene.pl.path=[];
@@ -20,17 +20,17 @@ button.disabled=false;
 saveGame=()=>{};refreshUI=()=>{document.getElementById('record').textContent='目前變身：'+playerMorph().name+'；卷軸剩 '+countItem('polyScroll')+' 張';};sfx=()=>{};
 document.getElementById('scroll').disabled=false;document.getElementById('step').disabled=false;
 document.getElementById('scroll').onclick=()=>{SIM_MODE=false;try{openMorphPicker();}finally{SIM_MODE=true;}};
-const seen=new Set();
+const seen=new Set(),attackSpec=MORPHS.flameDeathKnight.attack,n=attackSpec.frames.down,ms=attackSpec.ms,dur=n*ms;
 let paused=false,phase=-1;
 button.onclick=()=>{paused=false;phase=-1;seen.clear();cv.dataset.frames='';m.inst.hp-=1;sceneReadEvents();const a=scene.pl.anim;document.getElementById('record').textContent='觸發紀錄：'+(a?a.name+'／'+a.dur+'ms':'沒有動作')+'；目標HP '+m.inst.hp;};
-document.getElementById('step').onclick=()=>{paused=true;phase=(phase+1)%4;scene.pl.anim={name:'attack',t:phase*140+70,dur:560};};
+document.getElementById('step').onclick=()=>{paused=true;phase=(phase+1)%n;scene.pl.anim={name:'attack',t:phase*ms+ms/2,dur};};
 document.getElementById('direction').onchange=e=>{scene.pl.dir=e.target.value;};
 let prev=0;
 function draw(t){const dt=prev?Math.min(100,t-prev):0;prev=t;if(scene.pl.anim&&!paused)scene.pl.anim.t+=dt;
 sceneDraw(cv.getContext('2d'),640,300);
 const a=scene.pl.anim;const active=a&&a.t<a.dur;
-if(active){seen.add(Math.min(3,Math.floor(a.t/140)));cv.dataset.frames=Array.from(seen).join(',');}
-result.textContent=active?'攻擊：'+['蓄勢','斬下','火焰斬擊','收劍'][Math.min(3,Math.floor(a.t/140))]:'站立・點「攻擊一次」播放';
+if(active){seen.add(Math.min(n-1,Math.floor(a.t/ms)));cv.dataset.frames=Array.from(seen).join(',');}
+result.textContent=active?'攻擊：'+['持劍','抬劍','下斬','接觸','收勢','復位'][Math.min(n-1,Math.floor(a.t/ms))]:'站立・點「攻擊一次」播放';
 cv.dataset.animation=active?'attack':'idle';requestAnimationFrame(draw);}
 requestAnimationFrame(draw);
 })().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});

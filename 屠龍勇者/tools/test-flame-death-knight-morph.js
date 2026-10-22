@@ -19,10 +19,18 @@ assert.equal(playerSprite(),MORPHS.flameDeathKnight);assert.equal(playerMorph().
 assert.equal(MORPH_FORMS.length,30);assert.equal(SAVE_SCHEMA,5);
 const m={x:scene.pl.x+1,y:scene.pl.y,rx:scene.pl.x+1,ry:scene.pl.y,mid:'skeleton',lastHp:100,inst:{hp:90,maxHp:100}};
 scene.mons=[m];scene.engaged=m;gameLog.length=0;
+const attack=MORPHS.flameDeathKnight.attack,seen=new Set(),draws=[];
+assert.equal(attack.frames.down,6);assert.equal(attack.ms,80);
+spriteCache[attack.src]={complete:true,naturalWidth:2304};
+const painter=new Proxy({measureText:()=>({width:20}),createLinearGradient:()=>({addColorStop(){}}),createRadialGradient:()=>({addColorStop(){}}),drawImage:(im,...args)=>{if(im===spriteCache[attack.src]){seen.add(args[0]/384);draws.push(args);}}},{get:(o,k)=>k in o?o[k]:()=>{}});
 for(const dir of ['down','right','up','left']){
  scene.pl.dir=dir;scene.pl.anim=null;m.lastHp=100;m.inst.hp=90;scene.lastPlayerHp=player.hp;
- sceneReadEvents();assert.equal(scene.pl.anim.name,'attack');assert.equal(scene.pl.anim.dur,560);
+ sceneReadEvents();assert.equal(scene.pl.anim.name,'attack');assert.equal(scene.pl.anim.dur,480);
  scene.pl.anim.t=210;playAnim('hit');assert.equal(scene.pl.anim.name,'attack');assert.equal(scene.pl.anim.t,210);
+ seen.clear();draws.length=0;
+ for(let f=0;f<6;f++){scene.pl.anim.t=f*80+40;sceneDraw(painter,640,300);}
+ assert.deepEqual([...seen],[0,1,2,3,4,5],dir+' 六格攻擊都要畫出');
+ assert(draws.every(a=>a[1]==={down:0,right:320,left:320,up:640}[dir]),dir+' 攻擊方向列');
 }
 scene.pl.anim=null;m.lastHp=m.inst.hp;gameLog.push({seq:999999,cls:'miss',msg:'你的攻擊沒有命中'});scene.lastSeq=0;
 sceneReadEvents();assert.equal(scene.pl.anim.name,'attack');
@@ -47,3 +55,9 @@ for(const[a,n]of[['walk',4],['attack',4],['cast',2],['hit',2]]){
  assert.equal(manifest.actions[a].cells.length,n*3);
 }
 console.log('PASS：四張RGBA圖集、36格來源及離線預載。');
+const attackMeta=JSON.parse(fs.readFileSync(path.join(dir,'attack-v2-manifest.json'),'utf8'));
+const attackPng=fs.readFileSync(path.join(dir,'attack-v2.png'));
+assert.equal(attackPng.readUInt32BE(16),2304);assert.equal(attackPng.readUInt32BE(20),960);assert.equal(attackPng[25],6);
+assert.equal(attackMeta.cells.length,18);assert.equal(attackMeta.duration,480);
+assert(fs.readFileSync(path.join(root,'sw.js'),'utf8').includes(attackMeta.src));
+console.log('PASS：新版六格攻擊四向renderer、480ms動畫、18格新圖及原圖保留。');

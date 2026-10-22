@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022s：16號步態與經典風格單手斬**。使用者指出走路腳步不連續／像滑行，另指定天堂1／經典版死亡騎士攻擊為動作參考。新原創走路三向24格，固定骨盆／同列地面註冊，8×65ms＝520ms，移動速度及循環總長不變；攻擊三向18格，持劍／抬劍／下斬／接觸／收勢／復位，6×80ms＝480ms、縮小巨大刀光，右向兩格另補畫排除跨格斷劍／殘影。只調視覺、不改戰鬥間隔／傷害／能力／消耗／schema或等級測試開關。未使用商業圖片，也非官方逐格或秒數復刻。
+- **s版素材及工具**：flame-death-knight-v1保留原圖，新增walk-v2／attack-v2 PNG、42單格、AVIF／contact／獨立manifest；原稿／完整提示詞／prepare.py／registration.json在tools/sprite-src/morph/flame-death-knight-walk-v2及flame-death-knight-attack-v2。MORPHS與SW接兩張新圖；384×320／腳底[192,270]／charH160／drawH48、施法／受傷不變。新tools/flame-death-knight-walk-preview.html及test-flame-death-knight-walk.js，既有morph-preview／test更新六格攻擊。第18.13、88節；本對話flame-death-knight-v2-motion.html試播四動作。
+- **s版待實玩**：Ctrl+F5→使用變形卷軸→單手劍→16烈焰死亡騎士，四向走動與打怪，確認腳步銜接及抬劍／下斬／收劍的手感。依AGENTS.md第4節「使用者說沒問題後」才commit；目前未commit／Push。
+- **s版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022s），test-flame-death-knight-walk／test-flame-death-knight-morph／test-buff-groups與git diff --check通過。42格非重複RGBA／透明留邊／圖集逐格對應通過。瀏覽器實際行走從x25到43且八格全出現、停止正常；四向攻擊480ms均觀察0～5格，試播四動作／逐格／播放／左右鏡像正常，Console無error／warn。測試頁加preview查詢避免同次開發的s資源暫存，正式版本仍s。未讀寫真實存檔／上傳雲端；待實玩確認，未commit／Push。
 - **本機待驗收20261022r：16烈焰死亡騎士（紅變）**。使用者給16.jpg與三張jfif要求加入卷軸；檔案實際都在桌面「變身人物」。m16原已在單手劍組，本次接MORPHS.flameDeathKnight及專屬36格、SW四圖集。原表缺側面、走路漏劍、背向受傷混正面，內建image_gen重製並修邊緣劍尖。384×320／腳底[192,270]／charH160／drawH48，走4／攻4／施2／傷2，130／140／220／150ms，攻擊560ms；既有等級／能力／卷軸消耗／schema及測試不限等級開關不變。現8種專屬圖、22統一；第18.12、88節。未commit／Push。
 - **r版待實玩**：Ctrl+F5→使用變形卷軸→單手劍→16烈焰死亡騎士，確認火焰骷髏／黑甲、走路與四向揮劍有出手、劍尖與披風完整。確認後才commit及請Push origin。
 - **r版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022r）、test-flame-death-knight-morph與test-buff-groups通過，36格RGBA／非重複／透明留邊與圖集逐格對應通過，git diff --check通過。瀏覽器實際卷軸選單列單手劍紅變16，選取扣卷軸／套外觀；四向攻擊560ms、第0～3格均畫出。四動作試播、播放／逐格及左右鏡像正常，兩頁Console無error／warn。補畫右向收劍避免混到隔壁斬擊殘片；九份生成原稿／完整提示詞保存。未讀寫真實存檔或上傳，未commit／Push。

@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="../"><title>16號步態修正檢查</title>
+<style>body{margin:20px;background:#1c2225;color:#eee;font:16px sans-serif}canvas{width:min(100%,960px);height:auto}button,select{font:inherit;padding:8px;margin:5px}#result{white-space:pre-wrap}</style>
+<h2>16號烈焰死亡騎士・實際行走</h2><label>方向 <select id="direction"><option value="right">右側</option><option value="left">左側</option><option value="down">正面</option><option value="up">背面</option></select></label>
+<label>步態 <select id="version"><option value="new">修正後・8格</option><option value="old">原版・4格</option></select></label>
+<button id="walk" disabled>開始行走</button><button id="stop">停止</button><button id="step">逐格</button><p id="result">載入中</p><canvas width="640" height="300" aria-label="實際地面移動與八格左右交替步態"></canvas>
+<script>
+(async()=>{
+const index=await(await fetch('index.html')).text(),files=[...index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=[^"]+"/g)].map(m=>m[1]).filter(f=>!['data/main.js','data/pwa.js'].includes(f));
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261022s&preview=motion-v2';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('步態測試','knight',CLASSES.knight.base);player.lv=55;addItem('polyScroll',1);usePotion('polyScroll','m16');player.loc={type:'zone',id:'tower',floor:10};buildScene();
+scene.bg=null;scene.gates=null;scene.mons=[];scene.npcs=[];scene.props=[];scene.spawnCd=1e9;scene.mw=scene.mh=50;scene.shade=Array.from({length:50},(_,y)=>Array.from({length:50},(_,x)=>(x+y)%2));scene.grid=Array.from({length:50},(_,y)=>Array.from({length:50},(_,x)=>x===0||y===0||x===49||y===49?1:0));scene.manualUntil=gameNow+1e9;
+const sp=MORPHS.flameDeathKnight,newWalk=sp.walk,oldWalk={...newWalk,src:'images/sprites/morph/flame-death-knight-v1/walk.png',frames:{down:4,right:4,up:4},ms:130};sp.drawH=96;
+await Promise.all([newWalk.src,oldWalk.src].map(src=>new Promise((resolve,reject)=>{const im=new Image();im.onload=resolve;im.onerror=reject;im.src=src;})));
+const cv=document.querySelector('canvas'),ctx=cv.getContext('2d'),result=document.getElementById('result'),direction=document.getElementById('direction'),seen=new Set();let moving=false,paused=false,phase=0,previous=0;
+const drawImage=ctx.drawImage.bind(ctx);ctx.drawImage=(im,...args)=>{if(im.src&&im.src.includes('/flame-death-knight-v1/walk'))seen.add(args[0]/384);drawImage(im,...args);};
+function reset(){const p=scene.pl;p.x=p.y=p.rx=p.ry=25;p.path=[];p.dir=direction.value;p.anim=null;scene.walkClock=0;seen.clear();phase=0;}
+document.getElementById('walk').onclick=()=>{reset();moving=true;paused=false;const p=scene.pl,[dx,dy]=({right:[1,0],left:[-1,0],down:[0,1],up:[0,-1]})[direction.value];p.path=Array.from({length:18},(_,i)=>[p.x+dx*(i+1),p.y+dy*(i+1)]);};
+document.getElementById('stop').onclick=()=>{moving=false;paused=false;scene.pl.path=[];};
+document.getElementById('step').onclick=()=>{moving=false;paused=true;phase=(phase+1)%sp.walk.frames.down;scene.pl.path=[[scene.pl.x,scene.pl.y]];scene.walkClock=phase*sp.walk.ms;};
+document.getElementById('version').onchange=e=>{sp.walk=e.target.value==='new'?newWalk:oldWalk;moving=false;paused=false;reset();};
+direction.onchange=()=>{moving=false;paused=false;reset();};
+reset();document.getElementById('walk').disabled=false;
+function tick(t){const dt=previous?Math.min(50,t-previous):0;previous=t;if(!paused){gameNow+=dt;sceneUpdate(dt);}sceneDraw(ctx,640,300);const n=sp.walk.frames.down;cv.dataset.frames=Array.from(seen).join(',');cv.dataset.frame=String(scene.pl.path.length?Math.floor(scene.walkClock/sp.walk.ms)%n:Math.floor(n/2));cv.dataset.x=scene.pl.rx;cv.dataset.y=scene.pl.ry;result.textContent=(document.getElementById('version').value==='new'?'修正後':'原版')+'・'+n+'格／每格'+sp.walk.ms+'ms・移動速度 '+PLAYER_SPEED+' 格／秒・'+(paused?'逐格 '+(phase+1)+'/'+n:scene.pl.path.length?'行走中':'已停止');requestAnimationFrame(tick);}
+requestAnimationFrame(tick);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>

@@ -1,0 +1,578 @@
+[
+  {
+    "direction": "down",
+    "frame": 0,
+    "phase": "near-contact",
+    "source": "down-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      400,
+      512
+    ],
+    "sourceFoot": [
+      245,
+      480
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-01.png",
+    "bounds": [
+      90,
+      69,
+      260,
+      269
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "phase": "near-support",
+    "source": "down-generated.png",
+    "sourceRect": [
+      380,
+      0,
+      795,
+      512
+    ],
+    "sourceFoot": [
+      630,
+      480
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-02.png",
+    "bounds": [
+      92,
+      70,
+      258,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "phase": "far-passing",
+    "source": "down-generated.png",
+    "sourceRect": [
+      765,
+      0,
+      1185,
+      512
+    ],
+    "sourceFoot": [
+      1010,
+      480
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-03.png",
+    "bounds": [
+      90,
+      70,
+      260,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "phase": "far-swing",
+    "source": "down-generated.png",
+    "sourceRect": [
+      1150,
+      0,
+      1536,
+      512
+    ],
+    "sourceFoot": [
+      1395,
+      480
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-04.png",
+    "bounds": [
+      88,
+      69,
+      256,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 4,
+    "phase": "far-contact",
+    "source": "down-generated.png",
+    "sourceRect": [
+      0,
+      512,
+      400,
+      1024
+    ],
+    "sourceFoot": [
+      245,
+      950
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-05.png",
+    "bounds": [
+      90,
+      76,
+      268,
+      268
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 5,
+    "phase": "far-support",
+    "source": "down-generated.png",
+    "sourceRect": [
+      380,
+      512,
+      795,
+      1024
+    ],
+    "sourceFoot": [
+      630,
+      950
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-06.png",
+    "bounds": [
+      91,
+      72,
+      266,
+      268
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 6,
+    "phase": "near-passing",
+    "source": "down-generated.png",
+    "sourceRect": [
+      765,
+      512,
+      1185,
+      1024
+    ],
+    "sourceFoot": [
+      1010,
+      950
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-07.png",
+    "bounds": [
+      92,
+      74,
+      266,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 7,
+    "phase": "near-swing",
+    "source": "down-generated.png",
+    "sourceRect": [
+      1150,
+      512,
+      1536,
+      1024
+    ],
+    "sourceFoot": [
+      1395,
+      950
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-down-08.png",
+    "bounds": [
+      88,
+      76,
+      258,
+      269
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "phase": "near-contact",
+    "source": "right-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      475,
+      512
+    ],
+    "sourceFoot": [
+      245,
+      490
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-01.png",
+    "bounds": [
+      74,
+      64,
+      300,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "phase": "near-support",
+    "source": "right-generated.png",
+    "sourceRect": [
+      380,
+      0,
+      855,
+      512
+    ],
+    "sourceFoot": [
+      630,
+      490
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-02.png",
+    "bounds": [
+      71,
+      64,
+      285,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "phase": "far-passing",
+    "source": "right-generated.png",
+    "sourceRect": [
+      765,
+      0,
+      1230,
+      512
+    ],
+    "sourceFoot": [
+      1010,
+      490
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-03.png",
+    "bounds": [
+      78,
+      64,
+      280,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "phase": "far-swing",
+    "source": "right-generated.png",
+    "sourceRect": [
+      1150,
+      0,
+      1536,
+      512
+    ],
+    "sourceFoot": [
+      1395,
+      490
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-04.png",
+    "bounds": [
+      70,
+      66,
+      263,
+      269
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 4,
+    "phase": "far-contact",
+    "source": "right-generated.png",
+    "sourceRect": [
+      0,
+      512,
+      475,
+      1024
+    ],
+    "sourceFoot": [
+      245,
+      966
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-05.png",
+    "bounds": [
+      76,
+      70,
+      298,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 5,
+    "phase": "far-support",
+    "source": "right-generated.png",
+    "sourceRect": [
+      380,
+      512,
+      855,
+      1024
+    ],
+    "sourceFoot": [
+      630,
+      966
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-06.png",
+    "bounds": [
+      86,
+      68,
+      292,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 6,
+    "phase": "near-passing",
+    "source": "right-generated.png",
+    "sourceRect": [
+      765,
+      512,
+      1230,
+      1024
+    ],
+    "sourceFoot": [
+      1010,
+      966
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-07.png",
+    "bounds": [
+      76,
+      68,
+      288,
+      272
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 7,
+    "phase": "near-swing",
+    "source": "right-generated.png",
+    "sourceRect": [
+      1150,
+      512,
+      1536,
+      1024
+    ],
+    "sourceFoot": [
+      1395,
+      966
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-right-08.png",
+    "bounds": [
+      70,
+      68,
+      263,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "phase": "near-contact",
+    "source": "up-generated.png",
+    "sourceRect": [
+      0,
+      0,
+      450,
+      512
+    ],
+    "sourceFoot": [
+      245,
+      486
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-01.png",
+    "bounds": [
+      78,
+      54,
+      288,
+      268
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "phase": "near-support",
+    "source": "up-generated.png",
+    "sourceRect": [
+      380,
+      0,
+      835,
+      512
+    ],
+    "sourceFoot": [
+      630,
+      486
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-02.png",
+    "bounds": [
+      78,
+      54,
+      281,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "phase": "far-passing",
+    "source": "up-generated.png",
+    "sourceRect": [
+      765,
+      0,
+      1210,
+      512
+    ],
+    "sourceFoot": [
+      1010,
+      486
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-03.png",
+    "bounds": [
+      76,
+      56,
+      278,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "phase": "far-swing",
+    "source": "up-generated.png",
+    "sourceRect": [
+      1150,
+      0,
+      1536,
+      512
+    ],
+    "sourceFoot": [
+      1395,
+      486
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-04.png",
+    "bounds": [
+      70,
+      56,
+      262,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 4,
+    "phase": "far-contact",
+    "source": "up-generated.png",
+    "sourceRect": [
+      0,
+      512,
+      450,
+      1024
+    ],
+    "sourceFoot": [
+      245,
+      960
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-05.png",
+    "bounds": [
+      83,
+      60,
+      293,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 5,
+    "phase": "far-support",
+    "source": "up-generated.png",
+    "sourceRect": [
+      380,
+      512,
+      835,
+      1024
+    ],
+    "sourceFoot": [
+      630,
+      960
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-06.png",
+    "bounds": [
+      78,
+      60,
+      283,
+      268
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 6,
+    "phase": "near-passing",
+    "source": "up-generated.png",
+    "sourceRect": [
+      765,
+      512,
+      1210,
+      1024
+    ],
+    "sourceFoot": [
+      1010,
+      960
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-07.png",
+    "bounds": [
+      78,
+      61,
+      284,
+      269
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 7,
+    "phase": "near-swing",
+    "source": "up-generated.png",
+    "sourceRect": [
+      1150,
+      512,
+      1536,
+      1024
+    ],
+    "sourceFoot": [
+      1395,
+      960
+    ],
+    "sourceBodyHeight": 320,
+    "file": "frames/walk-v2-up-08.png",
+    "bounds": [
+      70,
+      60,
+      263,
+      266
+    ]
+  }
+]

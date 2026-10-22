@@ -97,8 +97,8 @@ const MORPHS = {
     // 16 烈焰死亡騎士：火焰劍、披風與斬擊留邊，腳底 (192,270)
     flameDeathKnight: {
         name: '烈焰死亡騎士', drawH: 48, charH: 160, foot: [192, 270],
-        walk:   { src: 'images/sprites/morph/flame-death-knight-v1/walk.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
-        attack: { src: 'images/sprites/morph/flame-death-knight-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        walk:   { src: 'images/sprites/morph/flame-death-knight-v1/walk-v2.png', cellW: 384, cellH: 320, frames: { down: 8, right: 8, up: 8 }, ms: 65 },
+        attack: { src: 'images/sprites/morph/flame-death-knight-v1/attack-v2.png', cellW: 384, cellH: 320, frames: { down: 6, right: 6, up: 6 }, ms: 80 },
         cast:   { src: 'images/sprites/morph/flame-death-knight-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/flame-death-knight-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },

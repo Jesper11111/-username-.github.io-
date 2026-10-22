@@ -1,0 +1,39 @@
+{
+  "tool": "built-in image_gen",
+  "motionReference": "https://www.youtube.com/watch?v=J_4qoEv_AZ0",
+  "scope": "Motion reference only; no commercial image assets used; timing is project-defined, not measured official timings",
+  "prompts": [
+    {
+      "dir": "down",
+      "ref": "down-generated.png",
+      "extra": "ALL six poses front three-quarter down-right facing toward viewer; skull and chest visible. Attack reaches toward foreground/down-right.",
+      "prompt": "Use case: identity-preserve. Original user-created flame skeletal knight from input. Make a compact, quick, old-school isometric 2D RPG ONE-HANDED SWORD attack animation; not a cinematic spell. Preserve dark charcoal spiked armor, burning skull and red eyes, ragged cape, orange-red rune sword. EXACTLY SIX full body poses in a regular THREE columns by TWO rows atlas read left to right then top to bottom. Each pose same anatomical scale, hip center, planted boots baseline. TRUE transparent alpha, no checkerboard, text, labels, ground or shadows. All poses isolated with generous clear margins; entire sword must fit inside its cell. Six distinct sequential poses: 1 low ready sword at side, free arm near body; 2 ONE sword arm lifts blade upward beside shoulder, short windup, no two-handed grip; 3 sharp compact diagonal downward chop toward target, torso rotates a little, elbow extends; 4 contact pose blade forward-low and body firmly planted, tiny thin orange blade streak only; 5 follow-through wrist and blade continue briefly downward near target; 6 quickly retract sword to same low-ready orientation as frame1, upright balanced. This must visibly move ARM and SWORD, not static poses with changing effects. Both feet remain grounded and stable, no running/jump/lunge. Head/cape size stays consistent, no extra weapons or hands. Keep FIRE CROWN but sword has only a thin ember edge: REMOVE all huge flame crescent arcs, rings, explosions and floor fire. The character must stay legible at 48 pixel game height. ALL six poses front three-quarter down-right facing toward viewer; skull and chest visible. Attack reaches toward foreground/down-right."
+    },
+    {
+      "dir": "right",
+      "ref": "attack-right-04-repair.png",
+      "extra": "ALL six poses face RIGHT in a true right side profile, one eye visible, nose and toes point RIGHT. Sword cuts to the RIGHT. Never turn front-facing.",
+      "prompt": "Use case: identity-preserve. Original user-created flame skeletal knight from input. Make a compact, quick, old-school isometric 2D RPG ONE-HANDED SWORD attack animation; not a cinematic spell. Preserve dark charcoal spiked armor, burning skull and red eyes, ragged cape, orange-red rune sword. EXACTLY SIX full body poses in a regular THREE columns by TWO rows atlas read left to right then top to bottom. Each pose same anatomical scale, hip center, planted boots baseline. TRUE transparent alpha, no checkerboard, text, labels, ground or shadows. All poses isolated with generous clear margins; entire sword must fit inside its cell. Six distinct sequential poses: 1 low ready sword at side, free arm near body; 2 ONE sword arm lifts blade upward beside shoulder, short windup, no two-handed grip; 3 sharp compact diagonal downward chop toward target, torso rotates a little, elbow extends; 4 contact pose blade forward-low and body firmly planted, tiny thin orange blade streak only; 5 follow-through wrist and blade continue briefly downward near target; 6 quickly retract sword to same low-ready orientation as frame1, upright balanced. This must visibly move ARM and SWORD, not static poses with changing effects. Both feet remain grounded and stable, no running/jump/lunge. Head/cape size stays consistent, no extra weapons or hands. Keep FIRE CROWN but sword has only a thin ember edge: REMOVE all huge flame crescent arcs, rings, explosions and floor fire. The character must stay legible at 48 pixel game height. ALL six poses face RIGHT in a true right side profile, one eye visible, nose and toes point RIGHT. Sword cuts to the RIGHT. Never turn front-facing."
+    },
+    {
+      "dir": "up",
+      "ref": "up-column-repair.png",
+      "extra": "ALL six poses face AWAY toward upper-right. Show BACK of skull and black cape in every frame, never skull face or front breastplate. Sword chops toward upper-right, free arm near body.",
+      "prompt": "Use case: identity-preserve. Original user-created flame skeletal knight from input. Make a compact, quick, old-school isometric 2D RPG ONE-HANDED SWORD attack animation; not a cinematic spell. Preserve dark charcoal spiked armor, burning skull and red eyes, ragged cape, orange-red rune sword. EXACTLY SIX full body poses in a regular THREE columns by TWO rows atlas read left to right then top to bottom. Each pose same anatomical scale, hip center, planted boots baseline. TRUE transparent alpha, no checkerboard, text, labels, ground or shadows. All poses isolated with generous clear margins; entire sword must fit inside its cell. Six distinct sequential poses: 1 low ready sword at side, free arm near body; 2 ONE sword arm lifts blade upward beside shoulder, short windup, no two-handed grip; 3 sharp compact diagonal downward chop toward target, torso rotates a little, elbow extends; 4 contact pose blade forward-low and body firmly planted, tiny thin orange blade streak only; 5 follow-through wrist and blade continue briefly downward near target; 6 quickly retract sword to same low-ready orientation as frame1, upright balanced. This must visibly move ARM and SWORD, not static poses with changing effects. Both feet remain grounded and stable, no running/jump/lunge. Head/cape size stays consistent, no extra weapons or hands. Keep FIRE CROWN but sword has only a thin ember edge: REMOVE all huge flame crescent arcs, rings, explosions and floor fire. The character must stay legible at 48 pixel game height. ALL six poses face AWAY toward upper-right. Show BACK of skull and black cape in every frame, never skull face or front breastplate. Sword chops toward upper-right, free arm near body."
+    }
+  ],
+  "sources": [
+    {
+      "dir": "down",
+      "path": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-263fa98a-4276-4fbc-af8d-66357bbea3dd.png"
+    },
+    {
+      "dir": "right",
+      "path": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-8ca2285f-d074-4caf-9c98-e742a3216cb9.png"
+    },
+    {
+      "dir": "up",
+      "path": "C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-54a24c53-e7a6-4856-b018-7fcb2bd8d345.png"
+    }
+  ]
+}
