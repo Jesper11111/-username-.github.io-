@@ -70,13 +70,13 @@ const MORPHS = {
         cast:   { src: 'images/sprites/morph/hellfire-archer-v1/cast.png',   cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/hellfire-archer-v1/hit.png',    cellW: 320, cellH: 280, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },
-    // 04 蒼穹女武神・艾爾：格子 384×320（光羽較寬），腳底 (192,270)；移動／射箭每向 8 格、施法／受傷 4 格，比前三種流暢
+    // 04 蒼穹女武神・艾爾：使用者新版分鏡，格子 384×320、腳底 (192,270)；舊素材保留
     skyValkyrie: {
         name: '蒼穹女武神・艾爾', drawH: 48, charH: 160, foot: [192, 270],
-        walk:   { src: 'images/sprites/morph/sky-valkyrie-v1/walk.png',   cellW: 384, cellH: 320, frames: { down: 8, right: 8, up: 8 }, ms: 80 },
-        attack: { src: 'images/sprites/morph/sky-valkyrie-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 8, right: 8, up: 8 }, ms: 70 },
-        cast:   { src: 'images/sprites/morph/sky-valkyrie-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 110 },
-        hit:    { src: 'images/sprites/morph/sky-valkyrie-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 80 },
+        walk:   { src: 'images/sprites/morph/sky-valkyrie-v2/walk.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 160 },
+        attack: { src: 'images/sprites/morph/sky-valkyrie-v2/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/sky-valkyrie-v2/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/sky-valkyrie-v2/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 160 },
     },
     // 05 矮人蒸氣火銃兵：留出完整白蒸氣、槍管與開火空間，腳底 (192,270)
     dwarfGunner: {

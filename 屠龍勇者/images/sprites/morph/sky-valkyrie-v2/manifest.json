@@ -1,0 +1,699 @@
+{
+  "id": "sky-valkyrie-v2",
+  "name": "蒼穹女武神・艾爾（神話）",
+  "form": "m04",
+  "status": "game-appearance",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/sky-valkyrie-v2/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 160,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            361,
+            376
+          ],
+          "sourceFoot": [
+            204,
+            367
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            361,
+            0,
+            728,
+            376
+          ],
+          "sourceFoot": [
+            570,
+            367
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            728,
+            0,
+            1094,
+            376
+          ],
+          "sourceFoot": [
+            943,
+            367
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1094,
+            0,
+            1451,
+            376
+          ],
+          "sourceFoot": [
+            1302,
+            367
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            362,
+            384
+          ],
+          "sourceFoot": [
+            215,
+            377
+          ],
+          "sourceBodyHeight": 285,
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            362,
+            0,
+            728,
+            384
+          ],
+          "sourceFoot": [
+            578,
+            377
+          ],
+          "sourceBodyHeight": 285,
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            728,
+            0,
+            1095,
+            384
+          ],
+          "sourceFoot": [
+            946,
+            377
+          ],
+          "sourceBodyHeight": 285,
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1095,
+            0,
+            1451,
+            384
+          ],
+          "sourceFoot": [
+            1311,
+            377
+          ],
+          "sourceBodyHeight": 285,
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            370,
+            376
+          ],
+          "sourceFoot": [
+            192,
+            367
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            370,
+            0,
+            736,
+            376
+          ],
+          "sourceFoot": [
+            555,
+            367
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            736,
+            0,
+            1098,
+            376
+          ],
+          "sourceFoot": [
+            919,
+            367
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1098,
+            0,
+            1451,
+            376
+          ],
+          "sourceFoot": [
+            1278,
+            367
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/sky-valkyrie-v2/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            376,
+            361,
+            724
+          ],
+          "sourceFoot": [
+            199,
+            715
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            361,
+            376,
+            759,
+            724
+          ],
+          "sourceFoot": [
+            563,
+            715
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            759,
+            376,
+            1116,
+            724
+          ],
+          "sourceFoot": [
+            924,
+            715
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1116,
+            376,
+            1451,
+            724
+          ],
+          "sourceFoot": [
+            1298,
+            715
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            384,
+            362,
+            733
+          ],
+          "sourceFoot": [
+            204,
+            721
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            362,
+            384,
+            753,
+            733
+          ],
+          "sourceFoot": [
+            564,
+            721
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            753,
+            384,
+            1105,
+            733
+          ],
+          "sourceFoot": [
+            931,
+            721
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1105,
+            384,
+            1451,
+            733
+          ],
+          "sourceFoot": [
+            1298,
+            721
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            376,
+            370,
+            730
+          ],
+          "sourceFoot": [
+            191,
+            718
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            370,
+            376,
+            731,
+            730
+          ],
+          "sourceFoot": [
+            553,
+            718
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            731,
+            376,
+            1100,
+            730
+          ],
+          "sourceFoot": [
+            920,
+            718
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1100,
+            376,
+            1451,
+            730
+          ],
+          "sourceFoot": [
+            1289,
+            718
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-up-04.png"
+        }
+      ],
+      "phases": [
+        "aim",
+        "draw",
+        "release",
+        "recover"
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/sky-valkyrie-v2/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            696,
+            370,
+            1084
+          ],
+          "sourceFoot": [
+            197,
+            1044
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            370,
+            696,
+            735,
+            1084
+          ],
+          "sourceFoot": [
+            559,
+            1038
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            714,
+            371,
+            1084
+          ],
+          "sourceFoot": [
+            203,
+            1053
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            371,
+            714,
+            738,
+            1084
+          ],
+          "sourceFoot": [
+            566,
+            1053
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            706,
+            371,
+            1084
+          ],
+          "sourceFoot": [
+            193,
+            1039
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            371,
+            706,
+            735,
+            1084
+          ],
+          "sourceFoot": [
+            555,
+            1039
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/sky-valkyrie-v2/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 160,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            735,
+            704,
+            1094,
+            1084
+          ],
+          "sourceFoot": [
+            932,
+            1065
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1094,
+            704,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1310,
+            1064
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            738,
+            714,
+            1106,
+            1084
+          ],
+          "sourceFoot": [
+            936,
+            1066
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1106,
+            714,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1318,
+            1066
+          ],
+          "sourceBodyHeight": 280,
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            735,
+            706,
+            1100,
+            1084
+          ],
+          "sourceFoot": [
+            927,
+            1054
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            1100,
+            706,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1295,
+            1053
+          ],
+          "sourceBodyHeight": 260,
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Original four reference files preserved",
+    "Replacement from supplied 4-1/4-2/4-3 sheets; v1 preserved",
+    "Background extracted and release/recovery corrected",
+    "Back attack frames 3/4 repaired to back view",
+    "Left direction mirrors right"
+  ]
+}

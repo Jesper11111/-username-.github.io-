@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022p：04替換新版分鏡**。使用者給4.jpg與4-1／4-2／4-3.jfif；改讀sky-valkyrie-v2，金甲白布／金髮羽冠／多片金翼依提供分鏡，36格（4／4／2／2），內建image_gen去棋盤與格線、修背面射箭後兩格及放箭／收弓。384×320／腳底[192,270]／charH160／drawH48，時間160／140／220／160ms，總長640／560／440／320ms維持原版；MORPHS.skyValkyrie key／m04、能力／等級／schema不變。SW改預載v2，舊v1全保留。新素材images/sprites/morph/sky-valkyrie-v2/；原圖／提示詞／整理腳本tools/sprite-src/morph/sky-valkyrie-v2/；試播valkyrie-v2-motion.html、隔離頁tools/valkyrie-v2-morph-preview.html與test-valkyrie-v2-morph.js；第18.11、88節。未commit／Push。
+- **p版待實玩**：Ctrl+F5→變形卷軸→弓手→04蒼穹女武神・艾爾，檢查新造型、走動與四向射箭；確認後才commit及請Push origin。
+- **p版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022p）、test-valkyrie-v2-morph.js通過，36格獨立RGBA／透明留邊／圖集逐格對應通過，v1檔案仍在。瀏覽器四動作切換／播放／逐格與左右鏡像正常；實際卷軸／renderer四向射箭560ms，第0～3格均畫出，背向放箭維持背影；兩頁Console無error／warn。未讀寫真實存檔或雲端，未commit／Push。原8790／8793伺服器已停，本環境HttpListener不支援，改用bundled Python http.server綁127.0.0.1啟動8790（專案）及8793（本對話visualizations），測試成功。
+
 - **本機待驗收20261022o：27裂空魔龍爪皇（紫變）**。使用者給立繪與三張jfif；實際都在桌面「變身人物」，原訊息jfif路徑缺資料夾。分鏡混銀髮人形／持刀與龍頭，依27.jpg龍頭巨爪立繪用內建image_gen補畫三向36格／左鏡像，走路／鋼爪揮擊／施法／受傷。MORPHS.riftDragon與m27.sprite／SW四圖集接入，紫變鋼爪既有能力／等級與測試不限等級開關不變，schema不變。384×320／腳底[192,270]／charH160／drawH48，130／140／220／150ms；第18.10、88節。現7專屬外觀、23統一；素材images/sprites/morph/rift-dragon-v1/，四原圖／提示詞／整理腳本tools/sprite-src/morph/rift-dragon-v1/，試播rift-dragon-motion.html，隔離檢查tools/rift-dragon-morph-preview.html／test-rift-dragon-morph.js。未commit／Push。
 - **o版待實玩**：Ctrl+F5→變形卷軸→鋼爪→27裂空魔龍爪皇，走動及四向打怪，確認龍頭、巨爪出手與翼尖／腳底；使用者確認後才commit及請Push origin。
 - **使用者再次要求27加入卷軸**：已確認o版MORPH_FORMS有m27／riftDragon、openMorphPicker在鋼爪組列出且有卷軸可選；隔離實測真正morphPick('m27')扣一張並套專屬外觀通過。程式已完成，沒有重複新增或換版；仍是本機o版待實玩、未發布。

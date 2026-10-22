@@ -9,7 +9,8 @@
 |---|---|
 | `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者透明素材／原稿／提示詞；m02 專屬圖，g 版新增 12 格 attack-v2（第 18.5、88 節） |
 | `images/sprites/morph/hellfire-archer-v1/`、`tools/sprite-src/morph/hellfire-archer-v1/` | 冥火骷髏神射 36 格透明人物／3 獨立箭矢、原圖／補畫原稿／提示詞／整理腳本；m03 專屬圖，20261022j 接入（第 18.6、88 節） |
-| `images/sprites/morph/sky-valkyrie-v1/`、`tools/sprite-src/morph/sky-valkyrie-v1/` | 蒼穹女武神・艾爾72格外觀、金甲／光翼原創分鏡、來源／提示詞／整理腳本（第18.7節）；20261022l接入m04 |
+| `images/sprites/morph/sky-valkyrie-v1/`、`tools/sprite-src/morph/sky-valkyrie-v1/` | 蒼穹女武神・艾爾舊72格外觀、原創分鏡與來源（第18.7節）；l接入m04，p改讀v2，v1完整保留 |
+| `images/sprites/morph/sky-valkyrie-v2/`、`tools/sprite-src/morph/sky-valkyrie-v2/`、`tools/valkyrie-v2-morph-preview.html`、`tools/test-valkyrie-v2-morph.js` | 使用者新版04分鏡替換、36格透明圖集／來源／提示詞／腳點註冊、隔離renderer與卷軸回歸（第18.11、88節） |
 | `images/sprites/morph/dwarf-gunner-v1/`、`tools/sprite-src/morph/dwarf-gunner-v1/` | 05矮人蒸氣火銃兵36格透明分鏡／4圖集、立繪／原表／去背初稿／補畫／提示詞／整理腳本（第18.8節）；m05專屬外觀 |
 | `tools/dwarf-morph-preview.html`、`tools/test-dwarf-morph.js` | 05真實卷軸／renderer隔離預覽與卷軸扣量、四向動作、到期／其他變身回歸（第18.8節） |
 | `images/sprites/morph/brudika-shadow-v1/`、`tools/sprite-src/morph/brudika-shadow-v1/`、`tools/brudika-morph-preview.html`、`tools/test-brudika-morph.js` | 10布魯迪卡之影36格透明動畫、原稿／提示詞／腳點註冊、真實renderer隔離頁與卷軸回歸（第18.9、88節） |
@@ -137,7 +138,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022o`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022p`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -956,6 +957,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - m27.sprite接MORPHS.riftDragon，SW預快取四PNG；沿用既有紫變鋼爪能力／等級設定、卷軸消耗及schema，MORPH_LV_FREE不變。專屬外觀7種（m01～m05、m10、m27），其餘23種統一。
 - 本對話rift-dragon-motion.html四向四動作試播，播放／暫停／逐格；tools/rift-dragon-morph-preview.html用真實usePotion／sceneReadEvents／sceneDraw，不讀寫真實存檔或雲端。test-rift-dragon-morph.js驗證卷軸扣量／上次選擇、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期、其他變身及圖集／SW。
 - 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022o）、上述Node測試及36格獨立RGBA／透明留邊／圖集逐格比對通過。瀏覽器四動作、播放／逐格／鏡像正常；真實renderer四向攻擊560ms、第0～3格均畫出，兩頁Console無error／warn。待使用者實際角色驗收，未commit／Push。
+
+### 18.11 蒼穹女武神・艾爾新版分鏡替換（2026-10-22，版本`20261022p`）
+
+- 使用者提供4.jpg與4-1／4-2／4-3.jfif，要求替換4號變身。新圖採金甲、白布、金髮羽冠及多片金色羽翼；三張分鏡每向走4／射箭4／施法2／受傷2，共36格。原背面射箭後兩格轉正面、射箭手臂缺少收勢，內建image_gen去棋盤／格線並修正背向及放箭／收弓；左向鏡像。
+- 新檔images/sprites/morph/sky-valkyrie-v2/：36獨立RGBA、4動作PNG圖集、AVIF試播、總覽與manifest。tools/sprite-src/morph/sky-valkyrie-v2/保留四原圖、三向透明修補原稿、完整prompts.json、registration.json及prepare.py／audit.json／preview.py。舊v1素材／來源全部保留。
+- 格384×320、腳底[192,270]、charH160、drawH48不變；每格160／140／220／160ms，總長640／560／440／320ms與舊版相同，未複製格或插值湊回72格。MORPHS.skyValkyrie四src與SW預快取改讀v2，m04.sprite key不變；能力、等級、卷軸、移動速度／攻速數值及schema不變。
+- 本對話valkyrie-v2-motion.html為四方向四動作試播。tools/valkyrie-v2-morph-preview.html用真實卷軸／renderer，不讀寫存檔或雲端；test-valkyrie-v2-morph.js驗證扣量／上次選擇、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期、其他變身、圖集／SW及v1仍在。
+- 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022p）、上述Node測試及36格獨立RGBA／透明留邊／圖集逐格比對通過。瀏覽器四動作、播放／逐格／鏡像正常；真實renderer四向射箭560ms、第0～3格均畫出、背向放箭保持背影；兩頁Console無error／warn。待使用者實際角色驗收，未commit／Push。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2444,6 +2453,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **20261022n：10布魯迪卡之影接上專屬圖**。MORPHS.brudikaShadow、m10.sprite、SW四圖集；三向36格／左鏡像，384×320／腳底[192,270]、4／4／2／2格，130／140／220／150ms。既有紫變雙刀能力與測試等級開關不變，第18.9節。
 
 - **20261022o：27裂空魔龍爪皇接上專屬圖**。MORPHS.riftDragon、m27.sprite、SW四PNG；三向36格／左鏡像，384×320／腳底[192,270]，4／4／2／2格、130／140／220／150ms。沿用既有紫變鋼爪能力、等級測試開關及schema，第18.10節。
+
+- **20261022p：04替換使用者新版分鏡**。MORPHS.skyValkyrie的四src改sky-valkyrie-v2，4／4／2／2格、160／140／220／160ms維持原總時間，SW同步；舊v1不動，m04與能力不變，第18.11節。
 
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 
