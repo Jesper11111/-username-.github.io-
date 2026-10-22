@@ -129,7 +129,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022f`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2372,8 +2372,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 增益紀錄 `player.buffs.morph = { src: 'item', id: 'polyScroll', form, until }`；`buffFx` 有 `form` 就回傳 `MORPH_BY_ID[form].fx`（`BUFF_DEFS.morph.fx` 是空的），`buffName` 顯示「變身：對象名」（左上角增益列的提示）。
   再讀一張會換成新對象並重新計時；死亡清除增益時一起解除；不改存檔結構（`SAVE_SCHEMA` 仍 5），上次選的對象存在 `player.settings.lastMorph`。
 - 快捷欄可放、可設自動：自動時用 `lastMorph`（效果沒了就再讀一張）；還沒選過任何對象時不能開自動（提示先點一下選擇）。
-- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01 巡守妖魔神射有自己的圖，其餘 29 種也先用它）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
+- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01 巡守妖魔神射、m02 月光精靈巡林者有自己的圖，其餘 28 種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
 - 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
 - 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
 - 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。
 - 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。
+- **20261022f：02 月光精靈巡林者接上專屬圖**（使用者要求）。素材 `images/sprites/morph/moon-ranger-v1/`（別的工作做好、已由使用者提交 6005cd1；說明在該資料夾 README.md）：格子 320×240（比巡守妖魔神射寬）、**腳底 (160,200)**，walk／attack 各 4 格、cast／hit 各 2 格，時間 130／140／220／150ms。`MORPHS.moonRanger`＋m02 的 sprite 欄位，`sw.js` 預先快取四張圖集。驗證：Lv.55 測試角色選 m02 → 外觀為月光精靈巡林者、四張圖集尺寸 1280×720／640×720 正確載入，野外放大確認腳踩影子不浮空，攻擊 560ms／施法 440ms 動作正常；改選 m05 回到統一外觀；Console 無錯誤。
