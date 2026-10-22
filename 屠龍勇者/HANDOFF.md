@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022w：變形卷軸暫停商店購買**。使用者指定先無法購買；shopItemIds排除polyScroll，所有村莊商店不列出，buyItem／openShopBuy與自訂購買沿用同一檢查。已有卷軸照常使用，原定價／回收價／交易所不改，不改schema或正式SQL。index.html所有?v=與GAME_VERSION更新w；待使用者Ctrl+F5確認商店卷軸分類後提交／請Push。
+
 - **本機待驗收20261022v：出生金幣2,000**。使用者指定玩家出生金幣2000，createPlayer由300改為2000，十二職業共用；既有角色不補發、不改schema。index.html所有?v=與GAME_VERSION更新v，保留u版公告移除。待使用者Ctrl+F5新建角色確認後提交／請Push。
 
 - **本機待驗收20261022u：移除封測公告**。使用者截圖要求移除「封測中：正式上線時會刪除所有角色與資料（帳號保留）」。config.js的TEST_NOTICE設空，沿用showTitle隱藏公告；index.html所有?v=與GAME_VERSION更新u。沒有啟動WIPE或改動存檔／正式資料庫。待使用者Ctrl+F5確認標題畫面無公告後才提交與請Push。

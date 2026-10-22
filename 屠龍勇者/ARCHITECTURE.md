@@ -147,7 +147,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022v`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022w`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2436,7 +2436,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 ## 88. 變形卷軸（2026-10-22，版本 `20261022c` 加入、`20261022d` 改成天堂式選變身對象；`items.js` 的 `MORPHS`／`MORPH_FORMS`、`ui-panels.js` 的 `openMorphPicker`、`ui-scene.js` 的 `playerSprite`）
 
 - 使用者先要求「新增道具 變形卷軸」（c 版：讀了固定變成巡守妖魔神射），再要求「變身卷軸用統一外觀，點選後跳出變身選項，參考天堂變身卷軸設計」（d 版）。
-- 道具 `polyScroll` 只有一種：卷軸類、`buff: 'morph'`、`morph: 'wolfRanger'`（統一外觀用的圖）、30 分鐘（`sec` 1800）、重 1、售價 500、tier 1（每個村莊都買得到），所有職業都能用。
+- 道具 `polyScroll` 只有一種：卷軸類、`buff: 'morph'`、`morph: 'wolfRanger'`（統一外觀用的圖）、30 分鐘（`sec` 1800）、重 1、原定價500、tier 1，所有職業都能用。20261022w依使用者要求暫停NPC商店販售，shopItemIds排除polyScroll，商品列表／直接購買／自訂購買入口共用此限制；既有卷軸使用、定價與回收價不改，未調整玩家交易所。
 - **選變身對象**（參考天堂：讀卷軸後選要變的怪物，等級到了才能變，越高級越強）：背包「使用」、快捷欄點一下、`quickPotion` 都改成開 `openMorphPicker` 視窗，列出 `MORPH_FORMS` 9 種（名稱、需求等級、效果）；等級不夠的變灰不能點；目前變身中的那個金框、上次選的標「上次」。
   點選 → `morphPick(id)` → `usePotion('polyScroll', id)`；等級不夠或沒選對象時**不扣卷軸**。變身中視窗多一個「解除變身」（`morphCancel`，不扣卷軸）。
 

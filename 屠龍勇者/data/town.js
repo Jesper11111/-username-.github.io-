@@ -53,8 +53,8 @@ function travelZone(zoneId, floor) {
 // ───────── 商店 ─────────
 function shopItemIds() {
     const tier = currentTown().tier;
-    // 魔法書只賣自己職業學得會的（spellbook.js）
-    return Object.keys(ITEMS).filter(id => ITEMS[id].price && ITEMS[id].tier <= tier && !(ITEMS[id].cat === 'book' && !skillNeedLv(SKILL_BY_ID[ITEMS[id].skill], player.cls)));
+    // 變形卷軸暫停販售；魔法書只賣自己職業學得會的（spellbook.js）
+    return Object.keys(ITEMS).filter(id => id !== 'polyScroll' && ITEMS[id].price && ITEMS[id].tier <= tier && !(ITEMS[id].cat === 'book' && !skillNeedLv(SKILL_BY_ID[ITEMS[id].skill], player.cls)));
 }
 
 function buyItem(id, n) {
