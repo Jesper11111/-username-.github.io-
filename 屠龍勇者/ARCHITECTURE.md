@@ -8,7 +8,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
-| `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；程式已上線、SQL已安裝，待啟用（第91節） |
+| `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
 | `tools/test-server-loot-db.js`、`tools/test-server-loot-integration.js`、`tools/test-server-loot-client.js`、`tools/server-loot-preview.html` | 隔離PostgreSQL與既有SQL／簽章相容測試、真實客戶端記憶體存檔與假RPC、瀏覽器重領／斷線驗證（第91節） |
 | `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者透明素材／原稿／提示詞；m02 專屬圖，g 版新增 12 格 attack-v2（第 18.5、88 節） |
@@ -2504,7 +2504,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `tools/test-buff-groups.js`隔離測分類、來源替換、固定排序、到期、共鳴去重與B圖接線；`tools/buff-groups-preview.html`用實際CSS與圖示函式供PC／390px窄螢幕刷新、快轉、負面示範，SIM_MODE且不讀寫存檔／雲端。
 - 驗證：上述分類測試含30／31秒邊界、test-item-art全433道具、check.ps1 ALL CHECKS PASSED、git diff --check通過；瀏覽器PC／390px窄版三區與藍黃紅底、橫滑查看後段、刷新／快轉40秒移除臨時效果並恢復共鳴待命正常；倒數保留同一img，Console無error／warn。待使用者實玩確認才提交。
 
-## 91. 線上後端掉寶（2026-10-22，版本 `20261022t`；程式已上線、SQL 已安裝，enabled=false 待使用者啟用）
+## 91. 線上後端掉寶（2026-10-22，版本 `20261022t`；2026-10-22 已上線並由使用者啟用 enabled=true）
 
 - 使用者已明確選線上打怪／首領／副本，離線掛機另議，並授權SQL製作。`tools/SERVER-LOOT.md`是部署與限制說明，`BACKEND-LOOT-PLAN.md`保留原盤點；正式資料庫尚未修改。
 - `data/loot.js`在pwa後、main前載入；頂層`LOOT_PROTOCOL`、`lootMode`、`lootBusy`、`lootProbeAt`、`lootNoticeAt`、`lootPendingAt`。`lootActive/lootRequired/lootCanPlay`處理模式與資格，`lootStart/lootProbe`查後端開關，`lootChar/lootEnvelope`處理角色與存檔外層，`lootQueueKey/lootJobs/lootStore/lootEnqueue`保存加密重試佇列，`lootSpawn`取得後端遇怪及憑證，`lootKill/lootRaid`排隊結算，`lootApply`原子入帳，`lootPump`補領及重試，`lootNotice`限頻提示。狀態30秒更新、佇列5秒重試，計時使用gameNow。
