@@ -6,7 +6,7 @@
 ## 1. 現況
 
 - **本機待部署／驗收20261022t：線上後端掉寶**。使用者明確選線上打怪／首領／副本、離線另議，並同意製作SQL及遊戲串接。data/loot.js在pwa後main前；後端發怪物憑證、抽完整物品／品質／詞綴／通貨／技能書／異界地圖與通關圖／任務物，並擲鑽石；副本按場次參加者、世界首領按原claim核對。重試佇列及原子收據外層lootProtocol／lootCursor，不新增player欄位、SAVE_SCHEMA仍5。伺服器目錄433道具／78怪／19區／100塔層／12職業任務／6副本，版本含hash且舊規則留存。離線SIM收益及現有道具不改。
-- **t版部署待使用者執行**：tools/server-loot-install.sql為一份可重跑安裝檔，初次預設disabled；由使用者貼Supabase SQL Editor。先安裝、驗收新版後再commit／Push，待新版上線才執行enabled=true；詳細tools/SERVER-LOOT.md。尚未修改正式後端、未commit／Push。安裝後未啟用仍沿舊流程；RPC缺失／未登入／斷線不退回本機掉寶。不要先啟用再發布，會擋舊版上傳。
+- **t版正式SQL已由使用者安裝**：使用者在Supabase SQL Editor執行tools/server-loot-install.sql，回報Success. No rows returned；再執行loot_status，截圖確認rules=20261022t-49fc938899d3、enabled=false、protocol=1。目前僅安裝、未啟用。待使用者本機登入／雲端同步／一般介面驗收後才commit／Push，待新版上線才執行enabled=true；詳細tools/SERVER-LOOT.md。未commit／Push。未啟用仍沿舊流程；RPC缺失／未登入／斷線不退回本機掉寶。不要先啟用再發布，會擋舊版上傳。
 - **t版明確限制**：戰鬥、角色快照、異界進度／團戰模擬與一般背包異動仍由客戶端執行；本版不是完整權威戰鬥／背包，不能宣稱完全防偽造擊殺或道具。帳本目前不自動刪除，正式啟用需觀察Supabase容量／請求量，未領獎勵不能直接清掉。
 - **t版本機測試**：test-server-loot-db真實PGlite測權限／角色／重領／收據／78怪與詞綴／團戰／世界首領；test-server-loot-integration載既有supabase.sql＋anticheat.sql再重複安裝migration，真實簽章及RLS相容；test-server-loot-client測寫入失敗復原、換角色／帳號、佇列競態、手動點怪非同步綁定、SIM及不回退本機掉寶，皆通過。PGlite在TEMP/dark-loot-test-runtime，非遊戲依賴。瀏覽器工具頁server-loot-preview使用記憶體storage與模擬RPC，不讀寫真實存檔、不連正式後端。
 - **t版最終驗證完成**：合併server-loot-install.sql在現有SQL上重複部署成功；新增三測試、原掉落紀錄／商店購買／傳說裝備／狀態三區／16步態與攻擊回歸通過。check.ps1 ALL CHECKS PASSED（47檔語法／46script／20261022t），git diff --check通過；實際46檔混淆建置433KB成功，產物在TEMP/dark-loot-build-20261022t。瀏覽器模擬後端結果：第一次紅藥+2／稀有劍1／收據1，重送不增加；第二次斷線留待重試1，恢復後紅藥+4／稀有劍2／收據2、待重試0，再重送不增加，Console無error／warn。截圖在本對話server-loot-proof.png。尚需使用者安裝正式SQL與實玩，不可誤稱已正式啟用；未commit／Push。
