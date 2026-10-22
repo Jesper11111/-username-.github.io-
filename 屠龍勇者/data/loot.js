@@ -6,6 +6,10 @@ function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
 function lootChar(p = player) { return p ? String(p.created) + '|' + p.cls : ''; }
 function lootNotice(msg) { if (gameNow >= lootNoticeAt) { lootNoticeAt = gameNow + 5000; showToast(msg, 4000); } }
+// 暫時性的連線問題（剛從背景回來網路還沒恢復、逾時、雲端存檔還沒傳完）：掛機暫停等它恢復，不要直接停止（第 99 節）
+function lootTransient(e) { return /timeout|Failed to fetch|NetworkError|network|Load failed|請先完成雲端同步/i.test(String((e && e.message) || e || '')); }
+// 已登入、沒被停權，只是後端狀態還在確認／剛才連不上：等下一次 lootProbe 恢復
+function lootWaiting() { return !SIM_MODE && (lootMode === 'checking' || lootMode === 'blocked') && cloudLoggedIn() && !cloudBan; }
 function lootCanPlay() {
     if (SIM_MODE || lootMode === 'legacy') return true;
     if (lootMode !== 'active') { lootNotice('後端掉寶連線尚未就緒，請稍後再試'); return false; }
@@ -35,6 +39,7 @@ async function lootProbe() {
         lootMode = r.enabled ? 'active' : 'legacy';
     } catch (e) {
         if (lootMode !== 'active') lootMode = 'blocked';
+        if (lootTransient(e)) { lootProbeAt = gameNow + 5000; return; }   // 連不上：5 秒後再查，掛機只暫停
         if (player && player.hunting) stopHunt('⚠️ 後端掉寶連線失敗，已停止掛機；沒有改用本機抽獎');
     }
 }
@@ -50,7 +55,7 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
     h.lootWait = true;
     const previousScene = typeof scene === 'undefined' ? null : scene;
     try {
-        saveGame(); if (!await cloudFlush(true)) throw Error('請先完成雲端同步');
+        saveGame(); if (!await cloudSyncedSlot(slot)) throw Error('請先完成雲端同步');
         if (!cloudUser || cloudUser.id !== uid || player !== p || hunt !== h) return;
         const keep = [...h.mobs.map(m => m.lootTicket), ...lootJobs().filter(j => j.kind === 'kill' && j.char === char).map(j => j.ticket)].filter(Boolean);
         await marketRpc('loot_release', { p_slot:slot,p_char:char,p_keep:keep });
@@ -77,7 +82,11 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
         }
         addLog(join ? '⚔️ 附近的怪物加入戰鬥' : `⚔️ 遭遇${rows[0].monster.name}（後端掉寶）`, '');
     } catch (e) {
-        if (player === p && hunt === h) stopHunt('⚠️ 後端掉寶尚未就緒：' + cloudErrText(e));
+        if (player !== p || hunt !== h) return;
+        if (lootTransient(e)) {   // 連線暫時不通：3 秒後自動再找怪，不停止掛機
+            if (!join) { h.state = 'search'; h.timer = 3000; }
+            lootNotice('⏳ 後端掉寶連線中，恢復後自動繼續掛機');
+        } else stopHunt('⚠️ 後端掉寶尚未就緒：' + cloudErrText(e));
     } finally { h.lootWait = false; }
 }
 function lootKill(mon) {

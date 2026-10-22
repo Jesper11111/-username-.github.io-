@@ -43,9 +43,18 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
  const target={rx:2,ry:2};scene={mons:[target],effects:[]};updateHuntLive=()=>{};
  marketRpc=async fn=>fn==='loot_release'?true:[{ticket:crypto.randomUUID(),monster:makeMonster('goblin')}];
  await lootSpawn(false,'goblin',target);assert.equal(target.inst,hunt.mon,'手動點怪等後端回覆後綁到原身體');assert.equal(scene.effects.length,1);
+ // 第99節：剛從背景回來網路不通，掛機只暫停、恢復後自動繼續；不是網路問題才停止。
+ stopHunt=msg=>{player.hunting=false;hunt=null;stopped=msg;};let stopped=null;lootNotice=()=>{};
+ marketRpc=async()=>{throw Error('Failed to fetch');};await lootProbe();assert.equal(player.hunting,true,'連不上不停掛機');assert.equal(lootMode,'active');
+ hunt.state='search';hunt.timer=0;await lootSpawn();assert.equal(player.hunting,true,'生怪連不上不停掛機');assert.equal(hunt.state,'search');assert.equal(hunt.timer,3000);
+ const syncedOrig=cloudSyncedSlot;cloudSyncedSlot=async()=>false;await lootSpawn();assert.equal(player.hunting,true,'存檔還沒傳完也只暫停');cloudSyncedSlot=syncedOrig;
+ lootMode='blocked';const h0=hunt;huntTick(100);assert.equal(player.hunting,true,'後端狀態確認中只暫停');assert.equal(hunt,h0);
+ marketRpc=async fn=>fn==='loot_status'?{protocol:LOOT_PROTOCOL,enabled:true,rules:'r'}:[];await lootProbe();assert.equal(lootMode,'active','恢復連線自動回到線上掉寶');
+ marketRpc=async fn=>{if(fn==='loot_release')return true;throw Error('loot zone denied');};await lootSpawn();assert.equal(player.hunting,false,'不是網路問題仍停止');assert(/後端掉寶尚未就緒/.test(stopped));
+ player.hunting=true;hunt={state:'search',mobs:[],mon:null,warned:{}};
  let spawnCalls=0;cloudFlush=async()=>{cloudUser={id:'other'};return true;};marketRpc=async()=>{spawnCalls++;};
  await lootSpawn();assert.equal(spawnCalls,0,'await期間換帳號不得繼續發怪');
  cloudUser=null;assert.equal(lootCanPlay(),false,'未登入不能進入線上掉寶');
- console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離。');
+ console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機。');
 })()`,ctx);}
 main().catch(e=>{console.error(e);process.exitCode=1;});

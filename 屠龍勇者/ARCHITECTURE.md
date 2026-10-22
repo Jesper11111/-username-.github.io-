@@ -150,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023g`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2602,3 +2602,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **原因**：第 96 節的 `cloudOwnOrConflict` 在上傳對不上時，會讀雲端那筆的 `client_t` 確認是不是自己送的；但剛從背景回來網路常還沒恢復，這次讀取失敗（逾時／Failed to fetch）時程式直接走 `cloudOnConflict`，等於又誤判成衝突。
 - **修正**：讀取失敗（含 `res.error`）時只記 `cloudError`、回傳 false，這格留在 `cloudDirty` 下次再傳，**不**設 `cloudConflict`、不跳對話框；只有確實讀到「不是這台送的 `client_t`」才判定衝突。`lootPump` 的錯誤若是網路類（timeout／Failed to fetch／NetworkError／Load failed），在 60 秒內不提示、佇列保留自動重試；`lootSyncFailAt` 改成整筆掉寶成功才重設，網路一直不通時 60 秒後仍會提示。
 - **測試**：`test-vault-v2-client.js` 新增：上傳回應丟失後，下一次讀雲端版本也失敗（`net.failSelect`）→ 不衝突、這格仍待上傳；再上傳一次就認得自己的版本並成功，全程沒有對話框。全部回歸、check.ps1、混淆建置通過。
+
+## 99. 離開畫面回來掛機停止：網路暫斷只暫停、恢復後自動繼續（2026-10-23，版本 `20261023g`；`loot.js` 的 `lootTransient`／`lootWaiting`／`lootProbe`／`lootSpawn`、`combat.js` 的 `huntTick`）
+
+- **使用者回報**：離開畫面一下回來，掛機停止，出現「後端掉寶連線尚未就緒」。
+- **原因**：剛回到前景網路常還沒恢復，以下任一步失敗就直接 `stopHunt`：`lootProbe`（`loot_status` 逾時）、`lootSpawn`（先上傳存檔失敗「請先完成雲端同步」或 `loot_spawn` 逾時）、`huntTick` 在 `lootMode` 是 `checking`／`blocked` 時（頁面被系統回收重載、或第一次查狀態失敗）。玩家只能手動重新開始掛機。
+- **修正**：
+  - `lootTransient(e)`：timeout／Failed to fetch／NetworkError／network／Load failed／「請先完成雲端同步」算暫時性錯誤。`lootWaiting()`：`lootMode` 是 `checking` 或 `blocked`、已登入、沒被停權。
+  - `lootProbe`：暫時性錯誤不停掛機，5 秒後再查（原本 30 秒）；其他錯誤（規則沒裝、管理者停用）照舊停止。
+  - `lootSpawn`：先上傳改用 `cloudSyncedSlot(slot)`（第 97 節）；暫時性錯誤時回到找怪狀態、3 秒後自動再試，`lootNotice` 提示「⏳ 後端掉寶連線中，恢復後自動繼續掛機」；其他錯誤照舊停止。
+  - `huntTick`：`lootCanPlay()` 不通過時，若 `lootWaiting()` 就只暫停這一回合（`player.hunting` 保持 true），查到狀態恢復為 `active` 後自動繼續；沒登入、被停權才停止。
+  - 後端掉寶的原則不變：連不上時**不會**改用本機抽獎。
+- **測試**：`test-server-loot-client.js` 新增：`loot_status`／`loot_spawn` Failed to fetch、存檔還沒傳完時掛機都不停、`hunt.timer` 3 秒後再找怪；`lootMode='blocked'` 時 `huntTick` 只暫停；查到狀態恢復回 `active`；非網路錯誤（`loot zone denied`）仍停止。全部回歸、check.ps1、混淆建置通過。

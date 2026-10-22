@@ -155,7 +155,10 @@ function autoSupport(st) {
 // ───────── 主迴圈中的掛機處理 ─────────
 function huntTick(dt) {
     if (!player.hunting) return;
-    if (!SIM_MODE && lootMode !== 'legacy' && !lootCanPlay()) { stopHunt('⚠️ 後端掉寶未連線，已暫停掛機'); return; }
+    if (!SIM_MODE && lootMode !== 'legacy' && !lootCanPlay()) {
+        if (lootWaiting()) return;   // 後端狀態確認中／剛才連不上：掛機先暫停，恢復後自動繼續（loot.js，第 99 節）
+        stopHunt('⚠️ 後端掉寶未連線，已暫停掛機'); return;
+    }
     if (!hunt) { startHunt(); if (!hunt) return; }
     if (hunt.lootWait) return;
     if (hunt.state === 'search') {
