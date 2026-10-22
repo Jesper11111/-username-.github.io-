@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261022y：彈藥每次 100 個一單位＋降價為 1/10**（第 92 節；x 版沒推，直接併入 y）。使用者要求：箭 1 元＝10 支、子彈 1 元＝5 發，銀箭／銀子彈同比例（每 100 個：箭 10、銀箭 40、子彈 20、銀子彈 50）。town.js 新增 shopUnit／shopCost／shopPriceText，彈藥快捷鍵 ×100／×1000／×10000，自訂數量須為 100 倍數。回收價：銀箭由 1 變 0（箭／子彈原本就 0）。test-shop-buy.js 與 check.ps1 通過、瀏覽器確認；已 commit 到本機 main，待使用者 Push 與線上 Ctrl+F5 確認。
+
 - **2026-10-22 狀態校正（Claude）**：t～w 版程式都已 commit 並推上 origin/main（線上 20261022w，含 data/loot.js）；下面 t／u／v／w 條目寫的「未commit／待Push」已過時。**後端掉寶已於 2026-10-22 由使用者啟用**（loot_status 截圖：rules=20261022t-49fc930899d3、enabled=true、protocol=1）。待使用者線上少量角色實玩驗證（tools/SERVER-LOOT.md 第 4 步）；出問題可執行 `update public.dragon_loot_config set enabled = false where id = 1;` 暫停回舊流程。t 以前的舊版客戶端會被擋上傳。**啟用後實玩出現「掉寶結算待重試：function public.dragon_save_ok(uuid, integer) does not exist」**：正式庫從沒執行過 tools/anticheat.sql（第 60 節待辦），loot_player 依賴它的 dragon_save_ok。已請使用者在 SQL Editor 整份執行 anticheat.sql（可重跑；vault_put 與 vault.sql 相同只多兩道檢查，整合測試 test-server-loot-integration 重跑通過），使用者執行後回報掉寶恢復正常（2026-10-22）。其餘地區／首領／副本／世界首領仍可再觀察。
 
 - **本機待驗收20261022w：變形卷軸暫停商店購買**。使用者指定先無法購買；shopItemIds排除polyScroll，所有村莊商店不列出，buyItem／openShopBuy與自訂購買沿用同一檢查。已有卷軸照常使用，原定價／回收價／交易所不改，不改schema或正式SQL。index.html所有?v=與GAME_VERSION更新w；待使用者Ctrl+F5確認商店卷軸分類後提交／請Push。

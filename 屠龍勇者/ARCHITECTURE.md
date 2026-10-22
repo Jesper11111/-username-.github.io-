@@ -147,7 +147,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022w`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022y`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2518,3 +2518,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 測試工具：test-server-loot-db.js以隔離PGlite跑實際PostgreSQL；test-server-loot-integration.js載既有supabase.sql與anticheat.sql後重複部署並驗證簽章／RLS；test-server-loot-client.js以記憶體存檔與假RPC跑真實串接，server-loot-preview.html提供相同隔離瀏覽器流程。PGlite僅安裝在TEMP測試目錄，非遊戲依賴；正式SQL由使用者執行，不由AI上線。
 - 最終驗證：三個新測試及掉落紀錄／商店購買／傳說裝備／狀態三區／16步態與攻擊回歸通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261022t）、git diff --check通過。實際混淆建置46檔→433KB成功。瀏覽器隔離頁正常入帳後重送數量不變，第二次斷線保留工作、連線後補領並清空佇列，Console無error／warn；畫面只用模擬RPC，正式SQL尚待使用者部署及實玩驗收。
 - **部署前置（2026-10-22 啟用後發現）**：loot_player呼叫anticheat.sql的`dragon_save_ok`，正式庫須先執行過anticheat.sql（第60節），否則每次結算報「function public.dragon_save_ok(uuid, integer) does not exist」，擊殺留在重試佇列，補裝後自動補領；使用者已於2026-10-22執行，掉寶恢復正常。test-server-loot-db.js以stub代替該函式，所以單元測試抓不到。
+
+## 92. 彈藥 100 個一單位、單價降為 1/10（2026-10-22，版本 `20261022y`；`town.js` 的 `shopUnit`／`shopCost`／`shopPriceText`、`items.js` 彈藥 price）
+
+- 使用者要求：箭矢、子彈商店每次以 100 個為單位；價格改成 1 元＝10 支箭、1 元＝5 發子彈，進階的銀箭／銀子彈同樣降為 1/10。`items.js` 單價改為小數：箭 0.1、銀箭 0.4、子彈 0.2、銀子彈 0.5（每 100 個 10／40／20／50 金幣）。
+- `shopUnit(id)`：`cat === 'ammo'` 回 100，其餘 1。`shopCost(id, n)` 回 `Math.round(price × n)`，購買一律是單位倍數所以總價必為整數；`shopPriceText(id)` 彈藥顯示「💰 10／100 個」（`fmt` 會無條件捨去，不能直接顯示 0.1），商店列表、自訂視窗、圖鑑商店來源都用它。
+- `buyItem` 數量不是單位倍數就提示「○○每次以 100 個為單位購買」不扣款；`shopBuyLimit` 以「一單位」計算金幣／負重上限避免小數誤差，回傳單位倍數；自訂視窗 `min`／`step`／預設值 100，預覽非倍數顯示「請輸入 100 的倍數」。彈藥快捷鍵 ×100／×1000／×10000，其他可堆疊道具仍 ×1／×10／×100。
+- 回收價沿用 `sellPriceOf`＝`floor(price×0.3)`：箭、子彈原本就是 0，銀箭由 1 變 0，銀子彈仍 0。不改存檔、掉落、後端掉寶目錄（目錄不含價格）。
+- `tools/test-shop-buy.js` 新增：1、150 個被拒、300 箭扣 30 金且金幣為整數、每 100 個價格、金幣只夠 250 個時上限 200、預覽提示、對話框 step、列表按鈕；check.ps1 ALL CHECKS PASSED。瀏覽器以未登入暫時角色確認列表顯示「💰 10／100 個」等、輸入 300 總價 30，測試資料已清掉；Console 只有本機預覽 Service Worker 註冊失敗的既有訊息。

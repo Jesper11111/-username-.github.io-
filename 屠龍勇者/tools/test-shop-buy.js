@@ -44,5 +44,21 @@ const buy=dialog.buttons[1].onClick; player.loc={type:'zone',id:'island'};
 const moved=JSON.stringify(player); buy(); assert.equal(JSON.stringify(player),moved); assert.equal(closed,1);
 player.loc={type:'town',id:Object.keys(TOWNS)[0]};
 assert(renderShop().includes('openShopBuy('));
-console.log('PASS：自訂 37 個、裝備逐件購買、金幣／負重限制、最大可買數量、負數／小數／非有限值／溢位拒絕、離村防重用。');
+// 彈藥每次以 100 個為單位（20261022x）
+for (const ammo of ['arrow','bullet']) {
+    assert(shopItemIds().includes(ammo)); assert.equal(shopUnit(ammo),100); player.gold=100000;
+    const keep=JSON.stringify(player); buyItem(ammo,1); buyItem(ammo,150); assert.equal(JSON.stringify(player),keep);
+    const g=player.gold, c=countItem(ammo); assert.equal(buyItem(ammo,300),true);
+    assert.equal(countItem(ammo),c+300); assert.equal(player.gold,g-shopCost(ammo,300)); assert(Number.isInteger(player.gold));
+    player.gold=shopCost(ammo,250); assert.equal(shopBuyLimit(ammo),200);
+    nodes['shop-buy-qty'].value='50'; shopBuyPreview(ammo); assert(nodes['shop-buy-total'].textContent.includes('100 的倍數'));
+    openShopBuy(ammo); assert(dialog.html.includes('step="100"') && dialog.html.includes('value="100"'));
+}
+// 1 元＝10 支箭／5 發子彈，銀箭／銀子彈同樣降為 1/10
+assert.equal(shopCost('arrow',100),10); assert.equal(shopCost('bullet',100),20); assert.equal(shopCost('silverArrow',100),40); assert.equal(shopCost('silverBullet',100),50);
+assert.equal(shopCost('arrow',300),30); assert.equal(shopPriceText('arrow'),'💰 10／100 個');
+shopCat=SHOP_CATS.find(c=>c[2]&&c[2].includes('ammo'))[0]; player.gold=100000;
+const ammoHtml=renderShop(); assert(ammoHtml.includes("buyItem('arrow',100)") && ammoHtml.includes("buyItem('arrow',10000)") && !ammoHtml.includes("buyItem('arrow',1)"));
+assert.equal(shopUnit(id),1);
+console.log('PASS：自訂 37 個、裝備逐件購買、金幣／負重限制、最大可買數量、負數／小數／非有限值／溢位拒絕、離村防重用、箭矢／子彈 100 個一單位。');
 `, ctx);

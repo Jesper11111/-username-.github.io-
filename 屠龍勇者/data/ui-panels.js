@@ -770,9 +770,9 @@ function renderShop() {
     return `<div class="chips">${cats.map(c => `<button class="chip-btn ${shopCat === c[0] ? 'active' : ''}" onclick="setShopCat('${c[0]}')">${c[1]}</button>`).join('')}</div><div class="list">` + (list.length ? '' : '<p class="muted">這裡沒有賣這類商品</p>') + list.map(id => {
         const d = ITEMS[id];
         const usable = !d.classes || d.classes.includes(player.cls);
-        const qty = isStackable(d) ? [1, 10, 100] : [1];
-        return `<div class="list-row ${usable ? '' : 'locked'}"><div onclick="shopInfo('${id}')" class="clickable item-info">${itemThumbHtml(id)}<b>${d.name}</b><small>💰 ${fmt(d.price)}｜${shortDesc(d)}</small></div>
-            <div class="qty-btns">${qty.map(n => `<button class="mini" onclick="buyItem('${id}',${n})" ${player.gold < d.price * n ? 'disabled' : ''}>×${n}</button>`).join('')}<button class="mini secondary" onclick="openShopBuy('${id}')">自訂</button></div></div>`;
+        const qty = d.cat === 'ammo' ? [100, 1000, 10000] : isStackable(d) ? [1, 10, 100] : [1];
+        return `<div class="list-row ${usable ? '' : 'locked'}"><div onclick="shopInfo('${id}')" class="clickable item-info">${itemThumbHtml(id)}<b>${d.name}</b><small>${shopPriceText(id)}｜${shortDesc(d)}</small></div>
+            <div class="qty-btns">${qty.map(n => `<button class="mini" onclick="buyItem('${id}',${n})" ${player.gold < shopCost(id, n) ? 'disabled' : ''}>×${n}</button>`).join('')}<button class="mini secondary" onclick="openShopBuy('${id}')">自訂</button></div></div>`;
     }).join('') + `</div>`;
 }
 

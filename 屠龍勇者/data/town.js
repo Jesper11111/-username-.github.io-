@@ -57,12 +57,19 @@ function shopItemIds() {
     return Object.keys(ITEMS).filter(id => id !== 'polyScroll' && ITEMS[id].price && ITEMS[id].tier <= tier && !(ITEMS[id].cat === 'book' && !skillNeedLv(SKILL_BY_ID[ITEMS[id].skill], player.cls)));
 }
 
+// 箭矢／子彈（彈藥）每次以 100 個為單位購買
+function shopUnit(id) { return ITEMS[id] && ITEMS[id].cat === 'ammo' ? 100 : 1; }
+// 彈藥單價是小數（箭 0.1），總價取整；n 一定是單位的倍數，所以一律是整數金幣
+function shopCost(id, n) { return Math.round(ITEMS[id].price * n); }
+function shopPriceText(id) { const u = shopUnit(id); return u > 1 ? `💰 ${fmt(shopCost(id, u))}／${u} 個` : `💰 ${fmt(ITEMS[id].price)}`; }
+
 function buyItem(id, n) {
     if (!inTown()) return;
     const d = ITEMS[id];
     if (!shopItemIds().includes(id)) return;
     if (!Number.isSafeInteger(n) || n < 1) { showToast('請輸入 1 以上的整數數量'); return; }
-    const cost = d.price * n;
+    if (n % shopUnit(id)) { showToast(`${d.name}每次以 ${shopUnit(id)} 個為單位購買`); return; }
+    const cost = shopCost(id, n);
     if (!Number.isSafeInteger(cost)) { showToast('購買數量太大'); return; }
     if (player.gold < cost) { showToast('金幣不足'); return; }
     if (invWeight() + d.wt * n > calcStats().weightMax) { showToast('負重不足，背不動了'); return; }
@@ -77,10 +84,11 @@ function buyItem(id, n) {
 function shopBuyLimit(id) {
     const d = ITEMS[id];
     if (!d || !inTown() || !shopItemIds().includes(id)) return 0;
-    const weight = invWeight(), maxWeight = calcStats().weightMax;
-    let n = Math.max(0, Math.min(Math.floor(player.gold / d.price), Math.floor(Number.MAX_SAFE_INTEGER / d.price), d.wt > 0 ? Math.floor((maxWeight - weight) / d.wt) : Number.MAX_SAFE_INTEGER));
-    if (n > 0 && weight + d.wt * n > maxWeight) n--;
-    return n;
+    // 以「一單位」（彈藥 100 個）來算，避免小數單價的浮點誤差
+    const weight = invWeight(), maxWeight = calcStats().weightMax, unit = shopUnit(id), price = shopCost(id, unit), wt = d.wt * unit;
+    let n = Math.max(0, Math.min(Math.floor(player.gold / price), Math.floor(Number.MAX_SAFE_INTEGER / price / unit), wt > 0 ? Math.floor((maxWeight - weight) / wt) : Number.MAX_SAFE_INTEGER));
+    if (n > 0 && weight + wt * n > maxWeight) n--;
+    return n * unit;
 }
 function shopBuyQuantity() {
     const input = document.getElementById('shop-buy-qty'), text = input ? input.value.trim() : '';
@@ -90,8 +98,8 @@ function shopBuyQuantity() {
 function shopBuyPreview(id) {
     const info = document.getElementById('shop-buy-total'), d = ITEMS[id];
     if (!info || !d || !inTown()) return;
-    const n = shopBuyQuantity(), cost = d.price * n, limit = shopBuyLimit(id);
-    info.textContent = !n ? '請輸入 1 以上的整數數量。' : !Number.isSafeInteger(cost) ? '購買數量太大。' : `總價：💰 ${fmt(cost)}　${n > limit ? '超過目前可購買數量。' : ''}`;
+    const n = shopBuyQuantity(), cost = shopCost(id, n), limit = shopBuyLimit(id);
+    info.textContent = !n ? '請輸入 1 以上的整數數量。' : n % shopUnit(id) ? `請輸入 ${shopUnit(id)} 的倍數。` : !Number.isSafeInteger(cost) ? '購買數量太大。' : `總價：💰 ${fmt(cost)}　${n > limit ? '超過目前可購買數量。' : ''}`;
 }
 function shopBuyCustom(id) {
     const n = shopBuyQuantity();
@@ -100,8 +108,8 @@ function shopBuyCustom(id) {
 }
 function openShopBuy(id) {
     if (!inTown() || !shopItemIds().includes(id)) return;
-    const buyer = player, town = player.loc.id, d = ITEMS[id];
-    openDialog('購買・' + d.name, `<p>單價：💰 ${fmt(d.price)}｜目前最多可買 ${fmt(shopBuyLimit(id))} 個（依金幣與負重）</p><label>購買數量<input id="shop-buy-qty" type="number" inputmode="numeric" min="1" step="1" value="1" style="width:100%;margin-top:8px" oninput="shopBuyPreview('${id}')"></label><p id="shop-buy-total" class="muted" aria-live="polite"></p>`, [
+    const buyer = player, town = player.loc.id, d = ITEMS[id], unit = shopUnit(id);
+    openDialog('購買・' + d.name, `<p>單價：${shopPriceText(id)}｜目前最多可買 ${fmt(shopBuyLimit(id))} 個（依金幣與負重）${unit > 1 ? `｜每次以 ${unit} 個為單位` : ''}</p><label>購買數量<input id="shop-buy-qty" type="number" inputmode="numeric" min="${unit}" step="${unit}" value="${unit}" style="width:100%;margin-top:8px" oninput="shopBuyPreview('${id}')"></label><p id="shop-buy-total" class="muted" aria-live="polite"></p>`, [
         { text: '取消', cls: 'secondary' },
         { text: '購買', keep: true, onClick: () => {
             if (player !== buyer || !inTown() || player.loc.id !== town) { showToast('角色或所在地已變更，請重新選擇商品'); closeDialog(); return; }

@@ -87,7 +87,7 @@ function codexSources(id) {
     if (d.cat === 'currency') list.push(`掉落：所有怪物 ${Math.round(CURRENCY_DROP_P * 100)}%（首領 ${Math.round(CURRENCY_BOSS_P * 100)}%，${CURRENCY[id].w < 3 ? '稀有' : '常見'}）`);
     if (d.price) {
         const t = Object.values(TOWNS).find(t => t.tier === d.tier);
-        list.push(`商店：${t ? t.name : '村莊'}起販售（💰${fmt(d.price)}）`);
+        list.push(`商店：${t ? t.name : '村莊'}起販售（${shopPriceText(id)}）`);
     }
     // 暗黑式隨機裝備掉落（affix.js 的 randomEquipFor：回收價 ≤ 怪物等級 × 600、非職業限定）
     // 只列真的掉得出來的（需要的怪物等級不超過遊戲裡最高等的怪，永夜之塔 100F 首領約 Lv.92）
