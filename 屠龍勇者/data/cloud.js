@@ -501,14 +501,20 @@ function cloudSentAdd(i, t) {
     while (list.length > 20) list.shift();
 }
 async function cloudOwnOrConflict(i, retry) {
-    if (!retry) {
-        try {
-            const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
-            if (!error && data && (cloudSentT[i] || []).includes(Number(data.client_t))) {
-                cloudKnown[i] = Number(data.client_t);
-                return cloudPushSlot(i, false, true);
-            }
-        } catch (e) { }
+    if (retry) return cloudOnConflict(i);
+    let data;
+    try {
+        const res = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
+        if (res.error) throw res.error;
+        data = res.data;
+    } catch (e) {
+        // 剛從背景回來網路常還沒恢復：查不到就先不判定衝突，這格留著下次再傳（20261023f；之前查失敗就直接跳衝突）
+        cloudError = cloudErrText(e);
+        return false;
+    }
+    if (data && (cloudSentT[i] || []).includes(Number(data.client_t))) {
+        cloudKnown[i] = Number(data.client_t);
+        return cloudPushSlot(i, false, true);
     }
     return cloudOnConflict(i);
 }

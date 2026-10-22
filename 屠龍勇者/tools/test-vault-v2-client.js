@@ -31,7 +31,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         select() { return this; } insert(r) { this.op = 'insert'; this.r = r; return this; } update(r) { this.op = 'update'; this.r = r; return this; }
         upsert(r) { this.op = 'upsert'; this.r = r; return this; } eq(k, v) { this.f.push([k, v]); return this; }
         order() { return this; } limit() { return this; } maybeSingle() { this.one = true; return this; }
-        then(ok, bad) { return this.run().then(r => { if (net.drop && this.op !== 'select') { net.drop = false; throw new Error('timeout'); } return r; }).then(ok, bad); }   // net.drop：寫進資料庫後丟掉回應（模擬手機縮小）
+        then(ok, bad) { if (net.failSelect && this.op === 'select') { net.failSelect = false; return Promise.reject(new Error('Failed to fetch')).then(ok, bad); } return this.run().then(r => { if (net.drop && this.op !== 'select') { net.drop = false; throw new Error('timeout'); } return r; }).then(ok, bad); }   // net.drop：寫進資料庫後丟掉回應；net.failSelect：下一次讀取連不上（模擬手機縮小）
         async run() {
             assert.equal(this.t, 'dragon_saves');
             const where = this.f.map(([k], i) => `${k}=$${i + 1}`).join(' and '), vals = this.f.map(([, v]) => v);
@@ -52,7 +52,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
             return r.error ? r : { data: r.data[0].v };
         }
     };
-    const net = { drop: false };
+    const net = { drop: false, failSelect: false };
     const memory = new Map();
     const ctx = vm.createContext({ console, assert, crypto: globalThis.crypto, TextEncoder, TextDecoder, btoa, atob, setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, Image: function () {},
         localStorage: { getItem: k => memory.has(k) ? memory.get(k) : null, setItem: (k, v) => memory.set(k, v), removeItem: k => memory.delete(k) },
@@ -168,12 +168,20 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         assert.equal(await cloudFlush(true), true, '下次上傳認得自己的版本、成功');
         assert(!cloudConflict[0]); assert.equal(Number((await cloud()).t), local().t);
         assert.equal(alerts.length, 0, '沒有跳任何對話框');
+        // 回應丟失＋回來時網路還沒恢復（查雲端版本失敗）：不能判定衝突，等下次再傳（20261023f）
+        player.exp += 1; saveGame(); net.drop = true;
+        assert.equal(await cloudFlush(true), false);
+        player.exp += 1; saveGame(); net.failSelect = true;
+        assert.equal(await cloudFlush(true), false, '查不到雲端版本：這次先不傳');
+        assert(!cloudConflict[0], '查詢失敗不能當成衝突'); assert(cloudDirty.has(0));
+        assert.equal(await cloudFlush(true), true, '網路恢復後認得自己的版本、成功');
+        assert.equal(alerts.length, 0);
         // 真的被別台裝置改過：仍要跳衝突
         let opened = null; openDialog = t => { opened = t; };
         await db.query('update public.dragon_saves set client_t = client_t + 5, data = jsonb_set(data, \'{t}\', to_jsonb((data->>\'t\')::bigint + 5)) where user_id=$1 and slot=0', [uid]);
         player.exp += 1; saveGame();
         assert.equal(await cloudFlush(true), false); assert.equal(opened, '☁️ 進度衝突', '別台裝置的新進度仍提示衝突');
-        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失不誤報衝突、別的角色上傳失敗不擋目前角色、簽章不誤判。');
+        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失（含回來時網路未恢復）不誤報衝突、別的角色上傳失敗不擋目前角色、簽章不誤判。');
     })()`, ctx);
     await db.close();
 })().catch(e => { console.error(e); process.exit(1); });

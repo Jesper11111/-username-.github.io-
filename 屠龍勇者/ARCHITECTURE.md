@@ -150,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023f`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2595,3 +2595,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **測試**：`test-vault-v2-client.js` 新增：第 2 格本機存檔能力值 99 一直被拒收，第 1 格照常存入共用倉庫，第 2 格仍待上傳。全部回歸、check.ps1、混淆建置通過。
 - **上線**：2026-10-23 使用者 Push 後實測共用倉庫東西領得出來。
 - **待觀察**：別的角色欄位為什麼上傳失敗，新版提示會附上原因，請玩家截圖回報。
+
+## 98. 縮小回來仍跳「進度衝突」：查不到雲端版本時不判定衝突（2026-10-23，版本 `20261023f`；`cloud.js` 的 `cloudOwnOrConflict`、`loot.js` 的 `lootPump`）
+
+- **使用者回報**（20261023e 上線後）：離開畫面一下子回來，仍跳「☁️ 進度衝突」，同時出現「掉寶結算待重試：連不上雲端伺服器，請確認網路」。
+- **原因**：第 96 節的 `cloudOwnOrConflict` 在上傳對不上時，會讀雲端那筆的 `client_t` 確認是不是自己送的；但剛從背景回來網路常還沒恢復，這次讀取失敗（逾時／Failed to fetch）時程式直接走 `cloudOnConflict`，等於又誤判成衝突。
+- **修正**：讀取失敗（含 `res.error`）時只記 `cloudError`、回傳 false，這格留在 `cloudDirty` 下次再傳，**不**設 `cloudConflict`、不跳對話框；只有確實讀到「不是這台送的 `client_t`」才判定衝突。`lootPump` 的錯誤若是網路類（timeout／Failed to fetch／NetworkError／Load failed），在 60 秒內不提示、佇列保留自動重試；`lootSyncFailAt` 改成整筆掉寶成功才重設，網路一直不通時 60 秒後仍會提示。
+- **測試**：`test-vault-v2-client.js` 新增：上傳回應丟失後，下一次讀雲端版本也失敗（`net.failSelect`）→ 不衝突、這格仍待上傳；再上傳一次就認得自己的版本並成功，全程沒有對話框。全部回歸、check.ps1、混淆建置通過。

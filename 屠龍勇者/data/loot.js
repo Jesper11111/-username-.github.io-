@@ -147,7 +147,6 @@ async function lootPump() {
                 if (Date.now() - lootSyncFailAt < 60000) return;
                 throw Error('雲端存檔尚未同步');
             }
-            lootSyncFailAt = 0;
             if (job.kind === 'raid') await marketRpc('loot_raid', { p_slot:job.slot,p_char:job.char,p_room:job.room,p_round:job.round });
             else await marketRpc('loot_finish', { p_ticket:job.ticket });
             if (!cloudUser || cloudUser.id !== uid) return;
@@ -155,6 +154,7 @@ async function lootPump() {
             for (const r of pending) if (!lootApply(r)) throw Error('掉寶收據需要同步，請到設定確認雲端進度');
             // 合併讀取，避免await期間新擊殺進佇列後被舊快照覆蓋。
             lootStore(lootJobs().filter(j => j.key !== job.key));
+            lootSyncFailAt = 0;   // 整筆成功才重設（網路一直不通時 60 秒後仍會提示）
         }
         // 回應遺失後，後端已決定的獎勵仍可按原順序補領。
         if (player && playerOwner === uid && gameNow >= lootPendingAt) {
@@ -164,6 +164,13 @@ async function lootPump() {
             if (!cloudUser || cloudUser.id !== uid) return;
             for (const r of pending) lootApply(r);
         }
-    } catch (e) { lootNotice('掉寶結算待重試：' + cloudErrText(e)); }
+    } catch (e) {
+        // 網路暫時斷（剛從背景回來）：佇列保留自動重試，連續 60 秒都失敗才提示
+        if (/timeout|Failed to fetch|NetworkError|network|Load failed/i.test(String((e && e.message) || e))) {
+            if (!lootSyncFailAt) lootSyncFailAt = Date.now();
+            if (Date.now() - lootSyncFailAt < 60000) return;
+        }
+        lootNotice('掉寶結算待重試：' + cloudErrText(e));
+    }
     finally { lootBusy = false; }
 }
