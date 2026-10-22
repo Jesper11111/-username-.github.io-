@@ -194,7 +194,8 @@ function quickHeal() {
     if (player.hp >= st.maxHp) { showToast('HP 已經是滿的'); return; }
     const id = choosePotion(st);
     if (!id) { showToast('沒有治癒藥水'); return; }
-    usePotion(id);
+    const err = usePotion(id);
+    if (err) showToast(err, 600);
 }
 
 function quickPotion(id) {

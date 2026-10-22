@@ -3,7 +3,7 @@
 // 多怪戰鬥（2026-10-09「中度 ARPG」）：hunt.mobs 是同時圍上來的怪（各自 atkCd 攻擊間隔、stunUntil 暈眩），
 // hunt.mon 是玩家正在打的目標（mobs 之一）；範圍技能（aoe）打全部、分散技能（spread）每一發打不同隻。
 // 戰鬥結果全部在這裡算（地圖 ui-scene.js 只負責畫），所以離線收益的快轉模擬照樣適用。
-let hunt = null;      // { state:'search'|'fight', timer, mon, mobs, pCd, joinCd, potCd, warned, tele }
+let hunt = null;      // { state:'search'|'fight', timer, mon, mobs, pCd, joinCd, warned, tele }
 let session = null;   // 本次掛機統計 { start, kills, exp, gold }
 let walkHome = null;  // { until, town }
 
@@ -18,7 +18,7 @@ function startHunt() {
     if (!currentZone()) { showToast('請先傳送到狩獵地點'); return; }
     if (walkHome) { showToast('正在步行回村'); return; }
     player.hunting = true;
-    hunt = { state: 'search', timer: 600, mon: null, mobs: [], pCd: 0, joinCd: 0, potCd: 0, warned: {} };
+    hunt = { state: 'search', timer: 600, mon: null, mobs: [], pCd: 0, joinCd: 0, warned: {} };
     if (!session) session = { start: gameNow, kills: 0, exp: 0, gold: 0 };
     addLog(`▶ 開始在${zoneTitle()}掛機`, 'sys');
 }
@@ -75,6 +75,9 @@ function changeFloor(delta) {
 }
 
 // ───────── 藥水 ─────────
+// 喝水延遲：藥水類（治癒、綠水、勇水、慎重、藍水）不管手動或自動都共用這個時間點；卷軸不算
+let potReadyAt = 0;
+function potionReady() { return gameNow >= potReadyAt; }
 // form：變形卷軸選的變身對象（MORPH_FORMS）；沒給就用上次選的（快捷欄自動使用）
 function usePotion(id, form) {
     const d = ITEMS[id];
@@ -85,7 +88,9 @@ function usePotion(id, form) {
         if (!mf) return '請先選擇變身對象';
         if (player.lv < mf.lv) return `${mf.name}需要 Lv.${mf.lv}`;
     }
+    if (d.cat === 'potion' && !potionReady()) return '喝水延遲中';
     if (!consumeItem(id)) return '沒有這個道具';
+    if (d.cat === 'potion') potReadyAt = gameNow + POTION_CD_MS;
     if (d.heal) {
         const st = calcStats(), before = player.hp;
         player.hp = Math.min(st.maxHp, player.hp + rand(d.heal[0], d.heal[1]));
@@ -122,7 +127,7 @@ function braveItemFor(cls) {
 
 // 自動補給：只用快捷欄裡開了「自動」的道具（2026-10-15，第 40 節）。治癒藥水格開自動＝跟以前一樣從身上所有治癒藥水挑合適的
 function autoSupport(st) {
-    const s = player.settings, now = gameNow, z = currentZone(), auto = barAutoItemIds();
+    const s = player.settings, z = currentZone(), auto = barAutoItemIds();
     if (auto.has('teleScroll') && !s.noTele && player.hp < st.maxHp * s.telePct / 100 && countItem('teleScroll') > 0) {
         consumeItem('teleScroll');
         if (z.type === 'dragon') { addLog('📜 使用瞬間移動卷軸逃離巢穴', 'sys'); moveToTown(z.town); return; }
@@ -131,10 +136,10 @@ function autoSupport(st) {
         addLog(moved ? '📜 使用瞬間移動卷軸，傳送到別的地方' : '📜 使用瞬間移動卷軸脫離戰鬥', 'sys');
         return;
     }
-    if (now < hunt.potCd) return;
+    if (!potionReady()) return;
     if (barHealAuto() && player.hp < st.maxHp * s.potionPct / 100) {
         const id = choosePotion(st);
-        if (id) { usePotion(id); hunt.potCd = now + POTION_CD_MS; return; }
+        if (id) { usePotion(id); return; }
         if (s.autoHome && useHomeScroll('藥水用完')) return;
     }
     // 增益藥水：效果沒了就喝（加速看整體加速，技能的加速術也算）
@@ -142,7 +147,7 @@ function autoSupport(st) {
         const d = ITEMS[id];
         if (!d.buff || countItem(id) <= 0 || (d.classes && !d.classes.includes(player.cls))) continue;
         if (d.buff === 'haste' ? st.haste : buffActive(d.buff)) continue;
-        usePotion(id); hunt.potCd = now + POTION_CD_MS; return;
+        usePotion(id); return;
     }
 }
 

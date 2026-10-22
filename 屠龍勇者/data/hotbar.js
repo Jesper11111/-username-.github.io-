@@ -78,7 +78,7 @@ function barUse(i) {
         if (err) showToast(`${s.name}：${err}`, 1200);
     } else if (ITEMS[b.id].heal) {
         if (player.hp >= calcStats().maxHp) showToast('HP 已經是滿的');
-        else if (countItem(b.id) > 0) usePotion(b.id);
+        else if (countItem(b.id) > 0) { const err = usePotion(b.id); if (err) showToast(err, 600); }
         else quickHeal();   // 這種藥水用完了：改喝身上其他治癒藥水
     } else if (b.id === 'homeScroll') homeScrollBtn();
     else if (b.id === 'teleScroll') quickTele();

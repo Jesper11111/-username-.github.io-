@@ -5,6 +5,7 @@
 
 ## 1. 現況
 
+- **20261022h：喝水延遲統一 0.8 秒**（使用者選；天堂官方秒數查不到）。藥水類手動、自動共用 `potReadyAt`，喝完 0.8 秒內再喝回「喝水延遲中」不扣藥；卷軸不受影響。第 89 節。
 - **本機待驗收 20261022g：月光精靈巡林者攻擊修正**。使用者指出紅變沒有攻擊動作，確認原四格皆維持拉弓；已用內建 image_gen 補畫三向 12 格準備／拉弓／放箭／收弓，MORPHS.moonRanger.attack／SW 改用 attack-v2.png。320×240、腳底 [160,200]、charH160、4×140ms；舊圖與原稿保留，提示詞／prepare-attack-v2.py 在 tools/sprite-src/morph/moon-ranger-v1/。不改能力／消耗／存檔，第18.5、88節。
 - **同次：冥火骷髏神射（紫變）素材待驗收**。使用者新提供 3.jpg／3-1.jpg，沿用「先完成外觀素材及試播」；33 原人物格＋3 補畫施法蓄力＝36 格人物，3 箭矢獨立。原圖／內建 image_gen 原稿／提示詞／prepare.py 保存在 tools/sprite-src/morph/hellfire-archer-v1/，透明圖集與單格在 images/sprites/morph/hellfire-archer-v1/；320×280、腳底 [160,240]、charH160，左鏡像。**未接 m03 專屬圖或改玩法／數值**；原射箭姿勢仍主要靠持弓／光效變化，不應誤稱補畫完整射箭流程。試播 hellfire-archer-motion.html 在本對話 visualizations 目錄，第18.6節。
 - **g 版驗證**：test-moon-attack.js 通過命中／MISS 四方向及受傷不打斷；12 紅變新版／36 紫變人物格皆為非重複 RGBA、透明留邊、逐格與圖集一致，3 箭矢獨立；check.ps1 ALL CHECKS PASSED（46 檔／45 script／20261022g）、git diff --check 通過。瀏覽器實際 renderer 四方向點攻擊有播放，修正隔離頁相對路徑後無新 Console 錯誤；兩份試播播放／暫停／逐格正常，紫變四動作與鏡像已看。未寫真實存檔或上傳、未 commit／Push，待使用者實玩驗收。

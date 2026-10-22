@@ -93,7 +93,7 @@ function raidSimulate(def, list, opts = {}) {
             p.hp = st.maxHp; p.mp = st.maxMp;   // 進副本前補滿
             return {
                 i, uid: x.uid, clan: x.clan || null, name: p.name, cls: p.cls, lv: p.lv, p, alive: true, dmg: 0, heal: 0, maxHp: st.maxHp,
-                hunt: { state: 'fight', timer: 0, mon: boss, mobs: [boss], pCd: rand(200, 1200), joinCd: 1e15, potCd: 0, warned: {} },
+                hunt: { state: 'fight', timer: 0, mon: boss, mobs: [boss], pCd: rand(200, 1200), joinCd: 1e15, warned: {} },
                 deaths: p.deaths, inv0: raidConsumables(p), say: -99999,
             };
         });
