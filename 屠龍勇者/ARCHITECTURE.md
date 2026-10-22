@@ -147,7 +147,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022t`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022u`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1502,7 +1502,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 37. 洗白（刪檔）與封測提示（2026-10-12，版本 `20261012i`；`config.js` 的 `WIPE`／`TEST_NOTICE`、`save.js` 開頭 `wipeCheck`、`tools/wipe.sql`）
 
-- **目前狀態：未啟動**（`WIPE = { id: '', at: 0 }`），只在標題畫面顯示封測提示 `TEST_NOTICE`（`#test-notice`，`showTitle` 設定；空字串＝不顯示）。
+- **目前狀態：洗白未啟動**（`WIPE = { id: '', at: 0 }`）；20261022u依使用者要求移除封測公告，`TEST_NOTICE = ''`，標題畫面`#test-notice`由既有showTitle隱藏。只移除公告，沒有啟動刪檔。
 - **玩家裝置**：`save.js` 一載入就執行 `wipeCheck`——`WIPE.id` 不是空字串、且和這台裝置記的 `dragonSlayer_wipe` 不同時，刪掉所有 `dragonSlayer_` 開頭的 localStorage
   （保留 `dragonSlayer_auth*` 登入狀態與 `dragonSlayer_logOpen`；凡塵修仙傳的資料不動），再記下新 id，所以**每台裝置只洗一次**。有刪到角色時標題提示改成「已正式上線，測試期的角色已清除」。
 - **雲端保險**：`cloudSync` 忽略 `client_t < WIPE.at` 的雲端存檔（忘了跑 wipe.sql 也不會把舊角色下載回來；新角色上傳時會覆蓋那個欄位）。

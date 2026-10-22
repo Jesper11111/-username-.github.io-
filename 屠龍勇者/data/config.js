@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261022t';
+const GAME_VERSION = '20261022u';
 const BOSS_MATERIAL_DROP_P = 0.001; // BOSS 材料固定掉落率 0.1%，不受異界掉落加成影響
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
@@ -10,7 +10,7 @@ const SLOT_KEY = 'dragonSlayer_slot';      // 最後玩的角色欄位
 // 玩家打開遊戲時 save.js 會刪掉這台裝置的舊角色（保留登入狀態），cloud.js 也會忽略 at 之前的雲端存檔；伺服器資料用 tools/wipe.sql 清
 const WIPE = { id: '', at: 0 };
 // 封測提示：標題畫面顯示（空字串＝不顯示）
-const TEST_NOTICE = '🧪 封測中：正式上線時會刪除所有角色與資料（帳號保留）';
+const TEST_NOTICE = '';
 const MAX_SLOTS = 8;                       // 角色欄位數（人物選單）
 const SAVE_SCHEMA = 5;   // 5：武器 bossEnchant 與技能專屬封魂石（第 68 節）   // 4：存檔最外層 owner／ownerEmail（角色屬於哪個帳號，save.js）   // 3：異界地圖（道具 map1～15 帶 q／mm／nm、player.mapRun）   // 2：裝備實體可帶 q／af／il／nm（暗黑式詞綴，affix.js）
 
