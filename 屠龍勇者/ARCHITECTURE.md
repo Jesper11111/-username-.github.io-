@@ -2561,7 +2561,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **SQL（`tools/stat-cap.sql`，可重跑、跟其他 SQL 沒有先後限制）**：BEFORE trigger `dragon_saves_stat_cap`，只管玩家（authenticated）上傳且存檔內容有變的：`player.stats` 不是物件、六項（str／dex／con／int／wis／cha）缺任何一項、任一項不是數字、小於 0 或大於 40 → `stat cap exceeded`（hint `dragon_stat_cap`）。正常玩法單項最高 35（`STAT_CAP`，加點 `addStatPoint` 與萬能藥 `useElixir` 都受它限制），40 是寬限。管理者在 SQL Editor 改資料不受影響；雲端既有的存檔不刪，只是之後上傳不了；被拒收的上傳整筆取消，不會再新增 `stat` 紀錄。
 - **遊戲端**：`cloudErrText` 把這個錯誤顯示成「能力值超過上限（單項最高 40），雲端不接受這份存檔」。不改存檔結構。
 - **測試**：`tools/test-stat-cap.js`（隔離 PGlite 載正式 SQL＋重複安裝）：35／40 照收；41、99、字串、負數、缺欄位、沒有 stats 拒收且雲端不變、不留紀錄；管理者修資料不受影響。`test-vault-v2-client.js` 也加裝 stat-cap.sql，證明真實遊戲上傳的存檔通過檢查。check.ps1 ALL CHECKS PASSED。
-- **限制**：已在雲端的 99 存檔仍可被後端掉寶讀到（`loot_player` 不看能力值），這種帳號建議用管理頁封鎖；能力值納入簽章需要同時改遊戲與伺服器，目前不做。
+- **限制**：已在雲端的 99 存檔仍可被後端掉寶讀到（`loot_player` 不看能力值），這種帳號建議用管理頁封鎖（a0926931545@gmail.com 已於 2026-10-23 封鎖）；能力值納入簽章需要同時改遊戲與伺服器，目前不做。
 
 ## 95. 交易所防複製 v2（2026-10-23，版本 `20261023c`；`market.js` 的 `marketListItem`／`marketCancel`／`marketBuy`、`tools/market-v2.sql`）
 
