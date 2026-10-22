@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **save-log-throttle.sql：減少上傳寫入（第 101 節）——待使用者在 Supabase 執行**。主控台警告 Disk IO Budget 快用完、DATABASE 錯誤率 67.6%、慢查詢 97 筆（明細待使用者截圖）。存檔歷程／最後上線改約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆，異常照樣每次記。test-save-log-throttle 通過；不改遊戲 JS。重跑 supabase.sql／save-device-log.sql 後要再跑這份。後端掉寶帳本仍無清理，待規劃。
+
 - **20261023h：後端掉寶不再每隻怪都上傳整份存檔（第 100 節）**。使用者轉來分析：lootSpawn 每隻怪強制上傳、lootPump 每筆先上傳，免費 Supabase CPU 撐不住，造成逾時／衝突／掛機停止（96～99 節是症狀）。改成只有生怪資格欄位（等級、地圖、塔、冷卻、異界地圖、任務）變了才上傳，結算不上傳。測試、check.ps1、建置通過；已 commit 本機 main 待 Push。上線後請使用者看 Supabase Reports 的 CPU／API 請求量是否下降；可再減量：存檔歷程／裝置紀錄改成幾分鐘一筆。
 
 - **20261023g：離開畫面回來掛機停止（第 99 節）**。f 版後使用者回報掛機會停、出現「後端掉寶連線尚未就緒」。lootProbe／lootSpawn／huntTick 遇到網路暫斷都直接 stopHunt；改成暫停、自動重試（查狀態 5 秒、找怪 3 秒），恢復後自動繼續，仍不改用本機抽獎；非網路錯誤照舊停止。test-server-loot-client 加情境，全部回歸、check.ps1、建置通過；已 commit 本機 main 待 Push，待手機實測（f 版的進度衝突修正也一起）。

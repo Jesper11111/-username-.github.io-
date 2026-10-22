@@ -10,6 +10,7 @@
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
 | `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
 | `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
+| `tools/save-log-throttle.sql`、`tools/test-save-log-throttle.js` | 減少每次上傳存檔的資料庫寫入：存檔歷程與最後上線約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆；隔離 PGlite 測試（第 101 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -2625,3 +2626,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `lootPump`：不再每筆 `saveGame`＋上傳，只有雲端還沒有這一格（`cloudKnown[slot] == null`）才先上傳。掉寶收據入帳後照一般 60 秒上傳。
 - **測試**：`test-server-loot-client.js` 新增：第一次生怪上傳、金幣／背包變了不重傳、等級變了重傳、結算不上傳。全部回歸、check.ps1、混淆建置通過。
 - **還沒做（可再減量）**：存檔歷程 `dragon_save_log`／裝置紀錄改成每幾分鐘才記一筆、`cloudSyncedSlot` 在上傳中又被存檔時誤判未完成。上線後請到 Supabase Reports 看 CPU 與 API 請求量是否下降。
+
+## 101. 減少上傳存檔的資料庫寫入（2026-10-23，SQL `tools/save-log-throttle.sql`；遊戲版本不變）
+
+- **起因**：Supabase 主控台警告 **Disk IO Budget 快用完**（用完後磁碟降到 5 MB/s，所有請求變慢、逾時）。同時 Observability 的 DATABASE 錯誤率 67.6%、慢查詢 97 筆（待查明細）。每次上傳存檔，trigger 除了寫存檔本身，還會寫存檔歷程 `dragon_save_log`（並刪超過 200 筆的舊資料）、`dragon_profiles` 最後上線、裝置紀錄 `dragon_save_dev`（並刪超過 300 筆的舊資料）。第 100 節已把上傳次數從「每隻怪」降回約每分鐘一次，這節再把每次上傳附帶的寫入減量。
+- **做法**（只改多久記一筆，不改檢查規則）：
+  - `dragon_saves_audit`（從 supabase.sql 複製後修改）：同一欄位 5 分鐘內已有歷程、這次也沒有異常 → 不記歷程也不刪舊的；`dragon_profiles` 在 5 分鐘內、名字與 email 沒變就不更新。異常檢查每次照做，有異常一定記；經驗／金幣暴增是和上一筆歷程比，時間差變長上限也跟著放寬，判斷不變。
+  - `dragon_save_dev_log`：同帳號最新一筆是同欄位、同登入 session、同裝置、同 IP，且不到 10 分鐘 → 不記。換裝置／IP／登入照樣馬上記。
+  - 管理頁「歷程」變成約 5 分鐘一筆。
+- **⚠️ 之後若重跑 supabase.sql 或 save-device-log.sql**，會把這兩個函式蓋回舊版，要再執行一次 `save-log-throttle.sql`。
+- **測試**：`tools/test-save-log-throttle.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：5 分鐘內連傳 6 次只記 1 筆歷程與 1 筆裝置紀錄、存檔照常更新；裝置時間異常照樣記歷程與 `clock` 紀錄；換裝置、換登入各記一筆；超過 5 分鐘再記；最後上線 5 分鐘內不改。
+- **還能再減**：後端掉寶的憑證／帳本（`dragon_loot_jobs` 等）每隻怪都有寫入且不會自動清除（第 91 節），之後需要保留期限與清理排程。
