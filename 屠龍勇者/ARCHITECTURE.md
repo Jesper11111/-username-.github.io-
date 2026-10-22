@@ -150,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023d`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2577,3 +2577,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **遊戲端**：三個動作改用 `vaultOp`（vault.js）：上架只送 uid＋數量、本機只扣上架數量；下架 `marketGiveItem(r.item)`；購買 `player.gold += r.gold`＋`marketGiveItem(r.item)`。`marketErrText` 新增 `market client outdated`、`bad amount`。
 - **測試**：`tools/test-market-v2.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：舊 RPC 停用、內部函式不能直接呼叫、上架存的是存檔那件且同時扣掉、上下架 3 輪數量守恆、部分上架、下架給新 uid、買家金幣真的扣不能重複買、買到直接入帳、賣家只入帳一次、舊存檔蓋不回。`test-vault-v2-client.js` 加上交易所：真實遊戲上架／下架／向另一帳號購買，本機與雲端一致、簽章不誤判。全部回歸、check.ps1、混淆建置通過。
 - **限制**：`p_cat = 'quest'` 仍由遊戲送來（伺服器沒有道具分類表），偽造分類只能讓任務道具上架，不能複製；賣家入帳仍是兩段式（有 `marketGot` 防重複）。
+
+## 96. 手機縮小後誤報「進度衝突」／「雲端存檔尚未同步」（2026-10-23，版本 `20261023d`；`cloud.js` 的 `cloudSentAdd`／`cloudOwnOrConflict`、`loot.js` 的 `lootSyncFailAt`）
+
+- **使用者回報**：玩家把遊戲縮小後，可能跳「雲端存檔資料尚未同步」（實際是 `lootPump` 的「掉寶結算待重試：雲端存檔尚未同步」）或「☁️ 進度衝突」。
+- **原因**：切到背景時 `visibilitychange` 會立刻 `cloudFlush(true)`。手機在等回應時把 App 暫停：更新已經寫進雲端（`client_t` 變成這次的 t），但遊戲沒收到回應（逾時），`cloudKnown` 還是舊值。回到前景再上傳時，`update … eq('client_t', 舊值)` 對不到列 → `cloudOnConflict` → 進度衝突；之後該格 `cloudConflict` 卡住，`cloudFlush` 一直回 false，掉寶佇列就一直提示「尚未同步」。
+- **修正**：
+  - `cloudPushSlot` 送出前用 `cloudSentAdd(i, t)` 記下這台送過的 `client_t`（每格最近 20 個；登入／登出／換帳號時清空）。對不上（update 0 列、insert 重複）時改呼叫 `cloudOwnOrConflict`：先讀雲端那筆的 `client_t`，如果是這台送過的，就把 `cloudKnown` 改成它再傳一次（只重試一次）；不是才跳進度衝突。別台裝置真的有新進度時照舊提示。
+  - `lootPump`：上傳失敗時佇列保留、5 秒後重試，連續 60 秒都失敗才提示「雲端存檔尚未同步」（`lootSyncFailAt`）。
+- **測試**：`test-vault-v2-client.js` 新增：假 Supabase 把一次寫入的回應丟掉（`net.drop`，資料已進資料庫），下次上傳成功、沒有衝突、沒有對話框；資料庫裡被別台改過（client_t 不是這台送的）仍跳「☁️ 進度衝突」。全部回歸、check.ps1、混淆建置通過。

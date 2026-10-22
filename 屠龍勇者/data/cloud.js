@@ -116,7 +116,7 @@ function cloudOnPassiveSignOut() {
     onlineStop();
     const email = cloudUser ? cloudUser.email : '';
     cloudUser = null; cloudBan = null;
-    cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     if (player) {
         if (slotHasSave(currentSlot)) saveGame(true);   // 本機欄位已被別的分頁清掉（主動登出）就不寫回去
         hunt = null; session = null; walkHome = null; player = null;
@@ -180,7 +180,7 @@ async function onlineKicked() {
         hunt = null; session = null; walkHome = null; player = null;
         showTitle();
     }
-    cloudUser = null; cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {};
+    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {};
     cloudSigningOut = true;
     try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; }
     renderCloudEntry(); cloudRefreshScreen();
@@ -486,8 +486,29 @@ async function cloudFlushRun() {
 // 雲端那份存檔不含 owner／ownerEmail（只在本機用）
 function cloudStripOwner(d) { const o = Object.assign({}, d); delete o.owner; delete o.ownerEmail; return o; }
 
-// 上傳一個欄位。雲端那筆必須還是上次看到的版本（client_t），否則代表別台裝置有新進度 → 衝突
-async function cloudPushSlot(i, overwrite) {
+// 這台送出過的 client_t（每格最近 20 個）。手機縮小／切到背景時，上傳已經寫進雲端，但 App 被暫停沒收到回應，
+// cloudKnown 還是舊的 → 下次上傳對不上。對不上時先查雲端那筆是不是這台送的（cloudOwnOrConflict），是就接著傳，不跳「進度衝突」
+let cloudSentT = {};
+function cloudSentAdd(i, t) {
+    const list = cloudSentT[i] || (cloudSentT[i] = []);
+    if (!list.includes(t)) list.push(t);
+    while (list.length > 20) list.shift();
+}
+async function cloudOwnOrConflict(i, retry) {
+    if (!retry) {
+        try {
+            const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).select('client_t').eq('user_id', cloudUser.id).eq('slot', i).maybeSingle());
+            if (!error && data && (cloudSentT[i] || []).includes(Number(data.client_t))) {
+                cloudKnown[i] = Number(data.client_t);
+                return cloudPushSlot(i, false, true);
+            }
+        } catch (e) { }
+    }
+    return cloudOnConflict(i);
+}
+
+// 上傳一個欄位。雲端那筆必須還是上次看到的版本（client_t），否則代表別台裝置有新進度 → 衝突（先排除是這台自己先前送出的）
+async function cloudPushSlot(i, overwrite, retry) {
     const raw = cloudLs(slotKey(i));
     if (!raw) return true;
     const full = saveParse(raw);
@@ -499,15 +520,16 @@ async function cloudPushSlot(i, overwrite) {
     if (!data.sig) delete data.sig;
     const row = { slot: i, client_t: t, name: String(p.name || '').slice(0, 40), cls: p.cls, lv: p.lv | 0, data };
     const known = cloudKnown[i];
+    cloudSentAdd(i, t);
     let res;
     if (overwrite) {
         res = await cloudTimeout(cloudSb.from(CLOUD_TABLE).upsert(Object.assign({ user_id: cloudUser.id }, row)).select('slot'));
     } else if (known == null) {
         res = await cloudTimeout(cloudSb.from(CLOUD_TABLE).insert(Object.assign({ user_id: cloudUser.id }, row)).select('slot'));
-        if (res.error && (res.error.code === '23505' || /duplicate/i.test(res.error.message))) return cloudOnConflict(i);
+        if (res.error && (res.error.code === '23505' || /duplicate/i.test(res.error.message))) return cloudOwnOrConflict(i, retry);
     } else {
         res = await cloudTimeout(cloudSb.from(CLOUD_TABLE).update(row).eq('slot', i).eq('client_t', known).select('slot'));
-        if (!res.error && (!res.data || !res.data.length)) return cloudOnConflict(i);
+        if (!res.error && (!res.data || !res.data.length)) return cloudOwnOrConflict(i, retry);
     }
     if (res.error && cloudIsTombErr(res.error)) { cloudDropDeleted(i); return true; }
     if (res.error && cloudIsVaultSeqErr(res.error)) return cloudVaultAdopt(i);
@@ -810,7 +832,7 @@ async function cloudDoSignOutRun(all) {
     cloudLs(CLOUD_SEEN_KEY, null);
     cloudUser = null; cloudBan = null; cloudBanShown = false;
     myClan = null; myClanRole = null; clanLoaded = false; clanViewLoaded = false; clanList = null;
-    cloudKnown = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();
     showToast(all ? '已登出所有裝置，建議順便改密碼' : '已登出');
 }

@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261023d：縮小後誤報進度衝突／尚未同步（第 96 節）**。使用者回報玩家縮小後跳「雲端存檔尚未同步」或「進度衝突」。原因是背景上傳已寫進雲端但回應沒收到，cloudKnown 還是舊值。cloud.js 記下這台送過的 client_t，對不上時先確認是不是自己送的再決定要不要跳衝突；lootPump 連續 60 秒失敗才提示。端到端測試加回應丟失情境、全部回歸與 check.ps1 通過；已 commit 本機 main 待 Push，待使用者手機實測。
+
 - **20261023b：能力值超過上限拒收（第 94 節）——SQL 已由使用者執行（2026-10-23），20261023c 已上線**。起因：管理頁 Lv.1 六項 99（a0926931545@gmail.com），雲端簽章不含能力值。新 BEFORE trigger：玩家上傳 stats 任一 >40／非數字／缺欄位就拒收；cloudErrText 加提示。test-stat-cap 與 test-vault-v2-client（加裝 stat-cap）通過、check.ps1 通過。SQL 與遊戲沒有先後限制；已 commit 本機 main 待 Push。建議同時在 gm.html 封鎖該帳號、不要把它的 stat 紀錄按已處理。
 - **20261023c：交易所防複製 v2（第 95 節）——stat-cap.sql、market-v2.sql 已由使用者執行成功（2026-10-23），遊戲 20261023c 已上線，使用者實測上架／下架／購買正常**。隔離資料庫重現 v1 三漏洞：① market_list 照收玩家送來的道具內容（可偽造 +15 傳說）② 上架不扣存檔、下架又還給玩家（10 瓶上下架 3 輪拿回 30 瓶）③ market_buy 只檢查買家金幣不扣（1000 金幣連買兩件，賣家憑空入帳 1900）。使用者同意比照第 93 節：market_list2／market_cancel2／market_buy2 直接改雲端存檔＋共用 vaultSeq，舊三個 RPC 停用；market.js 改用 vaultOp。test-market-v2、test-vault-v2-client（含交易所）、全部回歸、check.ps1、混淆建置通過。**順序：market-v2.sql 要在新版遊戲上線前執行**（反過來新版找不到 market_list2）。已 commit 本機 main。
 

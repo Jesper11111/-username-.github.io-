@@ -1,7 +1,7 @@
 // 後端掉寶：伺服器抽選、持久重試、原子本機收據。依賴save/cloud/market/vault，執行期呼叫combat。
 // 不新增player欄位；收據在存檔外層lootCursor，正式規則見tools/SERVER-LOOT.md。
 const LOOT_PROTOCOL = 1;
-let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0;
+let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0, lootSyncFailAt = 0;
 function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
 function lootChar(p = player) { return p ? String(p.created) + '|' + p.cls : ''; }
@@ -141,7 +141,13 @@ async function lootPump() {
             const raw = localStorage.getItem(slotKey(job.slot));
             if (!raw || lootChar(saveParse(raw).player) !== job.char || saveOwnerOf(saveParse(raw)) !== uid) continue;
             if (player && currentSlot === job.slot && lootChar() === job.char) saveGame();
-            if (!await cloudFlush(true)) throw Error('雲端存檔尚未同步');
+            // 從背景切回來時第一次上傳常會逾時：佇列保留、5 秒後再試，連續 60 秒都傳不上去才提示
+            if (!await cloudFlush(true)) {
+                if (!lootSyncFailAt) lootSyncFailAt = Date.now();
+                if (Date.now() - lootSyncFailAt < 60000) return;
+                throw Error('雲端存檔尚未同步');
+            }
+            lootSyncFailAt = 0;
             if (job.kind === 'raid') await marketRpc('loot_raid', { p_slot:job.slot,p_char:job.char,p_room:job.room,p_round:job.round });
             else await marketRpc('loot_finish', { p_ticket:job.ticket });
             if (!cloudUser || cloudUser.id !== uid) return;
