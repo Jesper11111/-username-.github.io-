@@ -8,6 +8,7 @@
 | 檔案 | 內容 |
 |---|---|
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
+| `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -148,7 +149,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023b`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2550,3 +2551,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   既有 server-loot 三測試、shop-buy、loot-log 回歸通過；check.ps1 ALL CHECKS PASSED；混淆建置 46 支→435 KB 語法通過；瀏覽器載入無新錯誤（只有本機預覽 Service Worker 註冊失敗的既有訊息）。
 - **部署**：2026-10-23 使用者已在 Supabase 執行 vault-v2.sql 成功，遊戲 20261023a 已推上線，使用者實測共用倉庫存取正常。
 - **限制／待辦**：`wipe.sql` 白名單還沒加 `dragon_vault_seq`（留著無害：角色 id 含建立時間，新角色不會撞到）；交易所 `market_list` 也是「只檢查不扣除」的同一種寫法，之後可比照處理。
+
+## 94. 能力值超過上限的存檔拒收（2026-10-23，版本 `20261023b`；`tools/stat-cap.sql`、`cloud.js` 的 `cloudErrText`）
+
+- **起因**：管理頁出現 Lv.1 角色六項能力值都 99（a0926931545@gmail.com「櫻萬美夕」，10/22 21:55）。`dragon_saves_audit` 只記 `stat` 紀錄、存檔照收；雲端簽章（第 60 節）只涵蓋等級／經驗／金幣／道具，**不含能力值**，所以改能力值的存檔可以上傳並用來打怪拿後端掉寶。未處理的 `stat` 紀錄會觸發交易所門檻（不能用交易所與共用倉庫），但擋不住打怪。
+- **使用者決定**：伺服器直接拒收，超過 40 一律不收。
+- **SQL（`tools/stat-cap.sql`，可重跑、跟其他 SQL 沒有先後限制）**：BEFORE trigger `dragon_saves_stat_cap`，只管玩家（authenticated）上傳且存檔內容有變的：`player.stats` 不是物件、六項（str／dex／con／int／wis／cha）缺任何一項、任一項不是數字、小於 0 或大於 40 → `stat cap exceeded`（hint `dragon_stat_cap`）。正常玩法單項最高 35（`STAT_CAP`，加點 `addStatPoint` 與萬能藥 `useElixir` 都受它限制），40 是寬限。管理者在 SQL Editor 改資料不受影響；雲端既有的存檔不刪，只是之後上傳不了；被拒收的上傳整筆取消，不會再新增 `stat` 紀錄。
+- **遊戲端**：`cloudErrText` 把這個錯誤顯示成「能力值超過上限（單項最高 40），雲端不接受這份存檔」。不改存檔結構。
+- **測試**：`tools/test-stat-cap.js`（隔離 PGlite 載正式 SQL＋重複安裝）：35／40 照收；41、99、字串、負數、缺欄位、沒有 stats 拒收且雲端不變、不留紀錄；管理者修資料不受影響。`test-vault-v2-client.js` 也加裝 stat-cap.sql，證明真實遊戲上傳的存檔通過檢查。check.ps1 ALL CHECKS PASSED。
+- **限制**：已在雲端的 99 存檔仍可被後端掉寶讀到（`loot_player` 不看能力值），這種帳號建議用管理頁封鎖；能力值納入簽章需要同時改遊戲與伺服器，目前不做。
