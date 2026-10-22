@@ -74,6 +74,9 @@ const MORPH_TIERS = {
     gold:   { name: '金變', grade: '神話', lv: 70, color: '#ffd56a', hit: 7, dmg: 7, spd: 0.20 },
 };
 const MORPH_TIER_K = { blue: 1, red: 2, purple: 3, gold: 4 };
+// 測試期間先拿掉變身等級限制（2026-10-22 使用者要求，方便測試）；正式開放時改回 false
+const MORPH_LV_FREE = true;
+function morphLvOk(f) { return MORPH_LV_FREE || player.lv >= f.lv; }
 // 系別：weapon＝建議武器（只是提示，不限制）；fx(t, k) 依階級 t 與階數 k（1～4）算加成
 const MORPH_GROUPS = {
     bow:    { name: '弓手系', weapon: '弓',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg, spdMul: t.spd }) },

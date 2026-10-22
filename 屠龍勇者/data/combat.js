@@ -86,7 +86,7 @@ function usePotion(id, form) {
     if (d.morph) {
         mf = MORPH_BY_ID[form || player.settings.lastMorph];
         if (!mf) return '請先選擇變身對象';
-        if (player.lv < mf.lv) return `${mf.name}需要 Lv.${mf.lv}`;
+        if (!morphLvOk(mf)) return `${mf.name}需要 Lv.${mf.lv}`;
     }
     if (d.cat === 'potion' && !potionReady()) return '喝水延遲中';
     if (!consumeItem(id)) return '沒有這個道具';

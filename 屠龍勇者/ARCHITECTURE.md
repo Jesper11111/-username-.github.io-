@@ -131,7 +131,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022h`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022i`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2391,6 +2391,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。
 - **20261022f：02 月光精靈巡林者接上專屬圖**（使用者要求）。素材 `images/sprites/morph/moon-ranger-v1/`（別的工作做好、已由使用者提交 6005cd1；說明在該資料夾 README.md）：格子 320×240（比巡守妖魔神射寬）、**腳底 (160,200)**，walk／attack 各 4 格、cast／hit 各 2 格，時間 130／140／220／150ms。`MORPHS.moonRanger`＋m02 的 sprite 欄位，`sw.js` 預先快取四張圖集。驗證：Lv.55 測試角色選 m02 → 外觀為月光精靈巡林者、四張圖集尺寸 1280×720／640×720 正確載入，野外放大確認腳踩影子不浮空，攻擊 560ms／施法 440ms 動作正常；改選 m05 回到統一外觀；Console 無錯誤。
 - **20261022g：m02 攻擊換用 attack-v2.png**。修正原四格皆拉弓而看不到出手的素材問題；三向各準備／拉弓／放箭／收弓，左鏡像，規格與時間維持不變；第18.5節。未改等級、能力、消耗或 schema。
+- **20261022i：測試期間暫時拿掉變身等級限制**（使用者要求方便測試）。`items.js` 的 `MORPH_LV_FREE = true`＋`morphLvOk(f)`，`usePotion` 與選單的鎖定都改用它；選單提示改成「測試中：暫不限等級」，卡片仍顯示原本的需求等級。**正式開放前把 `MORPH_LV_FREE` 改回 false** 即恢復 Lv.15／35／52／70 限制。
 
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 

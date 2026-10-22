@@ -5,6 +5,7 @@
 
 ## 1. 現況
 
+- **20261022i：變身等級限制暫時拿掉**（使用者要求方便測試，`MORPH_LV_FREE = true`）。**待辦：正式開放前改回 false。**
 - **20261022h：喝水延遲統一 0.8 秒**（使用者選；天堂官方秒數查不到）。藥水類手動、自動共用 `potReadyAt`，喝完 0.8 秒內再喝回「喝水延遲中」不扣藥；卷軸不受影響。第 89 節。
 - **本機待驗收 20261022g：月光精靈巡林者攻擊修正**。使用者指出紅變沒有攻擊動作，確認原四格皆維持拉弓；已用內建 image_gen 補畫三向 12 格準備／拉弓／放箭／收弓，MORPHS.moonRanger.attack／SW 改用 attack-v2.png。320×240、腳底 [160,200]、charH160、4×140ms；舊圖與原稿保留，提示詞／prepare-attack-v2.py 在 tools/sprite-src/morph/moon-ranger-v1/。不改能力／消耗／存檔，第18.5、88節。
 - **同次：冥火骷髏神射（紫變）素材待驗收**。使用者新提供 3.jpg／3-1.jpg，沿用「先完成外觀素材及試播」；33 原人物格＋3 補畫施法蓄力＝36 格人物，3 箭矢獨立。原圖／內建 image_gen 原稿／提示詞／prepare.py 保存在 tools/sprite-src/morph/hellfire-archer-v1/，透明圖集與單格在 images/sprites/morph/hellfire-archer-v1/；320×280、腳底 [160,240]、charH160，左鏡像。**未接 m03 專屬圖或改玩法／數值**；原射箭姿勢仍主要靠持弓／光效變化，不應誤稱補畫完整射箭流程。試播 hellfire-archer-motion.html 在本對話 visualizations 目錄，第18.6節。
