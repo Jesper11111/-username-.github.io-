@@ -2593,4 +2593,5 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **原因**：`vaultOp`（共用倉庫、交易所）與 `lootPump` 用 `cloudFlush(true)` 的回傳值判斷能不能繼續，但 `cloudFlushRun` 是**所有**待上傳的角色欄位都成功才回 true。帳號裡只要有別的角色欄位一直上傳失敗（衝突、被能力值上限／序號等拒收、逾時），目前角色明明已上傳完成也被擋住。
 - **修正**：新增 `cloudSyncedSlot(i)`：照常 `cloudFlush(true)`，但只看這一格是否已不在 `cloudDirty`、也沒有 `cloudConflict`。`vaultOp` 只看目前角色那格，失敗時等 1.5 秒自動重試一次，還失敗就提示原因：這格衝突時說「請先選擇要保留哪一邊的進度」，其他情況附上 `cloudError`。`lootPump` 只看那筆掉寶的角色欄位。
 - **測試**：`test-vault-v2-client.js` 新增：第 2 格本機存檔能力值 99 一直被拒收，第 1 格照常存入共用倉庫，第 2 格仍待上傳。全部回歸、check.ps1、混淆建置通過。
+- **上線**：2026-10-23 使用者 Push 後實測共用倉庫東西領得出來。
 - **待觀察**：別的角色欄位為什麼上傳失敗，新版提示會附上原因，請玩家截圖回報。
