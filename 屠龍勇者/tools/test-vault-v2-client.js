@@ -150,6 +150,16 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         player.exp += 1; saveGame(); assert.equal(await cloudFlush(true), true, '交易後照常上傳');
         assert.equal(flags.length, 0); assert.equal(g0, player.gold + 300);
 
+        // ⑤-2 別的角色欄位上傳一直失敗（例如能力值被拒收）：不影響目前角色存取共用倉庫（第 97 節）
+        const bad = JSON.parse(JSON.stringify(local())); bad.player.created = 777; bad.player.stats.str = 99; bad.vaultSeq = 0;
+        localStorage.setItem(slotKey(1), saveEncode(JSON.stringify(bad))); cloudKnown[1] = null; cloudDirty.add(1);
+        assert.equal(await cloudFlush(true), false, '第 2 格被拒收');
+        const g2 = player.gold;
+        document.getElementById = id => id === 'vault-gold' ? { value: '100' } : null;
+        vaultGold(1); while (vaultBusy) await new Promise(r => setTimeout(r, 5));
+        assert.equal(player.gold, g2 - 200, '目前角色照常存入'); assert(cloudDirty.has(1), '第 2 格仍待上傳');
+        localStorage.removeItem(slotKey(1)); cloudDirty.delete(1);
+
         // ⑥ 手機縮小：上傳已寫進雲端但回應丟了 → 下次上傳不能跳「進度衝突」，要認得是自己送的、接著傳（第 96 節）
         player.exp += 1; saveGame(); net.drop = true;
         assert.equal(await cloudFlush(true), false, '回應丟失：這次算失敗');
@@ -163,7 +173,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         await db.query('update public.dragon_saves set client_t = client_t + 5, data = jsonb_set(data, \'{t}\', to_jsonb((data->>\'t\')::bigint + 5)) where user_id=$1 and slot=0', [uid]);
         player.exp += 1; saveGame();
         assert.equal(await cloudFlush(true), false); assert.equal(opened, '☁️ 進度衝突', '別台裝置的新進度仍提示衝突');
-        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失不誤報衝突、簽章不誤判。');
+        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失不誤報衝突、別的角色上傳失敗不擋目前角色、簽章不誤判。');
     })()`, ctx);
     await db.close();
 })().catch(e => { console.error(e); process.exit(1); });

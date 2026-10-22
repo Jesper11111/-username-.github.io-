@@ -142,7 +142,7 @@ async function lootPump() {
             if (!raw || lootChar(saveParse(raw).player) !== job.char || saveOwnerOf(saveParse(raw)) !== uid) continue;
             if (player && currentSlot === job.slot && lootChar() === job.char) saveGame();
             // 從背景切回來時第一次上傳常會逾時：佇列保留、5 秒後再試，連續 60 秒都傳不上去才提示
-            if (!await cloudFlush(true)) {
+            if (!await cloudSyncedSlot(job.slot)) {   // 只看這筆掉寶的角色欄位
                 if (!lootSyncFailAt) lootSyncFailAt = Date.now();
                 if (Date.now() - lootSyncFailAt < 60000) return;
                 throw Error('雲端存檔尚未同步');

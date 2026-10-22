@@ -483,6 +483,12 @@ async function cloudFlushRun() {
     return ok;
 }
 
+// 只確認某一格已上傳完成（共用倉庫／交易所／掉寶用）：別的角色欄位上傳失敗（衝突、被拒收）不影響這一格
+async function cloudSyncedSlot(i) {
+    await cloudFlush(true);
+    return !cloudDirty.has(i) && !cloudConflict[i];
+}
+
 // 雲端那份存檔不含 owner／ownerEmail（只在本機用）
 function cloudStripOwner(d) { const o = Object.assign({}, d); delete o.owner; delete o.ownerEmail; return o; }
 

@@ -150,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023e`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2586,3 +2586,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `cloudPushSlot` 送出前用 `cloudSentAdd(i, t)` 記下這台送過的 `client_t`（每格最近 20 個；登入／登出／換帳號時清空）。對不上（update 0 列、insert 重複）時改呼叫 `cloudOwnOrConflict`：先讀雲端那筆的 `client_t`，如果是這台送過的，就把 `cloudKnown` 改成它再傳一次（只重試一次）；不是才跳進度衝突。別台裝置真的有新進度時照舊提示。
   - `lootPump`：上傳失敗時佇列保留、5 秒後重試，連續 60 秒都失敗才提示「雲端存檔尚未同步」（`lootSyncFailAt`）。
 - **測試**：`test-vault-v2-client.js` 新增：假 Supabase 把一次寫入的回應丟掉（`net.drop`，資料已進資料庫），下次上傳成功、沒有衝突、沒有對話框；資料庫裡被別台改過（client_t 不是這台送的）仍跳「☁️ 進度衝突」。全部回歸、check.ps1、混淆建置通過。
+
+## 97. 共用倉庫／交易所只等目前角色上傳完成（2026-10-23，版本 `20261023e`；`cloud.js` 的 `cloudSyncedSlot`、`vault.js` 的 `vaultOp`、`loot.js` 的 `lootPump`）
+
+- **使用者回報**：共用倉庫跳「雲端存檔還沒上傳完成，請稍後再試」、也出現過「連不上雲端伺服器，請確認網路」、東西領不出來。
+- **原因**：`vaultOp`（共用倉庫、交易所）與 `lootPump` 用 `cloudFlush(true)` 的回傳值判斷能不能繼續，但 `cloudFlushRun` 是**所有**待上傳的角色欄位都成功才回 true。帳號裡只要有別的角色欄位一直上傳失敗（衝突、被能力值上限／序號等拒收、逾時），目前角色明明已上傳完成也被擋住。
+- **修正**：新增 `cloudSyncedSlot(i)`：照常 `cloudFlush(true)`，但只看這一格是否已不在 `cloudDirty`、也沒有 `cloudConflict`。`vaultOp` 只看目前角色那格，失敗時等 1.5 秒自動重試一次，還失敗就提示原因：這格衝突時說「請先選擇要保留哪一邊的進度」，其他情況附上 `cloudError`。`lootPump` 只看那筆掉寶的角色欄位。
+- **測試**：`test-vault-v2-client.js` 新增：第 2 格本機存檔能力值 99 一直被拒收，第 1 格照常存入共用倉庫，第 2 格仍待上傳。全部回歸、check.ps1、混淆建置通過。
+- **待觀察**：別的角色欄位為什麼上傳失敗，新版提示會附上原因，請玩家截圖回報。
