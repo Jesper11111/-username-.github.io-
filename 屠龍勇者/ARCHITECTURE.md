@@ -20,6 +20,9 @@
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
 | `tools/MORPH-DESIGN.md` | 使用者給的 30 種變身設計稿（名稱、系別、階級、外觀與特效重點），做變身圖時照這份（第 88 節） |
 | `images/icons/items/polyScroll.png`、`tools/make-poly-icon.ps1` | 變形卷軸道具圖（羊皮紙卷軸＋變身人物第一格合成，128×128；第 88 節） |
+| `tools/icon-src/poly-scroll-samples-20261022/` | 變形卷軸四款外觀樣品、內建image_gen原圖／完整提示詞、128px圖與40px對照、排版腳本；B款已選並接入，其餘保留（第88、90節） |
+| `images/icons/items/polyScroll-v2.png` | 使用者選 B 紫晶幻化卷軸，128px透明PNG；舊polyScroll.png保留（第90節） |
+| `tools/test-buff-groups.js`／`tools/buff-groups-preview.html` | 狀態三區分類隔離測試／PC及390px窄螢幕互動預覽；不發佈（第90節） |
 | `images/icons/items/`、`tools/icon-src/items/`、`tools/item-art-*.json`、`tools/cut-item-art.ps1`、`tools/cut-single-item-art.ps1`、`tools/item-art-contact.ps1`、`tools/item-art-preview.html`、`tools/test-item-art.js` | 285 張原創道具 PNG、17 張原始圖集＋19 張單件原稿、名稱對照與生成提示詞、透明連通區裁切、縮圖總覽、432 件道具隔離圖庫與接線檢查（第 80、82、83 節）。tools 不發佈 |
 | `tools/legend-glow-preview.html`、`tools/test-legend-glow.js` | 全部 28 件傳說裝備的呼吸光暈、背包／角色／鍛造隔離預覽與品級範圍驗證（第 84 節） |
 | `tools/legend-equipment-art.json`、`tools/legend-equipment-preview.html`、`tools/test-legend-equipment.js` | 十二職業傳說代表武器與兩套七部位防具、原創單件提示詞／來源、隔離介紹與鍛造測試（第 83 節） |
@@ -138,7 +141,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022p`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022q`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1619,9 +1622,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   要換某招的圖：改 `SKILL_IMG` 的檔名（`tools/cut-icons.ps1` 重新裁出全部候選，再複製到 `images/icons/sk/`），換同檔名的圖要把 `ICON_IMG_VER` 加一。- **共鳴裝備圖示**（`20261015q`，使用者回報左上角 3 個一樣的紫色星星）：54 件共鳴裝備（`RESONANCE`）各配一張還沒用過的圖，對照表 `RES_IMG`（裝備 id → 檔名，同樣放 `images/icons/sk/`，共 200 張），
   不跟技能圖重複。共鳴觸發的增益（`player.buffs['res_裝備id']`，`findResonanceSkill` 回傳 id `res_…`）`skillIconHtml` 也用這張圖；
   **裝備還穿著時增益不另外多一格**，改在那件裝備的狀態圖示上發光（`.bf.on`）並顯示剩餘秒數，免得同一張圖出現兩次。- 用在：快捷欄格子（`barSlotHtml`，`.hb-face.svg` 整格由 SVG 畫）、選放對話框、技能頁每招前面（`.sk-ico`，沒學會變灰）。
-- **地圖左上角狀態**（`buffIconsHtml`，取代原本文字 chip 與 `resonanceChip()`）：每個增益一個圖示，下方剩餘時間（≥60 秒「分:秒」，否則「N秒」），剩 10 秒內變紅閃爍；
-  技能增益＝該技能圖示藍框、藥水＝道具圖示金框、共鳴裝備＝紫框、每件自己的圖（下方顯示冷卻秒數／就緒／充能／機率；共鳴增益生效中顯示剩餘秒數並發光）。點一下顯示名稱（`buffTip`），滑鼠移上去有 title。內容沒變就不重畫。地點名稱保留。
-  **頂端一整排、不換行**（`20261015p` 使用者要求：疊好幾排會擋畫面）：`.buffs.scene-buffs` nowrap＋overflow hidden，右邊 24px 淡出（放不下的看不到）；PC 從地點下方延伸到地圖右側。要用 `.buffs.scene-buffs` 才蓋得過後面通用的 `.buffs { flex-wrap: wrap }`。
+- **地圖左上角狀態**（`buffIconsHtml`）：每個增益一個圖示，下方剩餘時間（≥60 秒「分:秒」，否則「N秒」）。`20261022q`改為技能→道具→臨時三區，技能／共鳴藍底、藥水／卷軸黃底、負面紅底；原始持續≤30秒歸臨時，不依剩餘時間搬動，細節第90節。共鳴保留冷卻／就緒／充能／機率，生效時去重並發光。點一下顯示名稱／說明（`buffTip`），滑鼠有title；更新沿用`setHtmlStable`。
+  **頂端一整排、不換行**：q版保留單排，以標籤與分隔辨識三區，`overflow-x:auto`可橫滑查看後段，取代右側隱藏；`.buffs.scene-buffs`優先於通用`.buffs`的wrap。剩10秒內圖示閃爍／暖色秒數，分類底色不變；減少動態設定不閃爍。
 
 ## 42. 人物狀態「角色裝備」視窗（2026-10-16，版本 `20261016g`；`ui-panels.js` 的 `renderChar`、`index.html` 的 `.cv` 規則）
 
@@ -2439,6 +2441,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01～m05、m10、m27有自己的圖，其餘23種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
 - 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
 - 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
+- **2026-10-22 外觀樣品待選**：使用者要求更換變形卷軸外觀，先做幾款參考再決定。tools/icon-src/poly-scroll-samples-20261022/保存內建image_gen四款原創圖／prompts.json、a～d-128.png、comparison.png（大圖與40px快捷欄對照）及prepare.py／audit.json。A古典獸印、B紫晶幻化、C暗黑骷髏、D金翼聖印；使用者已選B，q版新增polyScroll-v2.png接共用入口，原polyScroll.png保留，其他三款待討論用途（第90節）。
 - 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。
 - 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。
 - **20261022f：02 月光精靈巡林者接上專屬圖**（使用者要求）。素材 `images/sprites/morph/moon-ranger-v1/`（別的工作做好、已由使用者提交 6005cd1；說明在該資料夾 README.md）：格子 320×240（比巡守妖魔神射寬）、**腳底 (160,200)**，walk／attack 各 4 格、cast／hit 各 2 格，時間 130／140／220／150ms。`MORPHS.moonRanger`＋m02 的 sprite 欄位，`sw.js` 預先快取四張圖集。驗證：Lv.55 測試角色選 m02 → 外觀為月光精靈巡林者、四張圖集尺寸 1280×720／640×720 正確載入，野外放大確認腳踩影子不浮空，攻擊 560ms／施法 440ms 動作正常；改選 m05 回到統一外觀；Console 無錯誤。
@@ -2462,3 +2465,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 以前只有自動喝水有 1 秒間隔（`hunt.potCd`，已移除），手動按快捷欄／背包沒有限制。現在 `usePotion` 本身檢查：**藥水類**（`cat: potion`：治癒、綠水、勇水、精靈餅乾、慎重、藍水）共用一個時間點 `potReadyAt`，喝完 `POTION_CD_MS`（800ms）內不管手動或自動都回「喝水延遲中」、不扣藥水。卷軸（回家、瞬移、變形卷軸）不算喝水，不受影響。
 - `autoSupport` 在延遲中直接跳過治癒與增益（包含自動讀變形卷軸）；快捷欄與 `quickHeal` 按太快會跳 0.6 秒的「喝水延遲中」提示，背包「使用」照舊提示。用 `gameNow`，離線模擬沿用同一套。
 - 驗證：手動連喝第 2 瓶、延遲中喝綠水都被擋，0.5 秒擋、0.8 秒可喝；自動 HP 一直很低時 3 秒喝 4 瓶（0／0.8／1.6／2.4 秒）；Console 無錯誤。
+
+## 90. 狀態三區與 B 款變形卷軸（2026-10-22，版本 `20261022q`；`icons.js`／`index.html`）
+
+- 使用者選B紫晶幻化；`ITEM_IMG.polyScroll = 'polyScroll-v2'`，背包／商店／快捷欄／狀態共用新128px透明PNG，原polyScroll.png及四款生成原稿全保留。新檔名避開SW舊圖快取；不改卷軸功能。A／C／D僅提陣營／軍團外觀用途建議，待使用者決定玩法。
+- `buffStatusGroup(b)`：負面（`negative === true`或`src === 'debuff'`）必歸temp；其餘查技能／道具原始sec，共鳴查裝備res.sec並套既有職業倍率。**使用者選原始持續≤30秒歸temp**，長效即使剩1秒也留原區，不加存檔欄位。
+- `buffIconsHtml`每次收集skill／item／temp三區，區內依狀態key固定排序，刷新／補放／同組來源覆蓋後重新分類；共鳴技能生效依時間歸臨時，未生效保留技能區冷卻／充能／機率。穿戴共鳴生效僅一格，到期恢復待命。空區hidden但保留容器順序，更新沿用`setHtmlStable`避免倒數換img。
+- 每格`bf-skill`藍底／`bf-item`黃底／`bf-bad`紅底；臨時增益仍依來源保留藍或黃，負面不跟到期提示混色。`.bf-time`僅樣式化倒數，避免原`.bf span`連圖示容器也套文字margin。三區標籤＋細分隔、單排、可橫滑；剩10秒提醒維持分類底色，減少動態設定停閃。
+- **現況限制**：目前實際戰鬥沒有寫入玩家負面增益；怪物的暈眩／bossEnchantDebuffs不可放入玩家列。紅底介面支援已備妥，隔離頁用明示的負面示範測試，沒有新增中毒或暈眩玩法。未改schema／數值。
+- `tools/test-buff-groups.js`隔離測分類、來源替換、固定排序、到期、共鳴去重與B圖接線；`tools/buff-groups-preview.html`用實際CSS與圖示函式供PC／390px窄螢幕刷新、快轉、負面示範，SIM_MODE且不讀寫存檔／雲端。
+- 驗證：上述分類測試含30／31秒邊界、test-item-art全433道具、check.ps1 ALL CHECKS PASSED、git diff --check通過；瀏覽器PC／390px窄版三區與藍黃紅底、橫滑查看後段、刷新／快轉40秒移除臨時效果並恢復共鳴待命正常；倒數保留同一img，Console無error／warn。待使用者實玩確認才提交。

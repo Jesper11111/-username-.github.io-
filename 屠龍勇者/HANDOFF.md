@@ -5,6 +5,11 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022q：B款變形卷軸＋狀態三區**。使用者選B紫晶幻化，新增images/icons/items/polyScroll-v2.png並改ITEM_IMG共用入口，舊圖與A／C／D樣品保留。其他三款陣營／軍團卷軸只提用途建議，未新增玩法。技能→道具→臨時固定順序，技能／共鳴藍底、藥水卷軸黃底、負面紅底；使用者明確選原始持續≤30秒歸臨時，長效快到期不搬區。補放／刷新自動重分，技能覆蓋同組藥水後來源也更新，共鳴生效不重複、到期恢復待命。單排可橫滑，沿用setHtmlStable；第90節。未改schema／能力／數值、未commit／Push。
+- **q版待實玩**：Ctrl+F5→確認背包／快捷欄變形卷軸為B款→使用長效技能、藥水及短效技能，檢查三區／底色／刷新與到期；手機左右滑查看後段。使用者確認後才commit及請Push origin。
+- **q版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022q）；test-buff-groups與test-item-art通過（433道具），git diff --check通過。瀏覽器實際CSS／buffIconsHtml於PC及390px窄版檢查三區，溢出430px／可視369px、橫滑到60.8px；刷新／快轉40秒／負面示範及共鳴待命更新正常，倒數保留同一img，Console無error／warn。紅底為隔離頁示範，現有遊戲沒有玩家負面狀態來源；未讀寫真實存檔／雲端，未commit／Push。
+- **卷軸樣品驗證**：四款透明RGBA／128px縮圖及40px快捷欄對照完成並檢視；check.ps1 ALL CHECKS PASSED（46檔／45script／20261022p），正式圖示未修改。generated-sources.json保留原生成檔位置。未commit／Push。
+
 - **本機待驗收20261022p：04替換新版分鏡**。使用者給4.jpg與4-1／4-2／4-3.jfif；改讀sky-valkyrie-v2，金甲白布／金髮羽冠／多片金翼依提供分鏡，36格（4／4／2／2），內建image_gen去棋盤與格線、修背面射箭後兩格及放箭／收弓。384×320／腳底[192,270]／charH160／drawH48，時間160／140／220／160ms，總長640／560／440／320ms維持原版；MORPHS.skyValkyrie key／m04、能力／等級／schema不變。SW改預載v2，舊v1全保留。新素材images/sprites/morph/sky-valkyrie-v2/；原圖／提示詞／整理腳本tools/sprite-src/morph/sky-valkyrie-v2/；試播valkyrie-v2-motion.html、隔離頁tools/valkyrie-v2-morph-preview.html與test-valkyrie-v2-morph.js；第18.11、88節。未commit／Push。
 - **p版待實玩**：Ctrl+F5→變形卷軸→弓手→04蒼穹女武神・艾爾，檢查新造型、走動與四向射箭；確認後才commit及請Push origin。
 - **p版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022p）、test-valkyrie-v2-morph.js通過，36格獨立RGBA／透明留邊／圖集逐格對應通過，v1檔案仍在。瀏覽器四動作切換／播放／逐格與左右鏡像正常；實際卷軸／renderer四向射箭560ms，第0～3格均畫出，背向放箭維持背影；兩頁Console無error／warn。未讀寫真實存檔或雲端，未commit／Push。原8790／8793伺服器已停，本環境HttpListener不支援，改用bundled Python http.server綁127.0.0.1啟動8790（專案）及8793（本對話visualizations），測試成功。

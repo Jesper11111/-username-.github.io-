@@ -1,0 +1,30 @@
+// 狀態分類、更新與圖示接線，隔離存檔／網路。
+const fs=require('fs'),path=require('path'),vm=require('vm');
+const setup=fs.readFileSync(path.join(__dirname,'test-item-art.js'),'utf8').split('const art=')[0];
+const run=String.raw`
+SIM_MODE=true;createPlayer('狀態隔離測試','knight',CLASSES.knight.base);gameNow=100000;
+const b=(src,id,sec)=>({src,id,until:gameNow+sec*1000});
+const section=(html,id)=>html.split('data-group="'+id+'"')[1].split('</div></div>')[0];
+player.buffs={morph:{...b('item','polyScroll',100),form:'m04'},shield:b('skill','mShield',5),blue:b('item','bluePotion',120),short:b('skill','absBarrier',15)};
+assert.equal(buffStatusGroup(player.buffs.shield),'skill','長效技能快到期不可換區');
+assert.equal(buffStatusGroup(player.buffs.short),'temp');
+const def=findSkill('mShield'),originalSec=def.sec;def.sec=30;assert.equal(buffStatusGroup(player.buffs.shield),'temp');def.sec=31;assert.equal(buffStatusGroup(player.buffs.shield),'skill');def.sec=originalSec;
+assert.equal(buffStatusGroup(b('skill','res_manaWand',20)),'temp');
+assert.equal(buffStatusGroup(b('item','polyScroll',5)),'item');
+let html=buffIconsHtml();
+assert(section(html,'skill').includes('data-status="shield"'));
+assert(section(html,'item').includes('data-status="morph"'));
+assert(section(html,'temp').includes('data-status="short"'));
+const before=html;player.buffs=Object.fromEntries(Object.entries(player.buffs).reverse());assert.equal(buffIconsHtml(),before,'不得依施放順序混排');
+player.buffs.haste=b('item','greenPotion',200);assert(section(buffIconsHtml(),'item').includes('data-status="haste"'));
+player.buffs.haste=b('skill','haste',600);html=buffIconsHtml();assert(section(html,'skill').includes('data-status="haste"'));assert(!section(html,'item').includes('data-status="haste"'),'同群技能蓋藥水後分類必須更新');
+const helm={uid:999,id:'knightHelm',ench:0};player.equip.helm=helm;
+player.buffs.res_knightHelm=b('skill','res_knightHelm',8);html=buffIconsHtml();
+assert.equal((html.match(/data-status="res_knightHelm"/g)||[]).length,1,'共鳴不可重複');assert(section(html,'temp').includes('res_knightHelm'));
+player.buffs.negative={src:'debuff',name:'負面測試',until:gameNow+20000};html=buffIconsHtml();assert(section(html,'temp').includes('bf-bad'));assert(!section(html,'skill').includes('bf-bad'));
+gameNow+=21000;cleanBuffs();html=buffIconsHtml();assert(!html.includes('data-status="negative"'));assert(!html.includes('data-status="short"'));assert(!html.includes('data-status="shield"'));assert(section(html,'skill').includes('res_knightHelm'),'共鳴到期恢復冷卻／充能顯示');
+assert(itemIconHtml('polyScroll').includes('items/polyScroll-v2.png'));assert(itemThumbHtml('polyScroll').includes('polyScroll-v2.png'));
+console.log('PASS：技能／道具／30秒臨時分類、固定排序、來源替換、到期、共鳴去重／待命、負面紅底與B卷軸共用入口。');
+`;
+vm.runInNewContext(setup+'\nvm.runInContext('+JSON.stringify(run)+',ctx);',{require,__dirname,console});
+if(!fs.existsSync(path.join(__dirname,'../images/icons/items/polyScroll.png')))throw Error('舊圖必須保留');

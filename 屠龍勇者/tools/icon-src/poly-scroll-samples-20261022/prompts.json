@@ -1,0 +1,26 @@
+{
+  "mode": "built-in image_gen",
+  "status": "preview-only pending user choice",
+  "jobs": [
+    {
+      "id": "a",
+      "name": "古典獸印",
+      "prompt": "Use case: stylized-concept. Asset: ONE original dark fantasy RPG inventory icon for a TRANSFORMATION MAGIC SCROLL. Square canvas with true transparent RGBA background. A recognizable unfurled parchment scroll, diagonal only very slightly, full object centered, both rolled ends visible, fill about 80% canvas, ample transparent margin. A single bold transformation emblem embossed on the center; keep silhouette distinct and legible when shrunk to 40x40 pixels. Hand-painted high-detail game item art with crisp controlled edges, aged material, dramatic top-left lighting, strong readable contrast, restrained magical glow. No frame, no text/letters/numbers, no UI, no checkerboard, no scenery, no tiny character collage, no floating full-body person, no brand or existing commercial game icon. Only ONE item icon.\nVARIANT: warm aged tan parchment, dark carved bronze scroll rods, one bold dark emerald seal showing a split human/wolf face silhouette as transformation symbol, a small green gem. Classic grounded medieval artifact; warm brown and deep green, minimal glow."
+    },
+    {
+      "id": "b",
+      "name": "紫晶幻化",
+      "prompt": "Use case: stylized-concept. Asset: ONE original dark fantasy RPG inventory icon for a TRANSFORMATION MAGIC SCROLL. Square canvas with true transparent RGBA background. A recognizable unfurled parchment scroll, diagonal only very slightly, full object centered, both rolled ends visible, fill about 80% canvas, ample transparent margin. A single bold transformation emblem embossed on the center; keep silhouette distinct and legible when shrunk to 40x40 pixels. Hand-painted high-detail game item art with crisp controlled edges, aged material, dramatic top-left lighting, strong readable contrast, restrained magical glow. No frame, no text/letters/numbers, no UI, no checkerboard, no scenery, no tiny character collage, no floating full-body person, no brand or existing commercial game icon. Only ONE item icon.\nVARIANT: pale aged parchment with silver scroll rods and violet bindings, one large amethyst jewel framed by a silver half-human half-beast MASK emblem, compact violet arcane swirl framing emblem. Elegant purple magic scroll, strong bright violet center, minimal ornate clutter."
+    },
+    {
+      "id": "c",
+      "name": "暗黑骷髏",
+      "prompt": "Use case: stylized-concept. Asset: ONE original dark fantasy RPG inventory icon for a TRANSFORMATION MAGIC SCROLL. Square canvas with true transparent RGBA background. A recognizable unfurled parchment scroll, diagonal only very slightly, full object centered, both rolled ends visible, fill about 80% canvas, ample transparent margin. A single bold transformation emblem embossed on the center; keep silhouette distinct and legible when shrunk to 40x40 pixels. Hand-painted high-detail game item art with crisp controlled edges, aged material, dramatic top-left lighting, strong readable contrast, restrained magical glow. No frame, no text/letters/numbers, no UI, no checkerboard, no scenery, no tiny character collage, no floating full-body person, no brand or existing commercial game icon. Only ONE item icon.\nVARIANT: charred charcoal parchment with blackened bronze scroll rods, one large ivory skull MASK transformation seal with two short curved horns, burgundy wax fastening, restrained ember red-violet light. Ominous gothic dark continent artifact; skull reads clearly against dark paper, visually still a scroll."
+    },
+    {
+      "id": "d",
+      "name": "金翼聖印",
+      "prompt": "Use case: stylized-concept. Asset: ONE original dark fantasy RPG inventory icon for a TRANSFORMATION MAGIC SCROLL. Square canvas with true transparent RGBA background. A recognizable unfurled parchment scroll, diagonal only very slightly, full object centered, both rolled ends visible, fill about 80% canvas, ample transparent margin. A single bold transformation emblem embossed on the center; keep silhouette distinct and legible when shrunk to 40x40 pixels. Hand-painted high-detail game item art with crisp controlled edges, aged material, dramatic top-left lighting, strong readable contrast, restrained magical glow. No frame, no text/letters/numbers, no UI, no checkerboard, no scenery, no tiny character collage, no floating full-body person, no brand or existing commercial game icon. Only ONE item icon.\nVARIANT: ivory parchment, finely sculpted warm gold scroll rods, one large gold ceremonial MASK seal surrounded by a compact pair of small stylized gold feather WINGS on the parchment, a vivid sapphire-blue gem forehead and restrained pale gold halo. Noble luminous gold and blue, still one parchment scroll, no angel figure."
+    }
+  ]
+}

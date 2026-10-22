@@ -1,0 +1,26 @@
+[
+  {
+    "id": "a",
+    "name": "古典獸印",
+    "saved": "a-generated.png",
+    "source": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99 as C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-7729941c-583a-4fa8-a0e0-9bad9cdd7991.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+  },
+  {
+    "id": "b",
+    "name": "紫晶幻化",
+    "saved": "b-generated.png",
+    "source": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99 as C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-776f35ca-2f3d-46ad-b383-ce1a5c9bdaa2.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+  },
+  {
+    "id": "c",
+    "name": "暗黑骷髏",
+    "saved": "c-generated.png",
+    "source": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99 as C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-5008ed9d-2395-44a0-802c-87fa17810cb1.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+  },
+  {
+    "id": "d",
+    "name": "金翼聖印",
+    "saved": "d-generated.png",
+    "source": "Generated images are saved to C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99 as C:\\Users\\User\\.codex\\generated_images\\01a15a1d-c75d-7212-99df-c1590074bc99\\exec-61fcdda5-dff0-4f5f-b7ab-c1d659d8382f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+  }
+]

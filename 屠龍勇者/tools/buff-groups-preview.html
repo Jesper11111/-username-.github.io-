@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="../"><title>狀態三區隔離預覽</title>
+<style id="game-style"></style><style>body{margin:0;padding:20px;background:#171c20;color:#eee;font:15px sans-serif}#frame{position:relative;width:100%;max-width:1100px;height:260px;background:linear-gradient(#0002,#0008),url('images/maps/ash.webp') center/cover;overflow:hidden;border:1px solid #867448}#frame .scene-buffs{position:absolute;left:10px;right:10px;top:50px}button{padding:9px;margin:4px}#result{white-space:pre-wrap}#sample .ico{width:64px;height:64px}</style>
+<style>#frame.pc{background:linear-gradient(#0002,#0008),url('images/maps/ash.webp') center/cover!important}#frame.pc .scene-buffs{left:10px;right:10px;top:50px}#frame.narrow{width:390px;max-width:100%}</style>
+<h2>技能 → 道具 → 臨時</h2><p>藍底技能／共鳴・黃底藥水卷軸・紅底負面（此頁示範用）；短效原始持續時間 ≤30秒。</p>
+<div id="frame" class="pc"><span style="position:absolute;left:12px;top:14px">焦骨峽谷・狀態分類預覽</span><div id="hunt-buffs" class="buffs scene-buffs"></div></div>
+<p><button id="refresh">刷新藥水與技能</button><button id="expire">快轉40秒</button><button id="reset">重設</button><button id="negative">負面示範</button><button id="mobile">390px窄螢幕</button><button id="pause">暫停倒數</button></p><p id="result">載入中</p><div id="sample"></div>
+<script>
+(async()=>{
+const index=await(await fetch('index.html')).text();document.getElementById('game-style').textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];
+const files=[...index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=[^"]+"/g)].map(m=>m[1]).filter(f=>!['data/main.js','data/pwa.js'].includes(f));
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261022q';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('分類測試','knight',CLASSES.knight.base);
+const box=document.getElementById('hunt-buffs'),result=document.getElementById('result');let saved,paused=false;
+const b=(src,id,sec)=>({src,id,until:gameNow+sec*1000});
+function paint(){setHtmlStable(box,buffIconsHtml());}
+function reset(){gameNow=100000;player.equip.helm={uid:999,id:'knightHelm',ench:0};player.buffs={mShield:b('skill','mShield',480),armorBless:b('skill','armorBless',480),holyWeapon:b('skill','holyWeapon',240),bodyBless:b('skill','bodyBless',480),haste:b('skill','haste',580),blue:b('item','bluePotion',540),brave:b('item','bravePotion',270),morph:{...b('item','polyScroll',1100),form:'m04'},short:b('skill','absBarrier',15),res_knightHelm:b('skill','res_knightHelm',8)};paint();saved=box.querySelector('[data-status="mShield"] img');result.textContent='隔離測試：未讀寫存檔／未連接雲端';}
+document.getElementById('reset').onclick=reset;
+document.getElementById('refresh').onclick=()=>{player.buffs.blue=b('item','bluePotion',600);player.buffs.mShield=b('skill','mShield',600);paint();result.textContent='已刷新：分類保持技能→道具→臨時';};
+document.getElementById('expire').onclick=()=>{gameNow+=40000;cleanBuffs();paint();result.textContent='快轉40秒：短效已移除，共鳴恢復待命';};
+document.getElementById('negative').onclick=()=>{player.buffs.demoNegative={src:'debuff',name:'負面狀態示範（隔離頁）',until:gameNow+20000};paint();};
+document.getElementById('mobile').onclick=()=>{const f=document.getElementById('frame');f.classList.toggle('narrow');f.classList.toggle('pc');};
+document.getElementById('pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'繼續倒數':'暫停倒數';};
+document.getElementById('sample').innerHTML=itemIconHtml('polyScroll','item')+' B款・正式共用圖示';reset();
+setInterval(()=>{if(!paused){gameNow+=1000;cleanBuffs();paint();}box.dataset.imageStable=String(saved===box.querySelector('[data-status="mShield"] img'));},1000);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>

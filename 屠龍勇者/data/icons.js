@@ -261,6 +261,7 @@ const ITEM_IMG = Object.fromEntries([
     'map1', 'map2', 'map3', 'map4', 'map5', 'map6', 'map7', 'map8',
     'map9', 'map10', 'map11', 'map12', 'map13', 'map14', 'map15',
 ].map(id => [id, id]));
+ITEM_IMG.polyScroll = 'polyScroll-v2';   // 使用者選 B 紫晶幻化；舊圖保留
 function itemIconOf(id) {
     if (ITEM_ICON[id]) return ITEM_ICON[id];
     const d = ITEMS[id] || {};
@@ -279,31 +280,47 @@ function itemThumbHtml(id) { return `<span class="item-thumb" aria-hidden="true"
 
 // ───────── 地圖左上角狀態：增益與共鳴裝備改成圖示＋剩餘時間（2026-10-15）─────────
 function fmtBuffTime(sec) { return sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}秒`; }
+function buffStatusGroup(b) {
+    if (b.negative === true || b.src === 'debuff') return 'temp';
+    const resId = b.id && b.id.startsWith('res_') ? b.id.slice(4) : null;
+    const r = resId && ITEMS[resId] && ITEMS[resId].res;
+    const d = r || (b.src === 'skill' ? findSkill(b.id) : ITEMS[b.id]);
+    const sec = r ? Math.round(r.sec * (resCls(r).includes(player.cls) ? RES_CLASS_BONUS : 1)) : d && d.sec;
+    // 看原始長度，不看剩餘秒數，避免快到期時突然換區；不寫入存檔。
+    return sec > 0 && sec <= 30 ? 'temp' : b.src === 'item' ? 'item' : 'skill';
+}
 function buffIconsHtml() {
     const now = gameNow, equippedRes = typeof resItemIds === 'function' ? resItemIds() : [];
+    const groups = { skill: [], item: [], temp: [] };
+    const add = (group, key, color, name, ico, text, cls = '') => {
+        groups[group].push({ key, html: `<div class="bf bf-${color} ${cls}" data-status="${esc(key)}" title="${esc(name)}" onclick="buffTip('${esc(name)}')">${ico}<span class="bf-time">${text}</span></div>` });
+    };
     // 共鳴觸發的增益（res_裝備id）：裝備還穿著就不另外多一格，改在下面那件裝備的圖示上發光＋顯示秒數（避免同一張圖出現兩次）
-    const buffs = Object.keys(player.buffs).filter(k => player.buffs[k].until > now && !(k.startsWith('res_') && equippedRes.includes(k.slice(4)))).map(k => {
+    Object.keys(player.buffs).filter(k => player.buffs[k].until > now && !(k.startsWith('res_') && equippedRes.includes(k.slice(4)))).forEach(k => {
         const b = player.buffs[k], sec = Math.ceil((b.until - now) / 1000), sk = b.src === 'skill' && findSkill(b.id);
-        const ico = sk ? skillIconHtml(sk, 'skill') : ITEMS[b.id] ? itemIconHtml(b.id, 'item') : iconSvg('sun', 'holy', 'skill');
-        const name = buffName(b) || k;
-        return `<div class="bf ${sec <= 10 ? 'low' : ''}" title="${esc(name)}" onclick="buffTip('${esc(name)}')">${ico}<span>${fmtBuffTime(sec)}</span></div>`;
+        const bad = b.negative === true || b.src === 'debuff', color = bad ? 'bad' : b.src === 'item' ? 'item' : 'skill';
+        const ico = sk ? skillIconHtml(sk, color) : ITEMS[b.id] ? itemIconHtml(b.id, color) : iconSvg(bad ? 'skull' : 'sun', bad ? 'blood' : 'holy', color);
+        const name = b.name || (sk || ITEMS[b.id] ? buffName(b) : k);
+        add(buffStatusGroup(b), k, color, name, ico, fmtBuffTime(sec), sec <= 10 ? 'low' : '');
     });
-    // 共鳴裝備（resonance.js）：紫框，下方顯示冷卻／充能／機率
-    const res = equippedRes.map(id => {
+    // 共鳴視為裝備提供的技能；生效時依原始持續時間分類，不重複顯示。
+    equippedRes.forEach(id => {
         const r = ITEMS[id].res, left = Math.ceil(((player.cds['res_' + id] || 0) - now) / 1000), act = player.buffs['res_' + id];
         let s;
         if (act && act.until > now) {   // 共鳴增益生效中：顯示剩餘秒數、圖示發光
             const sec = Math.ceil((act.until - now) / 1000);
-            const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'res') : iconSvg('star', 'dark', 'res');
-            return `<div class="bf on ${sec <= 10 ? 'low' : ''}" title="${esc(r.name + '（生效中）：' + r.desc)}" onclick="buffTip('${esc(r.name)}')">${ico}<span>${fmtBuffTime(sec)}</span></div>`;
+            const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'skill') : iconSvg('star', 'dark', 'skill');
+            add(buffStatusGroup(act), 'res_' + id, 'skill', r.name + '（生效中）：' + r.desc, ico, fmtBuffTime(sec), 'on' + (sec <= 10 ? ' low' : ''));
+            return;
         }
         if (r.trigger === 'cd' || r.trigger === 'lowhp') s = left > 0 ? `${left}秒` : r.trigger === 'cd' ? '就緒' : '待命';
         else if (r.trigger === 'charge') s = `${resChargeMap()[id] || 0}/${r.n}`;
         else s = `${Math.round(r.p * 100)}%`;
         const on = resCls(r).includes(player.cls) ? '（職業共鳴）' : '';
-        const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'res') : iconSvg('star', 'dark', 'res');
-        return `<div class="bf" title="${esc(r.name + on + '：' + r.desc)}" onclick="buffTip('${esc(r.name + on)}')">${ico}<span>${s}</span></div>`;
+        const ico = RES_IMG[id] ? imgIconHtml('sk/' + RES_IMG[id], 'skill') : iconSvg('star', 'dark', 'skill');
+        add('skill', 'res_' + id, 'skill', r.name + on + '：' + r.desc, ico, s);
     });
-    return buffs.concat(res).join('');
+    return Object.entries({ skill: '技能', item: '道具', temp: '臨時' }).map(([key, label]) =>
+        `<div class="bf-group bf-group-${key}" data-group="${key}"${groups[key].length ? '' : ' hidden'}><span class="bf-label">${label}</span><div class="bf-list">${groups[key].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0).map(b => b.html).join('')}</div></div>`).join('');
 }
 function buffTip(name) { showToast(name, 1500); }

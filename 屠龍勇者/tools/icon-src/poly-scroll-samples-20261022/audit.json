@@ -1,0 +1,58 @@
+[
+  {
+    "id": "a",
+    "name": "古典獸印",
+    "source": "a-generated.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "icon": "a-128.png",
+    "alpha": [
+      0,
+      255
+    ]
+  },
+  {
+    "id": "b",
+    "name": "紫晶幻化",
+    "source": "b-generated.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "icon": "b-128.png",
+    "alpha": [
+      0,
+      255
+    ]
+  },
+  {
+    "id": "c",
+    "name": "暗黑骷髏",
+    "source": "c-generated.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "icon": "c-128.png",
+    "alpha": [
+      0,
+      255
+    ]
+  },
+  {
+    "id": "d",
+    "name": "金翼聖印",
+    "source": "d-generated.png",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "icon": "d-128.png",
+    "alpha": [
+      0,
+      255
+    ]
+  }
+]
