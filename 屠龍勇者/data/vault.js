@@ -123,7 +123,7 @@ function vaultEnvelope(data, previous) {
     data.vaultSeq = Math.max(prev, vaultLive && vaultLive.char === ch ? vaultLive.seq : 0);
     return data;
 }
-// fn＝vault_put2／vault_take2；apply(r) 照伺服器回傳修改本機角色。修改與存檔在同一個同步段落，中間不會插入別的存檔
+// fn＝vault_put2／vault_take2，交易所 market_list2／market_cancel2／market_buy2 也用（market.js，第 95 節）；apply(r) 照伺服器回傳修改本機角色。修改與存檔在同一個同步段落，中間不會插入別的存檔
 async function vaultOp(fn, args, apply) {
     saveGame();
     if (!await cloudFlush(true)) throw Error('雲端存檔還沒上傳完成，請稍後再試');

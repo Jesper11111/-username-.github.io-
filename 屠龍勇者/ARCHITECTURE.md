@@ -9,6 +9,7 @@
 |---|---|
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
 | `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
+| `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -149,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023c`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1470,6 +1471,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   兩人領獎（第 2、3 名：經驗、金幣、祝福武器卷）、重複領被拒；結束畫面顯示最後一擊與下一隻倒數。Console 只有預期中的重複領獎 409。
 
 ## 36. 交易所（2026-10-10，版本 `20261010n`；`market.js`、`tools/supabase.sql` 交易所段）
+- **⚠️ 2026-10-23 起改用 v2（第 95 節）**：本節的 market_list／market_buy／market_cancel 只檢查不扣、照收玩家送來的道具內容，可複製道具與金幣，已停用；改為 market_list2／market_cancel2／market_buy2。
 
 - 使用者要求：B 計畫的「交易所」。入口：村莊頁「🏪 交易所」按鈕、PC 地圖左側圓鈕 🏪（血盟下面，`PC_SLOTS` side，y 368）、手機左柱抽屜、背包道具視窗「🏪 上架」（在村莊、已登入、可交易時）。
 - **寄賣制**（`dragon_market`，玩家不能直接讀寫，全部經過函式）：
@@ -2560,3 +2562,18 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **遊戲端**：`cloudErrText` 把這個錯誤顯示成「能力值超過上限（單項最高 40），雲端不接受這份存檔」。不改存檔結構。
 - **測試**：`tools/test-stat-cap.js`（隔離 PGlite 載正式 SQL＋重複安裝）：35／40 照收；41、99、字串、負數、缺欄位、沒有 stats 拒收且雲端不變、不留紀錄；管理者修資料不受影響。`test-vault-v2-client.js` 也加裝 stat-cap.sql，證明真實遊戲上傳的存檔通過檢查。check.ps1 ALL CHECKS PASSED。
 - **限制**：已在雲端的 99 存檔仍可被後端掉寶讀到（`loot_player` 不看能力值），這種帳號建議用管理頁封鎖；能力值納入簽章需要同時改遊戲與伺服器，目前不做。
+
+## 95. 交易所防複製 v2（2026-10-23，版本 `20261023c`；`market.js` 的 `marketListItem`／`marketCancel`／`marketBuy`、`tools/market-v2.sql`）
+
+- **起因**：使用者要求查證交易所；隔離資料庫重現 v1（第 36 節）三個漏洞：① `market_list` 存玩家送來的 `p_item`，普通長劍可偽造成 +15 傳說上架；② 上架不扣雲端存檔、下架又還給玩家，10 瓶藥水上下架 3 輪拿回 30 瓶；③ `market_buy` 只檢查買家金幣不扣，1000 金幣連買兩件 1000，賣家憑空入帳 1900（可用兩個帳號無限製造金幣）。
+- **使用者選的修法**：比照共用倉庫 v2（第 93 節）。
+- **SQL（`tools/market-v2.sql`，接在 vault-v2.sql 之後，可重跑）**：
+  - `dragon_market_row(slot, trade)`（內部）：登入、停權；上架／購買另檢查交易所門檻與雲端簽章（下架取回自己的東西不擋）；與共用倉庫同一把帳號鎖；鎖住存檔列。`dragon_inv_add(player, item)`（內部）：可堆疊（沒有 `ench`）併入同名那疊，否則給 `nextUid` 新 uid。
+  - `market_list2(slot, uid, n, price, seller_name, name, cat)`：從雲端存檔拿掉（可堆疊可賣一部分），交易所存**存檔裡那一件**；同一件拿掉後自然不能重複上架（不再需要 `already listed`）。
+  - `market_cancel2(id, slot)`：下架（含過期）放回**目前角色欄位**的雲端存檔。
+  - `market_buy2(id, slot, buyer_name)`：扣買家雲端金幣、道具加進買家存檔、`buyer_got = true`（不用再交貨），大額交易照記 `market_big`。賣家收入仍走 `market_pending`／`market_ack`（`marketDeliver`）。
+  - 三者都用 `dragon_vault_commit`：存取序號（`dragon_vault_seq`／`data.vaultSeq`）+1、伺服器時間、重算簽章，舊存檔蓋不回。舊 `market_list`／`market_buy`／`market_cancel` 改成拋 `market client outdated`（hint `dragon_market_old`）；v1 時買到還沒交貨的道具仍由 `market_pending` 補交。
+  - **部署順序**：先執行 SQL，再發佈遊戲（中間舊版只是暫時不能上架／購買／下架）。
+- **遊戲端**：三個動作改用 `vaultOp`（vault.js）：上架只送 uid＋數量、本機只扣上架數量；下架 `marketGiveItem(r.item)`；購買 `player.gold += r.gold`＋`marketGiveItem(r.item)`。`marketErrText` 新增 `market client outdated`、`bad amount`。
+- **測試**：`tools/test-market-v2.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：舊 RPC 停用、內部函式不能直接呼叫、上架存的是存檔那件且同時扣掉、上下架 3 輪數量守恆、部分上架、下架給新 uid、買家金幣真的扣不能重複買、買到直接入帳、賣家只入帳一次、舊存檔蓋不回。`test-vault-v2-client.js` 加上交易所：真實遊戲上架／下架／向另一帳號購買，本機與雲端一致、簽章不誤判。全部回歸、check.ps1、混淆建置通過。
+- **限制**：`p_cat = 'quest'` 仍由遊戲送來（伺服器沒有道具分類表），偽造分類只能讓任務道具上架，不能複製；賣家入帳仍是兩段式（有 `marketGot` 防重複）。

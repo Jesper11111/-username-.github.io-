@@ -1,8 +1,9 @@
 // 屠龍勇者：交易所（ARCHITECTURE.md 第 36 節）
 // 依賴 player、items、affix（品質名稱）、ui-panels（itemDescHtml／itemClass、TABS／PANEL_FNS）、cloud。
-// 寄賣制：在村莊把背包道具標價上架（伺服器確認道具在雲端存檔裡），別人用金幣買（伺服器確認買家雲端存檔的金幣夠），成交收 5% 手續費。
-// 交貨兩段式：伺服器先記帳（market_pending），遊戲把道具／金幣加進角色、存檔後再確認（market_ack）；
-// player.marketGot 記已入帳的編號，就算確認沒送到也不會重複領。
+// 寄賣制：在村莊把背包道具標價上架，別人用金幣買，成交收 5% 手續費。
+// 2026-10-23 起（第 95 節，tools/market-v2.sql）上架／下架／購買由伺服器直接改雲端存檔＋存取序號（同共用倉庫 vault.js 的 vaultOp）。
+// 賣家收入仍是兩段式：伺服器先記帳（market_pending），遊戲把金幣加進角色、存檔後再確認（market_ack）；
+// player.marketGot 記已入帳的編號，就算確認沒送到也不會重複領（v1 時買到還沒交貨的道具也走這裡）。
 
 const MARKET_FEE = 0.05;
 const MARKET_MAX = 10;
@@ -23,6 +24,7 @@ function marketErrText(e) {
         'already listed': '這件道具已經在上架中', 'bad price': '價格要在 1～20 億之間', 'not tradeable': '這件道具不能交易', banned: '帳號已停權',
         'market hold': '帳號有待管理者確認的異常紀錄，暫時不能使用交易所與共用倉庫（確認沒問題後會自動恢復）',
         'save signature': '雲端存檔驗證沒有通過：請重新整理（更新遊戲）後到設定按「☁️ 立即上傳」再試',
+        'market client outdated': '遊戲版本太舊，請重新整理（更新遊戲）後再使用交易所', 'bad amount': '數量不正確',
     };
     for (const k in map) if (m.includes(k)) return map[k];
     return cloudErrText(e);
@@ -135,14 +137,13 @@ async function marketBuy(id) {
     if (player.gold < r.price) { showToast('金幣不足'); return; }
     marketBusy = true;
     try {
-        saveGame();
-        await cloudFlush(true);   // 伺服器用雲端存檔的金幣檢查
-        const res = await marketRpc('market_buy', { p_id: id, p_slot: currentSlot, p_buyer_name: player.name });
-        player.gold -= res.price;
-        addLog(`🛍️ 交易所購買 ${res.name}（-${fmt(res.price)} 金幣）`, 'sys');
-        saveGame();
-        await marketDeliver(true);   // 把道具交給自己
-        showToast(`買到了 ${res.name}！`);
+        // 伺服器直接扣雲端存檔的金幣、把道具放進去（vault.js vaultOp）
+        await vaultOp('market_buy2', { p_id: id, p_buyer_name: player.name }, res => {
+            player.gold += res.gold;
+            marketGiveItem(res.item);
+            addLog(`🛍️ 交易所購買 ${res.name}（-${fmt(res.price)} 金幣）`, 'sys');
+            showToast(`買到了 ${res.name}！`);
+        });
     } catch (e) { showToast(marketErrText(e)); }
     marketBusy = false;
     marketCache = {};
@@ -161,19 +162,17 @@ async function marketListItem() {
     const n = isStackable(ITEMS[inst.id]) ? clamp(Math.floor(Number((document.getElementById('market-n') || {}).value) || 1), 1, inst.n) : 1;
     if (price < 1 || price > 2e9) { showToast('請輸入 1～20 億的價格'); return; }
     if (!marketTradeable(inst)) { showToast('這件道具不能交易'); return; }
-    const item = JSON.parse(JSON.stringify(inst)); item.n = n;
-    const name = itemName(inst) + (n > 1 ? ' ×' + n : '');
+    const uid = inst.uid, name = itemName(inst) + (n > 1 ? ' ×' + n : '');
     gameConfirm('上架', `以 💰${fmt(price)} 上架「${name}」？\n成交後收 5% 手續費（${fmt(Math.ceil(price * MARKET_FEE))}），實收 ${fmt(price - Math.ceil(price * MARKET_FEE))}。上架 48 小時，期間可以下架取回。`, async () => {
         marketBusy = true;
         try {
-            saveGame();
-            await cloudFlush(true);   // 伺服器確認道具在雲端存檔裡
-            await marketRpc('market_list', { p_slot: currentSlot, p_item: item, p_price: price, p_seller_name: player.name, p_name: name, p_cat: ITEMS[inst.id].cat });
-            // 上架成功才從背包拿走
-            if (n >= inst.n) removeInst(inst.uid); else inst.n -= n;
-            addLog(`🏪 上架 ${name}（💰${fmt(price)}）`, 'sys');
-            saveGame(); await cloudFlush(true); refreshUI();
-            showToast('已上架');
+            // 伺服器直接從雲端存檔拿掉（交易所存的是存檔裡那一件），本機照樣扣掉上架的數量
+            await vaultOp('market_list2', { p_uid: uid, p_n: n, p_price: price, p_seller_name: player.name, p_name: name, p_cat: ITEMS[inst.id].cat }, r => {
+                const cur = findInv(uid);
+                if (cur) { if (cur.n > r.n) cur.n -= r.n; else removeInst(uid); }
+                addLog(`🏪 上架 ${name}（💰${fmt(price)}）`, 'sys');
+                showToast('已上架');
+            });
             marketSellUid = null;
             marketCache = {};
         } catch (e) { showToast(marketErrText(e)); }
@@ -187,11 +186,12 @@ async function marketCancel(id) {
     if (!inTown()) { showToast('要在村莊裡才能下架取回'); return; }
     marketBusy = true;
     try {
-        const r = await marketRpc('market_cancel', { p_id: id });
-        marketGiveItem(r.item);
-        addLog(`🏪 下架取回 ${r.name}`, 'sys');
-        saveGame(); await cloudFlush(true); refreshUI();
-        showToast('已下架，道具回到背包');
+        // 伺服器直接把道具放回目前角色的雲端存檔
+        await vaultOp('market_cancel2', { p_id: id }, r => {
+            marketGiveItem(r.item);
+            addLog(`🏪 下架取回 ${r.name}`, 'sys');
+            showToast('已下架，道具回到背包');
+        });
     } catch (e) { showToast(marketErrText(e)); }
     marketBusy = false;
     marketCache = {};

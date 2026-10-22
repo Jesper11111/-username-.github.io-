@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
     create function auth.jwt() returns jsonb language sql as $$select jsonb_build_object('email','test@invalid','role','authenticated')$$;
     create function auth.role() returns text language sql as $$select 'authenticated'::text$$;
     grant usage on schema public,auth to anon,authenticated;`);
-    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql']) {   // 真實遊戲存檔也要通過能力值上限（第 94 節）
+    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql', 'market-v2.sql']) {   // 真實遊戲存檔也要通過能力值上限（第 94 節）；交易所 v2（第 95 節）
         let sql = fs.readFileSync(path.join(__dirname, file), 'utf8');
         if (file === 'supabase.sql') sql = sql.replace(/create extension if not exists pgcrypto;/i, '');
         await db.exec(sql);
@@ -116,7 +116,39 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         c = await cloud(); assert.equal(c.data.vaultSeq, 6); assert.equal(c.sig_ok, true);
         assert.equal(c.data.player.inv.filter(x => x.id === 'longSword').length, 1); assert.equal(Number(c.data.player.gold), 4000);
         assert.equal(flags.length, 0);
-        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、簽章不誤判。');
+
+        // ⑤ 交易所 v2（第 95 節）：上架、下架、向別的帳號購買，本機與雲端一致
+        const waitMarket = async () => { await new Promise(r => setTimeout(r, 5)); while (marketBusy) await new Promise(r => setTimeout(r, 5)); };
+        const g0 = player.gold, sw = player.inv.find(x => x.id === 'longSword');
+        marketSellUid = sw.uid;
+        document.getElementById = id => id === 'market-price' ? { value: '777' } : id === 'market-n' ? { value: '1' } : null;
+        await marketListItem(); await waitMarket();
+        c = await cloud();
+        assert(!findInv(sw.uid)); assert(!c.data.player.inv.some(x => x.id === 'longSword'), '上架後雲端存檔也拿掉');
+        const listing = (await db.query("select id, item from public.dragon_market where seller=$1 and state='active'", [uid])).rows[0];
+        assert.equal(listing.item.ench, 3, '交易所存的是存檔那一把');
+        await marketCancel(listing.id); await waitMarket();
+        c = await cloud();
+        assert.equal(player.inv.filter(x => x.id === 'longSword').length, 1); assert.equal(c.data.player.inv.filter(x => x.id === 'longSword').length, 1, '下架回到存檔，只有一把');
+        // 別的帳號上架 → 這個角色購買
+        const seller = '55555555-5555-4555-8555-555555555555';
+        await db.query('insert into auth.users values($1,$2)', [seller, 'seller@invalid']);
+        await db.exec("select set_config('request.jwt.claim.sub','" + seller + "',false)");
+        const sp = { created: 9, cls: 'mage', name: '賣家', lv: 5, exp: 0, gold: 0, nextUid: 9, inv: [{ uid: 3, id: 'redPotion', n: 5 }], storage: [], equip: {}, stats: { str: 8, dex: 8, con: 8, int: 18, wis: 12, cha: 8 } };
+        await db.query('insert into public.dragon_saves(user_id,slot,client_t,name,cls,lv,data) values($1,0,1,$2,$3,5,$4)', [seller, '賣家', 'mage', { schema: 5, player: sp, sig: (await db.query('select public.dragon_save_sig($1,0,$2) s', [seller, sp])).rows[0].s, lootProtocol: 1, lootCursor: 0 }]);
+        await db.exec('set role authenticated');
+        const bid = (await db.query("select public.market_list2(0,3,5,300,'賣家','紅藥水 ×5','potion') v")).rows[0].v.id;
+        await db.exec("reset role; select set_config('request.jwt.claim.sub','" + uid + "',false)");
+        const pot1 = countItem('redPotion'), g1 = player.gold;
+        marketRows = [{ id: bid, price: 300 }];
+        await marketBuy(bid); await waitMarket();
+        c = await cloud();
+        assert.equal(player.gold, g1 - 300); assert.equal(Number(c.data.player.gold), g1 - 300, '買家金幣雲端也扣');
+        assert.equal(countItem('redPotion'), pot1 + 5); assert.equal(c.data.player.inv.find(x => x.id === 'redPotion').n, pot1 + 5);
+        assert.equal(c.sig_ok, true); assert.equal(c.data.vaultSeq, local().vaultSeq);
+        player.exp += 1; saveGame(); assert.equal(await cloudFlush(true), true, '交易後照常上傳');
+        assert.equal(flags.length, 0); assert.equal(g0, player.gold + 300);
+        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、簽章不誤判。');
     })()`, ctx);
     await db.close();
 })().catch(e => { console.error(e); process.exit(1); });
