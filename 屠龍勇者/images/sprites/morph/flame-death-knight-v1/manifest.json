@@ -1,0 +1,699 @@
+{
+  "id": "flame-death-knight-v1",
+  "name": "烈焰死亡騎士（紅變）",
+  "form": "m16",
+  "status": "game-appearance",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/flame-death-knight-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            400,
+            365
+          ],
+          "sourceFoot": [
+            201,
+            337
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            400,
+            0,
+            755,
+            365
+          ],
+          "sourceFoot": [
+            581,
+            337
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            765,
+            0,
+            1115,
+            365
+          ],
+          "sourceFoot": [
+            944,
+            337
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1115,
+            0,
+            1448,
+            365
+          ],
+          "sourceFoot": [
+            1306,
+            337
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            425,
+            390
+          ],
+          "sourceFoot": [
+            205,
+            377
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            345,
+            0,
+            780,
+            390
+          ],
+          "sourceFoot": [
+            570,
+            377
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            730,
+            0,
+            1165,
+            390
+          ],
+          "sourceFoot": [
+            915,
+            377
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "walk-right-04-repair.png",
+          "sourceRect": [
+            0,
+            0,
+            1448,
+            1086
+          ],
+          "sourceFoot": [
+            750,
+            1015
+          ],
+          "sourceBodyHeight": 760,
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            410,
+            375
+          ],
+          "sourceFoot": [
+            220,
+            360
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            355,
+            0,
+            790,
+            375
+          ],
+          "sourceFoot": [
+            566,
+            360
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            735,
+            0,
+            1135,
+            375
+          ],
+          "sourceFoot": [
+            934,
+            360
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-column-repair.png",
+          "sourceRect": [
+            0,
+            0,
+            730,
+            724
+          ],
+          "sourceFoot": [
+            390,
+            640
+          ],
+          "sourceBodyHeight": 430,
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/flame-death-knight-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            365,
+            400,
+            720
+          ],
+          "sourceFoot": [
+            207,
+            677
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            400,
+            365,
+            755,
+            720
+          ],
+          "sourceFoot": [
+            555,
+            676
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "source": "down-generated.png",
+          "sourceRect": [
+            765,
+            365,
+            1115,
+            720
+          ],
+          "sourceFoot": [
+            927,
+            677
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1115,
+            365,
+            1448,
+            720
+          ],
+          "sourceFoot": [
+            1297,
+            677
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            390,
+            425,
+            750
+          ],
+          "sourceFoot": [
+            207,
+            735
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            345,
+            390,
+            780,
+            750
+          ],
+          "sourceFoot": [
+            548,
+            735
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "source": "right-generated.png",
+          "sourceRect": [
+            730,
+            390,
+            1165,
+            750
+          ],
+          "sourceFoot": [
+            920,
+            737
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "source": "attack-right-04-repair.png",
+          "sourceRect": [
+            0,
+            0,
+            1448,
+            1086
+          ],
+          "sourceFoot": [
+            785,
+            1015
+          ],
+          "sourceBodyHeight": 760,
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            375,
+            410,
+            730
+          ],
+          "sourceFoot": [
+            213,
+            706
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            355,
+            375,
+            790,
+            730
+          ],
+          "sourceFoot": [
+            540,
+            706
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "source": "up-generated.png",
+          "sourceRect": [
+            735,
+            375,
+            1135,
+            730
+          ],
+          "sourceFoot": [
+            917,
+            706
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "source": "up-column-repair.png",
+          "sourceRect": [
+            730,
+            0,
+            1435,
+            724
+          ],
+          "sourceFoot": [
+            1080,
+            640
+          ],
+          "sourceBodyHeight": 430,
+          "file": "frames/attack-up-04.png"
+        }
+      ],
+      "phases": [
+        "wind-up",
+        "slash",
+        "follow-through",
+        "recover"
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/flame-death-knight-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            720,
+            400,
+            1086
+          ],
+          "sourceFoot": [
+            199,
+            995
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            400,
+            720,
+            755,
+            1086
+          ],
+          "sourceFoot": [
+            565,
+            995
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            750,
+            425,
+            1086
+          ],
+          "sourceFoot": [
+            196,
+            1070
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            345,
+            750,
+            780,
+            1086
+          ],
+          "sourceFoot": [
+            558,
+            1070
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            730,
+            410,
+            1086
+          ],
+          "sourceFoot": [
+            207,
+            1040
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-generated.png",
+          "sourceRect": [
+            355,
+            730,
+            790,
+            1086
+          ],
+          "sourceFoot": [
+            560,
+            1040
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/flame-death-knight-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "source": "down-generated.png",
+          "sourceRect": [
+            765,
+            720,
+            1115,
+            1086
+          ],
+          "sourceFoot": [
+            935,
+            1005
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "source": "down-generated.png",
+          "sourceRect": [
+            1115,
+            720,
+            1448,
+            1086
+          ],
+          "sourceFoot": [
+            1308,
+            1004
+          ],
+          "sourceBodyHeight": 200,
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "source": "right-generated.png",
+          "sourceRect": [
+            730,
+            750,
+            1165,
+            1086
+          ],
+          "sourceFoot": [
+            937,
+            1070
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "source": "right-generated.png",
+          "sourceRect": [
+            1120,
+            750,
+            1448,
+            1086
+          ],
+          "sourceFoot": [
+            1297,
+            1070
+          ],
+          "sourceBodyHeight": 270,
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "source": "up-generated.png",
+          "sourceRect": [
+            735,
+            730,
+            1135,
+            1086
+          ],
+          "sourceFoot": [
+            938,
+            1040
+          ],
+          "sourceBodyHeight": 240,
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "source": "up-column-repair.png",
+          "sourceRect": [
+            1435,
+            0,
+            2172,
+            724
+          ],
+          "sourceFoot": [
+            1800,
+            631
+          ],
+          "sourceBodyHeight": 420,
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Original four reference files preserved",
+    "Based on supplied 16-1/16-2/16-3; sources preserved",
+    "Transparent original redraw; missing side view and missing swords repaired",
+    "Back poses remain rear-facing in every action",
+    "Left direction mirrors right"
+  ]
+}

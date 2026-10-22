@@ -1,0 +1,12 @@
+[
+  {
+    "dir": "down-v2",
+    "file": "exec-bc611261-666f-4b62-ad52-c9e98a05ff3b.png",
+    "prompt": "Edit target: this transparent 12-pose flame skeletal knight sprite atlas. Preserve the exact 4 columns x 3 rows layout, poses, character identity, colors and pixel-painted style. Repair production spacing ONLY: scale each individual complete pose down about 25 percent within its own regular grid cell, center the feet at each cell's horizontal midpoint and baseline at 85 percent of the cell height. Reconstruct complete sword tips where clipped at right image edge. There must be 24 pixels of completely transparent margin on EVERY side of EACH cell, including sword tip, cape and flame arcs. NO overlap between cells. All walking poses must retain their swords. Preserve original distinct four walking, four sword swinging, two casting and two hit poses. True transparent alpha, no checkerboard, text, lines or ground. All twelve remain front three-quarter toward viewer/down-right. Same skull and breastplate visible. Do not add a different character."
+  },
+  {
+    "dir": "right-v2",
+    "file": "exec-70ae9e08-15b1-473d-a1b9-d7e273ec58cc.png",
+    "prompt": "Edit target: this flame skeletal knight sprite atlas. ROTATE THE CHARACTER TO A TRUE RIGHT-FACING SIDE PROFILE IN ALL TWELVE POSES. Current image is mistakenly front-facing. Camera should see only one eye socket, narrow side of skull nose pointing horizontally RIGHT, side of chestplate, feet pointing RIGHT. No frontal chest view. He looks and attacks toward 3 o'clock. Same flame crown, charcoal spikes, ragged black cape trailing left, glowing orange rune sword. Keep exactly regular FOUR columns THREE rows, 12 independent full body poses. Row1 FOUR visibly alternating walking steps, sword held low right throughout. Row2: sword over shoulder windup; halfway forward downward sword cut toward right; full cut with compact crescent flame; low ready recovery. Row3 first two: casting gather raised free hand then free palm shooting flame right; last two hit recoil and recovery, stay in profile. Scale all complete poses to fit EACH regular cell with 25 pixels fully transparent padding on every side. Entire weapon tips, cape, crown must never touch edges or neighbor cells. Same anatomical scale and planted foot baseline 85% down cell. TRUE TRANSPARENT alpha, no checkerboard, lines, text, borders, ground, shadow. High quality detailed pixel painted 2D RPG sprites, same character as input."
+  }
+]

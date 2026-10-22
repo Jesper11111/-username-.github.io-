@@ -94,6 +94,14 @@ const MORPHS = {
         cast:   { src: 'images/sprites/morph/brudika-shadow-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/brudika-shadow-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },
+    // 16 烈焰死亡騎士：火焰劍、披風與斬擊留邊，腳底 (192,270)
+    flameDeathKnight: {
+        name: '烈焰死亡騎士', drawH: 48, charH: 160, foot: [192, 270],
+        walk:   { src: 'images/sprites/morph/flame-death-knight-v1/walk.png',   cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/flame-death-knight-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/flame-death-knight-v1/cast.png',   cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/flame-death-knight-v1/hit.png',    cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
     // 27 裂空魔龍爪皇：龍翼、腕鏈與巨爪留邊，腳底 (192,270)
     riftDragon: {
         name: '裂空魔龍爪皇', drawH: 48, charH: 160, foot: [192, 270],
@@ -134,7 +142,7 @@ const MORPH_FORMS = [
     ['m05', '矮人蒸氣火銃兵', 'gun', 'blue', 'dwarfGunner'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
     ['m08', '沉默洞穴刺客', 'dual', 'blue'], ['m09', '赤影暗殺者', 'dual', 'red'], ['m10', '布魯迪卡之影', 'dual', 'purple', 'brudikaShadow'], ['m11', '深淵雙刃魔神', 'dual', 'gold'],
     ['m12', '鋼鐵狂戰士', 'great', 'blue'], ['m13', '冥皇處刑者', 'great', 'red'], ['m14', '煉獄魔劍尊・巴拉卡', 'great', 'purple'],
-    ['m15', '亞丁榮耀劍士', 'sword', 'blue'], ['m16', '烈焰死亡騎士', 'sword', 'red'], ['m17', '雷霆黑騎士統領', 'sword', 'purple'], ['m18', '神聖裁決劍聖', 'sword', 'gold'],
+    ['m15', '亞丁榮耀劍士', 'sword', 'blue'], ['m16', '烈焰死亡騎士', 'sword', 'red', 'flameDeathKnight'], ['m17', '雷霆黑騎士統領', 'sword', 'purple'], ['m18', '神聖裁決劍聖', 'sword', 'gold'],
     ['m19', '象牙塔高階秘術師', 'staff', 'blue'], ['m20', '深淵羊魔・巴風特使徒', 'staff', 'red'], ['m21', '大魔導士・巴列斯真身', 'staff', 'purple'],
     ['m22', '修羅破戒僧', 'fist', 'blue'], ['m23', '熔岩碎骨鬥士', 'fist', 'red'], ['m24', '霸天雷神拳皇', 'fist', 'purple'],
     ['m25', '荒野血狼狂戰', 'claw', 'blue'], ['m26', '暗夜血族撕裂者', 'claw', 'red'], ['m27', '裂空魔龍爪皇', 'claw', 'purple', 'riftDragon'],

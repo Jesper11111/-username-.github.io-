@@ -5,6 +5,9 @@
 
 ## 1. 現況
 
+- **本機待驗收20261022r：16烈焰死亡騎士（紅變）**。使用者給16.jpg與三張jfif要求加入卷軸；檔案實際都在桌面「變身人物」。m16原已在單手劍組，本次接MORPHS.flameDeathKnight及專屬36格、SW四圖集。原表缺側面、走路漏劍、背向受傷混正面，內建image_gen重製並修邊緣劍尖。384×320／腳底[192,270]／charH160／drawH48，走4／攻4／施2／傷2，130／140／220／150ms，攻擊560ms；既有等級／能力／卷軸消耗／schema及測試不限等級開關不變。現8種專屬圖、22統一；第18.12、88節。未commit／Push。
+- **r版待實玩**：Ctrl+F5→使用變形卷軸→單手劍→16烈焰死亡騎士，確認火焰骷髏／黑甲、走路與四向揮劍有出手、劍尖與披風完整。確認後才commit及請Push origin。
+- **r版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022r）、test-flame-death-knight-morph與test-buff-groups通過，36格RGBA／非重複／透明留邊與圖集逐格對應通過，git diff --check通過。瀏覽器實際卷軸選單列單手劍紅變16，選取扣卷軸／套外觀；四向攻擊560ms、第0～3格均畫出。四動作試播、播放／逐格及左右鏡像正常，兩頁Console無error／warn。補畫右向收劍避免混到隔壁斬擊殘片；九份生成原稿／完整提示詞保存。未讀寫真實存檔或上傳，未commit／Push。
 - **本機待驗收20261022q：B款變形卷軸＋狀態三區**。使用者選B紫晶幻化，新增images/icons/items/polyScroll-v2.png並改ITEM_IMG共用入口，舊圖與A／C／D樣品保留。其他三款陣營／軍團卷軸只提用途建議，未新增玩法。技能→道具→臨時固定順序，技能／共鳴藍底、藥水卷軸黃底、負面紅底；使用者明確選原始持續≤30秒歸臨時，長效快到期不搬區。補放／刷新自動重分，技能覆蓋同組藥水後來源也更新，共鳴生效不重複、到期恢復待命。單排可橫滑，沿用setHtmlStable；第90節。未改schema／能力／數值、未commit／Push。
 - **q版待實玩**：Ctrl+F5→確認背包／快捷欄變形卷軸為B款→使用長效技能、藥水及短效技能，檢查三區／底色／刷新與到期；手機左右滑查看後段。使用者確認後才commit及請Push origin。
 - **q版驗證完成**：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022q）；test-buff-groups與test-item-art通過（433道具），git diff --check通過。瀏覽器實際CSS／buffIconsHtml於PC及390px窄版檢查三區，溢出430px／可視369px、橫滑到60.8px；刷新／快轉40秒／負面示範及共鳴待命更新正常，倒數保留同一img，Console無error／warn。紅底為隔離頁示範，現有遊戲沒有玩家負面狀態來源；未讀寫真實存檔／雲端，未commit／Push。

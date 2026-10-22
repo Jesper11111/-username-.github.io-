@@ -15,6 +15,7 @@
 | `tools/dwarf-morph-preview.html`、`tools/test-dwarf-morph.js` | 05真實卷軸／renderer隔離預覽與卷軸扣量、四向動作、到期／其他變身回歸（第18.8節） |
 | `images/sprites/morph/brudika-shadow-v1/`、`tools/sprite-src/morph/brudika-shadow-v1/`、`tools/brudika-morph-preview.html`、`tools/test-brudika-morph.js` | 10布魯迪卡之影36格透明動畫、原稿／提示詞／腳點註冊、真實renderer隔離頁與卷軸回歸（第18.9、88節） |
 | `images/sprites/morph/rift-dragon-v1/`、`tools/sprite-src/morph/rift-dragon-v1/`、`tools/rift-dragon-morph-preview.html`、`tools/test-rift-dragon-morph.js` | 27裂空魔龍爪皇36格透明動畫、原圖／生成提示詞／腳點註冊、卷軸與renderer隔離驗證（第18.10、88節） |
+| `images/sprites/morph/flame-death-knight-v1/`、`tools/sprite-src/morph/flame-death-knight-v1/`、`tools/flame-death-knight-morph-preview.html`、`tools/test-flame-death-knight-morph.js` | 16烈焰死亡騎士36格透明動畫、四原圖／完整生成與修補提示詞／腳點註冊、卷軸選單與renderer隔離驗證（第18.12、88節） |
 | `tools/hellfire-attack-preview.html`、`tools/test-hellfire-attack.js` | 紫變新版攻擊的實際renderer隔離預覽與四方向命中／MISS回歸（第18.6節） |
 | `tools/moon-attack-preview.html`、`tools/test-moon-attack.js`、`tools/sprite-src/morph/update-motion-previews.py` | 紅變實際 renderer 隔離試播、命中／MISS 動作回歸、嵌入式動畫試播素材更新工具（第 18.5 節） |
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
@@ -141,7 +142,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022q`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022r`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -968,6 +969,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 格384×320、腳底[192,270]、charH160、drawH48不變；每格160／140／220／160ms，總長640／560／440／320ms與舊版相同，未複製格或插值湊回72格。MORPHS.skyValkyrie四src與SW預快取改讀v2，m04.sprite key不變；能力、等級、卷軸、移動速度／攻速數值及schema不變。
 - 本對話valkyrie-v2-motion.html為四方向四動作試播。tools/valkyrie-v2-morph-preview.html用真實卷軸／renderer，不讀寫存檔或雲端；test-valkyrie-v2-morph.js驗證扣量／上次選擇、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期、其他變身、圖集／SW及v1仍在。
 - 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022p）、上述Node測試及36格獨立RGBA／透明留邊／圖集逐格比對通過。瀏覽器四動作、播放／逐格／鏡像正常；真實renderer四向射箭560ms、第0～3格均畫出、背向放箭保持背影；兩頁Console無error／warn。待使用者實際角色驗收，未commit／Push。
+
+### 18.12 烈焰死亡騎士（16紅變）專屬外觀（2026-10-22，版本`20261022r`）
+
+- 使用者提供16.jpg及16-1／16-2／16-3.jfif，要求16加入卷軸。三張jfif實際都在桌面「變身人物」內；m16原已存在單手劍紅變組，本次接上專屬外觀，沒有重複增加選項。
+- 原分鏡後兩張主要都是背面，缺右側面，部分走路漏武器、背向受傷混正面。依本次立繪以內建image_gen重製三向36格：火焰骷髏、黑色尖刺板甲、破披風、橙紅符文劍。走4／揮劍4／施法2／受傷2，左向鏡像；攻擊蓄勢→斬下→火焰斬擊→收劍，背向各動作保持背影。
+- tools/sprite-src/morph/flame-death-knight-v1/保留四原圖、三向初稿／修稿、右向走路及收劍單格／背向三格修補、完整prompts.json與各修補prompt、register.py／registration.json／prepare.py／audit.json／preview.py。補齊邊緣劍尖、避免混到相鄰斬擊殘片；以頭骨至腳底解剖高度註冊，火焰／披風不拿來當身高。
+- 正式images/sprites/morph/flame-death-knight-v1/：36獨立RGBA格、walk／attack／cast／hit四PNG圖集、AVIF試播、動作總覽與manifest。384×320、腳底[192,270]、charH160、drawH48，130／140／220／150ms；攻擊560ms。MORPHS.flameDeathKnight、m16.sprite、SW四圖集接入；現8種專屬外觀、22種統一。原紅變單手劍等級／加成、卷軸消耗及SAVE_SCHEMA不變，MORPH_LV_FREE測試開關不變。
+- 卷軸選單舊說明「外觀目前統一」改「部分變身已有專屬外觀」。tools/flame-death-knight-morph-preview.html用真實openMorphPicker／morphPick／usePotion與sceneReadEvents／sceneDraw，可四方向攻擊與逐格；隔離真實存檔及雲端。test-flame-death-knight-morph.js驗證扣量／上次選擇、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期、其他七種外觀與SW圖集。flame-death-knight-motion.html為本對話四動作試播。
+- 驗證：check.ps1 ALL CHECKS PASSED（46檔／45script／20261022r）、上述測試及狀態三區回歸通過，36格獨立RGBA／透明留邊／逐格與圖集一致。瀏覽器真實卷軸選取16與扣量、四向攻擊560ms及0～3格均畫出；四動作切換、播放／逐格與左右鏡像正常；兩頁Console無error／warn。待使用者實玩驗收才提交，未寫真實存檔或雲端。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2438,7 +2448,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 增益紀錄 `player.buffs.morph = { src: 'item', id: 'polyScroll', form, until }`；`buffFx` 有 `form` 就回傳 `MORPH_BY_ID[form].fx`（`BUFF_DEFS.morph.fx` 是空的），`buffName` 顯示「變身：對象名」（左上角增益列的提示）。
   再讀一張會換成新對象並重新計時；死亡清除增益時一起解除；不改存檔結構（`SAVE_SCHEMA` 仍 5），上次選的對象存在 `player.settings.lastMorph`。
 - 快捷欄可放、可設自動：自動時用 `lastMorph`（效果沒了就再讀一張）；還沒選過任何對象時不能開自動（提示先點一下選擇）。
-- **外觀統一**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01～m05、m10、m27有自己的圖，其餘23種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
+- **外觀**：`playerMorph()` 取 `MORPH_FORMS` 的 `sprite`，沒有就用卷軸的 `morph`（m01～m05、m10、m16、m27有自己的圖，其餘22種先用巡守妖魔神射）。之後有某個對象的專屬圖，在 `MORPHS` 加一組圖、該對象加 `sprite: 'key'` 即可。
 - 變身圖有 `foot: [128, 200]`，畫在 `(腳底X − 128k, 腳底Y − 200k)`，k＝drawH／charH（48／160），不用格子底部當腳底；變身中不畫職業武器光效（遮罩依職業模型算）。讀卷軸時 `scenePreloadMorph` 先載入四張圖，`buildScene` 也會載入，`sw.js` 預先快取四張圖集。
 - 道具圖 `images/icons/items/polyScroll.png`：`tools/make-poly-icon.ps1` 用羊皮紙卷軸＋變身人物第一格合成。道具總數 432 → 433，test-item-art／test-legend-equipment／test-hero-armor／test-legend-glow 的數字已同步。
 - **2026-10-22 外觀樣品待選**：使用者要求更換變形卷軸外觀，先做幾款參考再決定。tools/icon-src/poly-scroll-samples-20261022/保存內建image_gen四款原創圖／prompts.json、a～d-128.png、comparison.png（大圖與40px快捷欄對照）及prepare.py／audit.json。A古典獸印、B紫晶幻化、C暗黑骷髏、D金翼聖印；使用者已選B，q版新增polyScroll-v2.png接共用入口，原polyScroll.png保留，其他三款待討論用途（第90節）。

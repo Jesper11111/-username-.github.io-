@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><base href="../"><title>死亡騎士變身攻擊檢查</title>
+<style>body{background:#1c2225;color:#eee;font:16px sans-serif;margin:20px}canvas{width:min(100%,960px);height:auto}button,select{font:inherit;padding:8px;margin:6px}#result{white-space:pre-wrap}</style>
+<h2>烈焰死亡騎士・變身檢查</h2>
+<label>方向 <select id="direction"><option value="right">右側</option><option value="down">正面</option><option value="up">背面</option><option value="left">左側</option></select></label>
+<button id="attack" disabled>攻擊一次</button><button id="scroll" disabled>開啟變形卷軸</button><button id="step" disabled>攻擊逐格</button><p id="result">載入中</p><p id="record"></p><canvas width="640" height="300" aria-label="實際遊戲繪圖函式播放死亡騎士變身攻擊"></canvas><div id="dialog-layer" class="overlay"></div>
+<script>
+(async()=>{
+const index=await(await fetch('index.html')).text(),style=document.createElement('style');style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+const files=[...index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=[^"]+"/g)].map(m=>m[1]).filter(f=>!['data/main.js','data/pwa.js'].includes(f));
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261022r';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('死亡騎士變身測試','darkelf',CLASSES.darkelf.base);player.lv=55;
+addItem('polyScroll',5);const morphError=usePotion('polyScroll','m16');if(morphError)throw Error(morphError);player.loc={type:'zone',id:'tower',floor:10};buildScene();
+scene.bg=null;scene.gates=null;scene.pl.dir='right';scene.pl.path=[];
+const m={x:scene.pl.x+1,y:scene.pl.y,rx:scene.pl.rx+1,ry:scene.pl.ry,mid:'skeleton',lastHp:100,inst:{name:'測試骷髏',hp:100,maxHp:100,lv:10}};
+scene.mons=[m];scene.engaged=m;scene.lastPlayerHp=player.hp;
+const button=document.getElementById('attack'),result=document.getElementById('result'),cv=document.querySelector('canvas');
+await Promise.all(['walk','attack','cast','hit'].map(a=>new Promise((resolve,reject)=>{const im=new Image();im.onload=resolve;im.onerror=reject;im.src=MORPHS.flameDeathKnight[a].src;})));
+MORPHS.flameDeathKnight.drawH=96;
+button.disabled=false;
+saveGame=()=>{};refreshUI=()=>{document.getElementById('record').textContent='目前變身：'+playerMorph().name+'；卷軸剩 '+countItem('polyScroll')+' 張';};sfx=()=>{};
+document.getElementById('scroll').disabled=false;document.getElementById('step').disabled=false;
+document.getElementById('scroll').onclick=()=>{SIM_MODE=false;try{openMorphPicker();}finally{SIM_MODE=true;}};
+const seen=new Set();
+let paused=false,phase=-1;
+button.onclick=()=>{paused=false;phase=-1;seen.clear();cv.dataset.frames='';m.inst.hp-=1;sceneReadEvents();const a=scene.pl.anim;document.getElementById('record').textContent='觸發紀錄：'+(a?a.name+'／'+a.dur+'ms':'沒有動作')+'；目標HP '+m.inst.hp;};
+document.getElementById('step').onclick=()=>{paused=true;phase=(phase+1)%4;scene.pl.anim={name:'attack',t:phase*140+70,dur:560};};
+document.getElementById('direction').onchange=e=>{scene.pl.dir=e.target.value;};
+let prev=0;
+function draw(t){const dt=prev?Math.min(100,t-prev):0;prev=t;if(scene.pl.anim&&!paused)scene.pl.anim.t+=dt;
+sceneDraw(cv.getContext('2d'),640,300);
+const a=scene.pl.anim;const active=a&&a.t<a.dur;
+if(active){seen.add(Math.min(3,Math.floor(a.t/140)));cv.dataset.frames=Array.from(seen).join(',');}
+result.textContent=active?'攻擊：'+['蓄勢','斬下','火焰斬擊','收劍'][Math.min(3,Math.floor(a.t/140))]:'站立・點「攻擊一次」播放';
+cv.dataset.animation=active?'attack':'idle';requestAnimationFrame(draw);}
+requestAnimationFrame(draw);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>
