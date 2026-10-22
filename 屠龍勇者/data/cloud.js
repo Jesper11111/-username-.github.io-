@@ -492,6 +492,7 @@ async function cloudPushSlot(i, overwrite) {
     if (saveOwnerOf(full) !== cloudUser.id) return true;   // 不是目前帳號的角色（別的帳號或還沒歸屬的訪客角色）一律不上傳
     const data = cloudStripOwner(full), p = data.player, t = data.t || 0;
     data.schema = SAVE_SCHEMA;   // 伺服器用它擋掉沒有角色歸屬的舊版遊戲（tools/client-version.sql）；從雲端下載後沒再存檔的舊格式也照樣上傳得了
+    data.lootProtocol = LOOT_PROTOCOL;
     data.sig = await guardCloudSig(cloudUser.id, i, p);   // 雲端存檔簽章，伺服器重算（guard.js、tools/anticheat.sql）
     if (!data.sig) delete data.sig;
     const row = { slot: i, client_t: t, name: String(p.name || '').slice(0, 40), cls: p.cls, lv: p.lv | 0, data };

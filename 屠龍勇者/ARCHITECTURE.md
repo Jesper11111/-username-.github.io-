@@ -7,6 +7,9 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；20261022t實作完成待SQL部署（第91節） |
+| `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
+| `tools/test-server-loot-db.js`、`tools/test-server-loot-integration.js`、`tools/test-server-loot-client.js`、`tools/server-loot-preview.html` | 隔離PostgreSQL與既有SQL／簽章相容測試、真實客戶端記憶體存檔與假RPC、瀏覽器重領／斷線驗證（第91節） |
 | `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者透明素材／原稿／提示詞；m02 專屬圖，g 版新增 12 格 attack-v2（第 18.5、88 節） |
 | `images/sprites/morph/hellfire-archer-v1/`、`tools/sprite-src/morph/hellfire-archer-v1/` | 冥火骷髏神射 36 格透明人物／3 獨立箭矢、原圖／補畫原稿／提示詞／整理腳本；m03 專屬圖，20261022j 接入（第 18.6、88 節） |
 | `images/sprites/morph/sky-valkyrie-v1/`、`tools/sprite-src/morph/sky-valkyrie-v1/` | 蒼穹女武神・艾爾舊72格外觀、原創分鏡與來源（第18.7節）；l接入m04，p改讀v2，v1完整保留 |
@@ -133,7 +136,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → loot → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -143,7 +146,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022s`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022t`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2495,3 +2498,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **現況限制**：目前實際戰鬥沒有寫入玩家負面增益；怪物的暈眩／bossEnchantDebuffs不可放入玩家列。紅底介面支援已備妥，隔離頁用明示的負面示範測試，沒有新增中毒或暈眩玩法。未改schema／數值。
 - `tools/test-buff-groups.js`隔離測分類、來源替換、固定排序、到期、共鳴去重與B圖接線；`tools/buff-groups-preview.html`用實際CSS與圖示函式供PC／390px窄螢幕刷新、快轉、負面示範，SIM_MODE且不讀寫存檔／雲端。
 - 驗證：上述分類測試含30／31秒邊界、test-item-art全433道具、check.ps1 ALL CHECKS PASSED、git diff --check通過；瀏覽器PC／390px窄版三區與藍黃紅底、橫滑查看後段、刷新／快轉40秒移除臨時效果並恢復共鳴待命正常；倒數保留同一img，Console無error／warn。待使用者實玩確認才提交。
+
+## 91. 線上後端掉寶（2026-10-22，版本 `20261022t`，待正式部署）
+
+- 使用者已明確選線上打怪／首領／副本，離線掛機另議，並授權SQL製作。`tools/SERVER-LOOT.md`是部署與限制說明，`BACKEND-LOOT-PLAN.md`保留原盤點；正式資料庫尚未修改。
+- `data/loot.js`在pwa後、main前載入；頂層`LOOT_PROTOCOL`、`lootMode`、`lootBusy`、`lootProbeAt`、`lootNoticeAt`、`lootPendingAt`。`lootActive/lootRequired/lootCanPlay`處理模式與資格，`lootStart/lootProbe`查後端開關，`lootChar/lootEnvelope`處理角色與存檔外層，`lootQueueKey/lootJobs/lootStore/lootEnqueue`保存加密重試佇列，`lootSpawn`取得後端遇怪及憑證，`lootKill/lootRaid`排隊結算，`lootApply`原子入帳，`lootPump`補領及重試，`lootNotice`限頻提示。狀態30秒更新、佇列5秒重試，計時使用gameNow。
+- combat的startHunt／huntTick檢查登入與後端模式；spawnMonster、增援及pullMob透過lootSpawn，等待網路時暫停戰鬥。手動點怪保留sceneTarget，回覆後才綁定原身體／焦點，不誤報怪物過多；ui-scene的點擊處相應處理非同步等待。新spawn只接受後端目錄怪、首領／精英資格由後端選，塔層／龍穴／任務有資格檢查；被放棄的未結算憑證由loot_release取消，待重試擊殺仍保留。
+- rollDrops改走憑證結算；伺服器產生完整品質／詞綴／數量，通用與地區及怪物池、BOSS自身材料0.1%例外、通貨、高級書、隨機裝備、共鳴與異界地圖沿原規則。maps的精英資格採後端值、completeMap不再本機生成通關地圖；questOnKill不再本機擲收集物。鑽石由loot_finish擲骰，沿既有錢包／每日上限；舊dia_drop啟用後拒絕直接領。
+- raidApplyReward保留既有經驗／金幣與消耗流程，掉寶改排loot_raid；核對房間round、參加者及角色後各自一份。後端未就緒時raidRefresh延後領獎，不先記已領而遺失掉落。世界首領由loot_worldboss呼叫原claim、按名次產生物品，舊wb_claim啟用後擋下；重複領取被拒，回應遺失但已生成的物品仍能pending補領。
+- `tools/server-loot.sql`新增config／catalog／rules版本／state／jobs五表，全部RLS及撤銷直接權限；status允許anon，spawn／release／finish／raid／pending／worldboss僅authenticated。內部pick／int／quality／item／map／roll／player及存檔trigger撤銷PUBLIC執行權，security definer固定空search_path。帳號事件鍵唯一、列鎖及單調cursor防重抽／重領與舊版回退。loot_finish最低150ms及發怪速率限制僅是基本資格檢查，不是伺服器戰鬥驗證。
+- 存檔外層新增可選`lootProtocol:1`／`lootCursor`，不改player或SAVE_SCHEMA（仍5）；saveGame保留同角色外層收據，cloudPushSlot附協定。lootApply依cursor順序，在一次加密localStorage寫入中同時保存背包與收據，寫入失敗還原inv／gold／nextUid；非當前角色只改原欄位，換帳號中止await後操作。佇列key為dragonSlayer_loot_jobs_帳號，用saveEncode／saveParse；不讀寫別帳號角色。
+- `export-loot-catalog.js`以固定種子從當前資料產生loot-catalog.json／.sql及單一server-loot-install.sql，433道具／78怪／19區／100塔層／12職業任務／6副本；目錄version含資料hash，rules保存舊快照，更新不使既有憑證改抽新規則。安裝預設disabled、保留現有開關；先安裝再發布新版，最後由使用者在Supabase啟用。RPC缺失／斷線／未登入均不退回本機抽獎。
+- 離線掛機仍SIM_MODE試算，不新增離線物品，現有玩家物品保留。一般金幣／經驗、鍛造／商店與整份背包上傳仍屬現有客戶端流程，不能宣稱本版已建立權威背包或完全防作弊。帳本目前不自動清除，啟用前需估算容量／請求量；不要刪未領獎勵。
+- 測試工具：test-server-loot-db.js以隔離PGlite跑實際PostgreSQL；test-server-loot-integration.js載既有supabase.sql與anticheat.sql後重複部署並驗證簽章／RLS；test-server-loot-client.js以記憶體存檔與假RPC跑真實串接，server-loot-preview.html提供相同隔離瀏覽器流程。PGlite僅安裝在TEMP測試目錄，非遊戲依賴；正式SQL由使用者執行，不由AI上線。
+- 最終驗證：三個新測試及掉落紀錄／商店購買／傳說裝備／狀態三區／16步態與攻擊回歸通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261022t）、git diff --check通過。實際混淆建置46檔→433KB成功。瀏覽器隔離頁正常入帳後重送數量不變，第二次斷線保留工作、連線後補領並清空佇列，Console無error／warn；畫面只用模擬RPC，正式SQL尚待使用者部署及實玩驗收。

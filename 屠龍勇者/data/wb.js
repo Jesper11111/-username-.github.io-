@@ -103,15 +103,17 @@ function wbReward(c) {
 
 async function wbClaim(id) {
     if (!player || wbBusy) return;
+    if (!lootCanPlay()) return;
     wbBusy = true;
     try {
-        const c = await wbRpc('wb_claim', { p_wb: id });
+        const c = lootActive() ? await wbRpc('loot_worldboss', { p_slot: currentSlot, p_char: lootChar(), p_wb: id }) : await wbRpc('wb_claim', { p_wb: id });
         const r = wbReward(c);
         player.gold += r.gold;
         gainExp(r.exp);
-        for (const [it, n] of r.items) addItem(it, n);
+        if (!lootActive()) for (const [it, n] of r.items) addItem(it, n);
         addLog(`👹 世界首領「${c.name}」獎勵：經驗 +${fmt(r.exp)}、金幣 +${fmt(r.gold)}${r.items.length ? '、' + r.items.map(([it, n]) => ITEMS[it].name + ' ×' + n).join('、') : ''}`, 'boss');
         saveGame(); refreshUI();
+        if (lootActive()) lootPump();
         gameAlert(`${c.icon} ${c.name}`, `${c.killed ? '首領被打倒了！' : '首領逃走了（時間到），獎勵只有 30%。'}\n` +
             `你的傷害：${fmt(c.my_dmg)}（第 ${c.rank} 名／${c.participants} 人，佔 ${(r.share * 100).toFixed(1)}%）${c.killer_me ? '\n🗡️ 最後一擊是你！' : ''}\n\n` +
             `經驗 +${fmt(r.exp)}\n金幣 +${fmt(r.gold)}${r.items.map(([it, n]) => `\n${ITEMS[it].name} ×${n}`).join('')}`);

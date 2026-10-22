@@ -1,0 +1,45 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="../"><title>後端掉寶串接隔離檢查</title>
+<style>body{margin:24px;background:#172027;color:#eee;font:16px sans-serif}main{max-width:900px}button{font:inherit;padding:10px;margin:4px}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{text-align:left;padding:10px;border-bottom:1px solid #43505a}#messages{white-space:pre-wrap;color:#ffd68b}#result{padding:14px;background:#263640}</style>
+<main><h2>後端掉寶・串接檢查</h2><p>使用真實遊戲掉寶串接函式與記憶體存檔；此頁模擬後端回應，不連正式服務。</p>
+<button id="spawn" disabled>取得後端怪物</button><button id="kill" disabled>模擬擊殺</button><button id="repeat" disabled>重送相同獎勵</button><button id="offline" disabled>模擬斷線</button><button id="retry" disabled>恢復連線並重試</button>
+<p id="result" role="status">載入中</p><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody id="checks"></tbody></table><div id="messages"></div></main>
+<script>
+// 在載入任何遊戲程式前替換本頁storage，完全不讀寫使用者真實存檔。
+const testStorage=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>testStorage.get(k)||null,setItem:(k,v)=>testStorage.set(k,String(v)),removeItem:k=>testStorage.delete(k)}});
+(async()=>{
+const html=await(await fetch('index.html')).text();
+for(const[,src]of html.matchAll(/<script src="(data\/[^"?]+\.js)\?v=/g)){
+ if(['data/main.js','data/pwa.js'].includes(src))continue;
+ await new Promise((ok,no)=>{const s=document.createElement('script');s.src=src+'?v=20261022t&preview=server-loot-v2';s.onload=ok;s.onerror=no;document.head.append(s);});
+}
+SIM_MODE=true;createPlayer('隔離掉寶角色','knight',CLASSES.knight.base);SIM_MODE=false;
+const uid='11111111-1111-4111-8111-111111111111';cloudUser={id:uid,email:'test@invalid'};cloudLoggedIn=()=>true;authUid=()=>uid;playerOwner=uid;lootMode='active';cloudSb={};
+showToast=msg=>{document.getElementById('result').textContent=msg;};refreshUI=()=>{};sfx=()=>{};
+player.loc={type:'zone',id:'island',floor:1};let online=true,seq=0,last=null;const rewards=new Map();
+cloudMarkDirty=()=>{};cloudFlush=async()=>true;
+marketRpc=async(fn,args)=>{
+ if(!online)throw Error('示範連線中斷');
+ if(fn==='loot_status')return {protocol:1,enabled:true,rules:'isolation-test'};
+ if(fn==='loot_release')return true;
+ if(fn==='loot_spawn')return [{ticket:crypto.randomUUID(),monster:makeMonster('goblin')}];
+ if(fn==='loot_finish'){
+  if(!rewards.has(args.p_ticket)){last={id:args.p_ticket,cursor:++seq,char:lootChar(),slot:0,items:[{id:'longSword',n:1,q:'rare',il:40,nm:'後端測試',af:[{k:'str',v:3}]},{id:'redPotion',n:2}]};rewards.set(args.p_ticket,last);}
+  return rewards.get(args.p_ticket);
+ }
+ if(fn==='loot_pending')return [...rewards.values()];throw Error(fn);
+};
+saveGame();const initial=countItem('redPotion');
+function render(){
+ const data=saveParse(localStorage.getItem(slotKey(0))),jobs=lootJobs(),swords=player.inv.filter(x=>x.nm==='後端測試');
+ document.getElementById('checks').innerHTML=[['連線',online?'已連線':'已斷線'],['背包紅藥增加',String(countItem('redPotion')-initial)],['後端稀有長劍',String(swords.length)],['詞綴',swords.length?'力量 +'+swords[0].af[0].v:'尚未領取'],['已入帳收據',String(data.lootCursor||0)],['待重試工作',String(jobs.length)],['本機存檔schema',String(SAVE_SCHEMA)]].map(([a,b])=>'<tr><td>'+a+'</td><td>'+b+'</td></tr>').join('');
+ document.getElementById('messages').textContent=lootLog.slice(-8).map(l=>l.msg).join('\n');
+}
+document.getElementById('spawn').onclick=async()=>{startHunt();spawnMonster();while(hunt&&hunt.lootWait)await new Promise(r=>setTimeout(r,10));document.getElementById('result').textContent=hunt&&hunt.mon?'怪物已綁定後端憑證':'未取得怪物';render();};
+document.getElementById('kill').onclick=async()=>{if(!hunt||!hunt.mon)return;hunt.mon.hp=0;reapMobs();while(lootBusy)await new Promise(r=>setTimeout(r,10));render();};
+document.getElementById('repeat').onclick=()=>{if(last)lootApply(last);document.getElementById('result').textContent='已重送相同獎勵；背包數量與收據不應增加';render();};
+document.getElementById('offline').onclick=()=>{online=false;document.getElementById('result').textContent='已模擬斷線；擊殺後應留待重試，不在本機抽獎';render();};
+document.getElementById('retry').onclick=async()=>{online=true;await lootPump();document.getElementById('result').textContent='已恢復連線並重試原工作';render();};
+for(const b of document.querySelectorAll('button'))b.disabled=false;
+document.getElementById('result').textContent='串接已就緒';render();
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>

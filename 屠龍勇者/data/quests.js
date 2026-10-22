@@ -473,6 +473,7 @@ function questOnKill(mon, z) {
     } else if (g.type === 'kill') {
         if (s.prog < g.n && ++s.prog === g.n) addLog(`📜 任務目標達成！回村莊向${CLASS_STORIES[player.cls].npc}回報`, 'rare');
     } else if (g.type === 'collect') {
+        if (lootActive()) return;   // 任務收集物由同一筆後端掉落發放
         const have = countItem(g.item);
         if (have < g.n && chance(g.p)) {
             addItem(g.item, 1);

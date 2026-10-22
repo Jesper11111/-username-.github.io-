@@ -1523,8 +1523,8 @@ function sceneZoneClick(wx, wy) {
     if (hit) {
         if (hit.inst) focusMob(hit.inst);
         else {
-            const inst = pullMob(hit.mid);
-            if (!inst) { showToast('圍上來的怪太多了，先解決眼前的敵人'); return; }
+            const inst = pullMob(hit.mid, hit);
+            if (!inst) { if (lootActive() && hunt && hunt.lootWait) return; showToast('圍上來的怪太多了，先解決眼前的敵人'); return; }
             hit.inst = inst; hit.icon = inst.icon; hit.name = inst.name; hit.lastHp = inst.hp;
         }
         scene.manualUntil = 0;

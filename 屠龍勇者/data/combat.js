@@ -15,6 +15,7 @@ function zoneTitle() {
 }
 
 function startHunt() {
+    if (!lootCanPlay()) return;
     if (!currentZone()) { showToast('請先傳送到狩獵地點'); return; }
     if (walkHome) { showToast('正在步行回村'); return; }
     player.hunting = true;
@@ -154,7 +155,9 @@ function autoSupport(st) {
 // ───────── 主迴圈中的掛機處理 ─────────
 function huntTick(dt) {
     if (!player.hunting) return;
+    if (!SIM_MODE && lootMode !== 'legacy' && !lootCanPlay()) { stopHunt('⚠️ 後端掉寶未連線，已暫停掛機'); return; }
     if (!hunt) { startHunt(); if (!hunt) return; }
+    if (hunt.lootWait) return;
     if (hunt.state === 'search') {
         hunt.timer -= dt;
         if (hunt.timer <= 0) spawnMonster();
@@ -198,7 +201,8 @@ function huntTick(dt) {
         hunt.joinCd = MOB_JOIN_MS;
         if (hunt.mobs.length < packMax() && !hunt.mobs.some(m => m.boss) && !(inMapRun() && player.mapRun.left <= hunt.mobs.length) && chance(MOB_JOIN_P * (mapModOn('swarm') ? 2 : 1))) {
             const add = makeZoneMob(currentZone());
-            if (add) { addMob(weakenForPack(add, hunt.mobs.length + 1)); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
+            if (lootActive()) lootSpawn(true);
+            else if (add) { addMob(weakenForPack(add, hunt.mobs.length + 1)); addLog(`${add.name}（Lv.${add.lv}）加入戰鬥！`, 'warn'); }
         }
     }
 }
@@ -276,12 +280,13 @@ function focusMob(inst) {
     if (hunt && hunt.mobs.includes(inst)) { hunt.mon = inst; return inst; }
     return null;
 }
-function pullMob(mid) {
+function pullMob(mid, sceneTarget) {
     const z = currentZone();
     if (!z || walkHome) return null;
     if (!player.hunting) startHunt();
     if (!hunt) return null;
     if (hunt.state === 'fight' && (hunt.mobs.length >= packMax() || hunt.mobs.some(m => m.boss))) return null;
+    if (lootActive()) { lootSpawn(hunt.state === 'fight', z.type === 'tower' ? 'tower' : mid || null, sceneTarget); return null; }
     let mon = z.type === 'tower' ? makeTowerMonster(player.loc.floor, false) : mid && MONSTERS[mid] ? makeMonster(mid) : makeZoneMob(z);
     if (!mon) return null;
     if (hunt.state !== 'fight') {
@@ -363,6 +368,7 @@ function mobTargets() {
 }
 
 function spawnMonster() {
+    if (lootActive()) { lootSpawn(); return; }
     hunt.bossEnchantRuntime = null; hunt.bossEnchantAction = null;
     const z = currentZone();
     // 異界地圖：怪物清空後出現異界首領
@@ -635,7 +641,7 @@ function onKill(mon) {
     if (hunt.mon === mon) hunt.mon = hunt.mobs.slice().sort((a, b) => a.hp - b.hp)[0] || null;
     addLog(`☠️ 擊倒${mon.name}！經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'win');
     sfx('mon-die');
-    diaRoll(mon);   // 鑽石掉落（vault.js）
+    if (!lootRequired()) diaRoll(mon);   // 後端模式連同物品一併結算鑽石
     gainExp(exp);
     rollDrops(mon, z);
     questOnKill(mon, z);
@@ -668,6 +674,8 @@ function onKill(mon) {
 }
 
 function rollDrops(mon, z) {
+    if (lootRequired() && !lootActive()) { stopHunt('⚠️ 後端掉寶尚未就緒，沒有改用本機抽獎'); return; }
+    if (lootActive()) { lootKill(mon); return; }
     const st = calcStats();
     // q：武器／防具的品質（undefined＝依怪物擲；null＝普通）；暗黑式詞綴見 affix.js
     const give = (id, nRange, q) => {

@@ -242,6 +242,7 @@ function raidAllyHeal(m, st, ms, ev, t) {
 // ───────── 獎勵（各自在自己的瀏覽器領取）─────────
 // 勝利：經驗、金幣依人數分配；掉落每人各自擲一次（沿用 rollDrops）；龍類算一次討伐。不論輸贏都扣掉戰鬥中用掉的藥水與彈藥。
 function raidApplyReward(res, uid, runKey) {
+    if (lootRequired() && !lootActive()) return null;
     const me = res.members.find(m => m.uid === uid);
     if (!me) return null;
     if (!player.raidRuns) player.raidRuns = [];
@@ -265,7 +266,8 @@ function raidApplyReward(res, uid, runKey) {
     addLog(`🏆 團隊副本：討伐${boss.name}！經驗 +${fmt(out.exp)}、金幣 +${fmt(out.gold)}`, 'boss');
     gainExp(out.exp);
     const seq = logSeq;
-    rollDrops(boss, { drops: [] });
+    if (lootActive()) lootRaid(runKey, lootChar());
+    else rollDrops(boss, { drops: [] });
     out.items = gameLog.filter(l => l.seq > seq && /^🎁|^🪙/.test(l.msg)).map(l => l.msg);
     if (boss.dragon) {
         const first = !player.dragons[boss.id];
@@ -297,7 +299,7 @@ function raidClaim(res, runKey, charId) {
         const keep = player;
         let out;
         try {
-            player = migrateSave(data);
+            player = guardWrap(migrateSave(data));
             out = raidApplyReward(res, uid, runKey);
             if (out) {
                 cloudLs(slotKey(i), saveEncode(JSON.stringify(Object.assign({}, data, { schema: SAVE_SCHEMA, t: Date.now(), player }))));   // 保留 owner
@@ -454,7 +456,7 @@ async function raidRefresh(roomId) {
         const was = raidRoom;
         raidRoom = room; raidMembers = members;
         // 開戰：拿到結果就先發獎勵（重播只是觀看）
-        if ((room.status === 'fighting' || room.status === 'done') && room.result) {
+        if ((room.status === 'fighting' || room.status === 'done') && room.result && (!lootRequired() || lootActive())) {
             const key = raidRunKey(room);
             if (!raidReplay || raidReplay.key !== key) {
                 const me = raidMe();

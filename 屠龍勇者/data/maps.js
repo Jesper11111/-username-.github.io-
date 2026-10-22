@@ -124,7 +124,7 @@ function applyMapMods(m) {
     if (!inMapRun()) return m;
     const on = mapModsOn(), sc = mapTierScale(player.mapRun.t);
     if (sc > 1) { m.hp = m.maxHp = Math.round(m.maxHp * sc); m.dmg = m.dmg.map(d => Math.round(d * sc)); m.exp = Math.round(m.exp * sc); }
-    if (on.includes('elite') && !m.boss && !m.elite && chance(0.15)) {
+    if (on.includes('elite') && !m.boss && !m.elite && (lootActive() ? m.lootElite === true : chance(0.15))) {
         m.elite = true; m.name = '精英・' + m.name;
         m.hp = m.maxHp = Math.round(m.maxHp * 3);
         m.dmg = m.dmg.map(d => Math.round(d * 1.5));
@@ -165,9 +165,11 @@ function completeMap() {
     player.mapRun = null;
     addLog(`🏆 通關 ${r.name}！`, 'boss');
     // 通關獎勵：1 張地圖（同階 55%、高一階 35%、高兩階 10%），另有 50% 再一張同階以下
-    const up = Math.random(), t2 = r.t + (up < 0.55 ? 0 : up < 0.9 ? 1 : 2);
-    giveMap(Math.min(MAP_TIERS, t2), undefined, '通關獎勵');
-    if (chance(0.5)) giveMap(Math.max(1, r.t - rand(0, 1)), undefined, '通關獎勵');
+    if (!lootActive()) {
+        const up = Math.random(), t2 = r.t + (up < 0.55 ? 0 : up < 0.9 ? 1 : 2);
+        giveMap(Math.min(MAP_TIERS, t2), undefined, '通關獎勵');
+        if (chance(0.5)) giveMap(Math.max(1, r.t - rand(0, 1)), undefined, '通關獎勵');
+    }
     moveToTown(z.town);
 }
 // 離開異界（回家卷軸、步行、死亡、瞬移逃離）：地圖消失

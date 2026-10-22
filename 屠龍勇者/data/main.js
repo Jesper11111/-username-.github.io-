@@ -59,6 +59,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showTitle();
     setInterval(gameTick, TICK_MS);
     initPwa();
+    lootStart();
     initCloud();
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
