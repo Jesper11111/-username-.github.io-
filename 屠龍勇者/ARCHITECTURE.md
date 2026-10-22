@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；20261022t實作完成待SQL部署（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
 | `tools/test-server-loot-db.js`、`tools/test-server-loot-integration.js`、`tools/test-server-loot-client.js`、`tools/server-loot-preview.html` | 隔離PostgreSQL與既有SQL／簽章相容測試、真實客戶端記憶體存檔與假RPC、瀏覽器重領／斷線驗證（第91節） |
@@ -1505,12 +1506,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **玩家裝置**：`save.js` 一載入就執行 `wipeCheck`——`WIPE.id` 不是空字串、且和這台裝置記的 `dragonSlayer_wipe` 不同時，刪掉所有 `dragonSlayer_` 開頭的 localStorage
   （保留 `dragonSlayer_auth*` 登入狀態與 `dragonSlayer_logOpen`；凡塵修仙傳的資料不動），再記下新 id，所以**每台裝置只洗一次**。有刪到角色時標題提示改成「已正式上線，測試期的角色已清除」。
 - **雲端保險**：`cloudSync` 忽略 `client_t < WIPE.at` 的雲端存檔（忘了跑 wipe.sql 也不會把舊角色下載回來；新角色上傳時會覆蓋那個欄位）。
-- **伺服器**：`tools/wipe.sql`（交易包起來，`truncate … restart identity cascade`）清掉雲端存檔、存檔紀錄、可疑紀錄、團隊副本、聊天、禁言、血盟、世界首領、交易所；
+- **伺服器**：`tools/wipe.sql`（交易包起來，`truncate … restart identity restrict`）清掉雲端存檔、存檔紀錄、可疑紀錄、團隊副本、聊天、禁言、血盟、世界首領、交易所；
   **保留**帳號 auth.users、管理者 `dragon_admins`、封鎖 `dragon_bans`、帳號 Email 對照 `dragon_profiles`（清掉 last_name）。世界首領資料表清空後 `wb_current` 會自動開新的一隻。
 - **上線那天的步驟**（執行前先跟使用者確認，清掉無法復原）：
   1. 使用者在 Supabase → SQL Editor 執行 `tools/wipe.sql`。
   2. `config.js`：`WIPE = { id: 'launch1', at: <現在的毫秒時間> }`、`TEST_NOTICE = ''`，換版本號、發佈。之後再測再洗：換新的 id（launch2…）與 at，再跑一次 wipe.sql。
 - 驗證：本機 PostgreSQL 執行 wipe.sql 無錯誤、帳號數不變；Playwright 未啟動時角色保留＋顯示封測提示，啟動後角色清空、登入狀態與修仙資料保留、重新整理不會再洗第二次。
+- **2026-10-22 全清範圍補齊（不改遊戲JS，仍20261022t）**：使用者明確要求鑽石與共用倉庫也全部清空。新增清除dragon_wallet／dragon_dia_log／dragon_vault／dragon_vault_items／dragon_vault_out、dragon_loot_jobs／dragon_loot_state、dragon_save_dev／dragon_deleted_chars／dragon_online，共24張玩家資料表。保留dragon_loot_config／catalog／rules及原本帳號／管理者／封鎖／profiles（last_name清空）；RESTRICT避免意外連帶刪除未列明的新相依表，有未納入外鍵則整筆失敗。掉寶功能狀態不變，不需重裝SQL。刪除錢包後現有dia_status於下次登入重建並發每日5鑽，同日不重複，並非保留測試餘額。
+- **洗白執行條件**：先安排停機、關閉所有遊戲與備份資料庫，再由使用者執行SQL，同步設定新的WIPE.id／at與版本並發布後才恢復開放；單跑SQL不能阻擋仍運作的舊客戶端重新上傳角色。這次僅補程序，WIPE仍未啟動、未執行正式刪檔。`node tools/test-wipe.cjs`使用隔離PGlite驗證重跑、所有列明表清空、保留資料完整、舊待領／收據移除與每日鑽石行為。
+- **正式缺表相容修正**：使用者執行時回報42P01（dragon_save_dev不存在）。wipe.sql改用固定24表清單配合to_regclass收集已安裝表，在同一次TRUNCATE RESTART IDENTITY RESTRICT處理，缺附加表以NOTICE顯示略過；核心dragon_saves不存在則拒絕，其他SQL錯誤不吞掉。test-wipe.cjs新增缺裝置／刪角／在線三表仍成功、清單外外鍵阻擋且整筆回滾測試。正式環境成功清除尚未確認。
 
 ## 38. 帳號共用倉庫、鑽石、離線掛機扣鑽石（2026-10-12，版本 `20261012j`；`vault.js`、`tools/vault.sql`（也併入 `supabase.sql` 最後一段））
 
