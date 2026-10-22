@@ -2634,6 +2634,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `dragon_saves_audit`（從 supabase.sql 複製後修改）：同一欄位 5 分鐘內已有歷程、這次也沒有異常 → 不記歷程也不刪舊的；`dragon_profiles` 在 5 分鐘內、名字與 email 沒變就不更新。異常檢查每次照做，有異常一定記；經驗／金幣暴增是和上一筆歷程比，時間差變長上限也跟著放寬，判斷不變。
   - `dragon_save_dev_log`：同帳號最新一筆是同欄位、同登入 session、同裝置、同 IP，且不到 10 分鐘 → 不記。換裝置／IP／登入照樣馬上記。
   - 管理頁「歷程」變成約 5 分鐘一筆。
+- **部署**：2026-10-23 使用者已在 Supabase 執行成功。
 - **⚠️ 之後若重跑 supabase.sql 或 save-device-log.sql**，會把這兩個函式蓋回舊版，要再執行一次 `save-log-throttle.sql`。
 - **測試**：`tools/test-save-log-throttle.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：5 分鐘內連傳 6 次只記 1 筆歷程與 1 筆裝置紀錄、存檔照常更新；裝置時間異常照樣記歷程與 `clock` 紀錄；換裝置、換登入各記一筆；超過 5 分鐘再記；最後上線 5 分鐘內不改。
 - **還能再減**：後端掉寶的憑證／帳本（`dragon_loot_jobs` 等）每隻怪都有寫入且不會自動清除（第 91 節），之後需要保留期限與清理排程。
