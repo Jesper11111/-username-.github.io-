@@ -1,0 +1,211 @@
+{
+  "src": "images/sprites/morph/moon-ranger-v1/attack-v2.png",
+  "cellW": 320,
+  "cellH": 240,
+  "frames": {
+    "down": 4,
+    "right": 4,
+    "up": 4
+  },
+  "ms": 140,
+  "phases": [
+    "ready",
+    "draw",
+    "release",
+    "recover"
+  ],
+  "cells": [
+    {
+      "direction": "down",
+      "frame": 0,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        0,
+        0,
+        384,
+        341
+      ],
+      "sourceFoot": [
+        205,
+        333
+      ],
+      "file": "attack-v2-frames/attack-down-01.png"
+    },
+    {
+      "direction": "down",
+      "frame": 1,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        384,
+        0,
+        768,
+        341
+      ],
+      "sourceFoot": [
+        580,
+        333
+      ],
+      "file": "attack-v2-frames/attack-down-02.png"
+    },
+    {
+      "direction": "down",
+      "frame": 2,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        768,
+        0,
+        1152,
+        341
+      ],
+      "sourceFoot": [
+        960,
+        333
+      ],
+      "file": "attack-v2-frames/attack-down-03.png"
+    },
+    {
+      "direction": "down",
+      "frame": 3,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        1152,
+        0,
+        1536,
+        341
+      ],
+      "sourceFoot": [
+        1350,
+        333
+      ],
+      "file": "attack-v2-frames/attack-down-04.png"
+    },
+    {
+      "direction": "right",
+      "frame": 0,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        0,
+        341,
+        384,
+        683
+      ],
+      "sourceFoot": [
+        210,
+        681
+      ],
+      "file": "attack-v2-frames/attack-right-01.png"
+    },
+    {
+      "direction": "right",
+      "frame": 1,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        384,
+        341,
+        768,
+        683
+      ],
+      "sourceFoot": [
+        570,
+        681
+      ],
+      "file": "attack-v2-frames/attack-right-02.png"
+    },
+    {
+      "direction": "right",
+      "frame": 2,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        768,
+        341,
+        1152,
+        683
+      ],
+      "sourceFoot": [
+        970,
+        681
+      ],
+      "file": "attack-v2-frames/attack-right-03.png"
+    },
+    {
+      "direction": "right",
+      "frame": 3,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        1152,
+        341,
+        1536,
+        683
+      ],
+      "sourceFoot": [
+        1360,
+        681
+      ],
+      "file": "attack-v2-frames/attack-right-04.png"
+    },
+    {
+      "direction": "up",
+      "frame": 0,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        0,
+        683,
+        384,
+        1024
+      ],
+      "sourceFoot": [
+        195,
+        1005
+      ],
+      "file": "attack-v2-frames/attack-up-01.png"
+    },
+    {
+      "direction": "up",
+      "frame": 1,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        384,
+        683,
+        768,
+        1024
+      ],
+      "sourceFoot": [
+        565,
+        1005
+      ],
+      "file": "attack-v2-frames/attack-up-02.png"
+    },
+    {
+      "direction": "up",
+      "frame": 2,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        768,
+        683,
+        1152,
+        1024
+      ],
+      "sourceFoot": [
+        958,
+        1005
+      ],
+      "file": "attack-v2-frames/attack-up-03.png"
+    },
+    {
+      "direction": "up",
+      "frame": 3,
+      "source": "attack-motion-v2-transparent.png",
+      "sourceRect": [
+        1152,
+        683,
+        1536,
+        1024
+      ],
+      "sourceFoot": [
+        1350,
+        1005
+      ],
+      "file": "attack-v2-frames/attack-up-04.png"
+    }
+  ]
+}

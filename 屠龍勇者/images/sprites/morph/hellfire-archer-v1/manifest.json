@@ -1,0 +1,827 @@
+{
+  "id": "hellfire-archer-v1",
+  "name": "冥火骷髏神射（紫變）",
+  "status": "appearance-preview-only",
+  "level": null,
+  "effects": null,
+  "cellW": 320,
+  "cellH": 280,
+  "charH": 160,
+  "drawH": 48,
+  "footAnchor": [
+    160,
+    240
+  ],
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/hellfire-archer-v1/walk.png",
+      "cellW": 320,
+      "cellH": 280,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            0
+          ],
+          "sourceRect": [
+            0,
+            0,
+            242,
+            193
+          ],
+          "sourceFoot": [
+            121,
+            193
+          ],
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/walk-down-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            1
+          ],
+          "sourceRect": [
+            242,
+            0,
+            484,
+            193
+          ],
+          "sourceFoot": [
+            363,
+            193
+          ],
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/walk-down-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            2
+          ],
+          "sourceRect": [
+            484,
+            0,
+            726,
+            193
+          ],
+          "sourceFoot": [
+            606,
+            193
+          ],
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/walk-down-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            3
+          ],
+          "sourceRect": [
+            726,
+            0,
+            967,
+            193
+          ],
+          "sourceFoot": [
+            849,
+            193
+          ],
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/walk-down-04.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            0
+          ],
+          "sourceRect": [
+            0,
+            730,
+            242,
+            907
+          ],
+          "sourceFoot": [
+            121,
+            899
+          ],
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/walk-right-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            1
+          ],
+          "sourceRect": [
+            242,
+            730,
+            484,
+            907
+          ],
+          "sourceFoot": [
+            363,
+            899
+          ],
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/walk-right-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            2
+          ],
+          "sourceRect": [
+            484,
+            730,
+            726,
+            907
+          ],
+          "sourceFoot": [
+            606,
+            899
+          ],
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/walk-right-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            3
+          ],
+          "sourceRect": [
+            726,
+            730,
+            967,
+            907
+          ],
+          "sourceFoot": [
+            849,
+            899
+          ],
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/walk-right-04.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            0
+          ],
+          "sourceRect": [
+            0,
+            375,
+            242,
+            550
+          ],
+          "sourceFoot": [
+            121,
+            544
+          ],
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/walk-up-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            1
+          ],
+          "sourceRect": [
+            242,
+            375,
+            484,
+            550
+          ],
+          "sourceFoot": [
+            363,
+            544
+          ],
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/walk-up-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            2
+          ],
+          "sourceRect": [
+            484,
+            375,
+            726,
+            550
+          ],
+          "sourceFoot": [
+            606,
+            544
+          ],
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/walk-up-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            3
+          ],
+          "sourceRect": [
+            726,
+            375,
+            967,
+            550
+          ],
+          "sourceFoot": [
+            849,
+            544
+          ],
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/walk-up-04.png"
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/hellfire-archer-v1/attack.png",
+      "cellW": 320,
+      "cellH": 280,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            4
+          ],
+          "sourceRect": [
+            967,
+            0,
+            1209,
+            193
+          ],
+          "sourceFoot": [
+            1091,
+            193
+          ],
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/attack-down-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            0,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            0,
+            1451,
+            193
+          ],
+          "sourceFoot": [
+            1335,
+            193
+          ],
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/attack-down-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            1,
+            0
+          ],
+          "sourceRect": [
+            0,
+            193,
+            242,
+            375
+          ],
+          "sourceFoot": [
+            121,
+            367
+          ],
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/attack-down-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            1,
+            1
+          ],
+          "sourceRect": [
+            242,
+            193,
+            484,
+            375
+          ],
+          "sourceFoot": [
+            363,
+            367
+          ],
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/attack-down-04.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            4
+          ],
+          "sourceRect": [
+            967,
+            700,
+            1209,
+            907
+          ],
+          "sourceFoot": [
+            1091,
+            899
+          ],
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/attack-right-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            4,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            700,
+            1451,
+            907
+          ],
+          "sourceFoot": [
+            1335,
+            899
+          ],
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/attack-right-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            5,
+            0
+          ],
+          "sourceRect": [
+            0,
+            886,
+            242,
+            1084
+          ],
+          "sourceFoot": [
+            121,
+            1076
+          ],
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/attack-right-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            5,
+            1
+          ],
+          "sourceRect": [
+            242,
+            886,
+            484,
+            1084
+          ],
+          "sourceFoot": [
+            363,
+            1076
+          ],
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/attack-right-04.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            4
+          ],
+          "sourceRect": [
+            967,
+            375,
+            1209,
+            550
+          ],
+          "sourceFoot": [
+            1091,
+            544
+          ],
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/attack-up-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            2,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            375,
+            1451,
+            550
+          ],
+          "sourceFoot": [
+            1335,
+            544
+          ],
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/attack-up-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            3,
+            0
+          ],
+          "sourceRect": [
+            0,
+            530,
+            242,
+            730
+          ],
+          "sourceFoot": [
+            121,
+            719
+          ],
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/attack-up-03.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            3,
+            1
+          ],
+          "sourceRect": [
+            242,
+            530,
+            484,
+            730
+          ],
+          "sourceFoot": [
+            363,
+            719
+          ],
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/attack-up-04.png"
+        }
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/hellfire-archer-v1/cast.png",
+      "cellW": 320,
+      "cellH": 280,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "source": "cast-extra.png",
+          "sourceRect": [
+            0,
+            0,
+            724,
+            724
+          ],
+          "sourceFoot": [
+            400,
+            703
+          ],
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/cast-down-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            1,
+            3
+          ],
+          "sourceRect": [
+            726,
+            193,
+            967,
+            375
+          ],
+          "sourceFoot": [
+            849,
+            367
+          ],
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/cast-down-02.png"
+        },
+        {
+          "source": "cast-extra.png",
+          "sourceRect": [
+            724,
+            0,
+            1448,
+            724
+          ],
+          "sourceFoot": [
+            1140,
+            703
+          ],
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/cast-right-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            5,
+            3
+          ],
+          "sourceRect": [
+            726,
+            907,
+            967,
+            1084
+          ],
+          "sourceFoot": [
+            849,
+            1076
+          ],
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/cast-right-02.png"
+        },
+        {
+          "source": "cast-extra.png",
+          "sourceRect": [
+            1448,
+            0,
+            2172,
+            724
+          ],
+          "sourceFoot": [
+            1855,
+            700
+          ],
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/cast-up-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            3,
+            3
+          ],
+          "sourceRect": [
+            726,
+            550,
+            967,
+            730
+          ],
+          "sourceFoot": [
+            849,
+            719
+          ],
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/cast-up-02.png"
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/hellfire-archer-v1/hit.png",
+      "cellW": 320,
+      "cellH": 280,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            1,
+            4
+          ],
+          "sourceRect": [
+            967,
+            193,
+            1209,
+            375
+          ],
+          "sourceFoot": [
+            1091,
+            367
+          ],
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/hit-down-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            1,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            193,
+            1451,
+            375
+          ],
+          "sourceFoot": [
+            1335,
+            367
+          ],
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/hit-down-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            5,
+            4
+          ],
+          "sourceRect": [
+            1000,
+            907,
+            1209,
+            1084
+          ],
+          "sourceFoot": [
+            1091,
+            1076
+          ],
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/hit-right-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            5,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            907,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1335,
+            1076
+          ],
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/hit-right-02.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            3,
+            4
+          ],
+          "sourceRect": [
+            967,
+            550,
+            1209,
+            730
+          ],
+          "sourceFoot": [
+            1091,
+            719
+          ],
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/hit-up-01.png"
+        },
+        {
+          "source": "sheet-transparent.png",
+          "sourceCell": [
+            3,
+            5
+          ],
+          "sourceRect": [
+            1209,
+            550,
+            1451,
+            730
+          ],
+          "sourceFoot": [
+            1335,
+            719
+          ],
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/hit-up-02.png"
+        }
+      ]
+    }
+  },
+  "projectiles": [
+    {
+      "direction": "down",
+      "file": "projectile-down.png",
+      "sourceCell": [
+        1,
+        2
+      ],
+      "sourceRect": [
+        470,
+        244,
+        716,
+        310
+      ]
+    },
+    {
+      "direction": "right",
+      "file": "projectile-right.png",
+      "sourceCell": [
+        5,
+        2
+      ],
+      "sourceRect": [
+        484,
+        932,
+        710,
+        1003
+      ]
+    },
+    {
+      "direction": "up",
+      "file": "projectile-up.png",
+      "sourceCell": [
+        3,
+        2
+      ],
+      "sourceRect": [
+        511,
+        579,
+        707,
+        647
+      ]
+    }
+  ]
+}

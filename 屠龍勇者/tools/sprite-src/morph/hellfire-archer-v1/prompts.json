@@ -1,0 +1,13 @@
+{
+  "tool": "built-in image_gen",
+  "jobs": [
+    {
+      "key": "sheet",
+      "prompt": "Precise background extraction edit of image 1, a 6-column by 6-row game sprite sheet. Image 2 is character identity reference only. Remove ONLY the baked gray checkerboard background and give genuine transparent alpha. Preserve all 33 existing full-body skeletal archer sprites and the 3 independent blue flaming arrows, their identities, poses, positions, scale, burgundy hood/cape, dark skeletal armor, blue luminous ribs and eyes, black bony bow, violet/cyan flames. Do not turn them into humans, add figures, rearrange, remove weapons, or change directions. In each pair of rows: 4 walk sprites +4 attack sprites +1 independent arrow +1 casting sprite +2 hurt sprites =12 cells. There are THREE such direction groups. Keep all 36 cells in their original order and layout. Preserve dark armor edges, black bow details, blue light and translucent purple flames while removing gray checks including holes between arms and bow. No title, text, added grid, shadow or ground; original magical ground ring may remain translucent. Keep original wide canvas aspect ratio. True RGBA alpha, NOT a picture of a checkerboard."
+    },
+    {
+      "key": "cast-extra",
+      "prompt": "Create ONE supplementary casting sprite strip for the original skeletal archer in the supplied character reference (image 1) and original animation sheet (image 2). Exactly THREE separate full-body sprites in ONE horizontal row: LEFT is FRONT/three-quarter toward viewer, MIDDLE is RIGHT SIDE facing right, RIGHT is BACK facing away, showing burgundy hood and cape and quiver, NO face/chest on back sprite. Same dark skeletal archer identity: exposed skull with cyan glowing eyes, cyan luminous ribs, burgundy hood/tattered cape, dark spiked armor, flaming blue arrows in quiver. Detailed old-school 2D pixel RPG sprite style matching the small original animation figures. This is one new casting phase in three directions: arms held inward at chest channeling a compact violet/cyan orb, hands visibly closer together than the original raised/spread-arm casting phase. Bony bow safely slung on back; no aiming or shooting. Complete head, legs and feet visible, constant body scale and foot baseline, ample transparent gaps between all 3. Magic compact around hands and body, no giant blast obscuring character, no projectiles. True transparent alpha background, no gray checks, no page, no text/title/grid/ground/shadow. Landscape strip aspect ratio about 3:1; each sprite wholly inside its own equal cell."
+    }
+  ]
+}

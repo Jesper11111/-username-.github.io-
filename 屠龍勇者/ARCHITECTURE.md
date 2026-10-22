@@ -7,7 +7,9 @@
 
 | 檔案 | 內容 |
 |---|---|
-| `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者（紅變）36 格透明外觀與試播素材、原圖／去背原稿／提示詞及裁切規格；等級與能力待定，未加入選單（第 18.5 節） |
+| `images/sprites/morph/moon-ranger-v1/`、`tools/sprite-src/morph/moon-ranger-v1/` | 月光精靈巡林者透明素材／原稿／提示詞；m02 專屬圖，g 版新增 12 格 attack-v2（第 18.5、88 節） |
+| `images/sprites/morph/hellfire-archer-v1/`、`tools/sprite-src/morph/hellfire-archer-v1/` | 冥火骷髏神射 36 格透明人物／3 獨立箭矢、原圖／補畫原稿／提示詞／整理腳本；外觀試播階段（第 18.6 節） |
+| `tools/moon-attack-preview.html`、`tools/test-moon-attack.js`、`tools/sprite-src/morph/update-motion-previews.py` | 紅變實際 renderer 隔離試播、命中／MISS 動作回歸、嵌入式動畫試播素材更新工具（第 18.5 節） |
 | `images/sprites/morph/wolf-ranger-v1/`、`tools/sprite-src/morph/wolf-ranger-v1/` | 巡守妖魔神射變身素材：36 格透明動作、4 圖集、腳底規格與原稿／提示詞（第 18.4 節）；變形卷軸使用 walk／attack／cast／hit 四張圖集（第 88 節） |
 | `tools/MORPH-DESIGN.md` | 使用者給的 30 種變身設計稿（名稱、系別、階級、外觀與特效重點），做變身圖時照這份（第 88 節） |
 | `images/icons/items/polyScroll.png`、`tools/make-poly-icon.ps1` | 變形卷軸道具圖（羊皮紙卷軸＋變身人物第一格合成，128×128；第 88 節） |
@@ -129,7 +131,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261022g`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -894,13 +896,23 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **腳底 anchor (128,200)**，下方 40px 留給向下箭光。未來變身 renderer 應畫在 `(腳底X−128k, 腳底Y−200k)`、k＝drawH／160；目前 renderer 用 cellH 當基準，不能未處理 anchor 就直接貼上職業資料，否則浮空。
 - 本次僅製作素材與本對話互動試播；未改 `classes.js`、SW 清單、GAME_VERSION、變身能力、選單或存檔。互動預覽位於本對話 visualizations 的 `wolf-ranger-v2-motion.html`，不加入遊戲 script。
 
-### 18.5 月光精靈巡林者（紅變）外觀素材（2026-10-22，沿用 `20261022e`，未接入玩法）
+### 18.5 月光精靈巡林者（紅變）外觀素材（2026-10-22，初稿沿用 `20261022e`；f 接入，g 修正攻擊）
 
 - 使用者提供立繪與 36 格 JPG，並選擇「先完成外觀素材與試播，等級及能力稍後決定」。不新增 MORPH_FORMS、不改變形卷軸、數值、存檔或 SW。
 - `tools/sprite-src/morph/moon-ranger-v1/` 保留 reference.jpg、sheet-original.jpg；內建 image_gen 去掉白底與標題，保留銀髮／銀甲／紅綠魔法，透明原稿為 sheet-transparent.png，提示詞 prompts.json。prepare.py 依人物框分格、隔開鄰格、等比縮放與腳底對齊，原圖不覆寫。
 - `images/sprites/morph/moon-ranger-v1/`：walk／attack 各 12 格，cast／hit 各 6 格，共 36 單格 PNG、4 動作 PNG 圖集、輕量 WebP、contact.png 總覽與 manifest.json。每格 320×240、charH160、drawH48、腳底 anchor [160,200]；列 down／right／up，左側鏡像。每格 130／140／220／150ms。
 - 保留原圖姿勢，走路步幅變化小，部分攻擊／施法以特效變化為主；沒有新增插值動作。等級與能力在 manifest 留 null；未寫入遊戲資料。原版側面放箭上弓尖貼格邊，已用內建 image_gen 修補 2 格，原稿 bow-repair-generated.png／提示詞 bow-repair-prompt.json 留存，prepare.py 依 source 覆寫這兩個輸出格、維持共同腳點及身高。
 - 本對話互動預覽 moon-ranger-motion.html 提供四向鏡像、四動作、播放／暫停／逐格；不加入遊戲 script，GAME_VERSION 不變。
+
+- **20261022g 攻擊修正**：使用者回報沒有攻擊動作，原四格皆維持拉滿弓。內建 image_gen 補畫三向各 4 格「準備→拉弓→放箭→收弓」；attack-motion-v2-generated.png／transparent.png／prompts.json 及 prepare-attack-v2.py 保存來源。新版 attack-v2.png、attack-v2-frames/、attack-v2-manifest.json，保持 320×240、腳底 [160,200]、charH160、每格 140ms，舊圖／manifest 留存。MORPHS.moonRanger.attack 與 SW 預載改用新檔名，升版本避開快取。
+- tools/test-moon-attack.js 隔離驗證四向命中／MISS→attack 560ms、受傷不打斷及變身到期回復職業模型；tools/moon-attack-preview.html 使用實際 sceneReadEvents／sceneDraw，放大兩倍方便檢視，不載雲端／存檔。數值、變身選單、存檔 schema 與原動作觸發邏輯不變。本對話 moon-ranger-motion.html 更新新攻擊；update-motion-previews.py 更新內嵌 WebP。
+
+### 18.6 冥火骷髏神射（紫變）外觀素材（2026-10-22，與 `20261022g` 同次整理）
+
+- 使用者提供 3.jpg 立繪及 3-1.jpg JPG 分鏡；沿用先製作外觀／試播的決定。原圖 33 人物＋3 獨立箭矢，不能將箭矢當人物播放。內建 image_gen 去除棋盤底，另補正／右／背三格蓄力施法，共 36 人物格。
+- 原圖／透明原稿／補畫／完整 prompts.json／prepare.py 保存在 tools/sprite-src/morph/hellfire-archer-v1/；輸出 images/sprites/morph/hellfire-archer-v1/，4 動作圖集／WebP、36 單格、3 projectile PNG、contact.png、逐格來源 manifest.json。walk／attack 每向4格，cast／hit 每向2格，時間130／140／220／150ms。
+- 格子 **320×280**、腳底 **[160,240]**、charH160、drawH48；列 down／right／up，左鏡像。多留上方火焰空間，不能套紅變 240 高格子的參數。原圖射箭仍以持弓與光效變化為主，未假稱補齊新的射箭肢體動作。
+- 本對話 hellfire-archer-motion.html 提供四向／四動作與播放／逐格。manifest 的 level／effects 留 null；**未新增或改動 m03 的玩法／數值，m03 仍沿用既有統一外觀，專屬圖尚未接入**。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2378,3 +2390,4 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證（d 版）：check.ps1 ALL CHECKS PASSED、上述測試＋test-world-vfx 通過、混淆建置（公開函式多了 `morphPick`）與合併語法通過。瀏覽器 Lv.35 測試角色：視窗列 9 種、Lv.40 以上 4 種鎖住；點史巴托扣 1 張、防禦生效、外觀為巡守妖魔神射、提示「變身：史巴托」；選巴風特回「需要 Lv.60」不扣卷軸；解除變身後效果消失；不帶對象使用沿用上次（自動用）；Console 無錯誤。c 版另驗過野外腳底對齊影子、到期恢復職業模型。
 - 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。
 - **20261022f：02 月光精靈巡林者接上專屬圖**（使用者要求）。素材 `images/sprites/morph/moon-ranger-v1/`（別的工作做好、已由使用者提交 6005cd1；說明在該資料夾 README.md）：格子 320×240（比巡守妖魔神射寬）、**腳底 (160,200)**，walk／attack 各 4 格、cast／hit 各 2 格，時間 130／140／220／150ms。`MORPHS.moonRanger`＋m02 的 sprite 欄位，`sw.js` 預先快取四張圖集。驗證：Lv.55 測試角色選 m02 → 外觀為月光精靈巡林者、四張圖集尺寸 1280×720／640×720 正確載入，野外放大確認腳踩影子不浮空，攻擊 560ms／施法 440ms 動作正常；改選 m05 回到統一外觀；Console 無錯誤。
+- **20261022g：m02 攻擊換用 attack-v2.png**。修正原四格皆拉弓而看不到出手的素材問題；三向各準備／拉弓／放箭／收弓，左鏡像，規格與時間維持不變；第18.5節。未改等級、能力、消耗或 schema。

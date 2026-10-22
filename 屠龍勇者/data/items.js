@@ -58,7 +58,7 @@ const MORPHS = {
     moonRanger: {
         name: '月光精靈巡林者', drawH: 48, charH: 160, foot: [160, 200],
         walk:   { src: 'images/sprites/morph/moon-ranger-v1/walk.png',   cellW: 320, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
-        attack: { src: 'images/sprites/morph/moon-ranger-v1/attack.png', cellW: 320, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        attack: { src: 'images/sprites/morph/moon-ranger-v1/attack-v2.png', cellW: 320, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
         cast:   { src: 'images/sprites/morph/moon-ranger-v1/cast.png',   cellW: 320, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
         hit:    { src: 'images/sprites/morph/moon-ranger-v1/hit.png',    cellW: 320, cellH: 240, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
     },

@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **本機待驗收 20261022g：月光精靈巡林者攻擊修正**。使用者指出紅變沒有攻擊動作，確認原四格皆維持拉弓；已用內建 image_gen 補畫三向 12 格準備／拉弓／放箭／收弓，MORPHS.moonRanger.attack／SW 改用 attack-v2.png。320×240、腳底 [160,200]、charH160、4×140ms；舊圖與原稿保留，提示詞／prepare-attack-v2.py 在 tools/sprite-src/morph/moon-ranger-v1/。不改能力／消耗／存檔，第18.5、88節。
+- **同次：冥火骷髏神射（紫變）素材待驗收**。使用者新提供 3.jpg／3-1.jpg，沿用「先完成外觀素材及試播」；33 原人物格＋3 補畫施法蓄力＝36 格人物，3 箭矢獨立。原圖／內建 image_gen 原稿／提示詞／prepare.py 保存在 tools/sprite-src/morph/hellfire-archer-v1/，透明圖集與單格在 images/sprites/morph/hellfire-archer-v1/；320×280、腳底 [160,240]、charH160，左鏡像。**未接 m03 專屬圖或改玩法／數值**；原射箭姿勢仍主要靠持弓／光效變化，不應誤稱補畫完整射箭流程。試播 hellfire-archer-motion.html 在本對話 visualizations 目錄，第18.6節。
+- **g 版驗證**：test-moon-attack.js 通過命中／MISS 四方向及受傷不打斷；12 紅變新版／36 紫變人物格皆為非重複 RGBA、透明留邊、逐格與圖集一致，3 箭矢獨立；check.ps1 ALL CHECKS PASSED（46 檔／45 script／20261022g）、git diff --check 通過。瀏覽器實際 renderer 四方向點攻擊有播放，修正隔離頁相對路徑後無新 Console 錯誤；兩份試播播放／暫停／逐格正常，紫變四動作與鏡像已看。未寫真實存檔或上傳、未 commit／Push，待使用者實玩驗收。
+
 - **月光精靈巡林者（紅變）素材待驗收（2026-10-22）**：使用者提供立繪與 36 格 JPG，明確選擇「先完成外觀素材與試播，等級及能力稍後決定」。本次只整理外觀；未加選單／MORPH_FORMS、不改數值／存檔／SW；工作期間遊戲由外部更新至 20261022e，本次未改版本。36 格透明 PNG、4 動作圖集、manifest 在 images/sprites/morph/moon-ranger-v1/；原圖、內建 image_gen 去背原稿／提示詞及 prepare.py 在 tools/sprite-src/morph/moon-ranger-v1/。320×240、腳底 [160,200]、charH160；走路／攻擊各方向4格、施法／受傷各2格，左鏡像。原圖步幅差異較小，部分動作以光效變化為主；側面放箭兩格弓尖已另修補，原稿／提示詞保留。試播 moon-ranger-motion.html 在本對話 visualizations 目錄；第18.5節。
 
 - **紅變素材驗證**：36 格 RGBA、非重複內容、4 圖集／來源對應、共同腳點及修補兩格通過；manifest 的 level／effects 為 null。check.ps1 ALL CHECKS PASSED（46 檔、45 script，20261022e），git diff --check 通過。瀏覽器四動作、透明背景、左鏡像、播放／暫停／逐格已檢查，待使用者檢視動態；未 commit／Push。
@@ -92,6 +96,8 @@
   大地圖（多張真地圖拼接、遮擋、交界路引、瞬移卷軸、傳送師）、防改檔（伺服器可疑紀錄、存檔加密簽章、雲端簽章、交易所門檻、混淆）。
 
 ## 2. 待辦（使用者還沒叫做的不要自己開工，先問）
+
+- **20261022g 紅變攻擊待實玩**：本機 Ctrl+F5 → 變形卷軸選月光精靈巡林者 → 打怪，確認有抬弓／放箭／收弓，切四方向核對。隔離頁 http://localhost:8790/tools/moon-attack-preview.html 可點方向及「攻擊一次」，使用真實 sceneReadEvents／sceneDraw，不載真實存檔或雲端。使用者驗收後才 commit；紫變先看本對話試播，尚未接上遊戲 m03。
 
 - **20261022b 待驗收**：Ctrl+F5 後確認原本骷髏外框／法球仍在；從地圖依序進海岸、森林、雪原、王陵、泰坦，按 M 看世界地名及所在地，野外選目的地步行、兩塔傳送師入口；到四城鎮只點 NPC 名牌開設施。塔內確認怪物圖片、四龍場景。裝備圖鑑 → 傳說武器應 12 把皆列共鳴，穿戴新武器實戰核對集氣／冷卻／圖片特效。隔離美術預覽 tools/scene-rework/preview.html（工具列可選場景／手機），不讀寫真實存檔或雲端。使用者實玩確認後才提交本次指定檔案，請其 GitHub Desktop Push origin。
 
