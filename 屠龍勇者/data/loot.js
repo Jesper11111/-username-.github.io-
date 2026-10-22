@@ -6,6 +6,17 @@ function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
 function lootChar(p = player) { return p ? String(p.created) + '|' + p.cls : ''; }
 function lootNotice(msg) { if (gameNow >= lootNoticeAt) { lootNoticeAt = gameNow + 5000; showToast(msg, 4000); } }
+// 伺服器生怪（loot_spawn）讀雲端存檔的這些欄位判斷資格；只有它們變了才需要先上傳整份存檔（第 100 節）。
+// 背包、金幣、經驗不影響生怪，照一般 60 秒上傳即可（原本每隻怪都強制上傳，玩家一多資料庫就撐不住）
+function lootSnapKey(p) {
+    if (!p) return '';
+    const mr = p.mapRun, q = p.quests || {};
+    return JSON.stringify([p.cls, p.lv, p.loc && [p.loc.type, p.loc.id, p.loc.floor], p.towerMax, p.towerCleared, p.towerBossCd, p.dragons, p.dragonCd,
+        mr ? [mr.zone, mr.t, mr.mods, mr.left <= 0] : null, [q.ch, q.active, q.bossDone, q.prog]]);
+}
+// 這一格的雲端存檔已經有角色、生怪資格欄位也跟目前一樣（cloud.js 上傳成功時記 cloudSnapKey）
+function lootCloudFresh(slot) { return cloudKnown[slot] != null && !cloudConflict[slot] && cloudSnapKey[slot] === lootSnapKey(player); }
+
 // 暫時性的連線問題（剛從背景回來網路還沒恢復、逾時、雲端存檔還沒傳完）：掛機暫停等它恢復，不要直接停止（第 99 節）
 function lootTransient(e) { return /timeout|Failed to fetch|NetworkError|network|Load failed|請先完成雲端同步/i.test(String((e && e.message) || e || '')); }
 // 已登入、沒被停權，只是後端狀態還在確認／剛才連不上：等下一次 lootProbe 恢復
@@ -55,7 +66,7 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
     h.lootWait = true;
     const previousScene = typeof scene === 'undefined' ? null : scene;
     try {
-        saveGame(); if (!await cloudSyncedSlot(slot)) throw Error('請先完成雲端同步');
+        if (!lootCloudFresh(slot)) { saveGame(); if (!await cloudSyncedSlot(slot)) throw Error('請先完成雲端同步'); }
         if (!cloudUser || cloudUser.id !== uid || player !== p || hunt !== h) return;
         const keep = [...h.mobs.map(m => m.lootTicket), ...lootJobs().filter(j => j.kind === 'kill' && j.char === char).map(j => j.ticket)].filter(Boolean);
         await marketRpc('loot_release', { p_slot:slot,p_char:char,p_keep:keep });
@@ -149,9 +160,9 @@ async function lootPump() {
             if (!cloudUser || cloudUser.id !== uid) return;
             const raw = localStorage.getItem(slotKey(job.slot));
             if (!raw || lootChar(saveParse(raw).player) !== job.char || saveOwnerOf(saveParse(raw)) !== uid) continue;
-            if (player && currentSlot === job.slot && lootChar() === job.char) saveGame();
-            // 從背景切回來時第一次上傳常會逾時：佇列保留、5 秒後再試，連續 60 秒都傳不上去才提示
-            if (!await cloudSyncedSlot(job.slot)) {   // 只看這筆掉寶的角色欄位
+            // 結算只需要雲端已有這個角色（loot_player 核對角色），不必每筆都先上傳整份存檔（第 100 節）；
+            // 雲端還沒有這一格才先上傳。從背景切回來時第一次上傳常會逾時：佇列保留、5 秒後再試，連續 60 秒都傳不上去才提示
+            if (cloudKnown[job.slot] == null && !await cloudSyncedSlot(job.slot)) {
                 if (!lootSyncFailAt) lootSyncFailAt = Date.now();
                 if (Date.now() - lootSyncFailAt < 60000) return;
                 throw Error('雲端存檔尚未同步');

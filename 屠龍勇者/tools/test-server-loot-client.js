@@ -52,9 +52,18 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
  marketRpc=async fn=>fn==='loot_status'?{protocol:LOOT_PROTOCOL,enabled:true,rules:'r'}:[];await lootProbe();assert.equal(lootMode,'active','恢復連線自動回到線上掉寶');
  marketRpc=async fn=>{if(fn==='loot_release')return true;throw Error('loot zone denied');};await lootSpawn();assert.equal(player.hunting,false,'不是網路問題仍停止');assert(/後端掉寶尚未就緒/.test(stopped));
  player.hunting=true;hunt={state:'search',mobs:[],mon:null,warned:{}};
+ // 第100節：生怪資格欄位沒變就不重傳整份存檔；結算不再每筆先上傳
+ {let ups=0;const so=cloudSyncedSlot;cloudSyncedSlot=async s=>{ups++;cloudKnown[s]=1;cloudSnapKey[s]=lootSnapKey(player);return true;};
+  marketRpc=async fn=>fn==='loot_release'?true:[{ticket:crypto.randomUUID(),monster:makeMonster('goblin')}];
+  delete cloudSnapKey[0];hunt.state='search';await lootSpawn();assert.equal(ups,1,'第一次要上傳');
+  player.gold+=999;player.inv.push({uid:9999,id:'redPotion',n:1});hunt.state='search';await lootSpawn();assert.equal(ups,1,'金幣背包變了不用重傳');
+  player.lv+=1;hunt.state='search';await lootSpawn();assert.equal(ups,2,'等級變了要重傳');player.lv-=1;
+  lootStore([{key:'k1',kind:'kill',ticket:'k1',slot:0,char}]);let fin=0;
+  marketRpc=async fn=>{if(fn==='loot_finish')fin++;return fn==='loot_pending'?[]:{};};lootPendingAt=gameNow+30000;
+  await lootPump();assert.equal(fin,1);assert.equal(ups,2,'結算不上傳');cloudSyncedSlot=so;}
  let spawnCalls=0;cloudFlush=async()=>{cloudUser={id:'other'};return true;};marketRpc=async()=>{spawnCalls++;};
  await lootSpawn();assert.equal(spawnCalls,0,'await期間換帳號不得繼續發怪');
  cloudUser=null;assert.equal(lootCanPlay(),false,'未登入不能進入線上掉寶');
- console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機。');
+ console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔。');
 })()`,ctx);}
 main().catch(e=>{console.error(e);process.exitCode=1;});

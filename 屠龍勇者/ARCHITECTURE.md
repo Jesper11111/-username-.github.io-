@@ -150,7 +150,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023h`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2614,3 +2614,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `huntTick`：`lootCanPlay()` 不通過時，若 `lootWaiting()` 就只暫停這一回合（`player.hunting` 保持 true），查到狀態恢復為 `active` 後自動繼續；沒登入、被停權才停止。
   - 後端掉寶的原則不變：連不上時**不會**改用本機抽獎。
 - **測試**：`test-server-loot-client.js` 新增：`loot_status`／`loot_spawn` Failed to fetch、存檔還沒傳完時掛機都不停、`hunt.timer` 3 秒後再找怪；`lootMode='blocked'` 時 `huntTick` 只暫停；查到狀態恢復回 `active`；非網路錯誤（`loot zone denied`）仍停止。全部回歸、check.ps1、混淆建置通過。
+
+## 100. 後端掉寶不再每隻怪都上傳整份存檔（2026-10-23，版本 `20261023h`；`loot.js` 的 `lootSnapKey`／`lootCloudFresh`／`lootSpawn`／`lootPump`、`cloud.js` 的 `cloudSnapKey`）
+
+- **起因**：使用者轉來另一個 AI 的分析並確認：後端掉寶啟用後，掛機時每生一隻怪 `lootSpawn` 都 `saveGame()`＋強制上傳整份存檔，每結算一筆 `lootPump` 也先確認上傳，等於繞過「60 秒上傳一次」。每次上傳伺服器要跑十幾個 trigger（存檔歷程、裝置紀錄、掉寶序號列鎖、簽章、能力值、倉庫序號…），100 人掛機約每秒 25 次整份寫入＋上百個 RPC。Supabase 免費方案共用 CPU，請求變慢超過 10 秒逾時 → 「雲端存檔尚未同步」、進度衝突、掛機停止，重試又加重負擔，形成惡性循環。第 96～99 節是在處理症狀。
+- **查證**：`loot_spawn` 讀雲端存檔的 cls、lv、loc（type／id／floor）、towerMax、towerCleared、towerBossCd、dragons、dragonCd、mapRun（zone／t／mods／left）、quests（ch／active／bossDone／prog）判斷資格，**不讀背包、金幣、經驗**；`loot_finish` 只靠 `loot_player` 核對角色存在（任務收集數量讀雲端背包，遊戲端 `questMax` 會再夾一次）。
+- **修正**：
+  - `lootSnapKey(p)`：上述生怪資格欄位的 JSON（mapRun 只取 zone／t／mods 與 `left <= 0`）。`cloudPushSlot` 上傳成功時記 `cloudSnapKey[i]`；`cloudFetchSlot`、`cloudSync` 讀雲端時清掉（不確定就重傳）；登出／換帳號清空。
+  - `lootSpawn`：`lootCloudFresh(slot)`（雲端已有這格、沒衝突、`cloudSnapKey` 等於目前角色的）才跳過上傳；換地圖、升級、塔層、首領冷卻、異界地圖、任務進度變了才先上傳。
+  - `lootPump`：不再每筆 `saveGame`＋上傳，只有雲端還沒有這一格（`cloudKnown[slot] == null`）才先上傳。掉寶收據入帳後照一般 60 秒上傳。
+- **測試**：`test-server-loot-client.js` 新增：第一次生怪上傳、金幣／背包變了不重傳、等級變了重傳、結算不上傳。全部回歸、check.ps1、混淆建置通過。
+- **還沒做（可再減量）**：存檔歷程 `dragon_save_log`／裝置紀錄改成每幾分鐘才記一筆、`cloudSyncedSlot` 在上傳中又被存檔時誤判未完成。上線後請到 Supabase Reports 看 CPU 與 API 請求量是否下降。

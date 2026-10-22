@@ -116,7 +116,7 @@ function cloudOnPassiveSignOut() {
     onlineStop();
     const email = cloudUser ? cloudUser.email : '';
     cloudUser = null; cloudBan = null;
-    cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     if (player) {
         if (slotHasSave(currentSlot)) saveGame(true);   // 本機欄位已被別的分頁清掉（主動登出）就不寫回去
         hunt = null; session = null; walkHome = null; player = null;
@@ -180,7 +180,7 @@ async function onlineKicked() {
         hunt = null; session = null; walkHome = null; player = null;
         showTitle();
     }
-    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {};
+    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {};
     cloudSigningOut = true;
     try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; }
     renderCloudEntry(); cloudRefreshScreen();
@@ -282,6 +282,7 @@ async function cloudSync() {
         const cloud = [];
         for (const r of rows || []) if (r.slot >= 0 && r.slot < MAX_SLOTS && r.data && r.data.player && !(WIPE.at && r.client_t < WIPE.at)) cloud[r.slot] = { data: r.data, t: r.client_t, id: cloudCharId(r.data) };
         cloudKnown = {};
+        cloudSnapKey = {};   // 雲端這份的生怪欄位不確定：下次生怪前重傳一次
         for (let i = 0; i < MAX_SLOTS; i++) cloudKnown[i] = cloud[i] ? cloud[i].t : null;
         // 這個帳號的待刪除（沒登入時刪的、雲端刪除失敗的、在別的帳號登入時刪的）：刪雲端、寫墓碑；刪不掉的留著下次再試
         // 刪不掉（網路、伺服器規則）的也不下載回來，留著下次再刪
@@ -495,6 +496,7 @@ function cloudStripOwner(d) { const o = Object.assign({}, d); delete o.owner; de
 // 這台送出過的 client_t（每格最近 20 個）。手機縮小／切到背景時，上傳已經寫進雲端，但 App 被暫停沒收到回應，
 // cloudKnown 還是舊的 → 下次上傳對不上。對不上時先查雲端那筆是不是這台送的（cloudOwnOrConflict），是就接著傳，不跳「進度衝突」
 let cloudSentT = {};
+let cloudSnapKey = {};   // slot → 最後一次上傳成功那份的 lootSnapKey；下載／改用雲端進度時清掉（不確定就重傳）
 function cloudSentAdd(i, t) {
     const list = cloudSentT[i] || (cloudSentT[i] = []);
     if (!list.includes(t)) list.push(t);
@@ -547,6 +549,7 @@ async function cloudPushSlot(i, overwrite, retry) {
     if (res.error && cloudIsVaultSeqErr(res.error)) return cloudVaultAdopt(i);
     if (res.error) throw res.error;
     cloudKnown[i] = t;
+    if (typeof lootSnapKey === 'function') cloudSnapKey[i] = lootSnapKey(p);   // 雲端這份的生怪資格欄位（loot.js，第 100 節）
     delete cloudConflict[i];
     return true;
 }
@@ -607,7 +610,7 @@ async function cloudFetchSlot(i) {
     cloudLs(CLOUD_BAK_KEY, JSON.stringify({ t: Date.now(), owner: cloudUser.id, saves: { [i]: cloudLs(slotKey(i)) } }));
     if (player && i === currentSlot) { hunt = null; session = null; walkHome = null; player = null; }
     cloudLs(slotKey(i), saveEncode(JSON.stringify(Object.assign(cloudStripOwner(data.data), { owner: cloudUser.id, ownerEmail: cloudUser.email || '' }))));
-    cloudKnown[i] = data.client_t;
+    cloudKnown[i] = data.client_t; delete cloudSnapKey[i];
     delete cloudConflict[i];
     cloudDirty.delete(i);
     return true;
@@ -844,7 +847,7 @@ async function cloudDoSignOutRun(all) {
     cloudLs(CLOUD_SEEN_KEY, null);
     cloudUser = null; cloudBan = null; cloudBanShown = false;
     myClan = null; myClanRole = null; clanLoaded = false; clanViewLoaded = false; clanList = null;
-    cloudKnown = {}; cloudSentT = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();
     showToast(all ? '已登出所有裝置，建議順便改密碼' : '已登出');
 }
