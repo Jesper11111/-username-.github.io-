@@ -2517,4 +2517,4 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 離線掛機仍SIM_MODE試算，不新增離線物品，現有玩家物品保留。一般金幣／經驗、鍛造／商店與整份背包上傳仍屬現有客戶端流程，不能宣稱本版已建立權威背包或完全防作弊。帳本目前不自動清除，啟用前需估算容量／請求量；不要刪未領獎勵。
 - 測試工具：test-server-loot-db.js以隔離PGlite跑實際PostgreSQL；test-server-loot-integration.js載既有supabase.sql與anticheat.sql後重複部署並驗證簽章／RLS；test-server-loot-client.js以記憶體存檔與假RPC跑真實串接，server-loot-preview.html提供相同隔離瀏覽器流程。PGlite僅安裝在TEMP測試目錄，非遊戲依賴；正式SQL由使用者執行，不由AI上線。
 - 最終驗證：三個新測試及掉落紀錄／商店購買／傳說裝備／狀態三區／16步態與攻擊回歸通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261022t）、git diff --check通過。實際混淆建置46檔→433KB成功。瀏覽器隔離頁正常入帳後重送數量不變，第二次斷線保留工作、連線後補領並清空佇列，Console無error／warn；畫面只用模擬RPC，正式SQL尚待使用者部署及實玩驗收。
-- **部署前置（2026-10-22 啟用後發現）**：loot_player呼叫anticheat.sql的`dragon_save_ok`，正式庫須先執行過anticheat.sql（第60節），否則每次結算報「function public.dragon_save_ok(uuid, integer) does not exist」，擊殺留在重試佇列，補裝後自動補領。test-server-loot-db.js以stub代替該函式，所以單元測試抓不到。
+- **部署前置（2026-10-22 啟用後發現）**：loot_player呼叫anticheat.sql的`dragon_save_ok`，正式庫須先執行過anticheat.sql（第60節），否則每次結算報「function public.dragon_save_ok(uuid, integer) does not exist」，擊殺留在重試佇列，補裝後自動補領；使用者已於2026-10-22執行，掉寶恢復正常。test-server-loot-db.js以stub代替該函式，所以單元測試抓不到。
