@@ -305,11 +305,11 @@ const ITEMS = {
 
     // ── 彈藥 ──
     // 彈藥重量 2026-10-16 降為 1/5（箭 0.1→0.02、子彈 0.15→0.03），妖精／槍手帶大量彈藥不再超重
-    // 2026-10-22 單價降為 1/10（1 元＝10 支箭／5 發子彈），商店每次 100 個，總價用 town.js 的 shopCost 取整
+    // 2026-10-22 箭 1 金幣＝10 支（1/10）、子彈 2 金幣＝5 發（1/5），銀箭／銀子彈同比例；商店每次 100 個，總價用 town.js 的 shopCost 取整
     arrow:         { name: '箭',     cat: 'ammo', ammo: 'arrow', dmg: 1, wt: 0.02, price: 0.1, tier: 1 },
     silverArrow:   { name: '銀箭',   cat: 'ammo', ammo: 'arrow', dmg: 2, silver: true, wt: 0.02, price: 0.4, tier: 2 },
-    bullet:        { name: '子彈',   cat: 'ammo', ammo: 'bullet', dmg: 2, wt: 0.03, price: 0.2, tier: 1 },
-    silverBullet:  { name: '銀子彈', cat: 'ammo', ammo: 'bullet', dmg: 3, silver: true, wt: 0.03, price: 0.5, tier: 2 },
+    bullet:        { name: '子彈',   cat: 'ammo', ammo: 'bullet', dmg: 2, wt: 0.03, price: 0.4, tier: 1 },
+    silverBullet:  { name: '銀子彈', cat: 'ammo', ammo: 'bullet', dmg: 3, silver: true, wt: 0.03, price: 1, tier: 2 },
 
     // ── 萬能藥、材料 ──
     elixir:        { name: '萬能藥', cat: 'elixir', wt: 1, sell: 10000, desc: `永久提升一項能力值 +1（最多 ${ELIXIR_MAX} 瓶）` },

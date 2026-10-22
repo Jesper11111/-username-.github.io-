@@ -54,8 +54,8 @@ for (const ammo of ['arrow','bullet']) {
     nodes['shop-buy-qty'].value='50'; shopBuyPreview(ammo); assert(nodes['shop-buy-total'].textContent.includes('100 的倍數'));
     openShopBuy(ammo); assert(dialog.html.includes('step="100"') && dialog.html.includes('value="100"'));
 }
-// 1 元＝10 支箭／5 發子彈，銀箭／銀子彈同樣降為 1/10
-assert.equal(shopCost('arrow',100),10); assert.equal(shopCost('bullet',100),20); assert.equal(shopCost('silverArrow',100),40); assert.equal(shopCost('silverBullet',100),50);
+// 1 金幣＝10 支箭、2 金幣＝5 發子彈，銀箭／銀子彈同比例
+assert.equal(shopCost('arrow',100),10); assert.equal(shopCost('bullet',100),40); assert.equal(shopCost('silverArrow',100),40); assert.equal(shopCost('silverBullet',100),100);
 assert.equal(shopCost('arrow',300),30); assert.equal(shopPriceText('arrow'),'💰 10／100 個');
 shopCat=SHOP_CATS.find(c=>c[2]&&c[2].includes('ammo'))[0]; player.gold=100000;
 const ammoHtml=renderShop(); assert(ammoHtml.includes("buyItem('arrow',100)") && ammoHtml.includes("buyItem('arrow',10000)") && !ammoHtml.includes("buyItem('arrow',1)"));
