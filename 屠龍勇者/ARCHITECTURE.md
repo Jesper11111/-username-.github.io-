@@ -2573,7 +2573,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `market_cancel2(id, slot)`：下架（含過期）放回**目前角色欄位**的雲端存檔。
   - `market_buy2(id, slot, buyer_name)`：扣買家雲端金幣、道具加進買家存檔、`buyer_got = true`（不用再交貨），大額交易照記 `market_big`。賣家收入仍走 `market_pending`／`market_ack`（`marketDeliver`）。
   - 三者都用 `dragon_vault_commit`：存取序號（`dragon_vault_seq`／`data.vaultSeq`）+1、伺服器時間、重算簽章，舊存檔蓋不回。舊 `market_list`／`market_buy`／`market_cancel` 改成拋 `market client outdated`（hint `dragon_market_old`）；v1 時買到還沒交貨的道具仍由 `market_pending` 補交。
-  - **部署順序**：先執行 SQL，再發佈遊戲（中間舊版只是暫時不能上架／購買／下架）。2026-10-23 使用者已執行 market-v2.sql 與 stat-cap.sql 成功。
+  - **部署順序**：先執行 SQL，再發佈遊戲（中間舊版只是暫時不能上架／購買／下架）。2026-10-23 使用者已執行 market-v2.sql 與 stat-cap.sql 成功，20261023c 上線後實測上架／下架／購買正常。
 - **遊戲端**：三個動作改用 `vaultOp`（vault.js）：上架只送 uid＋數量、本機只扣上架數量；下架 `marketGiveItem(r.item)`；購買 `player.gold += r.gold`＋`marketGiveItem(r.item)`。`marketErrText` 新增 `market client outdated`、`bad amount`。
 - **測試**：`tools/test-market-v2.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：舊 RPC 停用、內部函式不能直接呼叫、上架存的是存檔那件且同時扣掉、上下架 3 輪數量守恆、部分上架、下架給新 uid、買家金幣真的扣不能重複買、買到直接入帳、賣家只入帳一次、舊存檔蓋不回。`test-vault-v2-client.js` 加上交易所：真實遊戲上架／下架／向另一帳號購買，本機與雲端一致、簽章不誤判。全部回歸、check.ps1、混淆建置通過。
 - **限制**：`p_cat = 'quest'` 仍由遊戲送來（伺服器沒有道具分類表），偽造分類只能讓任務道具上架，不能複製；賣家入帳仍是兩段式（有 `marketGot` 防重複）。
