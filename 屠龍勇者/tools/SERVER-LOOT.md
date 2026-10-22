@@ -4,7 +4,7 @@
 
 ## 使用者要做的部署步驟
 
-1. 在Supabase SQL Editor開新查詢，貼上 **tools/server-loot-install.sql整份**執行。它包含migration及433道具／78怪物／19地區／100塔層／12職業任務／6副本規則快照。安裝是同一筆交易、可重跑，不刪現有角色或物品，**初次安裝預設不啟用**。
+1. **先確認已執行過tools/anticheat.sql**（loot_player用它的dragon_save_ok；2026-10-22正式庫缺它，啟用後掉寶結算報function dragon_save_ok does not exist）。再在Supabase SQL Editor開新查詢，貼上 **tools/server-loot-install.sql整份**執行。它包含migration及433道具／78怪物／19地區／100塔層／12職業任務／6副本規則快照。安裝是同一筆交易、可重跑，不刪現有角色或物品，**初次安裝預設不啟用**。
 2. 回報SQL執行成功，先在localhost:8790以測試角色驗證登入、雲端同步與一般介面。依AGENTS.md由使用者驗收後才commit，使用者在GitHub Desktop按Push origin，等待新版t部署。
 3. 確認新版程式已上線、所有玩家更新後，在SQL Editor執行：
 

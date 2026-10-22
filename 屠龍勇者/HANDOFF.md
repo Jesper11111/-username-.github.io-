@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **2026-10-22 狀態校正（Claude）**：t～w 版程式都已 commit 並推上 origin/main（線上 20261022w，含 data/loot.js）；下面 t／u／v／w 條目寫的「未commit／待Push」已過時。**後端掉寶已於 2026-10-22 由使用者啟用**（loot_status 截圖：rules=20261022t-49fc930899d3、enabled=true、protocol=1）。待使用者線上少量角色實玩驗證（tools/SERVER-LOOT.md 第 4 步）；出問題可執行 `update public.dragon_loot_config set enabled = false where id = 1;` 暫停回舊流程。t 以前的舊版客戶端會被擋上傳。
+- **2026-10-22 狀態校正（Claude）**：t～w 版程式都已 commit 並推上 origin/main（線上 20261022w，含 data/loot.js）；下面 t／u／v／w 條目寫的「未commit／待Push」已過時。**後端掉寶已於 2026-10-22 由使用者啟用**（loot_status 截圖：rules=20261022t-49fc930899d3、enabled=true、protocol=1）。待使用者線上少量角色實玩驗證（tools/SERVER-LOOT.md 第 4 步）；出問題可執行 `update public.dragon_loot_config set enabled = false where id = 1;` 暫停回舊流程。t 以前的舊版客戶端會被擋上傳。**啟用後實玩出現「掉寶結算待重試：function public.dragon_save_ok(uuid, integer) does not exist」**：正式庫從沒執行過 tools/anticheat.sql（第 60 節待辦），loot_player 依賴它的 dragon_save_ok。已請使用者在 SQL Editor 整份執行 anticheat.sql（可重跑；vault_put 與 vault.sql 相同只多兩道檢查，整合測試 test-server-loot-integration 重跑通過），之後待重試佇列會自動補領。尚待使用者回報。
 
 - **本機待驗收20261022w：變形卷軸暫停商店購買**。使用者指定先無法購買；shopItemIds排除polyScroll，所有村莊商店不列出，buyItem／openShopBuy與自訂購買沿用同一檢查。已有卷軸照常使用，原定價／回收價／交易所不改，不改schema或正式SQL。index.html所有?v=與GAME_VERSION更新w；待使用者Ctrl+F5確認商店卷軸分類後提交／請Push。
 
@@ -185,7 +185,7 @@
 
 - 王族創建血盟的伺服器端限制：遊戲端已完成，正式 clan_create 尚未檢查職業；修改 SQL 前須先經使用者確認，再由使用者貼到 Supabase 執行。
 
-- **使用者要做**：到 Supabase SQL Editor 執行 `tools/anticheat.sql`（第 60 節；沒執行前伺服器不檢查簽章與交易所門檻，遊戲照常）。
+- **使用者要做**：到 Supabase SQL Editor 執行 `tools/anticheat.sql`（第 60 節）。**後端掉寶依賴它的 dragon_save_ok，沒執行時掉寶結算全部失敗**（2026-10-22 啟用後發現）。
 - 防改檔還沒做的（第 60 節末）：離線收益改用伺服器時間、加速器偵測、排行榜排除簽章不符的存檔。使用者沒說要做就先不做。
 
 - 大地圖第 3 期「獸潮」、第 4 期介面（第 45 節之後的規劃）。
