@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><base href="../"><meta name="viewport" content="width=device-width,initial-scale=1"><title>魔法娃娃・21款外觀確認</title>
+<style>body{margin:0;background:#111820;color:#e9e6da;font:16px "Microsoft JhengHei",sans-serif}main{max-width:1200px;margin:auto;padding:24px}h1{font-size:26px;margin:0 0 8px}p{color:#b7c7ce;line-height:1.7}button,select{font:inherit;color:#ece6d5;background:#263542;border:1px solid #627c88;border-radius:6px;padding:9px 13px;cursor:pointer}button.active{border-color:#e7c779;background:#4c4637}.controls{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}.stage{width:100%;border:1px solid #65757d;border-radius:10px;background:#29343b;display:block}#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:20px}.card{padding:8px;text-align:center;border:1px solid #40515c;border-radius:10px;background:#1b2630;cursor:pointer}.card.active{border-color:#f0ce7d;box-shadow:0 0 0 1px #f0ce7d}.card canvas{display:block;width:100%;height:142px}.card b{display:block;font-size:15px}.card small{display:block;color:#9db6bf;margin-top:6px}#name{color:#f0d494}.footer{font-size:13px}a{color:#a8dce8}</style>
+<main><h1>魔法娃娃・21 款外觀確認</h1><p>先看造型與走路動作；品質已依指定名單分為 T0～T4，能力待決定。白虎採全身版，只保留一款。</p>
+<div class="controls"><select id="pick" aria-label="選擇娃娃"></select><select id="direction" aria-label="方向"><option value="down">正面</option><option value="right">右側</option><option value="up">背面</option><option value="left">左側</option></select><button id="play">暫停動畫</button><button id="step">下一格</button><select id="size" aria-label="娃娃大小"><option value="1">遊戲比例（角色一半高）</option><option value="2">放大 2 倍查看</option><option value="4">放大 4 倍查看</option></select></div>
+<h2 id="name">載入外觀中…</h2><canvas class="stage" id="stage" width="1260" height="720" aria-label="實際遊戲畫面中的娃娃大小示意"></canvas>
+<p id="status"></p><div id="cards"></div><p class="footer">這是外觀素材預覽，未加入正式召喚功能。圖片與分鏡為原創或使用者提供的設計；已設定 T0～T4 品質，能力待決定。</p></main>
+<script>
+(async()=>{
+const data=await(await fetch('images/sprites/dolls/companions-v1/manifest.json')).json();
+if(data.count!==21)throw Error(`素材尚未齊全：${data.count}/21`);
+const base=new Image();base.src='tools/sprite-src/dolls/companions-v1/preview-base.png';await base.decode();
+const images=await Promise.all(data.dolls.map(async d=>{const im=new Image();im.src=d.src;await im.decode();return im;}));
+const pick=document.getElementById('pick'),direction=document.getElementById('direction'),size=document.getElementById('size'),cards=document.getElementById('cards');
+let selected=0,playing=true,phase=0,last=0,clock=0;
+pick.innerHTML=data.dolls.map((d,i)=>`<option value="${i}">${d.quality} · ${d.name}</option>`).join('');
+const contexts=data.dolls.map((d,i)=>{const card=document.createElement('div');card.className='card';card.setAttribute('role','button');card.tabIndex=0;card.setAttribute('aria-label',d.name);const cv=document.createElement('canvas');cv.width=220;cv.height=180;card.append(cv);const b=document.createElement('b');b.textContent=d.name;card.append(b);const note=document.createElement('small');note.textContent=d.quality+' · 能力待決定';card.append(note);card.onclick=()=>select(i);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')select(i);};cards.append(card);return cv.getContext('2d');});
+function select(i){selected=i;pick.value=String(i);document.getElementById('name').textContent=`${data.dolls[i].quality} · ${data.dolls[i].name}`;[...cards.children].forEach((c,j)=>c.classList.toggle('active',j===i));}
+pick.onchange=()=>select(Number(pick.value));
+document.getElementById('play').onclick=()=>{playing=!playing;document.getElementById('play').textContent=playing?'暫停動畫':'播放動畫';};
+document.getElementById('step').onclick=()=>{playing=false;document.getElementById('play').textContent='播放動畫';phase=(phase+1)%4;};
+const stage=document.getElementById('stage'),ctx=stage.getContext('2d');
+function doll(cr,i,x,y,h){const d=data.dolls[i],dir=direction.value,row={down:0,right:1,left:1,up:2}[dir],k=h/160;cr.save();if(dir==='left'){cr.translate(x,0);cr.scale(-1,1);cr.translate(-x,0);}cr.drawImage(images[i],phase*256,row*240,256,240,x-128*k,y-200*k,256*k,240*k);cr.restore();}
+function draw(t){const dt=last?Math.min(100,t-last):0;last=t;if(playing){clock+=dt;if(clock>=145){phase=(phase+1)%4;clock%=145;}}
+ctx.clearRect(0,0,1260,720);ctx.drawImage(base,0,0,1260,720);const h=31*Number(size.value);ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(710,354,9*Number(size.value),3*Number(size.value),0,0,Math.PI*2);ctx.fill();doll(ctx,selected,710,354,h);ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#10181d';ctx.strokeText(data.dolls[selected].name,710,354-h-7);ctx.fillStyle='#bdeeff';ctx.fillText(data.dolls[selected].name,710,354-h-7);
+contexts.forEach((cr,i)=>{cr.clearRect(0,0,220,180);cr.fillStyle='rgba(0,0,0,.2)';cr.beginPath();cr.ellipse(110,153,40,8,0,0,Math.PI*2);cr.fill();doll(cr,i,110,153,112);});
+document.getElementById('status').textContent=`共 ${data.count} 款・${{down:'正面',right:'右側',up:'背面',left:'左側'}[direction.value]}・第 ${phase+1}/4 格・${playing?'播放中':'已暫停'}`;
+requestAnimationFrame(draw);}
+select(0);requestAnimationFrame(draw);
+})().catch(e=>{document.getElementById('name').textContent=e.message;console.error(e);});
+</script></html>

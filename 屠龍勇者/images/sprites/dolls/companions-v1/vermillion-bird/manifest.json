@@ -1,0 +1,290 @@
+{
+  "id": "vermillion-bird",
+  "name": "朱雀",
+  "quality": "T1",
+  "effects": null,
+  "status": "appearance-review",
+  "cellW": 256,
+  "cellH": 240,
+  "charH": 160,
+  "drawH": 24,
+  "foot": [
+    128,
+    200
+  ],
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "frames": 4,
+  "ms": 145,
+  "left": "mirror right",
+  "src": "images/sprites/dolls/companions-v1/vermillion-bird/walk.png",
+  "cells": [
+    {
+      "direction": "down",
+      "frame": 0,
+      "file": "frames/walk-down-01.png",
+      "sourceRect": [
+        0,
+        0,
+        384,
+        341
+      ],
+      "sourceFoot": [
+        253,
+        341
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        48,
+        81,
+        175,
+        200
+      ]
+    },
+    {
+      "direction": "down",
+      "frame": 1,
+      "file": "frames/walk-down-02.png",
+      "sourceRect": [
+        384,
+        0,
+        768,
+        341
+      ],
+      "sourceFoot": [
+        239,
+        341
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        41,
+        89,
+        176,
+        200
+      ]
+    },
+    {
+      "direction": "down",
+      "frame": 2,
+      "file": "frames/walk-down-03.png",
+      "sourceRect": [
+        768,
+        0,
+        1152,
+        341
+      ],
+      "sourceFoot": [
+        203,
+        324
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        61,
+        86,
+        189,
+        201
+      ]
+    },
+    {
+      "direction": "down",
+      "frame": 3,
+      "file": "frames/walk-down-04.png",
+      "sourceRect": [
+        1152,
+        0,
+        1536,
+        341
+      ],
+      "sourceFoot": [
+        197,
+        325
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        61,
+        93,
+        186,
+        201
+      ]
+    },
+    {
+      "direction": "right",
+      "frame": 0,
+      "file": "frames/walk-right-01.png",
+      "sourceRect": [
+        0,
+        341,
+        384,
+        683
+      ],
+      "sourceFoot": [
+        199,
+        342
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        61,
+        76,
+        195,
+        200
+      ]
+    },
+    {
+      "direction": "right",
+      "frame": 1,
+      "file": "frames/walk-right-02.png",
+      "sourceRect": [
+        384,
+        341,
+        768,
+        683
+      ],
+      "sourceFoot": [
+        215.5,
+        342
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        50,
+        76,
+        189,
+        200
+      ]
+    },
+    {
+      "direction": "right",
+      "frame": 2,
+      "file": "frames/walk-right-03.png",
+      "sourceRect": [
+        768,
+        341,
+        1152,
+        683
+      ],
+      "sourceFoot": [
+        206.0,
+        342
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        53,
+        77,
+        192,
+        200
+      ]
+    },
+    {
+      "direction": "right",
+      "frame": 3,
+      "file": "frames/walk-right-04.png",
+      "sourceRect": [
+        1152,
+        341,
+        1536,
+        683
+      ],
+      "sourceFoot": [
+        198,
+        342
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        56,
+        83,
+        184,
+        200
+      ]
+    },
+    {
+      "direction": "up",
+      "frame": 0,
+      "file": "frames/walk-up-01.png",
+      "sourceRect": [
+        0,
+        683,
+        384,
+        1024
+      ],
+      "sourceFoot": [
+        341.0,
+        317
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        10,
+        85,
+        144,
+        200
+      ]
+    },
+    {
+      "direction": "up",
+      "frame": 1,
+      "file": "frames/walk-up-02.png",
+      "sourceRect": [
+        384,
+        683,
+        768,
+        1024
+      ],
+      "sourceFoot": [
+        322.0,
+        321
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        11,
+        84,
+        150,
+        201
+      ]
+    },
+    {
+      "direction": "up",
+      "frame": 2,
+      "file": "frames/walk-up-03.png",
+      "sourceRect": [
+        768,
+        683,
+        1152,
+        1024
+      ],
+      "sourceFoot": [
+        325,
+        324
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        10,
+        83,
+        149,
+        200
+      ]
+    },
+    {
+      "direction": "up",
+      "frame": 3,
+      "file": "frames/walk-up-04.png",
+      "sourceRect": [
+        1152,
+        683,
+        1536,
+        1024
+      ],
+      "sourceFoot": [
+        292,
+        322
+      ],
+      "scale": 0.3619631901840491,
+      "bounds": [
+        22,
+        83,
+        155,
+        200
+      ]
+    }
+  ]
+}

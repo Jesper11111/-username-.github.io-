@@ -1,0 +1,232 @@
+{
+  "date": "2026-10-24",
+  "status": "appearance-only",
+  "size": {
+    "cellW": 256,
+    "cellH": 240,
+    "foot": [
+      128,
+      200
+    ],
+    "charH": 160,
+    "drawH": 24
+  },
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "frames": 4,
+  "ms": 145,
+  "quality": null,
+  "effects": null,
+  "notes": [
+    "21 unique companions, including original three",
+    "White tiger: choose lower complete quadruped version",
+    "Quality tiers T0-T4 confirmed by user; abilities deferred",
+    "No gameplay integration or save structure change"
+  ],
+  "dolls": [
+    {
+      "id": "skeleton-knight",
+      "name": "骷髏小騎士",
+      "reference": 1,
+      "design": "tiny ivory skull knight, rounded charcoal iron helmet with small blunt horns, amber glowing eyes, burgundy cape, short broad sword and small round skull shield",
+      "quality": "T4",
+      "effects": null
+    },
+    {
+      "id": "frost-dragon",
+      "name": "冰霜幼龍",
+      "reference": 1,
+      "design": "round pale icy blue baby dragon with cyan eyes, stubby crystal horns, small translucent cyan wings, curled crystal-tipped tail; no object in hands",
+      "quality": "T2",
+      "effects": null
+    },
+    {
+      "id": "forest-sprite",
+      "name": "森林小精靈",
+      "reference": 1,
+      "design": "tiny woodland elf with huge amber eyes, short white hair, brown acorn cap, moss green leaf cloak and little twig staff with warm yellow glowing seed",
+      "quality": "T3",
+      "effects": null
+    },
+    {
+      "id": "lava-hound",
+      "name": "熔岩魔犬",
+      "reference": 0,
+      "design": "cute charcoal black lava puppy with floppy small ears, two tiny curved black horns, orange glowing eyes, molten cracks and small orange flame on tail and paws",
+      "quality": "T3",
+      "effects": null
+    },
+    {
+      "id": "forest-deer",
+      "name": "森靈幼鹿",
+      "reference": 0,
+      "design": "cute tawny fawn with enormous warm brown eyes, slender woodland antlers with green leaves, moss leaf collar and tiny pink blossom, four legs; no staff",
+      "quality": "T4",
+      "effects": null
+    },
+    {
+      "id": "star-fox",
+      "name": "星辰靈狐",
+      "reference": 0,
+      "design": "cute small dark indigo and violet fox with luminous blue star speckles, huge purple eyes, oversized ears and large bushy blue-purple tail, four paws",
+      "quality": "T3",
+      "effects": null
+    },
+    {
+      "id": "mushroom-rabbit",
+      "name": "蘑菇燈兔",
+      "reference": 0,
+      "design": "cute warm cream and brown rabbit wearing a wide glowing turquoise mushroom cap with pale cyan spots, olive green scarf, carrying tiny warm yellow lantern, long soft floppy bunny ears",
+      "quality": "T4",
+      "effects": null
+    },
+    {
+      "id": "tidal-dragon",
+      "name": "潮汐幼龍",
+      "reference": 0,
+      "design": "cute teal turquoise baby water dragon, coral pink fin-like horns and tiny coral pink wing fins, pink belly, big teal eyes, curled tail, little bubbles; distinct from ice dragon",
+      "quality": "T3",
+      "effects": null
+    },
+    {
+      "id": "snow-owl",
+      "name": "霜羽貓頭鷹",
+      "reference": 0,
+      "design": "cute small white and pale gray snowy owl with round big navy eyes, fluffy round face, icy blue feather cloak and hood-like face rim, tiny wings and talons, small blue crystal wand",
+      "quality": "T4",
+      "effects": null
+    },
+    {
+      "id": "flower-rabbit",
+      "name": "花翼仙兔",
+      "reference": 0,
+      "design": "cute cream-pink rabbit fairy with tall pink ears, pink flower crown, green leaf dress, small translucent rose pink butterfly wings and little white blossom wand",
+      "quality": "T2",
+      "effects": null
+    },
+    {
+      "id": "steam-squirrel",
+      "name": "蒸氣松鼠",
+      "reference": 0,
+      "design": "cute brown squirrel with large curled bushy tail, copper steampunk goggles on forehead, little brass gear vest and mechanical copper backpack, holding a small winding key",
+      "quality": "T4",
+      "effects": null
+    },
+    {
+      "id": "golden-griffin",
+      "name": "黃金獅鷲",
+      "reference": 0,
+      "design": "cute golden baby griffin with yellow eagle beak and bright amber eyes, golden feather crest, little gold feather wings, lion body and tufted tail, little gold chest medallion",
+      "quality": "T2",
+      "effects": null
+    },
+    {
+      "id": "crystal-turtle",
+      "name": "紫晶靈龜",
+      "reference": 0,
+      "design": "cute purple turtle with bright amethyst eyes and many faceted pointed purple crystals growing on shell, short chunky four legs, gentle smiling beak; no snake",
+      "quality": "T2",
+      "effects": null
+    },
+    {
+      "id": "white-tiger",
+      "name": "白虎",
+      "reference": 2,
+      "design": "cute compact white tiger cub with black stripes, four legs, small golden shoulder armor and jade green chest medallion, fierce but adorable open mouth; choose lower full-body white tiger from reference, not upper bust",
+      "quality": "T1",
+      "effects": null
+    },
+    {
+      "id": "azure-dragon",
+      "name": "青龍",
+      "reference": 2,
+      "design": "cute small turquoise Chinese eastern dragon, deer-like antlers, flowing teal mane, white segmented belly, four small clawed limbs, long sinuous body and tail, small blue lightning pearl; no western dragon wings",
+      "quality": "T1",
+      "effects": null
+    },
+    {
+      "id": "vermillion-bird",
+      "name": "朱雀",
+      "reference": 2,
+      "design": "cute miniature vivid scarlet vermilion fire bird with orange-gold flame crest, short curved beak, red orange wings, long red flowing tail feathers; mainly RED, distinct from multicolor phoenix",
+      "quality": "T1",
+      "effects": null
+    },
+    {
+      "id": "golden-dragon",
+      "name": "金龍",
+      "reference": 2,
+      "design": "cute compact golden Chinese eastern dragon with gold antlers, golden mane, segmented yellow belly, four clawed limbs and curled tail, holding a tiny golden pearl, no wings",
+      "quality": "T0",
+      "effects": null
+    },
+    {
+      "id": "phoenix",
+      "name": "鳳凰",
+      "reference": 2,
+      "design": "cute elegant small phoenix with gold cream head, burgundy chest, gold wings with teal accents, long flowing multicolor gold crimson teal tail, graceful bird legs; distinct from red vermilion bird",
+      "quality": "T0",
+      "effects": null
+    },
+    {
+      "id": "black-tortoise",
+      "name": "玄武",
+      "reference": 2,
+      "design": "cute charcoal gray-black ancient tortoise with thick segmented stone shell and a small dark snake coiled on top; two distinct friendly animal heads, four sturdy turtle legs, subtle aqua water accents",
+      "quality": "T1",
+      "effects": null
+    },
+    {
+      "id": "qilin",
+      "name": "麒麟",
+      "reference": 2,
+      "design": "cute small fiery golden Chinese qilin with dragon-like deer head, slender antlers, orange flaming mane, gold scaled quadruped body, four hooves and long fiery tufted tail; not a lion or western dragon",
+      "quality": "T0",
+      "effects": null
+    },
+    {
+      "id": "little-demon",
+      "name": "饕餮",
+      "reference": 2,
+      "design": "cute stocky burgundy goat demon doll with large curled ram horns, big expressive glowing amber eyes, green bronze little breastplate and green jewel belt, short hooved legs, compact body, friendly mischievous toothy grin",
+      "quality": "T0",
+      "effects": null
+    }
+  ],
+  "qualityTiers": {
+    "T0": [
+      "麒麟",
+      "鳳凰",
+      "金龍",
+      "饕餮"
+    ],
+    "T1": [
+      "白虎",
+      "青龍",
+      "朱雀",
+      "玄武"
+    ],
+    "T2": [
+      "紫晶靈龜",
+      "黃金獅鷲",
+      "冰霜幼龍",
+      "花翼仙兔"
+    ],
+    "T3": [
+      "森林小精靈",
+      "星辰靈狐",
+      "熔岩魔犬",
+      "潮汐幼龍"
+    ],
+    "T4": [
+      "蒸氣松鼠",
+      "蘑菇燈兔",
+      "霜羽貓頭鷹",
+      "森靈幼鹿",
+      "骷髏小騎士"
+    ]
+  }
+}

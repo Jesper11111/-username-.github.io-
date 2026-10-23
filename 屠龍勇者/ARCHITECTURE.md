@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/sprites/dolls/companions-v1/`、`tools/sprite-src/dolls/companions-v1/`、`tools/magic-doll-preview.html` | 21款魔法娃娃外觀素材、三參考圖／原稿／提示詞與打包、方向／逐格／實際大小預覽；品質T0～T4已定、能力待決定，尚未接遊戲（第115節） |
 | `images/sprites/morph/frost-nether-emperor-v1/`、`tools/sprite-src/morph/frost-nether-emperor-v1/`、`tools/frost-emperor-morph-preview.html`、`tools/test-frost-emperor-morph.js` | 32霜獄幽冥魔皇：36格透明動畫、四參考／生成原稿／提示詞／腳點註冊、隔離卷軸與動作測試（第112節） |
 | `images/sprites/morph/infernal-thunder-emperor-v1/`、`tools/sprite-src/morph/infernal-thunder-emperor-v1/`、`tools/infernal-emperor-morph-preview.html`、`tools/test-infernal-emperor-morph.js` | 31煉獄雷霆魔皇：36格透明動畫、原圖／生成提示詞／註冊與打包、隔離卷軸與renderer預覽及回歸（第111節） |
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
@@ -158,7 +159,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024a`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024b`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2782,3 +2783,31 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **異界裝置面板**：傳送門開著時顯示「🌀 異界傳送門開啟中」＋剩餘怪物、「🌀 進入傳送門」「關閉傳送門」（`closeMapPortalBtn`，確認後地圖消失）。傳送門開著時不能開新地圖（`openMap` 擋、開啟按鈕 disabled、背包地圖不顯示「🌀 開啟」）。
 - **測試**：`tools/test-map-portal.js`（回卷保留進度、`mapRun` 清空、不能開新地圖、進入後一次性關閉並掛機、首領 HP 保留、死亡／步行不開傳送門、手動關閉、存檔修正）。check.ps1、喝水延遲、離線掉落、後端掉寶客戶端測試、混淆建置通過。
   瀏覽器以未登入暫時角色：開 T1 → 回卷 → 低語港出現傳送門與名牌 → 實際點名牌回到異界（剩 260 隻、傳送門關閉）；測試角色已刪除。未登入角色因 `lootCanPlay()` 不會自動掛機（開地圖時也一樣，非本次改動）。
+
+## 115. 21款魔法娃娃外觀確認版（2026-10-24，沿用遊戲版本 `20261024a`）
+
+- 使用者喜歡原三款（骷髏小騎士、冰霜幼龍、森林小精靈），另提供三張角色合照要求全部製作；新圖去重後18款，加原三款共21款。白虎選下方完整四足版，僅一款。使用者明確指定品質等外觀完成後再一起決定，所有quality／effects均為null；未設定稀有度、等級、能力、取得或消耗，不更動存檔／正式遊戲玩法。
+- 新18款：熔岩魔犬、森靈幼鹿、星辰靈狐、蘑菇燈兔、潮汐幼龍、霜羽貓頭鷹、花翼仙兔、蒸氣松鼠、黃金獅鷲、紫晶靈龜、白虎、青龍、朱雀、金龍、鳳凰、玄武、麒麟、饕餮；名稱暫用於外觀辨識。內建image_gen逐款產生三向12格，冰霜幼龍沿用本對話先前已驗證的原稿，合計252格；4格基礎走路／飛行，不使用複製補間。
+- 正式素材images/sprites/dolls/companions-v1/<id>/含walk.png、walk.webp、12單格、contact.png與manifest；總manifest.json及catalog.jpg同層。格256×240、foot[128,200]、charH160、drawH24（角色48px的一半）；下／右／上各4格×145ms，左鏡像右；停止可用中間一格。尚未由data或SW載入，未改script順序與遊戲JS／版本。
+- 來源tools/sprite-src/dolls/companions-v1保留三張reference、plan.json、sources逐款原稿、prompts完整提示詞、prepare.py與README。prepare.py依每款共同尺度、下方不透明腳部定位，留出尾巴／翅膀／光效空間；驗證12格不重複、RGBA與透明留邊、逐格圖集相符。全部來源保留，不覆寫既有變身或人物素材。
+- tools/magic-doll-preview.html獨立預覽21款，可選正／右／背／左、暫停／播放／逐格、實際比例及2／4倍檢查；以隔離測試角色的現有遊戲截圖示意大小，不是正式跟隨功能。此頁不載入遊戲JS、不讀寫存檔、不連後端。品質與能力欄只顯示待決定，等使用者看完外觀再討論。
+- 驗證完成：21款／252格來源、RGBA與透明留邊、每款12格不重複、單格和圖集完全對應、一款白虎、21份完整提示詞、quality／effects均null。瀏覽器21款選擇、四方向／左右鏡像／暫停／逐格／實際比例及放大通過，Console無error／warn；check.ps1 ALL CHECKS PASSED（47檔／46script／20261024a）、git diff --check通過。等待使用者審閱外觀與動作，不接正式玩法／數值，不自行定品質。
+
+### 115.1 使用者指定娃娃品質（2026-10-24，版本 `20261024b`）
+
+- T0：麒麟、鳳凰、金龍、饕餮。
+- T1：白虎、青龍、朱雀、玄武。
+- T2：紫晶靈龜、黃金獅鷲、冰霜幼龍、花翼仙兔。
+- T3：森林小精靈、星辰靈狐、熔岩魔犬、潮汐幼龍。
+- T4：蒸氣松鼠、蘑菇燈兔、霜羽貓頭鷹、森靈幼鹿、骷髏小騎士。
+
+- 以上為目前品質設定，取代115節初版quality全null的狀態；effects仍為null。plan、總表及21份單款manifest同步quality，prepare.py保留品質並產生附品質的總覽，預覽選單／標題／卡片顯示品質。不新增能力、召喚或存檔欄位。因修改預覽內嵌JS，依專案規則同步index全部?v=與GAME_VERSION。
+
+### 115.2 已確認的召喚與加成規則（2026-10-24，設計紀錄；版本不變）
+
+- 一次只能召喚一隻魔法娃娃，只有目前出場的娃娃提供加成。切換時移除原娃娃加成，收回後不提供加成；未出場娃娃不疊加能力。
+- 使用者本次僅確認以上規則；先前提出的21款能力數值與各階共通經驗加成尚未確認，effects維持null。正式召喚、能力計算與存檔尚未實作。
+
+### 115.3 暫不開放（2026-10-24，使用者決定；版本不變）
+
+- 魔法娃娃暫不開放，使用者日後再增加。現有21款素材、動畫、獨立預覽、品質名單與單隻出場規則保留；目前不接正式召喚、跟隨、能力、取得方式或存檔。能力數值仍待確認，後續依使用者新指示繼續。
