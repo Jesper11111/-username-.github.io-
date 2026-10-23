@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **20261023t：修正一直「喝水延遲中」（第 113 節）**。玩家回報紅水／勇水／綠水都不能喝。離線結算、團隊副本、世界首領的快轉模擬把喝水延遲帶到未來（只還原 gameNow 沒還原 potReadyAt）；改成一起還原＋延遲超過 0.8 秒自動解除。test-potion-delay、check.ps1、相關回歸、建置通過。
+
+- **2026-10-23 Supabase 升級 Pro、運算主機 Nano → Micro**（使用者操作）。換主機重啟時 Data API 短暫 5xx，之後實測恢復正常。
+
 - **32號s版完成、待實玩驗收**：36獨立透明RGBA、共同腳點與留邊通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261023s）。test-frost-emperor-morph含11類近戰武器外觀／加成與卷軸／四向戰鬥／到期；m31、m16、m04、m27、m10、m05與射程回歸均通過，git diff --check通過。46檔混淆442KB成功，產物TEMP/dark-frost-build-20261023s。瀏覽器真實卷軸選單顯示m31及m32、選m32扣1張；四方向×四動作全部分鏡可逐格，正面攻擊與修正後側面施法已檢視，Console無error／warn；未讀寫真實存檔或上傳。請使用者Ctrl+F5→卷軸→近戰通用系→霜獄幽冥魔皇，走動與打怪確認，依AGENTS.md確認後才提交／Push。本次未commit。
 
 - **本機製作20261023s：新增32霜獄幽冥魔皇（金變、近戰武器通用，第112節）**。使用者提供32四張jfif並確認名稱與設定。沿用31近戰通用系與金變基礎Lv.70／命中+7／傷害+7／攻速+20%；保持冰藍骨甲、雙角骷髏、霜劍、深藍披風。內建image_gen補完整正／側／背動作，來源tools/sprite-src/morph/frost-nether-emperor-v1，正式素材images同名目錄，隔離預覽tools/frost-emperor-morph-preview.html及test-frost-emperor-morph.js。MORPH_LV_FREE與SAVE_SCHEMA不變。31尚待使用者實玩確認，不能將本次確認32名稱視為31驗收。完成後待使用者實玩才提交／Push。

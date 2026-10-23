@@ -79,7 +79,8 @@ function changeFloor(delta) {
 // ───────── 藥水 ─────────
 // 喝水延遲：藥水類（治癒、綠水、勇水、慎重、藍水）不管手動或自動都共用這個時間點；卷軸不算
 let potReadyAt = 0;
-function potionReady() { return gameNow >= potReadyAt; }
+// 保險：延遲不可能超過一次的長度，超過代表時鐘被快轉模擬帶走（第 113 節），直接解除
+function potionReady() { if (potReadyAt - gameNow > POTION_CD_MS) potReadyAt = 0; return gameNow >= potReadyAt; }
 // form：變形卷軸選的變身對象（MORPH_FORMS）；沒給就用上次選的（快捷欄自動使用）
 function usePotion(id, form) {
     const d = ITEMS[id];

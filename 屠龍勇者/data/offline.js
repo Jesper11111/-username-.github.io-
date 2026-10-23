@@ -36,7 +36,7 @@ function consumableCounts() {
 function measureHunt(sampleMs) {
     const snap = JSON.stringify(player);
     // 遊戲訊息要整份備份：訊息滿 120 行時模擬會把舊訊息擠掉，只切回長度會留下模擬的訊息（編號比 logSeq 大，地圖每幀重讀 → 頭頂一直冒 LEVEL UP）
-    const saved = { hunt, session, walkHome, gameNow, log: gameLog.slice(), logSeq };
+    const saved = { hunt, session, walkHome, gameNow, potReadyAt, log: gameLog.slice(), logSeq };
     const before = { exp: totalExpOf(player), gold: player.gold, kills: player.kills, deaths: player.deaths, items: consumableCounts() };
     SIM_MODE = true;
     hunt = null; walkHome = null;
@@ -68,7 +68,7 @@ function measureHunt(sampleMs) {
         };
     } finally {
         player = guardWrap(JSON.parse(snap));   // 還原成新物件：重新套上數值偽裝（guard.js）
-        hunt = saved.hunt; session = saved.session; walkHome = saved.walkHome; gameNow = saved.gameNow;
+        hunt = saved.hunt; session = saved.session; walkHome = saved.walkHome; gameNow = saved.gameNow; potReadyAt = saved.potReadyAt;   // 模擬裡喝的水不能把喝水延遲帶到真實時間（第 113 節）
         gameLog.length = 0; gameLog.push(...saved.log); logSeq = saved.logSeq;
         offlineDrops = null;
         SIM_MODE = false;

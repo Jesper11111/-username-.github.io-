@@ -70,7 +70,7 @@ function raidBlockReason(def, p = player) {
 // list：[{ uid, name, snap }]；回傳可以重播的結果。全程 SIM_MODE，結束後還原所有全域狀態
 // opts（世界首領用，wb.js）：{ boss: 指定的怪物物件, limitMs: 戰鬥時間上限 }
 function raidSimulate(def, list, opts = {}) {
-    const keep = { player, hunt, session, walkHome, gameNow, log: gameLog.slice(), logSeq };
+    const keep = { player, hunt, session, walkHome, gameNow, potReadyAt, log: gameLog.slice(), logSeq };
     SIM_MODE = true;
     session = { start: gameNow, kills: 0, exp: 0, gold: 0 };   // onKill（反擊打倒首領）會用到
     walkHome = null;
@@ -215,7 +215,7 @@ function raidSimulate(def, list, opts = {}) {
             members, frames, events,
         };
     } finally {
-        player = keep.player; hunt = keep.hunt; session = keep.session; walkHome = keep.walkHome; gameNow = keep.gameNow;
+        player = keep.player; hunt = keep.hunt; session = keep.session; walkHome = keep.walkHome; gameNow = keep.gameNow; potReadyAt = keep.potReadyAt;
         gameLog.length = 0; gameLog.push(...keep.log); logSeq = keep.logSeq;
         SIM_MODE = false;
     }

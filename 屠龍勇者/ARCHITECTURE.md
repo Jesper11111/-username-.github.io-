@@ -158,7 +158,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023s`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023t`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2762,3 +2762,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 保留銀黑冰霜骨甲、黑色彎角、冰藍符文巨劍、深藍破披風與寒氣，金色為階級而非衣甲配色。原32-2／32-3同為背向，內建image_gen補正／側／背36格；初稿側走第一格舉劍與側施法偏背影，另生成側向12格替換，原稿均保留。
 - 正式格384×320、foot[192,270]、charH160、drawH48；walk／attack每方向4格，cast／hit各2格，時間130／140／220／150ms，攻擊560ms。左方向鏡像右方向；四PNG加入SW預載。images/sprites/morph/frost-nether-emperor-v1保存36單格、四圖集／WebP／contact／manifest；tools/sprite-src同名目錄保存四參考／完整生成稿／提示詞／registration.json／prepare.py，以透明連通區隔離並註冊腳底，不覆寫舊圖。
 - tools/frost-emperor-morph-preview.html使用實際卷軸選單、sceneReadEvents與sceneDraw，四方向四動作、循環與逐格；記憶體storage並禁止連外。tools/test-frost-emperor-morph.js檢查金變數值、各近戰武器外觀／加成、卷軸扣量／到期／上次選擇、命中／MISS／施法／受傷、其他變身、圖集與SW。既有變身數量斷言同步32；待實玩確認才提交／Push。
+
+## 113. 修正離線結算／副本／世界首領後一直「喝水延遲中」（2026-10-23，版本 `20261023t`；`combat.js` 的 `potionReady`、`offline.js` 的 `measureHunt`、`raid.js` 的 `raidSimulate`）
+
+- **玩家回報**：藥水不能喝，一直顯示「喝水延遲中」，紅水、勇水、綠水都一樣。
+- **原因**：第 89 節的喝水延遲記在 `potReadyAt`（以 `gameNow` 計）。離線結算的 `measureHunt` 會把 `gameNow` 快轉最多 10 分鐘，團隊副本與世界首領的 `raidSimulate` 也會快轉；模擬裡自動喝水把 `potReadyAt` 設到快轉後的時間，模擬結束只還原 `gameNow`、沒還原 `potReadyAt`，回到真實時間後要等好幾分鐘才能再喝。最常在「切到背景回來、跳離線結算」後發生。
+- **修正**：兩個模擬都把 `potReadyAt` 跟 `gameNow` 一起備份、還原。另外 `potionReady` 加保險：剩餘延遲超過一次的長度（`POTION_CD_MS`）就視為錯誤直接解除。
+- **測試**：`tools/test-potion-delay.js`（模擬中一直喝水，結束後延遲還原、紅水綠水勇水可喝、0.8 秒延遲仍有效、超長延遲自動解除；舊程式會失敗）。check.ps1、離線掉落、後端掉寶、批次結算測試、混淆建置通過；瀏覽器載入版本 t 正常。
