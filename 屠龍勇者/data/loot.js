@@ -2,7 +2,7 @@
 // 不新增player欄位；收據在存檔外層lootCursor，正式規則見tools/SERVER-LOOT.md。
 const LOOT_PROTOCOL = 1;
 // 緊急開關（第 103 節）：Supabase 卡死、連 SQL 都執行不了時，改成 true 推上線，遊戲就不再找後端掉寶、改用一般掉寶，玩家可以照常掛機。恢復後改回 false
-const LOOT_FORCE_LOCAL = false;
+const LOOT_FORCE_LOCAL = true;   // 2026-10-23 開啟：Supabase 卡死期間先用一般掉寶；恢復且 loot-batch.sql 執行後改回 false（第 105 節）
 let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0, lootSyncFailAt = 0;
 // 批次結算（第 104 節，tools/loot-batch.sql）：擊殺先排隊，同一角色滿 10 隻或最早那隻等了 30 秒才一起結算（一批最多 50 隻）
 const LOOT_BATCH_N = 10, LOOT_BATCH_MS = 30000, LOOT_BATCH_MAX = 50;

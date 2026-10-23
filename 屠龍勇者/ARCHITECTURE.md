@@ -152,7 +152,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023k`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023l`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2677,3 +2677,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 玩家看到的變化：掉落紀錄每 10 隻或 30 秒一批出現。
 - **測試**：`tools/test-loot-batch.js`（PGlite 全部正式 SQL＋重複安裝）：12 群未結算可繼續生怪、一批 1 張收據、憑證刪除、重送同收據、待領新舊並列與確認後消失、太快整批重試、0／51 張拒絕、作廢憑證的 xmin 不變、全作廢回 empty、舊單隻結算相容、3 天／1 小時／12 小時清理、未確認不刪、收據表不可直讀。`test-server-loot-client.js`：9 隻不結算、滿 10 隻 1 次、失敗保留、重送同編號、馬上結算、超過 30 秒結算、同次掛機只釋放一次、遭遇太多不停掛機。`test-vault-v2-client.js`：真實遊戲接 PGlite 生怪→打倒→批次結算→入帳，收據張數少於怪數、憑證刪除、本機序號依收據增加。全部回歸、check.ps1、混淆建置通過；瀏覽器載入無程式錯誤。
 - **部署順序**：建議先執行 `loot-batch.sql` 再推遊戲。遊戲端有保險：伺服器找不到 `loot_finish_batch`（PGRST202）時 `lootBatchMissing=true`，改回逐張 `loot_finish`（作廢／過期的略過）、擊殺不再等湊滿，所以先推遊戲也不會卡住，只是還沒減量。SQL 要等 Supabase 恢復才能執行。
+
+## 105. 緊急開關開啟：暫時改用一般掉寶（2026-10-23，版本 `20261023l`；`loot.js` 的 `LOOT_FORCE_LOCAL = true`）
+
+- **使用者決定**：Supabase 卡死期間玩家無法掛機，先把 `LOOT_FORCE_LOCAL`（第 103 節）改成 true 推上線；**等 Supabase 恢復、執行 `tools/loot-batch.sql` 之後，再改回 false 推一版**。
+- **效果**：`lootStart` 不查後端，`lootMode` 維持 `legacy`，打怪的掉落、經驗、金幣在玩家裝置上決定，登入與否都能掛機；不呼叫 `loot_spawn`／`loot_release`／`loot_finish(_batch)`。雲端存檔在 Supabase 恢復前退避（第 102 節），恢復後自動上傳。
+- **代價**：開啟期間後端掉寶的防作弊不生效；`dragon_loot_config.enabled` 仍是 true，存檔上傳的掉寶收據檢查（lootCursor）照舊，序號不變所以不會被拒。
+- **驗證**：測試、check.ps1、混淆建置通過；瀏覽器以未登入暫時角色在 island 掛機：`lootMode='legacy'`、打 37 隻、拿到 43 件道具與金幣經驗、沒有任何 loot RPC；測試角色已刪除。
+- **關掉的步驟**：① Supabase 恢復（gm.html 能登入）② SQL Editor 執行 `tools/loot-batch.sql` ③ loot.js 改回 `LOOT_FORCE_LOCAL = false`、換版本號、推上線。
