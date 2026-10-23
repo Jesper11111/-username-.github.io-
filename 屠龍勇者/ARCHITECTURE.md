@@ -11,6 +11,7 @@
 | `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
 | `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/save-log-throttle.sql`、`tools/test-save-log-throttle.js` | 減少每次上傳存檔的資料庫寫入：存檔歷程與最後上線約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆；隔離 PGlite 測試（第 101 節） |
+| `tools/loot-batch.sql`、`tools/test-loot-batch.js` | 後端掉寶減量：批次結算收據表、釋放不重寫作廢憑證、每次結算順手清理舊帳本；隔離 PGlite 測試（第 104 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -151,7 +152,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023j`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023k`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2658,3 +2659,21 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `lootSpawn`：伺服器回 `loot disabled`（剛停用）時立刻重查狀態，並當成暫時性錯誤（3 秒後再找怪），不停止掛機。
   - **緊急開關** `LOOT_FORCE_LOCAL`（loot.js 頂端，預設 false）：Supabase 卡到連 SQL 都執行不了時，改成 true 推上線，`lootStart` 不再查後端，全部用一般掉寶，玩家可以照常掛機（雲端存檔在退避中，恢復後自動上傳）。恢復後改回 false 再推一版。注意：開著的期間後端掉寶的防作弊不生效。
 - **測試**：`test-server-loot-client.js` 新增：啟用中收到 `loot disabled`／`enabled=false` → 改 `legacy`、掛機不停、`lootCanPlay` 通過；重新啟用後回到 `active`。全部回歸、check.ps1、混淆建置通過。
+
+## 104. 後端掉寶減量：批次結算＋只釋放一次＋定期清理（2026-10-23，版本 `20261023k`；`loot.js` 的 `lootFormBatches`／`lootSettleNow`／`lootPump`／`lootSpawn`、`tools/loot-batch.sql`）
+
+- **起因**：免費 NANO 專案反覆卡死（第 101～103 節）。原本每隻怪約 4 次 RPC（release、spawn、finish、pending）、3 次以上寫入（每次 4 個索引），而且 `loot_release` 每次生怪都把這個角色**所有**沒結算的憑證（含早就作廢的）重寫一遍，作廢的又永不刪除，越玩越重。
+- **使用者決定**（2026-10-23）：每 10 隻或 30 秒結算一次、已確認收據保留 3 天、不用 pg_cron。
+- **SQL `tools/loot-batch.sql`**（接在 server-loot-install.sql 之後，可重跑；**重跑 server-loot-install.sql 後要再跑這份**）：
+  - 新表 `dragon_loot_receipts(user_id, char_id, slot, cursor, batch_id, items, diamonds, created_at)`，主鍵 (user_id, char_id, cursor)、(user_id, batch_id) 唯一；RLS、玩家不能直接讀寫。
+  - `loot_release`：多加 `not(context ? 'cancelled')`，已作廢的不再改寫。
+  - `loot_spawn`：同時遭遇上限 8 → 64（還沒結算的擊殺也算在內），其他不變。
+  - `loot_finish_batch(p_batch, p_tickets[])`：1～50 張；同帳號鎖；同批次已有收據就原樣回傳（回應遺失重送不重抽）；逐張檢查同角色同欄位、略過已用舊流程結算／作廢／超過 12 小時的，未滿 150ms 整批拒絕重試；每張 `loot_roll` 合併成一份 items、鑽石照舊判定（加總 got）；序號 +1、寫 1 張收據、刪除用掉的憑證；全部無效回 `{empty:true}` 並清掉。順手清自己帳號最多 200 筆：已確認（cursor ≤ acknowledged）超過 3 天的收據與舊帳本、作廢超過 1 小時、超過 12 小時沒結算的憑證。
+  - `loot_pending`：同時列出舊帳本（單隻結算、團隊副本、世界首領）與新收據，依序號排序。舊版遊戲的 `loot_finish` 照常可用。
+- **遊戲端**：
+  - `lootKill` 排隊時記 `at`。`lootFormBatches()`：同角色滿 `LOOT_BATCH_N`＝10 隻、最早一隻超過 `LOOT_BATCH_MS`＝30 秒、或 `lootFlushWanted` 時，給最多 50 隻一個 `batch` 編號並存進佇列（重送用同一個編號）。`lootPump` 依批次呼叫 `loot_finish_batch`，團隊副本照舊單筆 `loot_raid`；成功後依批次移除。
+  - `lootSettleNow()`：不等湊滿，下一輪就結算；`stopHunt`、`vaultOp`（共用倉庫／交易所）、離開畫面時呼叫；忙碌中要求時，這輪結束接著再跑一次。
+  - `lootSpawn`：同一次掛機（`hunt.lootReleased`）只釋放一次；伺服器回 `loot encounters full` 時，下次先釋放並馬上結算，當成暫時性錯誤不停掛機。
+  - 玩家看到的變化：掉落紀錄每 10 隻或 30 秒一批出現。
+- **測試**：`tools/test-loot-batch.js`（PGlite 全部正式 SQL＋重複安裝）：12 群未結算可繼續生怪、一批 1 張收據、憑證刪除、重送同收據、待領新舊並列與確認後消失、太快整批重試、0／51 張拒絕、作廢憑證的 xmin 不變、全作廢回 empty、舊單隻結算相容、3 天／1 小時／12 小時清理、未確認不刪、收據表不可直讀。`test-server-loot-client.js`：9 隻不結算、滿 10 隻 1 次、失敗保留、重送同編號、馬上結算、超過 30 秒結算、同次掛機只釋放一次、遭遇太多不停掛機。`test-vault-v2-client.js`：真實遊戲接 PGlite 生怪→打倒→批次結算→入帳，收據張數少於怪數、憑證刪除、本機序號依收據增加。全部回歸、check.ps1、混淆建置通過；瀏覽器載入無程式錯誤。
+- **部署順序**：先執行 `loot-batch.sql`，再推遊戲（舊版照常可用）。Supabase 恢復後才能執行。

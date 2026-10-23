@@ -31,7 +31,7 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
  currentSlot=0;player=first;applySaveData(saveParse(localStorage.getItem(slotKey(0))));
  // await期間新擊殺加入佇列，清除完成工作不能覆蓋新工作。
  lootStore([{key:'a',kind:'kill',ticket:'a',slot:0,char}]);let calls=0;
- marketRpc=async(fn,args)=>{if(fn==='loot_finish'){calls++;lootStore([...lootJobs(),{key:'b',kind:'kill',ticket:'b',slot:0,char}]);return {};}
+ marketRpc=async(fn,args)=>{if(fn==='loot_finish_batch'){calls++;lootStore([...lootJobs(),{key:'b',kind:'kill',ticket:'b',slot:0,char}]);return {};}
  if(fn==='loot_pending')return [];throw Error(fn);};
  lootPendingAt=gameNow+30000;await lootPump();assert.equal(calls,1);assert.equal(lootJobs().length,1);assert.equal(lootJobs()[0].key,'b');
  // 斷線不移除工作、不退回本機掉落。
@@ -64,13 +64,30 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
   player.gold+=999;player.inv.push({uid:9999,id:'redPotion',n:1});hunt.state='search';await lootSpawn();assert.equal(ups,1,'金幣背包變了不用重傳');
   player.lv+=1;hunt.state='search';await lootSpawn();assert.equal(ups,2,'等級變了要重傳');player.lv-=1;
   lootStore([{key:'k1',kind:'kill',ticket:'k1',slot:0,char}]);let fin=0;
-  marketRpc=async fn=>{if(fn==='loot_finish')fin++;return fn==='loot_pending'?[]:{};};lootPendingAt=gameNow+30000;
+  marketRpc=async fn=>{if(fn==='loot_finish_batch')fin++;return fn==='loot_pending'?[]:{};};lootPendingAt=gameNow+30000;
   await lootPump();assert.equal(fin,1);assert.equal(ups,2,'結算不上傳');cloudSyncedSlot=so;}
+ // 第104節：擊殺排隊、滿 10 隻或 30 秒才批次結算；重送用同一批次編號；每次掛機只釋放一次
+ {const calls=[];let fail=false;marketRpc=async(fn,args)=>{calls.push([fn,args]);if(fn==='loot_finish_batch'){if(fail)throw Error('Failed to fetch');return {};}return fn==='loot_pending'?[]:true;};
+  lootPendingAt=gameNow+300000;lootStore([]);const now=Date.now();
+  for(let i=0;i<9;i++)lootStore([...lootJobs(),{key:'k'+i,kind:'kill',ticket:'t'+i,slot:0,char,at:now}]);
+  await lootPump();assert.equal(calls.filter(c=>c[0]==='loot_finish_batch').length,0,'9 隻、未滿 30 秒不結算');
+  lootStore([...lootJobs(),{key:'k9',kind:'kill',ticket:'t9',slot:0,char,at:now}]);fail=true;await lootPump();
+  const first=calls.filter(c=>c[0]==='loot_finish_batch');assert.equal(first.length,1);assert.equal(first[0][1].p_tickets.length,10,'滿 10 隻一次結算');
+  assert.equal(lootJobs().length,10,'失敗時佇列保留');fail=false;lootSyncFailAt=0;await lootPump();
+  const all=calls.filter(c=>c[0]==='loot_finish_batch');assert.equal(all[1][1].p_batch,all[0][1].p_batch,'重送用同一批次編號');assert.equal(lootJobs().length,0,'成功後清掉');
+  lootStore([{key:'s1',kind:'kill',ticket:'s1',slot:0,char,at:now}]);lootSettleNow();await new Promise(r=>setTimeout(r,0));while(lootBusy)await new Promise(r=>setTimeout(r,1));
+  assert.equal(lootJobs().length,0,'要求馬上結算時不等湊滿');
+  lootStore([{key:'o1',kind:'kill',ticket:'o1',slot:0,char,at:now-31000}]);await lootPump();assert.equal(lootJobs().length,0,'超過 30 秒就結算');
+  calls.length=0;marketRpc=async(fn)=>{calls.push([fn]);return fn==='loot_spawn'?[{ticket:crypto.randomUUID(),monster:makeMonster('goblin')}]:true;};
+  hunt={state:'search',mobs:[],mon:null,warned:{}};player.hunting=true;await lootSpawn();hunt.state='search';await lootSpawn();
+  assert.equal(calls.filter(c=>c[0]==='loot_release').length,1,'同一次掛機只釋放一次');assert.equal(calls.filter(c=>c[0]==='loot_spawn').length,2);
+  marketRpc=async fn=>{calls.push([fn]);if(fn==='loot_spawn')throw Error('loot encounters full');return true;};hunt.state='search';await lootSpawn();
+  assert.equal(player.hunting,true,'遭遇太多不停掛機');assert.equal(hunt.lootReleased,false,'下次先釋放');lootStore([]);}
  {let calls=0;marketRpc=async()=>{calls++;return [];};cloudBackoffUntil=Date.now()+20000;hunt.state='search';hunt.timer=0;await lootSpawn();
   assert.equal(calls,0,'退避中不呼叫伺服器');assert.equal(player.hunting,true);assert(hunt.timer>=15000,'等退避結束再找怪');lootStore([{key:'b2',kind:'kill',ticket:'b2',slot:0,char}]);await lootPump();assert.equal(calls,0,'退避中不結算');cloudBackoffUntil=0;lootStore([]);}
  let spawnCalls=0;cloudFlush=async()=>{cloudUser={id:'other'};return true;};marketRpc=async()=>{spawnCalls++;};
  await lootSpawn();assert.equal(spawnCalls,0,'await期間換帳號不得繼續發怪');
  cloudUser=null;assert.equal(lootCanPlay(),false,'未登入不能進入線上掉寶');
- console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避、停用時改一般掉寶不卡住。');
+ console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避、停用時改一般掉寶不卡住、批次結算與少釋放。');
 })()`,ctx);}
 main().catch(e=>{console.error(e);process.exitCode=1;});

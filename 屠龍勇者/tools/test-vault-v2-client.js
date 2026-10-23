@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
     create function auth.jwt() returns jsonb language sql as $$select jsonb_build_object('email','test@invalid','role','authenticated')$$;
     create function auth.role() returns text language sql as $$select 'authenticated'::text$$;
     grant usage on schema public,auth to anon,authenticated;`);
-    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql', 'market-v2.sql']) {   // 真實遊戲存檔也要通過能力值上限（第 94 節）；交易所 v2（第 95 節）
+    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql', 'market-v2.sql', 'save-log-throttle.sql', 'loot-batch.sql']) {   // 真實遊戲存檔也要通過能力值上限（第 94 節）；交易所 v2（第 95 節）；掉寶批次（第 104 節）
         let sql = fs.readFileSync(path.join(__dirname, file), 'utf8');
         if (file === 'supabase.sql') sql = sql.replace(/create extension if not exists pgcrypto;/i, '');
         await db.exec(sql);
@@ -25,7 +25,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         catch (e) { return { error: { message: e.message, hint: e.hint, code: e.code } }; }
         finally { await db.exec('reset role'); }
     };
-    const json = v => v !== null && typeof v === 'object' ? JSON.stringify(v) : v;
+    const json = v => v !== null && typeof v === 'object' && !Array.isArray(v) ? JSON.stringify(v) : v;   // 陣列（uuid[]）直接傳給 PostgreSQL
     class Q {
         constructor(t) { this.t = t; this.op = 'select'; this.f = []; this.one = false; }
         select() { return this; } insert(r) { this.op = 'insert'; this.r = r; return this; } update(r) { this.op = 'update'; this.r = r; return this; }
@@ -161,6 +161,24 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         assert.equal(player.gold, g2 - 200, '目前角色照常存入'); assert(cloudDirty.has(1), '第 2 格仍待上傳');
         localStorage.removeItem(slotKey(1)); cloudDirty.delete(1);
 
+        // ⑤-3 後端掉寶批次結算（第 104 節）：真實生怪 → 打倒 → 批次結算 → 入帳，收據 1 張、憑證刪除
+        lootMode = 'active'; lootPendingAt = 0; player.loc = { type: 'zone', id: 'island' }; player.hunting = true; hunt = { state: 'search', mobs: [], mon: null, warned: {} };
+        let mobs = [];
+        for (let k = 0; k < 3; k++) { hunt.state = 'search'; await lootSpawn(); mobs.push(...hunt.mobs); await db.query("update public.dragon_loot_jobs set created_at=clock_timestamp()-interval '1 second'"); }
+        assert(mobs.length >= 3 && mobs.every(m => m.lootTicket), '後端生怪有憑證');
+        const relN = Number((await db.query("select count(*) c from public.dragon_loot_jobs where context ? 'cancelled'")).rows[0].c);
+        for (const m of mobs) lootKill(m);
+        assert.equal(lootJobs().length, mobs.length, '擊殺先排隊');
+        const cur0 = Number(local().lootCursor) || 0;
+        lootSettleNow(); for (let k = 0; k < 400 && lootJobs().length; k++) await new Promise(r => setTimeout(r, 10));
+        assert.equal(lootJobs().length, 0, '結算完清空佇列');
+        const rcN = Number((await db.query('select count(*) c from public.dragon_loot_receipts')).rows[0].c);
+        assert(rcN >= 1 && rcN <= 2 && rcN < mobs.length, mobs.length + ' 隻只寫 ' + rcN + ' 張收據（湊批時機可能分成兩批）');
+        assert.equal(Number((await db.query('select count(*) c from public.dragon_loot_jobs where result is null and not (context ? \'cancelled\')')).rows[0].c), 0, '用掉的憑證刪除');
+        assert.equal(Number(local().lootCursor), cur0 + rcN, '本機收據序號依收據張數增加');
+        assert(relN <= mobs.length, '同一次掛機只釋放一次（不會一直作廢憑證）');
+        player.hunting = false; hunt = null; lootMode = 'legacy';
+
         // ⑥ 手機縮小：上傳已寫進雲端但回應丟了 → 下次上傳不能跳「進度衝突」，要認得是自己送的、接著傳（第 96 節）
         player.exp += 1; saveGame(); net.drop = true;
         assert.equal(await cloudFlush(true), false, '回應丟失：這次算失敗');
@@ -188,7 +206,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         await db.query('update public.dragon_saves set client_t = client_t + 5, data = jsonb_set(data, \'{t}\', to_jsonb((data->>\'t\')::bigint + 5)) where user_id=$1 and slot=0', [uid]);
         player.exp += 1; saveGame();
         assert.equal(await cloudFlush(true), false); assert.equal(opened, '☁️ 進度衝突', '別台裝置的新進度仍提示衝突');
-        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失（含回來時網路未恢復）不誤報衝突、別的角色上傳失敗不擋目前角色、簽章不誤判。');
+        console.log('PASS：真實遊戲＋隔離資料庫：存裝備／藥水／金幣本機與雲端一致、舊存檔上傳被拒自動改用雲端（不重複）、取出直接入帳、交易所上架／下架／購買本機與雲端一致、縮小時回應丟失（含回來時網路未恢復）不誤報衝突、別的角色上傳失敗不擋目前角色、後端掉寶批次結算、簽章不誤判。');
     })()`, ctx);
     await db.close();
 })().catch(e => { console.error(e); process.exit(1); });

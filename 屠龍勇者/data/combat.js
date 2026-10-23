@@ -25,6 +25,7 @@ function startHunt() {
 }
 
 function stopHunt(msg) {
+    if (typeof lootSettleNow === 'function') lootSettleNow();   // 還沒湊滿的後端掉寶擊殺馬上結算（loot.js，第 104 節）
     rememberMapBoss();
     player.hunting = false;
     hunt = null;

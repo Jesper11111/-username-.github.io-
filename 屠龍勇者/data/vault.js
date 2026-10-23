@@ -125,6 +125,7 @@ function vaultEnvelope(data, previous) {
 }
 // fn＝vault_put2／vault_take2，交易所 market_list2／market_cancel2／market_buy2 也用（market.js，第 95 節）；apply(r) 照伺服器回傳修改本機角色。修改與存檔在同一個同步段落，中間不會插入別的存檔
 async function vaultOp(fn, args, apply) {
+    if (typeof lootSettleNow === 'function') lootSettleNow();   // 先把排隊中的掉寶結算掉（第 104 節）
     saveGame();
     const slot = currentSlot;
     // 只看目前角色這一格；剛從背景回來常第一次逾時，等 1.5 秒自動再試一次。失敗時把原因（cloudError）一起顯示

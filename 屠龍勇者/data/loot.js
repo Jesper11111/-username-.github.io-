@@ -4,6 +4,9 @@ const LOOT_PROTOCOL = 1;
 // 緊急開關（第 103 節）：Supabase 卡死、連 SQL 都執行不了時，改成 true 推上線，遊戲就不再找後端掉寶、改用一般掉寶，玩家可以照常掛機。恢復後改回 false
 const LOOT_FORCE_LOCAL = false;
 let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0, lootSyncFailAt = 0;
+// 批次結算（第 104 節，tools/loot-batch.sql）：擊殺先排隊，同一角色滿 10 隻或最早那隻等了 30 秒才一起結算（一批最多 50 隻）
+const LOOT_BATCH_N = 10, LOOT_BATCH_MS = 30000, LOOT_BATCH_MAX = 50;
+let lootFlushWanted = false;   // 停止掛機、離開畫面、使用倉庫／交易所前：不等湊滿，下次就結算
 function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
 function lootChar(p = player) { return p ? String(p.created) + '|' + p.cls : ''; }
@@ -76,7 +79,7 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
         if (!lootCloudFresh(slot)) { saveGame(); if (!await cloudSyncedSlot(slot)) throw Error('請先完成雲端同步'); }
         if (!cloudUser || cloudUser.id !== uid || player !== p || hunt !== h) return;
         const keep = [...h.mobs.map(m => m.lootTicket), ...lootJobs().filter(j => j.kind === 'kill' && j.char === char).map(j => j.ticket)].filter(Boolean);
-        await marketRpc('loot_release', { p_slot:slot,p_char:char,p_keep:keep });
+        if (!h.lootReleased) { await marketRpc('loot_release', { p_slot:slot,p_char:char,p_keep:keep }); h.lootReleased = true; }   // 每次掛機（換地圖會重新開始）只釋放一次（第 104 節）
         if (!cloudUser || cloudUser.id !== uid || player !== p || hunt !== h) return;
         const rows = await marketRpc('loot_spawn', { p_slot: slot, p_char: char, p_key: crypto.randomUUID(), p_join: join, p_mid: mid });
         if (player !== p || hunt !== h || !p.hunting || p.loc.id !== dir || p.loc.floor !== floor) return;
@@ -102,7 +105,8 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
     } catch (e) {
         if (player !== p || hunt !== h) return;
         if (/loot disabled/.test(String(e && e.message))) { lootProbeAt = 0; lootProbe(); }   // 管理者剛停用：馬上重查，改用一般掉寶
-        if (lootTransient(e) || /loot disabled/.test(String(e && e.message))) {   // 連線暫時不通：3 秒後自動再找怪，不停止掛機
+        if (/loot encounters full/.test(String(e && e.message))) { h.lootReleased = false; lootSettleNow(); }   // 沒結算的太多：下次先釋放、並馬上結算
+        if (lootTransient(e) || /loot disabled|loot encounters full/.test(String(e && e.message))) {   // 連線暫時不通：3 秒後自動再找怪，不停止掛機
             if (!join) { h.state = 'search'; h.timer = 3000; }
             lootNotice('⏳ 後端掉寶連線中，恢復後自動繼續掛機');
         } else stopHunt('⚠️ 後端掉寶尚未就緒：' + cloudErrText(e));
@@ -110,7 +114,7 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
 }
 function lootKill(mon) {
     if (!mon.lootTicket) { stopHunt('⚠️ 怪物沒有後端掉寶憑證，請重新開始掛機'); return; }
-    try { lootEnqueue({ key: mon.lootTicket, kind: 'kill', ticket: mon.lootTicket, slot: currentSlot, char: lootChar() }); }
+    try { lootEnqueue({ key: mon.lootTicket, kind: 'kill', ticket: mon.lootTicket, slot: currentSlot, char: lootChar(), at: Date.now() }); }
     catch (e) { stopHunt('⚠️ 無法保存掉寶重試紀錄，已停止掛機'); }
 }
 function lootRaid(runKey, char) {
@@ -158,13 +162,36 @@ function lootApply(result) {
     if (live) { if (session) session.gold += target.gold - before.gold; for (const [msg,cls] of messages) addLootLog(msg,cls); if (messages.length) sfx('treasure'); refreshUI(); }
     return true;
 }
+// 把還沒分批的擊殺湊成批：同一角色滿 10 隻、最早那隻超過 30 秒、或要求馬上結算時，給最多 50 隻一個批次編號（存進佇列，重送用同一個編號）
+function lootFormBatches() {
+    const jobs = lootJobs(), groups = {};
+    for (const j of jobs) if (j.kind === 'kill' && !j.batch) (groups[j.slot + '|' + j.char] = groups[j.slot + '|' + j.char] || []).push(j);
+    let changed = false;
+    for (const k in groups) {
+        const g = groups[k];
+        if (!lootFlushWanted && g.length < LOOT_BATCH_N && Date.now() - Math.min(...g.map(j => j.at || 0)) < LOOT_BATCH_MS) continue;
+        const id = crypto.randomUUID();
+        for (const j of g.slice(0, LOOT_BATCH_MAX)) j.batch = id;
+        changed = true;
+    }
+    lootFlushWanted = false;
+    if (changed) lootStore(jobs);
+}
+function lootSettleNow() { lootFlushWanted = true; lootPump(); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) lootSettleNow(); });
 async function lootPump() {
     if (!lootActive() || !cloudLoggedIn() || cloudBan || lootBusy || !cloudCanCall()) return;
     lootBusy = true;
     const uid = cloudUser.id;
     try {
-        const jobs = lootJobs();
-        for (const job of jobs) {
+        lootFormBatches();
+        const units = [], seen = new Set();
+        for (const j of lootJobs()) {
+            if (j.kind === 'kill' && !j.batch) continue;   // 還沒湊滿的擊殺
+            const k = j.kind === 'kill' ? 'b:' + j.batch : j.key;
+            if (!seen.has(k)) { seen.add(k); units.push(j); }
+        }
+        for (const job of units) {
             if (!cloudUser || cloudUser.id !== uid) return;
             const raw = localStorage.getItem(slotKey(job.slot));
             if (!raw || lootChar(saveParse(raw).player) !== job.char || saveOwnerOf(saveParse(raw)) !== uid) continue;
@@ -176,12 +203,12 @@ async function lootPump() {
                 throw Error('雲端存檔尚未同步');
             }
             if (job.kind === 'raid') await marketRpc('loot_raid', { p_slot:job.slot,p_char:job.char,p_room:job.room,p_round:job.round });
-            else await marketRpc('loot_finish', { p_ticket:job.ticket });
+            else await marketRpc('loot_finish_batch', { p_batch:job.batch,p_tickets:lootJobs().filter(j => j.batch === job.batch).map(j => j.ticket) });
             if (!cloudUser || cloudUser.id !== uid) return;
             const pending = await marketRpc('loot_pending', { p_slot:job.slot,p_char:job.char });
             for (const r of pending) if (!lootApply(r)) throw Error('掉寶收據需要同步，請到設定確認雲端進度');
             // 合併讀取，避免await期間新擊殺進佇列後被舊快照覆蓋。
-            lootStore(lootJobs().filter(j => j.key !== job.key));
+            lootStore(lootJobs().filter(j => job.kind === 'kill' ? j.batch !== job.batch : j.key !== job.key));
             lootSyncFailAt = 0;   // 整筆成功才重設（網路一直不通時 60 秒後仍會提示）
         }
         // 回應遺失後，後端已決定的獎勵仍可按原順序補領。
@@ -200,5 +227,5 @@ async function lootPump() {
         }
         lootNotice('掉寶結算待重試：' + cloudErrText(e));
     }
-    finally { lootBusy = false; }
+    finally { lootBusy = false; if (lootFlushWanted) setTimeout(lootPump, 0); }   // 忙碌時要求的馬上結算：這輪跑完接著再跑一次
 }
