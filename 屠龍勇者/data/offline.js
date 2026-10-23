@@ -129,7 +129,7 @@ function applyOffline(awayMs, paidMs = Infinity) {   // paidMs：伺服器用鑽
         endText = msg + `，已回到${TOWNS[z.town].name}`;
     } else if (end === 'supply' || end === 'home') {
         player.hunting = false;
-        if (consumeItem('homeScroll')) { player.loc = { type: 'town', id: z.town }; endText = `補給用完，使用回家卷軸回到${TOWNS[z.town].name}`; }
+        if (consumeItem('homeScroll')) { mapPortalOpen(); player.loc = { type: 'town', id: z.town }; endText = `補給用完，使用回家卷軸回到${TOWNS[z.town].name}`; }
         else endText = '補給用完，停止掛機（沒有回家卷軸，留在原地）';
     }
     if (end === 'map') endText = `異界的怪物已清空，異界首領正在等你（${zoneTitle()}）`;

@@ -33,8 +33,10 @@ function stopHunt(msg) {
     saveGame();
 }
 
-function moveToTown(townId) {
-    endMapRun('離開異界');   // 異界地圖：回城（卷軸、步行、死亡）地圖就消失（maps.js）
+// portal：回家卷軸回村，異界地圖不關閉，改在村莊開一次性傳送門（maps.js 的 mapPortalOpen，第 114 節）
+function moveToTown(townId, portal) {
+    if (portal) { rememberMapBoss(); mapPortalOpen(); }
+    endMapRun('離開異界');   // 異界地圖：其他回城方式（步行、死亡、逃離龍穴）地圖就消失（maps.js）
     player.hunting = false;
     hunt = null;
     walkHome = null;
@@ -53,7 +55,7 @@ function useHomeScroll(reason) {
         return false;
     }
     addLog(`📜 ${reason ? reason + '，' : ''}使用回家卷軸`, 'sys');
-    moveToTown(z.town);
+    moveToTown(z.town, true);
     return true;
 }
 

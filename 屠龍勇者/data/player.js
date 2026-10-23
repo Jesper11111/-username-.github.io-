@@ -48,7 +48,7 @@ function createPlayer(name, cls, stats) {
         towerMax: 10, towerCleared: {}, towerBossCd: {}, dragons: {}, dragonCd: {},
         kills: 0, deaths: 0,
         quests: { ch: 0, active: false, prog: 0, bossDone: false },
-        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null,
+        settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), mapRun: null, mapPortal: null,
         created: Date.now(),
         skills: [],
     };

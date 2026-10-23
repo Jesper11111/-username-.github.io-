@@ -99,6 +99,7 @@ function mapDescHtml(x) {
 function openMap(uid) {
     if (!inTown()) { showToast('要在村莊才能開啟異界'); return; }
     if (player.mapRun) { showToast('已經有一張異界地圖開啟中'); return; }
+    if (player.mapPortal) { showToast('村莊還有異界傳送門開著，先回去或關閉它'); return; }
     const x = findInv(uid);
     if (!x || ITEMS[x.id].cat !== 'map') return;
     const t = ITEMS[x.id].tier, z = mapZoneFor(t), mods = (x.mm || []).slice();
@@ -180,6 +181,39 @@ function endMapRun(reason) {
     player.mapRun = null;
 }
 
+// ───────── 村莊的一次性異界傳送門（2026-10-24 使用者要求，第 114 節） ─────────
+// 在異界裡用回家卷軸回村：異界進度搬到 player.mapPortal（mapRun 清空，伺服器只看 mapRun，回村期間不會被當成異界），
+// 村莊畫出傳送門；點它回到原本的異界接著打（剩餘怪物、首領剩餘 HP 都保留），傳送門隨即關閉。
+function mapPortalOpen() {
+    if (!inMapRun()) return;
+    player.mapPortal = player.mapRun;
+    player.mapRun = null;
+    addLog(`🌀 村莊出現一次性異界傳送門，補給完點傳送門可回到${player.mapPortal.name}`, 'boss');
+    if (!SIM_MODE) showToast('🌀 村莊出現異界傳送門，補給完點它返回異界', 3500);
+}
+function enterMapPortal() {
+    const r = player.mapPortal;
+    if (!r) return;
+    if (!inTown()) { showToast('要在村莊才能進入傳送門'); return; }
+    if (walkHome) { showToast('正在步行回村'); return; }
+    player.mapPortal = null;
+    player.mapRun = r;
+    player.loc = { type: 'zone', id: r.zone, floor: 1 };
+    addLog(`🌀 穿過傳送門回到${r.name}（${r.left > 0 ? `剩 ${fmt(r.left)} 隻` : '首領等著你'}），傳送門關閉了`, 'boss');
+    closeDialog();
+    switchTab('hunt');
+    startHunt();
+    saveGame();
+    refreshUI();
+}
+function closeMapPortalBtn() {
+    gameConfirm('關閉傳送門', '確定關閉異界傳送門？這張異界地圖會消失。', () => {
+        if (!player.mapPortal) return;
+        addLog(`🌀 關閉了傳送門，${player.mapPortal.name}消失了`, 'warn');
+        player.mapPortal = null; saveGame(); refreshUI();
+    }, '關閉');
+}
+
 // 地圖掉落（combat.js 的 rollDrops 呼叫）
 function rollMapDrop(mon, qm) {
     const inMap = inMapRun();
@@ -192,6 +226,13 @@ function rollMapDrop(mon, qm) {
 function mapDevicePanelHtml() {
     const r = player.mapRun;
     let h = `<div class="panel map-device"><h4>🌀 異界裝置</h4>`;
+    const pt = player.mapPortal;
+    if (pt) {
+        h += `<div class="map-run"><b>🌀 異界傳送門開啟中</b>　${esc(pt.name)}・${ZONE_BY_ID[pt.zone].name}<br>
+            ${pt.left > 0 ? `剩餘怪物 <b>${fmt(pt.left)}</b> / ${fmt(pt.total)}` : '<b class="warn">異界首領等著你</b>'}
+            <br><small class="muted">一次性：進入後傳送門關閉。村莊畫面上也可以點傳送門的名牌。</small>
+            <div class="btn-row"><button onclick="enterMapPortal()" ${inTown() ? '' : 'disabled'}>🌀 進入傳送門</button><button class="secondary" onclick="closeMapPortalBtn()">關閉傳送門</button></div></div>`;
+    }
     if (r) {
         h += `<div class="map-run"><b>${esc(r.name)}</b>　${ZONE_BY_ID[r.zone].name}<br>
             ${r.left > 0 ? `剩餘怪物 <b>${fmt(r.left)}</b> / ${fmt(r.total)}` : '<b class="warn">異界首領現身中</b>'}
@@ -203,9 +244,9 @@ function mapDevicePanelHtml() {
         const t = ITEMS[x.id].tier, mods = x.mm || [];
         return `<div class="list-row"><div><b class="${itemClass(x)}">${esc(itemName(x))}</b>${count > 1 ? ` <span class="muted">×${count}</span>` : ''}
             <small>${mapZoneFor(t).name}${mods.length ? '　' + mods.map(k => MAP_MODS[k].icon).join('') + ` 獎勵 +${Math.round(mapBonusOf(mods) * 100)}%` : ''}${mapQtyOf(mods) > 1 ? `　怪物 ×${mapQtyOf(mods)}` : ''}</small></div>
-            <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openMap(${x.uid})" ${inTown() && !r ? '' : 'disabled'}>開啟</button></div></div>`;
+            <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openMap(${x.uid})" ${inTown() && !r && !pt ? '' : 'disabled'}>開啟</button></div></div>`;
     }).join('')}</div>` : '<small class="muted">還沒有異界地圖。打怪有機率掉落（一般地圖每隻 0.4%、異界裡 1.5%），通關異界首領必掉。</small>';
-    return h + `<small class="muted">在村莊放入地圖開啟異界：200～300 隻怪（數量詞綴最多 ×3），殺光後打倒異界首領即通關。中途回城、死亡或瞬移逃離，地圖就會消失。</small></div>`;
+    return h + `<small class="muted">在村莊放入地圖開啟異界：200～300 隻怪（數量詞綴最多 ×3），殺光後打倒異界首領即通關。中途用回家卷軸回村會留下一次性傳送門，可以補給完再回去；步行回村、死亡或放棄，地圖就會消失。</small></div>`;
 }
 function abandonMapBtn() {
     gameConfirm('放棄地圖', '確定放棄這張異界地圖？地圖會消失。', () => { endMapRun('放棄地圖'); saveGame(); refreshUI(); }, '放棄');

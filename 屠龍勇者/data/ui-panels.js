@@ -614,7 +614,7 @@ function openItemDialog(uid) {
             : { text: '裝備', onClick: () => { if (equipItem(uid)) showToast(`裝備了 ${itemName(inst)}`); saveGame(); refreshUI(); } });
     }
     if (d.cat === 'map') {
-        if (inTown() && !player.mapRun) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
+        if (inTown() && !player.mapRun && !player.mapPortal) btns.push({ text: '🌀 開啟', onClick: () => openMap(uid) });
     }
     if (d.soulEnchant) btns.push({ text: '🔮 選擇武器裝回', onClick: () => openBossSoulPicker(uid) });
     if (d.morph) btns.push({ text: '使用', onClick: openMorphPicker });

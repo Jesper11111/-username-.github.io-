@@ -392,6 +392,7 @@ function buildScene() {
     for (let y = 0; y < mh; y++) { shade.push([]); for (let x = 0; x < mw; x++) shade[y].push(rnd() < 0.5); }
     if (player.loc.type === 'town' && bg) for (const b of townNpcList(bg)) grid[b.y][b.x] = 3;   // NPC 站的格子不能走
     if (player.loc.type === 'zone' && bg && bg.fieldNpcs) for (const n of bg.fieldNpcs) grid[n.y][n.x] = 3;
+    const portalAt = player.loc.type === 'town' ? scenePortalSpot(grid, mw, mh, cx, cy) : null;   // 異界傳送門的位置（第 114 節）
     if (player.loc.type === 'town' && !bg) {   // 沒有背景圖時才用畫出來的房屋與 NPC
         for (const b of TOWN_NPCS) { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[b.y + dy][b.x + dx] === 2) grid[b.y + dy][b.x + dx] = 0; grid[b.y][b.x] = 3; }
         for (const [hx, hy, hw, hh] of TOWN_HOUSES) for (let y = hy; y < hy + hh; y++) for (let x = hx; x < hx + hw; x++) grid[y][x] = 4;
@@ -404,9 +405,37 @@ function buildScene() {
         pl: { x: cx, y: cy, rx: cx, ry: cy, path: [], dir: 'down', lunge: null, idleCd: 1500 },
         mons: [], engaged: null, floats: [], effects: [],
         lastSeq: logSeq, lastPlayerHp: player.hp, critNext: false, spawnCd: 0, w: 0, h: 0,
-        cam: { x: cx * TILE, y: cy * TILE }, moveMark: null,
+        cam: { x: cx * TILE, y: cy * TILE }, moveMark: null, portalAt,
     };
     if (bg && bg.big && bg.regions) scene.gates = bg._gates || (bg._gates = bigMapGates(grid, bg.regions, mw, mh));
+}
+
+// 異界傳送門放在村莊出生點旁邊 2～4 格、可以走的地板上（找不到就放出生點）
+function scenePortalSpot(grid, mw, mh, cx, cy) {
+    for (let d = 2; d <= 4; d++) for (const [dx, dy] of [[d, 0], [-d, 0], [0, -d], [0, d], [d, -1], [-d, -1], [d, 1], [-d, 1]]) {
+        const x = cx + dx, y = cy + dy;
+        if (x > 0 && y > 0 && x < mw - 1 && y < mh - 1 && grid[y][x] === 0) return [x, y];
+    }
+    return [cx, cy];
+}
+// 傳送門：紫藍色漩渦（旋轉的光環）＋光點
+function drawMapPortal(ctx, sx, sy, t) {
+    ctx.fillStyle = 'rgba(80,40,160,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy + 10, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save();
+    ctx.translate(sx, sy - 18);
+    const g = ctx.createRadialGradient(0, 0, 2, 0, 0, 26);
+    g.addColorStop(0, 'rgba(230,220,255,0.95)'); g.addColorStop(0.45, 'rgba(140,90,255,0.75)'); g.addColorStop(1, 'rgba(60,20,140,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 18, 26, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = i === 1 ? 'rgba(120,220,255,0.85)' : 'rgba(190,140,255,0.85)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 14 + i * 3, 22 + i * 3, 0, t / 300 + i * 2.1, t / 300 + i * 2.1 + Math.PI * 1.3); ctx.stroke();
+    }
+    for (let i = 0; i < 6; i++) {
+        const a = t / 500 + i * Math.PI / 3, r = 20 + 4 * Math.sin(t / 200 + i);
+        ctx.fillStyle = 'rgba(200,240,255,0.9)'; ctx.fillRect(Math.cos(a) * r * 0.7 - 1, Math.sin(a) * r - 1, 2, 2);
+    }
+    ctx.restore();
 }
 
 // 大地圖：格子屬於哪一區（rect 依序第一個符合的；都不符合用最近的中心）
@@ -1156,6 +1185,13 @@ function sceneDraw(ctx, W, H) {
         if (n.prop) { ctx.font = '18px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.fillText(n.prop, sx - 20, sy + 6); }
         labels.push(() => drawNpcPlate(ctx, n.names[player.loc.id] || n.role, n.role, sx, sy - 26, camX, camY, n));
     } });
+    if (player.loc.type === 'town' && player.mapPortal && scene.portalAt) {   // 異界傳送門（第 114 節）
+        const [qx, qy] = scene.portalAt, sx = qx * TILE - camX + TILE / 2, sy = qy * TILE - camY + TILE / 2, pt = player.mapPortal;
+        actors.push({ y: qy, draw: () => {
+            drawMapPortal(ctx, sx, sy, performance.now());
+            labels.push(() => drawNpcPlate(ctx, '異界傳送門', `T${pt.t} 返回`, sx, sy - 56, camX, camY, { act: enterMapPortal }));
+        } });
+    }
     // 野外 NPC（大地圖，第 55 節）：去背立繪腳底對齊格子、腳下陰影，名牌可點
     // 大地圖路牌（第 63 節）：跟角色一起依 y 排序，走到路牌下面會被擋、走到前面會蓋住路牌
     if (scene.gates && player.loc.type === 'zone') for (const s of gateSigns(player.loc.id)) {

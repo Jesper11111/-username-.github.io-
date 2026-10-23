@@ -69,7 +69,7 @@
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
-| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
+| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、回卷傳送門 `mapPortalOpen`／`enterMapPortal`（第 114 節）、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
@@ -103,7 +103,7 @@
 | `data/player.js` | `player`、遊戲訊息 `addLog`、`DEFAULT_SETTINGS`、創角、背包／裝備、增益、**能力計算 `calcStats`**、升級、萬能藥 |
 | `data/affix.js` | 暗黑式裝備詞綴：`AFFIXES`、品質 `QUALITY`、`rollQuality`／`applyAffixes`／`affixFx`／`qualityName`／`instSellPrice`／`randomEquipFor`（第 21 節） |
 | `data/craft.js` | 製作通貨 `CURRENCY`（8 種，載入時併入 `ITEMS`）、`useCurrency`、改造視窗 `openCraftDialog`；通貨用在地圖時轉給 maps.js 的 `MAP_CURRENCY`（第 23 節） |
-| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
+| `data/maps.js` | 異界地圖 T1～T15：地圖道具、`MAP_MODS`、`openMap`／`mapOnKill`／`completeMap`／`endMapRun`、回卷傳送門 `mapPortalOpen`／`enterMapPortal`（第 114 節）、`applyMapMods`、`mapBonus`、地圖掉落、異界裝置面板（第 24 節） |
 | `data/enchant.js` | 衝裝規則 `doEnchant`、成功率、可強化目標 |
 | `data/combat.js` | 掛機戰鬥：`hunt` 狀態、尋怪、玩家行動、怪物攻擊、掉落、死亡、自動補給、回家、步行、自然回復 |
 | `data/town.js` | 村莊設施：傳送、商店、回收、旅館、倉庫、鍛造；龍穴進入條件 |
@@ -158,7 +158,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023t`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024a`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1139,7 +1139,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   **首領 HP 會保留**（2026-10-16，版本 `20261016k`；玩家回報 T15「閃紅圈後首領血量馬上回滿、打不死」）：原因是紅圈重擊（×2.5）把 HP 打到瞬移門檻 → 自動瞬移卷軸 `leaveFight` 放掉所有怪 →
   下次尋怪又 `makeMapBoss` 生出滿血首領（停止掛機 `stopHunt` 也一樣）。現在兩者都先呼叫 `rememberMapBoss()` 把首領剩餘 HP 記到 `player.mapRun.bossHp`（跟著存檔），
   `spawnMonster` 再生首領時在 `addMob`（套地圖詞綴，「強壯」會重設 HP）之後改回剩餘 HP，訊息「帶著傷回來了（HP x/y）」。
-- **地圖消失**：中途回城（回家卷軸、步行、死亡、瞬移逃離龍穴等所有 `moveToTown`）→ `endMapRun`。地圖頁也可「放棄這張地圖」。
+- **地圖消失**：中途回城（步行、死亡、瞬移逃離龍穴等 `moveToTown`）→ `endMapRun`；**回家卷軸改成留下村莊一次性傳送門（第 114 節）**。地圖頁也可「放棄這張地圖」。
 - **掉落**：一般地圖每隻 0.4%（`MAP_DROP_P`，階級＝怪物等級對應的最高階 `mapTierForLv`）、異界裡 1.5%（同階 ±1）；品質 普通 50%／魔法 35%／稀有 15%。
 - **通貨改地圖**（`MAP_CURRENCY`）：點化（普通→魔法）、重鑄（重擲魔法）、晉升（魔法→稀有＋1 條）、混沌（重擲稀有 3～4 條）、剝離（移除 1 條）、
   命運（普通→魔法 70%／稀有 30%）、神諭（稀有＋1 條，最多 6）；淬鍊石不能用在地圖。`craft.js` 的 `currencyCan`／`useCurrency` 依道具類型分流。
@@ -2769,3 +2769,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **原因**：第 89 節的喝水延遲記在 `potReadyAt`（以 `gameNow` 計）。離線結算的 `measureHunt` 會把 `gameNow` 快轉最多 10 分鐘，團隊副本與世界首領的 `raidSimulate` 也會快轉；模擬裡自動喝水把 `potReadyAt` 設到快轉後的時間，模擬結束只還原 `gameNow`、沒還原 `potReadyAt`，回到真實時間後要等好幾分鐘才能再喝。最常在「切到背景回來、跳離線結算」後發生。
 - **修正**：兩個模擬都把 `potReadyAt` 跟 `gameNow` 一起備份、還原。另外 `potionReady` 加保險：剩餘延遲超過一次的長度（`POTION_CD_MS`）就視為錯誤直接解除。
 - **測試**：`tools/test-potion-delay.js`（模擬中一直喝水，結束後延遲還原、紅水綠水勇水可喝、0.8 秒延遲仍有效、超長延遲自動解除；舊程式會失敗）。check.ps1、離線掉落、後端掉寶、批次結算測試、混淆建置通過；瀏覽器載入版本 t 正常。
+
+## 114. 異界地圖回卷：村莊一次性傳送門（2026-10-24，版本 `20261024a`；`maps.js` 的 `mapPortalOpen`／`enterMapPortal`／`closeMapPortalBtn`、`combat.js` 的 `moveToTown(townId, portal)`、`ui-scene.js` 的 `scenePortalSpot`／`drawMapPortal`）
+
+- **使用者要求**：開啟異界地圖後按回家卷軸，村莊出現一次性魔法傳送門，玩家補給完可以再回到地圖；回到地圖後傳送門關閉。
+- **資料**：新欄位 `player.mapPortal`（內容跟 `mapRun` 一樣：階級、地區、詞綴、剩餘怪物、首領剩餘 HP `bossHp`）。回卷時把 `mapRun` 整份搬過去、`mapRun` 清空。
+  **伺服器（後端掉寶 `loot_spawn`）只看 `mapRun`**，所以回村期間不會被當成異界，就算玩家走路去同一個野外也只是一般地圖，SQL 不用改。存檔 schema 不變（`migrateSave` 補 `mapPortal: null`；地區不存在、`mods` 不是陣列或同時有 `mapRun` 時丟掉傳送門）。
+- **哪些回村會開傳送門**：只有回家卷軸——手動（快捷欄／按鈕 `homeScrollBtn`）、自動（藥水用完 `useHomeScroll('藥水用完')`）、離線補給用完自動讀回卷（`offline.js`）。`useHomeScroll` 呼叫 `moveToTown(z.town, true)`：先 `rememberMapBoss()` 記住首領 HP，再 `mapPortalOpen()`（要在異界裡 `inMapRun()` 才開）。
+  步行回村、死亡、逃離龍穴、通關照舊 `endMapRun`，地圖消失、沒有傳送門。
+- **村莊畫面**：`buildScene` 在村莊算 `scene.portalAt`（出生點旁 2～4 格可走的地板，`scenePortalSpot`），`player.mapPortal` 存在時畫紫藍漩渦（`drawMapPortal`，旋轉光環＋光點）與名牌「異界傳送門 T? 返回」，點名牌 → `enterMapPortal`（沿用 `npcOpen`，只有點名牌才觸發）。
+- **進入**（`enterMapPortal`）：要在村莊、沒在步行；`mapRun` 還原、`mapPortal` 清空（一次性）、傳送到該地區、切到狩獵並開始掛機，訊息顯示剩幾隻或「首領等著你」。首領剩餘 HP 照第 24 節的 `bossHp` 機制接著打。
+- **異界裝置面板**：傳送門開著時顯示「🌀 異界傳送門開啟中」＋剩餘怪物、「🌀 進入傳送門」「關閉傳送門」（`closeMapPortalBtn`，確認後地圖消失）。傳送門開著時不能開新地圖（`openMap` 擋、開啟按鈕 disabled、背包地圖不顯示「🌀 開啟」）。
+- **測試**：`tools/test-map-portal.js`（回卷保留進度、`mapRun` 清空、不能開新地圖、進入後一次性關閉並掛機、首領 HP 保留、死亡／步行不開傳送門、手動關閉、存檔修正）。check.ps1、喝水延遲、離線掉落、後端掉寶客戶端測試、混淆建置通過。
+  瀏覽器以未登入暫時角色：開 T1 → 回卷 → 低語港出現傳送門與名牌 → 實際點名牌回到異界（剩 260 隻、傳送門關閉）；測試角色已刪除。未登入角色因 `lootCanPlay()` 不會自動掛機（開地圖時也一樣，非本次改動）。

@@ -133,7 +133,7 @@ function saveGame(force) {
 function migrateSave(data) {
     const p = data.player;
     // 補齊新版才有的欄位
-    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, towerBossCd: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0, mapRun: null,
+    const fresh = { statPoints: 0, elixirs: 0, storage: [], buffs: {}, cds: {}, towerMax: 10, towerCleared: {}, towerBossCd: {}, dragons: {}, dragonCd: {}, kills: 0, deaths: 0, mapRun: null, mapPortal: null,
         quests: { ch: 0, active: false, prog: 0, bossDone: false } };
     for (const k in fresh) if (p[k] == null) p[k] = fresh[k];
     p.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), p.settings || {});
@@ -158,6 +158,8 @@ function migrateSave(data) {
     delete p.mapMods;
     if (p.mapRun && (!ZONE_BY_ID[p.mapRun.zone] || !Array.isArray(p.mapRun.mods))) p.mapRun = null;
     if (p.mapRun) p.mapRun.mods = p.mapRun.mods.filter(k => MAP_MODS[k]);
+    if (p.mapPortal && (!ZONE_BY_ID[p.mapPortal.zone] || !Array.isArray(p.mapPortal.mods) || p.mapRun)) p.mapPortal = null;   // 村莊的異界傳送門（第 114 節）
+    if (p.mapPortal) p.mapPortal.mods = p.mapPortal.mods.filter(k => MAP_MODS[k]);
     // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
     const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => AFFIXES[a.k]); };
     [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
