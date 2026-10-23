@@ -152,7 +152,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023m`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023n`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2693,3 +2693,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - `sellPicked()`：在村莊才可用；確認視窗列出項數與合計，若含有品質、強化、BOSS 附魔或單價 ≥ 5000 的道具另外提醒件數；確認時重新讀一次清單（期間背包變了以當下為準），整疊賣出、加金幣、清空勾選、存檔。回收價 0 的（例如箭、子彈）本來就不列出。原本每列的「賣 1／全部／賣出」與一鍵賣出不變。
 - `sellPick` 只存在記憶體；`renderSell` 每次畫面會拿掉已不在背包的編號。不改存檔結構。
 - 驗證：check.ps1 通過；瀏覽器以未登入暫時角色在低語港回收頁實際點選：勾長劍＋治癒藥水 ×50 顯示（2）💰420，確認後金幣 2000→2420、+3 長劍（未勾）保留、勾選清空；Console 無錯誤；測試角色已刪除。
+
+## 107. 關閉緊急開關、恢復後端掉寶（批次結算）（2026-10-23，版本 `20261023n`；`loot.js` 的 `LOOT_FORCE_LOCAL = false`）
+
+- **經過**：使用者在 Supabase SQL Editor 執行 `tools/loot-batch.sql` 成功，但遊戲 API（PostgREST）仍卡住：`pg_stat_activity` 顯示 `authenticator` 10 條連線閒置 3 小時 17 分、沒有卡住的查詢，資料庫本身已恢復、卡的是 API 服務。「Fast database reboot」只重啟資料庫，改用主按鈕 **Restart project**（整個專案）重啟；約 5 分鐘後恢復（03:25 UTC），登入與 API 0.2～0.5 秒回應，`loot_finish_batch` 對未登入回 42501（函式存在、只是沒權限）。
+- **改動**：`LOOT_FORCE_LOCAL` 改回 false。上線後玩家重新整理即回到後端掉寶，並使用第 104 節的批次結算（10 隻或 30 秒一批、同次掛機只釋放一次、順手清理）。
+- **驗證**：掉寶客戶端、端到端、批次 SQL、掉落紀錄、商店測試與 check.ps1、混淆建置通過。
+- **注意**：剛重啟後磁碟額度可能還沒回滿；推送前可到 Observability → Database 看 **Disk IO balance**，回升後再推比較穩。之後若又出現 Disk IO 警告，可把開關再打開（第 103 節）或考慮升級 Pro＋Micro（基本速度 5 → 11 MB/s）。
