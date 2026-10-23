@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **31號r版驗證完成**：check.ps1 ALL CHECKS PASSED（47檔／46script）、新m31與既有m04／m05／m10／m16／m27變身回歸、射程回歸、git diff --check通過；混淆建置46檔441KB至TEMP/dark-emperor-build-20261023r。瀏覽器實際卷軸選單顯示金變近戰通用、選取扣1張、四方向×四動作切換與逐格正常、正面攻擊／背面施法透明與腳點已檢視，Console無error／warn。隔離頁僅記憶體storage且拒絕連外，未碰真實角色。待使用者本機Ctrl+F5→卷軸→近戰通用系→煉獄雷霆魔皇，走動／打怪確認後才提交r版及請Push。
+
+- **本機待驗收20261023r：新增31煉獄雷霆魔皇（金變、近戰武器通用，第111節）**。使用者確認名稱／階級／近戰通用；新增MORPH_GROUPS.melee、MORPH_FORMS.m31、MORPHS.infernalThunderEmperor與SW四圖集。採金變基礎Lv.70／命中+7／傷害+7／攻速+20%，既有測試不限等級開關與schema不變。內建image_gen依31四張jfif製作三向36格，384×320／腳底[192,270]／charH160／drawH48，4／4／2／2格、130／140／220／150ms；左鏡像。原圖／原稿／完整提示詞／腳點資料／prepare.py在tools/sprite-src/morph/infernal-thunder-emperor-v1；正式圖集與單格在images同名目錄。隔離預覽tools/infernal-emperor-morph-preview.html，回歸tools/test-infernal-emperor-morph.js。待實玩確認後才提交與Push；工作期間另一項射程q版提交時已包含部分m31資料，r版補齊素材及預載，勿將q版視為完整m31版本。
+
 - **20261023q：弓、槍射程 8 格（第 110 節）**。使用者要求；魔法、共鳴技能維持 4 格，近戰 1 格；道具說明顯示射程。test-weapon-range 與回歸、check.ps1、建置通過；已 commit 本機 main 待 Push。
 
 - **char-owner.sql＋20261023p：一隻角色只能屬於一個帳號（第 109 節）——char-owner.sql 已執行（2026-10-23，沒有列出任何分身）**。起因是「操真猛」分身出現在多個帳號。登記表＋上傳檢查＋回填；執行後會列出目前的分身，管理者刪掉多餘的。test-char-owner 與端到端通過。正式庫原本缺 char-tombstone.sql，已請使用者補執行。

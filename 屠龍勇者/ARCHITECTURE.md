@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/sprites/morph/infernal-thunder-emperor-v1/`、`tools/sprite-src/morph/infernal-thunder-emperor-v1/`、`tools/infernal-emperor-morph-preview.html`、`tools/test-infernal-emperor-morph.js` | 31煉獄雷霆魔皇：36格透明動畫、原圖／生成提示詞／註冊與打包、隔離卷軸與renderer預覽及回歸（第111節） |
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
 | `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
 | `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
@@ -155,7 +156,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023q`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023r`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2735,3 +2736,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 道具說明（`itemDescHtml`）與圖鑑（codex）的遠程武器多一行「射程 8 格」。
 - 和以前一樣只在地圖畫面開著時檢查距離，背景與離線不限制。
 - **測試**：`tools/test-weapon-range.js`：弓、槍 8 格內打得到、9 格打不到、斜角約 7.8 格可、中間有牆不行；魔法 4 格；近戰 1 格；技能距離種類；`canReach`；道具說明含「射程 8 格」。瀏覽器以未登入暫時妖精拿弓在低語海岸掛機正常（擊倒、無錯誤；怪物多在 4 格內出現並衝過來，所以實測距離多在 4 格內），測試角色已刪除。全部回歸、check.ps1、混淆建置通過。
+
+## 111. 31煉獄雷霆魔皇（金變、近戰通用）（2026-10-23，版本 `20261023r`）
+
+- 使用者提供31.jfif及31-1／31-2／31-3.jfif，確認新增第31種、金色、近戰武器通用，名稱「煉獄雷霆魔皇」。MORPH_GROUPS.melee為近戰通用系，採既有金變基礎：Lv.70、命中+7／傷害+7／攻速+20%；建議武器文字沿用現有提示規則，不新增裝備限制。MORPH_LV_FREE與SAVE_SCHEMA不變，卷軸仍30分鐘／1張。
+- MORPH_FORMS.m31接MORPHS.infernalThunderEmperor；內建image_gen依四參考圖生成4欄9列36格，再做透明去背。黑紅骨甲／雙角／赤雷巨劍造型維持，不因金變階級改成金甲。正面、右側、背面各走4／攻4／施2／傷2，背面全程維持背向，左側鏡像右側。
+- 格384×320、foot[192,270]、charH160、drawH48；時間130／140／220／150ms（攻擊560ms）。四張PNG圖集加入SW預載；images/sprites/morph/infernal-thunder-emperor-v1含單格／圖集／WebP／contact／manifest；tools/sprite-src同名資料夾保留四原圖、生成原稿／去背稿／完整prompts.json、registration.json與prepare.py。依透明連通區去除鄰格碎片，逐格腳點註冊，不覆寫來源。
+- tools/infernal-emperor-morph-preview.html以實際卷軸選單／sceneReadEvents／sceneDraw隔離預覽；tools/test-infernal-emperor-morph.js驗證31種、金變數值、卷軸扣量／上次選擇、四向命中／MISS／施法／受傷／到期、其他外觀與SW。既有五份morph測試的數量預期改31。素材打包檢查36獨立RGBA及透明留邊；待使用者實玩後提交。工作中q版射程提交含部分m31資料，r版為素材與預載完整版本。

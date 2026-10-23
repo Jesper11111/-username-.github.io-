@@ -16,7 +16,7 @@ addItem('polyScroll',2);const scrolls=countItem('polyScroll');
 assert.equal(usePotion('polyScroll','m27'),'');assert.equal(countItem('polyScroll'),scrolls-1);
 assert.equal(player.buffs.morph.form,'m27');assert.equal(player.settings.lastMorph,'m27');
 assert.equal(playerSprite(),MORPHS.riftDragon);assert.equal(playerMorph().name,'裂空魔龍爪皇');
-assert.equal(MORPH_FORMS.length,30);assert.equal(SAVE_SCHEMA,5);
+assert.equal(MORPH_FORMS.length,31);assert.equal(SAVE_SCHEMA,5);
 const m={x:scene.pl.x+1,y:scene.pl.y,rx:scene.pl.x+1,ry:scene.pl.y,mid:'skeleton',lastHp:100,inst:{hp:90,maxHp:100}};
 scene.mons=[m];scene.engaged=m;gameLog.length=0;
 for(const dir of ['down','right','up','left']){

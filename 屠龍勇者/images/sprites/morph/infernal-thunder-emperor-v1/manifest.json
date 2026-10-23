@@ -1,0 +1,649 @@
+{
+  "id": "infernal-thunder-emperor-v1",
+  "name": "煉獄雷霆魔皇",
+  "form": "m31",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/infernal-thunder-emperor-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/walk-down-01.png",
+          "sourceRect": [
+            0,
+            0,
+            256,
+            192
+          ],
+          "sourceFoot": [
+            139,
+            190
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/walk-down-02.png",
+          "sourceRect": [
+            256,
+            0,
+            512,
+            192
+          ],
+          "sourceFoot": [
+            412,
+            190
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/walk-down-03.png",
+          "sourceRect": [
+            512,
+            0,
+            768,
+            192
+          ],
+          "sourceFoot": [
+            656,
+            190
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/walk-down-04.png",
+          "sourceRect": [
+            768,
+            0,
+            1024,
+            192
+          ],
+          "sourceFoot": [
+            928,
+            190
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/walk-right-01.png",
+          "sourceRect": [
+            0,
+            578,
+            256,
+            749
+          ],
+          "sourceFoot": [
+            145,
+            744
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/walk-right-02.png",
+          "sourceRect": [
+            256,
+            578,
+            512,
+            749
+          ],
+          "sourceFoot": [
+            399,
+            744
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/walk-right-03.png",
+          "sourceRect": [
+            512,
+            578,
+            768,
+            749
+          ],
+          "sourceFoot": [
+            657,
+            744
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/walk-right-04.png",
+          "sourceRect": [
+            768,
+            578,
+            1024,
+            749
+          ],
+          "sourceFoot": [
+            921,
+            744
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/walk-up-01.png",
+          "sourceRect": [
+            0,
+            1095,
+            256,
+            1253
+          ],
+          "sourceFoot": [
+            150,
+            1249
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/walk-up-02.png",
+          "sourceRect": [
+            256,
+            1095,
+            512,
+            1253
+          ],
+          "sourceFoot": [
+            407,
+            1249
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/walk-up-03.png",
+          "sourceRect": [
+            512,
+            1095,
+            768,
+            1253
+          ],
+          "sourceFoot": [
+            662,
+            1249
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/walk-up-04.png",
+          "sourceRect": [
+            768,
+            1095,
+            1024,
+            1253
+          ],
+          "sourceFoot": [
+            925,
+            1249
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/infernal-thunder-emperor-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/attack-down-01.png",
+          "sourceRect": [
+            0,
+            192,
+            256,
+            388
+          ],
+          "sourceFoot": [
+            139,
+            382
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/attack-down-02.png",
+          "sourceRect": [
+            256,
+            192,
+            512,
+            388
+          ],
+          "sourceFoot": [
+            408,
+            382
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/attack-down-03.png",
+          "sourceRect": [
+            512,
+            192,
+            768,
+            388
+          ],
+          "sourceFoot": [
+            656,
+            382
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/attack-down-04.png",
+          "sourceRect": [
+            768,
+            192,
+            1024,
+            388
+          ],
+          "sourceFoot": [
+            927,
+            382
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/attack-right-01.png",
+          "sourceRect": [
+            0,
+            749,
+            256,
+            924
+          ],
+          "sourceFoot": [
+            144,
+            919
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/attack-right-02.png",
+          "sourceRect": [
+            256,
+            749,
+            512,
+            924
+          ],
+          "sourceFoot": [
+            404,
+            919
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/attack-right-03.png",
+          "sourceRect": [
+            512,
+            749,
+            768,
+            924
+          ],
+          "sourceFoot": [
+            657,
+            919
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/attack-right-04.png",
+          "sourceRect": [
+            768,
+            749,
+            1024,
+            924
+          ],
+          "sourceFoot": [
+            920,
+            919
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/attack-up-01.png",
+          "sourceRect": [
+            0,
+            1253,
+            256,
+            1402
+          ],
+          "sourceFoot": [
+            149,
+            1397
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/attack-up-02.png",
+          "sourceRect": [
+            256,
+            1253,
+            512,
+            1402
+          ],
+          "sourceFoot": [
+            406,
+            1397
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/attack-up-03.png",
+          "sourceRect": [
+            512,
+            1253,
+            768,
+            1402
+          ],
+          "sourceFoot": [
+            663,
+            1397
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/attack-up-04.png",
+          "sourceRect": [
+            768,
+            1253,
+            1024,
+            1402
+          ],
+          "sourceFoot": [
+            926,
+            1397
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/infernal-thunder-emperor-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/cast-down-01.png",
+          "sourceRect": [
+            0,
+            388,
+            256,
+            578
+          ],
+          "sourceFoot": [
+            141,
+            574
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/cast-down-02.png",
+          "sourceRect": [
+            256,
+            388,
+            512,
+            578
+          ],
+          "sourceFoot": [
+            411,
+            574
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/cast-right-01.png",
+          "sourceRect": [
+            0,
+            924,
+            256,
+            1095
+          ],
+          "sourceFoot": [
+            144,
+            1091
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/cast-right-02.png",
+          "sourceRect": [
+            256,
+            924,
+            512,
+            1095
+          ],
+          "sourceFoot": [
+            399,
+            1091
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/cast-up-01.png",
+          "sourceRect": [
+            0,
+            1402,
+            256,
+            1536
+          ],
+          "sourceFoot": [
+            150,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/cast-up-02.png",
+          "sourceRect": [
+            256,
+            1402,
+            512,
+            1536
+          ],
+          "sourceFoot": [
+            407,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/infernal-thunder-emperor-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/hit-down-01.png",
+          "sourceRect": [
+            512,
+            388,
+            768,
+            578
+          ],
+          "sourceFoot": [
+            657,
+            574
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/hit-down-02.png",
+          "sourceRect": [
+            768,
+            388,
+            1024,
+            578
+          ],
+          "sourceFoot": [
+            928,
+            574
+          ],
+          "sourceBodyHeight": 184
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/hit-right-01.png",
+          "sourceRect": [
+            512,
+            924,
+            768,
+            1095
+          ],
+          "sourceFoot": [
+            655,
+            1091
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/hit-right-02.png",
+          "sourceRect": [
+            768,
+            924,
+            1024,
+            1095
+          ],
+          "sourceFoot": [
+            921,
+            1091
+          ],
+          "sourceBodyHeight": 160
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/hit-up-01.png",
+          "sourceRect": [
+            512,
+            1402,
+            768,
+            1536
+          ],
+          "sourceFoot": [
+            662,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/hit-up-02.png",
+          "sourceRect": [
+            768,
+            1402,
+            1024,
+            1536
+          ],
+          "sourceFoot": [
+            926,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    }
+  }
+}
