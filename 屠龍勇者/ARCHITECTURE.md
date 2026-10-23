@@ -152,7 +152,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023l`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023m`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2685,3 +2685,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **代價**：開啟期間後端掉寶的防作弊不生效；`dragon_loot_config.enabled` 仍是 true，存檔上傳的掉寶收據檢查（lootCursor）照舊，序號不變所以不會被拒。
 - **驗證**：測試、check.ps1、混淆建置通過；瀏覽器以未登入暫時角色在 island 掛機：`lootMode='legacy'`、打 37 隻、拿到 43 件道具與金幣經驗、沒有任何 loot RPC；測試角色已刪除。
 - **關掉的步驟**：① Supabase 恢復（gm.html 能登入）② SQL Editor 執行 `tools/loot-batch.sql` ③ loot.js 改回 `LOOT_FORCE_LOCAL = false`、換版本號、推上線。
+
+## 106. 回收頁勾選賣出（2026-10-23，版本 `20261023m`；`ui-panels.js` 的 `sellPick`／`sellPickToggle`／`sellPickAll`／`sellPicked`、`index.html` 的 `.sell-pick` 樣式）
+
+- 使用者要求：販賣物品加勾選框，方便一次勾選處理掉。
+- 村莊「💰 回收」頁每列左邊加勾選框（`sellPickToggle(uid)`），勾到的那列金色框（`.list-row.picked`）；上方加「全選」（`sellPickAll`，只選有回收價的）與「🪙 賣出勾選（N）💰合計」按鈕。
+- `sellPicked()`：在村莊才可用；確認視窗列出項數與合計，若含有品質、強化、BOSS 附魔或單價 ≥ 5000 的道具另外提醒件數；確認時重新讀一次清單（期間背包變了以當下為準），整疊賣出、加金幣、清空勾選、存檔。回收價 0 的（例如箭、子彈）本來就不列出。原本每列的「賣 1／全部／賣出」與一鍵賣出不變。
+- `sellPick` 只存在記憶體；`renderSell` 每次畫面會拿掉已不在背包的編號。不改存檔結構。
+- 驗證：check.ps1 通過；瀏覽器以未登入暫時角色在低語港回收頁實際點選：勾長劍＋治癒藥水 ×50 顯示（2）💰420，確認後金幣 2000→2420、+3 長劍（未勾）保留、勾選清空；Console 無錯誤；測試角色已刪除。

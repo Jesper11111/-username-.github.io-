@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261023m：回收頁勾選賣出（第 106 節）**。使用者要求；每列勾選框、全選、「賣出勾選（N）💰合計」，含貴重道具會提醒。瀏覽器實測通過；已 commit 本機 main 待 Push。緊急開關仍開著（l 版起）。
+
 - **20261023l：緊急開關 LOOT_FORCE_LOCAL = true（第 105 節）——已 commit 待 Push**。Supabase 卡死期間先用一般掉寶讓玩家能掛機（瀏覽器實測可掛機、無 loot RPC）。**待辦：Supabase 恢復 → 執行 tools/loot-batch.sql → loot.js 改回 false、換版本推上線**。開啟期間後端掉寶防作弊不生效。
 
 - **20261023k：後端掉寶減量（第 104 節）——待 Supabase 恢復後執行 tools/loot-batch.sql；遊戲可先 Push（伺服器沒有批次函式時自動逐張結算）**。使用者同意 10 隻或 30 秒批次結算、已確認收據保留 3 天、不用 pg_cron。新收據表＋loot_finish_batch、釋放不重寫作廢憑證、每次結算順手清理；遊戲端擊殺排隊、同次掛機只釋放一次。test-loot-batch、test-server-loot-client、test-vault-v2-client（真實遊戲接 PGlite）與全部回歸、check.ps1、建置通過；已 commit 本機 main。緊急開關 LOOT_FORCE_LOCAL 仍是 false。

@@ -801,13 +801,40 @@ function bulkSellBtn(level) {
     }, '賣出');
 }
 
+// 勾選賣出（第 106 節）：每列勾選框，勾好一次賣出（整疊）；換頁、賣掉後不存在的編號自動拿掉
+let sellPick = new Set();
+function sellPickToggle(uid) { if (sellPick.has(uid)) sellPick.delete(uid); else sellPick.add(uid); renderPanel(); }
+function sellPickAll(on) { sellPick = new Set(on ? player.inv.filter(x => instSellPrice(x) > 0).map(x => x.uid) : []); renderPanel(); }
+function sellPickedList() { return player.inv.filter(x => sellPick.has(x.uid) && instSellPrice(x) > 0); }
+function sellPicked() {
+    if (!inTown()) return;
+    const list = sellPickedList();
+    if (!list.length) { showToast('請先勾選要賣的道具'); return; }
+    const total = list.reduce((a, x) => a + instSellPrice(x) * x.n, 0);
+    const valuable = list.filter(x => !!x.bossEnchant || (x.ench || 0) > 0 || !!x.q || instSellPrice(x) >= 5000).length;
+    gameConfirm('賣出勾選', `賣出勾選的 ${list.length} 項（整疊），共 💰${fmt(total)}？${valuable ? `\n⚠️ 其中 ${valuable} 件是有品質、強化、BOSS 附魔或高價的道具。` : ''}`, () => {
+        if (!inTown()) return;
+        const now = sellPickedList(), sum = now.reduce((a, x) => a + instSellPrice(x) * x.n, 0);
+        for (const x of now) removeInst(x.uid);
+        player.gold += sum;
+        sellPick.clear();
+        showToast(`賣出 ${now.length} 項（+${fmt(sum)}）`);
+        sfx('coin');
+        saveGame(); refreshUI();
+    }, '賣出');
+}
+
 function renderSell() {
     const list = sortedInv(player.inv).filter(x => instSellPrice(x) > 0);
     const n1 = bulkSellList(1).length, n2 = bulkSellList(2).length;
+    for (const uid of [...sellPick]) if (!list.some(x => x.uid === uid)) sellPick.delete(uid);
+    const picked = sellPickedList(), pickedGold = picked.reduce((a, x) => a + instSellPrice(x) * x.n, 0), allOn = list.length > 0 && picked.length === list.length;
     return `<div class="panel"><small class="muted">裝備中的道具不會出現在這裡。</small>
         <div class="btn-row"><button class="secondary" onclick="bulkSellBtn(1)" ${n1 ? '' : 'disabled'}>🪙 賣出普通裝備（${n1}）</button>
-        <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div></div><div class="list">` + (list.map(x =>
-        `<div class="list-row"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
+        <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div>
+        <div class="btn-row sell-pick-bar"><label class="sell-pick-all"><input type="checkbox" ${allOn ? 'checked' : ''} ${list.length ? '' : 'disabled'} onclick="sellPickAll(${allOn ? 'false' : 'true'})"> 全選</label>
+        <button onclick="sellPicked()" ${picked.length ? '' : 'disabled'}>🪙 賣出勾選（${picked.length}）${picked.length ? `　💰${fmt(pickedGold)}` : ''}</button></div></div><div class="list">` + (list.map(x =>
+        `<div class="list-row${sellPick.has(x.uid) ? ' picked' : ''}"><input type="checkbox" class="sell-pick" ${sellPick.has(x.uid) ? 'checked' : ''} onclick="sellPickToggle(${x.uid})" aria-label="勾選 ${esc(itemName(x))}"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
         <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
         || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
 }
