@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **char-owner.sql＋20261023p：一隻角色只能屬於一個帳號（第 109 節）——待使用者執行 SQL、Push**。起因是「操真猛」分身出現在多個帳號。登記表＋上傳檢查＋回填；執行後會列出目前的分身，管理者刪掉多餘的。test-char-owner 與端到端通過。正式庫原本缺 char-tombstone.sql，已請使用者補執行。
+
 - **20261023o：離線掛機可撿藥水、白色地圖、白色裝備（第 108 節）**。使用者決定這三類可離線掉落（在玩家裝置上決定，同離線經驗金幣）；依有效時間換算份數、受負重限制，報告新增寶物欄。test-offline-drops 與回歸、check.ps1、建置通過；已 commit 本機 main 待 Push。
 
 - **20261023n：關閉緊急開關、恢復後端掉寶批次結算（第 107 節）——已上線（2026-10-23，使用者確認 Disk IO balance 回升後推送）**。loot-batch.sql 已執行；API 卡住靠「Restart project」整個重啟後恢復（Fast database reboot 不會重啟 API）。建議 Disk IO balance 回升後再推。

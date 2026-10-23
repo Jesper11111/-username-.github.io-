@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
     create function auth.jwt() returns jsonb language sql as $$select jsonb_build_object('email','test@invalid','role','authenticated')$$;
     create function auth.role() returns text language sql as $$select 'authenticated'::text$$;
     grant usage on schema public,auth to anon,authenticated;`);
-    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql', 'market-v2.sql', 'save-log-throttle.sql', 'loot-batch.sql']) {   // 真實遊戲存檔也要通過能力值上限（第 94 節）；交易所 v2（第 95 節）；掉寶批次（第 104 節）
+    for (const file of ['supabase.sql', 'anticheat.sql', 'server-loot-install.sql', 'vault-v2.sql', 'stat-cap.sql', 'market-v2.sql', 'save-log-throttle.sql', 'loot-batch.sql', 'char-owner.sql']) {   // 角色歸屬（第 109 節）；真實遊戲存檔也要通過能力值上限（第 94 節）；交易所 v2（第 95 節）；掉寶批次（第 104 節）
         let sql = fs.readFileSync(path.join(__dirname, file), 'utf8');
         if (file === 'supabase.sql') sql = sql.replace(/create extension if not exists pgcrypto;/i, '');
         await db.exec(sql);

@@ -71,6 +71,7 @@ function cloudErrText(e) {
     if (/signups not allowed|Signups not allowed/i.test(m)) return '目前暫停註冊新帳號';
     if (/timeout|Failed to fetch|NetworkError|network/i.test(m)) return '連不上雲端伺服器，請確認網路';
     if (/client too old/i.test(m)) return '遊戲版本太舊，請重新整理或按「有新版本」更新';
+    if (/char owned elsewhere/i.test(m)) return '這個角色已經屬於其他帳號，不能上傳到目前的帳號';   // tools/char-owner.sql
     if (/stat cap exceeded/i.test(m)) return '能力值超過上限（單項最高 40），雲端不接受這份存檔';   // tools/stat-cap.sql
     return m || '未知錯誤';
 }

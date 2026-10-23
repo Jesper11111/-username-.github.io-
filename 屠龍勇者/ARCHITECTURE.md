@@ -13,6 +13,7 @@
 | `tools/save-log-throttle.sql`、`tools/test-save-log-throttle.js` | 減少每次上傳存檔的資料庫寫入：存檔歷程與最後上線約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆；隔離 PGlite 測試（第 101 節） |
 | `tools/loot-batch.sql`、`tools/test-loot-batch.js` | 後端掉寶減量：批次結算收據表、釋放不重寫作廢憑證、每次結算順手清理舊帳本；隔離 PGlite 測試（第 104 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/test-offline-drops.js` | 離線掛機掉落：篩選、依有效時間換算、負重上限、實跑離線結算（第 108 節） |
+| `tools/char-owner.sql`、`tools/test-char-owner.js` | 一隻角色只能屬於一個帳號：歸屬登記表＋上傳檢查＋回填；隔離 PGlite 測試（第 109 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -153,7 +154,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023o`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023p`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2712,3 +2713,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `applyOffline` 依 `k = 有效時間 ÷ 模擬時間` 呼叫 `offlineGiveDrops(drops, k)`：每筆掉落給 `floor(k)` 份，小數部分照機率多給一份；裝備 `addItem(id, 1, 0)`（白色、無強化），地圖 `makeMapItem(t, null)`（白色）；超過負重的不撿、計數。報告新增「寶物：…（負重已滿，N 件沒撿）」，說明改成「※ 離線只撿藥水、白色（普通）地圖與白色裝備，不累積任務進度。」，掉落紀錄加一行「🌙 離線撿到：…」。
 - **不改**：存檔結構、離線時間上限（12 小時 × 50%）、補給限制、陣亡規則；後端掉寶與 SQL 都不動。
 - **測試**：`tools/test-offline-drops.js`：篩選規則（魔法裝備、稀有地圖、材料、通貨、魔法書不給）、k=3 每筆 3 份且全白色、k=2.5 給 2 或 3 份、負重只撿得下的部分；實跑 Lv.30 角色離線 2 小時：擊倒 196、撿到紅水 ×18，新增道具只有允許的種類。全部回歸、check.ps1、混淆建置通過；瀏覽器離線報告顯示寶物欄、無錯誤，測試角色已刪除。
+
+## 109. 一隻角色只能屬於一個帳號（2026-10-23，SQL `tools/char-owner.sql`，遊戲版本 `20261023p`；`cloud.js` 的 `cloudErrText`）
+
+- **起因**：管理頁「經驗暴增」裡，同一隻「操真猛」（Lv.68、總經驗 728,514,376、建立時間相同）同時出現在 aszx113224、poiuyt、qazwsc、asdfgh 等多個帳號：同一台裝置註冊新帳號登入，把本機角色傳上去的分身。管理者用 SQL 刪掉（第 107 節後的刪除 SQL＋墓碑）只擋得住那個帳號，他再開新帳號還能再傳。也發現正式庫原本沒有 `char-tombstone.sql`（已請使用者補執行）。
+- **使用者決定**：伺服器擋下「同一隻角色已在別的帳號出現過」的上傳。
+- **SQL**（接在 supabase.sql、char-tombstone.sql 之後，可重跑）：
+  - `dragon_char_owner(char_id = created|cls 主鍵, user_id, name, first_at)`；RLS、玩家不能直接讀寫。`dragon_saves_char_idx` 表達式索引（created、cls）供檢查用。
+  - BEFORE trigger `dragon_saves_char_owner`（只管 authenticated、內容有變的上傳）：已登記給別的帳號 → `char owned elsewhere`（hint `dragon_char_owner`）；還沒登記但雲端已有別的帳號擁有同一隻 → 同樣拒收、不登記；否則登記給這個帳號。登記不會因刪除角色而消失，所以刪掉的分身也不能被新帳號傳回來。
+  - 回填：只在一個帳號出現的角色登記給那個帳號；多個帳號都有的分身不登記（都會被擋），執行完列出這些分身，請管理者刪掉多餘的，留下的那個上傳時再登記。
+- **遊戲端**：`cloudErrText` 顯示「這個角色已經屬於其他帳號，不能上傳到目前的帳號」；被拒收的格子依第 102 節 10 分鐘內不重傳。正常玩家不受影響（遊戲本來只上傳屬於目前帳號的角色）。
+- **測試**：`tools/test-char-owner.js`（PGlite 先有舊資料再安裝、重複安裝）：回填只登記單一帳號、正主照常、別的帳號傳同一隻被擋、分身清掉多餘的之前雙方都擋、管理者刪掉一邊（含墓碑）後另一邊可上傳並登記、刪除後新帳號傳不回來、新角色首傳登記、管理者不受影響、登記表不可直讀。`test-vault-v2-client.js` 加裝 char-owner.sql，真實遊戲多帳號流程照常。check.ps1、混淆建置通過。
+- **待辦**：`wipe.sql` 白名單還沒加 `dragon_char_owner`（全清時要一起清，否則舊角色 id 會留在登記表；新角色 id 不同，不影響新開的角色）。
