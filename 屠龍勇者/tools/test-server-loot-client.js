@@ -83,11 +83,15 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
   assert.equal(calls.filter(c=>c[0]==='loot_release').length,1,'同一次掛機只釋放一次');assert.equal(calls.filter(c=>c[0]==='loot_spawn').length,2);
   marketRpc=async fn=>{calls.push([fn]);if(fn==='loot_spawn')throw Error('loot encounters full');return true;};hunt.state='search';await lootSpawn();
   assert.equal(player.hunting,true,'遭遇太多不停掛機');assert.equal(hunt.lootReleased,false,'下次先釋放');lootStore([]);}
+ {const fins=[];marketRpc=async(fn,args)=>{if(fn==='loot_finish_batch')throw Error('Could not find the function public.loot_finish_batch(p_batch, p_tickets)');if(fn==='loot_finish'){fins.push(args.p_ticket);if(args.p_ticket==='x2')throw Error('loot ticket cancelled');return {};}return fn==='loot_pending'?[]:true;};
+  lootBatchMissing=false;lootPendingAt=gameNow+300000;lootStore([{key:'x1',kind:'kill',ticket:'x1',slot:0,char,at:Date.now()},{key:'x2',kind:'kill',ticket:'x2',slot:0,char,at:Date.now()}]);lootFlushWanted=true;await lootPump();
+  assert.equal(lootBatchMissing,true,'伺服器沒有批次函式');assert.deepEqual([...fins],['x1','x2'],'改回逐張結算');assert.equal(lootJobs().length,0,'作廢的略過、佇列清空');
+  lootStore([{key:'x3',kind:'kill',ticket:'x3',slot:0,char,at:Date.now()}]);await lootPump();assert.equal(lootJobs().length,0,'之後不等湊滿');lootBatchMissing=false;}
  {let calls=0;marketRpc=async()=>{calls++;return [];};cloudBackoffUntil=Date.now()+20000;hunt.state='search';hunt.timer=0;await lootSpawn();
   assert.equal(calls,0,'退避中不呼叫伺服器');assert.equal(player.hunting,true);assert(hunt.timer>=15000,'等退避結束再找怪');lootStore([{key:'b2',kind:'kill',ticket:'b2',slot:0,char}]);await lootPump();assert.equal(calls,0,'退避中不結算');cloudBackoffUntil=0;lootStore([]);}
  let spawnCalls=0;cloudFlush=async()=>{cloudUser={id:'other'};return true;};marketRpc=async()=>{spawnCalls++;};
  await lootSpawn();assert.equal(spawnCalls,0,'await期間換帳號不得繼續發怪');
  cloudUser=null;assert.equal(lootCanPlay(),false,'未登入不能進入線上掉寶');
- console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避、停用時改一般掉寶不卡住、批次結算與少釋放。');
+ console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避、停用時改一般掉寶不卡住、批次結算與少釋放、舊伺服器自動逐張結算。');
 })()`,ctx);}
 main().catch(e=>{console.error(e);process.exitCode=1;});

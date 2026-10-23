@@ -6,7 +6,8 @@ const LOOT_FORCE_LOCAL = false;
 let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0, lootSyncFailAt = 0;
 // 批次結算（第 104 節，tools/loot-batch.sql）：擊殺先排隊，同一角色滿 10 隻或最早那隻等了 30 秒才一起結算（一批最多 50 隻）
 const LOOT_BATCH_N = 10, LOOT_BATCH_MS = 30000, LOOT_BATCH_MAX = 50;
-let lootFlushWanted = false;   // 停止掛機、離開畫面、使用倉庫／交易所前：不等湊滿，下次就結算
+let lootFlushWanted = false;
+let lootBatchMissing = false;   // 伺服器還沒執行 loot-batch.sql（找不到 loot_finish_batch）：改回一隻一隻結算，先推遊戲也不會卡住   // 停止掛機、離開畫面、使用倉庫／交易所前：不等湊滿，下次就結算
 function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
 function lootChar(p = player) { return p ? String(p.created) + '|' + p.cls : ''; }
@@ -169,7 +170,7 @@ function lootFormBatches() {
     let changed = false;
     for (const k in groups) {
         const g = groups[k];
-        if (!lootFlushWanted && g.length < LOOT_BATCH_N && Date.now() - Math.min(...g.map(j => j.at || 0)) < LOOT_BATCH_MS) continue;
+        if (!lootFlushWanted && !lootBatchMissing && g.length < LOOT_BATCH_N && Date.now() - Math.min(...g.map(j => j.at || 0)) < LOOT_BATCH_MS) continue;
         const id = crypto.randomUUID();
         for (const j of g.slice(0, LOOT_BATCH_MAX)) j.batch = id;
         changed = true;
@@ -203,7 +204,18 @@ async function lootPump() {
                 throw Error('雲端存檔尚未同步');
             }
             if (job.kind === 'raid') await marketRpc('loot_raid', { p_slot:job.slot,p_char:job.char,p_room:job.room,p_round:job.round });
-            else await marketRpc('loot_finish_batch', { p_batch:job.batch,p_tickets:lootJobs().filter(j => j.batch === job.batch).map(j => j.ticket) });
+            else {
+                const tickets = lootJobs().filter(j => j.batch === job.batch).map(j => j.ticket);
+                try { if (lootBatchMissing) throw Error('loot_finish_batch missing'); await marketRpc('loot_finish_batch', { p_batch:job.batch,p_tickets:tickets }); }
+                catch (e) {
+                    if (!/loot_finish_batch|PGRST202|Could not find the function/i.test(String((e && (e.message || e.code)) || e))) throw e;
+                    lootBatchMissing = true;   // 舊版伺服器：逐張結算
+                    for (const t of tickets) {
+                        try { await marketRpc('loot_finish', { p_ticket:t }); }
+                        catch (e2) { if (!/loot ticket (cancelled|missing|expired)/.test(String(e2 && e2.message))) throw e2; }   // 作廢／過期的略過
+                    }
+                }
+            }
             if (!cloudUser || cloudUser.id !== uid) return;
             const pending = await marketRpc('loot_pending', { p_slot:job.slot,p_char:job.char });
             for (const r of pending) if (!lootApply(r)) throw Error('掉寶收據需要同步，請到設定確認雲端進度');

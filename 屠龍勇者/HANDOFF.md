@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **20261023k：後端掉寶減量（第 104 節）——待 Supabase 恢復後執行 tools/loot-batch.sql，再 Push**。使用者同意 10 隻或 30 秒批次結算、已確認收據保留 3 天、不用 pg_cron。新收據表＋loot_finish_batch、釋放不重寫作廢憑證、每次結算順手清理；遊戲端擊殺排隊、同次掛機只釋放一次。test-loot-batch、test-server-loot-client、test-vault-v2-client（真實遊戲接 PGlite）與全部回歸、check.ps1、建置通過；已 commit 本機 main。緊急開關 LOOT_FORCE_LOCAL 仍是 false。
+- **20261023k：後端掉寶減量（第 104 節）——待 Supabase 恢復後執行 tools/loot-batch.sql；遊戲可先 Push（伺服器沒有批次函式時自動逐張結算）**。使用者同意 10 隻或 30 秒批次結算、已確認收據保留 3 天、不用 pg_cron。新收據表＋loot_finish_batch、釋放不重寫作廢憑證、每次結算順手清理；遊戲端擊殺排隊、同次掛機只釋放一次。test-loot-batch、test-server-loot-client、test-vault-v2-client（真實遊戲接 PGlite）與全部回歸、check.ps1、建置通過；已 commit 本機 main。緊急開關 LOOT_FORCE_LOCAL 仍是 false。
 
 - **20261023j：後端掉寶停用自動改一般掉寶＋緊急開關 LOOT_FORCE_LOCAL（第 103 節）**。i 版後 Supabase 又卡死，玩家無法掛機。現在 enabled=false 不用重新整理就改一般掉寶；Supabase 完全卡死時可把 loot.js 的 LOOT_FORCE_LOCAL 改 true 推上線（恢復後改回）。測試、check.ps1、建置通過；已 commit 本機 main 待 Push。後端掉寶減量設計（第 103 節之後）待使用者決定，要等減量做完再重新啟用比較安全。
 

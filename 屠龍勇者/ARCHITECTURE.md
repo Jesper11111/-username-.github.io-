@@ -2676,4 +2676,4 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `lootSpawn`：同一次掛機（`hunt.lootReleased`）只釋放一次；伺服器回 `loot encounters full` 時，下次先釋放並馬上結算，當成暫時性錯誤不停掛機。
   - 玩家看到的變化：掉落紀錄每 10 隻或 30 秒一批出現。
 - **測試**：`tools/test-loot-batch.js`（PGlite 全部正式 SQL＋重複安裝）：12 群未結算可繼續生怪、一批 1 張收據、憑證刪除、重送同收據、待領新舊並列與確認後消失、太快整批重試、0／51 張拒絕、作廢憑證的 xmin 不變、全作廢回 empty、舊單隻結算相容、3 天／1 小時／12 小時清理、未確認不刪、收據表不可直讀。`test-server-loot-client.js`：9 隻不結算、滿 10 隻 1 次、失敗保留、重送同編號、馬上結算、超過 30 秒結算、同次掛機只釋放一次、遭遇太多不停掛機。`test-vault-v2-client.js`：真實遊戲接 PGlite 生怪→打倒→批次結算→入帳，收據張數少於怪數、憑證刪除、本機序號依收據增加。全部回歸、check.ps1、混淆建置通過；瀏覽器載入無程式錯誤。
-- **部署順序**：先執行 `loot-batch.sql`，再推遊戲（舊版照常可用）。Supabase 恢復後才能執行。
+- **部署順序**：建議先執行 `loot-batch.sql` 再推遊戲。遊戲端有保險：伺服器找不到 `loot_finish_batch`（PGRST202）時 `lootBatchMissing=true`，改回逐張 `loot_finish`（作廢／過期的略過）、擊殺不再等湊滿，所以先推遊戲也不會卡住，只是還沒減量。SQL 要等 Supabase 恢復才能執行。
