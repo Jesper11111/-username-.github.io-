@@ -1,0 +1,685 @@
+{
+  "id": "frost-nether-emperor-v1",
+  "name": "霜獄幽冥魔皇",
+  "form": "m32",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/frost-nether-emperor-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/walk-down-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            0,
+            256,
+            194
+          ],
+          "sourceFoot": [
+            136,
+            187
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/walk-down-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            0,
+            512,
+            194
+          ],
+          "sourceFoot": [
+            392,
+            187
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/walk-down-03.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            0,
+            768,
+            194
+          ],
+          "sourceFoot": [
+            648,
+            187
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/walk-down-04.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            0,
+            1024,
+            194
+          ],
+          "sourceFoot": [
+            904,
+            187
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/walk-right-01.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            408,
+            334
+          ],
+          "sourceFoot": [
+            238,
+            325
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/walk-right-02.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            384,
+            0,
+            792,
+            334
+          ],
+          "sourceFoot": [
+            622,
+            325
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/walk-right-03.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            768,
+            0,
+            1176,
+            334
+          ],
+          "sourceFoot": [
+            1006,
+            325
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/walk-right-04.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            1152,
+            0,
+            1536,
+            334
+          ],
+          "sourceFoot": [
+            1390,
+            325
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/walk-up-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            1104,
+            256,
+            1256
+          ],
+          "sourceFoot": [
+            156,
+            1252
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/walk-up-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            1104,
+            512,
+            1256
+          ],
+          "sourceFoot": [
+            407,
+            1252
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/walk-up-03.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            1104,
+            768,
+            1256
+          ],
+          "sourceFoot": [
+            663,
+            1252
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/walk-up-04.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            1104,
+            1024,
+            1256
+          ],
+          "sourceFoot": [
+            925,
+            1252
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/frost-nether-emperor-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/attack-down-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            194,
+            256,
+            377
+          ],
+          "sourceFoot": [
+            140,
+            373
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/attack-down-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            194,
+            512,
+            377
+          ],
+          "sourceFoot": [
+            385,
+            373
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/attack-down-03.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            194,
+            768,
+            377
+          ],
+          "sourceFoot": [
+            652,
+            373
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/attack-down-04.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            194,
+            1024,
+            377
+          ],
+          "sourceFoot": [
+            913,
+            373
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/attack-right-01.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            0,
+            334,
+            408,
+            670
+          ],
+          "sourceFoot": [
+            220,
+            656
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/attack-right-02.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            384,
+            334,
+            792,
+            670
+          ],
+          "sourceFoot": [
+            576,
+            656
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/attack-right-03.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            768,
+            334,
+            1176,
+            670
+          ],
+          "sourceFoot": [
+            976,
+            656
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/attack-right-04.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            1152,
+            334,
+            1536,
+            670
+          ],
+          "sourceFoot": [
+            1382,
+            656
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/attack-up-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            1256,
+            256,
+            1405
+          ],
+          "sourceFoot": [
+            156,
+            1401
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/attack-up-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            1256,
+            512,
+            1405
+          ],
+          "sourceFoot": [
+            407,
+            1401
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/attack-up-03.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            1256,
+            768,
+            1405
+          ],
+          "sourceFoot": [
+            663,
+            1401
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/attack-up-04.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            1256,
+            1024,
+            1405
+          ],
+          "sourceFoot": [
+            925,
+            1401
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/frost-nether-emperor-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/cast-down-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            377,
+            256,
+            558
+          ],
+          "sourceFoot": [
+            136,
+            550
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/cast-down-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            377,
+            512,
+            558
+          ],
+          "sourceFoot": [
+            391,
+            550
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/cast-right-01.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            0,
+            670,
+            408,
+            1024
+          ],
+          "sourceFoot": [
+            215,
+            979
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/cast-right-02.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            384,
+            670,
+            792,
+            1024
+          ],
+          "sourceFoot": [
+            594,
+            979
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/cast-up-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            0,
+            1405,
+            256,
+            1536
+          ],
+          "sourceFoot": [
+            156,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/cast-up-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            256,
+            1405,
+            512,
+            1536
+          ],
+          "sourceFoot": [
+            407,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/frost-nether-emperor-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/hit-down-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            377,
+            768,
+            558
+          ],
+          "sourceFoot": [
+            654,
+            550
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/hit-down-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            377,
+            1024,
+            558
+          ],
+          "sourceFoot": [
+            912,
+            550
+          ],
+          "sourceBodyHeight": 182
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/hit-right-01.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            768,
+            670,
+            1176,
+            1024
+          ],
+          "sourceFoot": [
+            1016,
+            979
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/hit-right-02.png",
+          "source": "side-generated.png",
+          "sourceRect": [
+            1152,
+            670,
+            1536,
+            1024
+          ],
+          "sourceFoot": [
+            1382,
+            979
+          ],
+          "sourceBodyHeight": 310
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/hit-up-01.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            512,
+            1405,
+            768,
+            1536
+          ],
+          "sourceFoot": [
+            669,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/hit-up-02.png",
+          "source": "sheet-transparent.png",
+          "sourceRect": [
+            768,
+            1405,
+            1024,
+            1536
+          ],
+          "sourceFoot": [
+            925,
+            1533
+          ],
+          "sourceBodyHeight": 146
+        }
+      ]
+    }
+  }
+}

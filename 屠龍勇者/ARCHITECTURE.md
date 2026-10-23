@@ -7,6 +7,7 @@
 
 | 檔案 | 內容 |
 |---|---|
+| `images/sprites/morph/frost-nether-emperor-v1/`、`tools/sprite-src/morph/frost-nether-emperor-v1/`、`tools/frost-emperor-morph-preview.html`、`tools/test-frost-emperor-morph.js` | 32霜獄幽冥魔皇：36格透明動畫、四參考／生成原稿／提示詞／腳點註冊、隔離卷軸與動作測試（第112節） |
 | `images/sprites/morph/infernal-thunder-emperor-v1/`、`tools/sprite-src/morph/infernal-thunder-emperor-v1/`、`tools/infernal-emperor-morph-preview.html`、`tools/test-infernal-emperor-morph.js` | 31煉獄雷霆魔皇：36格透明動畫、原圖／生成提示詞／註冊與打包、隔離卷軸與renderer預覽及回歸（第111節） |
 | `tools/vault-v2.sql`、`tools/vault-audit.sql`、`tools/test-vault-v2.js`、`tools/test-vault-v2-client.js` | 共用倉庫防複製 v2：伺服器存取直接改雲端存檔＋存檔序號守衛；只讀查帳 SQL；隔離 PGlite 的 SQL 測試與「真實遊戲＋假 Supabase 接 PGlite」端到端測試（第 93 節） |
 | `tools/stat-cap.sql`、`tools/test-stat-cap.js` | 能力值單項 > 40（或型別不對、缺欄位）的玩家上傳一律拒收；隔離 PGlite 測試（第 94 節） |
@@ -157,7 +158,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023r`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023s`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2754,3 +2755,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `dragon_saves_audit`（從 save-log-throttle.sql 的版本複製修改）：信任名單的帳號記完存檔歷程後直接結束、不記可疑紀錄；去重改成「同一種異常、同一角色 24 小時內已有紀錄（**含已處理**）就不再記」，所以「已處理」至少 24 小時內有效，超過 24 小時情況還在才會再記。
 - **gm.html**：可疑紀錄、玩家列表、存檔歷程視窗多一顆「排除」（已信任時變「取消信任」），帳號旁顯示 ✅；新分頁「✅ 信任名單」（時間、帳號、原因、處理人、取消信任）。`gmTrust` 跳 prompt 問原因 → upsert `dragon_trusted` → 把這個帳號所有未處理紀錄標成已處理；`gmUntrust` 確認後刪除。還沒執行 flag-trust.sql 時信任名單當作空的，排除會提示先執行 SQL。可疑紀錄頁的說明改成解釋「已處理」與「排除」的差別。
 - **測試**：`tools/test-flag-trust.js`（PGlite 全部相關正式 SQL＋重複安裝）：未處理會擋；已處理後 24 小時內連傳不重記也不擋；超過 24 小時再記；排除後不擋、不記、歷程照記、舊的未處理紀錄也不擋；取消信任恢復；玩家讀不到、寫不進信任名單。gm.html 語法檢查、本機載入（分頁與函式存在、無錯誤）、混淆建置（gm-lib）通過；登入後的實際操作未測（需要管理者帳號）。
+
+## 112. 32霜獄幽冥魔皇（金變、近戰通用）（2026-10-23，版本 `20261023s`）
+
+- 使用者提供32.jfif、32-1／32-2／32-3.jfif並確認名稱「霜獄幽冥魔皇」、金色與近戰武器通用；沿用MORPH_GROUPS.melee，金變Lv.70／命中+7／傷害+7／攻速+20%。MORPH_FORMS新增m32，sprite為MORPHS.frostNetherEmperor；測試等級開關、30分鐘卷軸消耗、SAVE_SCHEMA不變，不增加裝備限制。
+- 保留銀黑冰霜骨甲、黑色彎角、冰藍符文巨劍、深藍破披風與寒氣，金色為階級而非衣甲配色。原32-2／32-3同為背向，內建image_gen補正／側／背36格；初稿側走第一格舉劍與側施法偏背影，另生成側向12格替換，原稿均保留。
+- 正式格384×320、foot[192,270]、charH160、drawH48；walk／attack每方向4格，cast／hit各2格，時間130／140／220／150ms，攻擊560ms。左方向鏡像右方向；四PNG加入SW預載。images/sprites/morph/frost-nether-emperor-v1保存36單格、四圖集／WebP／contact／manifest；tools/sprite-src同名目錄保存四參考／完整生成稿／提示詞／registration.json／prepare.py，以透明連通區隔離並註冊腳底，不覆寫舊圖。
+- tools/frost-emperor-morph-preview.html使用實際卷軸選單、sceneReadEvents與sceneDraw，四方向四動作、循環與逐格；記憶體storage並禁止連外。tools/test-frost-emperor-morph.js檢查金變數值、各近戰武器外觀／加成、卷軸扣量／到期／上次選擇、命中／MISS／施法／受傷、其他變身、圖集與SW。既有變身數量斷言同步32；待實玩確認才提交／Push。

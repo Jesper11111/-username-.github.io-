@@ -1,0 +1,45 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><base href="../"><title>魔皇變身攻擊檢查</title>
+<style>body{background:#1c2225;color:#eee;font:16px sans-serif;margin:20px}canvas{width:min(100%,960px);height:auto}button,select{font:inherit;padding:8px;margin:6px}#result{white-space:pre-wrap}</style>
+<h2>霜獄幽冥魔皇・變身檢查</h2>
+<p>金變・近戰武器通用｜命中 +7／傷害 +7／攻速 +20%｜隔離預覽，不讀寫角色存檔。</p>
+<label>動作 <select id="action"><option value="attack">攻擊</option><option value="walk">走路</option><option value="cast">施法</option><option value="hit">受傷</option></select></label><button id="play">循環播放／暫停</button>
+<label>方向 <select id="direction"><option value="right">右側</option><option value="down">正面</option><option value="up">背面</option><option value="left">左側</option></select></label>
+<button id="attack" disabled>攻擊一次</button><button id="scroll" disabled>開啟變形卷軸</button><button id="step" disabled>攻擊逐格</button><p id="result">載入中</p><p id="record"></p><canvas width="640" height="300" aria-label="實際遊戲繪圖函式播放魔皇變身攻擊"></canvas><div id="dialog-layer" class="overlay"></div>
+<script>
+(async()=>{
+const memory=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)}});
+const localFetch=window.fetch.bind(window);window.fetch=(u,o)=>{if(new URL(u,location.href).origin!==location.origin)throw Error('隔離預覽禁止連外');return localFetch(u,o);};
+const index=await(await fetch('index.html')).text(),style=document.createElement('style');style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+const files=[...index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=[^"]+"/g)].map(m=>m[1]).filter(f=>!['data/main.js','data/pwa.js'].includes(f));
+for(const f of files)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=f+'?v=20261023s&preview=frost-emperor-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+SIM_MODE=true;createPlayer('魔皇變身測試','darkelf',CLASSES.darkelf.base);player.lv=55;
+addItem('polyScroll',5);const morphError=usePotion('polyScroll','m32');if(morphError)throw Error(morphError);player.loc={type:'zone',id:'tower',floor:10};buildScene();
+scene.bg=null;scene.gates=null;scene.pl.dir='right';scene.pl.path=[];
+const m={x:scene.pl.x+1,y:scene.pl.y,rx:scene.pl.rx+1,ry:scene.pl.ry,mid:'skeleton',lastHp:100,inst:{name:'測試骷髏',hp:100,maxHp:100,lv:10}};
+scene.mons=[m];scene.engaged=m;scene.lastPlayerHp=player.hp;
+const button=document.getElementById('attack'),result=document.getElementById('result'),cv=document.querySelector('canvas');
+await Promise.all(['walk','attack','cast','hit'].map(a=>new Promise((resolve,reject)=>{const im=new Image();im.onload=resolve;im.onerror=reject;im.src=MORPHS.frostNetherEmperor[a].src;})));
+MORPHS.frostNetherEmperor.drawH=96;
+button.disabled=false;
+saveGame=()=>{};refreshUI=()=>{document.getElementById('record').textContent='目前變身：'+playerMorph().name+'；卷軸剩 '+countItem('polyScroll')+' 張';};sfx=()=>{};
+document.getElementById('scroll').disabled=false;document.getElementById('step').disabled=false;
+document.getElementById('scroll').onclick=()=>{SIM_MODE=false;try{openMorphPicker();}finally{SIM_MODE=true;}};
+const seen=new Set(),attackSpec=MORPHS.frostNetherEmperor.attack,n=attackSpec.frames.down,ms=attackSpec.ms,dur=n*ms;
+let paused=false,phase=-1;
+let selected='attack',loop=false;
+document.getElementById('action').onchange=e=>{selected=e.target.value;phase=-1;scene.pl.anim=null;};
+document.getElementById('play').onclick=()=>{loop=!loop;paused=!loop;};
+button.onclick=()=>{paused=false;phase=-1;seen.clear();cv.dataset.frames='';m.inst.hp-=1;sceneReadEvents();const a=scene.pl.anim;document.getElementById('record').textContent='觸發紀錄：'+(a?a.name+'／'+a.dur+'ms':'沒有動作')+'；目標HP '+m.inst.hp;};
+document.getElementById('step').onclick=()=>{loop=false;paused=true;const spec=MORPHS.frostNetherEmperor[selected],count=spec.frames.down;phase=(phase+1)%count;scene.pl.anim={name:selected,t:phase*spec.ms+spec.ms/2,dur:count*spec.ms};};
+document.getElementById('direction').onchange=e=>{scene.pl.dir=e.target.value;};
+let prev=0;
+function draw(t){const dt=prev?Math.min(100,t-prev):0;prev=t;if(scene.pl.anim&&!paused)scene.pl.anim.t+=dt;
+if(loop&&(!scene.pl.anim||scene.pl.anim.t>=scene.pl.anim.dur)){const spec=MORPHS.frostNetherEmperor[selected];scene.pl.anim={name:selected,t:0,dur:spec.frames.down*spec.ms};}
+sceneDraw(cv.getContext('2d'),640,300);
+const a=scene.pl.anim;const active=a&&a.t<a.dur;
+if(active){seen.add(Math.min(n-1,Math.floor(a.t/ms)));cv.dataset.frames=Array.from(seen).join(',');}
+result.textContent=active?`${a.name}・第 ${Math.floor(a.t/MORPHS.frostNetherEmperor[a.name].ms)+1} 格／${a.dur}ms`:'站立・可選擇動作循環播放';
+cv.dataset.animation=active?a.name:'idle';requestAnimationFrame(draw);}
+requestAnimationFrame(draw);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></html>
