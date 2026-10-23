@@ -54,6 +54,7 @@ function makeMapItem(t, q) {
 function giveMap(t, q, why) {
     const x = makeMapItem(t, q);
     player.inv.push(x);
+    if (SIM_MODE && offlineDrops) offlineDrops.push({ map: clamp(t, 1, MAP_TIERS), q: x.q || null });   // 離線模擬：記下掉落（offline.js，第 108 節）
     addLootLog(`🗺️ ${why || '獲得'} ${x.q ? `【${QUALITY[x.q].name}】` : ''}${itemName(x)} ×1`, x.q === 'rare' ? 'rare' : 'loot');
     return x;
 }

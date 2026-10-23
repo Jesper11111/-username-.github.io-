@@ -4,7 +4,15 @@
 //   2. 量出每毫秒的經驗、金幣、擊殺、消耗品用量
 //   3. 有效時間 = 離開時間（最多 12 小時）× 50%，再受補給限制：藥水／彈藥不夠就提早結束
 //   4. 模擬中陣亡 → 只結算到陣亡為止，並照死亡規則扣經驗、回村
-// 離線期間不撿道具、不累積任務進度；龍穴不算離線掛機
+// 離線期間只撿藥水、白色（普通品質）異界地圖與白色裝備（2026-10-23 使用者決定，第 108 節），不累積任務進度；龍穴不算離線掛機
+
+let offlineDrops = null;   // 模擬中記下的掉落（combat.js rollDrops、maps.js giveMap 寫入）
+// 離線可以拿到的：藥水、沒有品質的地圖、沒有品質的武器／防具
+function offlineDropAllowed(r) {
+    if (r.map) return !r.q;
+    const d = ITEMS[r.id];
+    return !!d && (d.cat === 'potion' || ((d.cat === 'weapon' || d.cat === 'armor') && !r.q));
+}
 
 function totalExpOf(p) {
     let t = p.exp;
@@ -34,6 +42,7 @@ function measureHunt(sampleMs) {
     hunt = null; walkHome = null;
     session = { start: gameNow, kills: 0, exp: 0, gold: 0 };
     player.hunting = true;
+    offlineDrops = [];
     let t = 0, died = false, ended = false, expBeforeDeath = before.exp;
     try {
         while (t < sampleMs) {
@@ -55,11 +64,13 @@ function measureHunt(sampleMs) {
             exp: Math.max(0, (died ? expBeforeDeath : totalExpOf(player)) - before.exp),
             gold: player.gold - before.gold,
             kills: player.kills - before.kills,
+            drops: offlineDrops.filter(offlineDropAllowed),
         };
     } finally {
         player = guardWrap(JSON.parse(snap));   // 還原成新物件：重新套上數值偽裝（guard.js）
         hunt = saved.hunt; session = saved.session; walkHome = saved.walkHome; gameNow = saved.gameNow;
         gameLog.length = 0; gameLog.push(...saved.log); logSeq = saved.logSeq;
+        offlineDrops = null;
         SIM_MODE = false;
     }
 }
@@ -97,6 +108,7 @@ function applyOffline(awayMs, paidMs = Infinity) {   // paidMs：伺服器用鑽
     player.gold += gold;
     player.kills += kills;
     gainExp(exp);
+    const loot = offlineGiveDrops(s.drops, k);
     if (inMapRun()) player.mapRun.left = Math.max(0, player.mapRun.left - kills);
 
     let endText = `仍在${zoneTitle()}掛機中`;
@@ -129,10 +141,35 @@ function applyOffline(awayMs, paidMs = Infinity) {   // paidMs：伺服器用鑽
 
     const report = {
         awayMs, effMs: eff, exp, gold, kills, lvUp: player.lv - lv0, used: usedText, endText, capped: awayMs > capped,
+        loot: loot.text, lootSkipped: loot.skipped,
     };
+    if (loot.text.length) addLootLog(`🌙 離線撿到：${loot.text.join('、')}`, 'loot');
     addLog(`🌙 離線收益：擊倒 ${fmt(kills)}、經驗 +${fmt(exp)}、金幣 +${fmt(gold)}`, 'rare');
     saveGame();
     return report;
+}
+
+// 依模擬的掉落換算實際時間（k＝有效時間／模擬時間）：每筆掉落給 floor(k) 份，小數部分照機率多給一份；超過負重的不撿
+function offlineGiveDrops(drops, k) {
+    const st = calcStats(), got = {}, names = {};
+    let skipped = 0;
+    for (const r of drops || []) {
+        const copies = Math.floor(k) + (Math.random() < k % 1 ? 1 : 0);
+        for (let c = 0; c < copies; c++) {
+            if (r.map) {
+                const id = 'map' + r.map;
+                if (invWeight() + (ITEMS[id].wt || 0) > st.weightMax) { skipped++; continue; }
+                player.inv.push(makeMapItem(r.map, null));
+                got[id] = (got[id] || 0) + 1; names[id] = ITEMS[id].name;
+                continue;
+            }
+            const d = ITEMS[r.id], n = r.n || 1;
+            if (invWeight() + (d.wt || 0) * n > st.weightMax) { skipped += n; continue; }
+            addItem(r.id, n, 0);
+            got[r.id] = (got[r.id] || 0) + n; names[r.id] = d.short || d.name;
+        }
+    }
+    return { text: Object.keys(got).map(id => `${names[id]} ×${fmt(got[id])}`), skipped };
 }
 
 function fmtHM(ms) {
@@ -149,10 +186,11 @@ function showOfflineReport(r) {
         `經驗：+${fmt(r.exp)}${r.lvUp > 0 ? `（升了 ${r.lvUp} 級！）` : ''}`,
         `金幣：+${fmt(r.gold)}`,
         `消耗：${r.used.length ? r.used.join('、') : '無'}`,
+        `寶物：${r.loot && r.loot.length ? r.loot.join('、') : '無'}${r.lootSkipped ? `（負重已滿，${fmt(r.lootSkipped)} 件沒撿）` : ''}`,
         '',
         r.endText,
         '',
-        '※ 離線期間不撿道具、不累積任務進度。',
+        '※ 離線只撿藥水、白色（普通）地圖與白色裝備，不累積任務進度。',
     ];
     gameAlert('🌙 離線收益', lines.join('\n'));
 }

@@ -698,6 +698,7 @@ function rollDrops(mon, z) {
         if (invWeight() + d.wt * n > st.weightMax) { addLog(`⚠️ 負重已滿，${d.name}撿不起來`, 'warn'); return; }
         const inst = addItem(id, n);
         if (rolled && inst) for (const k of ['q', 'af', 'il', 'nm']) if (rolled[k] != null) inst[k] = rolled[k];
+        if (SIM_MODE && offlineDrops && inst) offlineDrops.push({ id, n, q: inst.q || null });   // 離線模擬：記下掉落（offline.js，第 108 節）
         const rare = ['weapon', 'armor', 'elixir'].includes(d.cat) || (d.cat === 'scroll' && d.bless === 1) || d.scroll === 'enchant';
         const tag = gear && inst && inst.q ? `【${QUALITY[inst.q].name}】` : '';
         addLootLog(`🎁 獲得 ${tag}${gear && inst ? itemName(inst) : d.name} ×${n}`, inst && inst.q === 'legend' ? 'boss' : rare ? 'rare' : 'loot');

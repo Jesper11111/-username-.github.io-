@@ -12,6 +12,7 @@
 | `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/save-log-throttle.sql`、`tools/test-save-log-throttle.js` | 減少每次上傳存檔的資料庫寫入：存檔歷程與最後上線約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆；隔離 PGlite 測試（第 101 節） |
 | `tools/loot-batch.sql`、`tools/test-loot-batch.js` | 後端掉寶減量：批次結算收據表、釋放不重寫作廢憑證、每次結算順手清理舊帳本；隔離 PGlite 測試（第 104 節）。端到端在 `test-vault-v2-client.js` |
+| `tools/test-offline-drops.js` | 離線掛機掉落：篩選、依有效時間換算、負重上限、實跑離線結算（第 108 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -152,7 +153,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023n`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023o`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2701,3 +2702,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **驗證**：掉寶客戶端、端到端、批次 SQL、掉落紀錄、商店測試與 check.ps1、混淆建置通過。
 - **上線**：使用者確認 Disk IO balance 回升後推送，線上 v20261023n、登入與 API 約 0.25 秒回應。
 - **注意**：剛重啟後磁碟額度可能還沒回滿；推送前可到 Observability → Database 看 **Disk IO balance**，回升後再推比較穩。之後若又出現 Disk IO 警告，可把開關再打開（第 103 節）或考慮升級 Pro＋Micro（基本速度 5 → 11 MB/s）。
+
+## 108. 離線掛機可撿藥水、白色地圖、白色裝備（2026-10-23，版本 `20261023o`；`offline.js` 的 `offlineDrops`／`offlineDropAllowed`／`offlineGiveDrops`）
+
+- **使用者決定**：離線掛機原本只給經驗、金幣（第 14 節「離線期間不撿道具」）；改成**藥水、白色（普通品質）異界地圖、白色（普通品質）裝備**可以離線掉落。其他（魔法以上品質、材料、通貨、魔法書、卷軸、萬能藥、共鳴、任務物、鑽石）仍然不給。
+- **做法**（在玩家裝置上決定，同離線經驗金幣；後端掉寶不管離線）：
+  - `measureHunt` 快轉模擬 10 分鐘時設 `offlineDrops = []`；`combat.js rollDrops` 的 `give()` 在 `SIM_MODE` 下把實際入包的道具（id、數量、品質）記進去，`maps.js giveMap` 記地圖階數與品質。模擬結束把 `offlineDrops` 過濾成 `s.drops`、清成 null（玩家狀態照舊整份還原）。戰利品過濾自動賣掉的不會記（金幣已算進模擬金幣）。
+  - `offlineDropAllowed(r)`：藥水（cat potion）、沒有品質的武器／防具、沒有品質的地圖。
+  - `applyOffline` 依 `k = 有效時間 ÷ 模擬時間` 呼叫 `offlineGiveDrops(drops, k)`：每筆掉落給 `floor(k)` 份，小數部分照機率多給一份；裝備 `addItem(id, 1, 0)`（白色、無強化），地圖 `makeMapItem(t, null)`（白色）；超過負重的不撿、計數。報告新增「寶物：…（負重已滿，N 件沒撿）」，說明改成「※ 離線只撿藥水、白色（普通）地圖與白色裝備，不累積任務進度。」，掉落紀錄加一行「🌙 離線撿到：…」。
+- **不改**：存檔結構、離線時間上限（12 小時 × 50%）、補給限制、陣亡規則；後端掉寶與 SQL 都不動。
+- **測試**：`tools/test-offline-drops.js`：篩選規則（魔法裝備、稀有地圖、材料、通貨、魔法書不給）、k=3 每筆 3 份且全白色、k=2.5 給 2 或 3 份、負重只撿得下的部分；實跑 Lv.30 角色離線 2 小時：擊倒 196、撿到紅水 ×18，新增道具只有允許的種類。全部回歸、check.ps1、混淆建置通過；瀏覽器離線報告顯示寶物欄、無錯誤，測試角色已刪除。
