@@ -57,11 +57,16 @@ async function lootProbe() {
 function lootStart() {
     if (!isCloudConfigured()) return;
     lootMode = 'checking';
-    setInterval(() => { if (gameNow >= lootProbeAt) { lootProbeAt = gameNow + 30000; lootProbe(); } lootPump(); }, 5000);
+    setInterval(() => { if (!cloudCanCall()) return; if (gameNow >= lootProbeAt) { lootProbeAt = gameNow + 30000; lootProbe(); } lootPump(); }, 5000);   // 伺服器忙碌退避中先不查（cloud.js，第 102 節）
     lootProbe();
 }
 async function lootSpawn(join = false, mid = null, sceneTarget = null) {
     if (!lootCanPlay() || !hunt || hunt.lootWait) return;
+    if (!cloudCanCall()) {   // 伺服器忙碌退避中：等退避結束再找怪，不停止掛機（第 102 節）
+        if (!join) { hunt.state = 'search'; hunt.timer = Math.max(3000, cloudBackoffUntil - Date.now()); }
+        lootNotice('⏳ 雲端伺服器忙碌，稍後自動繼續掛機');
+        return;
+    }
     const h = hunt, p = player, slot = currentSlot, char = lootChar(), dir = player.loc.id, floor = player.loc.floor, uid = cloudUser.id;
     h.lootWait = true;
     const previousScene = typeof scene === 'undefined' ? null : scene;
@@ -151,7 +156,7 @@ function lootApply(result) {
     return true;
 }
 async function lootPump() {
-    if (!lootActive() || !cloudLoggedIn() || cloudBan || lootBusy) return;
+    if (!lootActive() || !cloudLoggedIn() || cloudBan || lootBusy || !cloudCanCall()) return;
     lootBusy = true;
     const uid = cloudUser.id;
     try {

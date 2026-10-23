@@ -154,6 +154,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         const bad = JSON.parse(JSON.stringify(local())); bad.player.created = 777; bad.player.stats.str = 99; bad.vaultSeq = 0;
         localStorage.setItem(slotKey(1), saveEncode(JSON.stringify(bad))); cloudKnown[1] = null; cloudDirty.add(1);
         assert.equal(await cloudFlush(true), false, '第 2 格被拒收');
+        assert(cloudSlotHold[1] > Date.now() + 500000, '被拒收的格子 10 分鐘內不重傳（第 102 節）'); assert(cloudCanCall(), '被拒收不算伺服器忙碌');
         const g2 = player.gold;
         document.getElementById = id => id === 'vault-gold' ? { value: '100' } : null;
         vaultGold(1); while (vaultBusy) await new Promise(r => setTimeout(r, 5));
@@ -163,6 +164,8 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         // ⑥ 手機縮小：上傳已寫進雲端但回應丟了 → 下次上傳不能跳「進度衝突」，要認得是自己送的、接著傳（第 96 節）
         player.exp += 1; saveGame(); net.drop = true;
         assert.equal(await cloudFlush(true), false, '回應丟失：這次算失敗');
+        assert(!cloudCanCall(), '逾時後進入退避'); const wait1 = cloudBackoffUntil - Date.now(); assert(wait1 > 5000 && wait1 <= 12500, '第一次約 10 秒');
+        assert.equal(await cloudFlush(true), false, '退避中不上傳'); cloudBackoffUntil = 0;   // 模擬時間過了（第 102 節）
         assert.equal(Number((await cloud()).t), local().t, '其實已經寫進雲端');
         player.exp += 1; saveGame();
         assert.equal(await cloudFlush(true), true, '下次上傳認得自己的版本、成功');
@@ -171,9 +174,13 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         // 回應丟失＋回來時網路還沒恢復（查雲端版本失敗）：不能判定衝突，等下次再傳（20261023f）
         player.exp += 1; saveGame(); net.drop = true;
         assert.equal(await cloudFlush(true), false);
+        cloudBackoffUntil = 0;
         player.exp += 1; saveGame(); net.failSelect = true;
         assert.equal(await cloudFlush(true), false, '查不到雲端版本：這次先不傳');
         assert(!cloudConflict[0], '查詢失敗不能當成衝突'); assert(cloudDirty.has(0));
+        assert(!cloudCanCall(), '查詢連不上也進入退避'); cloudBackoffUntil = 0;
+        cloudNoteOk(); cloudNoteFail(); cloudNoteFail(); cloudNoteFail(); const w3 = cloudBackoffUntil - Date.now(); assert(w3 > 25000 && w3 <= 50000, '連續失敗退避拉長（第 3 次約 40 秒）');
+        for (let k = 0; k < 10; k++) cloudNoteFail(); assert(cloudBackoffUntil - Date.now() <= 375000, '最多約 5 分鐘'); cloudNoteOk(); assert(cloudCanCall(), '成功一次就恢復');
         assert.equal(await cloudFlush(true), true, '網路恢復後認得自己的版本、成功');
         assert.equal(alerts.length, 0);
         // 真的被別台裝置改過：仍要跳衝突

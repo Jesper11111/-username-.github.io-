@@ -167,7 +167,7 @@ function renderWb() {
 }
 
 setInterval(() => {
-    if (typeof currentTab !== 'undefined' && tabOpen('wb') && player && !document.hidden && !SIM_MODE && !wbBusy) wbLoad();
+    if (typeof currentTab !== 'undefined' && tabOpen('wb') && player && !document.hidden && !SIM_MODE && !wbBusy && cloudCanCall()) wbLoad();
 }, WB_REFRESH_MS);
 
 TABS.wb = ['👹', '世界首領'];

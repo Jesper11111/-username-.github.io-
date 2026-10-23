@@ -130,7 +130,7 @@ async function vaultOp(fn, args, apply) {
     // 只看目前角色這一格；剛從背景回來常第一次逾時，等 1.5 秒自動再試一次。失敗時把原因（cloudError）一起顯示
     if (!await cloudSyncedSlot(slot)) {
         await new Promise(r => setTimeout(r, 1500));
-        if (!await cloudSyncedSlot(slot)) throw Error(cloudConflict[slot] ? '雲端進度衝突，請先選擇要保留哪一邊的進度' : `雲端存檔還沒上傳完成${cloudError ? `（${cloudError}）` : ''}，請稍後再試`);
+        if (!await cloudSyncedSlot(slot)) throw Error(!cloudCanCall() ? '雲端伺服器忙碌，請稍後再試' : cloudConflict[slot] ? '雲端進度衝突，請先選擇要保留哪一邊的進度' : `雲端存檔還沒上傳完成${cloudError ? `（${cloudError}）` : ''}，請稍後再試`);
     }
     const who = player, ch = lootChar();
     vaultRpcBusy = true;

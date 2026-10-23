@@ -222,7 +222,7 @@ function renderChat() {
 }
 
 function chatShown() { return typeof currentTab !== 'undefined' && (tabOpen('chat') || chatPopOpen()) && player && !document.hidden && !SIM_MODE; }
-setInterval(() => { if (chatShown() && Date.now() - chatPollAt >= chatPollGap()) chatFetch(); }, 2000);
+setInterval(() => { if (chatShown() && cloudCanCall() && Date.now() - chatPollAt >= chatPollGap()) chatFetch(); }, 2000);   // 伺服器忙碌退避中不抓（cloud.js）
 document.addEventListener('visibilitychange', () => { if (chatShown()) chatFetch(); });   // 從背景切回來馬上抓一次
 
 TABS.chat = ['💬', '聊天'];

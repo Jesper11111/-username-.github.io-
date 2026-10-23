@@ -428,7 +428,7 @@ async function raidEnter(roomId) {
 
 function raidStartPoll() {
     if (raidPollTimer) return;
-    raidPollTimer = setInterval(() => { if (raidRoom && !document.hidden) raidRefresh(raidRoom.id); }, RAID_POLL_MS);
+    raidPollTimer = setInterval(() => { if (raidRoom && !document.hidden && cloudCanCall()) raidRefresh(raidRoom.id); }, RAID_POLL_MS);
 }
 
 function raidStopPoll() {

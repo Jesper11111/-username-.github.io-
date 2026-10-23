@@ -151,7 +151,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023h`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023i`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2638,3 +2638,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **⚠️ 之後若重跑 supabase.sql 或 save-device-log.sql**，會把這兩個函式蓋回舊版，要再執行一次 `save-log-throttle.sql`。
 - **測試**：`tools/test-save-log-throttle.js`（隔離 PGlite 載全部正式 SQL＋重複安裝）：5 分鐘內連傳 6 次只記 1 筆歷程與 1 筆裝置紀錄、存檔照常更新；裝置時間異常照樣記歷程與 `clock` 紀錄；換裝置、換登入各記一筆；超過 5 分鐘再記；最後上線 5 分鐘內不改。
 - **還能再減**：後端掉寶的憑證／帳本（`dragon_loot_jobs` 等）每隻怪都有寫入且不會自動清除（第 91 節），之後需要保留期限與清理排程。
+
+## 102. 伺服器忙碌時自動退避、被拒收的角色暫停重傳（2026-10-23，版本 `20261023i`；`cloud.js` 的 `cloudTimeout`／`cloudCanCall`／`cloudNoteFail`／`cloudSlotHold`）
+
+- **起因**：2026-10-23 正式專案（Supabase 免費 NANO）卡死：Disk IO Budget 用完、DATABASE 錯誤率 67.6%、Log Ingestion 1.01／1 GB 超過免費額度。使用者重啟專案後，登入服務時好時壞、資料庫回 `PGRST002`（schema cache）20 分鐘以上，之後才慢慢恢復。所有在線玩家的遊戲同時重試（上傳、掉寶查詢與結算、聊天、心跳、交易所、副本、世界首領），一重啟又被塞爆。
+- **退避**：`cloudTimeout` 包裝所有經過它的請求：逾時、Failed to fetch、NetworkError、Load failed、Gateway、`PGRST002`、schema cache、502／503／504 算「忙碌」→ `cloudNoteFail()`：退避約 10 秒、20 秒、40 秒…最多 5 分鐘（±25% 隨機錯開）；任何一次成功 `cloudNoteOk()` 立刻恢復。`cloudCanCall()` 回傳是否已過退避時間。
+  - 退避中不送：`cloudFlush`（含強制上傳）、`cloudFlushRun` 遇到第一格逾時就停止其他格、`onlinePing` 心跳、聊天輪詢、交易所自動入帳、團隊副本輪詢、世界首領刷新、`lootStart` 的定時查狀態與 `lootPump`。
+  - `lootSpawn`：退避中不呼叫伺服器，回到找怪狀態、等退避結束（至少 3 秒）再試，提示「⏳ 雲端伺服器忙碌，稍後自動繼續掛機」，掛機不停。
+  - 共用倉庫／交易所（`vaultOp`）退避中提示「雲端伺服器忙碌，請稍後再試」。
+- **被拒收的角色暫停重傳**：上傳被伺服器拒收（不是忙碌，例如序號、能力值、版本、掉寶收據檢查）時，`cloudSlotHold[i]` 記 10 分鐘，期間不再重傳那一格。原本每 60 秒重傳一次，每次被拒伺服器都把整份存檔記進錯誤紀錄，是 Log Ingestion 暴增的來源之一。登出／換帳號時清空。
+- **測試**：`test-vault-v2-client.js`：回應逾時後進入約 10 秒退避、退避中不上傳；查詢連不上也退避；連續失敗第 3 次約 40 秒、最多約 5 分鐘、成功一次就恢復；別的格被能力值拒收時那格 10 分鐘內不重傳，且不算伺服器忙碌。`test-server-loot-client.js`：退避中生怪與結算都不呼叫伺服器、掛機不停、等退避結束再找怪。全部回歸、check.ps1、混淆建置（含 gm-lib）通過；瀏覽器載入無錯誤。
+- **待處理**：免費方案的磁碟額度與紀錄額度偏小。後端掉寶每隻怪仍要寫入憑證與帳本、而且不會自動清除（第 91 節）；長期要嘛減量（批次結算、定期清理），要嘛升級運算方案。由使用者決定。

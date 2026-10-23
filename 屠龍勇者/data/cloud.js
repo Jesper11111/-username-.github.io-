@@ -39,8 +39,25 @@ function cloudLs(k, v) {   // v 省略＝讀，null＝刪
     return null;
 }
 
+// ───────── 退避（第 102 節）：伺服器塞爆／連不上時，所有定時請求自動拉長間隔，避免一大群玩家同時狂重試把資料庫壓垮 ─────────
+// 連續失敗：約 10 秒、20 秒、40 秒…最多 5 分鐘（±25% 錯開，免得大家同一秒一起重試）；任何一次成功就恢復。
+let cloudFailN = 0, cloudBackoffUntil = 0;
+function cloudBusyErr(e) {
+    const m = String((e && (e.message || e.code)) || e || '');
+    return /timeout|Failed to fetch|NetworkError|Load failed|Gateway|PGRST002|schema cache|upstream|50[234]/i.test(m) || (e && [502, 503, 504].includes(e.status));
+}
+function cloudNoteFail() {
+    cloudFailN++;
+    const ms = Math.min(300000, 10000 * Math.pow(2, cloudFailN - 1)) * (0.75 + Math.random() * 0.5);
+    cloudBackoffUntil = Math.max(cloudBackoffUntil, Date.now() + ms);
+}
+function cloudNoteOk() { cloudFailN = 0; cloudBackoffUntil = 0; }
+function cloudCanCall() { return Date.now() >= cloudBackoffUntil; }   // 定時請求（上傳、掉寶、聊天、心跳…）先問這個
+
 function cloudTimeout(p) {
-    return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), CLOUD_TIMEOUT_MS))]);
+    return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), CLOUD_TIMEOUT_MS))]).then(
+        r => { if (r && r.error && cloudBusyErr(r.error)) cloudNoteFail(); else cloudNoteOk(); return r; },
+        e => { if (cloudBusyErr(e)) cloudNoteFail(); throw e; });
 }
 
 function cloudErrText(e) {
@@ -116,7 +133,7 @@ function cloudOnPassiveSignOut() {
     onlineStop();
     const email = cloudUser ? cloudUser.email : '';
     cloudUser = null; cloudBan = null;
-    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     if (player) {
         if (slotHasSave(currentSlot)) saveGame(true);   // 本機欄位已被別的分頁清掉（主動登出）就不寫回去
         hunt = null; session = null; walkHome = null; player = null;
@@ -163,7 +180,7 @@ function onlineStart() {
 function onlineStop() { clearInterval(onlineTimer); onlineTimer = null; }
 
 async function onlinePing() {
-    if (!cloudLoggedIn() || onlineBlocked) return;
+    if (!cloudLoggedIn() || onlineBlocked || !cloudCanCall()) return;   // 退避中不送心跳
     try {
         const r = await cloudTimeout(cloudSb.rpc('online_ping'));
         if (!r.error && r.data === false) onlineKicked();
@@ -180,7 +197,7 @@ async function onlineKicked() {
         hunt = null; session = null; walkHome = null; player = null;
         showTitle();
     }
-    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {};
+    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {};
     cloudSigningOut = true;
     try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; }
     renderCloudEntry(); cloudRefreshScreen();
@@ -457,17 +474,24 @@ function cloudAutoPush() {
 let cloudFlushing = null;   // 上傳進行中（避免同時跑兩次）
 async function cloudFlush(force) {
     if (!cloudLoggedIn() || !cloudDirty.size || cloudBan) return true;
+    if (!cloudCanCall()) return false;   // 伺服器忙碌退避中：先不上傳，存檔留在本機（第 102 節）
     if (cloudFlushing) { await cloudFlushing.catch(() => { }); if (!cloudDirty.size) return true; }
     if (!force && Date.now() - cloudLastPush < CLOUD_PUSH_MS) return false;
     cloudFlushing = cloudFlushRun();
     try { return await cloudFlushing; } finally { cloudFlushing = null; }
 }
 
+// 伺服器拒收（不是忙碌／斷線，例如序號、能力值、版本檢查）的欄位：10 分鐘內不再重傳。
+// 每次被拒伺服器都會把整份存檔記進錯誤紀錄，原本每 60 秒重傳一次，紀錄量（Log Ingestion）會一直累積（第 102 節）
+const CLOUD_REJECT_HOLD_MS = 10 * 60 * 1000;
+let cloudSlotHold = {};
 async function cloudFlushRun() {
     cloudLastPush = Date.now();
     let ok = true;
     for (const i of [...cloudDirty]) {
         if (cloudConflict[i]) { ok = false; continue; }
+        if (Date.now() < (cloudSlotHold[i] || 0)) { ok = false; continue; }
+        if (!cloudCanCall()) { ok = false; break; }   // 前一格剛逾時進入退避：其他格也先不傳
         if (typeof vaultRpcBusy !== 'undefined' && vaultRpcBusy && i === currentSlot) { ok = false; continue; }   // 伺服器正在改這個角色的雲端存檔（共用倉庫，vault.js）
         try {
             const r = await cloudPushSlot(i, false);
@@ -476,6 +500,7 @@ async function cloudFlushRun() {
             ok = false;
             cloudError = cloudErrText(e);
             console.warn('雲端上傳失敗', e);
+            if (!cloudBusyErr(e)) cloudSlotHold[i] = Date.now() + CLOUD_REJECT_HOLD_MS;
             if (e && e.code === '42501' && await cloudCheckBan()) break;   // 被 RLS 擋下：可能剛被封鎖
         }
     }
@@ -847,7 +872,7 @@ async function cloudDoSignOutRun(all) {
     cloudLs(CLOUD_SEEN_KEY, null);
     cloudUser = null; cloudBan = null; cloudBanShown = false;
     myClan = null; myClanRole = null; clanLoaded = false; clanViewLoaded = false; clanList = null;
-    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
+    cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();
     showToast(all ? '已登出所有裝置，建議順便改密碼' : '已登出');
 }

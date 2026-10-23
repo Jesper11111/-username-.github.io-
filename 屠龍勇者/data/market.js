@@ -267,7 +267,7 @@ function marketMineHtml() {
 }
 
 setInterval(() => {
-    if (player && !document.hidden && !SIM_MODE && Date.now() - marketDeliverAt > MARKET_DELIVER_MS) marketDeliver(true).then(() => { if (tabOpen('market')) marketLoad(); });
+    if (player && !document.hidden && !SIM_MODE && cloudCanCall() && Date.now() - marketDeliverAt > MARKET_DELIVER_MS) marketDeliver(true).then(() => { if (tabOpen('market')) marketLoad(); });
 }, 30 * 1000);
 
 TABS.market = ['🏪', '交易所'];
