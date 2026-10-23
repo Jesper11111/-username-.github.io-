@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **20261023n：關閉緊急開關、恢復後端掉寶批次結算（第 107 節）——已 commit 待 Push**。loot-batch.sql 已執行；API 卡住靠「Restart project」整個重啟後恢復（Fast database reboot 不會重啟 API）。建議 Disk IO balance 回升後再推。
+- **20261023n：關閉緊急開關、恢復後端掉寶批次結算（第 107 節）——已上線（2026-10-23，使用者確認 Disk IO balance 回升後推送）**。loot-batch.sql 已執行；API 卡住靠「Restart project」整個重啟後恢復（Fast database reboot 不會重啟 API）。建議 Disk IO balance 回升後再推。
 
 - **20261023m：回收頁勾選賣出（第 106 節）**。使用者要求；每列勾選框、全選、「賣出勾選（N）💰合計」，含貴重道具會提醒。瀏覽器實測通過；已 commit 本機 main 待 Push。緊急開關仍開著（l 版起）。
 

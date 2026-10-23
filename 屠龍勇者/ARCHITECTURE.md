@@ -2699,4 +2699,5 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **經過**：使用者在 Supabase SQL Editor 執行 `tools/loot-batch.sql` 成功，但遊戲 API（PostgREST）仍卡住：`pg_stat_activity` 顯示 `authenticator` 10 條連線閒置 3 小時 17 分、沒有卡住的查詢，資料庫本身已恢復、卡的是 API 服務。「Fast database reboot」只重啟資料庫，改用主按鈕 **Restart project**（整個專案）重啟；約 5 分鐘後恢復（03:25 UTC），登入與 API 0.2～0.5 秒回應，`loot_finish_batch` 對未登入回 42501（函式存在、只是沒權限）。
 - **改動**：`LOOT_FORCE_LOCAL` 改回 false。上線後玩家重新整理即回到後端掉寶，並使用第 104 節的批次結算（10 隻或 30 秒一批、同次掛機只釋放一次、順手清理）。
 - **驗證**：掉寶客戶端、端到端、批次 SQL、掉落紀錄、商店測試與 check.ps1、混淆建置通過。
+- **上線**：使用者確認 Disk IO balance 回升後推送，線上 v20261023n、登入與 API 約 0.25 秒回應。
 - **注意**：剛重啟後磁碟額度可能還沒回滿；推送前可到 Observability → Database 看 **Disk IO balance**，回升後再推比較穩。之後若又出現 Disk IO 警告，可把開關再打開（第 103 節）或考慮升級 Pro＋Micro（基本速度 5 → 11 MB/s）。
