@@ -1,6 +1,8 @@
 // 後端掉寶：伺服器抽選、持久重試、原子本機收據。依賴save/cloud/market/vault，執行期呼叫combat。
 // 不新增player欄位；收據在存檔外層lootCursor，正式規則見tools/SERVER-LOOT.md。
 const LOOT_PROTOCOL = 1;
+// 緊急開關（第 103 節）：Supabase 卡死、連 SQL 都執行不了時，改成 true 推上線，遊戲就不再找後端掉寶、改用一般掉寶，玩家可以照常掛機。恢復後改回 false
+const LOOT_FORCE_LOCAL = false;
 let lootMode = 'legacy', lootBusy = false, lootProbeAt = 0, lootNoticeAt = 0, lootPendingAt = 0, lootSyncFailAt = 0;
 function lootActive() { return !SIM_MODE && lootMode === 'active'; }
 function lootRequired() { return !SIM_MODE && lootMode !== 'legacy'; }
@@ -45,8 +47,8 @@ async function lootProbe() {
     try {
         const r = await marketRpc('loot_status');
         if (!r || r.protocol !== LOOT_PROTOCOL || (r.enabled && !r.rules)) throw Error('掉寶規則尚未安裝');
-        // 啟用後不能因一個錯誤回應退回本機抽獎；停用需重新整理，並由管理者處理停機。
-        if (lootMode === 'active' && !r.enabled) throw Error('後端掉寶暫停中');
+        // 管理者明確停用（enabled=false）才改用一般掉寶，不用重新整理就能繼續掛機（第 103 節）；連不上、回應錯誤一律不退回本機抽獎
+        if (lootMode === 'active' && !r.enabled) lootNotice('後端掉寶已暫停，改用一般掉寶');
         lootMode = r.enabled ? 'active' : 'legacy';
     } catch (e) {
         if (lootMode !== 'active') lootMode = 'blocked';
@@ -55,7 +57,7 @@ async function lootProbe() {
     }
 }
 function lootStart() {
-    if (!isCloudConfigured()) return;
+    if (!isCloudConfigured() || LOOT_FORCE_LOCAL) return;   // lootMode 維持 legacy
     lootMode = 'checking';
     setInterval(() => { if (!cloudCanCall()) return; if (gameNow >= lootProbeAt) { lootProbeAt = gameNow + 30000; lootProbe(); } lootPump(); }, 5000);   // 伺服器忙碌退避中先不查（cloud.js，第 102 節）
     lootProbe();
@@ -99,7 +101,8 @@ async function lootSpawn(join = false, mid = null, sceneTarget = null) {
         addLog(join ? '⚔️ 附近的怪物加入戰鬥' : `⚔️ 遭遇${rows[0].monster.name}（後端掉寶）`, '');
     } catch (e) {
         if (player !== p || hunt !== h) return;
-        if (lootTransient(e)) {   // 連線暫時不通：3 秒後自動再找怪，不停止掛機
+        if (/loot disabled/.test(String(e && e.message))) { lootProbeAt = 0; lootProbe(); }   // 管理者剛停用：馬上重查，改用一般掉寶
+        if (lootTransient(e) || /loot disabled/.test(String(e && e.message))) {   // 連線暫時不通：3 秒後自動再找怪，不停止掛機
             if (!join) { h.state = 'search'; h.timer = 3000; }
             lootNotice('⏳ 後端掉寶連線中，恢復後自動繼續掛機');
         } else stopHunt('⚠️ 後端掉寶尚未就緒：' + cloudErrText(e));

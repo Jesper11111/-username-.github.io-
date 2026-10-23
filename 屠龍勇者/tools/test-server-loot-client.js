@@ -50,6 +50,11 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
  const syncedOrig=cloudSyncedSlot;cloudSyncedSlot=async()=>false;await lootSpawn();assert.equal(player.hunting,true,'存檔還沒傳完也只暫停');cloudSyncedSlot=syncedOrig;
  lootMode='blocked';const h0=hunt;huntTick(100);assert.equal(player.hunting,true,'後端狀態確認中只暫停');assert.equal(hunt,h0);
  marketRpc=async fn=>fn==='loot_status'?{protocol:LOOT_PROTOCOL,enabled:true,rules:'r'}:[];await lootProbe();assert.equal(lootMode,'active','恢復連線自動回到線上掉寶');
+ // 第103節：管理者停用（enabled=false）時改用一般掉寶，不用重新整理、掛機不停
+ {const h1=hunt;marketRpc=async fn=>fn==='loot_status'?{protocol:LOOT_PROTOCOL,enabled:false,rules:null}:(()=>{throw Error('loot disabled');})();
+  hunt.state='search';hunt.timer=0;await lootSpawn();assert.equal(player.hunting,true,'剛停用時生怪被拒也不停');assert.equal(lootMode,'legacy','重查後改用一般掉寶');
+  assert.equal(lootCanPlay(),true);assert.equal(lootRequired(),false);
+  marketRpc=async fn=>fn==='loot_status'?{protocol:LOOT_PROTOCOL,enabled:true,rules:'r'}:[];await lootProbe();assert.equal(lootMode,'active','重新啟用後回到後端掉寶');hunt=h1;}
  marketRpc=async fn=>{if(fn==='loot_release')return true;throw Error('loot zone denied');};await lootSpawn();assert.equal(player.hunting,false,'不是網路問題仍停止');assert(/後端掉寶尚未就緒/.test(stopped));
  player.hunting=true;hunt={state:'search',mobs:[],mon:null,warned:{}};
  // 第100節：生怪資格欄位沒變就不重傳整份存檔；結算不再每筆先上傳
@@ -66,6 +71,6 @@ async function main(){await vm.runInContext(String.raw`(async()=>{
  let spawnCalls=0;cloudFlush=async()=>{cloudUser={id:'other'};return true;};marketRpc=async()=>{spawnCalls++;};
  await lootSpawn();assert.equal(spawnCalls,0,'await期間換帳號不得繼續發怪');
  cloudUser=null;assert.equal(lootCanPlay(),false,'未登入不能進入線上掉寶');
- console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避。');
+ console.log('PASS：原子收據、重領／順序／角色、儲存失敗回復、後端詞綴、過濾、非當前角色入帳、佇列競態、斷線重試及SIM隔離、網路暫斷只暫停掛機、生怪欄位沒變不重傳存檔、伺服器忙碌時退避、停用時改一般掉寶不卡住。');
 })()`,ctx);}
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -151,7 +151,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023i`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023j`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2649,3 +2649,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **被拒收的角色暫停重傳**：上傳被伺服器拒收（不是忙碌，例如序號、能力值、版本、掉寶收據檢查）時，`cloudSlotHold[i]` 記 10 分鐘，期間不再重傳那一格。原本每 60 秒重傳一次，每次被拒伺服器都把整份存檔記進錯誤紀錄，是 Log Ingestion 暴增的來源之一。登出／換帳號時清空。
 - **測試**：`test-vault-v2-client.js`：回應逾時後進入約 10 秒退避、退避中不上傳；查詢連不上也退避；連續失敗第 3 次約 40 秒、最多約 5 分鐘、成功一次就恢復；別的格被能力值拒收時那格 10 分鐘內不重傳，且不算伺服器忙碌。`test-server-loot-client.js`：退避中生怪與結算都不呼叫伺服器、掛機不停、等退避結束再找怪。全部回歸、check.ps1、混淆建置（含 gm-lib）通過；瀏覽器載入無錯誤。
 - **待處理**：免費方案的磁碟額度與紀錄額度偏小。後端掉寶每隻怪仍要寫入憑證與帳本、而且不會自動清除（第 91 節）；長期要嘛減量（批次結算、定期清理），要嘛升級運算方案。由使用者決定。
+
+## 103. 後端掉寶停用時自動改一般掉寶＋緊急開關（2026-10-23，版本 `20261023j`；`loot.js` 的 `lootProbe`／`lootSpawn`／`LOOT_FORCE_LOCAL`）
+
+- **起因**：i 版上線後 Supabase 又卡死（登入與資料庫 API 20 秒無回應），使用者回報「無法掛機、自動打怪沒有反應」：退避版讓掛機只是暫停等待，但伺服器一直沒恢復，登入的玩家就一直打不了怪。止血的方法是把 `dragon_loot_config.enabled` 改成 false，但舊程式在「啟用中→停用」時會丟「後端掉寶暫停中」並停止掛機，生怪又被 `loot disabled` 擋下，玩家要重新整理才能玩。
+- **修正**：
+  - `lootProbe`：查到 `enabled=false` 就直接切成 `legacy`（一般掉寶）並提示「後端掉寶已暫停，改用一般掉寶」，不用重新整理、不停掛機。連不上或回應格式不對仍不退回本機抽獎（第 99 節）。
+  - `lootSpawn`：伺服器回 `loot disabled`（剛停用）時立刻重查狀態，並當成暫時性錯誤（3 秒後再找怪），不停止掛機。
+  - **緊急開關** `LOOT_FORCE_LOCAL`（loot.js 頂端，預設 false）：Supabase 卡到連 SQL 都執行不了時，改成 true 推上線，`lootStart` 不再查後端，全部用一般掉寶，玩家可以照常掛機（雲端存檔在退避中，恢復後自動上傳）。恢復後改回 false 再推一版。注意：開著的期間後端掉寶的防作弊不生效。
+- **測試**：`test-server-loot-client.js` 新增：啟用中收到 `loot disabled`／`enabled=false` → 改 `legacy`、掛機不停、`lootCanPlay` 通過；重新啟用後回到 `active`。全部回歸、check.ps1、混淆建置通過。
