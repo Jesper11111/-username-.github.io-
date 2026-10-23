@@ -16,6 +16,7 @@
 | `tools/test-offline-drops.js` | 離線掛機掉落：篩選、依有效時間換算、負重上限、實跑離線結算（第 108 節） |
 | `tools/char-owner.sql`、`tools/test-char-owner.js` | 一隻角色只能屬於一個帳號：歸屬登記表＋上傳檢查＋回填；隔離 PGlite 測試（第 109 節） |
 | `tools/test-weapon-range.js` | 遠程武器射程：弓、槍 8 格、魔法 4 格、近戰 1 格、牆擋、技能距離與道具說明（第 110 節） |
+| `tools/flag-trust.sql`、`tools/test-flag-trust.js` | 管理頁「排除」信任名單＋「已處理」24 小時內有效；隔離 PGlite 測試（第 111 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -2743,3 +2744,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - MORPH_FORMS.m31接MORPHS.infernalThunderEmperor；內建image_gen依四參考圖生成4欄9列36格，再做透明去背。黑紅骨甲／雙角／赤雷巨劍造型維持，不因金變階級改成金甲。正面、右側、背面各走4／攻4／施2／傷2，背面全程維持背向，左側鏡像右側。
 - 格384×320、foot[192,270]、charH160、drawH48；時間130／140／220／150ms（攻擊560ms）。四張PNG圖集加入SW預載；images/sprites/morph/infernal-thunder-emperor-v1含單格／圖集／WebP／contact／manifest；tools/sprite-src同名資料夾保留四原圖、生成原稿／去背稿／完整prompts.json、registration.json與prepare.py。依透明連通區去除鄰格碎片，逐格腳點註冊，不覆寫來源。
 - tools/infernal-emperor-morph-preview.html以實際卷軸選單／sceneReadEvents／sceneDraw隔離預覽；tools/test-infernal-emperor-morph.js驗證31種、金變數值、卷軸扣量／上次選擇、四向命中／MISS／施法／受傷／到期、其他外觀與SW。既有五份morph測試的數量預期改31。素材打包檢查36獨立RGBA及透明留邊；待使用者實玩後提交。工作中q版射程提交含部分m31資料，r版為素材與預載完整版本。
+
+## 111. 管理頁「排除」正常玩家（信任名單）＋「已處理」24 小時內有效（2026-10-23，SQL `tools/flag-trust.sql`、`gm.html`；遊戲版本不變）
+
+- **起因**：管理頁按「已處理」後，造成紀錄的情況還在（「角色建立 X 小時就 Lv.Y」、手機時間不準），玩家下次上傳又被記一筆新的、又被交易所門檻擋（玩家看到「帳號有待管理者確認的異常紀錄，暫時不能使用交易所與共用倉庫」），等於排除不掉。使用者同意照建議做。
+- **SQL**（接在 supabase.sql、anticheat.sql、save-log-throttle.sql 之後，可重跑；**之後重跑那三份要再跑這份**）：
+  - `dragon_trusted(user_id 主鍵, email, reason, by_email, at)`：RLS 只有管理者能讀寫（`dragon_is_admin()`），玩家看不到也寫不進去。
+  - `dragon_market_hold`：信任名單上的帳號一律不擋。
+  - `dragon_saves_audit`（從 save-log-throttle.sql 的版本複製修改）：信任名單的帳號記完存檔歷程後直接結束、不記可疑紀錄；去重改成「同一種異常、同一角色 24 小時內已有紀錄（**含已處理**）就不再記」，所以「已處理」至少 24 小時內有效，超過 24 小時情況還在才會再記。
+- **gm.html**：可疑紀錄、玩家列表、存檔歷程視窗多一顆「排除」（已信任時變「取消信任」），帳號旁顯示 ✅；新分頁「✅ 信任名單」（時間、帳號、原因、處理人、取消信任）。`gmTrust` 跳 prompt 問原因 → upsert `dragon_trusted` → 把這個帳號所有未處理紀錄標成已處理；`gmUntrust` 確認後刪除。還沒執行 flag-trust.sql 時信任名單當作空的，排除會提示先執行 SQL。可疑紀錄頁的說明改成解釋「已處理」與「排除」的差別。
+- **測試**：`tools/test-flag-trust.js`（PGlite 全部相關正式 SQL＋重複安裝）：未處理會擋；已處理後 24 小時內連傳不重記也不擋；超過 24 小時再記；排除後不擋、不記、歷程照記、舊的未處理紀錄也不擋；取消信任恢復；玩家讀不到、寫不進信任名單。gm.html 語法檢查、本機載入（分頁與函式存在、無錯誤）、混淆建置（gm-lib）通過；登入後的實際操作未測（需要管理者帳號）。

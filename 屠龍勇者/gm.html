@@ -67,6 +67,7 @@
             <button data-tab="players" onclick="gmTab('players')">👥 玩家</button>
             <button data-tab="chat" onclick="gmTab('chat')">💬 聊天</button>
             <button data-tab="bans" onclick="gmTab('bans')">⛔ 封鎖名單</button>
+            <button data-tab="trusted" onclick="gmTab('trusted')">✅ 信任名單</button>
             <button class="secondary" onclick="gmLoad()">🔄 重新整理</button>
         </div>
         <div id="view" class="panel"></div>
@@ -80,7 +81,7 @@
 <script>
 const KIND_NAMES = { exp_rate: '經驗暴增', gold_rate: '金幣暴增', stat: '能力值超過上限', elixir: '萬能藥超量', enchant: '強化超過 +15', level: '等級異常', gold_negative: '金幣為負', clock: '裝置時間異常', parse: '存檔格式異常', wb_dmg: '世界首領傷害超過上限', market_dupe: '交易所疑似複製道具', vault_dupe: '共用倉庫疑似複製道具', tamper: '遊戲偵測到改檔', market_big: '交易所大額交易（只提醒）' };
 let sb = null, me = null, tab = 'flags', showResolved = false, playerQuery = '';
-let flags = [], profiles = [], saves = [], bans = [], chats = [], mutes = [], dias = {};
+let flags = [], profiles = [], saves = [], bans = [], chats = [], mutes = [], dias = {}, trusted = [];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,6 +129,8 @@ async function gmLoad() {
     $('view').innerHTML = '<p class="muted">讀取中…</p>';
     try {
         bans = await q(sb.from('dragon_bans').select('*').order('at', { ascending: false }));
+        // 信任名單（tools/flag-trust.sql，第 111 節）；還沒執行那份 SQL 時當作空的
+        try { trusted = await q(sb.from('dragon_trusted').select('*').order('at', { ascending: false })); } catch (e) { trusted = []; }
         if (tab === 'flags') {
             let qq = sb.from('dragon_flags').select('*').order('at', { ascending: false }).limit(200);
             if (!showResolved) qq = qq.eq('resolved', false);
@@ -146,17 +149,22 @@ async function gmLoad() {
 }
 
 const isBanned = uid => bans.some(b => b.user_id === uid);
+const isTrusted = uid => trusted.some(x => x.user_id === uid);
+// 排除＝加入信任名單：不再記可疑紀錄、不會被擋在交易所和共用倉庫外（第 111 節）
+const trustBtn = (uid, email) => isTrusted(uid)
+    ? `<button class="mini secondary" onclick="gmUntrust('${uid}')">取消信任</button>`
+    : `<button class="mini secondary" onclick="gmTrust('${uid}', '${esc(email || '')}')">排除</button>`;
 const banBtn = (uid, email) => isBanned(uid)
     ? `<button class="mini secondary" onclick="gmUnban('${uid}')">解除封鎖</button>`
     : `<button class="mini danger" onclick="gmBan('${uid}', '${esc(email || '')}')">封鎖</button>`;
 
 function gmRender() {
     if (tab === 'flags') {
-        const rows = flags.map(f => `<tr class="${f.resolved ? 'muted' : ''}"><td>${t(f.at)}</td><td>${esc(f.email)}${isBanned(f.user_id) ? ' <span class="bad">⛔</span>' : ''}</td>
+        const rows = flags.map(f => `<tr class="${f.resolved ? 'muted' : ''}"><td>${t(f.at)}</td><td>${esc(f.email)}${isBanned(f.user_id) ? ' <span class="bad">⛔</span>' : ''}${isTrusted(f.user_id) ? ' <span class="good">✅</span>' : ''}</td>
             <td>${esc(f.name)}（欄位 ${f.slot + 1}・Lv.${f.lv ?? '?'}）</td><td><span class="kind">${esc(KIND_NAMES[f.kind] || f.kind)}</span></td><td>${esc(f.detail)}</td>
             <td><div class="row"><button class="mini secondary" onclick="gmHistory('${f.user_id}', ${f.slot}, '${esc(f.email || '')}')">歷程</button>
-            ${f.resolved ? '' : `<button class="mini secondary" onclick="gmResolve(${f.id})">已處理</button>`}${banBtn(f.user_id, f.email)}</div></td></tr>`).join('');
-        $('view').innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="muted">伺服器每次收到存檔都會檢查；這裡只是「可疑」，請看歷程再決定要不要封鎖。</span>
+            ${f.resolved ? '' : `<button class="mini secondary" onclick="gmResolve(${f.id})">已處理</button>`}${trustBtn(f.user_id, f.email)}${banBtn(f.user_id, f.email)}</div></td></tr>`).join('');
+        $('view').innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="muted">伺服器每次收到存檔都會檢查；這裡只是「可疑」，請看歷程再決定。「已處理」：同一種紀錄 24 小時內不再記；「排除」：確定是正常玩家，以後都不記、不擋。</span>
             <label class="row"><input type="checkbox" ${showResolved ? 'checked' : ''} onchange="showResolved = this.checked; gmLoad()"> 顯示已處理</label></div>
             ${rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>帳號</th><th>角色</th><th>類型</th><th>內容</th><th></th></tr>${rows}</table></div>` : '<p class="good">目前沒有可疑紀錄 👍</p>'}`;
     } else if (tab === 'players') {
@@ -164,7 +172,7 @@ function gmRender() {
         const rows = profiles.filter(p => !qy || (p.email || '').toLowerCase().includes(qy) || saves.some(s => s.user_id === p.user_id && (s.name || '').toLowerCase().includes(qy))).map(p => {
             const chars = saves.filter(s => s.user_id === p.user_id).sort((a, b) => a.slot - b.slot)
                 .map(s => `<button class="mini secondary" onclick="gmHistory('${p.user_id}', ${s.slot}, '${esc(p.email || '')}')">${esc(s.name)}・${esc(clsName(s.cls))} Lv.${s.lv}</button>`).join(' ');
-            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>💎 ${dias[p.user_id] || 0} <button class="mini secondary" onclick="gmDia('${p.user_id}', '${esc(p.email || '')}')">發放</button></td><td>${banBtn(p.user_id, p.email)}</td></tr>`;
+            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}${isTrusted(p.user_id) ? ' <span class="good">✅ 信任</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>💎 ${dias[p.user_id] || 0} <button class="mini secondary" onclick="gmDia('${p.user_id}', '${esc(p.email || '')}')">發放</button></td><td><div class="row">${trustBtn(p.user_id, p.email)}${banBtn(p.user_id, p.email)}</div></td></tr>`;
         }).join('');
         $('view').innerHTML = `<div class="row" style="margin-bottom:8px"><input id="pq" type="text" placeholder="搜尋 Email 或角色名" value="${esc(playerQuery)}" oninput="playerQuery = this.value; gmRender(); $('pq').focus()">
             <span class="muted">共 ${profiles.length} 個帳號（點角色看存檔歷程）</span></div>
@@ -181,6 +189,10 @@ function gmRender() {
         $('view').innerHTML = `<p class="muted" style="margin-top:0">最近 200 則（世界＋所有隊伍；訊息 3 天後自動刪除）。禁言期間不能發言，但可以正常遊玩。</p>
             ${rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>頻道</th><th>發言者</th><th>內容</th><th></th></tr>${rows}</table></div>` : '<p class="muted">還沒有訊息。</p>'}
             <h3>禁言中</h3>${ml ? `<div class="table-wrap"><table><tr><th>帳號</th><th>到期</th><th>原因</th><th></th></tr>${ml}</table></div>` : '<p class="muted">沒有人被禁言。</p>'}`;
+    } else if (tab === 'trusted') {
+        const rows = trusted.map(x => `<tr><td>${t(x.at)}</td><td>${esc(x.email)}</td><td>${esc(x.reason)}</td><td>${esc(x.by_email)}</td><td><button class="mini secondary" onclick="gmUntrust('${x.user_id}')">取消信任</button></td></tr>`).join('');
+        $('view').innerHTML = `<p class="muted" style="margin-top:0">信任名單上的帳號不再記可疑紀錄（存檔歷程照記）、也不會被擋在交易所和共用倉庫外。需要先在 Supabase 執行 tools/flag-trust.sql。</p>`
+            + (rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>帳號</th><th>原因</th><th>處理人</th><th></th></tr>${rows}</table></div>` : '<p class="muted">信任名單是空的。</p>');
     } else {
         const rows = bans.map(b => `<tr><td>${t(b.at)}</td><td>${esc(b.email)}</td><td>${esc(b.reason)}</td><td>${esc(b.by_email)}</td><td><button class="mini secondary" onclick="gmUnban('${b.user_id}')">解除封鎖</button></td></tr>`).join('');
         $('view').innerHTML = rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>帳號</th><th>原因</th><th>處理人</th><th></th></tr>${rows}</table></div>` : '<p class="muted">沒有被封鎖的帳號。</p>';
@@ -200,7 +212,7 @@ async function gmHistory(uid, slot, email) {
                 <td>${(r.flags || []).map(k => `<span class="kind">${esc(KIND_NAMES[k] || k)}</span>`).join(' ')}</td></tr>`;
         }).join('');
         $('modal-box').innerHTML = `<div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(email)}・欄位 ${slot + 1} 的存檔歷程（最近 80 筆）</h3>
-            <div class="row">${banBtn(uid, email)}<button class="mini secondary" onclick="gmClose()">關閉</button></div></div>
+            <div class="row">${trustBtn(uid, email)}${banBtn(uid, email)}<button class="mini secondary" onclick="gmClose()">關閉</button></div></div>
             <p class="muted">每一列是一次雲端上傳（伺服器時間）。間隔＝和上一筆相差多久；換了不同角色時不計算差值。</p>
             ${rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>角色</th><th>Lv</th><th>總經驗</th><th>經驗變化</th><th>金幣</th><th>金幣變化</th><th>間隔</th><th>異常</th></tr>${rows}</table></div>` : '<p class="muted">沒有紀錄。</p>'}`;
     } catch (e) { $('modal-box').innerHTML = `<p class="bad">讀取失敗：${esc(e.message)}</p><button onclick="gmClose()">關閉</button>`; }
@@ -220,6 +232,24 @@ async function gmDia(uid, email) {
 async function gmResolve(id) {
     try { await q(sb.from('dragon_flags').update({ resolved: true }).eq('id', id)); } catch (e) { alert('失敗：' + e.message); }
     gmLoad();
+}
+
+// 排除：加入信任名單，並把這個帳號目前所有可疑紀錄標成已處理
+async function gmTrust(uid, email) {
+    const reason = prompt(`排除 ${email || uid}（確定是正常玩家）？
+以後不再記可疑紀錄、也不會被擋在交易所和共用倉庫外。
+原因（記錄用）：`, '確認為正常玩家');
+    if (reason == null) return;
+    try {
+        await q(sb.from('dragon_trusted').upsert({ user_id: uid, email, reason: reason.slice(0, 200), by_email: me.email }));
+        await q(sb.from('dragon_flags').update({ resolved: true }).eq('user_id', uid).eq('resolved', false));
+    } catch (e) { alert('排除失敗：' + e.message + '\n（如果是找不到 dragon_trusted，請先在 Supabase 執行 tools/flag-trust.sql）'); }
+    gmClose(); gmLoad();
+}
+async function gmUntrust(uid) {
+    if (!confirm('取消信任？之後這個帳號的異常又會被記錄。')) return;
+    try { await q(sb.from('dragon_trusted').delete().eq('user_id', uid)); } catch (e) { alert('取消失敗：' + e.message); }
+    gmClose(); gmLoad();
 }
 
 async function gmBan(uid, email) {
