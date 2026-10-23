@@ -14,6 +14,7 @@
 | `tools/loot-batch.sql`、`tools/test-loot-batch.js` | 後端掉寶減量：批次結算收據表、釋放不重寫作廢憑證、每次結算順手清理舊帳本；隔離 PGlite 測試（第 104 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/test-offline-drops.js` | 離線掛機掉落：篩選、依有效時間換算、負重上限、實跑離線結算（第 108 節） |
 | `tools/char-owner.sql`、`tools/test-char-owner.js` | 一隻角色只能屬於一個帳號：歸屬登記表＋上傳檢查＋回填；隔離 PGlite 測試（第 109 節） |
+| `tools/test-weapon-range.js` | 遠程武器射程：弓、槍 8 格、魔法 4 格、近戰 1 格、牆擋、技能距離與道具說明（第 110 節） |
 | `tools/test-wipe.cjs` | 記憶體PostgreSQL載入正式SQL後驗證洗白：24張玩家資料表清空、帳號／管理者／封鎖與掉寶規則設定保留、重跑與每日鑽石重新起算（第37節）；不連正式服務 |
 | `tools/BACKEND-LOOT-PLAN.md`、`tools/SERVER-LOOT.md` | 後端掉寶盤點與已確認的線上範圍、部署與限制說明；已上線並啟用（第91節） |
 | `data/loot.js`、`tools/server-loot.sql`、`tools/loot-catalog.json`／`.sql`、`tools/server-loot-install.sql`、`tools/export-loot-catalog.js` | 後端遇怪／掉寶RPC、規則版本快照、重試佇列與存檔外層收據；合併安裝檔預設不啟用（第91節） |
@@ -154,7 +155,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023p`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261023q`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2726,3 +2727,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **測試**：`tools/test-char-owner.js`（PGlite 先有舊資料再安裝、重複安裝）：回填只登記單一帳號、正主照常、別的帳號傳同一隻被擋、分身清掉多餘的之前雙方都擋、管理者刪掉一邊（含墓碑）後另一邊可上傳並登記、刪除後新帳號傳不回來、新角色首傳登記、管理者不受影響、登記表不可直讀。`test-vault-v2-client.js` 加裝 char-owner.sql，真實遊戲多帳號流程照常。check.ps1、混淆建置通過。
 - **部署**：2026-10-23 使用者執行 char-owner.sql 成功，回填後沒有列出任何同時在多個帳號的分身（「操真猛」的分身應已刪除）。
 - **待辦**：`wipe.sql` 白名單還沒加 `dragon_char_owner`（全清時要一起清，否則舊角色 id 會留在登記表；新角色 id 不同，不影響新開的角色）。
+
+## 110. 弓、槍射程改 8 格（2026-10-23，版本 `20261023q`；`items.js` 的 `WEAPON_TYPES.bow/gun.range`、`combat.js` 的 `weaponRange`／`canReach`／`skillReach`、`ui-scene.js` 的 `sceneReach`）
+
+- **使用者要求**：遠程職業的弓、槍攻擊距離從 4 格改成 8 格。攻擊魔法、共鳴技能維持 4 格（`RANGED_RANGE`），近戰 1 格（`MELEE_RANGE`）不變。
+- **做法**：`WEAPON_TYPES.bow`／`gun` 加 `range: 8`；`weaponRange()` 回傳目前遠程武器的射程（沒拿遠程武器時同 4 格）。`sceneReach` 多回傳 `weapon`（直線距離 ≤ 射程＋0.5 且視線不被牆擋），`canReach('weapon')` 用它。普攻、`sceneCanHit`、轉向判斷改用 `weapon`；`skillReach`：攻擊魔法＝`ranged`（4 格）、拿遠程武器的物理技能＝`weapon`（8 格）、近戰＝`melee`。技能距離不足的提示顯示對應格數。
+- 道具說明（`itemDescHtml`）與圖鑑（codex）的遠程武器多一行「射程 8 格」。
+- 和以前一樣只在地圖畫面開著時檢查距離，背景與離線不限制。
+- **測試**：`tools/test-weapon-range.js`：弓、槍 8 格內打得到、9 格打不到、斜角約 7.8 格可、中間有牆不行；魔法 4 格；近戰 1 格；技能距離種類；`canReach`；道具說明含「射程 8 格」。瀏覽器以未登入暫時妖精拿弓在低語海岸掛機正常（擊倒、無錯誤；怪物多在 4 格內出現並衝過來，所以實測距離多在 4 格內），測試角色已刪除。全部回歸、check.ps1、混淆建置通過。

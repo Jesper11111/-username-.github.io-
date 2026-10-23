@@ -11,8 +11,8 @@
 <title>黑暗大陸</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#12100c">
-<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png?v=20261023p">
-<link rel="apple-touch-icon" href="images/apple-touch-icon.png?v=20261023p">
+<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png?v=20261023q">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png?v=20261023q">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -70,7 +70,7 @@
     /* 標題 */
     /* 標題畫面＝使用者提供的「黑暗大陸」封面（images/cover.jpg，1000×1490，圖上已有標題字）；按鈕疊在下方 */
     #screen-title { align-items: center; justify-content: flex-end; text-align: center; padding: 24px 16px calc(20px + env(safe-area-inset-bottom)); gap: 10px;
-        background: url(images/cover.jpg?v=20261023p) center top / contain no-repeat, #000; }   /* contain：整張封面一定看得到（2026-10-12 使用者回報人物被裁掉） */
+        background: url(images/cover.jpg?v=20261023q) center top / contain no-repeat, #000; }   /* contain：整張封面一定看得到（2026-10-12 使用者回報人物被裁掉） */
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .title-btns { display: flex; flex-direction: column; gap: 10px; width: 240px; }
     .title-btns button { padding: 13px; font-size: 17px; }
@@ -187,7 +187,7 @@
         /* frame-notop.jpg＝frame.jpg 去掉上方拱門（原圖 y 715 以上，2026-10-15 使用者要求滿版）；頂端 25px 還有拱門殘邊，slice 跳過 */
         /* frame-nopillar.png（2026-10-19，第 54 節）：frame-notop 縮 75%、左右骷髏頭頂的符文石柱改透明（底部淡入），地圖延伸到左右邊；slice 跟著 ×0.75 */
         /* frame-clean.png：再把骷髏、法球後面的暗色階梯底（欄杆以上）去背，只留骷髏與法球（2026-10-19，第 54 節） */
-        border-image-source: url(images/frame-clean.png?v=20261023p);
+        border-image-source: url(images/frame-clean.png?v=20261023q);
         border-image-slice: 19 77 491 78 fill;
         border-image-width: 0 calc(var(--s) * 102px) calc(var(--s) * 655px) calc(var(--s) * 104px);
         border-image-repeat: stretch round;
@@ -196,7 +196,7 @@
     #frame::after {
         content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--s) * 405px); height: calc(var(--s) * 250px);
         z-index: 2; pointer-events: none;
-        background: url(images/frame-clean.png?v=20261023p) 0 calc(var(--s) * -630px) / 100% auto no-repeat;
+        background: url(images/frame-clean.png?v=20261023q) 0 calc(var(--s) * -630px) / 100% auto no-repeat;
     }
     #frame.pc::after { display: none; }
     /* 金幣、防禦、MR：經驗條正上方，左右分在等級兩側（手機原圖 y 1712～1744；PC y 870～904） */
@@ -474,10 +474,10 @@
     #frame.pc #frame-art {
         display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none;
         /* frame-pc-notop：上方拱門整段拿掉、左右柱子接到頂（2026-10-11，第 19 節） */
-        background: url(images/frame-pc-notop.jpg?v=20261023p) center / 100% 100% no-repeat;
+        background: url(images/frame-pc-notop.jpg?v=20261023q) center / 100% 100% no-repeat;
         /* frame-pc-nopillar-mask：左右骷髏頭頂的石柱（x < 92、x ≥ 1908、y < 625）也遮掉，y 570～625 淡入（2026-10-19，第 54 節） */
-        -webkit-mask: url(images/frame-pc-nopillar-mask.png?v=20261023p) center / 100% 100% no-repeat;
-        mask: url(images/frame-pc-nopillar-mask.png?v=20261023p) center / 100% 100% no-repeat;
+        -webkit-mask: url(images/frame-pc-nopillar-mask.png?v=20261023q) center / 100% 100% no-repeat;
+        mask: url(images/frame-pc-nopillar-mask.png?v=20261023q) center / 100% 100% no-repeat;
     }
     #frame.pc .pillar, #frame.pc .drawer { display: none; }
     #frame.pc #panel { left: 0; right: 0; top: 0; bottom: calc(var(--s) * 278px); padding: 0; overflow: hidden; z-index: 1; }
@@ -833,7 +833,7 @@
     .rank-val { flex: none; color: var(--gold); font-variant-numeric: tabular-nums; }
     .list-row.rank-me { border-color: var(--gold); background: #3a2a1e; }
 </style>
-<link rel="stylesheet" href="scene-art.css?v=20261023p">
+<link rel="stylesheet" href="scene-art.css?v=20261023q">
 </head>
 <body>
 <div id="app">
@@ -920,51 +920,51 @@
 <div id="toast-layer"></div>
 
 <!-- 載入順序：設定 → 資料 → 玩家 → 系統 → 介面 → 進入點（換版時所有 ?v= 一起改，見 ARCHITECTURE.md） -->
-<script src="data/config.js?v=20261023p"></script>
-<script src="data/classes.js?v=20261023p"></script>
-<script src="data/skills.js?v=20261023p"></script>
-<script src="data/items.js?v=20261023p"></script>
-<script src="data/spellbook.js?v=20261023p"></script>
-<script src="data/monsters.js?v=20261023p"></script>
-<script src="data/zones.js?v=20261023p"></script>
-<script src="data/quests.js?v=20261023p"></script>
-<script src="data/resonance.js?v=20261023p"></script>
-<script src="data/boss-enchant.js?v=20261023p"></script>
-<script src="data/boss-vfx.js?v=20261023p"></script>
-<script src="data/world-vfx.js?v=20261023p"></script>
-<script src="data/player.js?v=20261023p"></script>
-<script src="data/enchant.js?v=20261023p"></script>
-<script src="data/affix.js?v=20261023p"></script>
-<script src="data/craft.js?v=20261023p"></script>
-<script src="data/maps.js?v=20261023p"></script>
-<script src="data/combat.js?v=20261023p"></script>
-<script src="data/town.js?v=20261023p"></script>
-<script src="data/guard.js?v=20261023p"></script>
-<script src="data/save.js?v=20261023p"></script>
-<script src="data/cloud.js?v=20261023p"></script>
-<script src="data/offline.js?v=20261023p"></script>
-<script src="data/ui.js?v=20261023p"></script>
-<script src="data/sfx.js?v=20261023p"></script>
-<script src="data/bgm.js?v=20261023p"></script>
-<script src="data/ui-create.js?v=20261023p"></script>
-<script src="data/ui-panels.js?v=20261023p"></script>
-<script src="data/codex.js?v=20261023p"></script>
-<script src="data/raid.js?v=20261023p"></script>
-<script src="data/clan.js?v=20261023p"></script>
-<script src="data/chat.js?v=20261023p"></script>
-<script src="data/rank.js?v=20261023p"></script>
-<script src="data/wb.js?v=20261023p"></script>
-<script src="data/market.js?v=20261023p"></script>
-<script src="data/vault.js?v=20261023p"></script>
-<script src="data/presence.js?v=20261023p"></script>
-<script src="data/ui-frame.js?v=20261023p"></script>
-<script src="data/icons.js?v=20261023p"></script>
-<script src="data/hotbar.js?v=20261023p"></script>
-<script src="data/scene-art.js?v=20261023p"></script>
-<script src="data/ui-scene.js?v=20261023p"></script>
-<script src="data/world-atlas.js?v=20261023p"></script>
-<script src="data/pwa.js?v=20261023p"></script>
-<script src="data/loot.js?v=20261023p"></script>
-<script src="data/main.js?v=20261023p"></script>
+<script src="data/config.js?v=20261023q"></script>
+<script src="data/classes.js?v=20261023q"></script>
+<script src="data/skills.js?v=20261023q"></script>
+<script src="data/items.js?v=20261023q"></script>
+<script src="data/spellbook.js?v=20261023q"></script>
+<script src="data/monsters.js?v=20261023q"></script>
+<script src="data/zones.js?v=20261023q"></script>
+<script src="data/quests.js?v=20261023q"></script>
+<script src="data/resonance.js?v=20261023q"></script>
+<script src="data/boss-enchant.js?v=20261023q"></script>
+<script src="data/boss-vfx.js?v=20261023q"></script>
+<script src="data/world-vfx.js?v=20261023q"></script>
+<script src="data/player.js?v=20261023q"></script>
+<script src="data/enchant.js?v=20261023q"></script>
+<script src="data/affix.js?v=20261023q"></script>
+<script src="data/craft.js?v=20261023q"></script>
+<script src="data/maps.js?v=20261023q"></script>
+<script src="data/combat.js?v=20261023q"></script>
+<script src="data/town.js?v=20261023q"></script>
+<script src="data/guard.js?v=20261023q"></script>
+<script src="data/save.js?v=20261023q"></script>
+<script src="data/cloud.js?v=20261023q"></script>
+<script src="data/offline.js?v=20261023q"></script>
+<script src="data/ui.js?v=20261023q"></script>
+<script src="data/sfx.js?v=20261023q"></script>
+<script src="data/bgm.js?v=20261023q"></script>
+<script src="data/ui-create.js?v=20261023q"></script>
+<script src="data/ui-panels.js?v=20261023q"></script>
+<script src="data/codex.js?v=20261023q"></script>
+<script src="data/raid.js?v=20261023q"></script>
+<script src="data/clan.js?v=20261023q"></script>
+<script src="data/chat.js?v=20261023q"></script>
+<script src="data/rank.js?v=20261023q"></script>
+<script src="data/wb.js?v=20261023q"></script>
+<script src="data/market.js?v=20261023q"></script>
+<script src="data/vault.js?v=20261023q"></script>
+<script src="data/presence.js?v=20261023q"></script>
+<script src="data/ui-frame.js?v=20261023q"></script>
+<script src="data/icons.js?v=20261023q"></script>
+<script src="data/hotbar.js?v=20261023q"></script>
+<script src="data/scene-art.js?v=20261023q"></script>
+<script src="data/ui-scene.js?v=20261023q"></script>
+<script src="data/world-atlas.js?v=20261023q"></script>
+<script src="data/pwa.js?v=20261023q"></script>
+<script src="data/loot.js?v=20261023q"></script>
+<script src="data/main.js?v=20261023q"></script>
 </body>
 </html>

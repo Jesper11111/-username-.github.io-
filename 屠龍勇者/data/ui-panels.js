@@ -511,7 +511,7 @@ function itemDescHtml(inst) {
         if (d.silver) L.push('銀製：對不死系額外傷害');
         if (d.dragon) L.push(`對龍族傷害 ×${d.dragon}`);
         if (WEAPON_TYPES[d.type].double) L.push(`雙擊率 ${WEAPON_TYPES[d.type].double * 100}%`);
-        if (WEAPON_TYPES[d.type].ranged) L.push(`需要${WEAPON_TYPES[d.type].ammo === 'arrow' ? '箭' : '子彈'}`);
+        if (WEAPON_TYPES[d.type].ranged) L.push(`需要${WEAPON_TYPES[d.type].ammo === 'arrow' ? '箭' : '子彈'}`, `射程 ${WEAPON_TYPES[d.type].range || RANGED_RANGE} 格`);
     }
     if (d.cat === 'armor') {
         const ac = (d.ac || 0) + (d.safe >= 0 ? ench : 0);

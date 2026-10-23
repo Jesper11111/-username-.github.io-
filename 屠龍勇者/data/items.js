@@ -11,8 +11,8 @@ const WEAPON_TYPES = {
     axe:     { name: '斧',     spd: 1000 },
     spear:   { name: '矛',     spd: 1050, two: true },
     blunt:   { name: '鈍器',   spd: 950 },
-    bow:     { name: '弓',     spd: 1000, two: true, ranged: true, ammo: 'arrow' },
-    gun:     { name: '槍',     spd: 1100, two: true, ranged: true, ammo: 'bullet' },
+    bow:     { name: '弓',     spd: 1000, two: true, ranged: true, ammo: 'arrow', range: 8 },   // range：遠程武器射程（格，2026-10-23 使用者改 8，第 110 節）
+    gun:     { name: '槍',     spd: 1100, two: true, ranged: true, ammo: 'bullet', range: 8 },
     staff:   { name: '魔杖',   spd: 1050 },
     claw:    { name: '鋼爪',   spd: 800,  two: true },
     dual:    { name: '雙刀',   spd: 800,  two: true, double: 0.25 },
@@ -47,6 +47,13 @@ const BUFF_DEFS = {
 // 變身外觀（變形卷軸的 morph 欄位；ui-scene.js 的 playerSprite 在變身中改用這組圖）
 // 格式同 classes.js 的 sprite，多一個 foot：腳底在格子裡的位置（素材下方留了箭光空間，不能用格子底部當腳底）
 const MORPHS = {
+    infernalThunderEmperor: {
+        name: '煉獄雷霆魔皇', drawH: 48, charH: 160, foot: [192, 270],
+        walk:   { src: 'images/sprites/morph/infernal-thunder-emperor-v1/walk.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
+        attack: { src: 'images/sprites/morph/infernal-thunder-emperor-v1/attack.png', cellW: 384, cellH: 320, frames: { down: 4, right: 4, up: 4 }, ms: 140 },
+        cast:   { src: 'images/sprites/morph/infernal-thunder-emperor-v1/cast.png', cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 220 },
+        hit:    { src: 'images/sprites/morph/infernal-thunder-emperor-v1/hit.png', cellW: 384, cellH: 320, frames: { down: 2, right: 2, up: 2 }, ms: 150 },
+    },
     wolfRanger: {
         name: '巡守妖魔神射', drawH: 48, charH: 160, foot: [128, 200],
         walk:   { src: 'images/sprites/morph/wolf-ranger-v1/walk.png',   cellW: 256, cellH: 240, frames: { down: 4, right: 4, up: 4 }, ms: 130 },
@@ -127,6 +134,7 @@ const MORPH_LV_FREE = true;
 function morphLvOk(f) { return MORPH_LV_FREE || player.lv >= f.lv; }
 // 系別：weapon＝建議武器（只是提示，不限制）；fx(t, k) 依階級 t 與階數 k（1～4）算加成
 const MORPH_GROUPS = {
+    melee:  { name: '近戰通用系', weapon: '近戰武器通用', fx: t => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd }) },
     bow:    { name: '弓手系', weapon: '弓',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg, spdMul: t.spd }) },
     gun:    { name: '槍手系', weapon: '槍',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg + 1, spdMul: t.spd - 0.02 }) },
     dual:   { name: '雙刀系', weapon: '雙刀',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, dodge: 0.01 + k * 0.01 }) },
@@ -138,6 +146,7 @@ const MORPH_GROUPS = {
     shield: { name: '劍盾系', weapon: '單手劍＋盾', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg - 1, ac: [2, 3, 4, 6][k - 1], hp: [40, 80, 120, 200][k - 1], spdMul: t.spd - 0.03 }) },
 };
 const MORPH_FORMS = [
+    ['m31', '煉獄雷霆魔皇', 'melee', 'gold', 'infernalThunderEmperor'],
     ['m01', '巡守妖魔神射', 'bow', 'blue', 'wolfRanger'], ['m02', '月光精靈巡林者', 'bow', 'red', 'moonRanger'], ['m03', '冥火骷髏神射', 'bow', 'purple', 'hellfireArcher'], ['m04', '蒼穹女武神・艾爾', 'bow', 'gold', 'skyValkyrie'],
     ['m05', '矮人蒸氣火銃兵', 'gun', 'blue', 'dwarfGunner'], ['m06', '暗影海盜雙槍客', 'gun', 'red'], ['m07', '魔導審判狙擊手', 'gun', 'purple'],
     ['m08', '沉默洞穴刺客', 'dual', 'blue'], ['m09', '赤影暗殺者', 'dual', 'red'], ['m10', '布魯迪卡之影', 'dual', 'purple', 'brudikaShadow'], ['m11', '深淵雙刃魔神', 'dual', 'gold'],

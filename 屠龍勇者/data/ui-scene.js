@@ -716,7 +716,7 @@ function sceneUpdate(dt) {
         if (fighting && scene.engaged) {
             // 走到攻擊距離就停：遠程武器 4 格內且看得到，近戰走到旁邊；一次只走一格，每格重新判斷（怪也會移動）
             const e = scene.engaged, r = sceneReach(e);
-            if (weaponIsRanged() ? r.ranged : r.melee) pl.dir = Math.abs(e.x - pl.x) >= Math.abs(e.y - pl.y) ? (e.x > pl.x ? 'right' : 'left') : (e.y > pl.y ? 'down' : 'up');
+            if (weaponIsRanged() ? r.weapon : r.melee) pl.dir = Math.abs(e.x - pl.x) >= Math.abs(e.y - pl.y) ? (e.x > pl.x ? 'right' : 'left') : (e.y > pl.y ? 'down' : 'up');
             else if (Math.abs(e.x - pl.x) + Math.abs(e.y - pl.y) !== 1) pl.path = huntPath(findPath(pl.x, pl.y, e.x, e.y, true).slice(0, 1));
         } else if (inZone && player.hunting && !walkHome) {
             let best = null, bd = 1e9;
@@ -769,7 +769,7 @@ function sceneUpdate(dt) {
 const RELOCK_MS = 5000;
 function sceneFightMons() { return scene.mons.filter(m => !m.dead && m.inst && hunt.mobs.includes(m.inst) && m.inst.hp > 0); }
 function sceneDist(m) { return Math.abs(m.x - scene.pl.x) + Math.abs(m.y - scene.pl.y); }
-function sceneCanHit(m) { const r = sceneReach(m); return weaponIsRanged() ? r.ranged : r.melee; }
+function sceneCanHit(m) { const r = sceneReach(m); return weaponIsRanged() ? r.weapon : r.melee; }
 function sceneLock(m) {
     focusMob(m.inst);
     scene.engaged = m;
@@ -807,7 +807,8 @@ function sceneReach(e) {
     const pl = scene.pl, dx = Math.abs(e.x - pl.x), dy = Math.abs(e.y - pl.y);
     return {
         melee: Math.max(dx, dy) <= MELEE_RANGE,
-        ranged: Math.hypot(dx, dy) <= RANGED_RANGE + 0.5 && lineOfSight(pl.x, pl.y, e.x, e.y),
+        ranged: Math.hypot(dx, dy) <= RANGED_RANGE + 0.5 && lineOfSight(pl.x, pl.y, e.x, e.y),   // 攻擊魔法、共鳴技能
+        weapon: Math.hypot(dx, dy) <= weaponRange() + 0.5 && lineOfSight(pl.x, pl.y, e.x, e.y),   // 弓、槍（第 110 節）
     };
 }
 
