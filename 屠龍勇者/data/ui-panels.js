@@ -681,7 +681,7 @@ function skillInfoText(s) {
 function renderSkills() {
     const cls = player.cls, bar = player.settings.bar;
     let h = `<div class="panel"><h4>⚔️ 快捷欄</h4>
-        <small class="muted">${isPcFrame() ? '畫面底部骷髏頭左右各 8 格（鍵盤 1～8、Q E R F Z X C V），上排 6 格也能放' : '狩獵時地圖下方兩排各 8 格'}，技能、藥水、卷軸都能放。
+        <small class="muted">${isPcFrame() ? '畫面底部骷髏頭左右各 8 格（鍵盤 1～8、Q E R F Z X C V），上排 8 格也能放' : '狩獵時地圖下方兩排各 8 格'}，技能、藥水、卷軸都能放。
         <b>點一下</b>＝手動使用；<b>按住往下拉再放開</b>＝切換自動（暖黃光框）；點空格、長按或右鍵＝換成別的。
         自動技能依格子順序：治癒（HP 低於設定時）→ 增益（效果結束時）→ 攻擊技能；被動技能學會就生效，不用放。</small>
         <div class="btn-row"><button class="secondary mini" onclick="resetSkillSlots()">↺ 第一排技能自動排好</button></div></div>`;

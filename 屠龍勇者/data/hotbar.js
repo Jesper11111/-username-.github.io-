@@ -1,7 +1,7 @@
 // 屠龍勇者：快捷欄（ARCHITECTURE.md 第 40 節）（依賴 player、combat、ui、ui-panels、ui-frame）
-// 22 格 player.settings.bar，每格放技能或道具：點一下＝手動使用、按住往下拉再放開＝切換自動、點空格／長按／右鍵＝選要放什麼。
+// 24 格 player.settings.bar，每格放技能或道具：點一下＝手動使用、按住往下拉再放開＝切換自動、點空格／長按／右鍵＝選要放什麼。
 //   手機：地圖下方兩排（0～7、8～15；村莊裡不顯示）
-//   PC：底部骷髏頭左邊 0～7（鍵盤 1～8）、右邊 8～15（Q E R F Z X C V）、上排原本藥水卷軸的 6 格 16～21
+//   PC：底部骷髏頭左邊 0～7（鍵盤 1～8）、右邊 8～15（Q E R F Z X C V）、上排原本藥水卷軸的 6 格 16～21、上排最左邊 2 格 22～23
 
 // 圖示在 icons.js（skillIconHtml／itemIconHtml，第 41 節）
 function barName(id) { return SKILL_BY_ID[id] ? SKILL_BY_ID[id].name : ITEMS[id] ? ITEMS[id].name : ''; }
@@ -37,11 +37,12 @@ function barSlotHtml(i, cls = '', style = '') {
         <div class="hb-pull">▼ ${b.a ? '關閉自動' : '自動'}</div></div>`;   // 開自動只顯示暖黃光框，不顯示 AUTO 字樣（2026-10-18 使用者要求，技能、道具都一樣）
 }
 
-// PC 外框上的位置（原圖 2000×1116 座標）：底部石條左右各 8 格、上排第 3～8 格
+// PC 外框上的位置（原圖 2000×1116 座標）：底部石條左右各 8 格、上排第 3～8 格、上排第 1～2 格
 function barPcPos(i) {
     const P = (x, y, w, h) => `left:calc(var(--s) * ${x}px);top:calc(var(--s) * ${y}px);width:calc(var(--s) * ${w}px);height:calc(var(--s) * ${h}px)`;
     if (i < 8) return P(318 + i * 72, 1036, 62, 62);
     if (i < 16) return P(1114 + (i - 8) * 72, 1036, 62, 62);
+    if (i >= 22) return P(590 + (i - 22) * 70, 936, 62, 60);
     return P(590 + (i - 14) * 70, 936, 62, 60);
 }
 

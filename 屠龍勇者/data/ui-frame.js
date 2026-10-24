@@ -29,11 +29,12 @@ const PC_SQ = k => ({ x: 590 + k * 70, y: 936, w: 62, h: 60 });
 const PC_SLOTS = [
     { icon: '🧝', name: '人物狀態', tab: 'char',  x: 347, y: 933, w: 66, h: 66, round: true },
     { icon: '✨', name: '技能',     tab: 'skill', x: 447, y: 933, w: 66, h: 66, round: true },
-    { icon: '📜', name: '任務',     tab: 'quest', ...PC_SQ(0) },
-    { icon: '🎒', name: '背包',     tab: 'bag',   ...PC_SQ(1) },
-    // PC_SQ(2)～(7)：原本藥水、卷軸 6 格，2026-10-15 改成快捷欄第 17～22 格（hotbar.js）
-    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(9) },
-    { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(10) },
+    // PC_SQ(0)～(1)：原本任務、背包，2026-10-24 改成快捷欄第 23～24 格；PC_SQ(2)～(7)：原本藥水、卷軸 6 格，2026-10-15 改成快捷欄第 17～22 格（hotbar.js）
+    // 功能鈕集中在快捷欄右邊（2026-10-24 使用者要求，第 129 節）
+    { icon: '📜', name: '任務',     tab: 'quest', ...PC_SQ(8) },
+    { icon: '🎒', name: '背包',     tab: 'bag',   ...PC_SQ(9) },
+    { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(10) },
+    { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(11) },
     { icon: '📋', name: '地圖排程', tab: 'mapQueue', x: 1415, y: 933, w: 58, h: 66, round: true },
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },

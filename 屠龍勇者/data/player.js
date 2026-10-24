@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS = {
     lootKeepAf: [],                   // 戰利品過濾例外：有這些詞綴（AFFIXES 代號）的裝備一律保留
     skills: {},                       // 舊版：技能 id → false 代表關閉自動施放（2026-10-15 起改用技能欄，只在舊存檔轉換時參考）
     skillSlots: [],                   // 舊版技能欄 8 格（2026-10-15 改用 bar，只在舊存檔轉換時參考）
-    bar: [],                          // 快捷欄 22 格 { id, a }（技能或道具＋自動開關，第 40 節）；potionOn／autoHaste／autoBrave／autoBlue／teleOn 改由這裡決定
+    bar: [],                          // 快捷欄 24 格 { id, a }（技能或道具＋自動開關，第 40 節）；potionOn／autoHaste／autoBrave／autoBlue／teleOn 改由這裡決定
 };
 
 function conHpBonus(con) { return Math.max(0, Math.floor((con - 10) / 2)); }
@@ -187,13 +187,13 @@ function learnedSkills(p = player) {
 }
 function hasSkill(id) { return (player.skills || []).includes(id); }
 // ───────── 快捷欄（player.settings.bar，2026-10-15 起取代 skillSlots；第 40 節）─────────
-// 22 格 { id, a }：id＝技能 id 或道具 id（'' 空格），a＝1 自動使用（格子往下拉切換）。
+// 24 格 { id, a }：id＝技能 id 或道具 id（'' 空格），a＝1 自動使用（格子往下拉切換）。
 //   0～7  第一排（PC 底部骷髏頭左邊、手機地圖下方第一排；鍵盤 1～8）
 //   8～15 第二排（PC 底部右邊、手機第二排；鍵盤 Q E R F Z X C V）
-//   16～21 PC 上排原本藥水、卷軸的 6 格（手機不顯示，但自動照樣生效）
+//   16～21 PC 上排原本藥水、卷軸的 6 格、22～23 PC 上排最左邊原本任務、背包的 2 格（手機不顯示，但自動照樣生效）
 // 自動技能＝依格子順序施放（治癒 → 增益 → 攻擊）；自動道具：治癒藥水 HP 低於設定時喝、增益藥水效果沒了就喝、瞬移卷軸 HP 危險時用。
 const SKILL_SLOTS = 8;
-const BAR_N = 22;
+const BAR_N = 24;
 const BAR_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', 'q', 'e', 'r', 'f', 'z', 'x', 'c', 'v'];   // WASD 是移動鍵，第二排避開
 function barItemOk(id) { const d = ITEMS[id]; return !!d && (!!d.heal || !!d.buff || id === 'homeScroll' || id === 'teleScroll'); }
 function barCanAuto(id) {
@@ -220,7 +220,7 @@ function defaultBar(p = player, skillIds) {
     const skills = (skillIds || defaultSkillSlots(p)).slice(0, SKILL_SLOTS);
     while (skills.length < SKILL_SLOTS) skills.push('');
     const sup = [['redPotion', s.potionOn !== false], ['greenPotion', s.autoHaste !== false], [brave, s.autoBrave !== false], ['bluePotion', !!s.autoBlue], ['homeScroll', 0], ['teleScroll', !!s.teleOn]];
-    return [...skills.map(id => E(id, 1)), ...sup.map(([id, a]) => E(id, a)), E(''), E(''), ...sup.map(([id]) => E(id, 0))];
+    return [...skills.map(id => E(id, 1)), ...sup.map(([id, a]) => E(id, a)), E(''), E(''), ...sup.map(([id]) => E(id, 0)), E(''), E('')];
 }
 function normalizeBar(p) {
     const bar = Array.isArray(p.settings.bar) ? p.settings.bar : [];
