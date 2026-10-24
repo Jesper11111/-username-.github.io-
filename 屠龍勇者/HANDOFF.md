@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **20261024g：PC 地圖左側拿掉 💬 聊天圓鈕（下排已有聊天室）＋ tools/fix-vault-dupes.sql（第 121 節）**。SQL 給使用者自己在 Supabase 執行（先 ① 預覽再 ② 刪除，先備份到 dragon_fix_backup），刪 alen1144 複製出來的冥火地圖；**待使用者執行**。test-fix-vault-dupes／check.ps1／建置／瀏覽器 PC 畫面通過。
+- **20261024g：PC 地圖左側拿掉 💬 聊天圓鈕（下排已有聊天室）＋ tools/fix-vault-dupes.sql（第 121 節）**。SQL 給使用者自己在 Supabase 執行（先 ① 預覽再 ② 刪除，先備份到 dragon_fix_backup），刪 alen1144 複製出來的冥火地圖；**使用者 2026-10-24 決定不用刪除**（SQL 留著備用，之後別的帳號需要時可用）。test-fix-vault-dupes／check.ps1／建置／瀏覽器 PC 畫面通過。
 
 - **20261024f：修正共用倉庫複製漏洞——同一瀏覽器兩個分頁（第 120 節）**。alen1144「太初」3 張「冥火」地圖 T4（倉庫 #761～#764）確認是真複製：存入→取出後，舊分頁借用另一分頁寫進 localStorage 的存取序號把原本 3 張蓋回雲端。改成序號只取這個分頁自己知道的（載入時 vaultBase＋自己存取後 vaultLive），lootApply 寫目前角色也一樣。test-vault-v2-client ⑤-1b 重現並驗證修正，全部回歸／check.ps1／建置／瀏覽器通過。已複製出的道具要不要刪、要不要處分**待使用者決定**。另：934b29a／994d416／2f39910 等「更」提交會把各 AI 改到一半的檔案一起推上去，e 版血盟（第 119 節）在 SQL 執行前就已上線。
 
