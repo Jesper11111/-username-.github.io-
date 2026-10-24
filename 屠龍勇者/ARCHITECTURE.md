@@ -171,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025h`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025k`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1129,6 +1129,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   **保留特殊詞綴**（2026-10-17，版本 `20261017f`，使用者要求「戰利品過濾新增保留特殊詞綴裝備選項」）：設定 `lootKeepAf`（詞綴代號清單，預設空；舊存檔由 `migrateSave` 的 `DEFAULT_SETTINGS` 合併補上），
   設定頁「戰利品過濾」下方 19 個詞綴按鈕（`lootKeepHtml`／`toggleLootKeep`，勾選＝金色＋✔）。`lootFiltered` 先看 `lootKeepHit(inst)`：裝備有任何一條勾選的詞綴就不過濾——
   撿到時不自動賣、回收頁一鍵賣出也跳過；普通品質沒有詞綴，不受影響。
+  **保留共鳴裝備**（2026-10-25，版本 `20261025k`，使用者要求）：設定 `lootKeepRes`（預設開；舊存檔由 `DEFAULT_SETTINGS` 合併補上），設定頁「🌟 保留共鳴裝備（不論品質）」勾選框。
+  `lootFiltered` 在保留詞綴之後檢查：裝備有 `res`（第 27、28 節）就不過濾，撿到時（本機 `rollDrops`、後端 `loot.js`）與回收頁一鍵賣出都保留。
 - 衝裝、倉庫、丟棄都保留整個實體，詞綴不會消失。離線收益不給掉落（快轉模擬結束會還原角色），所以不影響。
 
 ## 22. 地名改為暗黑風格、亞丁大陸改名黑暗大陸（2026-10-09，版本 `20261009o`）

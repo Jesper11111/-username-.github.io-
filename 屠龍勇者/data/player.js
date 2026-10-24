@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
     autoDodge: true,                  // 首領大招（地上紅圈）自動走出圈外
     lootFilter: 1,                    // 戰利品過濾：0 全撿、1 普通自動賣、2 魔法以下自動賣、3 只撿傳說（affix.js）
     lootKeepAf: [],                   // 戰利品過濾例外：有這些詞綴（AFFIXES 代號）的裝備一律保留
+    lootKeepRes: true,                // 戰利品過濾例外：共鳴裝備（ITEMS[id].res）一律保留
     skills: {},                       // 舊版：技能 id → false 代表關閉自動施放（2026-10-15 起改用技能欄，只在舊存檔轉換時參考）
     skillSlots: [],                   // 舊版技能欄 8 格（2026-10-15 改用 bar，只在舊存檔轉換時參考）
     bar: [],                          // 快捷欄 24 格 { id, a }（技能或道具＋自動開關，第 40 節）；potionOn／autoHaste／autoBrave／autoBlue／teleOn 改由這裡決定

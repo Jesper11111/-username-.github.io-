@@ -148,6 +148,7 @@ function lootFiltered(inst, level, keepRareBase) {
     if (!level || (d.cat !== 'weapon' && d.cat !== 'armor')) return false;
     if (keepRareBase && !d.price) return false;
     if (lootKeepHit(inst)) return false;              // 有勾選要保留的詞綴（設定 lootKeepAf）
+    if (d.res && player && player.settings.lootKeepRes) return false;   // 保留共鳴裝備（設定 lootKeepRes）
     return qualityRank(inst) < level;
 }
 // 保留特殊詞綴（2026-10-17）：設定 lootKeepAf＝詞綴代號清單，裝備有其中任何一條就不自動賣（撿到時、回收頁一鍵賣出都一樣）
