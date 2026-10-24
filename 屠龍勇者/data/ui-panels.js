@@ -675,7 +675,7 @@ const SKILL_TYPE_NAMES = { spell: '攻擊魔法', strike: '技能', heal: '治�
 // ───────── 技能頁（2026-10-15 天堂式：魔法 1～10 級＋職業技能、魔法書學習、技能欄 8 格；第 40 節）─────────
 function skillInfoText(s) {
     const sec = s.sec ? (s.sec >= 60 ? `持續 ${s.sec / 60} 分` : `持續 ${s.sec} 秒`) : '';
-    return [SKILL_TYPE_NAMES[s.type], s.mp ? `MP ${s.mp}` : '', s.cd ? `冷卻 ${s.cd} 秒` : '', sec].filter(Boolean).join('｜');
+    return [SKILL_TYPE_NAMES[s.type], s.mp ? `MP ${s.mp}` : '', s.type !== 'passive' && skillCd(s) ? `冷卻 ${skillCd(s)} 秒` : '', sec].filter(Boolean).join('｜');
 }
 function renderSkills() {
     const cls = player.cls, bar = player.settings.bar;

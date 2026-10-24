@@ -5,6 +5,7 @@
 
 ## 1. 現況
 
+- **20261024ac：技能公共冷卻 3 秒 → 1 秒，增益也算；每種技能各自 CD（治癒預設 4 秒、增益 10 秒，攻擊技能照原設定）**。使用者要求技能不能好幾種一起瞬發。瀏覽器實測自動增益每秒只放一個、手動連放被擋，Console 無錯誤。
 - **20261024aa：命運的覺醒石專屬外觀（第80節）**。使用者要求並同意當天版本從z延伸至aa。內建image_gen原創虹彩紫晶＋金色符環＋白金星芒，正式128×128透明PNG images/icons/items/curAwaken-v1.png；原稿／完整提示詞／prepare.ps1在tools/icon-src/items/awakening-stone-v1。背包、圖鑑、倉庫、交易所共用新圖，鍛造通貨列／改造視窗也接上，SW預載。只換美術不改數值或SQL。RGBA／留邊／test-item-art（434道具、287新PNG）通過，圖庫實際顯示缺圖0、Console無error／warn。check.ps1 ALL CHECKS PASSED、混淆建置47檔461KB、新圖確實打包且hash相同、git diff --check通過；請使用者Ctrl+F5→背包或圖鑑搜尋命運的覺醒石→鍛造裝備改造確認新圖；實玩確認後才commit。
 
 - **20261024z：變身攻速最高 +20%**（`MORPH_SPD_MAX`；神聖裁決劍聖 23% → 20%，其他不變）。使用者要求。

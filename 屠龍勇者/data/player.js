@@ -169,7 +169,7 @@ function clockSanity() {
     const now = gameNow, p = player;
     for (const id in p.cds) {
         const r = id.startsWith('res_') && RESONANCE[id.slice(4)], k = !r && learnedSkillById(id);
-        const max = (id === '_bossEnchant' ? 15 : ((r ? r.cd : k ? k.cd : 0) || 180)) * 1000;
+        const max = (id === '_bossEnchant' ? 15 : ((r ? r.cd : k ? skillCd(k) : 0) || 180)) * 1000;
         if (p.cds[id] - now > max) p.cds[id] = now + max;
     }
     for (const key in p.buffs) {

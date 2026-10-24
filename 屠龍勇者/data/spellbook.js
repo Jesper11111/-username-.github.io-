@@ -67,7 +67,7 @@ function bookInfoHtml(d) {
     const s = SKILL_BY_ID[d.skill];
     if (!s) return '';
     const need = skillNeedLv(s, player.cls), err = bookLearnError(d);
-    const lines = [`<b>${esc(s.name)}</b>　${SKILL_TYPE_NAMES[s.type] || ''}${s.mp ? `｜MP ${s.mp}` : ''}${s.cd ? `｜冷卻 ${s.cd} 秒` : ''}`, esc(s.desc)];
+    const lines = [`<b>${esc(s.name)}</b>　${SKILL_TYPE_NAMES[s.type] || ''}${s.mp ? `｜MP ${s.mp}` : ''}${s.type !== 'passive' && skillCd(s) ? `｜冷卻 ${skillCd(s)} 秒` : ''}`, esc(s.desc)];
     lines.push(hasSkill(s.id) ? '<span class="good">已學會</span>' : err ? `<span class="bad">${esc(err)}</span>` : `<span class="good">可以學習（${CLASSES[player.cls].name} Lv.${need}）</span>`);
     return `<div class="res-box res-1">${lines.join('<br>')}</div>`;
 }

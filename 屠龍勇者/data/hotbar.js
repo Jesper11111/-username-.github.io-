@@ -17,13 +17,13 @@ function barSlotHtml(i, cls = '', style = '') {
     if (s) {
         ic = skillIconHtml(s);
         const own = player.cds[s.id] > now ? (player.cds[s.id] - now) / 1000 : 0;
-        const gcd = s.type !== 'passive' && s.type !== 'buff' ? skillGcdLeft() / 1000 : 0;   // 技能公共冷卻 3 秒（combat.js；增益瞬發不受限）
-        const left = Math.max(own, gcd), full = own >= gcd ? s.cd : SKILL_GCD_MS / 1000;
+        const gcd = s.type !== 'passive' ? skillGcdLeft() / 1000 : 0;   // 技能公共冷卻 1 秒（combat.js；增益也算）
+        const cd = skillCd(s), left = Math.max(own, gcd), full = own >= gcd ? cd : SKILL_GCD_MS / 1000;
         if (left) { cdTxt = Math.ceil(left) + 's'; pct = full ? Math.min(100, Math.round(left / full * 100)) : 0; }
         tl = s.mp ? `<span class="hb-tl">${s.mp}</span>` : '';
-        tr = s.cd ? `<span class="hb-tr">${s.cd}s</span>` : '';
+        tr = cd ? `<span class="hb-tr">${cd}s</span>` : '';
         dim = !hasSkill(s.id) || player.mp < (s.mp || 0);
-        tip = `${s.name}（${s.mp || 0} MP${s.cd ? '・冷卻 ' + s.cd + ' 秒' : ''}）${hasSkill(s.id) ? '' : '尚未學會'}`;
+        tip = `${s.name}（${s.mp || 0} MP${cd ? '・冷卻 ' + cd + ' 秒' : ''}）${hasSkill(s.id) ? '' : '尚未學會'}`;
     } else {
         const n = countItem(b.id);
         ic = itemIconHtml(b.id);
