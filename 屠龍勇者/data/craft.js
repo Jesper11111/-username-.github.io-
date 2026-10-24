@@ -11,8 +11,9 @@ const CURRENCY = {
     curAnnul:   { name: '剝離石', icon: '✂️', w: 2.5, desc: '隨機移除一條詞綴（魔法、稀有；特殊詞綴不會被移除）', can: x => (x.q === 'magic' || x.q === 'rare') && (x.af || []).some(a => !a.sx), use: removeRandomAffix },
     curChance:  { name: '命運石', icon: '🎲', w: 1.2, desc: '普通 → 隨機品質（魔法 75%、稀有 21%、傳說 4%）', can: x => !x.q, use: x => applyAffixes(x, rollQuality(false, true), craftIl(x)) },
     curOracle:  { name: '神諭石', icon: '✨', w: 0.3, desc: '稀有裝備再加 1 條詞綴（最多 6 條，不含特殊詞綴）', can: x => x.q === 'rare' && (x.af || []).filter(a => !a.sx).length < 6, use: addRandomAffix },
-    // 覺醒石（2026-10-24，第 23 節）：物品等級 70 以上（看掉落時記的 il，商店貨不算）才能用，任何品質都可以（傳說也行）
-    curAwaken:  { name: '覺醒石', icon: '💠', w: 0.5, desc: `物品等級 ${SPECIAL_AFFIX_IL} 以上的裝備：加上 1 條特殊詞綴（全能力／首領增傷／經驗／金幣／反傷，已有就重洗那條）`, can: x => (x.il || 0) >= SPECIAL_AFFIX_IL, use: awakenAffix },
+    // 命運的覺醒石（2026-10-24，第 23 節）：物品等級 70 以上（看掉落時記的 il，商店貨不算）才能用，任何品質都可以（傳說也行）；
+    // 最稀有的通貨，只有 Lv.minLv 以上的怪物會掉（後端 loot_roll 也看 catalog.currency 的 minLv）
+    curAwaken:  { name: '命運的覺醒石', icon: '💠', w: 0.15, minLv: 70, desc: `物品等級 ${SPECIAL_AFFIX_IL} 以上的裝備：加上 1 條特殊詞綴（全能力／首領增傷／經驗／金幣／反傷，已有就重洗那條）`, can: x => (x.il || 0) >= SPECIAL_AFFIX_IL, use: awakenAffix },
 };
 const CURRENCY_IDS = Object.keys(CURRENCY);
 const CURRENCY_DROP_P = 0.03, CURRENCY_BOSS_P = 0.6;   // 每隻怪掉通貨的機率（首領 60%）
@@ -72,7 +73,7 @@ function useCurrency(cid, uid) {
     if (!c || !x) return '找不到道具';
     const d = ITEMS[x.id];
     if (d.cat !== 'weapon' && d.cat !== 'armor' && d.cat !== 'map') return '只能用在武器、防具、異界地圖上';
-    if (x.q === 'legend' && cid !== 'curTemper' && cid !== 'curAwaken') return '傳說裝備只能用淬鍊石、覺醒石';
+    if (x.q === 'legend' && cid !== 'curTemper' && cid !== 'curAwaken') return '傳說裝備只能用淬鍊石、命運的覺醒石';
     if (!currencyCan(cid, x)) return `${c.name}不能用在這件道具上`;
     if (!consumeItem(cid)) return `沒有${c.name}`;
     const before = itemName(x);
@@ -82,12 +83,13 @@ function useCurrency(cid, uid) {
     return '';
 }
 
-// 掉落時擲一顆通貨（權重越小越稀有）
-function rollCurrency() {
-    const total = CURRENCY_IDS.reduce((a, id) => a + CURRENCY[id].w, 0);
+// 掉落時擲一顆通貨（權重越小越稀有）；lv＝怪物等級，有 minLv 的通貨等級不夠不會掉
+function rollCurrency(lv) {
+    const ids = CURRENCY_IDS.filter(id => !(CURRENCY[id].minLv > lv));
+    const total = ids.reduce((a, id) => a + CURRENCY[id].w, 0);
     let r = Math.random() * total;
-    for (const id of CURRENCY_IDS) { if (r < CURRENCY[id].w) return id; r -= CURRENCY[id].w; }
-    return CURRENCY_IDS[0];
+    for (const id of ids) { if (r < CURRENCY[id].w) return id; r -= CURRENCY[id].w; }
+    return ids[0];
 }
 
 // 改造視窗：上面是裝備現況，下面列出全部通貨（數量、能不能用）
@@ -99,7 +101,7 @@ function openCraftDialog(uid) {
         if (isMap && !MAP_CURRENCY[cid]) return '';
         const ok = n > 0 && currencyCan(cid, x);
         return `<button class="craft-cur ${ok ? '' : 'off'}" onclick="craftUseBtn('${cid}',${uid})" ${ok ? '' : 'disabled'}>
-            <span class="cc-i">${c.icon}</span><span class="cc-n">${c.name} <b>×${fmt(n)}</b></span><small>${isMap ? MAP_CURRENCY[cid].desc : c.desc}</small></button>`;
+            <span class="cc-i">${c.icon}</span><span class="cc-n"><span class="cur-${cid}">${c.name}</span> <b>×${fmt(n)}</b></span><small>${isMap ? MAP_CURRENCY[cid].desc : c.desc}</small></button>`;
     }).join('');
     openDialog('🔮 通貨改造', `<div class="craft-item">${itemDescHtml(x)}</div><div class="craft-list">${rows}</div>`,
         [{ text: '關閉', cls: 'secondary', onClick: () => refreshUI() }]);

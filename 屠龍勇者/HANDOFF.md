@@ -5,6 +5,7 @@
 
 ## 1. 現況
 
+- **20261024m：命運的覺醒石＋通貨顏色（第 23 節）**。使用者要求：覺醒石改名「命運的覺醒石」、權重 0.15（最稀有）、只有 Lv.70 以上的怪物掉（前端 `rollCurrency(lv)`＋後端 `loot_roll` 看 `catalog.currency[].minLv`）；每種通貨名稱各一色，覺醒石彩色流光。PGlite 驗證 Lv.20／69 不掉、Lv.70／90 會掉；test-server-loot-db PASS；瀏覽器確認顏色與動畫、Console 無錯誤。**待使用者在 Supabase 依序執行 `tools/awaken-stone.sql`、`tools/loot-catalog.sql`**（取代 20261024l 那次的待辦）。
 - **2026-10-24：手機禁止下拉重新整理與雙擊／雙指頁面縮放（第16節）**。僅index.html viewport與CSS，保留面板內捲動；未改JS版本。check.ps1 ALL CHECKS PASSED；本機瀏覽器確認viewport、touch-action、overscroll限制生效，面板仍overflow-y:auto，Console無error／warn。待真實手機實測：重整載入後下拉／雙擊／雙指不刷新或縮放，背包／設定／聊天仍可捲動；使用者確認後才commit。
 
 - **20261024l：覺醒石＋特殊詞綴（第 23 節）**。使用者要求並選定：新通貨💠覺醒石（權重 0.5），物品等級 70 以上裝備可洗 1 條特殊詞綴（全能力／首領增傷／經驗加成／金幣加成／反傷，上限隨物品等級 70～110 成長），其他通貨重洗保留它。本機測過可用條件、重洗保留、剝離不移除、能力與經驗金幣反傷生效、改造視窗顯示，Console 無錯誤。**待使用者在 Supabase SQL Editor 執行 `tools/loot-catalog.sql`（已重新產生，版本 20261024l-1dc40dbbba50，也同步了之前改過的彈藥價格）**，後端掉寶才會掉覺醒石。

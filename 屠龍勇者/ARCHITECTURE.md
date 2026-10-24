@@ -1130,13 +1130,19 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 | curAnnul | ✂️ 剝離石 | 隨機移除 1 條（不含傳說、特殊詞綴；魔法剝光變回普通，特殊詞綴留著） | 2.5 |
 | curChance | 🎲 命運石 | 普通 → 隨機品質（魔法 75%／稀有 21%／傳說 4%） | 1.2 |
 | curOracle | ✨ 神諭石 | 稀有再加 1 條（最多 6 條，特殊詞綴不算） | 0.3 |
-| curAwaken | 💠 覺醒石 | 物品等級 70 以上（看 `il`，商店貨不算）：加 1 條特殊詞綴，已有就換掉（傳說也能用） | 0.5 |
+| curAwaken | 💠 命運的覺醒石 | 物品等級 70 以上（看 `il`，商店貨不算）：加 1 條特殊詞綴，已有就換掉（傳說也能用）；**只有 Lv.70 以上的怪物掉**（`minLv`） | 0.15（最稀有） |
+
+- **掉落等級限制**（2026-10-24，`20261024m`）：`CURRENCY` 可設 `minLv`，`rollCurrency(lv)` 傳怪物等級，等級不夠的通貨不進權重；
+  後端 `loot_roll`（`server-loot.sql`）同樣依 `catalog.currency[].minLv` 過濾（`export-loot-catalog.js` 會輸出 minLv）。單獨更新函式用 `tools/awaken-stone.sql`，執行順序：先它、再 `loot-catalog.sql`。
+  Lv.70 以上的怪掉通貨時約 0.16% 是覺醒石。圖鑑取得方式顯示「Lv.70 以上的怪物」「極稀有」。
+- **通貨顏色**（`20261024m`，使用者要求）：`itemClass` 對通貨回傳 `cur-<id>`（index.html），點化石淡藍、重鑄石綠、淬鍊石銅、晉升石金、混沌石紫、剝離石紅、命運石青、神諭石白光、
+  命運的覺醒石彩色流光（漸層文字＋`curFlow` 動畫，`prefers-reduced-motion` 時不動）；改造視窗、鍛造 NPC 通貨列也套用。
 
 - **特殊詞綴**（2026-10-24，`20261024l`，使用者要求；`affix.js` `SPECIAL_AFFIXES`，存在 `inst.af` 並標 `sx: 1`，每件最多 1 條，任何部位都能出，掉落不會擲到）：
   數值依物品等級 70～110 成長（`specialIl`），上限：全能力 `allStat` +1～3（力敏體智精各加，`affixFx` 展開）、首領增傷 `bossDmg` 5～15%（`bossDmgMult`，物理與魔法傷害）、
   經驗加成 `expPct`／金幣加成 `goldPct` 3～10%（`onKill`）、反傷 `thorns` 5～15%（`monsterAttack`，只有被物理攻擊打中時）。
   其他通貨重洗（`applyAffixes`）保留特殊詞綴；顯示為青綠色 `.q-special`「💠 …（覺醒）」；`affixDef(k)` 同時查一般與特殊詞綴（`save.js` 讀檔過濾也用它）。
-  後端掉寶要使用者在 Supabase 執行重新產生的 `tools/loot-catalog.sql` 才會掉覺醒石（`catalog.currency` 依權重）。
+  後端掉寶要使用者在 Supabase 依序執行 `tools/awaken-stone.sql`、`tools/loot-catalog.sql` 才會掉覺醒石（`catalog.currency` 依權重與 minLv）。
 
 - 掉落：每隻怪 3%（`CURRENCY_DROP_P`）、首領 60%（`CURRENCY_BOSS_P`，1～3 顆），依權重 `rollCurrency`。實測約每 100 隻 3 顆。
 - 物品等級 `craftIl`：有 `il` 用 `il`，商店／任務裝沒有就用玩家等級。傳說裝備只能用淬鍊石。

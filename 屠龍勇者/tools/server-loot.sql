@@ -92,8 +92,8 @@ begin
   end if;
  end loop;
  if random()<(case when boss then 0.6 else 0.03 end)*qm then
-  select sum((v->>'w')::numeric) into total from jsonb_array_elements(c->'currency') v;r:=random()*total;
-  for dr in select * from jsonb_array_elements(c->'currency') loop r:=r-(dr->>'w')::numeric;if r<0 then out:=out||jsonb_build_array(public.loot_item(c,dr->>'id',case when boss then public.loot_int(1,3) else 1 end,null,lv));exit;end if;end loop;
+  select sum((v->>'w')::numeric) into total from jsonb_array_elements(c->'currency') v where coalesce((v->>'minLv')::int,0)<=lv;r:=random()*total;
+  for dr in select * from jsonb_array_elements(c->'currency') v where coalesce((v->>'minLv')::int,0)<=lv loop r:=r-(dr->>'w')::numeric;if r<0 then out:=out||jsonb_build_array(public.loot_item(c,dr->>'id',case when boss then public.loot_int(1,3) else 1 end,null,lv));exit;end if;end loop;
  end if;
  if random()<(case when mr is not null and mr<>'null'::jsonb then 0.015 else 0.004 end)*qm then
   if mr is not null and mr<>'null'::jsonb then mt:=(mr->>'t')::int+(array[-1,0,0,1])[public.loot_int(1,4)];

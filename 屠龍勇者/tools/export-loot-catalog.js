@@ -10,7 +10,7 @@ const catalog=vm.runInContext(`(()=>{
  return {version:GAME_VERSION,items,monsters:Object.fromEntries(Object.keys(MONSTERS).map(id=>[id,makeMonster(id)])),zones:ZONE_BY_ID,
  tower:Object.fromEntries(Array.from({length:100},(_,i)=>[String(i+1),{names:TOWER_THEMES[Math.min(9,Math.floor(i/10))],normal:makeTowerMonster(i+1,false),boss:(i+1)%10===0?makeTowerMonster(i+1,true):null}])),
  quests,questBosses:Object.fromEntries(Object.entries(quests).map(([cls,qs])=>[cls,qs.map(g=>g.type==='boss'?buildMonster('questBoss',g.boss):null)])),
- common:COMMON_DROPS,currency:Object.entries(CURRENCY).map(([id,c])=>({id,w:c.w})),quality:QUALITY,rareNames:RARE_NAMES,
+ common:COMMON_DROPS,currency:Object.entries(CURRENCY).map(([id,c])=>c.minLv?{id,w:c.w,minLv:c.minLv}:{id,w:c.w}),quality:QUALITY,rareNames:RARE_NAMES,
  affixes:Object.fromEntries(Object.entries(AFFIXES).map(([k,a])=>[k,{pre:a.pre,min:a.min,pct:!!a.pct,max:Array.from({length:111},(_,lv)=>Math.max(a.min,a.max(lv)))}])),legend:LEGEND_AFFIXES,
  mapZones:mapZones().map(z=>({id:z.id,lv:z.lv[0]})),mapMods:MAP_MODS,raids:RAID_BY_ID,resonance:RESONANCE,
  resTiers:Array.from({length:16},(_,t)=>resMaxTierForMap(t)),resMapBossP:RES_MAP_BOSS_P,bossMaterialP:BOSS_MATERIAL_DROP_P};
