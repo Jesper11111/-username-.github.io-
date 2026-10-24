@@ -163,7 +163,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024n`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024o`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1508,6 +1508,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   兩人領獎（第 2、3 名：經驗、金幣、祝福武器卷）、重複領被拒；結束畫面顯示最後一擊與下一隻倒數。Console 只有預期中的重複領獎 409。
 
 ## 36. 交易所（2026-10-10，版本 `20261010n`；`market.js`、`tools/supabase.sql` 交易所段）
+
+- **20261024o（2026-10-24）：新增「技能書」分類**。`MARKET_CATS` 在卷軸後加入 `book`，沿用 `marketSetCat`／`market_browse(p_cat: book)` 篩選全部魔法書、職業技能書及精靈水晶（`ITEMS.cat === book`）；既有上架分類已使用book，不需改SQL或存檔。
 - **⚠️ 2026-10-23 起改用 v2（第 95 節）**：本節的 market_list／market_buy／market_cancel 只檢查不扣、照收玩家送來的道具內容，可複製道具與金幣，已停用；改為 market_list2／market_cancel2／market_buy2。
 
 - 使用者要求：B 計畫的「交易所」。入口：村莊頁「🏪 交易所」按鈕、PC 地圖左側圓鈕 🏪（血盟下面，`PC_SLOTS` side，y 368）、手機左柱抽屜、背包道具視窗「🏪 上架」（在村莊、已登入、可交易時）。

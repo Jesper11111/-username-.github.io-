@@ -7,7 +7,7 @@
 
 const MARKET_FEE = 0.05;
 const MARKET_MAX = 10;
-const MARKET_CATS = [['', '全部'], ['weapon', '武器'], ['armor', '防具'], ['potion', '藥水'], ['scroll', '卷軸'], ['currency', '通貨'], ['map', '地圖'], ['material', '材料'], ['elixir', '萬能藥'], ['ammo', '彈藥']];
+const MARKET_CATS = [['', '全部'], ['weapon', '武器'], ['armor', '防具'], ['potion', '藥水'], ['scroll', '卷軸'], ['book', '技能書'], ['currency', '通貨'], ['map', '地圖'], ['material', '材料'], ['elixir', '萬能藥'], ['ammo', '彈藥']];
 
 let marketView = 'buy', marketCat = '', marketQ = '', marketSort = 'new', marketPage = 0;
 let marketRows = null, marketMine = null, marketBusy = false, marketErr = '', marketSellUid = null;
