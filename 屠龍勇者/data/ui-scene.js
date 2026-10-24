@@ -8,7 +8,10 @@
 //   村莊：畫建築，點一下打開對應設施
 const TILE = 32;
 const MAP_W = 28, MAP_H = 28;     // 格子地圖的大小；背景圖地圖用 SCENE_BGS 的 w/h（scene.mw/mh）
-const MAP_MON_COUNT = 10;        // 怪群最多 6 隻，地圖上多放幾隻讓牠們有得綁
+const MAP_MON_COUNT = 10;        // 怪群最多 6 隻，地圖上多放幾隻讓牠們有得綁（最少這麼多）
+const MAP_MON_DENSITY = 60;      // 怪物在整個區域隨機重生（2026-10-24）：每 60 格可走地板放 1 隻，最多 MAP_MON_MAX
+const MAP_MON_MAX = 30;
+const MON_SPAWN_GAP = 6;         // 重生點離角色至少幾格（不生在角色身邊）
 const PLAYER_SPEED = 5.5;         // 每秒幾格
 const MON_WANDER_MS = [900, 2600];
 
@@ -618,29 +621,60 @@ function visualMonster() {
     return { icon: MONSTERS[id].icon, name: MONSTERS[id].name, mid: id };
 }
 
-function spawnMapMon(near) {
-    const look = visualMonster();
-    if (!look) return null;
-    for (let tries = 0; tries < 40; tries++) {
-        const r = near ? rand(2, 4) : rand(3, 9);
-        const x = scene.pl.x + rand(-r, r), y = scene.pl.y + rand(-r, r);
-        // 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
-        if (freeTile(x, y) && inHuntZone(x, y) && Math.abs(x - scene.pl.x) + Math.abs(y - scene.pl.y) >= 2 && findPath(scene.pl.x, scene.pl.y, x, y, true).length) {
-            const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, mid: look.mid, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
-            scene.mons.push(m);
-            return m;
+// 這個區域裡角色走得到的地板（大地圖只算目前地圖的區域）；地圖不變就沿用，角色跑到別的連通塊（瞬移）才重算
+// 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
+function huntSpots() {
+    const pl = scene.pl, mw = scene.mw, id = player.loc.id, c = scene.spots;
+    if (c && c.id === id && c.reach.has(pl.y * mw + pl.x)) return c.list;
+    const reach = new Set([pl.y * mw + pl.x]), q = [[pl.x, pl.y]], list = [];
+    while (q.length) {
+        const [x, y] = q.pop();
+        if (inHuntZone(x, y)) list.push([x, y]);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = x + dx, ny = y + dy, k = ny * mw + nx;
+            if (nx < 0 || ny < 0 || nx >= mw || ny >= scene.mh || reach.has(k) || scene.grid[ny][nx] !== 0) continue;
+            reach.add(k); q.push([nx, ny]);
         }
     }
+    scene.spots = { id, reach, list };
+    return list;
+}
+function mapMonTarget() { return clamp(Math.round(huntSpots().length / MAP_MON_DENSITY), MAP_MON_COUNT, MAP_MON_MAX); }
+
+// 怪物在整個區域隨機一格重生（2026-10-24 使用者要求：不再生在角色周圍），離角色至少 MON_SPAWN_GAP 格
+function spawnMapMon() {
+    const look = visualMonster();
+    if (!look) return null;
+    const spots = huntSpots(), pl = scene.pl;
+    if (!spots.length) return null;
+    for (let tries = 0; tries < 40; tries++) {
+        const [x, y] = spots[rand(0, spots.length - 1)];
+        if (!freeTile(x, y) || (tries < 30 && Math.abs(x - pl.x) + Math.abs(y - pl.y) < MON_SPAWN_GAP)) continue;
+        const m = { x, y, rx: x, ry: y, icon: look.icon, name: look.name, mid: look.mid, inst: null, cd: rand(...MON_WANDER_MS), dying: 0, lunge: null };
+        scene.mons.push(m);
+        return m;
+    }
     return null;
+}
+
+// 地圖畫面開著時，角色要先走到怪旁邊才開打（combat.js 尋怪時間到了會問這裡）；畫面沒開（背景、離線模擬）照舊直接開打
+// 走不到怪等了 20 秒也直接開打，避免卡住
+function sceneHuntReady() {
+    if (SIM_MODE || !scene || scene.key !== sceneKey() || !(gameNow - (scene.tickAt || 0) < 500) || player.loc.type !== 'zone' || currentZone().type === 'dragon') return true;
+    const ready = scene.mons.some(m => !m.dead && !m.inst && inHuntZone(m.x, m.y) && (sceneDist(m) <= 2 || (weaponIsRanged() && sceneReach(m).weapon)));
+    if (ready || (hunt.waitFrom && gameNow - hunt.waitFrom > 20000)) { hunt.waitFrom = 0; return true; }
+    if (!hunt.waitFrom) hunt.waitFrom = gameNow;
+    return false;
 }
 
 // ───────── 每幀更新 ─────────
 function sceneUpdate(dt) {
     const pl = scene.pl, inZone = player.loc.type === 'zone', fighting = inZone && player.hunting && hunt && hunt.state === 'fight' && hunt.mon;
 
-    // 大地圖：離角色 16 格以上、沒在戰鬥的怪收掉（怪只生在角色附近，走遠了才會一直有新的）；記下目前在哪一區
+    scene.tickAt = gameNow;
+    // 大地圖：不在目前地圖區域、沒在戰鬥的怪收掉（走進別的地圖後，原地圖的怪不留著）；記下目前在哪一區
     if (scene.bg && scene.bg.big) {
-        scene.mons = scene.mons.filter(m => m.inst || m.dead || Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) < 16);
+        if (inZone) scene.mons = scene.mons.filter(m => m.inst || m.dead || inHuntZone(m.x, m.y));
         if (scene.bg.regions && inZone) {
             const rs = scene.bg.regions;
             const r = bigRegionAt(rs, pl.x, pl.y);
@@ -649,10 +683,11 @@ function sceneUpdate(dt) {
             if (name !== scene.region) { scene.region = name; scene.regionAt = gameNow; }
         }
     }
-    // 怪物數量維持
+    // 怪物數量維持：在整個區域隨機重生；剛進地圖（不到一半）一口氣補滿，之後每 1.2 秒補一隻
     if (inZone && currentZone().type !== 'dragon') {
         scene.spawnCd -= dt;
-        if (scene.spawnCd <= 0 && scene.mons.filter(m => !m.dead).length < MAP_MON_COUNT) { spawnMapMon(false); scene.spawnCd = 1200; }
+        const alive = scene.mons.filter(m => !m.dead).length, want = mapMonTarget();
+        if (scene.spawnCd <= 0 && alive < want) { spawnMapMon(); scene.spawnCd = alive < want / 2 ? 0 : 1200; }
     }
 
     // 綁定戰鬥中的怪：hunt.mobs 每隻對應一隻地圖怪
@@ -664,15 +699,16 @@ function sceneUpdate(dt) {
     }
     for (const inst of mobs) {
         if (scene.mons.some(m => m.inst === inst && !m.dead)) continue;
+        // 綁最近的地圖怪（遠的會自己走過來，走到旁邊才打得到，見 mobInReach）；地圖上沒怪才在區域隨機生一隻
         let best = null, bd = 1e9;
         for (const m of scene.mons) {
-            if (m.dead || m.inst) continue;
+            if (m.dead || m.inst || !inHuntZone(m.x, m.y)) continue;
             const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y);
             if (d < bd) { bd = d; best = m; }
         }
-        if (!best || bd > (inst === hunt.mon ? 6 : 4)) best = spawnMapMon(true) || best;
+        if (!best) best = spawnMapMon();
         if (!best) {   // 龍穴：龍出現在角色上方
-            best = { x: pl.x, y: Math.max(1, pl.y - 2), rx: pl.x, ry: Math.max(1, pl.y - 2), cd: 1e9, dying: 0 };
+            best = { x: pl.x, y: Math.max(1, pl.y - 2), rx: pl.x, ry: Math.max(1, pl.y - 2), cd: 1e9, dying: 0, fixed: true };   // fixed：龍不走動，攻擊不限距離
             scene.mons.push(best);
         }
         best.inst = inst;
@@ -681,6 +717,13 @@ function sceneUpdate(dt) {
         best.mid = inst.id;
         best.lastHp = inst.hp;
         if (inst === hunt.mon) pl.path = [];
+    }
+    // 圍上來的怪走到角色旁邊（會魔法的 4 格內）才能攻擊，回報給 combat.js 的 mobInReach
+    for (const m of scene.mons) {
+        if (!m.inst || m.dead) continue;
+        const d = Math.max(Math.abs(m.x - pl.x), Math.abs(m.y - pl.y));
+        m.inst.near = m.fixed || d <=(m.inst.magic ? RANGED_RANGE : MELEE_RANGE);
+        m.inst.nearAt = gameNow;
     }
     const target = fighting ? scene.mons.find(m => m.inst === hunt.mon && !m.dead) || null : null;
     if (target !== scene.engaged) { scene.engaged = target; if (target) pl.path = []; }

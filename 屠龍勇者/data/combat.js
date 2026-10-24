@@ -167,7 +167,7 @@ function huntTick(dt) {
     if (hunt.lootWait) return;
     if (hunt.state === 'search') {
         hunt.timer -= dt;
-        if (hunt.timer <= 0) spawnMonster();
+        if (hunt.timer <= 0 && sceneHuntReady()) spawnMonster();   // 地圖畫面開著：角色走到怪旁邊才開打（ui-scene.js）
         return;
     }
     const st = calcStats();
@@ -194,7 +194,8 @@ function huntTick(dt) {
         if (m.hp <= 0 || !hunt.mobs.includes(m)) continue;
         m.atkCd -= dt;
         if (m.atkCd > 0) continue;
-        m.atkCd = (m === hunt.mon ? m.spd : m.spd * MOB_SIDE_SLOW) * bossEnchantAttackFactor(m);
+        if (!mobInReach(m)) { m.atkCd = 200; continue; }   // 還沒走到角色旁邊
+        m.atkCd =(m === hunt.mon ? m.spd : m.spd * MOB_SIDE_SLOW) * bossEnchantAttackFactor(m);
         if (gameNow >= m.stunUntil) monsterAttack(calcStats(), m);
         if (!fightAlive()) return;
     }
@@ -420,6 +421,8 @@ function weaponRange() {
     const w = player.equip.weapon, wt = w && WEAPON_TYPES[ITEMS[w.id].type];
     return wt && wt.ranged ? (wt.range || RANGED_RANGE) : RANGED_RANGE;
 }
+// 怪物攻擊距離（2026-10-24 怪改成在區域隨機重生，圍上來的怪可能還在遠處）：ui-scene.js 每幀寫 m.near／m.nearAt；畫面沒開不限制
+function mobInReach(m) { return !m.nearAt || gameNow - m.nearAt > 500 || m.near; }
 function weaponIsRanged() {
     const w = player.equip.weapon;
     return !!(w && WEAPON_TYPES[ITEMS[w.id].type] && WEAPON_TYPES[ITEMS[w.id].type].ranged);
