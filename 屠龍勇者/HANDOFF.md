@@ -5,6 +5,10 @@
 
 ## 1. 現況
 
+- **20261025b：人物狀態按鈕替換為使用者新版無C鍵圖（第135節追加）**。原樣保存images/ui/character-status-v2.png，PC_SLOTS及SW改指向v2，舊圖保留。位置、點擊及存檔不變。待Ctrl+F5確認新版圖示，實玩確認後才commit。
+
+- **20261025a：PC人物狀態改用使用者提供的騎士卷軸圖片（第135節）**。images/ui/character-status-v1.png原樣複製，替換左下人物狀態emoji、完整縮放於原66×66位置，點擊功能與手機抽屜不變，SW預載。check.ps1 ALL CHECKS PASSED、47檔混淆打包通過；127.0.0.1隔離瀏覽器確認新圖與點擊開啟角色裝備、Console無error／warn。原localhost伺服器未開會顯示SW舊快取，serve.ps1在此環境HttpListener不支援，改Node唯讀本機伺服器8790。待使用者Ctrl+F5→確認原紅圈換圖→點擊人物狀態，實玩確認後才commit。
+
 - **20261024ao：修復PC左右骷髏外框破邊（第134節）**。舊遮罩殘留石柱／格紋矩形，index.html的#frame.pc #frame-art增加依2000×1116原圖輪廓換算的clip-path，裁掉頭頂及臉旁殘片；保留原圖、遮罩、法球、快捷欄與手機版。隔離瀏覽器左右輪廓確認、Console無error／warn，check.ps1與混淆打包通過。待使用者Ctrl+F5→PC畫面檢查紅圈兩側，在海岸等明亮地圖確認無方塊破邊；實玩確認後才commit。
 
 - **20261024an：暗影海盜雙槍客專屬變身＋訊息按鈕移位（第18.15、133節）**。m06接上使用者06原稿的紅黑雙槍客，三向36格、走路／攻擊／施法／受傷，左向鏡射；維持Lv35、槍手武器限制、原加成、GM豁免及schema7。原始參考、內建image_gen三張生成稿、提示詞與切圖腳本保存在tools/sprite-src/morph/shadow-pirate-gunner-v1。PC訊息按鈕移到技能右邊、第一快捷欄左邊，另製青藍雙對話泡圖示區別任務卷軸；手機原位置保留，抽屜三分頁不變。check.ps1 ALL CHECKS PASSED；pirate／cave-assassin／log-drawer／weapon-range回歸通過，47檔混淆466KB。隔離瀏覽器實點卷軸m06扣1、四動作四方向、訊息開關與三分頁、PC／手機配置，Console無error／warn，未讀寫正式角色或連外。**待實玩確認後才commit**：Ctrl+F5→PC技能右邊青藍訊息鈕→確認訊息／聊天／掉落與任務鈕能區分；Lv35槍手裝槍→變形卷軸→暗影海盜雙槍客→走動／射擊確認外觀。
