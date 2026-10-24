@@ -283,6 +283,7 @@ function calcStats() {
         if (d.safe >= 0) fx.ac = (fx.ac || 0) + (it.ench || 0);
     }
     for (const slot of SLOT_KEYS) addFx(fx, affixFx(p.equip[slot]));   // 暗黑式詞綴（affix.js）
+    addFx(fx, galeFx(SLOT_KEYS.map(s => p.equip[s])));                 // 傳說「疾風」只算一條
     for (const k in p.buffs) if (p.buffs[k].until > now) addFx(fx, buffFx(p.buffs[k]));
 
     const maxHp = p.baseHp + (fx.hp || 0);

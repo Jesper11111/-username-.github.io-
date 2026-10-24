@@ -7,7 +7,7 @@
 //   passive 被動：學會就生效；cond:'lowHp' 表示 HP 低於 50% 才生效
 // fx 欄位：ac（越大越硬）、hit、dmg、sp、mr、crit、dodge、reduce（減傷）、double（雙擊率）、
 //          absorb（傷害轉由 MP 承受比例）、counter（反擊率）、hpRegen、mpRegen、dmgSp（SP×倍率加到傷害）、
-//          spdMul（攻速提升比例，攻擊間隔 ×(1−合計)，合計最多 30%）、lifesteal（吸血比例）、haste（加速）、brave（勇敢）
+//          spdMul（攻速提升比例，攻擊間隔 ×(1−合計)，合計最多 30%；2026-10-24 起每個技能最多 5%）、lifesteal（吸血比例）、haste（加速）、brave（勇敢）
 // undeadMul：對不死系倍率
 // aoe：範圍攻擊，打全部圍上來的怪；spread：多發攻擊每一發打不同隻（2026-10-09 多怪戰鬥）
 
@@ -85,9 +85,9 @@ const SKILLS = {
         { id: 'royalMorale', name: '激勵士氣', lv: 25, mp: 15, type: 'buff', sec: 300, fx: { dmg: 4, hit: 3 }, desc: '傷害 +4、命中 +3' },
         { id: 'royalIron',   name: '鋼鐵士氣', lv: 40, mp: 20, type: 'buff', sec: 300, fx: { ac: 6, reduce: 3 }, desc: '防禦 +6、減傷 3' },
         { id: 'royalAura',   name: '王者光環', lv: 48, type: 'passive', fx: { hit: 3, mr: 5 }, desc: '被動：命中 +3、MR +5' },
-        { id: 'royalImpact', name: '衝擊士氣', lv: 55, mp: 25, type: 'buff', sec: 300, fx: { spdMul: 0.15, dmg: 5 }, desc: '攻速 +15%、傷害 +5' },
+        { id: 'royalImpact', name: '衝擊士氣', lv: 55, mp: 25, type: 'buff', sec: 300, fx: { spdMul: 0.05, dmg: 5 }, desc: '攻速 +5%、傷害 +5' },
         { id: 'royalWrath',  name: '王者之怒', lv: 70, mp: 25, type: 'strike', mult: 2.2, aoe: true, cd: 10, desc: '範圍：2.2 倍傷害橫掃所有敵人（冷卻 10 秒）' },
-        { id: 'royalDecree', name: '王命',     lv: 85, mp: 30, type: 'buff', sec: 180, fx: { dmg: 8, ac: 4, spdMul: 0.1 }, desc: '傷害 +8、防禦 +4、攻速 +10%（3 分鐘）' },
+        { id: 'royalDecree', name: '王命',     lv: 85, mp: 30, type: 'buff', sec: 180, fx: { dmg: 8, ac: 4, spdMul: 0.05 }, desc: '傷害 +8、防禦 +4、攻速 +5%（3 分鐘）' },
     ],
     knight: [
         { id: 'knightBash',    name: '猛擊',     lv: 5,  mp: 2,  type: 'strike', mult: 1.4, cd: 6, desc: '1.4 倍傷害一擊' },
@@ -137,7 +137,7 @@ const SKILLS = {
         { id: 'shuraIron',     name: '金剛體',   lv: 18, mp: 6,  type: 'buff', sec: 300, fx: { reduce: 3, ac: 3 }, desc: '減傷 3、防禦 +3' },
         { id: 'shuraBreak',    name: '破甲',     lv: 25, mp: 6,  type: 'strike', mult: 1.5, ignoreAc: true, cd: 6, desc: '無視防禦的 1.5 倍攻擊' },
         { id: 'shuraWhirl',    name: '旋風腿',   lv: 33, mp: 8,  type: 'strike', mult: 1.3, aoe: true, cd: 7, desc: '範圍：1.3 倍傷害踢向所有敵人' },
-        { id: 'shuraRage',     name: '狂暴',     lv: 40, mp: 12, type: 'buff', sec: 300, fx: { spdMul: 0.15 }, desc: '攻速 +15%' },
+        { id: 'shuraRage',     name: '狂暴',     lv: 40, mp: 12, type: 'buff', sec: 300, fx: { spdMul: 0.05 }, desc: '攻速 +5%' },
         { id: 'shuraBlood',    name: '血戰',     lv: 48, type: 'passive', cond: 'lowHp', fx: { dmg: 8, lifesteal: 0.05 }, desc: '被動：HP 低於 50% 時傷害 +8、吸血 5%' },
         { id: 'shuraThousand', name: '千手破',   lv: 55, mp: 15, type: 'strike', mult: 0.9, hits: 4, spread: true, cd: 10, desc: '連打 4 下，分散打向周圍敵人' },
         { id: 'shuraFist',     name: '羅剎拳',   lv: 62, mp: 15, type: 'strike', mult: 2.8, cd: 12, desc: '2.8 倍傷害一拳' },
@@ -166,9 +166,9 @@ const SKILLS = {
         { id: 'gunSteady',  name: '穩定姿態', lv: 42, type: 'passive', fx: { crit: 0.05, hit: 3 }, desc: '被動：爆擊 +5%、命中 +3' },
         { id: 'gunSnipe',   name: '狙擊',     lv: 50, mp: 18, type: 'strike', mult: 3.5, cd: 15, desc: '3.5 倍傷害一槍' },
         { id: 'gunPierce',  name: '穿甲彈',   lv: 58, mp: 15, type: 'strike', mult: 2.2, ignoreAc: true, cd: 9, desc: '無視防禦的 2.2 倍一槍' },
-        { id: 'gunBarrage', name: '彈幕',     lv: 65, mp: 20, type: 'buff', sec: 300, fx: { spdMul: 0.15 }, desc: '攻速 +15%' },
+        { id: 'gunBarrage', name: '彈幕',     lv: 65, mp: 20, type: 'buff', sec: 300, fx: { spdMul: 0.05 }, desc: '攻速 +5%' },
         { id: 'gunRocket',  name: '火箭砲',   lv: 72, mp: 22, type: 'strike', mult: 2, aoe: true, cd: 12, desc: '範圍：2 倍傷害炸向所有敵人' },
-        { id: 'gunBullet',  name: '子彈時間', lv: 85, mp: 30, type: 'buff', sec: 120, fx: { spdMul: 0.2, crit: 0.1 }, desc: '攻速 +20%、爆擊 +10%（2 分鐘）' },
+        { id: 'gunBullet',  name: '子彈時間', lv: 85, mp: 30, type: 'buff', sec: 120, fx: { spdMul: 0.05, crit: 0.1 }, desc: '攻速 +5%、爆擊 +10%（2 分鐘）' },
     ],
     magicfighter: [
         { id: 'mfSlash',   name: '魔刃',     lv: 5,  mp: 3,  type: 'strike', mult: 1.2, magic: { dmg: [4, 10], spK: 1 }, cd: 6, desc: '1.2 倍攻擊＋魔法傷害' },
@@ -179,7 +179,7 @@ const SKILLS = {
         { id: 'mfFocus',   name: '魔力凝聚', lv: 42, type: 'passive', fx: { sp: 2, mpRegen: 2 }, desc: '被動：SP +2、回魔 +2' },
         { id: 'mfBurst',   name: '元素爆發', lv: 50, mp: 25, type: 'spell', dmg: [50, 90], spK: 2.5, aoe: true, cd: 8, desc: '範圍：元素爆發打所有敵人（冷卻 8 秒）' },
         { id: 'mfStorm',   name: '雷霆風暴', lv: 60, mp: 25, type: 'strike', mult: 1.2, magic: { dmg: [30, 60], spK: 1.8 }, aoe: true, cd: 9, desc: '範圍：1.2 倍攻擊＋雷電魔法打所有敵人' },
-        { id: 'mfAvatar',  name: '魔劍化身', lv: 72, mp: 25, type: 'buff', sec: 180, fx: { spdMul: 0.1, sp: 4 }, desc: '攻速 +10%、SP +4（3 分鐘）' },
+        { id: 'mfAvatar',  name: '魔劍化身', lv: 72, mp: 25, type: 'buff', sec: 180, fx: { spdMul: 0.05, sp: 4 }, desc: '攻速 +5%、SP +4（3 分鐘）' },
         { id: 'mfCollapse', name: '天崩',    lv: 85, mp: 50, type: 'spell', dmg: [130, 200], spK: 3.5, aoe: true, cd: 12, desc: '範圍：天崩地裂打所有敵人（冷卻 12 秒）' },
     ],
     paladin: [
@@ -195,7 +195,7 @@ const SKILLS = {
     angel: [
         { id: 'holyBolt',    name: '聖光彈',     lv: 1,  mp: 3,  type: 'spell', cd: 3, dmg: [4, 9], spK: 1.1, desc: '基礎神聖魔法' },
         { id: 'angelAegis',  name: '神聖護盾',   lv: 12, mp: 10, type: 'buff', sec: 600, fx: { ac: 4, mr: 10 }, desc: '防禦 +4、MR +10（10 分鐘）' },
-        { id: 'angelWings',  name: '天使之翼',   lv: 20, mp: 15, type: 'buff', sec: 300, fx: { dodge: 0.1, spdMul: 0.1 }, desc: '閃避 +10%、攻速 +10%' },
+        { id: 'angelWings',  name: '天使之翼',   lv: 20, mp: 15, type: 'buff', sec: 300, fx: { dodge: 0.1, spdMul: 0.05 }, desc: '閃避 +10%、攻速 +5%' },
         { id: 'angelJudge',  name: '審判之光',   lv: 32, mp: 16, type: 'spell', cd: 6, dmg: [30, 52], spK: 2.2, undeadMul: 1.5, desc: '神聖魔法，對不死系再 ×1.5' },
         { id: 'angelGrace',  name: '神恩',       lv: 45, type: 'passive', fx: { hpRegen: 6, mpRegen: 3 }, desc: '被動：回血 +6、回魔 +3（每 5 秒）' },
         { id: 'angelRay',    name: '神聖射線',   lv: 54, mp: 20, type: 'spell', dmg: [60, 100], spK: 2.6, undeadMul: 1.5, cd: 4, desc: '神聖光線，對不死系再 ×1.5' },
@@ -209,7 +209,7 @@ const SKILLS = {
         { id: 'demonPact',      name: '深淵契約', lv: 20, mp: 8,  type: 'buff', sec: 300, fx: { dmg: 5, lifesteal: 0.05 }, desc: '傷害 +5、吸血 +5%' },
         { id: 'demonSkin',      name: '魔化皮膚', lv: 25, type: 'passive', fx: { reduce: 2, ac: 2 }, desc: '被動：減傷 2、防禦 +2' },
         { id: 'demonFear',      name: '恐懼之眼', lv: 30, mp: 8,  type: 'strike', mult: 1, stun: 2500, cd: 14, desc: '攻擊並使敵人恐懼 2.5 秒（無法行動）' },
-        { id: 'demonBloodlust', name: '狂血',     lv: 40, type: 'passive', cond: 'lowHp', fx: { dmg: 10, spdMul: 0.15 }, desc: '被動：HP 低於 50% 時傷害 +10、攻速 +15%' },
+        { id: 'demonBloodlust', name: '狂血',     lv: 40, type: 'passive', cond: 'lowHp', fx: { dmg: 10, spdMul: 0.05 }, desc: '被動：HP 低於 50% 時傷害 +10、攻速 +5%' },
         { id: 'demonHellfire',  name: '地獄火',   lv: 50, mp: 15, type: 'strike', mult: 1, magic: { dmg: [32, 64], spK: 1.6 }, aoe: true, cd: 8, desc: '範圍：攻擊所有敵人＋地獄火魔法傷害' },
         { id: 'demonDrain',     name: '生命汲取', lv: 58, mp: 18, type: 'spell', dmg: [50, 90], spK: 2, cd: 6, desc: '暗黑魔法，傷害可被吸血轉為 HP' },
         { id: 'demonLord',      name: '魔王覺醒', lv: 70, mp: 20, type: 'buff', sec: 180, fx: { dmg: 12, lifesteal: 0.1, ac: -3 }, desc: '傷害 +12、吸血 +10%，但 防禦 -3' },

@@ -14,7 +14,8 @@ const AFFIXES = {
     hit:       { name: '命中',   pre: '精準的', min: 1, max: il => 2 + il / 10 },
     dmg:       { name: '傷害',   pre: '銳利的', min: 1, max: il => 1 + il / 12, slots: ['weapon', 'gloves', 'ring', 'amulet'] },
     crit:      { name: '爆擊',   pre: '致命的', min: 0.01, max: il => 0.02 + il / 2500, pct: true, slots: ['weapon', 'gloves', 'ring', 'amulet'] },
-    spdMul:    { name: '攻速',   pre: '迅捷的', min: 0.02, max: il => 0.03 + il / 1000, pct: true, slots: ['weapon', 'gloves'] },
+    // 攻速每條最多 5%（cap，2026-10-24 使用者要求，傳說「疾風」也一樣；疾風身上幾件都只算一條，見 affixFx／galeFx）
+    spdMul:    { name: '攻速',   pre: '迅捷的', min: 0.02, max: il => 0.03 + il / 1000, cap: 0.05, pct: true, slots: ['weapon', 'gloves'] },
     lifesteal: { name: '吸血',   pre: '嗜血的', min: 0.01, max: il => 0.01 + il / 4000, pct: true, slots: ['weapon', 'ring', 'amulet'] },
     hp:        { name: 'HP',     pre: '堅韌的', min: 5, max: il => 10 + il * 1.2 },
     mp:        { name: 'MP',     pre: '奧術的', min: 5, max: il => 8 + il * 0.8 },
@@ -56,7 +57,7 @@ function equipSlotOf(def) { return def.cat === 'weapon' ? 'weapon' : def.slot; }
 function affixAllowed(k, def) { const a = AFFIXES[k]; return !a.slots || a.slots.includes(equipSlotOf(def)); }
 
 function rollAffixValue(k, il, mul = 1) {
-    const a = affixDef(k), hi = Math.max(a.min, a.max(il)) * mul;
+    const a = affixDef(k), hi = Math.min(a.cap || Infinity, Math.max(a.min, a.max(il)) * mul);
     if (a.pct) return Math.round((a.min + Math.random() * (hi - a.min)) * 100) / 100;
     return Math.max(a.min, Math.round(a.min + Math.random() * (hi - a.min)));
 }
@@ -93,19 +94,31 @@ function applyAffixes(inst, q, il) {
     return inst;
 }
 
-// 已裝備道具的詞綴合計成 fx（calcStats 用）
+// 詞綴實際數值：有 cap 的（攻速）超過上限只算上限（舊存檔、後端擲出的大數值都照這個生效與顯示）
+function affixVal(a) { const d = affixDef(a.k); return d && d.cap ? Math.min(d.cap, a.v) : a.v; }
+const isGale = a => a.lg && a.k === 'spdMul';   // 傳說「疾風」
+
+// 已裝備道具的詞綴合計成 fx（calcStats 用）；疾風另外由 galeFx 只算一條
 function affixFx(inst) {
     if (!inst || !inst.af) return null;
     const fx = {};
     for (const a of inst.af) {
+        if (isGale(a)) continue;
         if (a.k === 'allStat') for (const k of ALL_STAT_KEYS) fx[k] = (fx[k] || 0) + a.v;
-        else fx[a.k] = (fx[a.k] || 0) + a.v;
+        else fx[a.k] = (fx[a.k] || 0) + affixVal(a);
     }
     return fx;
 }
+// 疾風：身上不管幾件，只取最高的一條（2026-10-24 使用者要求，不能疊加）
+function galeFx(items) {
+    let v = 0;
+    for (const it of items) for (const a of (it && it.af) || []) if (isGale(a)) v = Math.max(v, affixVal(a));
+    return v ? { spdMul: v } : null;
+}
 
 function affixText(a) {
-    const d = affixDef(a.k);    return `${d.name} +${d.pct ? Math.round(a.v * 100) + '%' : a.v}`;
+    const d = affixDef(a.k), v = affixVal(a);
+    return `${d.name} +${d.pct ? Math.round(v * 100) + '%' : v}${isGale(a) ? '（多件只算一條）' : ''}`;
 }
 
 // 有品質的道具名稱：魔法＝前綴＋名稱；稀有＝「稱號」名稱；傳說＝傳說・稱號 名稱
