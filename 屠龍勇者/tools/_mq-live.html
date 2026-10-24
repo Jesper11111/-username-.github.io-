@@ -1,0 +1,33 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><base href="../"><meta name="viewport" content="width=device-width, initial-scale=1"><title>排程實跑</title>
+<style>#queue-preview-tools{position:fixed;top:4px;left:4px;z-index:100;background:#17120de8;border:1px solid #aa8844;padding:4px;color:#fff;font:12px sans-serif}#queue-preview-tools button{font-size:12px;padding:4px;margin:2px}</style></head><body>
+<div id="queue-preview-tools">隔離預覽：記憶體角色／存檔，禁止連外<br><button onclick="queuePreviewMode('pc')">PC</button><button onclick="queuePreviewMode('phone')">手機</button><button onclick="switchTab('mapQueue')">開啟排程</button><button onclick="queuePreviewFinish()">模擬目前地圖通關</button><button onclick="queuePreviewLoad()">模擬讀檔</button></div>
+<script>
+(async()=>{
+    const memory=new Map();
+    Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k),key:i=>[...memory.keys()][i],get length(){return memory.size;}}});
+    const localFetch=window.fetch.bind(window);
+    window.fetch=(u,o)=>{if(new URL(u,location.href).origin!==location.origin)throw Error('隔離預覽禁止連外');return localFetch(u,o);};
+    const index=await(await fetch('index.html')).text(),style=document.createElement('style');
+    style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+    const doc=new DOMParser().parseFromString(index,'text/html');
+    for(const script of doc.body.querySelectorAll('script'))script.remove();
+    for(const child of [...doc.body.children])document.body.append(child);
+    for(const m of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g)){
+        if(['data/pwa.js'].includes(m[1]))continue;
+        await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=m[1]+'?v='+m[2]+'&preview=map-queue-color-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+    }
+    let saved='';sfx=()=>{};presTick=()=>{};
+    saveGame=()=>{saved=saveEncode(JSON.stringify({schema:SAVE_SCHEMA,player}));};
+    createPlayer('排程預覽','knight',CLASSES.knight.base);
+    for(let t=1;t<=6;t++)for(let i=0;i<(t===1?3:1);i++)player.inv.push(makeMapItem(t,null));
+    player.inv.push(makeMapItem(6,'magic'),makeMapItem(7,'rare'));
+    window.queuePreviewMode=mode=>{displayMode=mode;layoutFrame();refreshUI();};
+    window.queuePreviewFinish=()=>{
+        if(!player.mapRun){showToast('請先開始地圖排程');return;}
+        mapOnKill({mapBoss:true});mapQueueTick();switchTab('mapQueue');
+    };
+    window.queuePreviewLoad=()=>{if(!saved)return;player=guardWrap(migrateSave(saveParse(saved)));hunt=null;scene=null;switchTab('mapQueue');refreshUI();};
+    showScreen('game');displayMode='pc';layoutFrame();switchTab('mapQueue');refreshUI();
+    player.inv=player.inv.filter(x=>!(ITEMS[x.id].cat==='map'&&ITEMS[x.id].tier>2));lastTick=Date.now();setInterval(gameTick,TICK_MS);window.__log=[];const _al=addLog;addLog=(m,c)=>{__log.push(Math.round(performance.now()/1000)+'s '+m);return _al(m,c);};
+})().catch(e=>{document.body.append('預覽錯誤：'+e.stack);console.error(e);});
+</script></body></html>
