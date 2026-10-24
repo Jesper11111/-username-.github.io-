@@ -161,7 +161,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024f`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024g`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2859,3 +2859,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **修正**：序號只取這個分頁自己知道的——`vaultBase`（`applySaveData` 載入角色時記下存檔裡的 `vaultSeq`；改用雲端進度、匯入都會經過）與 `vaultLive`（自己存取倉庫／交易所後）。`vaultEnvelope(data)` 不再讀 previous。`lootApply` 寫入目前角色時也改用 `vaultEnvelope`（原本沿用 localStorage 那份的序號，同樣能被另一分頁借用）。舊分頁序號舊 → 伺服器拒收 → `cloudVaultAdopt` 改用雲端進度。
 - **測試**：`test-vault-v2-client.js` ⑤-1b：分頁 A 存入長劍，切換成分頁 B 的記憶體（localStorage 是 A 寫的）＋舊 cloudKnown，存檔後選「用這台的進度」→ 雲端仍沒有那把劍、分頁 B 改用雲端進度（修正前此段失敗＝漏洞重現）。全部回歸、check.ps1、混淆建置、瀏覽器載入無錯誤。
 - **待處理**：已經複製出來的道具（alen1144 那 3 張地圖等）要不要刪、要不要處分由使用者決定；其他帳號可用 gm.html 的 vault_dupe 紀錄找。
+
+## 121. PC 左側拿掉聊天按鈕；共用倉庫複製品清除 SQL（2026-10-24，版本 `20261024g`；`ui-frame.js` 的 `PC_SLOTS`、SQL `tools/fix-vault-dupes.sql`）
+
+- **聊天按鈕**：使用者要求。PC 16:9 地圖左側的多人功能圓鈕拿掉 💬 聊天（下排功能鍵已有聊天室），血盟、交易所往上補位（y 458、524）。手機版右柱抽屜的聊天不變。
+- **`tools/fix-vault-dupes.sql`**（管理者在 SQL Editor 執行，帳號 email 寫在檔案兩處）：① 預覽（只讀）列出複製品；② 先把整份存檔備份到新表 `dragon_fix_backup(at, user_id, slot, data, note)`（RLS、玩家不能讀寫），再從背包／倉庫移除「存進共用倉庫 30 天內、不可堆疊（item ? 'ench'）、角色在存入前就建立、原 uid＋道具代號又出現在同欄位」的道具；有刪才寫：`dragon_vault_seq` +1、`data.vaultSeq`／`t`／`client_t` 更新、重算 `sig`，玩家還開著的舊遊戲上傳被拒、改用雲端進度。Messages 顯示每個欄位刪幾件；重跑不多刪。取出時拿到新 uid 的那份保留。
+- **測試**：`tools/test-fix-vault-dupes.js`（PGlite 重現存入→取出→舊分頁蓋回，預覽列出 3 張、只刪複製品、備份、簽章正確、序號 +1 擋舊遊戲、重跑不多刪）。
