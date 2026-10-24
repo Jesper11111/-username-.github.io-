@@ -139,7 +139,7 @@ function moveInst(uid, from, to) {
     if (!it) return;
     const def = ITEMS[it.id];
     const same = isStackable(def) && to.find(x => x.id === it.id);
-    if (same) same.n += it.n; else to.push(it);
+    if (same) { same.n += it.n; if (it.sellLocked) same.sellLocked = true; } else to.push(it);
 }
 // 依數量搬（合併的列，ui-panels.js groupInv；第 122 節）：一疊只搬 n 個（剩下的留原處）、不可堆疊搬前 n 件
 function moveQty(uid, n, from, to) {
@@ -148,7 +148,7 @@ function moveQty(uid, n, from, to) {
     if (!isStackable(ITEMS[it.id]) || n >= it.n) { moveInst(uid, from, to); return; }
     it.n -= n;
     const same = to.find(x => x.id === it.id);
-    if (same) same.n += n; else to.push({ uid: player.nextUid++, id: it.id, n });
+    if (same) { same.n += n; if (it.sellLocked) same.sellLocked = true; } else to.push({ ...it, uid: player.nextUid++, n });
 }
 function moveGroupN(uid, qid, from, to, check) {
     if (!inTown()) return;

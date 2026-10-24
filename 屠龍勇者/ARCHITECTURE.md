@@ -6,6 +6,7 @@
 ## 1. 專案結構
 
 | 檔案 | 內容 |
+| `tools/test-item-lock.js`、`tools/item-lock-preview.html` | 物品防賣鎖隔離測試與記憶體預覽：鎖定、全選、三種賣出、存檔遷移與倉庫合併（第124節） |
 |---|---|
 | `images/sprites/dolls/companions-v1/`、`tools/sprite-src/dolls/companions-v1/`、`tools/magic-doll-preview.html` | 21款魔法娃娃外觀素材、三參考圖／原稿／提示詞與打包、方向／逐格／實際大小預覽；品質T0～T4已定、能力待決定，尚未接遊戲（第115節） |
 | `images/sprites/morph/frost-nether-emperor-v1/`、`tools/sprite-src/morph/frost-nether-emperor-v1/`、`tools/frost-emperor-morph-preview.html`、`tools/test-frost-emperor-morph.js` | 32霜獄幽冥魔皇：36格透明動畫、四參考／生成原稿／提示詞／腳點註冊、隔離卷軸與動作測試（第112節） |
@@ -161,7 +162,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024k`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024m`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -279,7 +280,7 @@
 
 ## 7. 道具與衝裝
 
-- 道具實體 `{ uid, id, n, ench }`；藥水、卷軸、彈藥、材料、萬能藥可堆疊。裝備中的道具放 `player.equip[slot]`，不在 `inv`。
+- 道具實體 `{ uid, id, n, ench, sellLocked? }`（防賣鎖定見第124節）；藥水、卷軸、彈藥、材料、萬能藥可堆疊。裝備中的道具放 `player.equip[slot]`，不在 `inv`。
 - 雙手武器（雙手劍、矛、弓、槍、鋼爪、雙刀）不能與盾同時裝備。
 - 衝裝（`enchant.js`）：強化值 < 安定值必定成功（祝福卷 +1～3）；≥ 安定值成功率 `0.5/(超出+1.25)`（40%→22%→15%…），
   失敗**蒸發**；詛咒卷 -1；飾品不能強化；上限 +15。武器每 +1 傷害 +1，防具每 +1 AC -1。
@@ -341,6 +342,8 @@
 - 原表缺的 21、43 級依 (n+1)⁴ − n⁴ 規律補上（39,775、329,295）；原表 27 級總經驗 14656 為筆誤，應為 614,656。
 
 ## 10. 存檔欄位（`player`）
+
+- schema 6（20261024m）：`inv`／`storage`／`equip` 的物品實體可帶 `sellLocked: true`；舊存檔預設未鎖，`migrateSave` 清除非true旗標。使用者已同意變更存檔。
 
 `name, cls, lv, exp, gold, stats, statPoints, elixirs, baseHp, baseMp, hp, mp, inv, equip, storage, nextUid,
 buffs{key:{src,id,until}}, cds{技能id:到期}, loc{type,id,floor}, hunting, towerMax, towerCleared, dragons, dragonCd,
@@ -2901,3 +2904,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - `renderStatus` 使用 `invWeight() / calcStats().weightMax` 向下取整為百分比，在 MR 右側顯示「負重 xx%」，隨狀態列更新。
 - `.hud-mr` 作定位基準，`.hud-weight` 接在右側，不推動原本金幣、等級、防禦與 MR；PC 與直式外框共用。不改負重規則或存檔。
+
+## 124. 物品防賣鎖定（2026-10-24，版本 `20261024m`，schema 6）
+
+- 使用者同意新增存檔鎖定欄位。物品可帶 `sellLocked: true`，解鎖刪除此欄位；`migrateSave` 為舊物品維持未鎖定，背包、倉庫、裝備只保留明確true。加密存檔與雲端既有流程保留欄位，不改SQL。
+- `ui-panels.js` 新增頂層 `itemLockButton(x, grouped)`／`toggleItemLock(uid, grouped)`；背包及回收頁顯示🔓鎖定／🔒已鎖定，點擊立即存檔並取消該物品勾選。回收合併列鎖整組；背包合併異界地圖依同種與鎖定狀態分列，按鎖定套用該列全部地圖。
+- `sellPickAll`、`sellPickToggle`、`sellPickedList`、`bulkSellList` 都排除已鎖定；回收頁鎖定列的勾選與賣出停用，全選狀態只算未鎖物品。`sellN` 呼叫與確認時再檢查鎖；一鍵賣出確認時重查原清單，避免確認期間鎖定或背包改變仍被售出。
+- 鎖定僅防回收賣出，裝備、使用、衝裝、改造、交易所上架與倉庫操作沿原規則。堆疊合併時只要其中一疊有鎖，整疊保留鎖（bagTidy、town.js moveInst／moveQty）；拆疊複製原屬性。marketGiveItem取回堆疊物品時也保留鎖，裝備沿既有欄位複製。新拾取併入已鎖堆疊時同樣受鎖保護。
+- CSS `.bag-item-open` 為背包道具介紹按鈕，和 `.item-lock` 並排，避免按鎖時打開介紹；`.item-lock[aria-pressed="true"]` 金色邊框。無新增script載入依賴。
+- 隔離測試 `tools/test-item-lock.js`：加密saveEncode／saveParse往返、schema5遷移、全選與單件／勾選／一鍵賣出、確認期間加鎖、解鎖可賣、整組與地圖分列、角色倉庫拆疊合併、共用倉庫客戶端交貨。預覽 `tools/item-lock-preview.html` 只用記憶體storage，拒絕fetch、不載main／pwa、不連正式後端。

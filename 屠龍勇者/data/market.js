@@ -48,6 +48,7 @@ function marketGiveItem(it) {
     const d = ITEMS[it.id];
     if (!d) return null;
     const inst = addItem(it.id, it.n || 1, it.ench || 0);
+    if (inst && it.sellLocked) inst.sellLocked = true;   // 共用倉庫取回堆疊道具時保留防賣鎖定
     if (inst && !isStackable(d)) for (const k in it) if (!['uid', 'id', 'n', 'ench'].includes(k)) inst[k] = JSON.parse(JSON.stringify(it[k]));
     return inst;
 }

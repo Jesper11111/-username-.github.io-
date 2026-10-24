@@ -330,6 +330,9 @@
     .ico-img { position: relative; padding: 2px; border-radius: 5px; background: linear-gradient(135deg, var(--f1), var(--f2) 50%, var(--f3)); overflow: hidden; }
     .ico-img.framed { padding: 3px; }
     .item-face { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .bag-item-open { flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: transparent; border: 0; }
+    .item-lock { flex: none; white-space: nowrap; }
+    .item-lock[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
     .item-row { align-items: center; gap: 10px; }
     .item-face > .ico { flex: none; width: 36px; height: 36px; }
     .item-thumb { float: left; width: 36px; height: 36px; margin-right: 9px; }

@@ -163,6 +163,10 @@ function migrateSave(data) {
     // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
     const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => affixDef(a.k)); };   // 含特殊詞綴（affix.js SPECIAL_AFFIXES）
     [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
+    // schema 6：舊物品預設未鎖定；僅保留明確的鎖定旗標（背包、倉庫、已裝備）。
+    for (const it of [...p.inv, ...p.storage, ...Object.values(p.equip)]) {
+        if (it.sellLocked !== true) delete it.sellLocked;
+    }
     // schema 5：舊武器維持無附魔；不合法的附魔不帶入戰鬥。封魂石由靜態 id 保留技能。
     for (const it of [...p.inv, ...p.storage, ...Object.values(p.equip)]) {
         if (it.bossEnchant && (ITEMS[it.id].cat !== 'weapon' || !BOSS_ENCHANTS[it.bossEnchant])) delete it.bossEnchant;
