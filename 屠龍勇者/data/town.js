@@ -119,20 +119,6 @@ function openShopBuy(id) {
     shopBuyPreview(id);
 }
 
-function sellItem(uid, all) {
-    if (!inTown()) return;
-    const it = findInv(uid);
-    if (!it) return;
-    const n = all ? it.n : 1;
-    const price = instSellPrice(it) * n;
-    it.n -= n;
-    if (it.n <= 0) removeInst(uid);
-    player.gold += price;
-    showToast(`賣出 ${ITEMS[it.id].name} ×${n}（+${fmt(price)}）`);
-    sfx('coin');
-    refreshUI();
-}
-
 // ───────── 旅館 ─────────
 function innPrice() { return 20 + player.lv * 8; }
 function innRest() {
@@ -155,13 +141,33 @@ function moveInst(uid, from, to) {
     const same = isStackable(def) && to.find(x => x.id === it.id);
     if (same) same.n += it.n; else to.push(it);
 }
-function depositItem(uid) { if (inTown()) { moveInst(uid, player.inv, player.storage); refreshUI(); } }
-function withdrawItem(uid) {
+// 依數量搬（合併的列，ui-panels.js groupInv；第 122 節）：一疊只搬 n 個（剩下的留原處）、不可堆疊搬前 n 件
+function moveQty(uid, n, from, to) {
+    const it = findInv(uid, from);
+    if (!it) return;
+    if (!isStackable(ITEMS[it.id]) || n >= it.n) { moveInst(uid, from, to); return; }
+    it.n -= n;
+    const same = to.find(x => x.id === it.id);
+    if (same) same.n += n; else to.push({ uid: player.nextUid++, id: it.id, n });
+}
+function moveGroupN(uid, qid, from, to, check) {
     if (!inTown()) return;
-    const it = findInv(uid, player.storage);
-    if (it && invWeight() + ITEMS[it.id].wt * it.n > calcStats().weightMax) { showToast('負重不足'); return; }
-    moveInst(uid, player.storage, player.inv);
+    const x = findInv(uid, from), g = x && invGroupOf(from, x);
+    if (!g) return;
+    const n = qtyRead(qid, g.n);
+    if (!n) return;
+    const picks = groupPicks(g, n);
+    if (check && !check(picks)) return;
+    for (const [u, k] of picks) moveQty(u, k, from, to);
     refreshUI();
+}
+function depositN(uid, qid) { moveGroupN(uid, qid, player.inv, player.storage); }
+function withdrawN(uid, qid) {
+    moveGroupN(uid, qid, player.storage, player.inv, picks => {
+        const wt = picks.reduce((a, [u, k]) => a + ITEMS[findInv(u, player.storage).id].wt * k, 0);
+        if (invWeight() + wt > calcStats().weightMax) { showToast('負重不足'); return false; }
+        return true;
+    });
 }
 
 // ───────── 鍛造 ─────────

@@ -803,9 +803,40 @@ function bulkSellBtn(level) {
     }, '賣出');
 }
 
-// 勾選賣出（第 106 節）：每列勾選框，勾好一次賣出（整疊）；換頁、賣掉後不存在的編號自動拿掉
+// ───────── 相同道具合併成一列＋數量框（倉庫、共用倉庫、回收，2026-10-24 第 122 節）─────────
+// 可堆疊的本來就是一疊（n）；不可堆疊的（裝備、地圖）除了 uid 以外全部欄位一樣才算同一種，疊成「×N」，存檔裡仍是一件一個實體
+function instKindKey(x) { return JSON.stringify(Object.keys(x).filter(k => k !== 'uid' && k !== 'n').sort().map(k => [k, x[k]])); }
+function groupInv(list) {
+    const out = [], by = {};
+    for (const x of list) {
+        if (isStackable(ITEMS[x.id])) { out.push({ x, uids: [x.uid], n: x.n, stack: true }); continue; }
+        const k = instKindKey(x);
+        if (by[k]) { by[k].uids.push(x.uid); by[k].n++; } else out.push(by[k] = { x, uids: [x.uid], n: 1, stack: false });
+    }
+    return out;
+}
+function invGroupOf(list, x) { return groupInv(list).find(g => g.uids.includes(x.uid)); }
+// 依數量挑出要動的道具：[[uid, 數量]]（一疊只拆數量；不可堆疊挑前 n 件，每件 1）
+function groupPicks(g, n) { return g.stack ? [[g.uids[0], n]] : g.uids.slice(0, n).map(u => [u, 1]); }
+// 數量框（id 由呼叫端給）：預設全部；讀取時夾在 1～max，不是整數就提示
+function qtyInputHtml(id, max, def) { return max > 1 ? `<input id="${id}" class="qty-in" type="number" inputmode="numeric" min="1" max="${max}" value="${def || max}" aria-label="數量">` : ''; }
+function qtyRead(id, max) {
+    if (max <= 1) return 1;
+    const el = document.getElementById(id), n = Math.floor(Number(el ? el.value : max));
+    if (!Number.isFinite(n) || n < 1) { showToast('請輸入 1 以上的數量'); return 0; }
+    return Math.min(n, max);
+}
+function groupRowHtml(g, btns, opt = {}) {
+    return `<div class="list-row${opt.cls || ''}">${opt.pre || ''}<div class="item-info">${itemThumbHtml(g.x.id)}<b class="${itemClass(g.x)}">${esc(itemName(g.x))}</b>${g.n > 1 ? ` ×${fmt(g.n)}` : ''}${opt.sub || ''}</div><div class="qty-btns">${btns}</div></div>`;
+}
+
+// 勾選賣出（第 106 節）：每列勾選框，勾好一次賣出（整疊）；換頁、賣掉後不存在的編號自動拿掉。合併的列一次勾整組（第 122 節）
 let sellPick = new Set();
-function sellPickToggle(uid) { if (sellPick.has(uid)) sellPick.delete(uid); else sellPick.add(uid); renderPanel(); }
+function sellPickToggle(uid) {
+    const x = findInv(uid), g = x && invGroupOf(player.inv, x), uids = g ? g.uids : [uid], on = !uids.every(u => sellPick.has(u));
+    for (const u of uids) if (on) sellPick.add(u); else sellPick.delete(u);
+    renderPanel();
+}
 function sellPickAll(on) { sellPick = new Set(on ? player.inv.filter(x => instSellPrice(x) > 0).map(x => x.uid) : []); renderPanel(); }
 function sellPickedList() { return player.inv.filter(x => sellPick.has(x.uid) && instSellPrice(x) > 0); }
 function sellPicked() {
@@ -835,24 +866,38 @@ function renderSell() {
         <div class="btn-row"><button class="secondary" onclick="bulkSellBtn(1)" ${n1 ? '' : 'disabled'}>🪙 賣出普通裝備（${n1}）</button>
         <button class="secondary" onclick="bulkSellBtn(2)" ${n2 ? '' : 'disabled'}>🪙 賣出魔法以下（${n2}）</button></div>
         <div class="btn-row sell-pick-bar"><label class="sell-pick-all"><input type="checkbox" ${allOn ? 'checked' : ''} ${list.length ? '' : 'disabled'} onclick="sellPickAll(${allOn ? 'false' : 'true'})"> 全選</label>
-        <button onclick="sellPicked()" ${picked.length ? '' : 'disabled'}>🪙 賣出勾選（${picked.length}）${picked.length ? `　💰${fmt(pickedGold)}` : ''}</button></div></div><div class="list">` + (list.map(x =>
-        `<div class="list-row${sellPick.has(x.uid) ? ' picked' : ''}"><input type="checkbox" class="sell-pick" ${sellPick.has(x.uid) ? 'checked' : ''} onclick="sellPickToggle(${x.uid})" aria-label="勾選 ${esc(itemName(x))}"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}<small>單價 💰${fmt(instSellPrice(x))}</small></div>
-        <div class="qty-btns">${x.n > 1 ? `<button class="mini secondary" onclick="sellBtn(${x.uid},false)">賣 1</button>` : ''}<button class="mini" onclick="sellBtn(${x.uid},true)">${x.n > 1 ? '全部' : '賣出'}</button></div></div>`).join('')
-        || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
+        <button onclick="sellPicked()" ${picked.length ? '' : 'disabled'}>🪙 賣出勾選（${picked.length}）${picked.length ? `　💰${fmt(pickedGold)}` : ''}</button></div></div><div class="list">` + (groupInv(list).map(g => {
+            const on = g.uids.every(u => sellPick.has(u)), x = g.x, qid = 'sell-q-' + x.uid;
+            return groupRowHtml(g, `${qtyInputHtml(qid, g.n, 1)}<button class="mini" onclick="sellN(${x.uid},'${qid}')">賣出</button>`, {
+                cls: on ? ' picked' : '', sub: `<small>單價 💰${fmt(instSellPrice(x))}</small>`,
+                pre: `<input type="checkbox" class="sell-pick" ${on ? 'checked' : ''} onclick="sellPickToggle(${x.uid})" aria-label="勾選 ${esc(itemName(x))}">` });
+        }).join('') || '<p class="muted">沒有可以賣的東西</p>') + `</div>`;
 }
 
-function sellBtn(uid, all) {
-    const it = findInv(uid);
-    if (!it) return;
+// 依數量賣出（合併的列：可堆疊拆數量、不可堆疊賣前 n 件）；有品質／強化／附魔或高價的先確認
+function sellN(uid, qid) {
+    const it = findInv(uid), g = it && invGroupOf(player.inv, it);
+    if (!g) return;
+    const n = qtyRead(qid, g.n);
+    if (!n) return;
     const valuable = !!it.bossEnchant || (it.ench || 0) > 0 || !!it.q || instSellPrice(it) >= 5000;
-    if (valuable) gameConfirm('確認賣出', `確定賣出 ${itemName(it)}${all && it.n > 1 ? ' ×' + it.n : ''}？`, () => sellItem(uid, all), '賣出');
-    else sellItem(uid, all);
+    const go = () => {
+        if (!inTown()) return;
+        const g2 = invGroupOf(player.inv, findInv(uid) || it);
+        if (!g2) return;
+        let sum = 0, cnt = 0;
+        for (const [u, k] of groupPicks(g2, Math.min(n, g2.n))) { const x = findInv(u); if (!x) continue; sum += instSellPrice(x) * k; cnt += k; x.n -= k; if (x.n <= 0) removeInst(u); }
+        player.gold += sum;
+        showToast(`賣出 ${ITEMS[it.id].name} ×${cnt}（+${fmt(sum)}）`);
+        sfx('coin');
+        saveGame(); refreshUI();
+    };
+    if (valuable) gameConfirm('確認賣出', `確定賣出 ${itemName(it)} ×${n}？`, go, '賣出'); else go();
 }
 
 function renderStorage() {
-    const row = (x, btn) => `<div class="list-row"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
-    const inv = sortedInv(player.inv).map(x => row(x, `<button class="mini" onclick="depositItem(${x.uid})">存入</button>`)).join('') || '<p class="muted">背包是空的</p>';
-    const sto = sortedInv(player.storage).map(x => row(x, `<button class="mini" onclick="withdrawItem(${x.uid})">取出</button>`)).join('') || '<p class="muted">倉庫是空的</p>';
+    const inv = groupInv(sortedInv(player.inv)).map(g => groupRowHtml(g, `${qtyInputHtml('dep-q-' + g.x.uid, g.n)}<button class="mini" onclick="depositN(${g.x.uid},'dep-q-${g.x.uid}')">存入</button>`)).join('') || '<p class="muted">背包是空的</p>';
+    const sto = groupInv(sortedInv(player.storage)).map(g => groupRowHtml(g, `${qtyInputHtml('wd-q-' + g.x.uid, g.n)}<button class="mini" onclick="withdrawN(${g.x.uid},'wd-q-${g.x.uid}')">取出</button>`)).join('') || '<p class="muted">倉庫是空的</p>';
     const tabs = `<div class="chips"><button class="chip-btn ${storageMode === 'char' ? 'active' : ''}" onclick="setStorageMode('char')">📦 角色倉庫</button><button class="chip-btn ${storageMode === 'vault' ? 'active' : ''}" onclick="setStorageMode('vault')">🏦 帳號共用倉庫</button></div>`;
     if (storageMode === 'vault') return tabs + vaultHtml();
     return tabs + `<h4>📦 角色倉庫（${player.storage.length} 格，只有這個角色能用）</h4><div class="list">${sto}</div><h4>🎒 背包</h4><div class="list">${inv}</div>`;

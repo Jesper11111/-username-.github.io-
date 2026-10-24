@@ -184,6 +184,18 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         assert(!(await cloud()).data.player.inv.some(x => x.uid === blade.uid), '舊分頁不能把存進倉庫的道具蓋回雲端');
         assert(!findInv(blade.uid), '舊分頁改用雲端進度'); assert.equal(alerts.pop(), '☁️ 已載入雲端進度');
 
+        // ⑤-1c 合併的列依數量存取（第 122 節）：3 把相同匕首存 2 把、再一次取出 2 把
+        const dg = () => player.inv.filter(x => x.id === 'dagger' && !x.q && !x.ench).length, dg0 = dg();
+        const ds = [0, 1, 2].map(() => addItem('dagger', 1, 0)); saveGame(); assert.equal(await cloudFlush(true), true);
+        document.getElementById = id => id === 'q' ? { value: '2' } : null;
+        vaultPutN(ds[0].uid, 'q'); while (vaultBusy) await new Promise(r => setTimeout(r, 5));
+        assert.equal(dg(), dg0 + 1, '存入 2 把、背包剩 1 把');
+        const dgv = vaultGroups().find(g => g.x.id === 'dagger');
+        assert.equal(dgv.n, 2, '倉庫裡 2 把合併成一列');
+        vaultTakeN(dgv.ids[0], 'q'); while (vaultBusy) await new Promise(r => setTimeout(r, 5));
+        assert.equal(dg(), dg0 + 3); assert(!vaultGroups().some(g => g.x.id === 'dagger'), '一次取出 2 把');
+        assert.equal((await cloud()).data.player.inv.filter(x => x.id === 'dagger' && !x.ench).length, dg0 + 3, '雲端一致');
+
         // ⑤-2 別的角色欄位上傳一直失敗（例如能力值被拒收）：不影響目前角色存取共用倉庫（第 97 節）
         const bad = JSON.parse(JSON.stringify(local())); bad.player.created = 777; bad.player.stats.str = 99; bad.vaultSeq = 0;
         localStorage.setItem(slotKey(1), saveEncode(JSON.stringify(bad))); cloudKnown[1] = null; cloudDirty.add(1);

@@ -91,9 +91,10 @@ function vaultHtml() {
     if (!cloudLoggedIn()) return `<div class="panel notice">共用倉庫要登入帳號才能使用（同帳號的所有角色共用）。<div class="btn-row"><button onclick="openCloudDialog()">☁️ 登入／註冊</button></div></div>`;
     if (cloudBan) return '<p class="bad">帳號已停權。</p>';
     if (!vaultData) return `<p class="muted">${vaultErr ? esc(vaultErr) : '讀取中…'}</p>`;
-    const row = (x, btn) => `<div class="list-row"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b>${x.n > 1 ? ` ×${fmt(x.n)}` : ''}</div>${btn}</div>`;
-    const items = vaultData.items.map(v => row(v.item, `<button class="mini" onclick="vaultTake(${v.id})" ${vaultBusy ? 'disabled' : ''}>取出</button>`)).join('') || '<p class="muted">共用倉庫是空的</p>';
-    const inv = sortedInv(player.inv).filter(marketTradeable).map(x => row(x, `<button class="mini" onclick="vaultPut(${x.uid})" ${vaultBusy ? 'disabled' : ''}>存入</button>`)).join('') || '<p class="muted">背包沒有可以存的道具</p>';
+    // 相同道具合併成一列＋數量框（第 122 節）：倉庫裡一疊一筆只能整筆取出；不可堆疊的同種可選取出幾件（每件各收手續費）
+    const dis = vaultBusy ? 'disabled' : '';
+    const items = vaultGroups().map(g => groupRowHtml(g, `${g.stack ? '' : qtyInputHtml('vt-q-' + g.ids[0], g.n)}<button class="mini" onclick="vaultTakeN(${g.ids[0]},'vt-q-${g.ids[0]}')" ${dis}>取出</button>`)).join('') || '<p class="muted">共用倉庫是空的</p>';
+    const inv = groupInv(sortedInv(player.inv).filter(marketTradeable)).map(g => groupRowHtml(g, `${qtyInputHtml('vp-q-' + g.x.uid, g.n)}<button class="mini" onclick="vaultPutN(${g.x.uid},'vp-q-${g.x.uid}')" ${dis}>存入</button>`)).join('') || '<p class="muted">背包沒有可以存的道具</p>';
     return `<div class="panel"><b>🏦 帳號共用倉庫</b>（${vaultData.items.length}／${VAULT_MAX} 格）　💎 鑽石 ${fmt(diaCount || 0)}
         <small class="muted" style="display:block">同帳號所有角色共用。每次存入、取出各收 💰${VAULT_FEE} 手續費。存取前會先上傳存檔，伺服器以雲端存檔為準。</small>
         ${vaultErr ? `<p class="bad">${esc(vaultErr)}</p>` : ''}
@@ -154,14 +155,44 @@ function vaultPut(uid) {
     const inst = findInv(uid);
     if (!inst || !marketTradeable(inst)) return;
     if (player.gold < VAULT_FEE) { showToast(`金幣不足，存入要 💰${VAULT_FEE} 手續費`); return; }
-    const name = itemName(inst) + (inst.n > 1 ? ' ×' + inst.n : ''), n = inst.n || 1;
-    gameConfirm('存入共用倉庫', `把「${name}」存進帳號共用倉庫？\n手續費 💰${VAULT_FEE}。`, () => vaultRun(() =>
-        vaultOp('vault_put2', { p_uid: uid, p_n: n, p_gold: null, p_name: name }, r => {
-            const cur = findInv(uid);   // 等待伺服器時可能又撿到同一種（疊加），只扣存進去的數量
-            if (cur) { if (cur.n > r.n) cur.n -= r.n; else removeInst(uid); }
-            player.gold += r.gold;
-            addLog(`🏦 存入共用倉庫：${name}（手續費 ${VAULT_FEE}）`, 'sys');
-        })), '存入');
+    const name = itemName(inst) + (inst.n > 1 ? ' ×' + inst.n : '');
+    gameConfirm('存入共用倉庫', `把「${name}」存進帳號共用倉庫？\n手續費 💰${VAULT_FEE}。`, () => vaultRun(() => vaultPutOne(uid, inst.n || 1)), '存入');
+}
+// 存入一件（一疊可只存 n 個），伺服器直接從雲端存檔扣（vault_put2）
+function vaultPutOne(uid, n) {
+    const inst = findInv(uid);
+    if (!inst) return;
+    const name = itemName(inst) + (n > 1 ? ' ×' + n : '');
+    return vaultOp('vault_put2', { p_uid: uid, p_n: n, p_gold: null, p_name: name }, r => {
+        const cur = findInv(uid);   // 等待伺服器時可能又撿到同一種（疊加），只扣存進去的數量
+        if (cur) { if (cur.n > r.n) cur.n -= r.n; else removeInst(uid); }
+        player.gold += r.gold;
+        addLog(`🏦 存入共用倉庫：${name}（手續費 ${VAULT_FEE}）`, 'sys');
+    });
+}
+// 合併的列依數量存入（第 122 節）：一疊存 n 個收一次手續費；不可堆疊的存前 n 件，每件各一次
+function vaultPutN(uid, qid) {
+    const inst = findInv(uid), g = inst && marketTradeable(inst) && invGroupOf(player.inv, inst);
+    if (!g) return;
+    const n = qtyRead(qid, g.n);
+    if (!n) return;
+    const picks = groupPicks(g, n), fee = VAULT_FEE * picks.length;
+    if (player.gold < fee) { showToast(`金幣不足，存入要 💰${fmt(fee)} 手續費`); return; }
+    if (vaultData && vaultData.items.length + picks.length > VAULT_MAX) { showToast(`共用倉庫最多 ${VAULT_MAX} 格`); return; }
+    gameConfirm('存入共用倉庫', `把「${itemName(inst)}」×${n} 存進帳號共用倉庫？\n手續費 💰${fmt(fee)}${picks.length > 1 ? `（每件 ${VAULT_FEE}）` : ''}。`, () => vaultRun(async () => {
+        for (const [u, k] of picks) await vaultPutOne(u, k);
+    }), '存入');
+}
+// 共用倉庫清單合併：一筆一疊的各自一列；不可堆疊的同種疊成一列（ids 是倉庫編號）
+function vaultGroups() {
+    const out = [], by = {};
+    for (const v of vaultData.items) {
+        const d = ITEMS[v.item.id];
+        if (!d || isStackable(d)) { out.push({ x: v.item, ids: [v.id], n: v.item.n || 1, stack: true }); continue; }
+        const k = instKindKey(v.item);
+        if (by[k]) { by[k].ids.push(v.id); by[k].n++; } else out.push(by[k] = { x: v.item, ids: [v.id], n: 1, stack: false });
+    }
+    return out;
 }
 
 function vaultGold(dir) {
@@ -185,11 +216,25 @@ function vaultGold(dir) {
 
 function vaultTake(id) {
     if (player.gold < VAULT_FEE) { showToast(`金幣不足，取出要 💰${VAULT_FEE} 手續費`); return; }
-    vaultRun(() => vaultOp('vault_take2', { p_id: id, p_gold: null }, r => {
+    vaultRun(() => vaultTakeOne(id));
+}
+function vaultTakeOne(id) {
+    return vaultOp('vault_take2', { p_id: id, p_gold: null }, r => {
         marketGiveItem(r.item);
         player.gold += r.gold;
         addLog(`🏦 從共用倉庫取出：${r.name || itemName(r.item)}（手續費 ${VAULT_FEE}）`, 'loot');
-    }));
+    });
+}
+// 合併的列依數量取出（第 122 節）：每件各收一次手續費
+function vaultTakeN(id, qid) {
+    const g = vaultData && vaultGroups().find(x => x.ids.includes(id));
+    if (!g) return;
+    const n = g.stack ? 1 : qtyRead(qid, g.n);
+    if (!n) return;
+    const ids = g.ids.slice(0, n), fee = VAULT_FEE * ids.length;
+    if (player.gold < fee) { showToast(`金幣不足，取出要 💰${fmt(fee)} 手續費`); return; }
+    const go = () => vaultRun(async () => { for (const i of ids) await vaultTakeOne(i); });
+    if (ids.length > 1) gameConfirm('從共用倉庫取出', `取出「${itemName(g.x)}」×${ids.length}？\n手續費 💰${fmt(fee)}（每件 ${VAULT_FEE}）。`, go, '取出'); else go();
 }
 
 // 交貨（v1 舊流程，只補交 v2 之前取出還沒入帳的）：伺服器記帳的取出（這個角色欄位）→ 加進角色、扣手續費；player.vaultGot 記已入帳編號，ack 沒送到也不會重複領

@@ -161,7 +161,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024g`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024h`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2865,3 +2865,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **聊天按鈕**：使用者要求。PC 16:9 地圖左側的多人功能圓鈕拿掉 💬 聊天（下排功能鍵已有聊天室），血盟、交易所往上補位（y 458、524）。手機版右柱抽屜的聊天不變。
 - **`tools/fix-vault-dupes.sql`**（管理者在 SQL Editor 執行，帳號 email 寫在檔案兩處）：① 預覽（只讀）列出複製品；② 先把整份存檔備份到新表 `dragon_fix_backup(at, user_id, slot, data, note)`（RLS、玩家不能讀寫），再從背包／倉庫移除「存進共用倉庫 30 天內、不可堆疊（item ? 'ench'）、角色在存入前就建立、原 uid＋道具代號又出現在同欄位」的道具；有刪才寫：`dragon_vault_seq` +1、`data.vaultSeq`／`t`／`client_t` 更新、重算 `sig`，玩家還開著的舊遊戲上傳被拒、改用雲端進度。Messages 顯示每個欄位刪幾件；重跑不多刪。取出時拿到新 uid 的那份保留。
 - **測試**：`tools/test-fix-vault-dupes.js`（PGlite 重現存入→取出→舊分頁蓋回，預覽列出 3 張、只刪複製品、備份、簽章正確、序號 +1 擋舊遊戲、重跑不多刪）。
+
+## 122. 倉庫、共用倉庫、回收：相同道具合併成一列＋數量框（2026-10-24，版本 `20261024h`；`ui-panels.js` 的 `instKindKey`／`groupInv`／`invGroupOf`／`groupPicks`／`qtyInputHtml`／`qtyRead`／`groupRowHtml`／`sellN`、`town.js` 的 `moveQty`／`moveGroupN`／`depositN`／`withdrawN`、`vault.js` 的 `vaultGroups`／`vaultPutN`／`vaultPutOne`／`vaultTakeN`／`vaultTakeOne`）
+
+- **使用者要求**：倉庫、回收清單裡同樣的道具（例如好幾張一樣的異界地圖 T6）疊成一列，旁邊加數量框和按鈕，選數量存放或賣出。
+- **合併規則**：可堆疊的本來就是一疊（n）；不可堆疊的除了 `uid`、`n` 以外所有欄位都一樣（`instKindKey`：品質、詞綴、強化、地圖詞綴、名稱、物品等級、BOSS 附魔…）才合併成「×N」。存檔仍是一件一個實體，只是顯示合併。
+- **數量框**：數量 >1 才出現；角色倉庫／共用倉庫預設全部，回收預設 1；輸入超過上限自動夾到上限，非正整數提示。
+- **角色倉庫**（`depositN`／`withdrawN`）：一疊只搬 n 個（`moveQty`，剩下的留原處，目的地有同種就併疊、沒有就給新 uid）；不可堆疊搬前 n 件；取出先檢查負重。舊的 `depositItem`／`withdrawItem` 移除。
+- **回收**（`sellN`）：一疊賣 n 個、不可堆疊賣前 n 件；有品質／強化／BOSS 附魔或單價 ≥5000 先確認。勾選框一次勾整組（`sellPickToggle` 切換整組 uid），「賣出勾選」照舊整疊賣。舊的 `sellBtn`、`town.js` 的 `sellItem` 移除。
+- **共用倉庫**（`vaultPutN`／`vaultTakeN`）：背包清單合併；存入一疊 n 個收一次手續費，不可堆疊存前 n 件、每件一次 `vault_put2`（各收 100）；先檢查手續費與 200 格上限，確認後在同一次 `vaultRun` 依序存。倉庫清單 `vaultGroups`：不可堆疊同種合併、可選取出幾件（每件一次 `vault_take2`、各收 100，多件先確認）；一筆一疊的仍整筆取出。`vaultPut`／`vaultTake` 保留（拆出 `vaultPutOne`／`vaultTakeOne`）。伺服器 SQL 不變。
+- **測試**：`test-vault-v2-client.js` ⑤-1c（3 把相同匕首存 2 把→倉庫合併 2 把→一次取出 2 把，本機與雲端一致）；瀏覽器實測角色倉庫存 3 張／15 瓶、取 2 張、回收賣 2 張（確認框）／5 瓶、勾選整組；check.ps1、混淆建置（447 KB）、回歸通過。
