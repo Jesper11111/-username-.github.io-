@@ -171,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024an`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024ao`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3063,3 +3063,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - tools/test-log-drawer檢查PC與手機抽屜定位回歸；純按鈕位置與美術用瀏覽器確認，不新增照抄CSS的測試。
 
 第18.15／133節驗證：20261024an check.ps1 ALL CHECKS PASSED；pirate／cave-assassin／log-drawer／weapon-range測試通過，47檔混淆466KB，四圖集與訊息圖示打包hash相同。隔離瀏覽器卷軸m06扣1、四動作四方向、PC／手機配置與訊息三分頁操作正常，Console無error／warn；待真實角色實玩確認後才commit。
+
+## 134. PC骷髏外框殘片修復（2026-10-24，版本20261024ao）
+
+使用者回報左右骷髏頭頂與臉旁有方塊破圖，為舊frame-pc-nopillar-mask未完全排除石柱／格紋背景。index.html的#frame.pc #frame-art在既有alpha遮罩之外增加百分比clip-path，沿左右骷髏／翅膀輪廓裁掉殘片；中央與下排完整保留，原始JPG／PNG遮罩不修改，手機不受影響。載入順序與存檔schema不變。版本更新使快取重新載入。隔離瀏覽器以真實index樣式檢查左右輪廓，Console無error／warn；check.ps1與打包通過，待實玩確認。
