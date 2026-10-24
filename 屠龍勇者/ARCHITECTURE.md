@@ -174,7 +174,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025l`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025m`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -565,6 +565,8 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 - 迴圈：`requestAnimationFrame`，只在狩獵畫面顯示時跑（`huntVisible()`），分頁隱藏時不更新；canvas 依 `devicePixelRatio` 調整解析度。
 
 ## 18. 人物模型與職業立繪
+
+- 20261025m：m12鋼鐵狂戰士專屬三向四動作圖集，來源／腳底註冊與36格驗證見第140節。
 
 - 在 `classes.js` 的職業資料加欄位即可，沒有就用職業圖示（emoji）：
   - `sprite: { drawH, charH, walk, attack, cast, hit }`：每個動作一張圖，**列＝方向（0 向下、1 向右、2 向上；向左＝向右水平鏡像）**，欄＝格數。
@@ -3124,6 +3126,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   樣式 `.chat-news`（📢 職業圖示＋名字 Lv.＋【傳說】名稱橘色 `q-legend`／🌟共鳴名稱用 `RES_TIERS` 顏色）。名字一律 `esc`。
   設定 `lootNews`（預設開，`DEFAULT_SETTINGS` 合併補舊存檔），開關在設定「🎒 戰利品過濾」與聊天分頁世界頻道下方（`setLootNews`），關掉就不顯示也不抓。
   伺服器還沒執行 `loot-news.sql`（表不存在）時 `chatNewsOff = true`，這次遊戲不再抓，聊天照常，所以遊戲可以先發布。
-- **部署**：使用者在 Supabase SQL Editor 執行 `tools/loot-news.sql`（接在 server-loot／loot-batch 之後，可重跑）。
+- **部署**：使用者在 Supabase SQL Editor 執行 `tools/loot-news.sql`（接在 server-loot／loot-batch 之後，可重跑）；2026-10-25 已執行。
 - **測試**：`tools/test-loot-news.js`（隔離 PGlite 載入正式 SQL）：一般／稀有不公告、傳說＋共鳴公告、一批最多 3 件、舊流程 result 也公告、批次結算正常、玩家只能讀且看不到帳號、表壞掉時收據照寫。
   瀏覽器用假 Supabase 確認公告依時間混排、HTML 跳脫、開關、表不存在時停抓；`tools/build.js` 混淆版函式公開、可進遊戲。
+
+## 140. 鋼鐵狂戰士藍變專屬外觀（2026-10-25，版本20261025m）
+
+完成時共享工作目錄續版20261025n，其他對話修改保留；n版自動檢查與48檔混淆476KB建置亦通過。
+
+- 使用者提供12號參考圖，動作圖實際位於Desktop/變身人物/12-1／12-2／12-3.jfif，連同12.jpg原樣保存在tools/sprite-src/morph/steel-berserker-v1。使用內建image_gen製作正／右／背各12格（側背面另修留邊），完整提示詞／原圖／切圖來源保留。
+- data/items.js新增MORPHS.steelBerserker，m12接上sprite；三向四動作圖集位於images/sprites/morph/steel-berserker-v1，格384×320、foot192／270、charH160、drawH48。walk4×130ms、attack4×140ms、cast2×220ms、hit2×150ms，左向鏡射。所有動作腳底對齊，完整大劍與橙色斬擊特效。
+- 不新增變身種類，仍32款；保留m12雙手劍系、藍變Lv15、命中+2／傷害+4／攻速+4%／爆擊+1%、既有武器建議規則及GM等級豁免，卷軸仍一張30分鐘，不改schema／SQL。sw.js預載四張新圖；script載入順序不變。
+- tools/sprite-src/morph/steel-berserker-v1/prepare.py與preview.py沿既有RGBA打包／腳底註冊流程，保存36個不重複格、來源rect／foot、manifest／audit、contact及motion-preview。tools/test-steel-berserker-morph.js驗證Lv14拒絕不扣卷／Lv15使用、四向命中與MISS／施法／受傷、到期沿上次選擇、RGBA圖集與其他變身回歸。tools/steel-berserker-preview.html僅記憶體存檔、拒絕連外，使用實際sceneDraw及卷軸選單。
+
+第140節驗證：36格透明邊界／腳底註冊與圖集對應檢查通過，steel-berserker及pirate回歸通過；check.ps1 ALL CHECKS PASSED、48檔混淆475KB打包通過。隔離瀏覽器實點m12卷軸4→3張、四方向四動作及48實際尺寸／96放大檢查，實際attack560ms與目標扣血正常，Console無error／warn。待使用者實玩驗收後commit。

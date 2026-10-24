@@ -133,10 +133,16 @@ async function chatFetch() {
 // ───────── 全服掉寶公告（ARCHITECTURE.md 第 139 節）─────────
 // 伺服器結算掉寶時把傳說品質／共鳴裝備寫進 dragon_loot_news（tools/loot-news.sql，玩家不能自己寫）；
 // 世界頻道抓聊天時順便抓（同一個輪詢，不另外連網），依時間混在聊天裡顯示。設定 lootNews 可關（關掉就不抓）。
+// 新公告另外在地圖上方跑馬燈播一次（newsBannerPush）；沒開世界頻道時每 NEWS_POLL_MS 背景抓一次（只抓比手上新的，通常回空陣列）。
+const NEWS_POLL_MS = 30000;
 let chatNews = null;           // 公告陣列（舊→新）
 let chatNewsOff = false;       // 伺服器還沒裝 loot-news.sql：這次遊戲不再抓
+let chatNewsBusy = false, chatNewsAt = 0;
 function chatNewsOn() { return !chatNewsOff && !!player && player.settings.lootNews !== false; }
 async function chatNewsFetch() {
+    if (chatNewsBusy) return false;
+    chatNewsBusy = true;
+    chatNewsAt = Date.now();
     const list = chatNews || [];
     const q = cloudSb.from('dragon_loot_news').select('id, at, name, cls, lv, item, q');
     try {
@@ -145,17 +151,74 @@ async function chatNewsFetch() {
             : (await raidQ(q.order('id', { ascending: false }).limit(20))).reverse();
         const first = !chatNews;
         chatNews = list.concat(rows).slice(-CHAT_SHOW);
+        if (!first) rows.slice(-5).forEach(newsBannerPush);   // 第一次載入的是舊公告，不播
         return first || rows.length > 0;
     } catch (e) {
         if (/dragon_loot_news|does not exist|schema cache/.test(String((e && e.message) || e))) chatNewsOff = true;
         return false;
-    }
+    } finally { chatNewsBusy = false; }
 }
 function setLootNews(on) {
     player.settings.lootNews = !!on;
     saveGame();
     chatRenderList();
+    if (!on) newsBannerClear();
     if (on && chatShown()) chatFetch();
+}
+// 背景輪詢：聊天世界頻道開著時由 chatFetch 順便抓，這裡不重複
+setInterval(() => {
+    if (!chatNewsOn() || !chatReady() || document.hidden || SIM_MODE || !cloudCanCall()) return;
+    if (chatShown() && chatChannel === 'world') return;
+    if (Date.now() - chatNewsAt >= NEWS_POLL_MS) chatNewsFetch().then(changed => { if (changed && chatShown()) chatRenderList(); });
+}, 5000);
+
+// ───────── 地圖上方跑馬燈（#news-banner，index.html 樣式）─────────
+const NEWS_BANNER_SPEED = 110;   // 每秒移動像素
+let newsQueue = [], newsPlaying = null;
+function newsBannerText(m) {
+    const d = ITEMS[m.item], q = m.q && QUALITY[m.q], res = d && d.res, c = CLASSES[m.cls] || {};
+    const cls = q ? q.cls : res ? RES_TIERS[res.tier].cls : '';
+    return `📢 恭喜 ${c.icon || ''}<b>${esc(m.name)}</b> 獲得了 <b class="${cls}">${esc(`${q ? `【${q.name}】` : ''}${res ? '🌟' : ''}${d ? d.name : m.item}`)}</b>！`;
+}
+function newsBannerPush(m) {
+    if (newsQueue.length >= 10) newsQueue.shift();
+    newsQueue.push(m);
+    if (!newsPlaying) newsBannerNext();
+}
+function newsBannerClear() {
+    newsQueue = [];
+    if (newsPlaying) newsPlaying.cancel();
+    newsPlaying = null;
+    const box = document.getElementById('news-banner');
+    if (box) { box.classList.remove('on'); box.innerHTML = ''; }
+}
+// 放在地圖頂端：左上地名下方、右邊停在小地圖左側，PC／手機共用（scene.miniRect 是畫布邏輯座標，×scene.zoom 才是 CSS 像素）
+function newsBannerPlace(box) {
+    const p = document.getElementById('panel'), f = document.getElementById('frame'), cv = document.getElementById('scene-canvas');
+    if (!p || !f) return;
+    const pr = p.getBoundingClientRect(), fr = f.getBoundingClientRect();
+    const mr = typeof scene !== 'undefined' && scene && scene.miniRect, z = (scene && scene.zoom) || 1;
+    const right = mr && mr.r && cv ? cv.getBoundingClientRect().left - pr.left + (mr.cx - mr.r) * z - 10 : pr.width * 0.85;
+    const left = Math.min(pr.width * 0.12, right * 0.15);
+    box.style.left = (pr.left - fr.left + left) + 'px';
+    box.style.width = Math.max(160, right - left) + 'px';
+    box.style.top = (pr.top - fr.top + 30) + 'px';
+}
+function newsBannerNext() {
+    newsPlaying = null;
+    const frame = document.getElementById('frame');
+    let box = document.getElementById('news-banner');
+    if (!box && frame) { box = document.createElement('div'); box.id = 'news-banner'; frame.appendChild(box); }
+    const m = newsQueue.shift();
+    if (!box || !m || !chatNewsOn()) { if (box) box.classList.remove('on'); return; }
+    box.innerHTML = `<div class="nb-msg">${newsBannerText(m)}</div>`;
+    box.classList.add('on');
+    newsBannerPlace(box);
+    const el = box.firstElementChild, bw = box.clientWidth, mw = el.offsetWidth;
+    if (!bw || !el.animate) { setTimeout(newsBannerNext, 6000); newsPlaying = { cancel() { } }; return; }   // 畫面沒顯示（不在遊戲畫面）：等一下再播下一則
+    const a = el.animate([{ transform: `translateX(${bw}px)` }, { transform: `translateX(${-mw}px)` }], { duration: (bw + mw) / NEWS_BANNER_SPEED * 1000, easing: 'linear' });
+    newsPlaying = a;
+    a.onfinish = () => { if (newsPlaying === a) newsBannerNext(); };
 }
 function chatNewsHtml(m) {
     const d = ITEMS[m.item], c = CLASSES[m.cls] || {}, q = m.q && QUALITY[m.q];
