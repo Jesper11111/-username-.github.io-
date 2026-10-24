@@ -438,6 +438,8 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 
 ## 16. 畫面尺寸（設定 →「🖥️ 畫面尺寸」）
 
+- **2026-10-24 手機觸控**：`index.html` viewport 限定倍率1；`html, body` 設 `overscroll-behavior: none` 擋下拉重新整理／邊界回彈，`touch-action: pan-x pan-y` 禁止雙擊與雙指頁面縮放，保留一般捲動；面板、對話框、聊天、訊息與增益列表亦禁止捲動傳到外層。原快捷欄 `touch-action: none` 與增益列 `pan-x` 保留。僅HTML／CSS，不另換JS版本；需真實手機驗收。
+
 - 存在這台裝置的 `localStorage`（key `dragonSlayer_display`），不進角色存檔；標題畫面也會沿用。
 - 結構：`#screen-game > #stage > #frame（外框）＋ #side（右側欄）`，`layoutFrame()` 依模式算出 `#stage`、`#frame`、`#side` 的像素大小與 `--s`。
 

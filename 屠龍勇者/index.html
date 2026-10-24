@@ -7,7 +7,7 @@
 <!-- Google Analytics 4（串流「我的網站」G-TM576GBMKF，整個 github.io 網站共用）：只統計造訪，不送遊戲資料 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TM576GBMKF"></script>
 <script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-TM576GBMKF');</script>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>黑暗大陸</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#12100c">
@@ -25,7 +25,9 @@
         --rare: #c58cff; --ench: #ffd34d;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; }
+    /* 關閉下拉重新整理、雙擊與雙指縮放，保留面板內水平／垂直捲動。 */
+    html, body { margin: 0; height: 100%; overscroll-behavior: none; touch-action: pan-x pan-y; }
+    #panel, .pane, .dialog-body, .log, .chat-list, .buffs.scene-buffs { overscroll-behavior: none; }
     body {
         background: radial-gradient(ellipse at 50% -10%, #3a2a18, var(--bg) 65%) fixed;
         color: var(--text); font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; font-size: 15px;
