@@ -172,6 +172,18 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         assert.equal(player.gold, g3 + 95, '下次不重複入帳'); assert.equal(await sellerGot(), true, '上傳成功才確認');
         assert.equal(Number((await cloud()).data.player.gold), g3 + 95);
 
+        // ⑤-1b 同一個瀏覽器開兩個分頁（第 118 節）：分頁 A 存進倉庫後，舊分頁 B 存檔時不能借用 A 寫進 localStorage 的新序號把道具蓋回雲端
+        const blade = addItem('longSword', 1, 5); saveGame(); assert.equal(await cloudFlush(true), true);
+        const rawB = localStorage.getItem(slotKey(0)), knownB = cloudKnown[0];   // 分頁 B 這時載入
+        vaultPut(blade.uid); while (vaultBusy) await new Promise(r => setTimeout(r, 5));   // 分頁 A 存入
+        assert(!(await cloud()).data.player.inv.some(x => x.uid === blade.uid), '雲端已拿掉');
+        assert(applySaveData(saveParse(rawB))); vaultLive = null; cloudKnown[0] = knownB;   // 切到分頁 B 的記憶體（localStorage 是 A 寫的）
+        assert(findInv(blade.uid), '分頁 B 還看得到那把劍');
+        player.exp += 1; saveGame();
+        await cloudUseLocalSlot(); await new Promise(r => setTimeout(r, 50));   // 跳進度衝突時選「用這台的進度」
+        assert(!(await cloud()).data.player.inv.some(x => x.uid === blade.uid), '舊分頁不能把存進倉庫的道具蓋回雲端');
+        assert(!findInv(blade.uid), '舊分頁改用雲端進度'); assert.equal(alerts.pop(), '☁️ 已載入雲端進度');
+
         // ⑤-2 別的角色欄位上傳一直失敗（例如能力值被拒收）：不影響目前角色存取共用倉庫（第 97 節）
         const bad = JSON.parse(JSON.stringify(local())); bad.player.created = 777; bad.player.stats.str = 99; bad.vaultSeq = 0;
         localStorage.setItem(slotKey(1), saveEncode(JSON.stringify(bad))); cloudKnown[1] = null; cloudDirty.add(1);
