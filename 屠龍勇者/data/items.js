@@ -136,6 +136,7 @@ const MORPH_TIERS = {
     gold:   { name: '金變', grade: '神話', lv: 70, color: '#ffd56a', hit: 7, dmg: 7, spd: 0.20 },
 };
 const MORPH_TIER_K = { blue: 1, red: 2, purple: 3, gold: 4 };
+const MORPH_SPD_MAX = 0.2;   // 變身攻速最高 +20%（2026-10-24 使用者要求；單手劍系金變原本 23%）
 // 恢復變身等級限制（2026-10-24）；伺服器確認的 GM 帳號不受等級限制。
 const MORPH_LV_FREE = false;
 function morphGmOk() { return typeof cloudMorphAdminUid !== 'undefined' && cloudLoggedIn() && !cloudBan && cloudMorphAdminUid === cloudUser.id; }
@@ -169,6 +170,7 @@ const MORPH_FORMS = [
     ['m28', '風木鐵壁重裝兵', 'shield', 'blue'], ['m29', '薔薇聖殿十字軍', 'shield', 'red'], ['m30', '不滅黃金守護神・宙斯盾', 'shield', 'gold'],
 ].map(([id, name, group, tier, sprite]) => {
     const t = MORPH_TIERS[tier], fx = MORPH_GROUPS[group].fx(t, MORPH_TIER_K[tier]);
+    if (fx.spdMul > MORPH_SPD_MAX) fx.spdMul = MORPH_SPD_MAX;
     for (const k in fx) if (!fx[k]) delete fx[k];
     return { id, name, group, tier, lv: t.lv, fx, desc: morphFxText(fx), ...(sprite ? { sprite } : {}) };
 });
