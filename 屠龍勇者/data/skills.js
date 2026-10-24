@@ -7,7 +7,7 @@
 //   passive 被動：學會就生效；cond:'lowHp' 表示 HP 低於 50% 才生效
 // fx 欄位：ac（越大越硬）、hit、dmg、sp、mr、crit、dodge、reduce（減傷）、double（雙擊率）、
 //          absorb（傷害轉由 MP 承受比例）、counter（反擊率）、hpRegen、mpRegen、dmgSp（SP×倍率加到傷害）、
-//          spdMul（攻速提升比例，攻擊間隔 ×(1−合計)，合計最多 30%；2026-10-24 起每個技能最多 5%）、lifesteal（吸血比例）、haste（加速）、brave（勇敢）
+//          spdMul（攻速提升比例，攻擊間隔 ÷(1＋合計)，不設上限；2026-10-24 起每個技能最多 5%）、lifesteal（吸血比例）、haste（加速）、brave（勇敢）
 // undeadMul：對不死系倍率
 // aoe：範圍攻擊，打全部圍上來的怪；spread：多發攻擊每一發打不同隻（2026-10-09 多怪戰鬥）
 

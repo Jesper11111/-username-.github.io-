@@ -256,7 +256,7 @@ const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'dou
     'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight',
     'bossDmg', 'expPct', 'goldPct', 'thorns', ...STAT_KEYS];   // 第二行：特殊詞綴（affix.js SPECIAL_AFFIXES）
 // 攻速規則：見 calcStats 的 atkMs／castMs（天堂式：綠水、勇水 ×1.33，精靈餅乾 ×1.15）
-const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, SPD_EXTRA_MAX = 0.3, ATK_MIN_MS = 200;
+const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, ATK_MIN_MS = 200;
 const CAST_BASE_MS = 1200, CAST_MIN_MS = 600, CAST_POTION_MS = 300;
 
 function addFx(acc, fx) {
@@ -301,12 +301,12 @@ function calcStats() {
     const statHit = ranged ? Math.floor((s.dex - 8) / 2) : Math.floor((s.str - 8) / 3) + Math.floor((s.dex - 8) / 4);
     const statDmg = ranged ? Math.max(0, Math.floor((s.dex - 10) / 2)) : Math.max(0, Math.floor((s.str - 10) / 2));
     // 攻擊間隔（2026-10-18 改成天堂式，使用者給的天堂攻速資料）：武器 spd × 職業動作係數 ÷ 一段加速（綠水 1.33）÷ 二段加速（勇水 1.33、精靈餅乾 1.15）
-    // × (1 − 其他攻速，最多 30%)，最快 0.4 秒（150 下/分）
+    // ÷ (1 ＋ 其他攻速)（2026-10-24 改除法、不設上限：加成越多效果越小，不會算出 0 或負數），最快 0.2 秒（300 下/分）
     const wid = w ? w.type : 'fist';
     let atkMs = wt.spd * classAtkK(p.cls, wid);
     if (fx.haste) atkMs /= HASTE_MUL;
     if (fx.brave) atkMs /= braveItemFor(p.cls) === 'elvenWafer' ? WAFER_MUL : BRAVE_MUL;
-    atkMs = Math.max(ATK_MIN_MS, Math.round(atkMs * (1 - Math.min(SPD_EXTRA_MAX, fx.spdMul || 0))));
+    atkMs = Math.max(ATK_MIN_MS, Math.round(atkMs / (1 + Math.max(-0.5, fx.spdMul || 0))));
     // 施法間隔（攻擊魔法用，不看武器）：1.2 秒 − 綠水 0.3 − 慎重藥水 0.3（法師、魔鬥士、天使），最快 0.6 秒
     const castMs = Math.max(CAST_MIN_MS, CAST_BASE_MS - (fx.haste ? CAST_POTION_MS : 0) - (fx.wise ? CAST_POTION_MS : 0));
 
