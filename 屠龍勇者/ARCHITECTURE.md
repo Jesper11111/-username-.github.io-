@@ -159,7 +159,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024c`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024d`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -385,7 +385,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 ## 14. 離線收益（`offline.js`）
 
 - **2026-10-12 起要登入、只有最後離線的角色**（版本 `20261012t` 起**不再扣鑽石**，改由遊戲端讀自己 `dragon_saves` 最新 updated_at 的欄位判斷）（第 38 節 `offlineSettle`）：沒登入沒有離線收益；`applyOffline(awayMs, paidMs)` 的 paidMs 是伺服器 `offline_claim` 用鑽石換到的可結算時間。
-- 觸發：①「繼續冒險」讀檔時，離開時間 = 現在 − 存檔時間（`lastSaveAt`）；② 遊戲中主迴圈發現兩次 tick 間隔 ≥ 30 秒（分頁在背景被暫停、電腦休眠）。
+- 觸發：①「繼續冒險」讀檔時，離開時間 = 現在 − 存檔時間（`lastSaveAt`）；② 遊戲中主迴圈發現兩次 tick 間隔 ≥ 30 分鐘（分頁在背景被暫停、電腦休眠）。
 - 條件：在狩獵地圖且 `player.hunting` 為 true；村莊、步行中、龍穴都不結算。
 - 做法：`measureHunt` 把玩家狀態存成快照，用 `SIM_MODE` 快轉模擬 10 分鐘掛機（會自動喝水、施法、回家），量出經驗、金幣、擊殺與每種消耗品用量，結束後完整還原。
   `SIM_MODE` 期間 `saveGame`、`refreshUI`、`showToast`、`openDialog` 都不動作，遊戲訊息也會還原。
@@ -395,7 +395,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
   依比例給經驗（會正常升級）、金幣、擊殺數，扣除對應的消耗品。
 - 結束狀態：補給撐完整段 → 繼續掛機；補給用完 → 有回家卷軸就回村，沒有就停在原地；模擬中陣亡 → 只結算到陣亡為止，照死亡規則扣經驗並回村。
 - 不給：道具掉落、任務進度（避免估算誤差影響稀有物品與劇情）。
-- 常數在 `config.js`：`OFFLINE_MIN_MS`（30 秒）、`OFFLINE_MAX_MS`（12 小時）、`OFFLINE_RATE`（50%）、`OFFLINE_SAMPLE_MS`（10 分鐘）。
+- 常數在 `config.js`：`OFFLINE_MIN_MS`（30 分鐘，20261024d 起）、`OFFLINE_MAX_MS`（12 小時）、`OFFLINE_RATE`（50%）、`OFFLINE_SAMPLE_MS`（10 分鐘）。
 - 結算一次約 0.01～0.1 秒，結果以「🌙 離線收益」對話框顯示並寫入遊戲訊息。
 
 ## 15. 主畫面外框（`ui-frame.js`、`images/frame.jpg`）
@@ -2829,3 +2829,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **道具分類以伺服器為準**：新增 `dragon_item_cat(id)`（內部用，玩家不能呼叫）：`q_%` 一律 `quest`，其他查 `dragon_loot_catalog.data.items[id].cat`，查不到回 null。`market_list2` 用它決定分類（不採用玩家送來的 `p_cat`，查不到才用 p_cat）、存進 `dragon_market.cat`，quest 拒絕；`vault_put2` 也拒絕 quest。原本直接呼叫 API 謊報分類可以上架／存入任務道具。
 - **部署**：Supabase SQL Editor 依序重跑 `tools/vault-v2.sql`、`tools/market-v2.sql`（都可重複執行）。遊戲端修正不依賴 SQL，可先上線。
 - **測試**：`test-market-v2.js` 加任務道具謊報分類被拒（交易所＋共用倉庫）、分類以伺服器為準、過期不佔名額、未過期滿 10 件擋；`test-vault-v2-client.js` 加 ⑤-1：真實遊戲賣出後存檔被拒收時不 ack、下次上傳成功才 ack 且金幣只入帳一次（舊版 market.js 跑此段會失敗）。check.ps1、混淆建置（445 KB）、瀏覽器載入無錯誤。
+
+## 118. 離線掛機門檻改為30分鐘（2026-10-24，版本 `20261024d`）
+
+- 使用者要求離開畫面30分鐘內不算離線掛機。`config.js` 的 `OFFLINE_MIN_MS` 從30秒改為30分鐘，主迴圈暫停與重新讀檔共用門檻；未滿30分鐘不查離線資格、不模擬收益、不跳離線報告，接續原掛機。
+- 瀏覽器暫停期間不會補算一般戰鬥；滿30分鐘仍依既有離線規則結算整段（12小時上限、50%效率）。不改存檔、SQL與掉寶規則。
+- 驗證：隔離VM測30秒／1分鐘／10分鐘／29:59.999／30分鐘／30分鐘+1ms，主迴圈與重新讀檔入口均符合門檻，短暫離開不查伺服器；離線掉落與喝水延遲回歸、check.ps1 ALL CHECKS PASSED、混淆建置46檔445KB通過。實際手機切背景待使用者驗收。

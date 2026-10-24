@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261024c';
+const GAME_VERSION = '20261024d';
 const BOSS_MATERIAL_DROP_P = 0.001; // BOSS 材料固定掉落率 0.1%，不受異界掉落加成影響
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
@@ -33,7 +33,7 @@ let gameNow = Date.now();
 
 // 離線收益（offline.js）：模擬期間為 true，存檔、畫面更新、提示一律略過
 let SIM_MODE = false;
-const OFFLINE_MIN_MS = 30 * 1000;           // 離開超過 30 秒才結算
+const OFFLINE_MIN_MS = 30 * 60 * 1000;           // 離開滿 30 分鐘才結算
 const OFFLINE_MAX_MS = 12 * 3600 * 1000;    // 最多結算 12 小時
 const OFFLINE_RATE = 0.5;                   // 離線效率 50%
 const OFFLINE_SAMPLE_MS = 10 * 60 * 1000;   // 用 10 分鐘模擬量測掛機效率
