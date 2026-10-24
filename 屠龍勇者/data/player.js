@@ -253,7 +253,8 @@ function defaultSkillSlots(p = player, skip = {}) {
 
 // ───────── 能力計算 ─────────
 const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'double', 'absorb', 'counter', 'hpRegen', 'mpRegen',
-    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight', ...STAT_KEYS];
+    'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight',
+    'bossDmg', 'expPct', 'goldPct', 'thorns', ...STAT_KEYS];   // 第二行：特殊詞綴（affix.js SPECIAL_AFFIXES）
 // 攻速規則：見 calcStats 的 atkMs／castMs（天堂式：綠水、勇水 ×1.33，精靈餅乾 ×1.15）
 const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, SPD_EXTRA_MAX = 0.3, ATK_MIN_MS = 400;
 const CAST_BASE_MS = 1200, CAST_MIN_MS = 600, CAST_POTION_MS = 300;
@@ -321,6 +322,7 @@ function calcStats() {
         absorb: fx.absorb || 0,
         counter: fx.counter || 0,
         lifesteal: fx.lifesteal || 0,
+        bossDmg: fx.bossDmg || 0, expPct: fx.expPct || 0, goldPct: fx.goldPct || 0, thorns: fx.thorns || 0,
         hpRegen: 1 + Math.floor(p.lv / 8) + Math.max(0, s.con - 12) + (fx.hpRegen || 0),
         mpRegen: 1 + Math.floor(p.lv / 12) + Math.max(0, Math.floor((s.wis - 10) * c.mpRegenK)) + (fx.mpRegen || 0),
         // 負重（2026-10-16 改版）：底值 1200＋（力量＋體質）×80＋等級×20＋裝備（腰帶 weight）；原本 (力量＋體質)×100，1～50 級不會成長

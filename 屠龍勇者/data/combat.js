@@ -491,7 +491,7 @@ function castBuff(k) {
 function magicDamage(base, spK, st, undeadMul, mon = hunt.mon) {
     let d = rand(base[0], base[1]) + Math.floor(st.sp * spK);
     if (mon.undead && undeadMul) d *= undeadMul;
-    d *= slayerMult(mon);
+    d *= slayerMult(mon) * bossDmgMult(mon, st);
     d *= 1 - clamp(mon.mr, 0, 100) / 200;
     return Math.max(1, Math.round(d));
 }
@@ -561,6 +561,9 @@ function slayerMult(mon) {
     return s && s.tags.some(t => mon[t]) ? s.mult : 1;
 }
 
+// 特殊詞綴「首領增傷」（affix.js）：對首領的物理、魔法傷害
+function bossDmgMult(mon, st) { return mon.boss ? 1 + (st.bossDmg || 0) : 1; }
+
 // 吸血：造成傷害的一定比例轉為 HP
 function lifeSteal(dmg, st) {
     if (st.lifesteal > 0 && dmg > 0) player.hp = Math.min(st.maxHp, player.hp + Math.max(1, Math.floor(dmg * st.lifesteal)));
@@ -588,7 +591,7 @@ function physicalAttack(st, mult, opt, mon = hunt.mon) {
         if (mon.undead && ((st.weapon && st.weapon.silver) || (ammoDef && ammoDef.silver))) d += rand(1, 10);
         if (mon.undead && opt.undeadMul) d *= opt.undeadMul;
         if (mon.dragon && st.weapon && st.weapon.dragon) d *= st.weapon.dragon;
-        d *= slayerMult(mon);
+        d *= slayerMult(mon) * bossDmgMult(mon, st);
         d *= mult;
         if (chance(st.crit)) { d *= 1.5; crit = true; }
         total += Math.max(1, Math.round(d));
@@ -630,6 +633,12 @@ function monsterAttack(st, mon) {
     if (player.hp <= 0) { onDeath(mon); return; }
     if (dmg > 0) sfx('hurt');
     if (dmg > 0) resonanceOnHurt(st);   // 共鳴防具：受擊／危急觸發（resonance.js）
+    if (st.thorns && dmg > 0 && !magic) {   // 特殊詞綴「反傷」：被物理攻擊打中時反彈
+        const t = Math.max(1, Math.round(dmg * st.thorns));
+        mon.hp -= t;
+        addLog(`🌵 反傷！${mon.name}受到 ${t} 傷害`, 'crit');
+        if (mon.hp <= 0) { onKill(mon); return; }
+    }
     if (st.counter && dmg > 0 && chance(st.counter)) {
         mon.hp -= dmg;
         addLog(`🛡️ 反擊！${mon.name}受到 ${dmg} 傷害`, 'crit');
@@ -645,11 +654,12 @@ function onKill(mon) {
     const mb = 1 + mapBonus();   // 地圖詞綴獎勵加成
     let gold = Math.round(rand(mon.gold[0], mon.gold[1]) * mb);
     if (player.cls === 'royal') gold = Math.round(gold * (1 + Math.max(0, st.cha - 10) * 0.03));
+    gold = Math.round(gold * (1 + st.goldPct));   // 特殊詞綴「金幣加成」
     player.gold += gold;
     player.kills++;
     session.kills++;
     // 狩獵經驗＝怪物經驗 × 倍率 × 高等級遞減（65 級起）
-    const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv) * mb));
+    const exp = Math.max(1, Math.floor(mon.exp * EXP_RATE * huntExpRate(player.lv) * mb * (1 + st.expPct)));   // 特殊詞綴「經驗加成」
     session.exp += exp;
     session.gold += gold;
     hunt.mobs = hunt.mobs.filter(m => m !== mon);

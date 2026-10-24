@@ -546,7 +546,7 @@ function itemDescHtml(inst) {
     if (d.cat === 'book') L.push(bookInfoHtml(d));   // 魔法書：技能內容、能不能學（spellbook.js）
     if (inst.q) {   // 暗黑式詞綴
         L.push(`<b class="${QUALITY[inst.q].cls}">${QUALITY[inst.q].name}品質</b><small class="muted">（物品等級 ${inst.il || 1}）</small>`);
-        for (const a of inst.af || []) L.push(`<span class="${a.lg ? 'q-legend' : 'q-magic'}">◆ ${affixText(a)}${a.lg ? '（傳說）' : ''}</span>`);
+        for (const a of inst.af || []) L.push(`<span class="${a.sx ? 'q-special' : a.lg ? 'q-legend' : 'q-magic'}">${a.sx ? '💠' : '◆'} ${affixText(a)}${a.sx ? '（覺醒）' : a.lg ? '（傳說）' : ''}</span>`);
     }
     L.push(`<small class="muted">重量 ${d.wt}｜回收價 ${fmt(instSellPrice(inst))}</small>`);
     return art + L.join('<br>');

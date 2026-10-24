@@ -161,7 +161,7 @@ function migrateSave(data) {
     if (p.mapPortal && (!ZONE_BY_ID[p.mapPortal.zone] || !Array.isArray(p.mapPortal.mods) || p.mapRun)) p.mapPortal = null;   // 村莊的異界傳送門（第 114 節）
     if (p.mapPortal) p.mapPortal.mods = p.mapPortal.mods.filter(k => MAP_MODS[k]);
     // schema 2：詞綴品質不認得（例如之後刪掉的品質）就當普通裝備
-    const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => AFFIXES[a.k]); };
+    const fixQ = x => { if (x.q && !QUALITY[x.q]) { delete x.q; delete x.af; delete x.nm; } if (x.af) x.af = x.af.filter(a => affixDef(a.k)); };   // 含特殊詞綴（affix.js SPECIAL_AFFIXES）
     [...p.inv, ...p.storage, ...Object.values(p.equip)].forEach(fixQ);
     // schema 5：舊武器維持無附魔；不合法的附魔不帶入戰鬥。封魂石由靜態 id 保留技能。
     for (const it of [...p.inv, ...p.storage, ...Object.values(p.equip)]) {

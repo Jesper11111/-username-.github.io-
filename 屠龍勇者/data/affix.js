@@ -31,6 +31,20 @@ const LEGEND_AFFIXES = [
     { k: 'lifesteal', mul: 2, title: '血族' }, { k: 'spdMul', mul: 2, title: '疾風' }, { k: 'crit', mul: 2, title: '死神' },
     { k: 'reduce', mul: 2, title: '不滅' }, { k: 'hp', mul: 2.5, title: '巨人' }, { k: 'sp', mul: 2, title: '大賢者' },
 ];
+// 特殊詞綴（2026-10-24 使用者要求）：只能用覺醒石（craft.js curAwaken）洗在物品等級 SPECIAL_AFFIX_IL 以上的裝備，每件最多 1 條（a.sx＝1），任何部位都能出；
+// 掉落時不會擲到；其他通貨重洗、剝離都保留這條。數值上限依物品等級（70～110）成長
+const SPECIAL_AFFIX_IL = 70;
+const specialIl = il => clamp(il, SPECIAL_AFFIX_IL, 110) - SPECIAL_AFFIX_IL;
+const SPECIAL_AFFIXES = {
+    allStat: { name: '全能力',   min: 1,    max: il => 1 + specialIl(il) / 20 },                     // 力量、敏捷、體質、智力、精神各加
+    bossDmg: { name: '首領增傷', min: 0.05, max: il => 0.05 + specialIl(il) / 400, pct: true },       // 對首領的物理、魔法傷害
+    expPct:  { name: '經驗加成', min: 0.03, max: il => 0.03 + specialIl(il) / 570, pct: true },       // 打怪經驗
+    goldPct: { name: '金幣加成', min: 0.03, max: il => 0.03 + specialIl(il) / 570, pct: true },       // 打怪金幣
+    thorns:  { name: '反傷',     min: 0.05, max: il => 0.05 + specialIl(il) / 400, pct: true },       // 被物理攻擊打中時反彈受到的傷害
+};
+const ALL_STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis'];
+function affixDef(k) { return AFFIXES[k] || SPECIAL_AFFIXES[k]; }
+
 const QUALITY = {
     magic:  { name: '魔法', cls: 'q-magic',  n: [1, 2], sell: 1.5 },
     rare:   { name: '稀有', cls: 'q-rare',   n: [3, 4], sell: 3 },
@@ -42,7 +56,7 @@ function equipSlotOf(def) { return def.cat === 'weapon' ? 'weapon' : def.slot; }
 function affixAllowed(k, def) { const a = AFFIXES[k]; return !a.slots || a.slots.includes(equipSlotOf(def)); }
 
 function rollAffixValue(k, il, mul = 1) {
-    const a = AFFIXES[k], hi = Math.max(a.min, a.max(il)) * mul;
+    const a = affixDef(k), hi = Math.max(a.min, a.max(il)) * mul;
     if (a.pct) return Math.round((a.min + Math.random() * (hi - a.min)) * 100) / 100;
     return Math.max(a.min, Math.round(a.min + Math.random() * (hi - a.min)));
 }
@@ -59,7 +73,7 @@ function rollQuality(boss, guaranteed) {
 function applyAffixes(inst, q, il) {
     const def = ITEMS[inst.id];
     if (!q || !def || (def.cat !== 'weapon' && def.cat !== 'armor')) return inst;
-    const Q = QUALITY[q], n = rand(Q.n[0], Q.n[1]);
+    const Q = QUALITY[q], n = rand(Q.n[0], Q.n[1]), keepSx = (inst.af || []).filter(a => a.sx);   // 特殊詞綴重洗時保留
     const pool = Object.keys(AFFIXES).filter(k => affixAllowed(k, def));
     const af = [];
     if (q === 'legend') {
@@ -73,7 +87,7 @@ function applyAffixes(inst, q, il) {
         if (af.some(a => a.k === k)) continue;
         af.push({ k, v: rollAffixValue(k, il) });
     }
-    inst.q = q; inst.af = af; inst.il = il;
+    inst.q = q; inst.af = af.concat(keepSx); inst.il = il;
     if (q === 'rare') inst.nm = RARE_NAMES[rand(0, RARE_NAMES.length - 1)];
     if (q === 'magic') inst.nm = AFFIXES[af[0].k].pre;
     return inst;
@@ -83,12 +97,15 @@ function applyAffixes(inst, q, il) {
 function affixFx(inst) {
     if (!inst || !inst.af) return null;
     const fx = {};
-    for (const a of inst.af) fx[a.k] = (fx[a.k] || 0) + a.v;
+    for (const a of inst.af) {
+        if (a.k === 'allStat') for (const k of ALL_STAT_KEYS) fx[k] = (fx[k] || 0) + a.v;
+        else fx[a.k] = (fx[a.k] || 0) + a.v;
+    }
     return fx;
 }
 
 function affixText(a) {
-    const d = AFFIXES[a.k];    return `${d.name} +${d.pct ? Math.round(a.v * 100) + '%' : a.v}`;
+    const d = affixDef(a.k);    return `${d.name} +${d.pct ? Math.round(a.v * 100) + '%' : a.v}`;
 }
 
 // 有品質的道具名稱：魔法＝前綴＋名稱；稀有＝「稱號」名稱；傳說＝傳說・稱號 名稱
