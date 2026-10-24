@@ -86,6 +86,30 @@ const { PGlite } = require(process.env.LOOT_TEST_RUNTIME || path.join(require('o
     await db.exec(`select set_config('request.jwt.claim.sub','${B}',false);set role authenticated`);
     await assert.rejects(db.query('update public.dragon_saves set data = data || \'{"vaultSeq":0}\'::jsonb where user_id=$1 and slot=0', [B]), /vault seq conflict/);
     await db.exec('reset role');
+
+    // ④ 任務道具：玩家謊報分類也不能上架、不能存共用倉庫；分類以伺服器道具表為準（第 117 節）
+    const addInv = async (u, items) => {   // 管理者改存檔：序號照舊、重算簽章
+        const d = (await save(u)).data; d.player.inv.push(...items);
+        d.sig = (await db.query('select public.dragon_save_sig($1,0,$2) s', [u, d.player])).rows[0].s;
+        await db.query('update public.dragon_saves set data=$2 where user_id=$1 and slot=0', [u, d]);
+    };
+    await db.query("update public.dragon_saves set data=jsonb_set(data,'{player,gold}','100000') where user_id=$1 and slot=0", [A]);
+    await addInv(A, [{ uid: 90, id: 'q_knight_0', n: 1 }, { uid: 91, id: 'redPotion', n: 30 }]);
+    await assert.rejects(list(A, 90, 1, 10, 'material'), /not tradeable/);
+    await assert.rejects(as(A, 'select public.vault_put2(0,$1,1,null,$2) v', [90, 'x']), /not tradeable/);
+    await assert.rejects(as(A, 'select public.dragon_item_cat($1) v', ['redPotion']), /permission denied/);
+    const lie = await list(A, 91, 1, 10, 'weapon');
+    assert.equal((await db.query('select cat from public.dragon_market where id=$1', [lie.id])).rows[0].cat, 'potion', '分類不採用玩家送來的');
+
+    // ⑤ 名額只算沒過期的：過期沒取回的不佔名額，沒過期的滿 10 件就擋
+    await db.query("delete from public.dragon_market where seller=$1 and state='active'", [A]);
+    const fill = (exp) => db.query(`insert into public.dragon_market(seller,seller_name,slot,item,item_id,uid,n,cat,name,price,fee,expires_at)
+        select $1,'S',0,'{"id":"redPotion","n":1}','redPotion',1000+g,1,'potion','x',10,1,now()+$2::interval from generate_series(1,10) g`, [A, exp]);
+    await fill('-1 hour');
+    await list(A, 91, 1, 10, 'potion');
+    await db.query("delete from public.dragon_market where seller=$1 and state='active'", [A]);
+    await fill('1 hour');
+    await assert.rejects(list(A, 91, 1, 10, 'potion'), /too many listings/);
     await db.close();
-    console.log('PASS：舊交易所 RPC 停用；上架存的是存檔那件且同時扣掉、上下架數量守恆、部分上架、下架新 uid、買家金幣真的扣不能重複買、買到直接入帳、賣家只入帳一次、舊存檔蓋不回。');
+    console.log('PASS：舊交易所 RPC 停用；上架存的是存檔那件且同時扣掉、上下架數量守恆、部分上架、下架新 uid、買家金幣真的扣不能重複買、買到直接入帳、賣家只入帳一次、舊存檔蓋不回；任務道具謊報分類也不能上架／存倉庫、分類以伺服器為準、過期商品不佔名額。');
 })().catch(e => { console.error(e); process.exit(1); });

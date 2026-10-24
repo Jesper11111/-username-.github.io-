@@ -52,6 +52,14 @@ begin
 end $$;
 revoke execute on function public.dragon_vault_commit(int, jsonb) from public, anon, authenticated;
 
+-- 道具分類以伺服器為準（2026-10-24，第 117 節）：任務道具 q_職業_序號 一律 quest，其他查後端掉寶的道具表；查不到回 null（內部用）
+create or replace function public.dragon_item_cat(p_id text) returns text
+language sql stable security definer set search_path = '' as $$
+    select case when p_id like 'q\_%' then 'quest'
+        else (select c.data -> 'items' -> p_id ->> 'cat' from public.dragon_loot_catalog c where c.id = 1) end;
+$$;
+revoke execute on function public.dragon_item_cat(text) from public, anon, authenticated;
+
 -- 共同檢查＋鎖住這個角色的雲端存檔
 create or replace function public.dragon_vault_row(p_slot int) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -84,7 +92,7 @@ begin
     if (select count(*) from public.dragon_vault_items where user_id = auth.uid() and taken_at is null) >= 200 then raise exception 'vault full'; end if;
     select x, (o - 1)::int into it, idx from jsonb_array_elements(coalesce(p -> 'inv', '[]'::jsonb)) with ordinality e(x, o) where (x ->> 'uid')::int = p_uid limit 1;
     if it is null then raise exception 'item not in cloud save'; end if;
-    if coalesce((it ->> 'ench')::int, 0) > 15 or it ->> 'id' is null then raise exception 'not tradeable'; end if;
+    if coalesce((it ->> 'ench')::int, 0) > 15 or it ->> 'id' is null or public.dragon_item_cat(it ->> 'id') = 'quest' then raise exception 'not tradeable'; end if;
     have := greatest(coalesce((it ->> 'n')::int, 1), 1);
     if p_n is null or p_n < 1 or p_n > have then raise exception 'bad amount'; end if;
     if p_n < have then

@@ -49,13 +49,15 @@ revoke execute on function public.dragon_inv_add(jsonb, jsonb) from public, anon
 -- ═════ 上架：從雲端存檔拿掉，交易所存存檔裡那一件 ═════
 create or replace function public.market_list2(p_slot int, p_uid int, p_n int, p_price bigint, p_seller_name text, p_name text, p_cat text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare p jsonb := public.dragon_market_row(p_slot, true); it jsonb; idx int; have int; item jsonb; r bigint;
+declare p jsonb := public.dragon_market_row(p_slot, true); it jsonb; idx int; have int; item jsonb; r bigint; v_cat text;
 begin
     if p_price is null or p_price < 1 or p_price > 2000000000 then raise exception 'bad price'; end if;
-    if p_cat = 'quest' then raise exception 'not tradeable'; end if;
-    if (select count(*) from public.dragon_market where seller = auth.uid() and state = 'active') >= 10 then raise exception 'too many listings'; end if;
+    -- 名額只算還沒過期的（過期沒取回的不佔名額，2026-10-24 第 117 節）
+    if (select count(*) from public.dragon_market where seller = auth.uid() and state = 'active' and expires_at > now()) >= 10 then raise exception 'too many listings'; end if;
     select x, (o - 1)::int into it, idx from jsonb_array_elements(coalesce(p -> 'inv', '[]'::jsonb)) with ordinality e(x, o) where (x ->> 'uid')::int = p_uid limit 1;
     if it is null then raise exception 'item not in cloud save'; end if;
+    v_cat := coalesce(public.dragon_item_cat(it ->> 'id'), p_cat);   -- 分類以伺服器為準，不採用玩家送來的 p_cat
+    if v_cat = 'quest' then raise exception 'not tradeable'; end if;
     if it ->> 'id' is null or coalesce((it ->> 'ench')::int, 0) > 15 then raise exception 'not tradeable'; end if;
     have := greatest(coalesce((it ->> 'n')::int, 1), 1);
     if p_n is null or p_n < 1 or p_n > have then raise exception 'bad amount'; end if;
@@ -69,7 +71,7 @@ begin
     delete from public.dragon_market where state <> 'active' and buyer_got and seller_got and listed_at < now() - interval '30 days';
     delete from public.dragon_market where state = 'cancelled' and listed_at < now() - interval '30 days';
     insert into public.dragon_market (seller, seller_name, slot, item, item_id, uid, n, cat, name, price, fee, expires_at)
-        values (auth.uid(), left(p_seller_name, 40), p_slot, item, it ->> 'id', p_uid, p_n, left(p_cat, 20), left(p_name, 60), p_price, ceil(p_price * 0.05), now() + interval '48 hours')
+        values (auth.uid(), left(p_seller_name, 40), p_slot, item, it ->> 'id', p_uid, p_n, left(v_cat, 20), left(p_name, 60), p_price, ceil(p_price * 0.05), now() + interval '48 hours')
         returning id into r;
     return public.dragon_vault_commit(p_slot, p) || jsonb_build_object('ok', true, 'id', r, 'uid', p_uid, 'n', p_n);
 end $$;

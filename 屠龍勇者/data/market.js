@@ -59,6 +59,7 @@ async function marketDeliver(silent) {
     if (!isCloudConfigured() || !cloudLoggedIn() || !player || cloudBan || marketPendingBusy) return;
     marketPendingBusy = true;
     marketDeliverAt = Date.now();
+    const who = player, slot = currentSlot;
     try {
         const p = await marketRpc('market_pending');
         if (!player.marketGot) player.marketGot = [];
@@ -88,7 +89,8 @@ async function marketDeliver(silent) {
             saveGame(); refreshUI();
             if (!silent || msgs.length) showToast(msgs.length > 1 ? `交易所：${msgs.length} 筆交易入帳` : msgs[0], 3000);
         }
-        if (ackB.length || ackS.length) { await cloudFlush(true); await marketRpc('market_ack', { p_bought: ackB, p_sold: ackS }); }
+        // 存檔確定上傳到雲端才確認入帳；沒傳上去（忙碌、被拒收、之後改用雲端進度）就留到下次，marketGot 擋重複入帳（2026-10-24，第 117 節）
+        if ((ackB.length || ackS.length) && player === who && await cloudSyncedSlot(slot)) await marketRpc('market_ack', { p_bought: ackB, p_sold: ackS });
     } catch (e) { if (!silent) showToast('交易所：' + marketErrText(e)); }
     marketPendingBusy = false;
 }

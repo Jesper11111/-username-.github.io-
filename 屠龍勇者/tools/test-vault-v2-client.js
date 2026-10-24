@@ -150,6 +150,28 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         player.exp += 1; saveGame(); assert.equal(await cloudFlush(true), true, '交易後照常上傳');
         assert.equal(flags.length, 0); assert.equal(g0, player.gold + 300);
 
+        // ⑤-1 賣家入帳（第 117 節）：存檔沒上傳成功不確認入帳（留到下次）、下次確認時不重複入帳
+        const pUid = player.inv.find(x => x.id === 'redPotion').uid;
+        marketSellUid = pUid;
+        document.getElementById = id => id === 'market-price' ? { value: '100' } : id === 'market-n' ? { value: '1' } : null;
+        await marketListItem(); await waitMarket();
+        const sellId = (await db.query("select id from public.dragon_market where seller=$1 and state='active'", [uid])).rows[0].id;
+        const ss = (await db.query('select data from public.dragon_saves where user_id=$1 and slot=0', [seller])).rows[0].data;
+        ss.player.gold = 1000; ss.sig = (await db.query('select public.dragon_save_sig($1,0,$2) s', [seller, ss.player])).rows[0].s;
+        await db.query('update public.dragon_saves set data=$2 where user_id=$1 and slot=0', [seller, ss]);
+        await db.exec("select set_config('request.jwt.claim.sub','" + seller + "',false); set role authenticated");
+        await db.query("select public.market_buy2(" + sellId + ",0,'賣家') v");
+        await db.exec("reset role; select set_config('request.jwt.claim.sub','" + uid + "',false)");
+        const sellerGot = async () => (await db.query('select seller_got from public.dragon_market where id=$1', [sellId])).rows[0].seller_got;
+        const g3 = player.gold;
+        cloudBackoffUntil = Date.now() + 60000;   // 伺服器忙碌：存檔傳不上去
+        await marketDeliver(true);
+        assert.equal(player.gold, g3 + 95, '本機先入帳'); assert.equal(await sellerGot(), false, '沒上傳成功不確認入帳');
+        cloudBackoffUntil = 0;
+        await marketDeliver(true);
+        assert.equal(player.gold, g3 + 95, '下次不重複入帳'); assert.equal(await sellerGot(), true, '上傳成功才確認');
+        assert.equal(Number((await cloud()).data.player.gold), g3 + 95);
+
         // ⑤-2 別的角色欄位上傳一直失敗（例如能力值被拒收）：不影響目前角色存取共用倉庫（第 97 節）
         const bad = JSON.parse(JSON.stringify(local())); bad.player.created = 777; bad.player.stats.str = 99; bad.vaultSeq = 0;
         localStorage.setItem(slotKey(1), saveEncode(JSON.stringify(bad))); cloudKnown[1] = null; cloudDirty.add(1);
