@@ -256,7 +256,7 @@ const FX_KEYS = ['ac', 'hit', 'dmg', 'sp', 'mr', 'crit', 'dodge', 'reduce', 'dou
     'dmgSp', 'spdMul', 'lifesteal', 'hp', 'mp', 'haste', 'brave', 'wise', 'weight',
     'bossDmg', 'expPct', 'goldPct', 'thorns', ...STAT_KEYS];   // 第二行：特殊詞綴（affix.js SPECIAL_AFFIXES）
 // 攻速規則：見 calcStats 的 atkMs／castMs（天堂式：綠水、勇水 ×1.33，精靈餅乾 ×1.15）
-const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, SPD_EXTRA_MAX = 0.3, ATK_MIN_MS = 400;
+const HASTE_MUL = 1.33, BRAVE_MUL = 1.33, WAFER_MUL = 1.15, SPD_EXTRA_MAX = 0.3, ATK_MIN_MS = 200;
 const CAST_BASE_MS = 1200, CAST_MIN_MS = 600, CAST_POTION_MS = 300;
 
 function addFx(acc, fx) {
