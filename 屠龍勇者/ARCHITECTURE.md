@@ -3033,3 +3033,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - test-poison-enchant新增世界入口可達、地標／座標一致、步行不改所在地與金幣、遠距／取消／確認前移開／缺錢阻擋、成功扣600與洞內出生點可走；隔離頁poison-enchant-preview新增南境入口、世界地圖及點入口名牌控制。地圖、掉落目錄及中毒共同以al版重新檢查，schema7與異界排序不變。
 - 後端仍由使用者先執行tools/loot-catalog.sql（本次匯出436道具／80怪／20區），不必重裝server-loot.sql，也不改Supabase設定。巢穴入口只是世界導航，不新增後端傳送RPC。
 - 最終驗證（al）：check.ps1 ALL CHECKS PASSED；test-poison-enchant／boss-enchant／world-vfx／item-art／cave-assassin-morph／map-queue／server-loot-db／server-loot-client通過。隔離瀏覽器世界地標→入口確認→取消不扣費→確認扣600進洞、洞內開世界地圖，以及材料附魔→封魂→裝回實點完成，最新Console無error／warn。中毒六跳後蛛后HP5000→4874、剩餘0。47檔混淆465KB、五個新美術檔打包hash一致、git diff --check通過。正式SQL尚待使用者執行，實玩驗收後再提交剩餘檔案。
+
+## 132. 遠程武器掛機不再走到怪旁邊（2026-10-24，版本 `20261024am`；`ui-scene.js` 的 `sceneUpdate` 掛機尋怪段、綁定地圖怪段）
+
+- 玩家回報：槍手、弓手掛機打一打就變成走到怪物旁邊近距離打。
+- 原因：`hunt.state === 'search'`（每打倒一隻怪後 0.6～1.6 秒、瞬移卷軸 `leaveFight(1500)`、換樓層、大地圖換區之後）時，`sceneUpdate` 的「掛機尋怪」一律以 6 格為一段走向最近的怪、走到距離 1 才停，沒有看武器；角色每秒 5.5 格，等 `sceneHuntReady` 時間到的那 1 秒多已經貼到怪旁。開打後 `sceneReach().weapon` 的判斷是對的，所以只有「找下一隻怪」那段走錯。
+- 修正：
+  - 尋怪時拿遠程武器（`weaponIsRanged()`）：地圖上這一塊已有射程內（`sceneReach(m).weapon`，8 格＋視線）沒在戰鬥的怪 → 原地面向牠等開打；沒有才走，而且一次只走一格、每格重新判斷，進射程就停。近戰照舊 6 格一段走到旁邊。
+  - 開打綁定地圖怪（`hunt.mobs` 對應 `scene.mons`）：遠程武器優先綁射程內看得到的怪（射程外的距離 +1000），避免綁到牆後最近的怪又得走過去。
+- 沒改的（原本設計）：開打後怪物會自己走到角色旁邊才能攻擊（`mobInReach`），所以遠程角色站著不動、怪走過來後仍會在貼身距離射擊（照樣扣彈藥、遠程命中／傷害公式）；`sceneRelock` 打不到時把怪移到角色旁邊也保留。
+- 驗證（隔離測試頁：記憶體角色、禁止連外、自己驅動 `sceneUpdate`）：舊版槍手 40 秒攻擊 39 次有 31 次貼身、角色自己走進怪旁 2 次；新版槍手（低語海岸 40 秒、迷霧古林 80 秒 3 隻圍攻）角色自己走進怪旁 0 次、迷霧古林全程沒移動；弓手在低語墓窟連用 3 次瞬移、不死系自動換銀箭，走進怪旁 0 次；騎士照舊走到旁邊打（32 次全部距離 1、7 殺）。Console 無錯誤。

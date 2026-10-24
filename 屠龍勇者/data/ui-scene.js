@@ -712,9 +712,10 @@ function sceneUpdate(dt) {
         if (scene.mons.some(m => m.inst === inst && !m.dead)) continue;
         // 綁最近的地圖怪（遠的會自己走過來，走到旁邊才打得到，見 mobInReach）；地圖上沒怪才在區域隨機生一隻
         let best = null, bd = 1e9;
+        const ranged = weaponIsRanged();   // 遠程武器：射程內看得到的怪優先綁（不然綁到牆後最近的怪，角色又得走過去）
         for (const m of scene.mons) {
             if (m.dead || m.inst || !inHuntZone(m.x, m.y)) continue;
-            const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y);
+            const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y) + (ranged && !sceneReach(m).weapon ? 1000 : 0);
             if (d < bd) { bd = d; best = m; }
         }
         if (!best) best = spawnMapMon();
@@ -804,7 +805,10 @@ function sceneUpdate(dt) {
         } else if (inZone && player.hunting && !walkHome) {
             let best = null, bd = 1e9;
             for (const m of scene.mons) { if (m.dead || !inHuntZone(m.x, m.y)) continue; const d = Math.abs(m.x - pl.x) + Math.abs(m.y - pl.y); if (d < bd) { bd = d; best = m; } }   // 大地圖只找這個地圖的怪
-            if (best && bd > 1) pl.path = huntPath(findPath(pl.x, pl.y, best.x, best.y, true).slice(0, 6));
+            // 遠程武器（2026-10-24 玩家回報弓手、槍手打一打變成貼身打）：射程內已有看得到的怪就原地等開打，否則一次走一格、每格重新判斷，不走到怪旁邊
+            const ranged = weaponIsRanged(), inRange = ranged && scene.mons.find(m => !m.dead && !m.inst && inHuntZone(m.x, m.y) && sceneReach(m).weapon);
+            if (inRange) pl.dir = Math.abs(inRange.x - pl.x) >= Math.abs(inRange.y - pl.y) ? (inRange.x > pl.x ? 'right' : 'left') : (inRange.y > pl.y ? 'down' : 'up');
+            else if (best && bd > 1) pl.path = huntPath(findPath(pl.x, pl.y, best.x, best.y, true).slice(0, ranged ? 1 : 6));
         } else if (inZone) {
             // 野外停止掛機：原地附近隨機走動；村莊裡站著不動
             pl.idleCd -= dt;
