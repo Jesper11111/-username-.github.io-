@@ -150,12 +150,12 @@ function unequipSlot(slot) {
 function buffActive(key) { const b = player.buffs[key]; return !!(b && b.until > gameNow); }
 function buffFx(b) {
     if (b.src === 'skill') { const s = findSkill(b.id); return s ? s.fx : null; }
-    if (b.form) return (MORPH_BY_ID[b.form] || {}).fx || null;   // 變形卷軸：看選的變身對象
+    if (b.form) { const f = MORPH_BY_ID[b.form]; return f && !morphWeaponErr(f) ? f.fx : null; }   // 變形卷軸：看選的變身對象；武器不符時效果暫停
     const d = ITEMS[b.id];
     return d && BUFF_DEFS[d.buff] ? BUFF_DEFS[d.buff].fx : null;
 }
 function buffName(b) {
-    if (b.form && MORPH_BY_ID[b.form]) return `變身：${MORPH_BY_ID[b.form].name}`;
+    if (b.form && MORPH_BY_ID[b.form]) return `變身：${MORPH_BY_ID[b.form].name}${morphWeaponErr(MORPH_BY_ID[b.form]) ? '（武器不符，效果暫停）' : ''}`;
     return b.src === 'skill' ? (findSkill(b.id) || {}).name : ITEMS[b.id].short || ITEMS[b.id].name;
 }
 function cleanBuffs() {

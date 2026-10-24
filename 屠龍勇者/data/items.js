@@ -140,18 +140,20 @@ const MORPH_TIER_K = { blue: 1, red: 2, purple: 3, gold: 4 };
 const MORPH_LV_FREE = false;
 function morphGmOk() { return typeof cloudMorphAdminUid !== 'undefined' && cloudLoggedIn() && !cloudBan && cloudMorphAdminUid === cloudUser.id; }
 function morphLvOk(f) { return MORPH_LV_FREE || morphGmOk() || player.lv >= f.lv; }
-// 系別：weapon＝建議武器（只是提示，不限制）；fx(t, k) 依階級 t 與階數 k（1～4）算加成
+// 系別：weapon＝建議武器；fx(t, k) 依階級 t 與階數 k（1～4）算加成
+// 武器限制（2026-10-24 使用者要求，morphWeaponErr）：need＝一定要裝這類武器才能變（弓手系要弓、槍手系要槍）；
+// oneHand＝單手武器系列，拿雙手武器（WEAPON_TYPES 的 two：雙手劍、矛、弓、槍、鋼爪、雙刀、鐮刀）不能變
 const MORPH_GROUPS = {
     melee:  { name: '近戰通用系', weapon: '近戰武器通用', fx: t => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd }) },
-    bow:    { name: '弓手系', weapon: '弓',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg, spdMul: t.spd }) },
-    gun:    { name: '槍手系', weapon: '槍',     fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg + 1, spdMul: t.spd - 0.02 }) },
+    bow:    { name: '弓手系', weapon: '弓',     need: ['bow'], fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg, spdMul: t.spd }) },
+    gun:    { name: '槍手系', weapon: '槍',     need: ['gun'], fx: (t, k) => ({ hit: t.hit + k, dmg: t.dmg + 1, spdMul: t.spd - 0.02 }) },
     dual:   { name: '雙刀系', weapon: '雙刀',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, dodge: 0.01 + k * 0.01 }) },
     great:  { name: '雙手劍系', weapon: '雙手劍', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg + k + 1, spdMul: t.spd - 0.02, crit: k * 0.01 }) },
-    sword:  { name: '單手劍系', weapon: '單手劍', fx: (t, k) => ({ hit: t.hit + 1, dmg: t.dmg, spdMul: t.spd + 0.03 }) },
-    staff:  { name: '法杖系', weapon: '魔杖',   fx: (t, k) => ({ hit: k, sp: [2, 3, 4, 6][k - 1], mpRegen: [2, 3, 4, 6][k - 1], mr: k * 5 }) },
+    sword:  { name: '單手劍系', weapon: '單手劍', oneHand: true, fx: (t, k) => ({ hit: t.hit + 1, dmg: t.dmg, spdMul: t.spd + 0.03 }) },
+    staff:  { name: '法杖系', weapon: '魔杖',   oneHand: true, fx: (t, k) => ({ hit: k, sp: [2, 3, 4, 6][k - 1], mpRegen: [2, 3, 4, 6][k - 1], mr: k * 5 }) },
     fist:   { name: '拳套系', weapon: '空手',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, crit: 0.01 + k * 0.01 }) },
     claw:   { name: '鋼爪系', weapon: '鋼爪',   fx: (t, k) => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd, crit: k * 0.01, lifesteal: k * 0.01 }) },
-    shield: { name: '劍盾系', weapon: '單手劍＋盾', fx: (t, k) => ({ hit: t.hit, dmg: t.dmg - 1, ac: [2, 3, 4, 6][k - 1], hp: [40, 80, 120, 200][k - 1], spdMul: t.spd - 0.03 }) },
+    shield: { name: '劍盾系', weapon: '單手劍＋盾', oneHand: true, fx: (t, k) => ({ hit: t.hit, dmg: t.dmg - 1, ac: [2, 3, 4, 6][k - 1], hp: [40, 80, 120, 200][k - 1], spdMul: t.spd - 0.03 }) },
 };
 const MORPH_FORMS = [
     ['m31', '煉獄雷霆魔皇', 'melee', 'gold', 'infernalThunderEmperor'],
@@ -177,6 +179,13 @@ function morphFxText(fx) {
     return Object.keys(L).filter(k => fx[k]).map(k => `${L[k][0]} ${fx[k] > 0 ? '+' : ''}${L[k][1](fx[k])}`).join('、');
 }
 const MORPH_BY_ID = Object.fromEntries(MORPH_FORMS.map(f => [f.id, f]));
+// 目前（或指定）武器能不能變這個對象；可以回傳 ''。變身後換成不符合的武器：效果暫停（buffFx），換回來就恢復
+function morphWeaponErr(f, w = player && player.equip.weapon) {
+    const g = MORPH_GROUPS[f.group], wt = w ? ITEMS[w.id].type : 'fist';
+    if (g.need && !g.need.includes(wt)) return `${g.name}要裝備${g.weapon}才能變身`;
+    if (g.oneHand && WEAPON_TYPES[wt] && WEAPON_TYPES[wt].two) return `拿雙手武器不能變身成${g.name}`;
+    return '';
+}
 
 // cat：weapon／armor／potion／scroll／ammo／elixir／material
 // 武器 dmg:[對小型, 對大型] 最大傷害（最小 1）；safe 安定值（-1 不可強化）

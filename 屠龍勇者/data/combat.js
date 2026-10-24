@@ -93,6 +93,8 @@ function usePotion(id, form) {
         mf = MORPH_BY_ID[form || player.settings.lastMorph];
         if (!mf) return '請先選擇變身對象';
         if (!morphLvOk(mf)) return `${mf.name}需要 Lv.${mf.lv}`;
+        const werr = morphWeaponErr(mf);
+        if (werr) return werr;
     }
     if (d.cat === 'potion' && !potionReady()) return '喝水延遲中';
     if (!consumeItem(id)) return '沒有這個道具';
@@ -153,7 +155,7 @@ function autoSupport(st) {
         const d = ITEMS[id];
         if (!d.buff || countItem(id) <= 0 || (d.classes && !d.classes.includes(player.cls))) continue;
         if (d.buff === 'haste' ? st.haste : buffActive(d.buff)) continue;
-        usePotion(id); return;
+        if (!usePotion(id)) return;   // 用不了（例如變身武器不符）就換下一格，不卡住後面的道具
     }
 }
 

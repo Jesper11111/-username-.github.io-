@@ -1077,12 +1077,12 @@ function openMorphPicker() {
     const n = countItem('polyScroll'), cur = player.buffs.morph && player.buffs.morph.until > gameNow ? player.buffs.morph : null;
     const left = cur ? Math.ceil((cur.until - gameNow) / 60000) : 0;
     const opt = f => {
-        const t = MORPH_TIERS[f.tier], lock = !morphLvOk(f), on = cur && cur.form === f.id, last = !cur && player.settings.lastMorph === f.id;
+        const t = MORPH_TIERS[f.tier], werr = morphWeaponErr(f), lock = !morphLvOk(f) || !!werr, on = cur && cur.form === f.id, last = !cur && player.settings.lastMorph === f.id;
         return `<button class="mf-opt ${lock ? 'lock' : ''} ${on ? 'cur' : ''}" style="--mf:${t.color}" ${lock || !n ? 'disabled' : ''} onclick="morphPick('${f.id}')">
-            <b>${esc(f.name)}</b><span class="mf-lv"><i>${t.name}・${t.grade}</i> Lv.${f.lv}${on ? '・變身中' : last ? '・上次' : ''}</span><small>${esc(f.desc)}</small></button>`;
+            <b>${esc(f.name)}</b><span class="mf-lv"><i>${t.name}・${t.grade}</i> Lv.${f.lv}${on ? '・變身中' : last ? '・上次' : ''}</span><small>${esc(f.desc)}${werr ? `<br>⚠️ ${esc(werr)}` : ''}</small></button>`;
     };
     // 依系別分組（參考天堂變身清單）；系別後面標建議武器
-    const rows = Object.keys(MORPH_GROUPS).map(g => `<h4 class="mf-group">${MORPH_GROUPS[g].name}<small>建議武器：${MORPH_GROUPS[g].weapon}</small></h4>
+    const rows = Object.keys(MORPH_GROUPS).map(g => `<h4 class="mf-group">${MORPH_GROUPS[g].name}<small>${MORPH_GROUPS[g].need ? '需要' : '建議'}武器：${MORPH_GROUPS[g].weapon}${MORPH_GROUPS[g].oneHand ? '（雙手武器不可）' : ''}</small></h4>
         <div class="mf-list">${MORPH_FORMS.filter(f => f.group === g).map(opt).join('')}</div>`).join('');
     const html = `<div class="mf-head">${itemIconHtml('polyScroll')}<div>持有 <b>${n}</b> 張・變身 ${ITEMS.polyScroll.sec / 60} 分鐘${cur ? `<br>目前：<b>${esc(MORPH_BY_ID[cur.form] ? MORPH_BY_ID[cur.form].name : '變身')}</b>（剩 ${left} 分）` : ''}</div></div>
         <small class="muted">選擇要變身的對象；${MORPH_LV_FREE ? '<b>測試中：暫不限等級</b>。' : morphGmOk() ? '<b>GM：不限變身等級</b>。' : '等級不夠的不能選。'}再讀一張會換成新的對象並重新計時，死亡解除。部分變身已有專屬外觀。</small>
