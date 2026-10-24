@@ -10,7 +10,7 @@ const FRAME_MIN_RATIO = 0.62;     // 寬度不超過高度 × 0.62，避免矮�
 
 const DRAWERS = {
     left:  [['char', '🧝', '人物狀態'], ['skill', '✨', '技能'], ['quest', '📜', '任務'], ['codex', '📖', '裝備圖鑑'], ['clan', '🏰', '血盟'], ['market', '🏪', '交易所']],
-    right: [['map', '🗺️', '地圖'], ['raid', '🐉', '團隊副本'], ['chat', '💬', '聊天'], ['rank', '🏆', '排行榜'], ['wb', '👹', '世界首領'], ['set', '⚙️', '設定']],
+    right: [['map', '🗺️', '地圖'], ['mapQueue', '📋', '地圖排程'], ['raid', '🐉', '團隊副本'], ['chat', '💬', '聊天'], ['rank', '🏆', '排行榜'], ['wb', '👹', '世界首領'], ['set', '⚙️', '設定']],
 };
 
 const SLOT_DEFS = [
@@ -34,6 +34,7 @@ const PC_SLOTS = [
     // PC_SQ(2)～(7)：原本藥水、卷軸 6 格，2026-10-15 改成快捷欄第 17～22 格（hotbar.js）
     { icon: '💾', name: '手動存檔', use: () => manualSave(), ...PC_SQ(9) },
     { icon: '📖', name: '裝備圖鑑', tab: 'codex', ...PC_SQ(10) },
+    { icon: '📋', name: '地圖排程', tab: 'mapQueue', x: 1415, y: 933, w: 58, h: 66, round: true },
     { icon: '🗺️', name: '地圖', tab: 'map', x: 1487, y: 933, w: 66, h: 66, round: true },
     { icon: '⚙️', name: '設定', tab: 'set', x: 1583, y: 933, w: 66, h: 66, round: true },
     // 多人功能放在地圖左側，從 y 260 起避開上方地名與增益（2026-10-21）；聊天 2026-10-24 拿掉，下排已有聊天室（第 121 節）

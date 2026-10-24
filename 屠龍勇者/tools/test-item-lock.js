@@ -33,7 +33,7 @@ assert(renderBag().includes('toggleItemLock('));
 sellN(a.uid, 'qty'); assert.equal(pending, null); assert(findInv(a.uid));
 sellPicked(); pending(); assert(findInv(a.uid)); assert(!findInv(b.uid)); assert(!findInv(c.uid));
 // 真正加密存檔往返與 schema 5 舊存檔遷移。
-saveGame(); assert.equal(saveParse(saved).schema, 6);
+saveGame(); assert.equal(saveParse(saved).schema, SAVE_SCHEMA);
 player = guardWrap(migrateSave(saveParse(saved))); assert(player.inv[0].sellLocked);
 const legacy = JSON.parse(JSON.stringify(player)); delete legacy.inv[0].sellLocked;
 assert(!migrateSave({schema:5, player:legacy}).inv[0].sellLocked);

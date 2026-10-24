@@ -174,6 +174,8 @@ function migrateSave(data) {
     if (p.cds._bossEnchant != null && !Number.isFinite(p.cds._bossEnchant)) delete p.cds._bossEnchant;
     if (p.loc.type === 'zone' && !ZONE_BY_ID[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
     if (p.loc.type === 'town' && !TOWNS[p.loc.id]) p.loc = { type: 'town', id: 'talking' };
+    // schema 7：地圖排程舊檔預設空；讀回時暫停，避免登入後直接消耗卷軸。
+    mapQueueNormalize(p);
     return p;
 }
 

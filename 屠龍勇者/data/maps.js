@@ -96,7 +96,8 @@ function mapDescHtml(x) {
 }
 
 // ───────── 開啟與進行 ─────────
-function openMap(uid) {
+function openMap(uid, queued = false) {
+    if (!queued && player.mapQueue && player.mapQueue.state === 'running') { showToast('請先暫停或取消地圖排程'); return; }
     if (!inTown()) { showToast('要在村莊才能開啟異界'); return; }
     if (player.mapRun) { showToast('已經有一張異界地圖開啟中'); return; }
     if (player.mapPortal) { showToast('村莊還有異界傳送門開著，先回去或關閉它'); return; }
@@ -106,6 +107,7 @@ function openMap(uid) {
     removeInst(uid);
     const total = Math.round(rand(200, 300) * mapQtyOf(mods));
     player.mapRun = { t, zone: z.id, mods, q: x.q || null, name: itemName(x), total, left: total, boss: false };
+    if (queued) player.mapRun.queueSlot = player.mapQueue.index;
     player.loc = { type: 'zone', id: z.id, floor: 1 };
     addLog(`🌀 開啟${itemName(x)}：${z.name}的異界（${total} 隻怪物${mods.length ? `、獎勵 +${Math.round(mapBonusOf(mods) * 100)}%` : ''}）`, 'boss');
     closeDialog();
@@ -164,6 +166,7 @@ function mapOnKill(mon) {
 }
 function completeMap() {
     const r = player.mapRun, z = currentZone();
+    mapQueueCompleted(r);
     player.mapRun = null;
     addLog(`🏆 通關 ${r.name}！`, 'boss');
     // 通關獎勵：1 張地圖（同階 55%、高一階 35%、高兩階 10%），另有 50% 再一張同階以下
@@ -177,6 +180,7 @@ function completeMap() {
 // 離開異界（回家卷軸、步行、死亡、瞬移逃離）：地圖消失
 function endMapRun(reason) {
     if (!player.mapRun) return;
+    mapQueueLost(reason || '離開異界');
     addLog(`🌀 ${reason || '離開異界'}，${player.mapRun.name}關閉了`, 'warn');
     player.mapRun = null;
 }
@@ -186,6 +190,7 @@ function endMapRun(reason) {
 // 村莊畫出傳送門；點它回到原本的異界接著打（剩餘怪物、首領剩餘 HP 都保留），傳送門隨即關閉。
 function mapPortalOpen() {
     if (!inMapRun()) return;
+    mapQueueAutoPause('使用回家卷軸，請補給後按繼續');
     player.mapPortal = player.mapRun;
     player.mapRun = null;
     addLog(`🌀 村莊出現一次性異界傳送門，補給完點傳送門可回到${player.mapPortal.name}`, 'boss');
@@ -210,6 +215,7 @@ function closeMapPortalBtn() {
     gameConfirm('關閉傳送門', '確定關閉異界傳送門？這張異界地圖會消失。', () => {
         if (!player.mapPortal) return;
         addLog(`🌀 關閉了傳送門，${player.mapPortal.name}消失了`, 'warn');
+        mapQueueLost('傳送門已關閉');
         player.mapPortal = null; saveGame(); refreshUI();
     }, '關閉');
 }
@@ -225,7 +231,7 @@ function rollMapDrop(mon, qm) {
 // ───────── 介面 ─────────
 function mapDevicePanelHtml() {
     const r = player.mapRun;
-    let h = `<div class="panel map-device"><h4>🌀 異界裝置</h4>`;
+    let h = `<div class="panel map-device"><h4>🌀 異界裝置</h4><button class="mini secondary" onclick="switchTab('mapQueue')">📋 地圖排程</button>`;
     const pt = player.mapPortal;
     if (pt) {
         h += `<div class="map-run"><b>🌀 異界傳送門開啟中</b>　${esc(pt.name)}・${ZONE_BY_ID[pt.zone].name}<br>

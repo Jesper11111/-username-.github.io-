@@ -65,6 +65,7 @@ function renderStatus() {
     renderSlots();
     renderHotbar();   // 快捷欄（hotbar.js）：冷卻、數量每 250ms 更新
     renderSkull();
+    updateMapQueueLive();
     renderLogPop();
     presTick();   // 村莊其他玩家：加入／離開頻道、送出位置（presence.js）
 }

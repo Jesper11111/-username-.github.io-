@@ -1,6 +1,6 @@
 // 屠龍勇者：全域設定、常數、共用小工具（最先載入，不依賴其他檔案）
 const GAME_TITLE = '黑暗大陸';   // 遊戲名稱（2026-10-12 由「屠龍勇者」改名；資料夾與網址不變）
-const GAME_VERSION = '20261024r';
+const GAME_VERSION = '20261024s';
 const BOSS_MATERIAL_DROP_P = 0.001; // BOSS 材料固定掉落率 0.1%，不受異界掉落加成影響
 
 // 與凡塵修仙傳同網域，localStorage 共用，key 一定要有 dragonSlayer_ 前綴
@@ -12,7 +12,7 @@ const WIPE = { id: '', at: 0 };
 // 封測提示：標題畫面顯示（空字串＝不顯示）
 const TEST_NOTICE = '';
 const MAX_SLOTS = 8;                       // 角色欄位數（人物選單）
-const SAVE_SCHEMA = 6;   // 6：物品 sellLocked 防賣鎖定（第124節）   // 5：武器 bossEnchant 與技能專屬封魂石（第 68 節）   // 4：存檔最外層 owner／ownerEmail（角色屬於哪個帳號，save.js）   // 3：異界地圖（道具 map1～15 帶 q／mm／nm、player.mapRun）   // 2：裝備實體可帶 q／af／il／nm（暗黑式詞綴，affix.js）
+const SAVE_SCHEMA = 7;   // 7：地圖排程mapQueue（第126節）   // 6：物品 sellLocked 防賣鎖定（第124節）   // 5：武器 bossEnchant 與技能專屬封魂石（第 68 節）   // 4：存檔最外層 owner／ownerEmail（角色屬於哪個帳號，save.js）   // 3：異界地圖（道具 map1～15 帶 q／mm／nm、player.mapRun）   // 2：裝備實體可帶 q／af／il／nm（暗黑式詞綴，affix.js）
 
 const TICK_MS = 100;              // 主迴圈間隔
 const REGEN_MS = 5000;            // 自然回復間隔（天堂式每幾秒跳一次）
