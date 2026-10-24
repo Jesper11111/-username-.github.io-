@@ -12,7 +12,7 @@ try { logDrawerOpen = localStorage.getItem(LOG_OPEN_KEY) === '1'; } catch (e) { 
 
 // 各分頁名稱（狩獵是預設主畫面；其他分頁從左右柱子抽屜或底部格子打開）
 const TABS = {
-    hunt: ['⚔️', '狩獵'], map: ['🗺️', '地圖'], char: ['🧝', '人物狀態'], bag: ['🎒', '背包'],
+    hunt: ['⚔️', '狩獵'], map: ['🌀', '異界裝置'], char: ['🧝', '人物狀態'], bag: ['🎒', '背包'],
     skill: ['✨', '技能'], quest: ['📜', '任務'], town: ['🏘️', '村莊'], set: ['⚙️', '設定'],
 };
 
@@ -187,7 +187,7 @@ function huntButtonsHtml() {
         const z = currentZone();
         return z && z.type === 'tower' ? `<button class="secondary" onclick="changeFloorBtn(-1)">⬇ 下樓</button><button class="secondary" onclick="changeFloorBtn(1)">⬆ 上樓</button>` : '';
     }
-    if (inTown()) return `<button onclick="switchTab('map')">🗺️ 前往狩獵地點</button>`;   // 村莊設施改由地圖上的商人 NPC 打開（2026-10-11）
+    if (inTown()) return `<button onclick="openWorldAtlas()">🗺️ 世界地圖</button>`;   // 村莊設施改由地圖上的商人 NPC 打開（2026-10-11）
     if (walkHome) return `<button class="secondary" onclick="cancelWalkBtn()">取消步行</button>`;
     const z = currentZone();
     // 開始／停止掛機改由底部中間骷髏頭控制（skullHuntClick）
@@ -243,37 +243,7 @@ function cancelWalkBtn() { cancelWalk(); updateHuntLive(); }
 function changeFloorBtn(d) { changeFloor(d); refreshUI(); }
 
 // ───────── 地圖 ─────────
-function renderMap() {
-    const town = inTown();
-    let h = town ? '' : `<div class="panel notice">目前在${zoneTitle()}，要先回到村莊才能使用傳送師。</div>`;
-    h += `<h4>🌀 村莊</h4><div class="grid2">` + Object.keys(TOWNS).map(id => {
-        const t = TOWNS[id], here = town && player.loc.id === id;
-        return `<button class="${here ? '' : 'secondary'}" onclick="travelTown('${id}')" ${!town || here ? 'disabled' : ''}>
-            ${t.icon} ${t.name}<br><small>${here ? '目前位置' : '傳送 💰' + fmt(townTravelFee(id))}</small></button>`;
-    }).join('') + `</div>`;
-
-    h += mapDevicePanelHtml();
-    h += `<h4>⚔️ 狩獵地點</h4>`;
-    for (const z of ZONES) {
-        const why = zoneBlockReason(z);
-        let action;
-        if (keeperNpc(z.id)) {   // 有傳送師的地圖（永夜之塔、暮光法師塔）：先飛到傳送師面前，跟他說話才進去（第 55、56 節）
-            action = `<button onclick="travelToKeeper('${z.id}')" ${town ? '' : 'disabled'}>${keeperNpc(z.id).entrance ? '前往洞穴入口' : '前往傳送師'}</button>`;
-        } else {
-            action = `<button onclick="travelZone('${z.id}')" ${town && !why ? '' : 'disabled'}>前往</button>`;
-        }
-        const extra = z.type === 'dragon'
-            ? `<small class="${player.dragons[z.boss] ? 'good' : 'muted'}">${player.dragons[z.boss] ? `已討伐 ${player.dragons[z.boss]} 次` : '尚未討伐'}${why ? '｜' + why : ''}</small>`
-            : z.type === 'tower' ? towerBossStatusHtml() : '';
-        h += `<div class="zone-card ${z.type}">
-            <div class="zone-head"><span class="zone-icon">${z.icon}</span><b>${z.name}</b>
-                <small class="${player.lv < z.lv[0] ? 'bad' : 'muted'}">${z.type === 'dragon' ? '需求' : '建議'} Lv.${z.lv[0]}${z.type === 'dragon' ? '' : '～' + z.lv[1]}</small></div>
-            <small class="muted">${z.desc}</small>${extra}
-            <div class="zone-foot"><small>傳送費 💰${fmt(z.fee)}・回城：${TOWNS[z.town].name}</small>${action}</div>
-        </div>`;
-    }
-    return h;
-}
+function renderMap() { return mapDevicePanelHtml(); }
 
 // ───────── 傳送師 NPC（大地圖，第 55、56 節）：永夜之塔＝紫霧遺跡最左上角、暮光法師塔＝腐朽礦坑・深層 ─────────
 // SCENE_BGS.wild.fieldNpcs 的 to＝要送去的地圖；地圖清單「前往傳送師」先飛到 NPC 面前，跟他說話才進去

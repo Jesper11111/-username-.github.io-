@@ -1,0 +1,3 @@
+Original dark fantasy RPG inventory HUD icon: a compact circular ancient bronze and dark steel dimensional portal device, carved stone-metal ring with four small violet crystals and bright violet cyan swirling magical vortex in center, small arcane base. Single clear bold silhouette readable at 40 pixels. Front view, painted detailed game item art, gothic aged metal style, restrained glow. No map, no landscape, no lettering, no letters, no text, no outer square button frame. Centered with 12 percent empty margin. True transparent alpha background, no checkerboard, no ground shadow.
+
+Built-in image_gen, transparent_background=true. Original output copied without pixel edits to images/ui/map-device-v1.png; source.png retained here.

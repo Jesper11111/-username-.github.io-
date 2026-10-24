@@ -205,7 +205,7 @@ const TOWN_NPCS = [
       names: { talking: '杜克', gludio: '柏恩', giran: '歐文', aden: '葛雷' } },
     { role: '鍛造',  icon: '🧑‍🏭', x: 17, y: 15, act: () => openTownSub('craft'), prop: '⚒️',
       names: { talking: '葛蘭', gludio: '托爾', giran: '布洛克', aden: '巴恩' } },
-    { role: '傳送師', icon: '🧙‍♀️', x: 14, y: 16, act: () => switchTab('map'),
+    { role: '傳送師', icon: '🧙‍♀️', x: 14, y: 16, act: () => openWorldAtlas(),
       names: { talking: '露娜', gludio: '希雅', giran: '伊芙', aden: '星語者' } },
     { role: '任務',  icon: '🧓', x: 11, y: 15, act: () => switchTab('quest'),
       names: { talking: '賽恩長老', gludio: '亞瑟隊長', giran: '諾亞祭司', aden: '騎士團長' } },

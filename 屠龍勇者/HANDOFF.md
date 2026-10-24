@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261025h：地圖按鈕改為專用異界裝置（第137節）**。PC原地圖鈕換內建image_gen紫藍傳送門圖images/ui/map-device-v1.png，PC／手機／分頁名稱統一異界裝置；renderMap僅mapDevicePanelHtml，無村莊或狩獵區一般傳送。保留異界卷軸詳情／開啟／進度／放棄／回卷門及排程，仍須村莊開圖。村莊傳送師與狩獵頁前往改開世界地圖。無schema／SQL。check.ps1 ALL CHECKS PASSED、atlas-travel／map-queue／map-portal通過，47檔混淆打包通過；隔離瀏覽器確認野外開圖disabled、村莊異界裝置只列T1，實點開啟後T1剩300／300、卷軸消耗，Console無error／warn。原稿／完整提示詞tools/icon-src/ui/map-device-v1。待Ctrl+F5→新紫色異界裝置鈕→確認沒有其他傳送選項、村莊開圖，驗收後才commit。
+
 - **20261025g：世界地圖所有24地名可直接傳送（第136節）**。含4村莊、野外、塔／龍穴及毒霧巢穴；點名稱→費用確認→抵達，側欄亦有傳送、下拉僅選目的地，步行保留。區域收原fee，村莊按目前村莊／所在地回城村莊tier級差×200；龍穴等級／前置／冷卻保留、塔直達1F，不自動掛機。異界傳送前提醒關閉目前地圖，確認重查角色／位置／死亡／金幣／限制，scene重建避免共用地圖仍在原地。無schema／SQL變動。test-atlas-travel24目的地／費用／取消／缺錢／死亡／異界／龍穴重查通過，check.ps1 ALL CHECKS PASSED、47檔混淆打包通過；隔離瀏覽器實點永夜塔→灰燼村扣400、村莊→沉船海灣扣400、所在地更新，Console無error／warn。預覽補載正式stylesheet。待使用者Ctrl+F5→M→點村莊／區域名稱→確認傳送及扣款、確認龍穴限制，驗收後才commit。
 
 - **20261025f：修正人物圓面仍偏下（第135節）**。依使用者近照，x355不變、y939→931，上移8原圖像素；保留圓面大小。check.ps1、47檔混淆打包通過，隔離瀏覽器無Console錯誤；待Ctrl+F5後使用者確認圓框對齊，驗收後才commit。

@@ -9,7 +9,7 @@
  const doc=new DOMParser().parseFromString(index,'text/html');for(const link of doc.head.querySelectorAll('link[rel="stylesheet"]'))document.head.append(link);for(const script of doc.body.querySelectorAll('script'))script.remove();for(const child of [...doc.body.children])document.body.append(child);
  for(const[,file,version]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g))if(!['data/main.js','data/pwa.js'].includes(file))await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=file+'?v='+version+'&preview=message-button-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});
  SIM_MODE=true;sfx=()=>{};saveGame=()=>{};createPlayer('訊息按鈕測試','gunner',CLASSES.gunner.base);player.lv=35;addItem('rifle');equipItem(player.inv.find(it=>it.id==='rifle').uid,true);addItem('polyScroll');usePotion('polyScroll','m06');
- player.loc={type:'zone',id:'tower',floor:10};player.hunting=false;
+ addItem('map1');player.loc={type:'zone',id:'tower',floor:10};player.hunting=false;
  window.messagePreviewMode=mode=>{displayMode=mode;layoutFrame();refreshUI();};
  showScreen('game');displayMode='pc';SIM_MODE=false;layoutFrame();refreshUI();
  addLog('訊息按鈕測試：戰鬥訊息、聊天、掉落紀錄。','sys');
