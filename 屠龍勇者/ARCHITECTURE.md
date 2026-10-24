@@ -174,7 +174,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025m`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025o`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3129,6 +3129,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **部署**：使用者在 Supabase SQL Editor 執行 `tools/loot-news.sql`（接在 server-loot／loot-batch 之後，可重跑）；2026-10-25 已執行。
 - **測試**：`tools/test-loot-news.js`（隔離 PGlite 載入正式 SQL）：一般／稀有不公告、傳說＋共鳴公告、一批最多 3 件、舊流程 result 也公告、批次結算正常、玩家只能讀且看不到帳號、表壞掉時收據照寫。
   瀏覽器用假 Supabase 確認公告依時間混排、HTML 跳脫、開關、表不存在時停抓；`tools/build.js` 混淆版函式公開、可進遊戲。
+- **地圖上方跑馬燈**（2026-10-25，版本 `20261025n` 初版、`20261025o` 修 PC 高度與縮放定位，使用者看到公告在聊天框後要求「直接顯示在畫面頭頂」）：新公告另外由右往左捲一次（`newsBannerPush`／`newsBannerNext`，Web Animations，每秒 110px，佇列最多 10 則、一次抓到最多播 5 則；第一次載入的舊公告不播）。
+  `#news-banner` 動態加在 `#frame`，`newsBannerPlace` 依 `#panel` 與小地圖定位：左上地名下方、右邊停在小地圖左側（`scene.miniRect` 是畫布邏輯座標，要 ×`scene.zoom`），PC 版跟著小地圖往下；視窗縮放時重新定位。z-index 2（在地圖上、在 PC 分頁視窗與快捷欄下），不擋點擊。
+  **背景輪詢**：沒開世界頻道時每 30 秒（`NEWS_POLL_MS`）抓一次比手上新的公告（通常回空陣列），頁面在背景、離線模擬、伺服器忙碌退避、關掉 `lootNews` 時不抓；世界頻道開著時由 `chatFetch` 順便抓，不重複（`chatNewsBusy` 防同時兩次）。關掉開關會清掉跑馬燈。
+  驗證：手機與 PC 16:9 實際進遊戲看位置、假 Supabase 確認只播新公告、關閉後隱藏；check.ps1、test-loot-news、test-server-loot-client 通過。
 
 ## 140. 鋼鐵狂戰士藍變專屬外觀（2026-10-25，版本20261025m）
 

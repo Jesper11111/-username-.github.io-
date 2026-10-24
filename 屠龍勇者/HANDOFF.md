@@ -9,6 +9,8 @@
 
 - **20261025m：鋼鐵狂戰士專屬藍變外觀（第140節）**。使用者12號四張參考原樣保存在tools/sprite-src/morph/steel-berserker-v1，內建image_gen製作三向36格、四動作，左向鏡射；m12接上steelBerserker並由SW預載。保留Lv15／原能力／武器建議／GM豁免，仍32款、schema7。test-steel-berserker-morph與pirate回歸通過、check.ps1 ALL CHECKS PASSED、48檔混淆打包通過；隔離瀏覽器實點卷軸扣1、四方向四動作及遊戲尺寸繪製，Console無error／warn，未讀寫真實角色或連外。完整提示詞prompts-final.json、prepare／preview、manifest／audit與動畫預覽均保留。**待使用者實玩確認後才commit**：Ctrl+F5→使用變形卷軸→雙手劍系→鋼鐵狂戰士（Lv15）→走動、攻擊並看背面／側面外觀。共享目錄其他對話的掉寶公告修改保留。
 
+- **20261025o：全服掉寶公告加地圖上方跑馬燈（n 初版被一起提交，o 修 PC 高度）（第139節）**。新公告由右往左捲一次，位置在地名下方、小地圖左側（PC／手機自動定位）；沒開世界頻道時每30秒背景抓新公告。lootNews關掉同時關跑馬燈。
+
 - **20261025l：全服掉寶公告（第139節）**。傳說品質／共鳴裝備由伺服器trigger寫入dragon_loot_news，聊天世界頻道混排顯示，設定lootNews可關。使用者已於2026-10-25在Supabase執行tools/loot-news.sql；待第一則實際公告驗收。test-loot-news通過。
 
 - **20261025k：戰利品過濾新增「🌟 保留共鳴裝備（不論品質）」（第21節，lootKeepRes預設開）**。lootFiltered遇到有res的裝備不過濾，撿到時（本機／後端loot.js）與回收頁一鍵賣出都保留；無schema／SQL。

@@ -202,8 +202,10 @@ function newsBannerPlace(box) {
     const left = Math.min(pr.width * 0.12, right * 0.15);
     box.style.left = (pr.left - fr.left + left) + 'px';
     box.style.width = Math.max(160, right - left) + 'px';
-    box.style.top = (pr.top - fr.top + 30) + 'px';
+    const top = mr && mr.r && cv ? cv.getBoundingClientRect().top - pr.top + Math.max(30, (mr.cy - mr.r) * z + 8) : 30;   // PC 小地圖往下移（外框上緣有裝飾），跟著對齊
+    box.style.top = (pr.top - fr.top + top) + 'px';
 }
+window.addEventListener('resize', () => { const box = document.getElementById('news-banner'); if (box && newsPlaying) newsBannerPlace(box); });
 function newsBannerNext() {
     newsPlaying = null;
     const frame = document.getElementById('frame');
