@@ -449,15 +449,21 @@ function bigRegionAt(rs, x, y) {
         || rs.reduce((a, b) => (Math.hypot(b.x - x, b.y - y) < Math.hypot(a.x - x, a.y - y) ? b : a));
 }
 // 大地圖掛機只在目前這個地圖的區域內（2026-10-18，第 53 節，使用者選「限制在原地圖」）：怪只生在、只遊走在這一區，角色追怪就不會跨到別的地圖
-// 每格屬於哪個地圖存在 bg._zoneOf（只算一次）；不是大地圖一律 true
+// 每格屬於哪一塊存在 bg._regOf（regions 的索引，只算一次）；不是大地圖一律 true
+// 2026-10-24 使用者要求「迷霧古林區域內的怪物在迷霧古林區域隨機出生」：同一個地圖分成好幾塊（迷霧古林／古林河畔／南境林道都是 elvenForest）時，
+//   以角色站的那一塊為準；角色剛好站在別的地圖的格子上（剛跨過交界、還沒換地圖）才退回整個地圖都算
 function inHuntZone(x, y) {
-    const bg = scene.bg;
+    const bg = scene.bg, pl = scene.pl;
     if (!bg || !bg.big || !bg.regions || player.loc.type !== 'zone') return true;
-    if (!bg._zoneOf) {
-        bg._zoneOf = [];
-        for (let yy = 0; yy < scene.mh; yy++) { bg._zoneOf.push([]); for (let xx = 0; xx < scene.mw; xx++) bg._zoneOf[yy].push(bigRegionAt(bg.regions, xx, yy).zone); }
+    if (!bg._regOf) {
+        bg._regOf = [];
+        for (let yy = 0; yy < scene.mh; yy++) { bg._regOf.push([]); for (let xx = 0; xx < scene.mw; xx++) bg._regOf[yy].push(bg.regions.indexOf(bigRegionAt(bg.regions, xx, yy))); }
     }
-    return !!bg._zoneOf[y] && bg._zoneOf[y][x] === player.loc.id;
+    const row = bg._regOf[y];
+    if (!row || row[x] == null) return false;
+    const mine = bg._regOf[pl.y] && bg._regOf[pl.y][pl.x];
+    if (mine != null && bg.regions[mine].zone === player.loc.id) return row[x] === mine;
+    return bg.regions[row[x]].zone === player.loc.id;
 }
 // 掛機自動走的路線：走到要出這個地圖的那一格前就停（手動走路、點小地圖不受限）
 function huntPath(path) {
@@ -626,11 +632,12 @@ function visualMonster() {
 // 這個區域裡角色走得到的地板（大地圖只算目前地圖的區域）；地圖不變就沿用，角色跑到別的連通塊（瞬移）才重算
 // 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
 // 只走同一個地圖的格子（2026-10-24 使用者回報怪沒生在該區域）：大地圖裡同一個地圖可能分成好幾塊（精靈森林有一塊在右下角），
-//   以前穿過別的地圖填充，怪會生到遠處那塊；現在只算角色所在、連在一起的那一塊。角色剛好站在區外時才照舊穿過別的地圖找。
+//   以前穿過別的地圖填充，怪會生到遠處那塊；現在只算角色所在、連在一起的那一塊（同一個地圖的不同塊也分開，見 inHuntZone）。角色剛好站在區外時才照舊穿過別的地圖找。
 function huntSpots() {
-    const pl = scene.pl, mw = scene.mw, id = player.loc.id, c = scene.spots;
+    const pl = scene.pl, mw = scene.mw, own = inHuntZone(pl.x, pl.y), c = scene.spots;
+    const ro = scene.bg && scene.bg._regOf, id = player.loc.id + '|' + (ro && ro[pl.y] ? ro[pl.y][pl.x] : '');   // 換地圖或換一塊就重算
     if (c && c.id === id && c.reach.has(pl.y * mw + pl.x)) return c.list;
-    const reach = new Set([pl.y * mw + pl.x]), q = [[pl.x, pl.y]], list = [], own = inHuntZone(pl.x, pl.y);
+    const reach = new Set([pl.y * mw + pl.x]), q = [[pl.x, pl.y]], list = [];
     while (q.length) {
         const [x, y] = q.pop();
         if (inHuntZone(x, y)) list.push([x, y]);
