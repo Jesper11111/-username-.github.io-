@@ -704,7 +704,7 @@ function cloudTombAdd(p) {
 // 刪掉目前帳號雲端裡的這個角色（用角色的建立時間＋職業找，不管在哪個欄位；只照欄位刪可能刪到換過位置的別的角色）
 async function cloudRemoveChar(p) {
     const { data, error } = await cloudTimeout(cloudSb.from(CLOUD_TABLE).delete()
-        .eq('data->player->>created', String(p.created)).eq('cls', p.cls).select('slot'));
+        .eq('user_id', cloudUser.id).eq('data->player->>created', String(p.created)).eq('cls', p.cls).select('slot'));
     if (error) throw error;
     for (const r of data || []) cloudKnown[r.slot] = null;
     return data || [];
@@ -872,7 +872,7 @@ async function cloudDoSignOutRun(all) {
     cloudLs(CLOUD_OWNER_KEY, null);
     cloudLs(CLOUD_SEEN_KEY, null);
     cloudUser = null; cloudBan = null; cloudBanShown = false;
-    myClan = null; myClanRole = null; clanLoaded = false; clanViewLoaded = false; clanList = null;
+    clanReset();
     cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();
     showToast(all ? '已登出所有裝置，建議順便改密碼' : '已登出');

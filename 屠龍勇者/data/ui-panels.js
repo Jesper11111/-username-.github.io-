@@ -17,6 +17,7 @@ const TABS = {
 };
 
 function enterGame() {
+    clanReset();
     lootLog.length = 0; lootLogSeq = 0; lastLootRendered = -1;
     syncLogPopTab();
     showScreen('game');
@@ -24,6 +25,7 @@ function enterGame() {
     layoutFrame();
     renderTabs();
     refreshUI();
+    clanLoad(true);
 }
 
 // 更新抽屜、底部格子的「目前分頁」標示（ui-frame.js）

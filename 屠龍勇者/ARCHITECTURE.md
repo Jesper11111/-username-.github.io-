@@ -15,6 +15,8 @@
 | `tools/market-v2.sql`、`tools/test-market-v2.js` | 交易所防複製 v2：上架／下架／購買直接改雲端存檔、共用存取序號；隔離 PGlite 重跑 v1 三種複製手法（第 95 節）。端到端在 `test-vault-v2-client.js` |
 | `tools/save-log-throttle.sql`、`tools/test-save-log-throttle.js` | 減少每次上傳存檔的資料庫寫入：存檔歷程與最後上線約 5 分鐘一筆、裝置紀錄同裝置 10 分鐘一筆；隔離 PGlite 測試（第 101 節） |
 | `tools/loot-batch.sql`、`tools/test-loot-batch.js` | 後端掉寶減量：批次結算收據表、釋放不重寫作廢憑證、每次結算順手清理舊帳本；隔離 PGlite 測試（第 104 節）。端到端在 `test-vault-v2-client.js` |
+| `tools/clan-character.sql` | 血盟綁角色的資料庫遷移、刪角退盟與自動接班、角色RPC及聊天／排行榜連動（第119節；由使用者執行） |
+| `tools/test-clan-character.js`、`tools/test-clan-character-client.js` | 隔離資料庫與前端測試：角色血盟、舊資料遷移、刪角接班、切角與權限（第119節） |
 | `tools/test-offline-drops.js` | 離線掛機掉落：篩選、依有效時間換算、負重上限、實跑離線結算（第 108 節） |
 | `tools/char-owner.sql`、`tools/test-char-owner.js` | 一隻角色只能屬於一個帳號：歸屬登記表＋上傳檢查＋回填；隔離 PGlite 測試（第 109 節） |
 | `tools/test-weapon-range.js` | 遠程武器射程：弓、槍 8 格、魔法 4 格、近戰 1 格、牆擋、技能距離與道具說明（第 110 節） |
@@ -159,7 +161,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024d`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024e`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1427,6 +1429,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 ## 33. 血盟（2026-10-10，版本 `20261010k`；`clan.js`、`tools/supabase.sql` 血盟段）
 
 - 使用者要求：B 計畫的「血盟」。入口：手機左柱抽屜「🏰 血盟」、PC 地圖左側 🏰。
+- **20261024e 起改為角色血盟（第119節）**：同帳號各隻角色可各自加入一個血盟；下列帳號制為舊規格，須先執行 `tools/clan-character.sql`。刪除入盟角色會移除成員；盟主優先由有效副盟主接班，否則最早入盟的有效盟員，無人則解散。
 - **規則（全部在伺服器函式裡，玩家不能直接寫表）**：`dragon_clans`（名稱 2～12 字、不分大小寫唯一，徽章，公告 ≤200 字，加入方式 open／approve，人數）、
   `dragon_clan_members`（主鍵 user_id＝**一個帳號只能在一個血盟**；role leader／officer／member；最近用的角色名、職業、等級、最後上線）、`dragon_clan_apps`（入盟申請，附言 ≤60 字）。
   函式（security definer，都檢查已登入、沒被封鎖）：`clan_create`（Lv.15 以上）、`clan_join`（open 直接加入／approve 送申請，同時最多申請 3 個）、`clan_cancel_app`、
@@ -1446,7 +1449,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - 使用者要求：B 計畫的「排行榜」。入口：手機右柱抽屜「🏆 排行榜」、PC 地圖左側最上面 🏆（`PC_SLOTS` side，y 104）。
 - **資料來源**：伺服器函式 `dragon_leaderboard(p_kind, p_cls, p_limit)`（security definer）直接從 `dragon_saves` 的存檔計算，玩家不用另外上傳；被封鎖（`dragon_bans`）的帳號排除。
-  回傳前 `p_limit`（最多 100）名＋呼叫者自己的角色（`is_me`），**不回傳 user_id**；只有登入者能呼叫。每個角色（帳號×欄位）一列，角色旁顯示所屬血盟。
+  回傳前 `p_limit`（最多 100）名＋呼叫者自己的角色（`is_me`），**不回傳 user_id**；只有登入者能呼叫。每個角色（帳號×欄位）一列，角色旁顯示所屬血盟。20261024e 起以帳號＋角色 created＋職業精確關聯，分身不共用血盟（第119節）。
   - `level`：總經驗（`dragon_total_exp`），可用 `p_cls` 篩選職業。
   - `dragon`：`player.dragons` 各龍討伐次數總和（單人龍穴＋團隊副本）。
   - `tower`：`player.towerCleared` 最大的樓層（只記守關首領樓層：10、20…）。
@@ -2835,3 +2838,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 使用者要求離開畫面30分鐘內不算離線掛機。`config.js` 的 `OFFLINE_MIN_MS` 從30秒改為30分鐘，主迴圈暫停與重新讀檔共用門檻；未滿30分鐘不查離線資格、不模擬收益、不跳離線報告，接續原掛機。
 - 瀏覽器暫停期間不會補算一般戰鬥；滿30分鐘仍依既有離線規則結算整段（12小時上限、50%效率）。不改存檔、SQL與掉寶規則。
 - 驗證：隔離VM測30秒／1分鐘／10分鐘／29:59.999／30分鐘／30分鐘+1ms，主迴圈與重新讀檔入口均符合門檻，短暫離開不查伺服器；離線掉落與喝水延遲回歸、check.ps1 ALL CHECKS PASSED、混淆建置46檔445KB通過。實際手機切背景待使用者驗收。
+
+## 119. 血盟綁實際角色、刪角自動退盟與盟主接班（2026-10-24，版本 `20261024e`）
+
+- **使用者已確認**：改成綁入盟角色，同帳號其他角色不共用身分；同意製作SQL。盟主刪角先交給副盟主，無副盟主則交最早入盟有效盟員，無盟員才解散；多位副盟主按入盟時間、資料列id決定。
+- **資料庫遷移** `tools/clan-character.sql`：成員／申請新增 `id`（UUID）與 `char_created`；成員主鍵帳號＋created＋職業，申請主鍵再加血盟。既有 `dragon_clans.leader` 保留帳號欄位，角色盟主以成員的leader職位辨識；同帳號可有多隻角色分別入盟或同盟。
+- **舊資料**：在單一交易鎖表，按帳號＋名稱＋職業匹配唯一有效雲端角色，排除墓碑及名單最後更新後才建立的同名角色；多筆候選則整份回滾並回報帳號／名字／職業，不能任選。不存在的成員／申請清除，既有卡住的盟主一併接班。可重跑，不改角色存檔或SAVE_SCHEMA。
+- **伺服器連動**：`clan_char_alive` 查雲端角色及墓碑；`clan_char_changed` 在存檔刪除／替換、墓碑新增時觸發 `clan_prune`，鎖血盟後清無效成員／申請、選有效接班人、同步人數與leader帳號；同角色仍在另一欄位不退盟。正常上傳同步該角色的名稱與等級，角色身分固定。離線刪角依既有待刪佇列，重新連線刪雲端或寫墓碑後才退盟。
+- **RPC與權限**：新版 `clan_action(p_slot,p_action,p_args)` 從自己雲端欄位讀角色，核對請求created＋職業、登入／停權、角色職位；鎖雲端存檔與血盟，執行建盟／加入／審核／任命／讓位／退出／解散／公告／touch。建盟延續王族Lv15限制；金幣仍依既有遊戲端扣款。管理目標改傳成員／申請的id，能區分同帳號分身。舊帳號RPC撤銷PUBLIC／anon／authenticated執行權；內部函式不對玩家開放。
+- **遊戲端**：`clanRpc` 對修改動作先saveGame＋await cloudSyncedSlot，只確認本角色；touch不強制上傳，避免改變離線收益的最後角色判定。伺服器讀自己的存檔，不信任客戶端名字／職業／等級。`clanLoad` 以touch回傳當前角色血盟，申請過濾created與職業；`clanLoadSeq`防止舊角色延遲回應蓋回新角色。`clanReset`在enterGame／登出清身分、名單與血盟聊天頻道；副本與在線名牌不沿用其他角色血盟。`cloudRemoveChar`補上當前帳號條件，管理者刪自己同ID角色時不會連別人一起刪。Supabase設定不變。
+- **聊天／排行榜**：`clan_has_channel`讓帳號存取自己有效入盟角色的血盟頻道（認證仍以帳號為單位，遊戲畫面依當前角色切頻道）；RLS改用此檢查，最後入盟角色刪除後撤銷存取。`dragon_my_clan`相容函式只回最近上傳的有效入盟角色；排行榜精確關聯created＋職業，避免同帳號多角色造成多列錯誤。
+- **部署**：先在Supabase執行整份 `tools/clan-character.sql`（須已有char-tombstone.sql），再發佈20261024e；執行後舊版血盟操作會被擋，需重新整理新版。重跑supabase.sql會還原舊函式／權限，因此必須再跑本檔。AI未連正式資料庫執行。
+- **驗證**：`test-clan-character.js`載入正式supabase＋墓碑＋新遷移，涵蓋舊資料遷移、同名歧義完整回滾、已刪副盟主排除、墓碑／DELETE／替換角色退盟、另一欄位仍有同角色保留、接班／空盟解散、同帳號多角色權限、跨盟與舊RPC／內部函式拒絕、入盟申請／審核／清除、排行榜／頻道、重跑；`test-clan-character-client.js`載入實際遊戲腳本，涵蓋RPC身分、await上傳失敗與切角、舊回應忽略、同帳號分身按鈕ID、聊天與副本身分清除。
+- **驗證結果**：上述新測試、test-char-owner與test-vault-v2-client回歸通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261024e）、git diff --check與混淆建置46檔445KB通過；瀏覽器首頁v20261024e無error／warn。正式登入血盟操作須待使用者執行SQL後實玩驗收。
