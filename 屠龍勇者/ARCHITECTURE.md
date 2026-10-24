@@ -36,6 +36,7 @@
 | `images/sprites/morph/sky-valkyrie-v2/`、`tools/sprite-src/morph/sky-valkyrie-v2/`、`tools/valkyrie-v2-morph-preview.html`、`tools/test-valkyrie-v2-morph.js` | 使用者新版04分鏡替換、36格透明圖集／來源／提示詞／腳點註冊、隔離renderer與卷軸回歸（第18.11、88節） |
 | `images/sprites/morph/dwarf-gunner-v1/`、`tools/sprite-src/morph/dwarf-gunner-v1/` | 05矮人蒸氣火銃兵36格透明分鏡／4圖集、立繪／原表／去背初稿／補畫／提示詞／整理腳本（第18.8節）；m05專屬外觀 |
 | `tools/dwarf-morph-preview.html`、`tools/test-dwarf-morph.js` | 05真實卷軸／renderer隔離預覽與卷軸扣量、四向動作、到期／其他變身回歸（第18.8節） |
+| `tools/sprite-src/poison-boss-v1/`、`tools/poison-enchant-preview.html`、`tools/test-poison-enchant.js` | 劇毒蛛后、毒囊與封魂石／毒液特效原稿、提示詞、打包工具與隔離驗證（第127節） |
 | `images/sprites/morph/silent-cave-assassin-v1/`、`tools/sprite-src/morph/silent-cave-assassin-v1/`、`tools/cave-assassin-morph-preview.html`、`tools/test-cave-assassin-morph.js` | 08沉默洞穴刺客36格透明動畫、來源與驗證（第18.14、88節） |
 | `images/sprites/morph/brudika-shadow-v1/`、`tools/sprite-src/morph/brudika-shadow-v1/`、`tools/brudika-morph-preview.html`、`tools/test-brudika-morph.js` | 10布魯迪卡之影36格透明動畫、原稿／提示詞／腳點註冊、真實renderer隔離頁與卷軸回歸（第18.9、88節） |
 | `images/sprites/morph/rift-dragon-v1/`、`tools/sprite-src/morph/rift-dragon-v1/`、`tools/rift-dragon-morph-preview.html`、`tools/test-rift-dragon-morph.js` | 27裂空魔龍爪皇36格透明動畫、原圖／生成提示詞／腳點註冊、卷軸與renderer隔離驗證（第18.10、88節） |
@@ -334,6 +335,8 @@
   每隻首領必掉一種新材料（`items.js`：古樹之心、地龍之牙、海賊的寶箱、飛龍之翼、寒冰結晶、伊弗利特之焰、遺忘的聖物、巨人之魂，目前只能回收換錢，之後可做配方）。
   掉落只用既有裝備。種族標籤（`MONSTER_TAGS`）：海賊、黑暗妖精斥候、冰之魔女、亡靈術士＝人型；三頭犬、火之精靈、火焰騎士、伊弗利特＝惡魔；鳥身女妖＝神聖。
 - 地圖清單（`renderMap`）照 `ZONES` 陣列順序顯示，新地圖依建議等級插入。新地圖還沒有職業任務。
+
+毒系新增區（2026-10-24，20261024af）：毒霧巢穴`venomNest`，Lv.38～48、暗金城傳送600金幣、一般洞穴畫面；毒霧獵蛛／蛇女／沙漠巨蠍，稀有Lv.52劇毒蛛后0.8%。靜態`noMap:true`讓此區不加入異界池，`mapZones`排除它，既有T1～T15名稱、區域排序與強化倍率不變；不是player存檔欄位。詳第127節。
 
 ## 9. 經驗曲線
 
@@ -2138,6 +2141,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 ## 68. BOSS 附魔與永夜之魂封存（2026-10-20，版本 `20261020g`，schema 5）
 
+**20261024af新增第26種「劇毒侵蝕」**：`spiderVenom`（蛛后毒囊），8%命中觸發、8秒冷卻、每秒30% B魔法傷害，共6次；不疊層、重施重置，BOSS有效並計MR。沿用材料100萬與封魂／裝回各50萬；後端目錄與中毒綠霧已接，詳第127節。以下25種為原始技能資料，全部保留。
+
 ### 使用者核定與費用
 
 - 25 種戰鬥附魔＋永夜之魂封存。每把武器限一種，消耗對應材料 ×1，100% 成功；全職業可用，武器本身職業限制不變。
@@ -2979,6 +2984,17 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 第80節補充（2026-10-24，20261024aa）：命運的覺醒石專屬外觀為原創虹彩紫晶、破碎金色符環與白金星芒核心，內建image_gen生成透明原稿，保留於tools/icon-src/items/awakening-stone-v1/source.png；完整提示詞PROMPT.md，prepare.ps1保留全幅及alpha、等比縮入112px後置中128×128，四邊至少8px透明，正式檔images/icons/items/curAwaken-v1.png。
 - icons.js的ITEM_IMG.curAwaken指向curAwaken-v1，所有共用itemIconHtml介面直接使用新圖；craft.openCraftDialog的覺醒石cc-i及ui-panels.renderGearForge的通貨列也改用itemIconHtml，其他通貨沿原圖示。新增.craft-cur .cc-i .ico固定28px。sw.js預載新圖?v=1，保持安裝版離線可用。不改掉率、權重、能力、價格、存檔、SQL。
 - tools/item-art-preview.html改讀index目前版本號，避免測試舊快取；test-item-art同步434件道具／287張獨立PNG，含覺醒石背包、鍛造列、改造視窗接線驗證。RGBA／128px／透明留邊檢查、全圖檔案存在與不重複檢查、瀏覽器圖庫成功1張缺0張且Console無error／warn。
+
+## 127. 劇毒蛛后、毒霧巢穴與中毒附魔（2026-10-24，版本 `20261024af`）
+
+- 使用者要求「變身完成後增加一種中毒BOSS附魔」，選擇新增毒系BOSS與專屬材料並同意需更新後端掉落。新增venomNest毒霧巢穴（Lv.38～48、暗金城、傳送600、通用cave畫面），venomSpider毒霧獵蛛Lv.42及venomQueen劇毒蛛后Lv.52（HP×12、傷害×1.6、經驗×15、金幣×10、額外AC−12）；稀有出現0.8%，不改其他區域首領。蛛后噴吐為現有立即魔法傷害，未新增玩家中毒。
+- 蛛后專屬spiderVenom蛛后毒囊，重量5、回收5000，自身掉落固定0.1%／一次1個、不受異界加成。材料附魔100萬金幣，產生第26種BOSS附魔「劇毒侵蝕」；封存消耗永夜之魂×1＋50萬得到soul_spiderVenom，裝回消耗石×1＋50萬，原有武器／強化／詞綴／共鳴保留。
+- 命中8%觸發、共用附魔冷卻8秒；主目標每秒30% B魔法傷害，共6跳，第一跳於1秒後、沒有額外立即傷害。受MR與既有附魔烙印影響，無暴擊、吸血、額外連鎖或範圍傷害；BOSS同樣有效。沿用bossEnchantRuntime.jobs的dot工作，最多1層，重施重置第一跳與6秒期限，gameNow推進；換武器、離戰、目標死亡依既有流程取消，不新增player欄位或schema（仍7）。
+- world-vfx的status-0中毒綠霧從僅預覽改為真實毒傷工作顯示，隨活目標移動、毒傷結束消失，玩家死亡／武器不符不畫。既有燃燒／冰霜／暈眩不改；僅預覽剩格擋、突破兩款。boss-vfx新增spiderVenom→venom-burst-v1（16格4×4），鍛造師特效預覽可看。
+- noMap是靜態區域設定，mapZones排除此區，保持全部既有異界階級與舊卷軸對應、T15倍率不變；地圖清單仍有正常毒霧巢穴入口。未新增異界專用道具，也不改已有存檔的mapRun／排程。
+- tools/sprite-src/poison-boss-v1保留內建image_gen四份透明原稿、prompts.json、prepare.py及audit.json。正式images/monsters/venomQueen.png為256×224單姿勢按六列怪物協定排版（未宣稱新動作），size80／body180；毒霧獵蛛沿用巨大蜘蛛原創模型。spiderVenom-v1.png與soul_spiderVenom-v1.png為128×128專屬道具圖，images/vfx/venom-burst-v1.png為1024×1024圖集；SW預載四個新增檔。道具共436件／新PNG289，BOSS附魔及對應封魂石26種。
+- tools/poison-enchant-preview.html用真實鍛造確認／封魂／裝回、travelZone及sceneDraw隔離測試，記憶體localStorage、拒絕外部fetch、不載main／pwa；強制觸發只限此測試按鈕，正式仍8%。test-poison-enchant.js涵蓋六跳／抗魔／BOSS／冷卻／重施／不疊層／換武器／死亡與綠霧跟隨／異界排序／schema不變；test-boss-enchant及world-vfx／item-art同步新數量。
+- 使用者已授權更新後端目錄：node tools/export-loot-catalog.js產生436道具／80怪／20區的loot-catalog.json、loot-catalog.sql及整包安裝檔server-loot-install.sql；不改server-loot.sql函式／Supabase設定。**正式庫尚未操作：請使用者先在Supabase SQL Editor執行tools/loot-catalog.sql，再發布遊戲**，舊憑證保留舊規則。test-server-loot-db用隔離PGlite驗證實際SQL、蛛后生怪與毒囊固定一個掉落，測試內強制機率不回寫正式目錄。
 
 ## 128. GM 發放道具（2026-10-24，版本 `20261024ah`；`chat.js` 的 `chatCommand`／`gmCmdOk`／`gmFindItem`、`gm.html` 的 `gmGive`／`gmGiveSend`、SQL `tools/gm-give.sql`）
 

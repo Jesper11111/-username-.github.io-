@@ -83,5 +83,5 @@ resetScene(); worldVfxLoot(mon,{cat:'material'},null); assert.equal(scene.worldV
 worldVfxLoot(mon,{cat:'weapon'},{q:'legend'}); assert.equal(scene.worldVfx.at(-1).id,'loot-3');
 chance = oldChance;
 console.log('PASS：48 款／十類／十二職業、真實 12 圖分格、Canvas 邊界與還原、預覽／常駐繪圖不改角色。');
-console.log('PASS：SIM 隔離、預覽限定三款、事件數量上限與過期、普攻／暴擊／治癒／閃避／首領時序／掉落接線。');
+console.log('PASS：SIM 隔離、預覽限定兩款、事件數量上限與過期、普攻／暴擊／治癒／閃避／首領時序／掉落接線。');
 `, ctx);

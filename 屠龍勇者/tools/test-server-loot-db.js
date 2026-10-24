@@ -89,8 +89,9 @@ async function main(){
  await db.exec('reset role');
  mapPlayer.loc={type:'zone',id:'venomNest',floor:1};
  await db.query('update public.dragon_saves set data=$1 where user_id=$2 and slot=1',[{schema:7,lootProtocol:1,lootCursor:0,player:mapPlayer},uuid]);
+ await db.exec("update public.dragon_loot_catalog set data=jsonb_set(data,'{zones,venomNest,rare,p}','1') where id=1");
  await db.exec('set role authenticated');
- const queen=await rpc('loot_spawn',[1,'456|knight',crypto.randomUUID(),false,'venomQueen']);assert.equal(queen[0].monster.id,'venomQueen');assert.equal(queen[0].monster.boss,true);
+ const nest=await rpc('loot_spawn',[1,'456|knight',crypto.randomUUID(),false,null]);assert.equal(nest.length,1);assert.equal(nest[0].monster.id,'venomQueen');assert.equal(nest[0].monster.boss,true);
  await db.exec('reset role');
  assert.equal(cat.monsters.venomQueen.drops.find(d=>d.id==='spiderVenom').p,.001);
  assert.equal(cat.items.soul_spiderVenom.soulEnchant,'spiderVenom');assert.equal(cat.mapZones.some(z=>z.id==='venomNest'),false);

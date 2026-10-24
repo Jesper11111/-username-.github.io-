@@ -1,4 +1,4 @@
-// 黑暗大陸：25 種 BOSS 附魔圖片特效（ARCHITECTURE.md 第 73 節）
+// 黑暗大陸：26 種 BOSS 附魔圖片特效（ARCHITECTURE.md 第 73 節）
 // 預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
 // 各圖按需載入並快取；下載失敗時仍使用程序動畫。
 const BOSS_VFX_SHEETS = {

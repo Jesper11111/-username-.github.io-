@@ -243,7 +243,7 @@ function drawWorldVfx(ctx, camX, camY, layer) {
         const debuffs = (m.inst.bossEnchantDebuffs || []).filter(b => b.until > gameNow && b.owner === player && weapon && b.uid === weapon.uid && b.id === weapon.bossEnchant);
         if (debuffs.some(b => b.type === 'slow' || b.type === 'atkSlow')) worldVfxPaint(ctx, 'status-2', x, y + 5, gameNow, 42, .4, true);
         const rt = hunt && hunt.bossEnchantRuntime;
-        if (rt && rt.owner === player && weapon && rt.uid === weapon.uid && rt.id === weapon.bossEnchant && rt.jobs.some(j => j.mon === m.inst && j.type === 'dot' && BOSS_ENCHANTS[j.id].poison)) worldVfxPaint(ctx, 'status-0', x, y, gameNow, 44, .55, true);
+        if (player.hp > 0 && rt && rt.owner === player && weapon && rt.uid === weapon.uid && rt.id === weapon.bossEnchant && rt.jobs.some(j => j.mon === m.inst && j.type === 'dot' && BOSS_ENCHANTS[j.id].poison)) worldVfxPaint(ctx, 'status-0', x, y, gameNow, 44, .55, true);
         if (rt && rt.owner === player && weapon && rt.uid === weapon.uid && rt.id === weapon.bossEnchant && rt.jobs.some(j => j.mon === m.inst && j.type === 'dot' && /火|炎|燃|吐息/.test(BOSS_ENCHANTS[j.id].name))) worldVfxPaint(ctx, 'status-1', x, y, gameNow, 40, .45, true);
     }
 }

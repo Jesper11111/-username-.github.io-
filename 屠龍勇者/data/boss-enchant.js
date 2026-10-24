@@ -69,7 +69,7 @@ function bossEnchantInfo(id) {
     if (!r) return '';
     return '<div class="res-box"><b>🔱 BOSS 附魔・' + esc(r.name) + '</b><br>' + esc(BOSS_ENCHANT_TEXT[id]) +
         '<br><small>' + Math.round(r.p * 100) + '% 命中觸發｜冷卻 ' + r.cd + ' 秒｜' + (r.kind === 'physical' ? '物理' : '魔法') +
-        '傷害｜不耗 MP<br>B＝等級＋物理／魔法換算基準；範圍最多 5 個目標，無暴擊、無吸血、不連鎖。' +
+        '傷害｜不耗 MP<br>B＝等級＋物理／魔法換算基準；' + (r.poison ? '單一目標' : '範圍最多 5 個目標') + '，無暴擊、無吸血、不連鎖。' +
         (typeof player !== 'undefined' && player ? '<br>目前角色 B：' + fmt(bossEnchantBase(calcStats())) + '（實際傷害另計防禦／MR）' : '') + '</small></div>';
 }
 function bossEnchantItemHtml(inst) {
