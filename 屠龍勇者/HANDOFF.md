@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **20261024m：物品防賣鎖定（第124節，SAVE_SCHEMA 6，使用者已同意）**。背包／回收頁🔓鎖定與🔒已鎖定按鈕；全選跳過、單件／勾選／一鍵賣出皆保護，解鎖才可賣。鎖定存於物品sellLocked，舊檔預設未鎖；整理、角色倉庫拆疊合併與共用倉庫客戶端取回保留。鎖僅防回收，不限制裝備／使用／改造／交易所上架。test-item-lock、test-shop-buy通過；隔離預覽實點背包鎖匕首→讀檔→回收全選3項339金幣→售出後僅鎖定匕首保留，Console無error／warn，未碰真實角色或後端。最終檢查與建置待完成；待使用者Ctrl+F5→背包鎖重要物品→回收全選確認跳過→重開確認鎖保留，驗收後才commit。
+- **20261024m：物品防賣鎖定（第124節，SAVE_SCHEMA 6，使用者已同意）**。背包／回收頁🔓鎖定與🔒已鎖定按鈕；全選跳過、單件／勾選／一鍵賣出皆保護，解鎖才可賣。鎖定存於物品sellLocked，舊檔預設未鎖；整理、角色倉庫拆疊合併與共用倉庫客戶端取回保留。鎖僅防回收，不限制裝備／使用／改造／交易所上架。test-item-lock、test-shop-buy通過；隔離預覽實點背包鎖匕首→讀檔→回收全選3項339金幣→售出後僅鎖定匕首保留，Console無error／warn，未碰真實角色或後端。check.ps1 ALL CHECKS PASSED、混淆建置46檔451KB、git diff --check通過；待使用者Ctrl+F5→背包鎖重要物品→回收全選確認跳過→重開確認鎖保留，驗收後才commit。
 
 - **20261024m：命運的覺醒石＋通貨顏色（第 23 節）**。使用者要求：覺醒石改名「命運的覺醒石」、權重 0.15（最稀有）、只有 Lv.70 以上的怪物掉（前端 `rollCurrency(lv)`＋後端 `loot_roll` 看 `catalog.currency[].minLv`）；每種通貨名稱各一色，覺醒石彩色流光。PGlite 驗證 Lv.20／69 不掉、Lv.70／90 會掉；test-server-loot-db PASS；瀏覽器確認顏色與動畫、Console 無錯誤。使用者已在 Supabase 執行 `tools/awaken-stone.sql`、`tools/loot-catalog.sql`，2026-10-24 從遊戲端 loot_status 確認規則版本為 `20261024m-fd3f70355364`（已生效）。
 - **2026-10-24：手機禁止下拉重新整理與雙擊／雙指頁面縮放（第16節）**。僅index.html viewport與CSS，保留面板內捲動；未改JS版本。check.ps1 ALL CHECKS PASSED；本機瀏覽器確認viewport、touch-action、overscroll限制生效，面板仍overflow-y:auto，Console無error／warn。待真實手機實測：重整載入後下拉／雙擊／雙指不刷新或縮放，背包／設定／聊天仍可捲動；使用者確認後才commit。
