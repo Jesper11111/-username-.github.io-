@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261025l：全服掉寶公告（第139節）**。傳說品質／共鳴裝備由伺服器trigger寫入dragon_loot_news，聊天世界頻道混排顯示，設定lootNews可關。**要使用者在Supabase執行tools/loot-news.sql才會出現公告**（沒執行前遊戲照常、不抓）。test-loot-news通過。
+
 - **20261025k：戰利品過濾新增「🌟 保留共鳴裝備（不論品質）」（第21節，lootKeepRes預設開）**。lootFiltered遇到有res的裝備不過濾，撿到時（本機／後端loot.js）與回收頁一鍵賣出都保留；無schema／SQL。
 
 - **20261025j拍賣完成，現工作版20261025k（第138節）**。使用者已同意新增tools/auction.sql：3小時一輪最多10件、休息2小時；每帳號一件×1登記抽唯一號碼牌，每輪random抽前10、未選保留。底價自訂≥5鑽、刊登1鑽不退、每次固定+1，成交高於底價收5%進位最低1；僅底價成交只收1。黃裝rare／傳說裝備＋祝武／祝防／26種BOSS附魔材料／curOracle／curAwaken白名單；doll預留分類（娃娃未正式開放），傭兵日後可由GM白名單擴充。GM拍賣頁可改門檻及白名單。伺服器錢包託管、超標退款、簽章／vaultSeq防複製、領物／領收入一次性；不改schema。test-auction-db／client、原market-v2回歸通過；隔離PGlite串接實際UI出5鑽100→95、領得標物、登記晨星長劍95→94顯號碼牌，PC／手機正常、Console無error／warn。**待使用者在Supabase SQL Editor執行tools/auction.sql（先確認已裝market-v2／vault-v2及最新loot-catalog.sql），首次安裝休息2小時後開第一輪；未連正式後端安裝。** Ctrl+F5→交易所→拍賣→村莊登記／競標／我的拍賣領取，驗收後才commit。工作中其他對話加入k版保留共鳴裝備，勿覆蓋其修改。

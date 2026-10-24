@@ -174,7 +174,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025k`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025l`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3112,3 +3112,18 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 新全域AUCTION_MIN／LIST_FEE／HOURS，auctionView／Rows／Uid／Busy／Error／Loading／Status／Registered／QueueCount／ClockOffset；auctionFee／ErrText／Load／SetView／Refresh／Pick／RowsHtml／SellHtml／Eligible／Html／Op／List／BidDialog／Cancel／Claim／ConfigDialog。
 - tools/test-auction-db.js隔離載入原SQL與新SQL重跑；驗證3h／2h／10件、下一輪保留票、帳號單件、黃裝與白名單、刊登／取消數量守恆、同價搶標／退款／差額、底價基本費與5%進位、一次領取／存檔簽章序號／直接表與內部RPC拒絕／GM權限。tools/auction-preview-server.js在127.0.0.1:8791開記憶體PGlite資料庫，tools/auction-preview.html?db=1以實際SQL串接真實UI，禁止連正式帳號與網路；測試結束按鈕僅隔離頁存在。
 第138節驗證：test-auction-db／test-auction-client與原test-market-v2通過；隔離PGlite完整UI驗證100→95出價／結標領物、95→94登記／號碼牌排隊，PC與手機可操作，Console無error／warn。共享目錄外部續版20261025k（共鳴裝備保留）保留，拍賣j一併納入k。正式SQL尚未安裝，由使用者執行（既有market-v2／vault-v2與最新loot-catalog為前提），首次休息2小時再開場。
+
+## 139. 全服掉寶公告（2026-10-25，版本 `20261025l`；`chat.js` 的 `chatNewsFetch`／`chatNewsHtml`／`setLootNews`、SQL `tools/loot-news.sql`）
+
+- 使用者要求：有人打到**傳說品質**或**共鳴裝備**（第 27、28 節）時，在世界頻道通知所有人，設定可開關。事前確認 Supabase 用量充足（Egress 2.1／250 GB、CPU 10%、連線 14／60）。
+- **伺服器（防假公告）**：`dragon_loot_news(id, at, user_id, name, cls, lv, item, q)`，玩家只能讀（欄位授權不含 `user_id`），不能寫改刪。
+  trigger 在後端掉寶結算時寫入：`dragon_loot_receipts` 新增（`loot_finish_batch`）、`dragon_loot_jobs.result` 由空變有（`loot_finish`／`loot_raid`）→ `dragon_loot_news_add(uid, slot, items)`：
+  `q = 'legend'` 或 id 在 `dragon_loot_news_items`（從掉寶目錄 `resonance` 建立，目錄更新時 trigger 重建）才公告，一次結算最多 3 件；名稱／職業／等級取 `dragon_saves` 該格欄位。
+  函式內例外全部吞掉，公告失敗不影響掉寶；5% 機率順手刪 3 天前的公告。世界首領獎勵（直接 insert 有 result 的 job）沒有傳說／共鳴，不經過 trigger。
+- **遊戲端**：世界頻道每次 `chatFetch` 順便抓 `dragon_loot_news`（第一次最新 20 則，之後只抓更新的，同一個輪詢節奏，第 61 節），`chatListHtml` 依時間混進世界頻道，
+  樣式 `.chat-news`（📢 職業圖示＋名字 Lv.＋【傳說】名稱橘色 `q-legend`／🌟共鳴名稱用 `RES_TIERS` 顏色）。名字一律 `esc`。
+  設定 `lootNews`（預設開，`DEFAULT_SETTINGS` 合併補舊存檔），開關在設定「🎒 戰利品過濾」與聊天分頁世界頻道下方（`setLootNews`），關掉就不顯示也不抓。
+  伺服器還沒執行 `loot-news.sql`（表不存在）時 `chatNewsOff = true`，這次遊戲不再抓，聊天照常，所以遊戲可以先發布。
+- **部署**：使用者在 Supabase SQL Editor 執行 `tools/loot-news.sql`（接在 server-loot／loot-batch 之後，可重跑）。
+- **測試**：`tools/test-loot-news.js`（隔離 PGlite 載入正式 SQL）：一般／稀有不公告、傳說＋共鳴公告、一批最多 3 件、舊流程 result 也公告、批次結算正常、玩家只能讀且看不到帳號、表壞掉時收據照寫。
+  瀏覽器用假 Supabase 確認公告依時間混排、HTML 跳脫、開關、表不存在時停抓；`tools/build.js` 混淆版函式公開、可進遊戲。

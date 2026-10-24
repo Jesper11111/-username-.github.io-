@@ -117,7 +117,8 @@ async function chatFetch() {
             ? await raidQ(q.gt('id', list[list.length - 1].id).order('id', { ascending: true }).limit(50))
             : (await raidQ(q.order('id', { ascending: false }).limit(CHAT_SHOW))).reverse();
         if (rows.length && chatMsgs[ch]) chatTouch();   // 有人說話（不是第一次載入）：回到 4 秒
-        if (rows.length || !chatMsgs[ch]) {
+        const news = ch === 'world' && chatNewsOn() ? await chatNewsFetch() : false;
+        if (rows.length || !chatMsgs[ch] || news) {
             chatMsgs[ch] = list.concat(rows).slice(-CHAT_SHOW);
             chatRenderList();
         }
@@ -127,6 +128,41 @@ async function chatFetch() {
         chatRenderList();
     }
     chatLoading = false;
+}
+
+// ───────── 全服掉寶公告（ARCHITECTURE.md 第 139 節）─────────
+// 伺服器結算掉寶時把傳說品質／共鳴裝備寫進 dragon_loot_news（tools/loot-news.sql，玩家不能自己寫）；
+// 世界頻道抓聊天時順便抓（同一個輪詢，不另外連網），依時間混在聊天裡顯示。設定 lootNews 可關（關掉就不抓）。
+let chatNews = null;           // 公告陣列（舊→新）
+let chatNewsOff = false;       // 伺服器還沒裝 loot-news.sql：這次遊戲不再抓
+function chatNewsOn() { return !chatNewsOff && !!player && player.settings.lootNews !== false; }
+async function chatNewsFetch() {
+    const list = chatNews || [];
+    const q = cloudSb.from('dragon_loot_news').select('id, at, name, cls, lv, item, q');
+    try {
+        const rows = list.length
+            ? await raidQ(q.gt('id', list[list.length - 1].id).order('id', { ascending: true }).limit(50))
+            : (await raidQ(q.order('id', { ascending: false }).limit(20))).reverse();
+        const first = !chatNews;
+        chatNews = list.concat(rows).slice(-CHAT_SHOW);
+        return first || rows.length > 0;
+    } catch (e) {
+        if (/dragon_loot_news|does not exist|schema cache/.test(String((e && e.message) || e))) chatNewsOff = true;
+        return false;
+    }
+}
+function setLootNews(on) {
+    player.settings.lootNews = !!on;
+    saveGame();
+    chatRenderList();
+    if (on && chatShown()) chatFetch();
+}
+function chatNewsHtml(m) {
+    const d = ITEMS[m.item], c = CLASSES[m.cls] || {}, q = m.q && QUALITY[m.q];
+    const res = d && d.res, cls = q ? q.cls : res ? RES_TIERS[res.tier].cls : '';
+    const name = `${q ? `【${q.name}】` : ''}${res ? '🌟' : ''}${d ? d.name : m.item}`;
+    return `<div class="chat-line chat-news"><span class="chat-time">${chatTime(m.at)}</span>
+        <span class="chat-text">📢 ${c.icon || ''}<b>${esc(m.name)}</b><small> Lv.${m.lv || '?'}</small> 獲得了 <b class="${cls}">${esc(name)}</b>！</span></div>`;
 }
 
 async function chatCheckMute() {
@@ -219,10 +255,13 @@ function chatTime(at) {
 
 function chatListHtml() {
     if (chatErr) return `<div class="muted">⚠️ ${esc(chatErr)}</div>`;
-    const list = chatMsgs[chatChannel];
+    let list = chatMsgs[chatChannel];
     if (!list) return '<div class="muted">讀取中…</div>';
+    if (chatChannel === 'world' && chatNewsOn() && chatNews && chatNews.length)   // 掉寶公告依時間混進世界頻道
+        list = list.concat(chatNews.map(n => Object.assign({ news: true }, n))).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).slice(-CHAT_SHOW);
     if (!list.length) return `<div class="muted">還沒有人說話，打個招呼吧！</div>`;
     return list.map(m => {
+        if (m.news) return chatNewsHtml(m);
         const c = CLASSES[m.cls] || {}, mine = cloudUser && m.user_id === cloudUser.id;
         return `<div class="chat-line ${mine ? 'mine' : ''}"><span class="chat-time">${chatTime(m.at)}</span>
             <b class="chat-name">${c.icon || ''}${esc(m.name)}<small> Lv.${m.lv || '?'}</small></b><span class="chat-text">${esc(m.text)}</span></div>`;
@@ -262,6 +301,7 @@ function renderChat() {
         if (el && hadFocus) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
     }, 0);
     return `<div class="panel chat-panel">${chips}<div id="chat-list" class="chat-list">${chatListHtml()}</div>${input}
+        ${chatChannel === 'world' ? `<label class="set-row"><span>📢 顯示全服掉寶公告（傳說品質、共鳴裝備）</span><input type="checkbox" ${player && player.settings.lootNews !== false ? 'checked' : ''} onchange="setLootNews(this.checked)"></label>` : ''}
         <small class="muted">${chatChannel === 'world' ? '所有玩家都看得到。' : chatChannel.startsWith('clan:') ? '只有血盟成員看得到。' : '只有隊伍裡的人看得到。'}每則最多 ${CHAT_MAX_LEN} 字、3 秒一則，訊息保留 3 天。請友善發言，管理者可以禁言。</small></div>`;
 }
 
