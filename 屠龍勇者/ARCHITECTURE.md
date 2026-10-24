@@ -161,7 +161,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024h`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024k`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -416,7 +416,7 @@ kills, deaths, settings（含 skillSlots 技能欄 8 格）, created, skills[已
 
 | 元素 | 原圖位置 | 內容 |
 |---|---|---|
-| `#hud-stats` | x 390～952、y 1712～1744（經驗條正上方，等級兩側） | 💰金幣（左）、防禦、MR（右）。原本上方 `#hud-top`（名稱、職業 Lv、稱號、負重）2026-10-09 依使用者要求移除，稱號仍在人物狀態／任務頁顯示 |
+| `#hud-stats` | x 390～952、y 1712～1744（經驗條正上方，等級兩側） | 💰金幣（左）、防禦、MR、負重百分比（右，20261024k）。原本上方 `#hud-top`（名稱、職業 Lv、稱號、負重）2026-10-09 依使用者要求移除，稱號仍在人物狀態／任務頁顯示 |
 | `#panel` | x 112～1232，y 445 ～ 底部往上 626 | 目前分頁內容（預設狩獵）；非狩獵分頁有標題列與「返回狩獵」 |
 | `#hud-bottom` | 兩骷髏之間、欄杆上方 | 地點／掛機狀態 |
 | 經驗條 `#exp-strip` | x 380～962、y 1746～1762（欄杆下緣與底部格子之間的石條） | EXP 百分比（2026-10-09 從 `#hud-bottom` 搬來） |
@@ -1037,7 +1037,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 | 掛機面板 `.hunt-ctrl` | 窗口左上（地點名稱下方） | **PC 不畫操作框**（2026-10-09 使用者要求；地圖、村莊、回家卷軸、步行回村都在底部格子，效率／補給也不顯示），只在永夜之塔顯示「⬇ 下樓／⬆ 上樓」、步行中顯示「取消步行」，沒按鈕時整塊隱藏（`.hunt-ctrl.empty`） |
 | 骷髏頭 `#skull-hunt` | x 950～1050、y 1010～1110（底部正中間） | 開始／停止掛機（第 15 節） |
 | 骷髏頭 `#skull-log` | x 5～100、y 1010～1110（左下、紅球下方） | 戰鬥訊息抽屜開關；抽屜 `#log-pop` 在窗口左下（第 17 節） |
-| `#hud-stats` | x 320～1680、y 870～904（經驗條正上方，等級兩側） | 💰金幣、防禦、MR（取代原本惡魔下巴下方的 `#hud-top`） |
+| `#hud-stats` | x 320～1680、y 870～904（經驗條正上方，等級兩側） | 💰金幣、防禦、MR、負重百分比（20261024k；取代原本惡魔下巴下方的 `#hud-top`） |
 | `#hud-bottom` | 窗口下方中間（靠上對齊，避開地圖的「停止掛機中」） | 地點／掛機狀態 |
 | 經驗條 `#exp-strip` | x 300～1700、y 907～925（欄杆與底部按鈕之間） | EXP 百分比 |
 | 等級 `#lv-badge` | x 940～1060、y 848～894（欄杆正中間裝飾） | 目前等級「Lv.N」 |
@@ -2881,3 +2881,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **回收**（`sellN`）：一疊賣 n 個、不可堆疊賣前 n 件；有品質／強化／BOSS 附魔或單價 ≥5000 先確認。勾選框一次勾整組（`sellPickToggle` 切換整組 uid），「賣出勾選」照舊整疊賣。舊的 `sellBtn`、`town.js` 的 `sellItem` 移除。
 - **共用倉庫**（`vaultPutN`／`vaultTakeN`）：背包清單合併；存入一疊 n 個收一次手續費，不可堆疊存前 n 件、每件一次 `vault_put2`（各收 100）；先檢查手續費與 200 格上限，確認後在同一次 `vaultRun` 依序存。倉庫清單 `vaultGroups`：不可堆疊同種合併、可選取出幾件（每件一次 `vault_take2`、各收 100，多件先確認）；一筆一疊的仍整筆取出。`vaultPut`／`vaultTake` 保留（拆出 `vaultPutOne`／`vaultTakeOne`）。伺服器 SQL 不變。
 - **測試**：`test-vault-v2-client.js` ⑤-1c（3 把相同匕首存 2 把→倉庫合併 2 把→一次取出 2 把，本機與雲端一致）；瀏覽器實測角色倉庫存 3 張／15 瓶、取 2 張、回收賣 2 張（確認框）／5 瓶、勾選整組；check.ps1、混淆建置（447 KB）、回歸通過。
+
+## 123. 主面板負重（2026-10-24，版本 `20261024k`）
+
+- `renderStatus` 使用 `invWeight() / calcStats().weightMax` 向下取整為百分比，在 MR 右側顯示「負重 xx%」，隨狀態列更新。
+- `.hud-mr` 作定位基準，`.hud-weight` 接在右側，不推動原本金幣、等級、防禦與 MR；PC 與直式外框共用。不改負重規則或存檔。

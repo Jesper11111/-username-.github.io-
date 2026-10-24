@@ -45,9 +45,10 @@ function renderStatus() {
     if (!player || SIM_MODE || !$('hud-stats')) return;
     const st = calcStats();
     const expPct = player.lv >= MAX_LEVEL ? 100 : player.exp / expToNext(player.lv) * 100;
-    // 上方人物狀態（名稱、職業、負重）已移除（2026-10-09 使用者要求）；金幣、防禦、MR 顯示在經驗條上方 #hud-stats
+    // 上方人物狀態（名稱、職業、負重）已移除（2026-10-09 使用者要求）；金幣、防禦、MR、負重顯示在經驗條上方 #hud-stats
+    const weightPct = Math.floor(invWeight() / st.weightMax * 100);
     const hs = $('hud-stats');
-    if (hs) hs.innerHTML = `<span class="gold">💰${fmt(player.gold)}</span>${diaCount != null ? `<span class="dia">💎${fmt(diaCount)}</span>` : ''}<span class="hud-lv-gap"></span><span>防禦 ${defenseOf(st)}</span><span>MR ${st.mr}</span>`;
+    if (hs) hs.innerHTML = `<span class="gold">💰${fmt(player.gold)}</span>${diaCount != null ? `<span class="dia">💎${fmt(diaCount)}</span>` : ''}<span class="hud-lv-gap"></span><span>防禦 ${defenseOf(st)}</span><span class="hud-mr">MR ${st.mr}<span class="hud-weight">負重 ${weightPct}%</span></span>`;
     setOrb('orb-hp', player.hp, st.maxHp, 'HP');
     setOrb('orb-mp', player.mp, st.maxMp, 'MP');
     const where = player.loc.type === 'town' ? `${TOWNS[player.loc.id].icon} ${TOWNS[player.loc.id].name}`
