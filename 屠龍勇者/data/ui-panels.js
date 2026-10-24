@@ -789,8 +789,8 @@ function shortDesc(d) {
 
 function shopInfo(id) { openDialog(ITEMS[id].name, itemDescHtml({ id, n: 1, ench: 0 }), [{ text: '關閉', cls: 'secondary' }]); }
 
-// 一鍵賣出：背包裡品質低於 level 的一般貨裝備（沒強化、不含稀有基底的普通品質；規則同戰利品過濾）
-function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level) && !(x.ench > 0) && !x.bossEnchant); }
+// 一鍵賣出：背包裡品質低於 level 的一般貨裝備（沒強化、不含稀有基底；撿到時的戰利品過濾則連稀有基底也賣）
+function bulkSellList(level) { return player.inv.filter(x => lootFiltered(x, level, true) &&!(x.ench > 0) && !x.bossEnchant); }
 function bulkSellBtn(level) {
     const list = bulkSellList(level);
     if (!list.length) { showToast('沒有符合的裝備'); return; }
@@ -973,7 +973,7 @@ function renderSettings() {
         <div class="panel"><h4>🎒 戰利品過濾</h4>
             <label class="set-row"><span>撿到裝備時</span><select onchange="setSettingNum('lootFilter',this.value,0,3)">
                 ${LOOT_FILTERS.map((n, i) => `<option value="${i}" ${s.lootFilter === i ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-            <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、屠龍劍這類商店沒賣的稀有裝備一律保留。</small>
+            <small class="muted">被過濾的裝備會直接換成金幣，不進背包、不佔負重。武士刀、精靈之弓、能力戒指這類商店沒賣的稀有基底也一樣照品質賣出（勾選的保留詞綴除外）。</small>
             <div class="set-row"><span>保留有這些詞綴的裝備（不論品質）</span></div>
             ${lootKeepHtml()}
             <small class="muted">勾選的詞綴只要裝備上有其中一條，就不會被自動賣出，回收頁的「一鍵賣出」也會跳過。</small>

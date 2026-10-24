@@ -108,14 +108,15 @@ function instSellPrice(inst) {
 
 // ───────── 戰利品過濾（設定 lootFilter）─────────
 // 品質等級：普通 0、魔法 1、稀有 2、傳說 3；低於設定的「一般貨」撿到時直接自動賣掉換金幣（不佔負重）。
-// 只過濾商店也有賣的基底（有 price）；武士刀、屠龍劍這類稀有基底（商店沒賣）不論品質一律保留。
+// 撿到時：武士刀、屠龍劍這類稀有基底（商店沒賣）也照品質賣（2026-10-24 使用者要求不再保留）；
+// keepRareBase：回收頁一鍵賣出整理背包時仍保留稀有基底（避免手動一鍵把背包裡的稀有裝備賣光）
 const QUALITY_RANK = { magic: 1, rare: 2, legend: 3 };
 const LOOT_FILTERS = ['全部撿起', '普通裝備自動賣出', '魔法以下自動賣出', '只撿傳說（稀有以下自動賣出）'];
 function qualityRank(inst) { return inst.q ? QUALITY_RANK[inst.q] : 0; }
-function lootFiltered(inst, level) {
+function lootFiltered(inst, level, keepRareBase) {
     const d = ITEMS[inst.id];
     if (!level || (d.cat !== 'weapon' && d.cat !== 'armor')) return false;
-    if (!d.price) return false;                       // 稀有基底一律保留
+    if (keepRareBase && !d.price) return false;
     if (lootKeepHit(inst)) return false;              // 有勾選要保留的詞綴（設定 lootKeepAf）
     return qualityRank(inst) < level;
 }

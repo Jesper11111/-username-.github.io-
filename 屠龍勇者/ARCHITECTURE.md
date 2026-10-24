@@ -1084,7 +1084,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 售價 `instSellPrice`：基本回收價（至少 50）× 品質倍率（魔法 1.5、稀有 3、傳說 8）＋ 詞綴數 × 物品等級 × 10。有品質的道具賣出前會確認。
 - **戰利品過濾**（2026-10-09）：設定 `lootFilter`（預設 1）：0 全部撿起、1 普通裝備自動賣出、2 魔法以下自動賣出、3 只撿傳說。
   `rollDrops` 的 `give` 先擲品質（`applyAffixes` 在暫存物件上），`lootFiltered` 判定要擋就直接 `instSellPrice` 換金幣（記入本次掛機金幣、訊息 🪙），不進背包、不佔負重。
-  只過濾商店有賣的基底（有 `price`）；武士刀、屠龍劍等稀有基底不論品質一律保留。
+  2026-10-24（`20261024j`，使用者要求）起撿到時稀有基底（沒有 `price`，武士刀、精靈之弓、能力戒指等）也照品質自動賣出，不再保留；
+  回收頁一鍵賣出（`bulkSellList` 傳 `keepRareBase`）仍保留稀有基底。勾選的保留詞綴（`lootKeepAf`）兩邊都照樣保留。
   村莊「回收」頁有「賣出普通裝備」「賣出魔法以下」一鍵賣出（`bulkSellBtn`，同樣規則，已強化的不賣，會先確認總價）。
   **保留特殊詞綴**（2026-10-17，版本 `20261017f`，使用者要求「戰利品過濾新增保留特殊詞綴裝備選項」）：設定 `lootKeepAf`（詞綴代號清單，預設空；舊存檔由 `migrateSave` 的 `DEFAULT_SETTINGS` 合併補上），
   設定頁「戰利品過濾」下方 19 個詞綴按鈕（`lootKeepHtml`／`toggleLootKeep`，勾選＝金色＋✔）。`lootFiltered` 先看 `lootKeepHit(inst)`：裝備有任何一條勾選的詞綴就不過濾——
