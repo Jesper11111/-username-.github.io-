@@ -3022,3 +3022,14 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - `inHuntZone` 改存每格屬於哪一塊（`bg._regOf`＝regions 索引，取代 `_zoneOf`）：角色站在目前地圖的某一塊上時，只有同一塊才算；角色剛好站在別的地圖的格子上才退回整個地圖都算。所以重生、怪物遊走、掛機尋怪、`huntPath` 自動走路、離開時收怪都以「這一塊」為準；手動走路照舊不受限，走到同地圖的另一塊時舊塊的怪收掉、新塊一口氣補滿。
   - `huntSpots` 快取鍵改成「地圖 id｜塊索引」，換塊就重算。
   - 驗證：16 塊逐一把角色放中央生 30 隻，重生點與怪全部在該塊內（迷霧古林 606 格、古林河畔 611 格、南境林道 624 格各自獨立）；迷霧古林走到古林河畔，舊怪 20 隻全收、新生 20 隻都在古林河畔；迷霧古林模擬 1500 幀（打倒再重生 27 隻＋遊走）沒有一隻離開該塊，Console 無新錯誤。
+
+## 131. 毒霧巢穴世界地圖與南境林道入口（2026-10-24，版本 `20261024al`）
+
+- 使用者要求新區也出現在世界地圖，並明確選擇「南境林道加入可步行抵達的洞穴入口，點入口進入獨立巢穴」。沿用16塊世界幾何，不替換任何既有區域／怪物分區。
+- scene-art.js的SCENE_ART_BGS.wild.fieldNpcs新增入口[164,125]，前方[164,127]可走且與全世界相通；zone仍elvenForest、實際所在南境林道，單一入口格3擋路。新增靜態entrance:true、原創毒霧蛛網洞口PNG／h2.8，ui-scene對入口圖置中，仍只有名牌觸發原有點擊流程，不擴大身體點擊區。
+- world-atlas.js新增venomNest地標、下拉目的地、建議等級、南境林道與600金幣說明及「步行至入口」；target=[164,127]，只排尋路、不直接切區或扣錢。地形圖保留，新增atlas-landmark透明洞穴地景疊在對應座標，scene-art.css控尺寸；世界地標共24個。syncWorldAtlas對一般洞穴bg=null也能顯示位置，不再讀null.big。
+- ui-panels.js新增頂層openVenomNestEntrance：距離5格內才可開gameConfirm，確認時再次檢查同角色、仍在入口附近；沿enterZoneFromKeeper收600金幣、進venomNest並開始掛機，缺錢／取消不扣費。地圖卡片改為「前往洞穴入口」，由村莊免費到南境林道入口前，進洞才付600；既有塔傳送師不變。
+- 新圖images/maps/rework/venom-entrance-v1.png為384×320透明原創，來源與完整提示詞保留於tools/sprite-src/poison-boss-v1/entrance-source.png及entrance-prompt.txt，prepare.py等比留邊輸出，SW預載。
+- test-poison-enchant新增世界入口可達、地標／座標一致、步行不改所在地與金幣、遠距／取消／確認前移開／缺錢阻擋、成功扣600與洞內出生點可走；隔離頁poison-enchant-preview新增南境入口、世界地圖及點入口名牌控制。地圖、掉落目錄及中毒共同以al版重新檢查，schema7與異界排序不變。
+- 後端仍由使用者先執行tools/loot-catalog.sql（本次匯出436道具／80怪／20區），不必重裝server-loot.sql，也不改Supabase設定。巢穴入口只是世界導航，不新增後端傳送RPC。
+- 最終驗證（al）：check.ps1 ALL CHECKS PASSED；test-poison-enchant／boss-enchant／world-vfx／item-art／cave-assassin-morph／map-queue／server-loot-db／server-loot-client通過。隔離瀏覽器世界地標→入口確認→取消不扣費→確認扣600進洞、洞內開世界地圖，以及材料附魔→封魂→裝回實點完成，最新Console無error／warn。中毒六跳後蛛后HP5000→4874、剩餘0。47檔混淆465KB、五個新美術檔打包hash一致、git diff --check通過。正式SQL尚待使用者執行，實玩驗收後再提交剩餘檔案。

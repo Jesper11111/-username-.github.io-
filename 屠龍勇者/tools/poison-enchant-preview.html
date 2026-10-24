@@ -2,24 +2,28 @@
 <style>body{background:#20252a;color:#eee;font:16px sans-serif;margin:20px}button{font:inherit;padding:8px;margin:5px}canvas{width:min(100%,960px);height:auto}#info{white-space:pre-wrap}.art{height:80px}</style>
 <h2>毒霧巢穴・劇毒侵蝕</h2><p>隔離測試，不讀寫真實角色、不連線。中毒每秒30% B，共6次；正式8%觸發、冷卻8秒。</p>
 <img class="art" src="images/icons/items/spiderVenom-v1.png" alt="蛛后毒囊"><img class="art" src="images/icons/items/soul_spiderVenom-v1.png" alt="劇毒侵蝕封魂石">
-<button id="forge" disabled>鍛造附魔</button><button id="seal" disabled>封存附魔</button><button id="back" disabled>裝回封魂石</button><button id="fight" disabled>進入毒霧巢穴並觸發中毒</button><button id="preview" disabled>附魔特效預覽</button>
+<button id="forge" disabled>鍛造附魔</button><button id="seal" disabled>封存附魔</button><button id="back" disabled>裝回封魂石</button><button id="fight" disabled>進入毒霧巢穴並觸發中毒</button><button id="preview" disabled>附魔特效預覽</button><button id="entrance" disabled>南境林道洞穴入口</button><button id="world" disabled>世界地圖</button><button id="enter" disabled>點入口名牌</button>
 <p id="info">載入中</p><canvas id="scene" width="640" height="320" aria-label="劇毒蛛后與中毒戰鬥"></canvas><div id="dialog-layer" class="overlay"></div><div id="toast-layer"></div>
 <script>
 (async()=>{
 const memory=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)}});
 const localFetch=window.fetch.bind(window);window.fetch=(u,o)=>{if(new URL(u,location.href).origin!==location.origin)throw Error('隔離預覽禁止連外');return localFetch(u,o);};
 const index=await(await fetch('index.html',{cache:'no-store'})).text(),style=document.createElement('style');style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+const atlasCss=document.createElement('link');atlasCss.rel='stylesheet';atlasCss.href='scene-art.css?v=poison-atlas-v1';document.head.append(atlasCss);
 for(const[,file,version]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g))if(!['data/main.js','data/pwa.js'].includes(file))await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=file+'?v='+version+'&preview=poison-v2';s.onload=resolve;s.onerror=reject;document.head.append(s);});
 SIM_MODE=true;createPlayer('中毒隔離測試','darkelf',CLASSES.darkelf.base);player.lv=70;player.baseHp=10000;player.hp=10000;player.gold=5000000;player.inv=[];player.equip={};player.skills=[];player.settings.autoHome=false;
 const w=addItem('dualBlade');equipItem(w.uid,true);addItem('spiderVenom');addItem('towerSoul');addItem('polyScroll');usePotion('polyScroll','m08');
 const info=document.getElementById('info'),canvas=document.getElementById('scene');let target=null;
-saveGame=()=>{};sfx=()=>{};renderTabs=()=>{};refreshUI=()=>{info.textContent='目前：'+zoneTitle()+'｜武器附魔：'+(BOSS_ENCHANTS[w.bossEnchant]?.name||'無')+'｜毒囊 '+countItem('spiderVenom')+'｜封魂石 '+countItem('soul_spiderVenom')+'｜金幣 '+player.gold+(target?'\n蛛后 HP '+target.hp+'/'+target.maxHp+'｜中毒剩餘跳數 '+(hunt?.bossEnchantRuntime?.jobs.filter(j=>j.type==='dot').reduce((n,j)=>n+j.left,0)||0):'');};
+saveGame=()=>{};sfx=()=>{};renderTabs=()=>{};refreshUI=()=>{if(scene&&scene.key!==sceneKey())buildScene();info.textContent='目前：'+zoneTitle()+'｜武器附魔：'+(BOSS_ENCHANTS[w.bossEnchant]?.name||'無')+'｜毒囊 '+countItem('spiderVenom')+'｜封魂石 '+countItem('soul_spiderVenom')+'｜金幣 '+player.gold+(target?'\n蛛后 HP '+target.hp+'/'+target.maxHp+'｜中毒剩餘跳數 '+(hunt?.bossEnchantRuntime?.jobs.filter(j=>j.type==='dot').reduce((n,j)=>n+j.left,0)||0):'');};
 function town(){closeDialog();player.hunting=false;hunt=null;target=null;player.loc={type:'town',id:'giran'};buildScene();refreshUI();}
 town();
 document.getElementById('forge').onclick=()=>{town();SIM_MODE=false;openBossEnchantWeapon(w.uid);};
 document.getElementById('seal').onclick=()=>{town();SIM_MODE=false;bossEnchantSealAsk(w.uid);};
 document.getElementById('back').onclick=()=>{town();SIM_MODE=false;bossEnchantAsk(w.uid,'spiderVenom',true);};
 document.getElementById('preview').onclick=()=>openBossEnchantPreview('spiderVenom');
+document.getElementById('entrance').onclick=()=>{SIM_MODE=true;town();travelToKeeper('venomNest');SIM_MODE=false;refreshUI();};
+document.getElementById('world').onclick=()=>{SIM_MODE=false;openWorldAtlas();};
+document.getElementById('enter').onclick=()=>{SIM_MODE=false;openVenomNestEntrance();};
 document.getElementById('fight').onclick=()=>{
  if(w.bossEnchant!=='spiderVenom'){info.textContent='先按鍛造附魔，選擇劇毒侵蝕。';return;}
  closeDialog();SIM_MODE=true;town();travelZone('venomNest');player.hunting=false;buildScene();
@@ -28,7 +32,7 @@ document.getElementById('fight').onclick=()=>{
  const m={x:scene.pl.x+2,y:scene.pl.y,rx:scene.pl.x+2,ry:scene.pl.y,mid:'venomQueen',lastHp:target.hp,inst:target};scene.mons=[m];scene.engaged=m;scene.pl.path=[];scene.pl.dir='right';scene.lastPlayerHp=player.hp;
  SIM_MODE=false;const previous=chance;chance=()=>true;try{bossEnchantOnHit(target,calcStats());}finally{chance=previous;}refreshUI();
 };
-for(const id of ['forge','seal','back','fight','preview'])document.getElementById(id).disabled=false;
+for(const id of ['forge','seal','back','fight','preview','entrance','world','enter'])document.getElementById(id).disabled=false;
 let prev=0;function draw(t){const dt=prev?Math.min(100,t-prev):0;prev=t;gameNow+=dt;if(target){bossEnchantTick(calcStats());sceneReadEvents();if(scene.pl.anim)scene.pl.anim.t+=dt;}sceneDraw(canvas.getContext('2d'),640,320);refreshUI();requestAnimationFrame(draw);}requestAnimationFrame(draw);
 })().catch(e=>{document.getElementById('info').textContent=e.stack;console.error(e);});
 </script></html>

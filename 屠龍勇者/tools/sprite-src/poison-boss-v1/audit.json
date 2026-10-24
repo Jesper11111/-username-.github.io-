@@ -37,5 +37,18 @@
       244,
       190
     ]
+  },
+  {
+    "source": "entrance-source.png",
+    "size": [
+      384,
+      320
+    ],
+    "alphaBounds": [
+      25,
+      42,
+      366,
+      269
+    ]
   }
 ]

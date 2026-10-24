@@ -19,6 +19,7 @@ const SCENE_ART_BGS = {
     wild: { src: SCENE_ART_ROOT + 'world-play.jpg', mini: SCENE_ART_ROOT + 'world-mini.jpg', w: 188, h: 149, start: [23, 92], big: true,
         walk: SCENE_WORLD_WALK, block: [], regions: SCENE_WORLD_TILES,
         fieldNpcs: [
+            { name: '毒霧巢穴入口', role: '進入洞穴', to: 'venomNest', zone: 'elvenForest', x: 164, y: 125, front: [164, 127], img: 'images/maps/rework/venom-entrance-v1.png', h: 2.8, entrance: true, act: openVenomNestEntrance },
             { name: '永夜之塔傳送師', role: '對話', to: 'tower', zone: 'forgottenIsle', x: 18, y: 16, front: [18, 18], img: 'images/npc/tower-keeper.png', face: 'images/npc/tower-keeper-face.jpg', h: 2.4, say: '永夜之塔的入口就在紫霧遺跡。你要進去嗎？', act: () => openKeeper('tower') },
             { name: '暮光法師塔傳送師', role: '對話', to: 'ivory', zone: 'gludio2', x: 110, y: 124, front: [110, 126], img: 'images/npc/ivory-keeper.png', face: 'images/npc/ivory-keeper-face.jpg', h: 2.4, say: '礦坑深處的道路通往暮光法師塔。你要過去嗎？', act: () => openKeeper('ivory') },
         ],

@@ -46,4 +46,24 @@ assert.equal(MONSTERS.venomQueen.drops.find(d=>d.id==='spiderVenom').n.join(',')
 assert.equal(mapZones().map(x=>x.id).join(','),'island,islandDungeon,elvenForest,gludio1,sleepingCave,gludio2,pirateIsle,ivory,dragonValley,pyramid,orenSnow,fireCave,forgottenIsle,giantTomb');
 assert.equal(SAVE_SCHEMA,7);assert.equal(ITEMS.soul_spiderVenom.soulEnchant,'spiderVenom');assert.equal(BOSS_ENCHANTS.spiderVenom.cost,1000000);
 console.log('PASS：中毒六跳／MR／BOSS／冷卻／刷新不疊層／換武器與死亡／跟隨綠霧／蛛后掉落／異界排序與schema不變。');
+// 世界地圖只安排步行，洞穴入口確認後才扣費進入，且必須仍站在入口附近。
+{
+ const entry=keeperNpc('venomNest'),point=ATLAS_POINTS.find(p=>p.id==='venomNest');
+ assert.equal(entry.zone,'elvenForest');assert.equal(entry.entrance,true);assert.equal(point.entrance,true);
+ assert.equal(entry.x,164);assert.equal(entry.y,125);assert.equal(point.target.join(','),entry.front.join(','));
+ player.loc={type:'zone',id:'island'};buildScene();
+ assert.equal(scene.grid[entry.y][entry.x],3);assert.equal(scene.grid[entry.front[1]][entry.front[0]],0);
+ assert(findPath(scene.pl.x,scene.pl.y,...entry.front,true).length>0);
+ const originalLoc=JSON.stringify(player.loc),gold=player.gold;
+ atlasWalkTo(ATLAS_POINTS.indexOf(point));assert(scene.pl.path.length>0);assert.equal(JSON.stringify(player.loc),originalLoc);assert.equal(player.gold,gold);
+ let confirmAction=null;gameConfirm=(title,msg,action)=>{assert(msg.includes('600'));confirmAction=action;};showToast=()=>{};sfx=()=>{};refreshUI=()=>{};renderTabs=()=>{};startHunt=()=>{};
+ openVenomNestEntrance();assert.equal(confirmAction,null);
+ scene.pl.x=entry.front[0];scene.pl.y=entry.front[1];player.loc={type:'zone',id:'elvenForest'};
+ openVenomNestEntrance();assert(confirmAction);assert.equal(player.gold,gold); // 未確認／取消不扣費
+ scene.pl.x=20;confirmAction();assert.equal(player.loc.id,'elvenForest');assert.equal(player.gold,gold);
+ scene.pl.x=entry.front[0];player.gold=0;openVenomNestEntrance();confirmAction();assert.equal(player.loc.id,'elvenForest');assert.equal(player.gold,0);
+ player.gold=1000;openVenomNestEntrance();confirmAction();assert.equal(player.loc.id,'venomNest');assert.equal(player.gold,400);
+ buildScene();assert.equal(scene.grid[scene.pl.y][scene.pl.x],0);
+ console.log('PASS：南境林道入口／全世界可達路徑／地標只步行不扣費／遠距阻擋／取消／移開／缺錢／確認扣600進獨立巢穴。');
+}
 `,ctx);

@@ -1258,7 +1258,7 @@ function sceneDraw(ctx, W, H) {
         const img = spriteImage(n.img), dh = n.h * TILE;
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.beginPath(); ctx.ellipse(sx, sy + 12, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
-        if (img) { const dw = dh * img.naturalWidth / img.naturalHeight; ctx.drawImage(img, sx - dw * 0.62, sy + 14 - dh, dw, dh); }   // 人站在圖的偏右（手杖在右邊）
+        if (img) { const dw = dh * img.naturalWidth / img.naturalHeight; ctx.drawImage(img, sx - dw * (n.entrance ? 0.5 : 0.62), sy + 14 - dh, dw, dh); }   // 洞穴置中；人站在圖的偏右（手杖在右邊）
         labels.push(() => drawNpcPlate(ctx, n.name, n.role, sx, sy + 8 - dh, camX, camY, { act: n.act }));
     } });
     // 村莊點擊移動的目的地標記（走到就消失）

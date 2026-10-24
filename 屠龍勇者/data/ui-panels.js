@@ -258,7 +258,7 @@ function renderMap() {
         const why = zoneBlockReason(z);
         let action;
         if (keeperNpc(z.id)) {   // 有傳送師的地圖（永夜之塔、暮光法師塔）：先飛到傳送師面前，跟他說話才進去（第 55、56 節）
-            action = `<button onclick="travelToKeeper('${z.id}')" ${town ? '' : 'disabled'}>前往傳送師</button>`;
+            action = `<button onclick="travelToKeeper('${z.id}')" ${town ? '' : 'disabled'}>${keeperNpc(z.id).entrance ? '前往洞穴入口' : '前往傳送師'}</button>`;
         } else {
             action = `<button onclick="travelZone('${z.id}')" ${town && !why ? '' : 'disabled'}>前往</button>`;
         }
@@ -306,6 +306,14 @@ function openKeeper(to) {
         <p>建議 Lv.${z.lv[0]}～${z.lv[1]}・傳送費 💰${fmt(z.fee)}${tower ? `・已開放到 ${max}F` : ''}</p>
         ${tower ? `<p class="tower-pick">樓層 <input id="tower-floor" type="number" min="1" max="${max}" value="${Math.max(1, max - 9)}"> / ${max}F</p>${towerBossStatusHtml()}` : ''}`,
         [{ text: '不了', cls: 'secondary' }, { text: `進入${z.name}`, keep: true, onClick: () => keeperGo(to) }]);
+}
+function openVenomNestEntrance() {
+    if (!keeperNear('venomNest')) { showToast('走近毒霧巢穴入口才能進入'); return; }
+    const owner = player, z = ZONE_BY_ID.venomNest;
+    gameConfirm('毒霧巢穴入口', '蛛網後方瀰漫著綠色毒霧。建議 Lv.' + z.lv[0] + '～' + z.lv[1] + '，進入費用 ' + fmt(z.fee) + ' 金幣。要進入巢穴嗎？', () => {
+        if (player !== owner || !keeperNear('venomNest')) { showToast('請先走回毒霧巢穴入口'); return; }
+        enterZoneFromKeeper('venomNest');
+    }, '進入巢穴');
 }
 // 對話框「進入」：先讀樓層再關對話框（openDialog 預設先關掉才呼叫 onClick）
 function keeperGo(to) {

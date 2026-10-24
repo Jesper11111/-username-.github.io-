@@ -22,6 +22,8 @@ boss=fit('boss-source.png',(256,224),(236,180))
 sheet=Image.new('RGBA',(256,224*6))
 for row in range(6):sheet.alpha_composite(boss,(0,row*224))
 sheet.save(GAME/'images/monsters/venomQueen.png',optimize=True)
+if (ROOT/'entrance-source.png').exists():
+    fit('entrance-source.png',(384,320),(352,288)).save(GAME/'images/maps/rework/venom-entrance-v1.png',optimize=True)
 src=Image.open(ROOT/'vfx-source.png').convert('RGBA')
 atlas=Image.new('RGBA',(1024,1024))
 for i in range(16):
