@@ -145,7 +145,7 @@ function huntViewHtml(title) {
     </div>`;
 }
 
-// 戰鬥訊息抽屜：外框左下（紅球下方）骷髏頭是開關，抽屜 #log-pop 從下往上滑出（index.html 靜態元素，不隨分頁重畫）
+// 戰鬥訊息抽屜：PC技能右側／手機外框左下的對話圖示是開關，抽屜 #log-pop 從下往上滑出（index.html 靜態元素，不隨分頁重畫）
 function toggleLogDrawer() {
     logDrawerOpen = !logDrawerOpen;
     try { localStorage.setItem(LOG_OPEN_KEY, logDrawerOpen ? '1' : '0'); } catch (e) { }

@@ -6,6 +6,8 @@
 ## 1. 專案結構
 
 | 檔案 | 內容 |
+| `images/sprites/morph/shadow-pirate-gunner-v1/`、`tools/sprite-src/morph/shadow-pirate-gunner-v1/`、`tools/pirate-morph-preview.html`、`tools/test-pirate-morph.js` | 06暗影海盜雙槍客36格透明動畫、原稿提示詞、卷軸接線與隔離驗證（第18.15、88節） |
+| `images/ui/message-bubbles-v1.png`、`tools/icon-src/ui/message-bubbles-v1/`、`tools/message-button-preview.html` | 訊息專屬雙對話泡圖示及PC位置／抽屜預覽（第133節） |
 | `images/icons/items/curAwaken-v1.png`、`tools/icon-src/items/awakening-stone-v1/` | 命運的覺醒石專屬虹彩晶石圖示，128px透明PNG；原稿、完整image_gen提示詞與尺寸輸出腳本（第80節） |
 | `data/map-queue.js` | 五格異界地圖排程：卷軸張數、順序、開始／暫停／取消、通關換圖、存檔轉換與進度面板（第126節） |
 | `tools/test-map-queue.js`、`tools/map-queue-preview.html` | 排程隔離測試與PC／手機實際外框預覽，不讀寫正式存檔、不連正式後端（第126節） |
@@ -169,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024ag`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024an`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1041,6 +1043,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 正式`images/sprites/morph/silent-cave-assassin-v1/`含36獨立RGBA格、walk／attack／cast／hit四張PNG、AVIF試播、contact及manifest。格子384×320、腳點[192,270]、charH160、drawH48；三向每向4／4／2／2格，130／140／220／150ms；左向鏡像右向。
 - `MORPHS.silentCaveAssassin`由m08.sprite使用；SW預載四圖集。沿用既有藍變雙刀Lv.15、命中+2、傷害+2、攻速+6%、閃避+2%，GM及武器判斷不動，SAVE_SCHEMA仍7。
 - `tools/cave-assassin-morph-preview.html`使用真實卷軸、sceneReadEvents及sceneDraw，提供四方向／四動作、播放／暫停／逐格、48px實際大小與放大；只用記憶體存檔且拒絕連外。`tools/test-cave-assassin-morph.js`驗證Lv.14不扣卷、Lv.15可用、加成不變、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期及RGBA圖集與SW。
+
+### 18.15 暗影海盜雙槍客（06紅變）專屬動畫（2026-10-24，版本`20261024an`）
+
+- 使用者提供6.jpg、6-1／6-2／6-3.jfif，三張動作圖實際位於桌面變身人物資料夾，已完整保留於tools/sprite-src/morph/shadow-pirate-gunner-v1。內建image_gen製作黑紅海盜外套、三角帽、骷髏面巾、雙燧發槍與紅焰三向12格；背向攻擊修成背影，左鏡像右。
+- 正式images/sprites/morph/shadow-pirate-gunner-v1含36獨立RGBA、walk／attack／cast／hit四圖集、AVIF、contact、manifest與motion-preview.gif。384×320／腳點[192,270]／charH160／drawH48，4／4／2／2格及130／140／220／150ms，攻擊560ms。完整prompts.json、來源原稿、registration.json、prepare.py／audit.json／preview.py保留；依實際行距及較寬的側向施法格校正來源範圍，沿用isolate排除鄰格碎片。
+- MORPHS.shadowPirateGunner接既有m06.sprite，SW預載四圖集；不增加第33種，保留Lv.35、槍手系必須裝槍、命中+5／傷害+4／攻速+8%、GM等級豁免、卷軸消耗與schema7。其他外觀不改；原本用m06測共用備援的測試改用仍共用外觀的m07。
+- tools/pirate-morph-preview.html使用實際卷軸／sceneReadEvents／sceneDraw，四向四動作／播放／暫停／逐格與48／96px檢查，記憶體存檔並拒絕連外。test-pirate-morph檢查Lv.34與未裝槍都不扣卷、Lv.35扣一張、原加成／四向命中MISS／受傷不打斷／施法受傷／到期與四圖集預載；舊變身回歸保留。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2573,6 +2582,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 - **20261024ad：08沉默洞穴刺客接上專屬圖**：MORPHS.silentCaveAssassin、m08.sprite、SW四PNG，三向36格／左鏡像，沿用既有Lv.15藍變雙刀能力、GM及武器限制與schema7；素材與測試見第18.14節。
 
+- **20261024an：06暗影海盜雙槍客接上專屬圖**：MORPHS.shadowPirateGunner／m06.sprite、四圖集預載，三向36格及左鏡像；保留紅變Lv.35槍械限制、原能力、GM與schema7，詳第18.15節。
+
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 
 - 使用者要求「喝水秒數統一，手動或自動都改成固定喝水延遲，比照天堂」。查不到天堂官方確切秒數（原版治癒藥水沒有明確冷卻），使用者選 **0.8 秒**。
@@ -3043,3 +3054,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   - 開打綁定地圖怪（`hunt.mobs` 對應 `scene.mons`）：遠程武器優先綁射程內看得到的怪（射程外的距離 +1000），避免綁到牆後最近的怪又得走過去。
 - 沒改的（原本設計，使用者 2026-10-24 確認維持、不做遠程後退拉距離）：開打後怪物會自己走到角色旁邊才能攻擊（`mobInReach`），所以遠程角色站著不動、怪走過來後仍會在貼身距離射擊（照樣扣彈藥、遠程命中／傷害公式）；`sceneRelock` 打不到時把怪移到角色旁邊也保留。
 - 驗證（隔離測試頁：記憶體角色、禁止連外、自己驅動 `sceneUpdate`）：舊版槍手 40 秒攻擊 39 次有 31 次貼身、角色自己走進怪旁 2 次；新版槍手（低語海岸 40 秒、迷霧古林 80 秒 3 隻圍攻）角色自己走進怪旁 0 次、迷霧古林全程沒移動；弓手在低語墓窟連用 3 次瞬移、不死系自動換銀箭，走進怪旁 0 次；騎士照舊走到旁邊打（32 次全部距離 1、7 殺）。Console 無錯誤。
+
+## 133. 訊息按鈕移至技能右側並更換圖示（2026-10-24，版本 `20261024an`）
+
+- 使用者截圖要求左下紅圈訊息按鈕移到技能右邊箭頭空位，並與任務卷軸分辨。PC的#skull-log改原圖left525／top936／width56／height60，位於技能圓鈕（x447～513）與第一快捷欄（x590）之間，無重疊；左下不再放按鈕。原戰鬥訊息抽屜面板定位與三頁行為不變，手機仍沿用左下位置。
+- 內建image_gen原創深青藍琺瑯＋古銅邊雙對話泡，前方三個亮點，與任務羊皮卷軸造型區分；正式images/ui/message-bubbles-v1.png為128×128透明PNG，原稿／完整PROMPT.txt／prepare.py保留於tools/icon-src/ui/message-bubbles-v1，SW預載。靜態button仍呼叫頂層toggleLogDrawer，不涉及存檔或聊天後端；新圖同時用於手機訊息按鈕。
+- index.html新增圖片等比尺寸、手機22px圖框、PC深色銅框與開啟亮邊；訊息／聊天／掉落紀錄三頁仍走原實作。tools/message-button-preview.html以最新index實際外框＋記憶體角色（新m06）隔離測PC／手機、任務及訊息抽屜，拒絕外部fetch，不讀寫真實存檔。
+- tools/test-log-drawer檢查PC與手機抽屜定位回歸；純按鈕位置與美術用瀏覽器確認，不新增照抄CSS的測試。
+
+第18.15／133節驗證：20261024an check.ps1 ALL CHECKS PASSED；pirate／cave-assassin／log-drawer／weapon-range測試通過，47檔混淆466KB，四圖集與訊息圖示打包hash相同。隔離瀏覽器卷軸m06扣1、四動作四方向、PC／手機配置與訊息三分頁操作正常，Console無error／warn；待真實角色實玩確認後才commit。

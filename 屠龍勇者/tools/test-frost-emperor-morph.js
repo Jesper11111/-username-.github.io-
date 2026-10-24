@@ -44,7 +44,7 @@ player.buffs.morph.until=gameNow;assert.equal(playerMorph(),null);
 assert.equal(usePotion('polyScroll'),'');assert.equal(player.buffs.morph.form,'m32');
 assert.equal(countItem('polyScroll'),scrolls-2);assert.equal(JSON.stringify(MORPH_BY_ID.m32.fx),fxBefore);
 for(const[id,key]of[['m01','wolfRanger'],['m02','moonRanger'],['m03','hellfireArcher'],['m04','skyValkyrie'],['m05','dwarfGunner'],['m10','brudikaShadow']])assert.equal(MORPH_BY_ID[id].sprite,key);
-player.buffs.morph.form='m06';assert.equal(playerMorph(),MORPHS.wolfRanger);
+player.buffs.morph.form='m07';assert.equal(playerMorph(),MORPHS.wolfRanger);
 console.log('PASS：卷軸扣量／上次選擇、m32專屬外觀、四向命中／MISS／施法／受傷、到期與其他變身回歸。');
 `,ctx);
 const dir=path.join(root,'images/sprites/morph/frost-nether-emperor-v1');

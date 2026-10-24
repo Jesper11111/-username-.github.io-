@@ -1,0 +1,18 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><base href="../"><meta name="viewport" content="width=device-width, initial-scale=1"><title>訊息按鈕隔離預覽</title>
+<style>#message-preview-tools{position:fixed;top:4px;left:4px;z-index:100;background:#17120de8;border:1px solid #aa8844;padding:4px;color:#fff;font:12px sans-serif}#message-preview-tools button{font-size:12px;padding:4px;margin:2px}</style></head><body>
+<div id="message-preview-tools">隔離預覽，不讀寫角色存檔／不連外<br><button onclick="messagePreviewMode('pc')">PC</button><button onclick="messagePreviewMode('phone')">手機</button></div>
+<script>
+(async()=>{
+ const memory=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)}});
+ const localFetch=window.fetch.bind(window);window.fetch=(u,o)=>{if(new URL(u,location.href).origin!==location.origin)throw Error('隔離預覽禁止連外');return localFetch(u,o);};
+ const index=await(await fetch('index.html',{cache:'no-store'})).text(),style=document.createElement('style');style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+ const doc=new DOMParser().parseFromString(index,'text/html');for(const script of doc.body.querySelectorAll('script'))script.remove();for(const child of [...doc.body.children])document.body.append(child);
+ for(const[,file,version]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g))if(!['data/main.js','data/pwa.js'].includes(file))await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=file+'?v='+version+'&preview=message-button-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+ SIM_MODE=true;sfx=()=>{};saveGame=()=>{};createPlayer('訊息按鈕測試','gunner',CLASSES.gunner.base);player.lv=35;addItem('rifle');equipItem(player.inv.find(it=>it.id==='rifle').uid,true);addItem('polyScroll');usePotion('polyScroll','m06');
+ player.loc={type:'zone',id:'tower',floor:10};player.hunting=false;
+ window.messagePreviewMode=mode=>{displayMode=mode;layoutFrame();refreshUI();};
+ showScreen('game');displayMode='pc';SIM_MODE=false;layoutFrame();refreshUI();
+ addLog('訊息按鈕測試：戰鬥訊息、聊天、掉落紀錄。','sys');
+ setInterval(()=>{gameNow+=100;},100);
+})().catch(e=>{document.body.append('預覽錯誤：'+e.stack);console.error(e);});
+</script></body></html>

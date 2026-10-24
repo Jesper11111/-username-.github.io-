@@ -1,0 +1,685 @@
+{
+  "id": "shadow-pirate-gunner-v1",
+  "name": "暗影海盜雙槍客（紅變）",
+  "form": "m06",
+  "rows": [
+    "down",
+    "right",
+    "up"
+  ],
+  "left": "mirror right",
+  "cellW": 384,
+  "cellH": 320,
+  "footAnchor": [
+    192,
+    270
+  ],
+  "charH": 160,
+  "drawH": 48,
+  "actions": {
+    "walk": {
+      "src": "images/sprites/morph/shadow-pirate-gunner-v1/walk.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 130,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/walk-down-01.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            362,
+            390
+          ],
+          "sourceFoot": [
+            168,
+            374
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/walk-down-02.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            362,
+            0,
+            724,
+            390
+          ],
+          "sourceFoot": [
+            541,
+            373
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/walk-down-03.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            724,
+            0,
+            1085,
+            390
+          ],
+          "sourceFoot": [
+            894,
+            374
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/walk-down-04.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            1085,
+            0,
+            1447,
+            390
+          ],
+          "sourceFoot": [
+            1251,
+            374
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/walk-right-01.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            363,
+            389
+          ],
+          "sourceFoot": [
+            183,
+            370
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/walk-right-02.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            363,
+            0,
+            726,
+            389
+          ],
+          "sourceFoot": [
+            519,
+            370
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/walk-right-03.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            726,
+            0,
+            1088,
+            389
+          ],
+          "sourceFoot": [
+            899,
+            372
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/walk-right-04.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            1088,
+            0,
+            1451,
+            389
+          ],
+          "sourceFoot": [
+            1279,
+            372
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/walk-up-01.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            0,
+            363,
+            422
+          ],
+          "sourceFoot": [
+            200,
+            406
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/walk-up-02.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            363,
+            0,
+            726,
+            422
+          ],
+          "sourceFoot": [
+            576,
+            406
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/walk-up-03.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            726,
+            0,
+            1088,
+            422
+          ],
+          "sourceFoot": [
+            933,
+            406
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/walk-up-04.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            1088,
+            0,
+            1451,
+            422
+          ],
+          "sourceFoot": [
+            1272,
+            402
+          ],
+          "sourceBodyHeight": 354.5
+        }
+      ]
+    },
+    "attack": {
+      "src": "images/sprites/morph/shadow-pirate-gunner-v1/attack.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 4,
+        "right": 4,
+        "up": 4
+      },
+      "ms": 140,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/attack-down-01.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            390,
+            410,
+            731
+          ],
+          "sourceFoot": [
+            175,
+            727
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/attack-down-02.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            338,
+            390,
+            772,
+            731
+          ],
+          "sourceFoot": [
+            537,
+            727
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 2,
+          "file": "frames/attack-down-03.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            700,
+            390,
+            1133,
+            731
+          ],
+          "sourceFoot": [
+            896,
+            727
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 3,
+          "file": "frames/attack-down-04.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            1061,
+            390,
+            1447,
+            731
+          ],
+          "sourceFoot": [
+            1276,
+            727
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/attack-right-01.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            389,
+            411,
+            729
+          ],
+          "sourceFoot": [
+            169,
+            724
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/attack-right-02.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            339,
+            389,
+            774,
+            729
+          ],
+          "sourceFoot": [
+            527,
+            722
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 2,
+          "file": "frames/attack-right-03.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            702,
+            389,
+            1136,
+            729
+          ],
+          "sourceFoot": [
+            878,
+            722
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 3,
+          "file": "frames/attack-right-04.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            1064,
+            389,
+            1451,
+            729
+          ],
+          "sourceFoot": [
+            1268,
+            724
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/attack-up-01.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            422,
+            411,
+            751
+          ],
+          "sourceFoot": [
+            198,
+            736
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/attack-up-02.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            339,
+            422,
+            774,
+            751
+          ],
+          "sourceFoot": [
+            589,
+            736
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 2,
+          "file": "frames/attack-up-03.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            702,
+            422,
+            1136,
+            751
+          ],
+          "sourceFoot": [
+            922,
+            736
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 3,
+          "file": "frames/attack-up-04.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            1064,
+            422,
+            1451,
+            751
+          ],
+          "sourceFoot": [
+            1276,
+            736
+          ],
+          "sourceBodyHeight": 354.5
+        }
+      ]
+    },
+    "cast": {
+      "src": "images/sprites/morph/shadow-pirate-gunner-v1/cast.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 220,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/cast-down-01.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            0,
+            731,
+            362,
+            1087
+          ],
+          "sourceFoot": [
+            194,
+            1067
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/cast-down-02.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            362,
+            731,
+            724,
+            1087
+          ],
+          "sourceFoot": [
+            548,
+            1067
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/cast-right-01.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            0,
+            729,
+            363,
+            1084
+          ],
+          "sourceFoot": [
+            174,
+            1066
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/cast-right-02.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            381,
+            729,
+            817,
+            1084
+          ],
+          "sourceFoot": [
+            511,
+            1066
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/cast-up-01.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            0,
+            751,
+            363,
+            1084
+          ],
+          "sourceFoot": [
+            200,
+            1064
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/cast-up-02.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            363,
+            751,
+            726,
+            1084
+          ],
+          "sourceFoot": [
+            567,
+            1065
+          ],
+          "sourceBodyHeight": 354.5
+        }
+      ]
+    },
+    "hit": {
+      "src": "images/sprites/morph/shadow-pirate-gunner-v1/hit.png",
+      "cellW": 384,
+      "cellH": 320,
+      "frames": {
+        "down": 2,
+        "right": 2,
+        "up": 2
+      },
+      "ms": 150,
+      "cells": [
+        {
+          "direction": "down",
+          "frame": 0,
+          "file": "frames/hit-down-01.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            724,
+            731,
+            1085,
+            1087
+          ],
+          "sourceFoot": [
+            928,
+            1067
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "down",
+          "frame": 1,
+          "file": "frames/hit-down-02.png",
+          "source": "down-generated.png",
+          "sourceRect": [
+            1085,
+            731,
+            1447,
+            1087
+          ],
+          "sourceFoot": [
+            1285,
+            1067
+          ],
+          "sourceBodyHeight": 339.0
+        },
+        {
+          "direction": "right",
+          "frame": 0,
+          "file": "frames/hit-right-01.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            726,
+            729,
+            1088,
+            1084
+          ],
+          "sourceFoot": [
+            944,
+            1065
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "right",
+          "frame": 1,
+          "file": "frames/hit-right-02.png",
+          "source": "right-generated.png",
+          "sourceRect": [
+            1088,
+            729,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1274,
+            1067
+          ],
+          "sourceBodyHeight": 356.0
+        },
+        {
+          "direction": "up",
+          "frame": 0,
+          "file": "frames/hit-up-01.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            726,
+            751,
+            1088,
+            1084
+          ],
+          "sourceFoot": [
+            956,
+            1064
+          ],
+          "sourceBodyHeight": 354.5
+        },
+        {
+          "direction": "up",
+          "frame": 1,
+          "file": "frames/hit-up-02.png",
+          "source": "up-generated.png",
+          "sourceRect": [
+            1088,
+            751,
+            1451,
+            1084
+          ],
+          "sourceFoot": [
+            1276,
+            1063
+          ],
+          "sourceBodyHeight": 354.5
+        }
+      ]
+    }
+  }
+}
