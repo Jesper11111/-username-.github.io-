@@ -32,6 +32,21 @@ function mapQueueChoices(index) {
     const q = mapQueueGet(), used = new Set(q.slots.filter((s, i) => s && i !== index).map(s => s.key));
     return groupMaps(player.inv.filter(x => ITEMS[x.id] && ITEMS[x.id].cat === 'map')).filter(g => !used.has(mapKindKey(g.x)));
 }
+function mapQueueChoose(index) {
+    if (mapQueueGet().state !== 'idle') return;
+    const groups = mapQueueChoices(index);
+    const html = '<small class="muted">普通白色・魔法藍色・稀有黃色</small><div class="list map-queue-choices">' + (groups.map(g => `<button class="map-queue-choice" onclick="mapQueuePick(${index},${g.x.uid})"><b class="${itemClass(g.x)}">${esc(itemName(g.x))}</b><small>${esc(mapZoneFor(ITEMS[g.x.id].tier).name)}・持有 ${g.count} 張</small></button>`).join('') || '<p class="muted">沒有可安排的地圖</p>') + '</div>';
+    openDialog('地圖 ' + (index + 1) + '：選擇地圖', html, [{ text: '關閉', cls: 'secondary' }]);
+}
+function mapQueuePick(index, uid) {
+    if (mapQueueGet().state !== 'idle') return;
+    const g = mapQueueChoices(index).find(g => g.x.uid === uid), sel = $('map-queue-select-' + index), btn = $('map-queue-pick-' + index);
+    if (!g || !sel || !btn) return;
+    sel.value = String(uid);
+    btn.innerHTML = `<span class="${itemClass(g.x)}">${esc(itemName(g.x))}</span>・${esc(mapZoneFor(ITEMS[g.x.id].tier).name)}（${g.count} 張） ▾`;
+    mapQueueSelectChanged(index);
+    closeDialog();
+}
 function mapQueueSet(index) {
     const q = mapQueueGet();
     if (q.state !== 'idle' || !Number.isInteger(index) || index < 0 || index >= MAP_QUEUE_MAX) return;
@@ -173,7 +188,7 @@ function mapQueueTick() {
 function mapQueueLiveHtml() {
     const q = mapQueueGet(), names = { idle: '尚未開始', running: '執行中', paused: '已暫停', done: '已完成' };
     const r = q.active && (player.mapRun || player.mapPortal);
-    return `<b>📋 ${names[q.state]}</b>${q.reason ? `<small>${esc(q.reason)}</small>` : ''}${r ? `<small>目前第 ${q.index + 1} 格・${esc(r.name)}・${r.left > 0 ? `剩 ${fmt(r.left)} / ${fmt(r.total)} 隻` : '等待擊倒首領'}</small>` : ''}
+    return `<b>📋 ${names[q.state]}</b>${q.reason ? `<small>${esc(q.reason)}</small>` : ''}${r ? `<small>目前第 ${q.index + 1} 格・<span class="${(QUALITY[r.q] || {}).cls || ''}">${esc(r.name)}</span>・${r.left > 0 ? `剩 ${fmt(r.left)} / ${fmt(r.total)} 隻` : '等待擊倒首領'}</small>` : ''}
         <div class="btn-row"><button onclick="mapQueueStart()" ${q.state === 'running' || q.state === 'done' ? 'disabled' : ''}>▶ ${q.state === 'paused' ? '繼續' : '開始'}</button><button class="secondary" onclick="mapQueuePause()" ${q.state === 'running' ? '' : 'disabled'}>⏸ 暫停</button><button class="danger" onclick="mapQueueCancel()">⏹ 取消</button></div>`;
 }
 function mapQueueRowStatus(i) {
@@ -192,8 +207,8 @@ function renderMapQueue() {
     let h = `<div class="panel"><small>最多安排 5 種地圖，依第 1～5 格順序刷完。相同區域、階級、品質與詞綴的卷軸可放多張；每次進圖才扣 1 張。</small><small class="muted">死亡、回村或補給不足會暫停；重開遊戲保留排程，需按繼續。取消不會扣掉未使用的卷軸。</small></div><div id="map-queue-live" class="panel">${mapQueueLiveHtml()}</div>`;
     for (let i = 0; i < MAP_QUEUE_MAX; i++) {
         const s = q.slots[i], groups = mapQueueChoices(i);
-        h += `<div class="panel map-queue-row"><b>地圖 ${i + 1}${s ? '：' + esc(s.name) : ''}</b><small id="map-queue-status-${i}">${esc(mapQueueRowStatus(i))}</small>
-            <fieldset ${editable ? '' : 'disabled hidden'}><select id="map-queue-select-${i}" aria-label="地圖 ${i + 1}" onchange="mapQueueSelectChanged(${i})"><option value="">選擇背包地圖</option>${groups.map(g => `<option value="${g.x.uid}" ${s && s.key === mapKindKey(g.x) ? 'selected' : ''}>${esc(itemName(g.x))}・${esc(mapZoneFor(ITEMS[g.x.id].tier).name)}（${g.count} 張）</option>`).join('')}</select>
+        h += `<div class="panel map-queue-row"><b>地圖 ${i + 1}${s ? '：<span class="' + ((QUALITY[s.key.split('|')[1]] || {}).cls || '') + '">' + esc(s.name) + '</span>' : ''}</b><small id="map-queue-status-${i}">${esc(mapQueueRowStatus(i))}</small>
+            <fieldset ${editable ? '' : 'disabled hidden'}><input type="hidden" id="map-queue-select-${i}" value="${s && groups.find(g => mapKindKey(g.x) === s.key) ? groups.find(g => mapKindKey(g.x) === s.key).x.uid : ''}"><button id="map-queue-pick-${i}" class="map-queue-picker secondary" aria-label="地圖 ${i + 1}" onclick="mapQueueChoose(${i})">${s ? '<span class="' + ((QUALITY[s.key.split('|')[1]] || {}).cls || '') + '">' + esc(s.name) + '</span>' : '選擇背包地圖'} ▾</button>
             <div class="btn-row"><input id="map-queue-qty-${i}" type="number" inputmode="numeric" min="1" value="${s ? Math.max(1, s.uids.length) : 1}" aria-label="地圖 ${i + 1} 張數"><span>張</span><button class="mini" onclick="mapQueueSet(${i})">設定</button><button class="mini secondary" onclick="mapQueueMove(${i},-1)" ${i ? '' : 'disabled'}>↑</button><button class="mini secondary" onclick="mapQueueMove(${i},1)" ${i < MAP_QUEUE_MAX - 1 ? '' : 'disabled'}>↓</button><button class="mini secondary" onclick="mapQueueRemove(${i})">清空</button></div></fieldset></div>`;
     }
     return h + '<small class="muted">開始後要更換地圖或張數，請先取消排程再重新設定。排程中的卷軸請留在背包。</small>';

@@ -166,7 +166,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024v`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024y`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2952,7 +2952,9 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **暫停／取消**：暫停立即stopHunt，保留剩怪與bossHp，再開始接原圖、不再扣地圖卷。stopHunt亦令執行中排程暫停；回卷mapPortalOpen暫停且保留active，補給後繼續會enterMapPortal。死亡／步行／放棄／關門透過mapQueueLost記中斷一次、停止排程，不補回已耗卷。取消需gameConfirm，停掉排程目前掛機、移除queueSlot、清空排程；保留目前異界／傳送門與未用卷。對話框確認時檢查角色及原排程身分，避免操作套給另一角色。
 - **補給與連線**：開始／開下一張前，檢查自動紅水已用完、負重達設定回村門檻、遠程彈藥已用完、lootCanPlay。未就緒不扣卷；實際戰鬥的自動補給回村沿既有邏輯，會觸發排程暫停。手動離開異界所在區域亦暫停，返回原區或取消後才能繼續。
 - **遷移與離線**：mapQueueNormalize由migrateSave呼叫，舊檔無排程補null，清掉第6格後資料與重複／非法uid，讀回的running改paused；active進度保留但hunting=false，要手動按繼續。重開後不直接進行排程或結算其離線掛機；頁面背景離線模擬不執行mapQueueTick、不通關換下一張。既有未排程的離線規則不變。資料庫／Supabase設定／SQL不改。
-- **全域**：MAP_QUEUE_MAX；mapQueueGet／mapQueueNormalize／mapQueueChoices／mapQueueSet／mapQueueSelectChanged／mapQueueRemove／mapQueueMove／mapQueueAutoPause／mapQueueLost／mapQueueCompleted／mapQueueSupplyReason／mapQueueStart／mapQueuePause／mapQueueCancel／mapQueueTick／mapQueueLiveHtml／mapQueueRowStatus／updateMapQueueLive／renderMapQueue。TABS及PANEL_FNS註冊mapQueue，renderStatus每250ms只更新進度與控制列，避免重建正在編輯的表單。新增.map-queue-row與#map-queue-live樣式；開始後收起設定欄，只看執行進度。
+- **全域**：MAP_QUEUE_MAX；mapQueueGet／mapQueueNormalize／mapQueueChoices／mapQueueChoose／mapQueuePick／mapQueueSet／mapQueueSelectChanged／mapQueueRemove／mapQueueMove／mapQueueAutoPause／mapQueueLost／mapQueueCompleted／mapQueueSupplyReason／mapQueueStart／mapQueuePause／mapQueueCancel／mapQueueTick／mapQueueLiveHtml／mapQueueRowStatus／updateMapQueueLive／renderMapQueue。TABS及PANEL_FNS註冊mapQueue，renderStatus每250ms只更新進度與控制列，避免重建正在編輯的表單。新增.map-queue-row與#map-queue-live樣式；開始後收起設定欄，只看執行進度。
 - **驗證**：tools/test-map-queue.js記憶體角色與加密存檔，禁止連線：3＋1順序、最多5格／非法數量／去重／排序、暫停繼續取消、死亡回卷、缺卷／改造／補給／斷線、一般開圖隔離、schema6遷移／讀回暫停、SIM不接圖、共用場景換區、骷髏停止與最後一張中斷後結束。tools/map-queue-preview.html取真實index樣式／外框／腳本、排除main／pwa，只用記憶體storage並拒絕連外；PC實點3張T1後進T2低語墓窟、讀檔暫停／繼續、手機完成與取消重設，Console無error／warn。
 
 第126節最終驗證（20261024v）：check.ps1 ALL CHECKS PASSED（48檔／47 scripts）、47檔混淆建置460KB，輸出TEMP/dark-map-queue-20261024t（內部版本v）；test-map-queue、test-map-portal、test-item-lock、test-potion-delay、test-offline-drops、test-server-loot-client皆通過，git diff --check通過。v整合另一對話的變身武器限制與共鳴攻速8%（u），未覆寫該修改。正式帳號實玩仍待使用者確認。
+
+第126節補充（2026-10-24，20261024w）：地圖選擇改為遊戲內彩色清單（mapQueueChoose／mapQueuePick），避免原生select在手機忽略option字色。使用itemClass及既有品質CSS：普通白、魔法q-magic藍、稀有q-rare黃；選中名稱、已設定欄位標題及執行中地圖同樣保留品質色。原map-queue-select-N改為hidden input存選擇uid，map-queue-pick-N為可點選按鈕，按設定才存入排程；不改schema或排程規則。新增.map-queue-picker／.map-queue-choice樣式；預覽加入魔法T6與稀有T7，PC與手機實點選擇和設定，字色實測rgb(106,168,255)／rgb(255,216,74)，Console無error／warn，test-map-queue及check.ps1通過。

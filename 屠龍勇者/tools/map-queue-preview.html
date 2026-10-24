@@ -14,12 +14,13 @@
     for(const child of [...doc.body.children])document.body.append(child);
     for(const m of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g)){
         if(['data/main.js','data/pwa.js'].includes(m[1]))continue;
-        await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=m[1]+'?v='+m[2]+'&preview=map-queue-v2';s.onload=resolve;s.onerror=reject;document.head.append(s);});
+        await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=m[1]+'?v='+m[2]+'&preview=map-queue-color-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});
     }
     let saved='';sfx=()=>{};presTick=()=>{};
     saveGame=()=>{saved=saveEncode(JSON.stringify({schema:SAVE_SCHEMA,player}));};
     createPlayer('排程預覽','knight',CLASSES.knight.base);
     for(let t=1;t<=6;t++)for(let i=0;i<(t===1?3:1);i++)player.inv.push(makeMapItem(t,null));
+    player.inv.push(makeMapItem(6,'magic'),makeMapItem(7,'rare'));
     window.queuePreviewMode=mode=>{displayMode=mode;layoutFrame();refreshUI();};
     window.queuePreviewFinish=()=>{
         if(!player.mapRun){showToast('請先開始地圖排程');return;}
