@@ -351,6 +351,7 @@ const ITEMS = {
     elixir:        { name: '萬能藥', cat: 'elixir', wt: 1, sell: 10000, desc: `永久提升一項能力值 +1（最多 ${ELIXIR_MAX} 瓶）` },
     baphometHorn:  { name: '巴風特之角',     cat: 'material', wt: 5, sell: 3000 },
     demonHeart:    { name: '惡魔之心',       cat: 'material', wt: 5, sell: 5000 },
+    spiderVenom:  { name: '蛛后毒囊',       cat: 'material', wt: 5, sell: 5000, desc: '毒霧巢穴・劇毒蛛后的專屬材料，可製作劇毒侵蝕附魔' },
     osirisSeal:    { name: '歐西里斯的封印', cat: 'material', wt: 5, sell: 6000 },
     towerSoul:     { name: '永夜之魂',       cat: 'material', wt: 1, sell: 2000 },
     towerBullHorn: { name: '巨大牛人之角', cat: 'material', wt: 1, sell: 2000, desc: '永夜之塔 10F・巨大牛人的專屬材料' },

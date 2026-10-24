@@ -24,7 +24,7 @@ player.lv = 70; player.baseHp = player.hp = 10000; player.baseMp = player.mp = 1
 assert.equal(Object.keys(WORLD_VFX_DEFS).length, 48);
 assert.equal(new Set(Object.values(WORLD_VFX_GROUPS)).size, 10);
 assert.deepEqual(Object.keys(WORLD_VFX_CLASS).sort(), Object.keys(CLASSES).sort());
-assert.deepEqual(Object.keys(WORLD_VFX_DEFS).filter(id => WORLD_VFX_DEFS[id].previewOnly).sort(), ['impact-1', 'progress-1', 'status-0']);
+assert.deepEqual(Object.keys(WORLD_VFX_DEFS).filter(id => WORLD_VFX_DEFS[id].previewOnly).sort(), ['impact-1', 'progress-1']);
 let imageCalls = 0;
 const stack = [], paint = new Proxy({ globalAlpha: 1 }, {
     get(o, key) {
@@ -52,7 +52,7 @@ function resetScene() {
 }
 resetScene(); worldVfxEmit('attack-0', mon); assert(!scene.worldVfx);
 SIM_MODE = false;
-for (const id of ['impact-1','progress-1','status-0']) worldVfxEmit(id, mon);
+for (const id of ['impact-1','progress-1']) worldVfxEmit(id, mon);
 assert(!scene.worldVfx);
 worldVfxQuality = 'low'; for (let i=0;i<50;i++) worldVfxEmit('attack-0', mon); assert.equal(scene.worldVfx.length, 8);
 worldVfxQuality = 'high'; for (let i=0;i<50;i++) worldVfxEmit('attack-0', mon); assert.equal(scene.worldVfx.length, 24);

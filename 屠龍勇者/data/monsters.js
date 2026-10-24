@@ -71,6 +71,12 @@ const MONSTERS = {
     werewolf:       { name: '狼人',       icon: '🐺', lv: 11, spd: 1300 },
     forestBear:     { name: '森林熊',     icon: '🐻', lv: 13, large: true, hpMul: 1.3, spd: 1700 },
     giantSpider:    { name: '巨大蜘蛛',   icon: '🕷️', lv: 15, magic: { p: 0.15, dmg: [10, 18], name: '毒液' } },
+    venomSpider:    { name: '毒霧獵蛛',   icon: '🕷️', lv: 42, hpMul: 1.15, magic: { p: 0.2, dmg: [35, 55], name: '毒液' } },
+    venomQueen: {
+        name: '劇毒蛛后', icon: '🕷️', lv: 52, boss: true, large: true, hpMul: 12, dmgMul: 1.6, acAdd: -12, expMul: 15, goldMul: 10,
+        magic: { p: 0.25, dmg: [90, 140], name: '劇毒噴吐' },
+        drops: [{ id: 'spiderVenom', p: BOSS_MATERIAL_DROP_P, n: [1, 1] }, { id: 'darkDual', p: 0.04 }, { id: 'darkClaw', p: 0.04 }, { id: 'bWeaponScroll', p: 0.06 }, { id: 'bArmorScroll', p: 0.1 }, { id: 'elixir', p: 0.04 }],
+    },
     treant:         { name: '樹精',       icon: '🌳', lv: 17, large: true, acAdd: -3, hpMul: 1.4, spd: 1900 },
     elderTreant: {
         name: '古老樹精', icon: '🌲', lv: 24, boss: true, large: true, hpMul: 10, dmgMul: 1.4, acAdd: -8, expMul: 12, goldMul: 8,

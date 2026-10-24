@@ -217,6 +217,8 @@ const TOWN_HOUSES = [[5, 9, 4, 3], [9, 6, 4, 3], [16, 6, 4, 3], [20, 9, 4, 3], [
 // 6 列＝走路 正面／側面朝右／背面、攻擊 正面／側面／背面；每列 n[列] 格動畫，每格 cw×ch；body＝正面走路第一格身高（縮放基準），size＝畫面身高（預設 42、大型 62）
 // 沒有模型的怪照舊畫 emoji
 const MON_SPRITES = {
+    venomQueen: { cw: 256, ch: 224, body: 180, n: [1, 1, 1, 1, 1, 1], size: 80 },
+    venomSpider: { src: 'images/monsters/giantSpider.png', cw: 62, ch: 49, body: 45, n: [1, 1, 1, 1, 1, 1] },
     skeleton: { cw: 46, ch: 65, body: 56, n: [2, 2, 2, 2, 2, 2] },
     skeletonArcher: { cw: 44, ch: 64, body: 56, n: [2, 2, 2, 2, 2, 2] },
     skeletonAxe: { cw: 41, ch: 76, body: 69, n: [1, 1, 1, 2, 2, 2] },

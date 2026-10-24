@@ -85,6 +85,18 @@ async function main(){
  await db.query('update public.dragon_saves set data=$1 where user_id=$2 and slot=1',[{schema:5,lootProtocol:1,lootCursor:0,player:mapPlayer},uuid]);
  await db.exec('set role authenticated');
  const tower=await rpc('loot_spawn',[1,'456|knight',crypto.randomUUID(),false,null]);assert.equal(tower[0].monster.towerFloor,10);
- await db.close();console.log('PASS：PostgreSQL重複安裝、RLS／權限、帳號／角色／怪物資格、重送不重抽、收據防回退、78怪物與詞綴、團戰與世界首領去重。');
+ // 毒霧巢穴實際後端生怪資格、專屬材料單個掉落；機率只改測試副本，不改正式目錄。
+ await db.exec('reset role');
+ mapPlayer.loc={type:'zone',id:'venomNest',floor:1};
+ await db.query('update public.dragon_saves set data=$1 where user_id=$2 and slot=1',[{schema:7,lootProtocol:1,lootCursor:0,player:mapPlayer},uuid]);
+ await db.exec('set role authenticated');
+ const queen=await rpc('loot_spawn',[1,'456|knight',crypto.randomUUID(),false,'venomQueen']);assert.equal(queen[0].monster.id,'venomQueen');assert.equal(queen[0].monster.boss,true);
+ await db.exec('reset role');
+ assert.equal(cat.monsters.venomQueen.drops.find(d=>d.id==='spiderVenom').p,.001);
+ assert.equal(cat.items.soul_spiderVenom.soulEnchant,'spiderVenom');assert.equal(cat.mapZones.some(z=>z.id==='venomNest'),false);
+ const poisonCat=structuredClone(cat);poisonCat.bossMaterialP=1;poisonCat.monsters.venomQueen.drops=[{id:'spiderVenom',p:1,n:[1,1]}];
+ const poisonItems=await rpc('loot_roll',[poisonCat,{monster:poisonCat.monsters.venomQueen,zone:cat.zones.venomNest,player:mapPlayer}]);
+ assert.equal(poisonItems.find(x=>x.id==='spiderVenom').n,1);
+ await db.close();console.log('PASS：PostgreSQL重複安裝、RLS／權限、怪物資格、重送與收據、全怪物／詞綴、團戰／世界首領、毒霧巢穴蛛后及專屬材料。');
 }
 main().catch(e=>{console.error(e.message,e.position,e.internalPosition,e.where);if(e.query&&e.position){const p=Number(e.position);console.error(e.query.slice(Math.max(0,p-160),p+100));}if(e.internalQuery)console.error(e.internalQuery);process.exit(1);});

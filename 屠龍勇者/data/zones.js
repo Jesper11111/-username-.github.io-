@@ -80,6 +80,12 @@ const ZONES = [
         desc: '飛龍盤旋的焦土山谷，龍騎士的遺骸仍在守望。',
     },
     {
+        id: 'venomNest', name: '毒霧巢穴', icon: '🕸️', type: 'dungeon', scene: 'cave', lv: [38, 48], town: 'giran', fee: 600, noMap: true,
+        mons: ['lamia', 'venomSpider', 'sandScorpion'], rare: { id: 'venomQueen', p: 0.008 },
+        drops: [{ id: 'darkClaw', p: 0.0008 }, { id: 'darkDual', p: 0.0008 }, { id: 'mrCloak', p: 0.001 }, { id: 'hasteBoots', p: 0.0005 }],
+        desc: '毒霧與蛛網覆蓋的地下巢穴，深處潛伏著劇毒蛛后。',
+    },
+    {
         id: 'pyramid', name: '黃沙王陵', icon: '🔺', type: 'dungeon', scene: 'pyramid', bg: 'wild', lv: [44, 56], town: 'giran', fee: 700,
         mons: ['mummy', 'sandScorpion', 'sphinx', 'anubis'], rare: { id: 'osiris', p: 0.008 },
         drops: [{ id: 'trident', p: 0.002 }, { id: 'darkClaw', p: 0.0008 }, { id: 'darkDual', p: 0.0008 }, { id: 'elvenBow', p: 0.0008 },

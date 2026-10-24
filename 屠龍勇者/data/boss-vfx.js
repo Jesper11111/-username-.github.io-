@@ -2,6 +2,7 @@
 // 預覽不改遊戲狀態，正式戰鬥的命中事件由 boss-enchant.js 發送。
 // 各圖按需載入並快取；下載失敗時仍使用程序動畫。
 const BOSS_VFX_SHEETS = {
+    spiderVenom: 'venom-burst-v1',
     treantHeart: 'treant', drakeFang: 'rock-spikes', baphometHorn: 'hell-pillar',
     demonHeart: 'soul-flame', wyvernWing: 'gale-blades', osirisSeal: 'nether-seal',
     frostCrystal: 'ice-shards', ifritFlame: 'inferno-field', forgottenRelic: 'forgotten-mark',

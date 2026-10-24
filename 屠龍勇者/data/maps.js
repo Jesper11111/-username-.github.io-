@@ -21,7 +21,7 @@ const MAP_QTY_MAX = 3;
 const MAP_DROP_P = 0.004, MAP_DROP_IN_MAP_P = 0.015;   // 一般地圖每隻 0.4%、異界裡每隻 1.5%
 
 // 階級對應的地區：野外＋地監依建議等級排序（14 個），T15 用最後一個並加強 ×1.4
-function mapZones() { return ZONES.filter(z => z.type === 'field' || z.type === 'dungeon').sort((a, b) => a.lv[0] - b.lv[0]); }
+function mapZones() { return ZONES.filter(z => !z.noMap && (z.type === 'field' || z.type === 'dungeon')).sort((a, b) => a.lv[0] - b.lv[0]); }
 function mapZoneFor(t) { const zs = mapZones(); return zs[Math.min(t, zs.length) - 1]; }
 function mapTierScale(t) { return t > mapZones().length ? 1.4 : 1; }
 // 怪物等級對應掉落的地圖階級：建議等級 ≤ 怪物等級的最高階

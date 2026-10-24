@@ -1,6 +1,7 @@
 // 黑暗大陸：BOSS 附魔與封魂（ARCHITECTURE.md 第 68 節）
 // 載入時依賴 items；執行期使用 player、combat、ui。戰鬥狀態放 hunt，武器只儲存材料 id。
 const BOSS_ENCHANTS = {
+    spiderVenom: { name: '劇毒侵蝕', p: .08, cd: 8, kind: 'magic', dot: .3, ticks: 6, poison: true },
     treantHeart: { name: '古樹荊棘', p: .08, cd: 8, kind: 'magic', main: .9, splash: .45, root: 1, slow: .1, sec: 2 },
     drakeFang: { name: '裂地岩刺', p: .07, cd: 7, kind: 'physical', main: 1.5, splash: .5, cap: 3, pierce: .15 },
     baphometHorn: { name: '地獄火柱', p: .06, cd: 9, kind: 'magic', main: 1.8, splash: .7 },
@@ -29,6 +30,7 @@ const BOSS_ENCHANTS = {
 };
 const BOSS_ENCHANT_SOUL_COST = 500000;
 const BOSS_ENCHANT_TEXT = {
+    spiderVenom: '主目標中毒 6 秒，每秒受到 30% B 魔法傷害（受 MR 影響）；不疊層，重新施加會重置持續時間，BOSS 同樣有效。',
     treantHeart: '主目標 90% B、附近各 45% B；一般怪定身 1 秒，BOSS 緩速 10%／2 秒。',
     drakeFang: '主目標 150% B、另外最多兩個目標各 50% B；忽略此次正數物理減傷量的 15%。',
     baphometHorn: '主目標 180% B、附近各 70% B。',

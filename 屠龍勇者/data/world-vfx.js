@@ -42,7 +42,7 @@ for (const sheet in WORLD_VFX_ROWS) WORLD_VFX_ROWS[sheet].forEach((name, row) =>
     WORLD_VFX_DEFS[sheet + '-' + row] = { name, sheet, row, layer: ground ? 'ground' : 'front',
         size: sheet === 'loot' ? 78 : sheet === 'boss' ? 120 : sheet.startsWith('class') ? 86 : 64,
         dur: sheet === 'loot' ? 2600 : sheet === 'progress' ? 1800 : sheet === 'boss' ? 900 : 600,
-        previewOnly: (sheet === 'impact' && row === 1) || (sheet === 'status' && row === 0) || (sheet === 'progress' && row === 1) };
+        previewOnly: (sheet === 'impact' && row === 1) || (sheet === 'progress' && row === 1) };
 });
 const worldVfxImages = {};
 let worldVfxQuality = 'medium', worldVfxPreviewRun = 0;
@@ -243,6 +243,7 @@ function drawWorldVfx(ctx, camX, camY, layer) {
         const debuffs = (m.inst.bossEnchantDebuffs || []).filter(b => b.until > gameNow && b.owner === player && weapon && b.uid === weapon.uid && b.id === weapon.bossEnchant);
         if (debuffs.some(b => b.type === 'slow' || b.type === 'atkSlow')) worldVfxPaint(ctx, 'status-2', x, y + 5, gameNow, 42, .4, true);
         const rt = hunt && hunt.bossEnchantRuntime;
+        if (rt && rt.owner === player && weapon && rt.uid === weapon.uid && rt.id === weapon.bossEnchant && rt.jobs.some(j => j.mon === m.inst && j.type === 'dot' && BOSS_ENCHANTS[j.id].poison)) worldVfxPaint(ctx, 'status-0', x, y, gameNow, 44, .55, true);
         if (rt && rt.owner === player && weapon && rt.uid === weapon.uid && rt.id === weapon.bossEnchant && rt.jobs.some(j => j.mon === m.inst && j.type === 'dot' && /火|炎|燃|吐息/.test(BOSS_ENCHANTS[j.id].name))) worldVfxPaint(ctx, 'status-1', x, y, gameNow, 40, .45, true);
     }
 }

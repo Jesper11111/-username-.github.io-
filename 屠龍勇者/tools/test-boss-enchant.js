@@ -31,8 +31,8 @@ function testFight(w, id, n = 1) {
     session = { start: gameNow, kills: 0, exp: 0, gold: 0 };
     return mobs;
 }
-assert.equal(Object.keys(BOSS_ENCHANTS).length, 25);
-assert.equal(Object.values(ITEMS).filter(d => d.soulEnchant).length, 25);
+assert.equal(Object.keys(BOSS_ENCHANTS).length, 26);
+assert.equal(Object.values(ITEMS).filter(d => d.soulEnchant).length, 26);
 for (const id in BOSS_ENCHANTS) {
     assert(ITEMS[id]); assert.equal(ITEMS['soul_' + id].name, BOSS_ENCHANTS[id].name + '封魂石');
     const r = BOSS_ENCHANTS[id];
@@ -164,10 +164,10 @@ for (const low of [false, true]) {
 }
 w = testPlayer(); mobs = testFight(w, 'towerIceCrown'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) }; bossEnchantOnHit(mobs[0], calcStats()); scene.mons[0].x = 8;
 gameNow += 200; drawBossEnchantEffects(paint, 0, 0, 'ground'); assert.equal(scene.bossEnchantFx[0].frost[0].x, 8);
-assert.equal(BOSS_VFX_IDS.length, 25);
+assert.equal(BOSS_VFX_IDS.length, 26);
 assert.deepEqual(BOSS_VFX_IDS.slice().sort(), Object.keys(BOSS_ENCHANTS).sort());
-assert.equal(new Set(Object.values(BOSS_VFX_SHEETS)).size, 25);
-assert.equal((bossVfxPreviewButtons().match(/onclick=/g) || []).length, 25);
+assert.equal(new Set(Object.values(BOSS_VFX_SHEETS)).size, 26);
+assert.equal((bossVfxPreviewButtons().match(/onclick=/g) || []).length, 26);
 assert(renderBossEnchantForge().includes('不消耗材料'));
 // 混沌裂爆的爆炸畫面與實際延遲傷害同步；地龍動畫以玩家為中心。
 w = testPlayer(); mobs = testFight(w, 'towerChaosCore'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
@@ -180,8 +180,8 @@ assert(scene.bossEnchantFx.some(f => f.phase === 'impact' && f.at === gameNow));
 w = testPlayer(); mobs = testFight(w, 'antharasScale'); scene = { pl: { x: 3, y: 6 }, mons: mobs.map(inst => ({ inst, x: 7, y: 5 })) };
 bossEnchantOnHit(mobs[0], calcStats()); assert.equal(scene.bossEnchantFx[0].pos.x, 3); assert.equal(scene.bossEnchantFx[0].pos.y, 6);
 SIM_MODE = true; chance = oldChance;
-console.log('PASS：25 種特效預覽、備援 Canvas、無消耗、砲擊／裂爆傷害同步、地龍中心、四連斬與斬殺色。');
-console.log('PASS：25 技能傷害／範圍／延遲、全費用、材料消耗、封魂往返防重複、舊新存檔、共鳴隔離、每次行動只抽一次、換武器冷卻、控場／護盾、UI／圖鑑。');
+console.log('PASS：26 種特效預覽、備援 Canvas、無消耗、砲擊／裂爆傷害同步、地龍中心、四連斬與斬殺色。');
+console.log('PASS：26 技能傷害／範圍／延遲、全費用、材料消耗、封魂往返防重複、舊新存檔、共鳴隔離、每次行動只抽一次、換武器冷卻、控場／護盾、UI／圖鑑。');
 `, ctx);
 
 // 載入成功的圖片分支：使用真實 PNG 尺寸，驗證各格不越界、死神雙色及砲擊分段。
@@ -209,5 +209,5 @@ for (const id of BOSS_VFX_IDS) for (const execute of [false, true]) for (const p
         if (id === 'pirateTreasure' || id === 'towerChaosCore') assert(phase === 'impact' ? frame >= 4 : frame < 4);
     }
 }
-console.log('PASS：25 套真實 PNG、4×4 分格邊界、比例、死神紫紅分段、砲擊／裂爆預警與爆炸分段。');
+console.log('PASS：26 套真實 PNG、4×4 分格邊界、比例、死神紫紅分段、砲擊／裂爆預警與爆炸分段。');
 `, spriteContext);

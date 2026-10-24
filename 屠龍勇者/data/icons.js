@@ -262,6 +262,8 @@ const ITEM_IMG = Object.fromEntries([
     'map9', 'map10', 'map11', 'map12', 'map13', 'map14', 'map15',
 ].map(id => [id, id]));
 ITEM_IMG.curAwaken = 'curAwaken-v1';   // 命運的覺醒石：虹彩晶石專屬外觀（第80節）
+ITEM_IMG.spiderVenom = 'spiderVenom-v1';
+ITEM_IMG.soul_spiderVenom = 'soul_spiderVenom-v1';
 ITEM_IMG.polyScroll = 'polyScroll-v2';   // 使用者選 B 紫晶幻化；舊圖保留
 function itemIconOf(id) {
     if (ITEM_ICON[id]) return ITEM_ICON[id];

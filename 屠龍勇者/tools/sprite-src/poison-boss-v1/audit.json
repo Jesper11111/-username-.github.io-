@@ -1,0 +1,41 @@
+[
+  {
+    "source": "material-source.png",
+    "size": [
+      128,
+      128
+    ],
+    "alphaBounds": [
+      37,
+      9,
+      99,
+      117
+    ]
+  },
+  {
+    "source": "soul-source.png",
+    "size": [
+      128,
+      128
+    ],
+    "alphaBounds": [
+      34,
+      9,
+      94,
+      116
+    ]
+  },
+  {
+    "source": "boss-source.png",
+    "size": [
+      256,
+      224
+    ],
+    "alphaBounds": [
+      13,
+      34,
+      244,
+      190
+    ]
+  }
+]
