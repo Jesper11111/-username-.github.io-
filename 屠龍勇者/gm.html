@@ -172,11 +172,11 @@ function gmRender() {
         const rows = profiles.filter(p => !qy || (p.email || '').toLowerCase().includes(qy) || saves.some(s => s.user_id === p.user_id && (s.name || '').toLowerCase().includes(qy))).map(p => {
             const chars = saves.filter(s => s.user_id === p.user_id).sort((a, b) => a.slot - b.slot)
                 .map(s => `<button class="mini secondary" onclick="gmHistory('${p.user_id}', ${s.slot}, '${esc(p.email || '')}')">${esc(s.name)}・${esc(clsName(s.cls))} Lv.${s.lv}</button>`).join(' ');
-            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}${isTrusted(p.user_id) ? ' <span class="good">✅ 信任</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>💎 ${dias[p.user_id] || 0} <button class="mini secondary" onclick="gmDia('${p.user_id}', '${esc(p.email || '')}')">發放</button></td><td><div class="row">${trustBtn(p.user_id, p.email)}${banBtn(p.user_id, p.email)}</div></td></tr>`;
+            return `<tr><td>${esc(p.email)}${isBanned(p.user_id) ? ' <span class="bad">⛔ 已封鎖</span>' : ''}${isTrusted(p.user_id) ? ' <span class="good">✅ 信任</span>' : ''}</td><td>${t(p.last_seen)}</td><td><div class="row">${chars || '<span class="muted">（雲端沒有角色）</span>'}</div></td><td>💎 ${dias[p.user_id] || 0} <button class="mini secondary" onclick="gmDia('${p.user_id}', '${esc(p.email || '')}')">發放</button> <button class="mini secondary" onclick="gmGive('${p.user_id}', '${esc(p.email || '')}')">🎁 道具</button></td><td><div class="row">${trustBtn(p.user_id, p.email)}${banBtn(p.user_id, p.email)}</div></td></tr>`;
         }).join('');
         $('view').innerHTML = `<div class="row" style="margin-bottom:8px"><input id="pq" type="text" placeholder="搜尋 Email 或角色名" value="${esc(playerQuery)}" oninput="playerQuery = this.value; gmRender(); $('pq').focus()">
             <span class="muted">共 ${profiles.length} 個帳號（點角色看存檔歷程）</span></div>
-            <div class="table-wrap"><table><tr><th>帳號</th><th>最後上傳</th><th>角色</th><th>鑽石</th><th></th></tr>${rows}</table></div>`;
+            <div class="table-wrap"><table><tr><th>帳號</th><th>最後上傳</th><th>角色</th><th>鑽石／道具</th><th></th></tr>${rows}</table></div>`;
         const el = $('pq'); if (el) el.setSelectionRange(el.value.length, el.value.length);
     } else if (tab === 'chat') {
         const emailOf = uid => (profiles.find(p => p.user_id === uid) || {}).email || '';
@@ -227,6 +227,41 @@ async function gmDia(uid, email) {
     try { const v = await q(sb.rpc('dia_grant', { p_user: uid, p_n: n, p_reason: reason })); alert(`完成，目前 💎${v}`); }
     catch (e) { alert('失敗：' + e.message); }
     gmLoad();
+}
+
+// 發放道具（tools/gm-give.sql，第 128 節）：放進對方帳號的共用倉庫；道具清單取自伺服器道具目錄
+let gmItems = null;
+async function gmGive(uid, email) {
+    $('modal-box').innerHTML = '<p class="muted">讀取道具清單…</p>'; show('modal', true);
+    let log = [];
+    try {
+        if (!gmItems) gmItems = await q(sb.rpc('gm_item_list'));
+        log = await q(sb.from('dragon_gm_give_log').select('*').eq('to_user', uid).order('id', { ascending: false }).limit(20));
+    } catch (e) { $('modal-box').innerHTML = `<p class="bad">讀取失敗：${esc(e.message)}</p><p class="muted">如果是第一次用，請先在 Supabase SQL Editor 執行 tools/gm-give.sql。</p><button onclick="gmClose()">關閉</button>`; return; }
+    const opts = Object.entries(gmItems).filter(([, d]) => d.cat !== 'quest').sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-Hant'))
+        .map(([id, d]) => `<option value="${esc(id)}">${esc(d.name)}（${esc(d.cat)}${d.stack ? '・可堆疊' : ''}）</option>`).join('');
+    const rows = log.map(r => `<tr><td>${t(r.at)}</td><td>${esc((gmItems[r.item_id] || {}).name || r.item_id)}</td><td class="num">${n(r.n)}</td><td>${esc(r.reason)}</td><td>${esc(r.by_email)}</td></tr>`).join('');
+    $('modal-box').innerHTML = `<div class="row" style="justify-content:space-between"><h3 style="margin:0">🎁 發放道具給 ${esc(email || uid)}</h3><button class="mini secondary" onclick="gmClose()">關閉</button></div>
+        <p class="muted">道具會放進對方帳號的「共用倉庫」，對方到村莊倉庫 → 共用倉庫取出（取出照常收 100 金幣手續費）。可堆疊道具一次 1～99999 個占 1 格；裝備一次 1～50 件、每件 1 格、+0 普通品質；共用倉庫上限 200 格。</p>
+        <div class="row"><input id="gv-item" list="gv-items" placeholder="道具 id（可打名稱搜尋）" style="min-width:260px"><datalist id="gv-items">${opts}</datalist>
+            <input id="gv-n" type="number" min="1" value="1" style="width:100px"><input id="gv-reason" type="text" placeholder="原因（記錄用）" value="活動獎勵">
+            <button onclick="gmGiveSend('${uid}', '${esc(email || '')}')">發放</button></div>
+        <p id="gv-msg" class="muted"></p>
+        <h3>最近發放紀錄</h3>${rows ? `<div class="table-wrap"><table><tr><th>時間</th><th>道具</th><th>數量</th><th>原因</th><th>處理人</th></tr>${rows}</table></div>` : '<p class="muted">還沒有發放過。</p>'}`;
+}
+async function gmGiveSend(uid, email) {
+    const id = $('gv-item').value.trim(), cnt = parseInt($('gv-n').value, 10), d = gmItems[id];
+    if (!d) { $('gv-msg').innerHTML = '<span class="bad">請從清單選一個道具（要填道具 id）</span>'; return; }
+    if (!(cnt >= 1)) { $('gv-msg').innerHTML = '<span class="bad">數量要 1 以上</span>'; return; }
+    $('gv-msg').textContent = '發放中…';
+    try {
+        const r = await q(sb.rpc('gm_give_item', { p_target: uid, p_item: id, p_n: cnt, p_reason: $('gv-reason').value.slice(0, 200) }));
+        await gmGive(uid, email);
+        $('gv-msg').innerHTML = `<span class="good">完成：${esc(r.name)} ×${n(r.n)} 已放進 ${esc(r.email)} 的共用倉庫（剩 ${r.free} 格）</span>`;
+    } catch (e) {
+        const m = e.message || '';
+        $('gv-msg').innerHTML = `<span class="bad">失敗：${esc(/vault full/.test(m) ? '對方共用倉庫格數不夠' : /bad amount/.test(m) ? '數量超過上限' : /unknown item/.test(m) ? '道具目錄沒有這個道具' : m)}</span>`;
+    }
 }
 
 async function gmResolve(id) {

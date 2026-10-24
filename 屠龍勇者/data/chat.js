@@ -141,6 +141,7 @@ async function chatSend(inputId = 'chat-input') {
     const text = ((el && el.value) || '').replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX_LEN);
     if (!text || !chatReady() || !player) return;
     if (cloudBan) { showToast('帳號已停權，無法發言'); return; }
+    if (text[0] === '/') { if (await chatCommand(text) && el) { el.value = ''; if (inputId === 'chat-input') chatDraft = ''; } return; }   // 指令不送進聊天
     const wait = CHAT_COOLDOWN_MS - (Date.now() - chatLastSent);
     if (wait > 0) { showToast(`說話太快了，${Math.ceil(wait / 1000)} 秒後再試`); return; }
     chatLastSent = Date.now();
@@ -158,6 +159,49 @@ async function chatSend(inputId = 'chat-input') {
             showToast(chatMute ? `你被禁言到 ${new Date(chatMute.until).toLocaleString('zh-TW', { hour12: false })}` : '無法在這個頻道發言');
             renderPanel();
         } else showToast('發送失敗：' + cloudErrText(e));
+    }
+}
+
+// ───────── GM 指令（ARCHITECTURE.md 第 128 節）─────────
+// /give 道具id或名稱 [數量] [Email]：沒有 Email＝直接放進自己目前角色的背包；有 Email＝伺服器 gm_give_item 放進對方帳號的共用倉庫（tools/gm-give.sql）
+// GM＝這次登入由 dragon_is_admin 確認過的帳號（cloudMorphAdminUid，同變身等級豁免），一般玩家打指令只會看到提示、不會送出
+const GM_GIVE_MAX_STACK = 99999, GM_GIVE_MAX_EQUIP = 50;   // 和 gm-give.sql 的上限一致
+function gmCmdOk() { return morphGmOk(); }
+function gmFindItem(key) {
+    if (ITEMS[key]) return [key];
+    const k = key.toLowerCase();
+    const ids = Object.keys(ITEMS).filter(id => id.toLowerCase() === k || ITEMS[id].name === key);
+    return ids.length ? ids : Object.keys(ITEMS).filter(id => ITEMS[id].name.includes(key)).slice(0, 8);
+}
+async function chatCommand(text) {
+    const [cmd, ...args] = text.split(' ');
+    if (!['/give', '/發放'].includes(cmd.toLowerCase())) { showToast('沒有這個指令'); return false; }
+    if (!gmCmdOk()) { showToast('只有 GM 可以使用這個指令'); return false; }
+    const email = args.find(a => a.includes('@'));
+    const rest = args.filter(a => a !== email);
+    const item = rest[0], n = rest[1] == null ? 1 : Number(rest[1]);
+    if (!item) { gameAlert('GM 指令', '/give 道具id或名稱 [數量] [對方Email]\n不填 Email＝發給自己目前的角色（放進背包）\n填 Email＝放進對方帳號的共用倉庫'); return false; }
+    const ids = gmFindItem(item);
+    if (ids.length !== 1) { gameAlert('找不到唯一的道具', ids.length ? `「${item}」符合多個道具，請改用 id：\n${ids.map(id => `${id}　${ITEMS[id].name}`).join('\n')}` : `沒有「${item}」這個道具`); return false; }
+    const id = ids[0], d = ITEMS[id], max = isStackable(d) ? GM_GIVE_MAX_STACK : GM_GIVE_MAX_EQUIP;
+    if (!Number.isSafeInteger(n) || n < 1 || n > max) { showToast(`數量要是 1～${max} 的整數`); return false; }
+    if (!email) {
+        addItem(id, n);
+        showToast(`GM：${d.name} ×${n} 已放進背包`);
+        refreshUI();
+        saveGame();
+        return true;
+    }
+    try {
+        const { data, error } = await cloudTimeout(cloudSb.rpc('gm_give_item', { p_target: email, p_item: id, p_n: n, p_reason: '遊戲內 /give' }));
+        if (error) throw error;
+        showToast(`GM：已發 ${data.name} ×${data.n} 到 ${data.email} 的共用倉庫（剩 ${data.free} 格）`);
+        return true;
+    } catch (e) {
+        const m = String((e && e.message) || e);
+        showToast('發放失敗：' + (/no such player/.test(m) ? '找不到這個 Email 的帳號' : /unknown item/.test(m) ? '伺服器道具目錄沒有這個道具（或是任務道具）'
+            : /vault full/.test(m) ? '對方共用倉庫格數不夠' : /not admin/.test(m) ? '伺服器不承認 GM 權限' : /gm_give_item|function/.test(m) ? '伺服器還沒安裝 tools/gm-give.sql' : cloudErrText(e)));
+        return false;
     }
 }
 

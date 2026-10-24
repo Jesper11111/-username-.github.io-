@@ -125,7 +125,7 @@
 | `data/bgm.js` | **背景音樂**（第 44 節）：`BGM_LISTS`（野外 `field`、村莊 `town`）、`bgmUpdate`（每 0.5 秒依位置切換、淡入淡出）、設定列 `bgmSettingsHtml`／`setBgmOn`／`setBgmVol`；存在 localStorage `dragonSlayer_bgm` |
 | `data/ui-create.js` | 標題畫面、**人物選單**（`openCharSelect`，第 25 節）、創角（選職業、配點、取名） |
 | `data/raid.js` | **團隊副本**：`RAIDS`（6 個副本）、團戰模擬 `raidSimulate`、獎勵 `raidApplyReward`／`raidClaim`、隊伍大廳（Supabase `raid_rooms`／`raid_members`）、重播畫面；載入時把 `raid` 加進 `TABS`／`PANEL_FNS`（第 30 節） |
-| `data/chat.js` | **聊天**：世界／隊伍頻道、`renderChat`、`chatFetch`（分頁開著時每 4 秒抓新訊息）、`chatSend`、`chatOpen`；載入時把 `chat` 加進 `TABS`／`PANEL_FNS`（第 32 節） |
+| `data/chat.js` | **聊天**：世界／隊伍頻道、`renderChat`、`chatFetch`（分頁開著時每 4 秒抓新訊息）、`chatSend`、`chatOpen`；載入時把 `chat` 加進 `TABS`／`PANEL_FNS`（第 32 節）；GM 指令 `/give`（`chatCommand`，第 128 節） |
 | `data/clan.js` | **血盟**：`myClan`／`myClanRole`、`clanLoad`、建立／加入／審核／踢人／任命／讓位／退出／解散（都呼叫 Supabase `clan_*` 函式）、`renderClan`；載入時把 `clan` 加進 `TABS`／`PANEL_FNS`（第 33 節） |
 | `data/rank.js` | **排行榜**：`RANK_KINDS`（等級／屠龍／永夜之塔／擊殺／血盟）、`rankLoad`（呼叫 Supabase `dragon_leaderboard`，同一榜 1 分鐘快取）、`renderRank`；載入時把 `rank` 加進 `TABS`／`PANEL_FNS`（第 34 節） |
 | `data/wb.js` | **世界首領**：`WB_KINDS`（5 隻首領的種族與招式）、`wbLoad`、`wbAttack`（60 秒模擬→`wb_attack`）、`wbClaim`／`wbReward`（領獎）、`renderWb`；載入時把 `wb` 加進 `TABS`／`PANEL_FNS`（第 35 節） |
@@ -144,7 +144,7 @@
 | `data/ui-panels.js` | 主畫面 8 個分頁（狩獵／地圖／人物狀態／背包／技能／任務／村莊／設定）、道具對話框、衝裝選擇、匯出入 |
 | `data/pwa.js` | PWA：註冊 SW、安裝說明 `openInstallGuide`、新版本提示、持久儲存（第 12 節） |
 | `data/main.js` | 主迴圈 `gameTick`（每 100ms）、繼續遊戲、啟動（呼叫 `initPwa`） |
-| `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
+| `gm.html` | **管理頁**（不是遊戲的一部分）：可疑紀錄、玩家存檔歷程、封鎖／解除封鎖、🎁 發放道具（第 128 節）；載入 config／classes／cloud.js 取得 Supabase 設定（第 31 節） |
 | `manifest.json` | App 名稱、圖示、`scope: ./`（只涵蓋本資料夾） |
 | `sw.js` | Service Worker，快取名稱 `dragon-` 開頭（第 12 節） |
 | `images/` | `icons/` 圖片圖示（藥水 `potion-*.jpg`、技能 `sk/`，第 41 節）；App 圖示：`icon-192/512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`；主畫面外框 `frame-nopillar.png`（去掉拱門與左右石柱，第 54 節；`frame-notop.jpg`、原版 `frame.jpg` 保留；第 15 節）、PC 橫式外框 `frame-pc.jpg`＋遮罩 `frame-pc-mask.png`（第 19 節）；`sprites/` 人物模型、`classes/` 職業立繪、十二職業合照 `all.jpg` 、創角舞台去背圖 `classes/stage/`（合照中的人）與 `classes/hero/`（立繪全身像）（第 18 節）；`maps/ruins.jpg` 野外地圖背景、`maps/tower.jpg` 永夜之塔通用地圖（第 52 節）、`npc/tower-keeper.png`／`ivory-keeper.png`＋`-face.jpg` 永夜之塔／暮光法師塔傳送師（第 55、56 節）、`maps/village.webp` 村莊背景（第 17 節）、`maps/wild.jpg`＋`wild-mini.jpg` 低語海岸大地圖與小地圖（第 45 節；12 個地圖合併、6016×4768＝188×149 格，第 67 節）、`wild-occ.png` 遮擋深度圖（第 46 節） |
@@ -2979,3 +2979,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 第80節補充（2026-10-24，20261024aa）：命運的覺醒石專屬外觀為原創虹彩紫晶、破碎金色符環與白金星芒核心，內建image_gen生成透明原稿，保留於tools/icon-src/items/awakening-stone-v1/source.png；完整提示詞PROMPT.md，prepare.ps1保留全幅及alpha、等比縮入112px後置中128×128，四邊至少8px透明，正式檔images/icons/items/curAwaken-v1.png。
 - icons.js的ITEM_IMG.curAwaken指向curAwaken-v1，所有共用itemIconHtml介面直接使用新圖；craft.openCraftDialog的覺醒石cc-i及ui-panels.renderGearForge的通貨列也改用itemIconHtml，其他通貨沿原圖示。新增.craft-cur .cc-i .ico固定28px。sw.js預載新圖?v=1，保持安裝版離線可用。不改掉率、權重、能力、價格、存檔、SQL。
 - tools/item-art-preview.html改讀index目前版本號，避免測試舊快取；test-item-art同步434件道具／287張獨立PNG，含覺醒石背包、鍛造列、改造視窗接線驗證。RGBA／128px／透明留邊檢查、全圖檔案存在與不重複檢查、瀏覽器圖庫成功1張缺0張且Console無error／warn。
+
+## 128. GM 發放道具（2026-10-24，版本 `20261024ah`；`chat.js` 的 `chatCommand`／`gmCmdOk`／`gmFindItem`、`gm.html` 的 `gmGive`／`gmGiveSend`、SQL `tools/gm-give.sql`）
+
+- 使用者要求「新增 GM 指令 發放道具」，選定：發給自己＋發給指定玩家都要、管理頁和遊戲內聊天指令兩邊都做。權限沿用既有 `dragon_admins`／`dragon_is_admin()`（同第 125 節變身豁免，遊戲端看 `cloudMorphAdminUid`；伺服器 RPC 自己再查一次）。
+- **遊戲內聊天指令**：在聊天輸入框打 `/give 道具id或名稱 [數量] [對方Email]`（`/發放` 也可）。以 `/` 開頭的訊息一律不送進聊天；非 GM 只顯示「只有 GM 可以使用這個指令」，其他 `/` 開頭顯示「沒有這個指令」。道具可打 id、完整名稱或部分名稱（多個符合時列出 id 請 GM 改打 id）；數量預設 1，可堆疊最多 99999、裝備最多 50（`GM_GIVE_MAX_STACK`／`GM_GIVE_MAX_EQUIP`）。
+  - 不填 Email＝直接 `addItem` 進自己目前角色的背包（裝備 +0 普通品質、不檢查負重），接著 `refreshUI`＋`saveGame`。
+  - 填 Email＝呼叫 `gm_give_item` 放進對方帳號的**共用倉庫**，對方到村莊倉庫 → 共用倉庫取出（照常收 100 金幣手續費、要雲端存檔簽章正確）。
+- **管理頁**：「👥 玩家」分頁每個帳號的「鑽石／道具」欄多一顆「🎁 道具」，開視窗選道具（datalist 可打名稱搜尋，清單來自伺服器道具目錄、排除任務道具）、填數量與原因後發放，下方列最近 20 筆發給該帳號的紀錄。視窗內不用原生對話框。
+- **SQL `tools/gm-give.sql`（使用者自己在 Supabase SQL Editor 執行，可重複執行）**：`dragon_gm_give_log` 發放紀錄（RLS 只有管理者看得到）、`gm_item_list()` 道具清單、`gm_give_item(p_target, p_item, p_n, p_reason)`（p_target＝user_id 或 Email，不分大小寫）。非管理者 `not admin`；道具以 `dragon_loot_catalog` 為準（新道具要先重跑 server-loot-install／loot-catalog 才能發），任務道具拒絕；可堆疊 1 格、裝備每件 1 格；共用倉庫 200 格上限照算（`vault full`）。插入的列 `from_slot = -1`、`uid = 0`，不會被 vault_dupe 誤判；與共用倉庫存取用同一把 advisory lock。
+- 測試：`tools/test-gm-give.js`（PGlite 隔離，只在記憶體）驗證一般玩家被拒、看不到紀錄、Email 大小寫、堆疊／裝備格數、上限、任務道具、找不到帳號、倉庫滿、紀錄內容、可重複安裝。瀏覽器用記憶體角色＋模擬 GM 驗證指令（一般玩家被擋、自己背包 +10 藥水、+3 匕首、數量上限、找不到道具、說明、指定 Email 的 RPC 參數與錯誤訊息、登出後失效），gm.html 用假 sb 驗證發放視窗，Console 無錯誤；沒有連正式後端。

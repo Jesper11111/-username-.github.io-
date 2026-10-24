@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261024ah：GM 發放道具（ARCHITECTURE 第 128 節）**。使用者選定：發給自己＋指定玩家、管理頁＋遊戲內指令兩邊都做。聊天輸入 `/give 道具id或名稱 [數量] [Email]`（只有 dragon_is_admin 確認過的 GM 能用，`/` 開頭不送進聊天）：沒 Email 直接進自己背包，有 Email 放進對方帳號共用倉庫；gm.html 玩家分頁新增「🎁 道具」視窗＋發放紀錄。**待使用者在 Supabase SQL Editor 執行 `tools/gm-give.sql`**，之前「發給別人」與管理頁發放會顯示還沒安裝（發給自己不需要 SQL）。test-gm-give（PGlite）通過、瀏覽器模擬 GM／一般玩家驗證、Console 無錯誤；未連正式後端實測。工作區另有劇毒蛛后修補（第127節等）未提交，本次 commit 不含。
+
 - **20261024ag：祝福／詛咒的對武器・盔甲施法的卷軸名稱上色**。使用者要求：詛咒＝深紅、祝福＝金黃帶流光神聖感（itemClass 的 scroll-bless／scroll-curse，ARCHITECTURE 通貨顏色那段後）。瀏覽器實測顏色與動畫，Console 無錯誤。同時工作區另有20261024af劇毒蛛后後續修補（ARCHITECTURE第127節等）尚未提交，本次 commit 不含那些。
 
 - **20261024ad（起版ab）：08沉默洞穴刺客藍變專屬動畫（第18.14、88節）**。使用者提供08.jpg與三份jfif；保留原圖，內建image_gen補正／側／背36格透明動作與修正稿，左向鏡像。來源tools/sprite-src/morph/silent-cave-assassin-v1含完整提示詞、原稿、腳點、prepare.py／audit及preview.py；正式images同名目錄含四PNG、單格、manifest與動態GIF。接m08.sprite與SW；沿用Lv.15、命中+2／傷害+2／攻速+6%／閃避+2%、GM與武器限制，schema7不變。test-cave-assassin-morph通過Lv.14不扣卷、Lv.15可用、原加成、四向命中／MISS／受傷不打斷／施法／到期與圖集。真實renderer隔離頁tools/cave-assassin-morph-preview.html四向四動作逐格、透明／腳點完成，Console無error／warn，不讀寫真實存檔或連外。check.ps1 ALL CHECKS PASSED、47檔混淆461KB、git diff --check通過。工作期間另一對話ac技能公共冷卻已提交，現工作區ad保留合併，不回用ab。請使用者Ctrl+F5→變形卷軸→雙刀系→沉默洞穴刺客→走動及打怪，確認外觀與刀光；實玩確認後才commit／請Push。另已回答武器技能目前無持續中毒，劇毒之刃為立即毒素魔法傷害；附魔已有持續傷害、定身、緩速、降攻速、弱化、禁療及暈眩，未改玩法。
