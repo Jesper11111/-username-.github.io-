@@ -171,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025b`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025e`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3074,3 +3074,12 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 第135節追加（20261025b）：使用者提供無右下C鍵新版騎士卷軸，原樣保存images/ui/character-status-v2.png，PC_SLOTS與SW預載改為v2；v1保留。位置／完整等比縮放／人物狀態點擊不變。
 20261025b驗證：check.ps1 ALL CHECKS PASSED、47檔混淆建置通過，隔離瀏覽器新版圖示正常、Console無error／warn。
+
+第135節追加（20261025c）：使用者要求圖片放入原圓框內。人物鈕恢復round，slot-art置中縮為按鈕72%寬高（原圖座標47.52px），border-radius:50%以CSS圓形裁切，object-fit:cover；原始PNG不修改，外圈石框露出，66×66點擊範圍不變。
+20261025c驗證：check.ps1 ALL CHECKS PASSED、47檔混淆打包通過；隔離瀏覽器圓框與人物圖片顯示正常，Console無error／warn。
+
+第135節追加（20261025d）：依使用者要求讓肖像與圓框融合。slot-art改裝飾span，圓面直徑78%，背景圖放大170%、定位50%／48%，只呈現中央騎士肖像與羊皮紙，隱去原圖方形邊框，內陰影銜接原石框。純CSS呈現，原圖保留，人物狀態操作不變。
+20261025d驗證：check.ps1 ALL CHECKS PASSED、47檔混淆建置通過；隔離瀏覽器確認肖像圓面與石框銜接、無方形邊框，Console無error／warn。
+
+第135節修正（20261025e）：使用者回報肖像偏位、後方底圖持續露出。PC_SLOTS人物鈕校正到x355／y939（66×66），圓面由78%增至90%，背景定位50%／50%並加不透明羊皮紙底色，對齊實際外框內圓及覆蓋舊底圖；其他按鈕與原圖不變。check.ps1通過，隔離瀏覽器確認。
+20261025e驗證：47檔混淆建置與git diff --check通過；隔離瀏覽器人物按鈕實點正常，Console無error／warn。
