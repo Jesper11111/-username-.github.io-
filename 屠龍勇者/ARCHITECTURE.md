@@ -2670,7 +2670,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 ## 104. 後端掉寶減量：批次結算＋只釋放一次＋定期清理（2026-10-23，版本 `20261023k`；`loot.js` 的 `lootFormBatches`／`lootSettleNow`／`lootPump`／`lootSpawn`、`tools/loot-batch.sql`）
 
 - **起因**：免費 NANO 專案反覆卡死（第 101～103 節）。原本每隻怪約 4 次 RPC（release、spawn、finish、pending）、3 次以上寫入（每次 4 個索引），而且 `loot_release` 每次生怪都把這個角色**所有**沒結算的憑證（含早就作廢的）重寫一遍，作廢的又永不刪除，越玩越重。
-- **使用者決定**（2026-10-23）：每 10 隻或 30 秒結算一次、已確認收據保留 3 天、不用 pg_cron。
+- **使用者決定**（2026-10-23）：每 10 隻或 30 秒結算一次、已確認收據保留 3 天、不用 pg_cron。（2026-10-24 升 Pro 後改為另加 pg_cron 每日全帳號清理，見第 116 節。）
 - **SQL `tools/loot-batch.sql`**（接在 server-loot-install.sql 之後，可重跑；**重跑 server-loot-install.sql 後要再跑這份**）：
   - 新表 `dragon_loot_receipts(user_id, char_id, slot, cursor, batch_id, items, diamonds, created_at)`，主鍵 (user_id, char_id, cursor)、(user_id, batch_id) 唯一；RLS、玩家不能直接讀寫。
   - `loot_release`：多加 `not(context ? 'cancelled')`，已作廢的不再改寫。
@@ -2811,3 +2811,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 ### 115.3 暫不開放（2026-10-24，使用者決定；版本不變）
 
 - 魔法娃娃暫不開放，使用者日後再增加。現有21款素材、動畫、獨立預覽、品質名單與單隻出場規則保留；目前不接正式召喚、跟隨、能力、取得方式或存檔。能力數值仍待確認，後續依使用者新指示繼續。
+
+## 116. 後端掉寶紀錄每日自動清理（2026-10-24，SQL `tools/loot-cleanup.sql`；遊戲版本不變）
+
+- **起因**：使用者查 Supabase 用量，`dragon_loot_jobs` 65 MB、`dragon_loot_receipts` 17 MB，佔資料庫約 9 成。第 104 節的清理只在玩家**自己**批次結算時順手清自己帳號最多 200 筆，不再上線的玩家、10/23 以前舊版遺留的憑證永遠不會清。
+- **使用者決定**（2026-10-24）：先一次清掉，之後用 pg_cron 每天清全部玩家（推翻第 104 節「不用 pg_cron」）。
+- **`loot_cleanup_all()`**（security definer，玩家與 anon 不能呼叫）：保留規則與 `loot_finish_batch` 的順手清理相同，只是不限帳號、不限筆數——收據與已結算帳本要已確認入帳（cursor ≤ `dragon_loot_state.acknowledged`）且超過 3 天才刪，**沒確認的不刪**；作廢超過 1 小時、超過 12 小時沒結算的憑證刪除。回傳 `{receipts, jobs}` 刪除筆數。
+- **排程**：`create extension pg_cron`，工作名 `dragon-loot-cleanup`，`17 19 * * *`（UTC，＝台灣凌晨 3:17）。重跑這份會先 `cron.unschedule` 舊的再建立；執行檔本身最後會立刻清一次。
+- **注意**：PostgreSQL 刪除後空間是給同一張表重用，主控台顯示的表大小不會馬上變小；要立刻縮小需另外單獨執行 `vacuum full public.dragon_loot_jobs;`（會短暫鎖表）。
+- **查排程紀錄**：`select * from cron.job_run_details where jobid=(select jobid from cron.job where jobname='dragon-loot-cleanup') order by start_time desc limit 10;`
+- **測試**：`tools/test-loot-cleanup.js`（PGlite 載入全部正式 SQL＋本檔去掉 pg_cron 段）：兩個帳號（含不在線、只確認到 1 的）、已確認超過 3 天才刪、未確認的收據／帳本保留、作廢／過期憑證刪除、進行中保留、重跑不多刪、玩家呼叫被拒；`test-loot-batch.js` 回歸通過。
