@@ -122,7 +122,7 @@ Object.assign(RESONANCE, {
     // 神話（四大龍）
     earthGuard:   { tier: 4, cls: ['knight', 'paladin', 'warrior'], trigger: 'hurt', p: 0.12, name: '大地震', kind: 'strike', mult: 2, aoe: true, stun: 2000, desc: '範圍：反擊 2 倍並暈眩 2 秒' },
     tideHeart:    { tier: 4, trigger: 'cd', cd: 30, name: '潮汐之癒', kind: 'heal', heal: [200, 300], spK: 2, desc: '每 30 秒回復大量 HP' },
-    galeBoots:    { tier: 4, trigger: 'hurt', p: 0.15, name: '風神', kind: 'buff', sec: 5, fx: { dodge: 0.4, spdMul: 0.08 }, desc: '5 秒內閃避 +40%、攻速 +8%' },
+    galeBoots:    { tier: 4, trigger: 'hurt', p: 0.15, name: '風神', kind: 'buff', sec: 5, fx: { dodge: 0.1, spdMul: 0.08 }, desc: '5 秒內閃避 +10%、攻速 +8%' },
     dragonHeartRing: { tier: 4, trigger: 'proc', p: 0.08, name: '龍炎', kind: 'spell', dmg: [100, 160], spK: 2, aoe: true, desc: '範圍：龍炎燒灼所有敵人（魔法）' },
 });
 // 防具掉落：稀有首領、永夜之塔守關首領、四大龍
