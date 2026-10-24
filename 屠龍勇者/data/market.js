@@ -99,6 +99,7 @@ async function marketDeliver(silent) {
 // ───────── 讀資料 ─────────
 async function marketLoad(force) {
     if (!isCloudConfigured() || !cloudLoggedIn()) return;
+    if (marketView === 'auction') { await auctionLoad(); return; }
     marketErr = '';
     if (marketView === 'mine') await marketDeliver(true);   // 看「我的上架」時順便入帳
     try {
@@ -208,11 +209,11 @@ function renderMarket() {
         <div class="btn-row"><button onclick="cloudLoginFromGame()">☁️ 回標題畫面登入</button></div></div>`;
     if (cloudBan) return `<div class="panel notice">⛔ 帳號已被管理者停權，無法使用交易所。</div>`;
     if (Date.now() - marketDeliverAt > 20000) marketDeliver(true);   // 打開交易所時入帳（20 秒內不重複查）
-    const tabs = `<div class="chips">${[['buy', '🛍️ 購買'], ['sell', '🏷️ 出售'], ['mine', '📋 我的上架']].map(([v, n]) =>
+    const tabs = `<div class="chips">${[['buy', '🛍️ 購買'], ['sell', '🏷️ 出售'], ['mine', '📋 我的上架'], ['auction', '🔨 拍賣']].map(([v, n]) =>
         `<button class="chip-btn ${marketView === v ? 'active' : ''}" onclick="marketSetView('${v}')">${n}</button>`).join('')}</div>`;
     const town = inTown() ? '' : `<div class="panel notice">交易所在村莊裡，可以瀏覽，但要回到村莊才能購買、上架、下架。</div>`;
     const err = marketErr ? `<div class="panel notice">⚠️ ${esc(marketErr)}</div>` : '';
-    return tabs + town + err + (marketView === 'sell' ? marketSellHtml() : marketView === 'mine' ? marketMineHtml() : marketBuyHtml());
+    return tabs + town + err + (marketView === 'auction' ? auctionHtml() : marketView === 'sell' ? marketSellHtml() : marketView === 'mine' ? marketMineHtml() : marketBuyHtml());
 }
 
 function marketBuyHtml() {

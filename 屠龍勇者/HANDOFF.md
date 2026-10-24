@@ -7,6 +7,8 @@
 
 - **20261025k：戰利品過濾新增「🌟 保留共鳴裝備（不論品質）」（第21節，lootKeepRes預設開）**。lootFiltered遇到有res的裝備不過濾，撿到時（本機／後端loot.js）與回收頁一鍵賣出都保留；無schema／SQL。
 
+- **20261025j拍賣完成，現工作版20261025k（第138節）**。使用者已同意新增tools/auction.sql：3小時一輪最多10件、休息2小時；每帳號一件×1登記抽唯一號碼牌，每輪random抽前10、未選保留。底價自訂≥5鑽、刊登1鑽不退、每次固定+1，成交高於底價收5%進位最低1；僅底價成交只收1。黃裝rare／傳說裝備＋祝武／祝防／26種BOSS附魔材料／curOracle／curAwaken白名單；doll預留分類（娃娃未正式開放），傭兵日後可由GM白名單擴充。GM拍賣頁可改門檻及白名單。伺服器錢包託管、超標退款、簽章／vaultSeq防複製、領物／領收入一次性；不改schema。test-auction-db／client、原market-v2回歸通過；隔離PGlite串接實際UI出5鑽100→95、領得標物、登記晨星長劍95→94顯號碼牌，PC／手機正常、Console無error／warn。**待使用者在Supabase SQL Editor執行tools/auction.sql（先確認已裝market-v2／vault-v2及最新loot-catalog.sql），首次安裝休息2小時後開第一輪；未連正式後端安裝。** Ctrl+F5→交易所→拍賣→村莊登記／競標／我的拍賣領取，驗收後才commit。工作中其他對話加入k版保留共鳴裝備，勿覆蓋其修改。
+
 - **20261025h：地圖按鈕改為專用異界裝置（第137節）**。PC原地圖鈕換內建image_gen紫藍傳送門圖images/ui/map-device-v1.png，PC／手機／分頁名稱統一異界裝置；renderMap僅mapDevicePanelHtml，無村莊或狩獵區一般傳送。保留異界卷軸詳情／開啟／進度／放棄／回卷門及排程，仍須村莊開圖。村莊傳送師與狩獵頁前往改開世界地圖。無schema／SQL。check.ps1 ALL CHECKS PASSED、atlas-travel／map-queue／map-portal通過，47檔混淆打包通過；隔離瀏覽器確認野外開圖disabled、村莊異界裝置只列T1，實點開啟後T1剩300／300、卷軸消耗，Console無error／warn。原稿／完整提示詞tools/icon-src/ui/map-device-v1。待Ctrl+F5→新紫色異界裝置鈕→確認沒有其他傳送選項、村莊開圖，驗收後才commit。
 
 - **20261025g：世界地圖所有24地名可直接傳送（第136節）**。含4村莊、野外、塔／龍穴及毒霧巢穴；點名稱→費用確認→抵達，側欄亦有傳送、下拉僅選目的地，步行保留。區域收原fee，村莊按目前村莊／所在地回城村莊tier級差×200；龍穴等級／前置／冷卻保留、塔直達1F，不自動掛機。異界傳送前提醒關閉目前地圖，確認重查角色／位置／死亡／金幣／限制，scene重建避免共用地圖仍在原地。無schema／SQL變動。test-atlas-travel24目的地／費用／取消／缺錢／死亡／異界／龍穴重查通過，check.ps1 ALL CHECKS PASSED、47檔混淆打包通過；隔離瀏覽器實點永夜塔→灰燼村扣400、村莊→沉船海灣扣400、所在地更新，Console無error／warn。預覽補載正式stylesheet。待使用者Ctrl+F5→M→點村莊／區域名稱→確認傳送及扣款、確認龍穴限制，驗收後才commit。

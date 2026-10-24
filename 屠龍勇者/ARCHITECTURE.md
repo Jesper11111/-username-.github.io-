@@ -133,6 +133,9 @@
 | `data/rank.js` | **排行榜**：`RANK_KINDS`（等級／屠龍／永夜之塔／擊殺／血盟）、`rankLoad`（呼叫 Supabase `dragon_leaderboard`，同一榜 1 分鐘快取）、`renderRank`；載入時把 `rank` 加進 `TABS`／`PANEL_FNS`（第 34 節） |
 | `data/wb.js` | **世界首領**：`WB_KINDS`（5 隻首領的種族與招式）、`wbLoad`、`wbAttack`（60 秒模擬→`wb_attack`）、`wbClaim`／`wbReward`（領獎）、`renderWb`；載入時把 `wb` 加進 `TABS`／`PANEL_FNS`（第 35 節） |
 | `data/market.js` | **交易所**：寄賣、瀏覽／搜尋／購買、出售、我的上架、交貨 `marketDeliver`（兩段式＋`player.marketGot`）、`marketGiveItem`；載入時把 `market` 加進 `TABS`／`PANEL_FNS`（第 36 節） |
+| `data/auction.js` | 鑽石拍賣、3h／2h輪次、號碼牌排隊、競標／刊登／領取及GM門檻；vault後載入（第138節） |
+| `tools/auction.sql` | 使用者同意新增的拍賣資料表／鑽石託管RPC；由使用者自行貼到Supabase安裝，不改既有SQL |
+| `tools/test-auction-db.js`／`tools/test-auction-client.js` | 隔離PGlite後端交易／輪次／權限與客戶端費用／確認／門檻檢查 |
 | `data/vault.js` | 帳號共用倉庫、鑽石（每日登入、掉落）、離線掛機扣鑽石（第 38 節） |
 | `data/presence.js` | 村莊看得到其他在線玩家（Supabase Realtime presence／broadcast）、點人聊天／邀請組隊（第 39 節） |
 | `data/codex.js` | 裝備圖鑑分頁 `renderCodex`（全部道具的分類、品質、屬性、取得方式；第 20 節），載入時把 `codex` 加進 `TABS`／`PANEL_FNS` |
@@ -160,7 +163,7 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → map-queue → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → loot → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → auction → presence → ui-frame → map-queue → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → loot → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
@@ -3097,3 +3100,15 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 使用者要求原右側地圖按鈕只開異界地圖、不提供其他傳送。保留tab id map及renderMap，內容僅回傳mapDevicePanelHtml，移除村莊／狩獵區傳送清單；TABS、PC_SLOTS、手機右抽屜統一名異界裝置。沿用異界卷軸清單、詳情／開啟、進度／放棄、回卷傳送門及排程入口，既有村莊開圖限制不改。村莊傳送師及狩獵頁前往按鈕改openWorldAtlas，世界地圖點地名傳送保留。新images/ui/map-device-v1.png為內建image_gen原創紫藍旋渦裝置，slot-device-art按鈕內等比82%，SW預載；原稿與完整提示詞在tools/icon-src/ui/map-device-v1。無新script順序、全域資料、schema或SQL。
 第137節驗證：check.ps1 ALL CHECKS PASSED，atlas-travel／map-queue／map-portal回歸通過，47檔混淆打包通過；隔離瀏覽器野外開啟disabled、村莊僅異界選項、T1實點開啟後300／300正常，Console無error／warn。
+
+## 138. 鑽石拍賣場（2026-10-25，版本20261025j；初稿i）
+
+- 使用者同意新增tools/auction.sql，由使用者貼至Supabase執行。交易所增加「拍賣」，原金幣寄賣不變；auction.js放在market／vault之後、presence之前，只在執行期引用錢包與角色。不改player或SAVE_SCHEMA。
+- 每輪3小時拍賣、2小時休息，最多10件；首次安裝後休息2小時才開第一輪。伺服器first_open為固定5小時週期錨點，所有截止依clock_timestamp，不依本機／遊戲加速時間。每輪首次RPC在全域交易鎖內建round，僅抽開場前已排隊者，random隨機排序前10件；未入選保留物品與號碼牌、不重收費。無人瀏覽時不建空過期輪次，下次依錨點處理當輪，無需排程外掛。前景競標／我的拍賣每30秒更新，刊登輸入時不自動重畫。
+- 每個帳號（非角色）最多一件queued／active。登記一樣×1，底價自訂5～100萬鑽，先收1鑽不退、物品由伺服器雲端背包移出託管、隨機唯一ticket號碼牌；相同輪次已入選後再登記只能等下一輪。已出價不能取消；排隊或無出價可取消取回。流標結束取回。最多10件在開場固定，不中途補位。
+- 第一標為底價，之後每次固定+1鑽，最高100萬。出價由帳號diamond錢包保留全額；被超標立即退回（本人續標只扣差額），不能買自己帳號物品。成交費：成交價等於起標價只收1鑽；高於底價收max(1,ceil(price×5%))。刊登費獨立收取。買方到我的拍賣領物品、賣方領淨收入；資料庫seller_claimed／buyer_claimed確保僅領一次。鑽石有dragon_dia_log紀錄。
+- 門檻依使用者回覆：q=rare黃裝及legend傳說裝備；額外白名單bWeaponScroll／bArmorScroll、26種BOSS_ENCHANTS材料、curOracle／curAwaken。預留doll分類，但正式娃娃尚未開放，不虛構可交易娃娃；未來傭兵可由GM加入分類／ID白名單，仍須正式道具／伺服器catalog支援。普通藥水、一般強化卷、低階通貨不符。GM「管理門檻」可改裝備最低品質／物品等級與額外ID／分類；伺服器再驗dragon_is_admin，已排隊物品不追溯下架。
+- 新資料表dragon_auction_config／rounds、dragon_auctions、dragon_auction_bids，RLS開啟、直接存取與內部函式execute撤權。公開auction_browse／list／bid／cancel／claim／configure皆SECURITY DEFINER固定空search_path。變更物品沿dragon_market_row與dragon_vault_commit更新簽章／vaultSeq；本機vaultOp只依回傳增減。檢查村莊、存檔身分／停權／交易所hold、金幣不涉入；角色切換／舊存檔不能複製道具。所有拍賣RPC統一鎖順序，全域pg_advisory_xact_lock串行低流量十件場，截止／出價／退款／領取在同一交易。
+- 新全域AUCTION_MIN／LIST_FEE／HOURS，auctionView／Rows／Uid／Busy／Error／Loading／Status／Registered／QueueCount／ClockOffset；auctionFee／ErrText／Load／SetView／Refresh／Pick／RowsHtml／SellHtml／Eligible／Html／Op／List／BidDialog／Cancel／Claim／ConfigDialog。
+- tools/test-auction-db.js隔離載入原SQL與新SQL重跑；驗證3h／2h／10件、下一輪保留票、帳號單件、黃裝與白名單、刊登／取消數量守恆、同價搶標／退款／差額、底價基本費與5%進位、一次領取／存檔簽章序號／直接表與內部RPC拒絕／GM權限。tools/auction-preview-server.js在127.0.0.1:8791開記憶體PGlite資料庫，tools/auction-preview.html?db=1以實際SQL串接真實UI，禁止連正式帳號與網路；測試結束按鈕僅隔離頁存在。
+第138節驗證：test-auction-db／test-auction-client與原test-market-v2通過；隔離PGlite完整UI驗證100→95出價／結標領物、95→94登記／號碼牌排隊，PC與手機可操作，Console無error／warn。共享目錄外部續版20261025k（共鳴裝備保留）保留，拍賣j一併納入k。正式SQL尚未安裝，由使用者執行（既有market-v2／vault-v2與最新loot-catalog為前提），首次休息2小時再開場。
