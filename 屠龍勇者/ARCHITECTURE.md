@@ -6,6 +6,7 @@
 ## 1. 專案結構
 
 | 檔案 | 內容 |
+| `images/icons/items/curAwaken-v1.png`、`tools/icon-src/items/awakening-stone-v1/` | 命運的覺醒石專屬虹彩晶石圖示，128px透明PNG；原稿、完整image_gen提示詞與尺寸輸出腳本（第80節） |
 | `data/map-queue.js` | 五格異界地圖排程：卷軸張數、順序、開始／暫停／取消、通關換圖、存檔轉換與進度面板（第126節） |
 | `tools/test-map-queue.js`、`tools/map-queue-preview.html` | 排程隔離測試與PC／手機實際外框預覽，不讀寫正式存檔、不連正式後端（第126節） |
 | `tools/test-morph-level-lock.js`、`tools/morph-level-lock-preview.html` | 變身等級門檻／GM豁免、拒絕不扣卷、帳號切換與RPC失敗的隔離測試及預覽（第125節） |
@@ -166,7 +167,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024y`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024aa`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2959,3 +2960,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 第126節最終驗證（20261024v）：check.ps1 ALL CHECKS PASSED（48檔／47 scripts）、47檔混淆建置460KB，輸出TEMP/dark-map-queue-20261024t（內部版本v）；test-map-queue、test-map-portal、test-item-lock、test-potion-delay、test-offline-drops、test-server-loot-client皆通過，git diff --check通過。v整合另一對話的變身武器限制與共鳴攻速8%（u），未覆寫該修改。正式帳號實玩仍待使用者確認。
 
 第126節補充（2026-10-24，20261024w）：地圖選擇改為遊戲內彩色清單（mapQueueChoose／mapQueuePick），避免原生select在手機忽略option字色。使用itemClass及既有品質CSS：普通白、魔法q-magic藍、稀有q-rare黃；選中名稱、已設定欄位標題及執行中地圖同樣保留品質色。原map-queue-select-N改為hidden input存選擇uid，map-queue-pick-N為可點選按鈕，按設定才存入排程；不改schema或排程規則。新增.map-queue-picker／.map-queue-choice樣式；預覽加入魔法T6與稀有T7，PC與手機實點選擇和設定，字色實測rgb(106,168,255)／rgb(255,216,74)，Console無error／warn，test-map-queue及check.ps1通過。
+
+第80節補充（2026-10-24，20261024aa）：命運的覺醒石專屬外觀為原創虹彩紫晶、破碎金色符環與白金星芒核心，內建image_gen生成透明原稿，保留於tools/icon-src/items/awakening-stone-v1/source.png；完整提示詞PROMPT.md，prepare.ps1保留全幅及alpha、等比縮入112px後置中128×128，四邊至少8px透明，正式檔images/icons/items/curAwaken-v1.png。
+- icons.js的ITEM_IMG.curAwaken指向curAwaken-v1，所有共用itemIconHtml介面直接使用新圖；craft.openCraftDialog的覺醒石cc-i及ui-panels.renderGearForge的通貨列也改用itemIconHtml，其他通貨沿原圖示。新增.craft-cur .cc-i .ico固定28px。sw.js預載新圖?v=1，保持安裝版離線可用。不改掉率、權重、能力、價格、存檔、SQL。
+- tools/item-art-preview.html改讀index目前版本號，避免測試舊快取；test-item-art同步434件道具／287張獨立PNG，含覺醒石背包、鍛造列、改造視窗接線驗證。RGBA／128px／透明留邊檢查、全圖檔案存在與不重複檢查、瀏覽器圖庫成功1張缺0張且Console無error／warn。

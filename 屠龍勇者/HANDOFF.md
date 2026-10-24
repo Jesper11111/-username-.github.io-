@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261024aa：命運的覺醒石專屬外觀（第80節）**。使用者要求並同意當天版本從z延伸至aa。內建image_gen原創虹彩紫晶＋金色符環＋白金星芒，正式128×128透明PNG images/icons/items/curAwaken-v1.png；原稿／完整提示詞／prepare.ps1在tools/icon-src/items/awakening-stone-v1。背包、圖鑑、倉庫、交易所共用新圖，鍛造通貨列／改造視窗也接上，SW預載。只換美術不改數值或SQL。RGBA／留邊／test-item-art（434道具、287新PNG）通過，圖庫實際顯示缺圖0、Console無error／warn。check.ps1 ALL CHECKS PASSED、混淆建置47檔461KB、新圖確實打包且hash相同、git diff --check通過；請使用者Ctrl+F5→背包或圖鑑搜尋命運的覺醒石→鍛造裝備改造確認新圖；實玩確認後才commit。
+
 - **20261024z：變身攻速最高 +20%**（`MORPH_SPD_MAX`；神聖裁決劍聖 23% → 20%，其他不變）。使用者要求。
 - **20261024y（起版w）：地圖排程依品質顯色（第126節）**。地圖選單換遊戲內清單，普通白／魔法藍／稀有黃；選中、設定後標題及執行中名稱也保留顏色，不改schema或排程行為。PC／手機實點與RGB確認、Console無error／warn，test-map-queue與check.ps1通過。待使用者重新整理→地圖排程→選擇地圖，確認顏色方便辨識；實玩確認後才commit。另使用者詢問SP，已依程式說明為魔法攻擊力，增加法術傷害及治癒回復量，實際依技能spK倍率。
 

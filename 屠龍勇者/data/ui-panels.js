@@ -937,7 +937,7 @@ let craftMode = 'gear';
 function setCraftMode(m) { craftMode = m; renderPanel(); }
 // 裝備改造：身上與背包的武器、防具，用通貨改詞綴（craft.js openCraftDialog）
 function renderGearForge() {
-    const curs = CURRENCY_IDS.filter(c => countItem(c) > 0).map(c => `${CURRENCY[c].icon}<span class="cur-${c}">${ITEMS[c].name}</span>×${fmt(countItem(c))}`).join('　');
+    const curs = CURRENCY_IDS.filter(c => countItem(c) > 0).map(c => `${c === 'curAwaken' ? itemIconHtml(c) : CURRENCY[c].icon}<span class="cur-${c}">${ITEMS[c].name}</span>×${fmt(countItem(c))}`).join('　');
     const gear = x => ['weapon', 'armor'].includes(ITEMS[x.id].cat);
     const row = (x, where) => `<div class="list-row"><div class="item-info">${itemThumbHtml(x.id)}<b class="${itemClass(x)}">${esc(itemName(x))}</b><small>${where}${x.af && x.af.length ? '　詞綴 ' + x.af.length + ' 條' : ''}</small></div>
         <div class="qty-btns"><button class="mini secondary" onclick="openItemDialog(${x.uid})">詳情</button><button class="mini" onclick="openCraftDialog(${x.uid})">🔮 改造</button></div></div>`;

@@ -101,7 +101,7 @@ function openCraftDialog(uid) {
         if (isMap && !MAP_CURRENCY[cid]) return '';
         const ok = n > 0 && currencyCan(cid, x);
         return `<button class="craft-cur ${ok ? '' : 'off'}" onclick="craftUseBtn('${cid}',${uid})" ${ok ? '' : 'disabled'}>
-            <span class="cc-i">${c.icon}</span><span class="cc-n"><span class="cur-${cid}">${c.name}</span> <b>×${fmt(n)}</b></span><small>${isMap ? MAP_CURRENCY[cid].desc : c.desc}</small></button>`;
+            <span class="cc-i">${cid === 'curAwaken' ? itemIconHtml(cid) : c.icon}</span><span class="cc-n"><span class="cur-${cid}">${c.name}</span> <b>×${fmt(n)}</b></span><small>${isMap ? MAP_CURRENCY[cid].desc : c.desc}</small></button>`;
     }).join('');
     openDialog('🔮 通貨改造', `<div class="craft-item">${itemDescHtml(x)}</div><div class="craft-list">${rows}</div>`,
         [{ text: '關閉', cls: 'secondary', onClick: () => refreshUI() }]);

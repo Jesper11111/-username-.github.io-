@@ -5,7 +5,7 @@
 (async()=>{
 const index=await(await fetch('../index.html')).text(),style=index.match(/<style>([\s\S]*?)<\/style>/)[1];
 const css=document.createElement('style');css.textContent=style+'body{background:#16191f;overflow:auto;height:auto}.ico{display:block}';document.head.prepend(css);
-for(const[,file]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=/g)){if(/\/(main|pwa|cloud)\.js$/.test(file))continue;await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='../'+file+'?v=20261021p';s.onload=resolve;s.onerror=reject;document.head.append(s);});}
+for(const[,file,version]of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"\s]+)/g)){if(/\/(main|pwa|cloud)\.js$/.test(file))continue;await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='../'+file+'?v='+version+'&preview=item-art-awaken-v1';s.onload=resolve;s.onerror=reject;document.head.append(s);});}
 SIM_MODE=true;
 let renderSeq=0;
 function render(){const seq=++renderSeq,mode=document.getElementById('view').value;document.getElementById('grid').hidden=mode!=='gallery';document.getElementById('grid').style.display=mode==='gallery'?'grid':'none';document.getElementById('sample').hidden=mode==='gallery';
