@@ -625,16 +625,18 @@ function visualMonster() {
 
 // 這個區域裡角色走得到的地板（大地圖只算目前地圖的區域）；地圖不變就沿用，角色跑到別的連通塊（瞬移）才重算
 // 只生在走得到的格子（障礙物、牆圍住的死角生怪會讓角色永遠打不到，2026-10-12 使用者回報異界找不到怪打）
+// 只走同一個地圖的格子（2026-10-24 使用者回報怪沒生在該區域）：大地圖裡同一個地圖可能分成好幾塊（精靈森林有一塊在右下角），
+//   以前穿過別的地圖填充，怪會生到遠處那塊；現在只算角色所在、連在一起的那一塊。角色剛好站在區外時才照舊穿過別的地圖找。
 function huntSpots() {
     const pl = scene.pl, mw = scene.mw, id = player.loc.id, c = scene.spots;
     if (c && c.id === id && c.reach.has(pl.y * mw + pl.x)) return c.list;
-    const reach = new Set([pl.y * mw + pl.x]), q = [[pl.x, pl.y]], list = [];
+    const reach = new Set([pl.y * mw + pl.x]), q = [[pl.x, pl.y]], list = [], own = inHuntZone(pl.x, pl.y);
     while (q.length) {
         const [x, y] = q.pop();
         if (inHuntZone(x, y)) list.push([x, y]);
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
             const nx = x + dx, ny = y + dy, k = ny * mw + nx;
-            if (nx < 0 || ny < 0 || nx >= mw || ny >= scene.mh || reach.has(k) || scene.grid[ny][nx] !== 0) continue;
+            if (nx < 0 || ny < 0 || nx >= mw || ny >= scene.mh || reach.has(k) || scene.grid[ny][nx] !== 0 || (own && !inHuntZone(nx, ny))) continue;
             reach.add(k); q.push([nx, ny]);
         }
     }
