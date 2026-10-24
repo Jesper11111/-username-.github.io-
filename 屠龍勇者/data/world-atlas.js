@@ -1,4 +1,4 @@
-// 獨立繪製的世界總覽。地標只負責資訊與實際步行，不繞過傳送費用／副本入口。
+// 獨立繪製的世界總覽。地標可直接傳送，沿用區域費用與龍穴限制，亦保留實際步行。
 const ATLAS_POINTS = SCENE_WORLD_TILES.filter((r, i, a) => a.findIndex(q => q.zone === r.zone) === i).map(r => ({
     id: r.zone, kind: 'zone', x: (r.x + 0.5) / 188 * 100, y: (r.y + 0.5) / 149 * 100, target: r.start,
 })).concat([
@@ -18,9 +18,9 @@ function ensureWorldAtlas() {
     if ($('world-atlas')) return;
     const root = document.createElement('div'); root.id = 'world-atlas'; root.hidden = true;
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', '黑暗大陸世界地圖');
-    root.innerHTML = `<section class="atlas-shell"><header><div><small>黑暗大陸 · 大陸誌</small><h2>世界地圖</h2></div><nav><button onclick="atlasZoom(-1)" aria-label="縮小地圖">−</button><button onclick="atlasZoom(1)" aria-label="放大地圖">＋</button><button onclick="atlasZoom(0)">全圖</button><button onclick="closeWorldAtlas()" aria-label="關閉世界地圖">✕</button></nav></header><div class="atlas-layout"><div class="atlas-scroll"><div class="atlas-paper"><img src="${SCENE_ART_ROOT}world-atlas.jpg?v=${GAME_VERSION}" alt="原創大陸地形圖：森林、海岸、雪原與荒漠"><div class="atlas-points"></div><span class="atlas-player" title="你的位置"></span><span class="atlas-compass">北<br>✦<br>南</span></div></div><aside><label for="atlas-location">目的地</label><select id="atlas-location" aria-label="選擇地圖位置"></select><div id="atlas-detail"></div><p class="atlas-legend"><i>◆</i> 城鎮　<span>●</span> 狩獵區<br>◇ 塔與龍穴　<span class="atlas-dot">●</span> 所在位置</p><p class="atlas-help">可拖動捲動條查看地圖，使用 ＋／− 放大縮小。<br>M 開關地圖 · Esc 關閉</p></aside></div><footer>山脈、海灣、古道與遺跡 · 點選地標查看詳情</footer></section>`;
+    root.innerHTML = `<section class="atlas-shell"><header><div><small>黑暗大陸 · 大陸誌</small><h2>世界地圖</h2></div><nav><button onclick="atlasZoom(-1)" aria-label="縮小地圖">−</button><button onclick="atlasZoom(1)" aria-label="放大地圖">＋</button><button onclick="atlasZoom(0)">全圖</button><button onclick="closeWorldAtlas()" aria-label="關閉世界地圖">✕</button></nav></header><div class="atlas-layout"><div class="atlas-scroll"><div class="atlas-paper"><img src="${SCENE_ART_ROOT}world-atlas.jpg?v=${GAME_VERSION}" alt="原創大陸地形圖：森林、海岸、雪原與荒漠"><div class="atlas-points"></div><span class="atlas-player" title="你的位置"></span><span class="atlas-compass">北<br>✦<br>南</span></div></div><aside><label for="atlas-location">目的地</label><select id="atlas-location" aria-label="選擇地圖位置"></select><div id="atlas-detail"></div><p class="atlas-legend"><i>◆</i> 城鎮　<span>●</span> 狩獵區<br>◇ 塔與龍穴　<span class="atlas-dot">●</span> 所在位置</p><p class="atlas-help">可拖動捲動條查看地圖，使用 ＋／− 放大縮小。<br>M 開關地圖 · Esc 關閉</p></aside></div><footer>山脈、海灣、古道與遺跡 · 點選地名傳送前往</footer></section>`;
     document.body.appendChild(root);
-    root.querySelector('.atlas-points').innerHTML = ATLAS_POINTS.filter(p => p.art).map(p => `<img class="atlas-landmark" src="${p.art}" alt="" style="left:${p.x}%;top:${p.y}%">`).join('') + ATLAS_POINTS.map((p, i) => `<button class="atlas-pin ${p.kind}${p.target ? '' : ' remote'}" style="left:${p.x}%;top:${p.y}%" data-point="${i}" aria-label="${atlasPointName(p)}" onclick="atlasSelect(${i})"><b>${p.kind === 'town' ? '◆' : p.entrance || p.id === 'tower' || p.id === 'ivory' || !p.target ? '◇' : '●'}</b><span>${atlasPointName(p)}</span></button>`).join('');
+    root.querySelector('.atlas-points').innerHTML = ATLAS_POINTS.filter(p => p.art).map(p => `<img class="atlas-landmark" src="${p.art}" alt="" style="left:${p.x}%;top:${p.y}%">`).join('') + ATLAS_POINTS.map((p, i) => `<button class="atlas-pin ${p.kind}${p.target ? '' : ' remote'}" style="left:${p.x}%;top:${p.y}%" data-point="${i}" aria-label="${atlasPointName(p)}" onclick="atlasTravel(${i})"><b>${p.kind === 'town' ? '◆' : p.entrance || p.id === 'tower' || p.id === 'ivory' || !p.target ? '◇' : '●'}</b><span>${atlasPointName(p)}</span></button>`).join('');
     const list = $('atlas-location');
     list.innerHTML = ATLAS_POINTS.map((p, i) => `<option value="${i}">${p.kind === 'town' ? '城鎮 · ' : ''}${atlasPointName(p)}</option>`).join('');
     list.addEventListener('change', () => atlasSelect(Number(list.value)));
@@ -56,8 +56,40 @@ function atlasSelect(index) {
     const z = p.kind === 'zone' && ZONE_BY_ID[p.id], here = player.loc.type === p.kind && player.loc.id === p.id;
     const walk = p.target && scene && scene.bg && scene.bg.big;
     const sub = p.kind === 'town' ? '安全城鎮' : z && z.lv ? `建議 Lv.${z.lv[0]}～${z.lv[1]}` : '副本入口';
-    const hint = p.kind === 'town' ? '請透過傳送師前往城鎮。' : p.entrance ? '入口位於南境林道。步行抵達後點「毒霧巢穴入口」名牌，支付 600 金幣進入獨立巢穴。' : p.id === 'tower' || p.id === 'ivory' ? '步行到野外傳送師後，交談進入塔內。' : p.target ? '沿道路步行前往；路上會穿越其他狩獵區。' : '請由地圖面板／對應入口進入，條件與費用維持原設定。';
-    $('atlas-detail').innerHTML = `<small>${here ? '目前所在地' : p.kind === 'town' ? '城鎮' : '探索地點'}</small><h3>${atlasPointName(p)}</h3><strong>${sub}</strong><p>${hint}</p>${walk ? `<button class="atlas-go" onclick="atlasWalkTo(${index})">步行${p.entrance || p.id === 'tower' || p.id === 'ivory' ? '至入口' : '前往'}</button>` : '<p class="atlas-note">目前所在場景無法直接步行至此。</p>'}`;
+    const fee = atlasTravelFee(p), why = z ? zoneBlockReason(z) : '';
+    const hint = `傳送費 💰${fmt(fee)}。${p.kind === 'town' ? '依目前城鎮或所在地的回城村莊計算城鎮級差。' : z.type === 'tower' ? '直接傳送至 1F，其他樓層仍依原解鎖規則。' : '直接傳送抵達，進入限制維持原設定。'}${why ? ' ' + why : ''}`;
+    $('atlas-detail').innerHTML = `<small>${here ? '目前所在地' : p.kind === 'town' ? '城鎮' : '探索地點'}</small><h3>${atlasPointName(p)}</h3><strong>${sub}</strong><p>${hint}</p><button class="atlas-go" onclick="atlasTravel(${index})" ${here || why ? 'disabled' : ''}>${here ? '目前所在地' : '傳送前往'}</button>${walk ? `<button class="atlas-go secondary" onclick="atlasWalkTo(${index})">步行${p.entrance || p.id === 'tower' || p.id === 'ivory' ? '至入口' : '前往'}</button>` : ''}`;
+}
+function atlasTravelFee(p) {
+    if (p.kind === 'zone') return ZONE_BY_ID[p.id].fee;
+    const from = inTown() ? player.loc.id : currentZone().town;
+    return TOWN_TRAVEL_FEE * Math.abs(TOWNS[p.id].tier - TOWNS[from].tier);
+}
+function atlasTravel(index) {
+    const p = ATLAS_POINTS[index];
+    if (!p || !player || !scene || walkHome || player.hp <= 0) return;
+    atlasSelect(index);
+    if (player.loc.type === p.kind && player.loc.id === p.id) { showToast('已經在這個地點'); return; }
+    const z = p.kind === 'zone' && ZONE_BY_ID[p.id], why = z && zoneBlockReason(z), fee = atlasTravelFee(p);
+    if (why) { showToast(why); return; }
+    if (player.gold < fee) { showToast(`金幣不足（傳送費 ${fmt(fee)}）`); return; }
+    const owner = player, origin = JSON.stringify(player.loc), run = player.mapRun;
+    closeWorldAtlas();
+    gameConfirm('世界地圖傳送', `傳送到${atlasPointName(p)}，費用 ${fmt(fee)} 金幣。${run ? '\n離開會關閉目前異界地圖，地圖排程將暫停。' : ''}`, () => {
+        if (player !== owner || JSON.stringify(player.loc) !== origin || player.mapRun !== run || walkHome || player.hp <= 0) { showToast('角色或所在地已變更，請重新選擇目的地'); return; }
+        const blocked = z && zoneBlockReason(z);
+        if (blocked) { showToast(blocked); return; }
+        if (player.gold < fee) { showToast(`金幣不足（傳送費 ${fmt(fee)}）`); return; }
+        stopHunt();
+        endMapRun('世界地圖傳送離開異界');
+        player.gold -= fee;
+        player.loc = { type: p.kind, id: p.id };
+        if (z && z.type === 'tower') player.loc.floor = 1;
+        scene = null; sceneSpawnAt = null; session = null;
+        openTabs = []; currentTab = 'hunt';
+        addLog(`🌀 世界地圖傳送到${atlasPointName(p)}`, 'sys');
+        saveGame(); renderTabs(); refreshUI();
+    }, '傳送前往');
 }
 function atlasWalkTo(index) {
     const p = ATLAS_POINTS[index];

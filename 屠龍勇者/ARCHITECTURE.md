@@ -171,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025f`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025g`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3085,3 +3085,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 20261025e驗證：47檔混淆建置與git diff --check通過；隔離瀏覽器人物按鈕實點正常，Console無error／warn。
 
 第135節垂直對齊修正（20261025f）：使用者近照顯示圓面仍偏下約8原圖像素，x355不變、y939改931，中心改為388／964，維持66×66及90%圓面。check.ps1 ALL CHECKS PASSED、47檔混淆建置通過；隔離瀏覽器外觀檢查、Console無error／warn。待使用者近照驗收。
+
+## 136. 世界地圖點地名直接傳送（2026-10-25，版本20261025g）
+
+使用者要求所有區域與村莊名稱可點擊傳送。world-atlas.js地標點擊改呼叫atlasTravel，側欄增加傳送前往並保留步行；下拉仍選資訊、不直接扣費。新增atlasTravelFee：區域沿ZONE.fee；村莊依目前村莊或野外回城村莊的tier差×200，同地點不收費不移動。點名稱先顯示gameConfirm費用，取消不扣款；確認重查同角色／所在地／異界狀態／存活／步行／金幣及zoneBlockReason，保留龍穴等級、前置討伐及真實時間冷卻。塔直達1F，毒霧巢穴直達洞內，NPC入口原操作仍可使用。傳送stopHunt、endMapRun（對話預警異界關閉）、扣款、更新所在地，清scene／sceneSpawnAt／session重建正確落點，關閉分頁並存檔，不自動開掛機。無存檔欄位／SQL更動。tools/test-atlas-travel.js驗證24地標含四村莊、共用地圖落點、費用、取消／缺款／死亡／位置變更／異界／龍穴限制重查。隔離預覽補載正式外部stylesheet。此節取代第86／131節世界地標僅步行限制。
+第136節驗證：check.ps1 ALL CHECKS PASSED，test-atlas-travel／test-map-queue／test-map-portal通過，47檔混淆467KB，git diff --check通過。隔離瀏覽器實點村莊與區域傳送、核對扣費及所在地，完整世界地圖畫面與側欄正常，Console無error／warn。待真實角色實玩確認後才commit。
