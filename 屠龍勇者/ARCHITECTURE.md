@@ -171,7 +171,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025e`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261025f`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -3083,3 +3083,5 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 
 第135節修正（20261025e）：使用者回報肖像偏位、後方底圖持續露出。PC_SLOTS人物鈕校正到x355／y939（66×66），圓面由78%增至90%，背景定位50%／50%並加不透明羊皮紙底色，對齊實際外框內圓及覆蓋舊底圖；其他按鈕與原圖不變。check.ps1通過，隔離瀏覽器確認。
 20261025e驗證：47檔混淆建置與git diff --check通過；隔離瀏覽器人物按鈕實點正常，Console無error／warn。
+
+第135節垂直對齊修正（20261025f）：使用者近照顯示圓面仍偏下約8原圖像素，x355不變、y939改931，中心改為388／964，維持66×66及90%圓面。check.ps1 ALL CHECKS PASSED、47檔混淆建置通過；隔離瀏覽器外觀檢查、Console無error／warn。待使用者近照驗收。

@@ -27,7 +27,7 @@ const SLOT_X = [410, 500, 590, 680, 770, 858];   // 原圖中 6 個格子的左�
 const PC_W = 2000, PC_H = 1116;
 const PC_SQ = k => ({ x: 590 + k * 70, y: 936, w: 62, h: 60 });
 const PC_SLOTS = [
-    { icon: '<span class="slot-art" aria-hidden="true"></span>', name: '人物狀態', tab: 'char',  x: 355, y: 939, w: 66, h: 66, round: true },
+    { icon: '<span class="slot-art" aria-hidden="true"></span>', name: '人物狀態', tab: 'char',  x: 355, y: 931, w: 66, h: 66, round: true },
     { icon: '✨', name: '技能',     tab: 'skill', x: 447, y: 933, w: 66, h: 66, round: true },
     // PC_SQ(0)～(1)：原本任務、背包，2026-10-24 改成快捷欄第 23～24 格；PC_SQ(2)～(7)：原本藥水、卷軸 6 格，2026-10-15 改成快捷欄第 17～22 格（hotbar.js）
     // 功能鈕集中在快捷欄右邊（2026-10-24 使用者要求，第 129 節）
