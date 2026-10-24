@@ -159,7 +159,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024b`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024c`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2821,3 +2821,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **注意**：PostgreSQL 刪除後空間是給同一張表重用，主控台顯示的表大小不會馬上變小；要立刻縮小需另外單獨執行 `vacuum full public.dragon_loot_jobs;`（會短暫鎖表）。
 - **查排程紀錄**：`select * from cron.job_run_details where jobid=(select jobid from cron.job where jobname='dragon-loot-cleanup') order by start_time desc limit 10;`
 - **測試**：`tools/test-loot-cleanup.js`（PGlite 載入全部正式 SQL＋本檔去掉 pg_cron 段）：兩個帳號（含不在線、只確認到 1 的）、已確認超過 3 天才刪、未確認的收據／帳本保留、作廢／過期憑證刪除、進行中保留、重跑不多刪、玩家呼叫被拒；`test-loot-batch.js` 回歸通過。
+
+## 117. 交易所三項修正：賣家入帳確認時機、過期商品不佔名額、道具分類以伺服器為準（2026-10-24，版本 `20261024c`；`market.js` 的 `marketDeliver`、SQL `tools/vault-v2.sql` 的 `dragon_item_cat`／`vault_put2`、`tools/market-v2.sql` 的 `market_list2`）
+
+- **賣家入帳**：原本 `marketDeliver` 把賣出金幣加進角色後，不管 `cloudFlush` 成功與否都送 `market_ack`。上傳失敗（忙碌、被拒收）後這台進度又被雲端蓋掉（衝突選雲端、共用倉庫序號改用雲端）時，那筆收入永久消失。現在記下開始時的 `player`／`currentSlot`，角色沒換且 `cloudSyncedSlot(slot)` 為真才 ack；沒確認的下次 `market_pending` 會再出現，`player.marketGot` 擋重複入帳，若本機進度被蓋掉則 marketGot 也一起回到舊狀態，會正確重新入帳。
+- **過期商品不佔名額**：`market_list2` 的 10 件上限只算 `state='active' and expires_at > now()`；過期沒取回的仍可在「我的上架」取回。
+- **道具分類以伺服器為準**：新增 `dragon_item_cat(id)`（內部用，玩家不能呼叫）：`q_%` 一律 `quest`，其他查 `dragon_loot_catalog.data.items[id].cat`，查不到回 null。`market_list2` 用它決定分類（不採用玩家送來的 `p_cat`，查不到才用 p_cat）、存進 `dragon_market.cat`，quest 拒絕；`vault_put2` 也拒絕 quest。原本直接呼叫 API 謊報分類可以上架／存入任務道具。
+- **部署**：Supabase SQL Editor 依序重跑 `tools/vault-v2.sql`、`tools/market-v2.sql`（都可重複執行）。遊戲端修正不依賴 SQL，可先上線。
+- **測試**：`test-market-v2.js` 加任務道具謊報分類被拒（交易所＋共用倉庫）、分類以伺服器為準、過期不佔名額、未過期滿 10 件擋；`test-vault-v2-client.js` 加 ⑤-1：真實遊戲賣出後存檔被拒收時不 ack、下次上傳成功才 ack 且金幣只入帳一次（舊版 market.js 跑此段會失敗）。check.ps1、混淆建置（445 KB）、瀏覽器載入無錯誤。

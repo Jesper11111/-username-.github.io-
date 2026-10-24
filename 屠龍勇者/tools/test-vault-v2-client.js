@@ -164,10 +164,10 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         await db.exec("reset role; select set_config('request.jwt.claim.sub','" + uid + "',false)");
         const sellerGot = async () => (await db.query('select seller_got from public.dragon_market where id=$1', [sellId])).rows[0].seller_got;
         const g3 = player.gold;
-        cloudBackoffUntil = Date.now() + 60000;   // 伺服器忙碌：存檔傳不上去
+        cloudSlotHold[0] = Date.now() + 600000;   // 這格剛被拒收：存檔暫時傳不上去
         await marketDeliver(true);
         assert.equal(player.gold, g3 + 95, '本機先入帳'); assert.equal(await sellerGot(), false, '沒上傳成功不確認入帳');
-        cloudBackoffUntil = 0;
+        delete cloudSlotHold[0];
         await marketDeliver(true);
         assert.equal(player.gold, g3 + 95, '下次不重複入帳'); assert.equal(await sellerGot(), true, '上傳成功才確認');
         assert.equal(Number((await cloud()).data.player.gold), g3 + 95);
