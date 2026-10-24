@@ -439,6 +439,7 @@ function itemClass(inst) {
     if (d.safe >= 0 && (inst.ench || 0) > d.safe) return 'ench-hi';
     if ((inst.ench || 0) < 0) return 'cursed';
     if (inst.q) return QUALITY[inst.q].cls;
+    if (d.scroll === 'enchant' && d.bless) return d.bless > 0 ? 'scroll-bless' : 'scroll-curse';   // 祝福＝金色流光、詛咒＝深紅（index.html）
     if (d.cat === 'elixir' || ((d.cat === 'weapon' || d.cat === 'armor') && !d.price) || (d.cat === 'scroll' && d.bless === 1)) return 'rare-item';
     if (d.cat === 'currency') return 'cur-' + inst.id;   // 通貨各有顏色，命運的覺醒石彩色流光（index.html .cur-*）
     return '';

@@ -168,7 +168,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024ad`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024ag`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1162,6 +1162,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   Lv.70 以上的怪掉通貨時約 0.16% 是覺醒石。圖鑑取得方式顯示「Lv.70 以上的怪物」「極稀有」。
 - **通貨顏色**（`20261024m`，使用者要求）：`itemClass` 對通貨回傳 `cur-<id>`（index.html），點化石淡藍、重鑄石綠、淬鍊石銅、晉升石金、混沌石紫、剝離石紅、命運石青、神諭石白光、
   命運的覺醒石彩色流光（漸層文字＋`curFlow` 動畫，`prefers-reduced-motion` 時不動）；改造視窗、鍛造 NPC 通貨列也套用。
+- **衝裝卷軸名稱顏色**（`20261024ag`，使用者要求）：`itemClass` 對 `scroll:'enchant'` 的祝福卷軸回傳 `scroll-bless`（金色漸層＋白光掃過的 `blessFlow` 流光、金色光暈），詛咒卷軸回傳 `scroll-curse`（深紅 #a8122b＋暗紅光暈）；一般衝裝卷軸維持白色。只改顯示，不改數值、存檔。
 
 - **特殊詞綴**（2026-10-24，`20261024l`，使用者要求；`affix.js` `SPECIAL_AFFIXES`，存在 `inst.af` 並標 `sx: 1`，每件最多 1 條，任何部位都能出，掉落不會擲到）：
   數值依物品等級 70～110 成長（`specialIl`），上限：全能力 `allStat` +1～3（力敏體智精各加，`affixFx` 展開）、首領增傷 `bossDmg` 5～15%（`bossDmgMult`，物理與魔法傷害）、
