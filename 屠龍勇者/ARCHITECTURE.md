@@ -161,7 +161,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024e`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024f`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2851,3 +2851,11 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **部署**：先在Supabase執行整份 `tools/clan-character.sql`（須已有char-tombstone.sql），再發佈20261024e；執行後舊版血盟操作會被擋，需重新整理新版。重跑supabase.sql會還原舊函式／權限，因此必須再跑本檔。AI未連正式資料庫執行。
 - **驗證**：`test-clan-character.js`載入正式supabase＋墓碑＋新遷移，涵蓋舊資料遷移、同名歧義完整回滾、已刪副盟主排除、墓碑／DELETE／替換角色退盟、另一欄位仍有同角色保留、接班／空盟解散、同帳號多角色權限、跨盟與舊RPC／內部函式拒絕、入盟申請／審核／清除、排行榜／頻道、重跑；`test-clan-character-client.js`載入實際遊戲腳本，涵蓋RPC身分、await上傳失敗與切角、舊回應忽略、同帳號分身按鈕ID、聊天與副本身分清除。
 - **驗證結果**：上述新測試、test-char-owner與test-vault-v2-client回歸通過；check.ps1 ALL CHECKS PASSED（47檔／46script／20261024e）、git diff --check與混淆建置46檔445KB通過；瀏覽器首頁v20261024e無error／warn。正式登入血盟操作須待使用者執行SQL後實玩驗收。
+
+## 120. 修正共用倉庫複製漏洞：同一瀏覽器兩個分頁（2026-10-24，版本 `20261024f`；`vault.js` 的 `vaultBase`／`vaultNoteLoaded`／`vaultEnvelope`、`save.js` 的 `applySaveData`／`saveGame`、`loot.js` 的 `lootApply`）
+
+- **實際案例**：alen1144「太初」（欄位 1）2026-10-23 23:51（UTC）把 3 張相同的「冥火」異界地圖 T4（uid 141～143）存進共用倉庫，23:55 取出，23:56 存檔又出現原本 uid 141～143 的同 3 張 → `dragon_vault_audit` 記 vault_dupe（倉庫 #761～#764）。
+- **漏洞**：`vaultEnvelope(data, previous)` 的存取序號取「本機 localStorage 上一份」與 `vaultLive` 的較大值。同一個瀏覽器的兩個分頁共用 localStorage：分頁 A 存入倉庫後把新序號寫進 localStorage，舊分頁 B（記憶體裡道具還在）存檔時借用這個新序號，上傳就通過 `dragon_vault_save_guard`；跳進度衝突時選「用這台的進度」也一樣（upsert 一樣過序號檢查）。匯入舊存檔代碼也會借用 localStorage 的序號。
+- **修正**：序號只取這個分頁自己知道的——`vaultBase`（`applySaveData` 載入角色時記下存檔裡的 `vaultSeq`；改用雲端進度、匯入都會經過）與 `vaultLive`（自己存取倉庫／交易所後）。`vaultEnvelope(data)` 不再讀 previous。`lootApply` 寫入目前角色時也改用 `vaultEnvelope`（原本沿用 localStorage 那份的序號，同樣能被另一分頁借用）。舊分頁序號舊 → 伺服器拒收 → `cloudVaultAdopt` 改用雲端進度。
+- **測試**：`test-vault-v2-client.js` ⑤-1b：分頁 A 存入長劍，切換成分頁 B 的記憶體（localStorage 是 A 寫的）＋舊 cloudKnown，存檔後選「用這台的進度」→ 雲端仍沒有那把劍、分頁 B 改用雲端進度（修正前此段失敗＝漏洞重現）。全部回歸、check.ps1、混淆建置、瀏覽器載入無錯誤。
+- **待處理**：已經複製出來的道具（alen1144 那 3 張地圖等）要不要刪、要不要處分由使用者決定；其他帳號可用 gm.html 的 vault_dupe 紀錄找。

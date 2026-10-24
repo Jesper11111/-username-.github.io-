@@ -125,7 +125,7 @@ function saveGame(force) {
     let previous = null;
     try { const raw = localStorage.getItem(slotKey(currentSlot)); if (raw) previous = saveParse(raw); } catch (e) {}
     lootEnvelope(data, previous);
-    vaultEnvelope(data);   // 共用倉庫序號：只用這個分頁自己知道的（vault.js，第 93、118 節）
+    vaultEnvelope(data);   // 共用倉庫序號：只用這個分頁自己知道的（vault.js，第 93、120 節）
     try { localStorage.setItem(slotKey(currentSlot), saveEncode(JSON.stringify(data))); } catch (e) { return; /* 無痕模式等存不了，略過 */ }
     cloudMarkDirty(currentSlot);   // 登入雲端時記號，cloud.js 定時上傳（只上傳屬於目前帳號的角色）
 }
@@ -191,7 +191,7 @@ function applySaveData(data) {
     player = guardWrap(migrateSave(data));   // 金幣、經驗等改成偽裝存放（guard.js）
     playerOwner = saveOwnerOf(data); playerOwnerEmail = data.ownerEmail || '';
     lastSaveAt = data.t || Date.now();
-    vaultNoteLoaded(data);   // 共用倉庫序號（vault.js，第 118 節）
+    vaultNoteLoaded(data);   // 共用倉庫序號（vault.js，第 120 節）
     return true;
 }
 

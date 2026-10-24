@@ -172,7 +172,7 @@ const root = path.resolve(__dirname, '..'), uid = '33333333-3333-4333-8333-33333
         assert.equal(player.gold, g3 + 95, '下次不重複入帳'); assert.equal(await sellerGot(), true, '上傳成功才確認');
         assert.equal(Number((await cloud()).data.player.gold), g3 + 95);
 
-        // ⑤-1b 同一個瀏覽器開兩個分頁（第 118 節）：分頁 A 存進倉庫後，舊分頁 B 存檔時不能借用 A 寫進 localStorage 的新序號把道具蓋回雲端
+        // ⑤-1b 同一個瀏覽器開兩個分頁（第 120 節）：分頁 A 存進倉庫後，舊分頁 B 存檔時不能借用 A 寫進 localStorage 的新序號把道具蓋回雲端
         const blade = addItem('longSword', 1, 5); saveGame(); assert.equal(await cloudFlush(true), true);
         const rawB = localStorage.getItem(slotKey(0)), knownB = cloudKnown[0];   // 分頁 B 這時載入
         vaultPut(blade.uid); while (vaultBusy) await new Promise(r => setTimeout(r, 5));   // 分頁 A 存入

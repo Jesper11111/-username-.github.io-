@@ -120,7 +120,7 @@ let vaultBase = null;          // { char, seq }：這個分頁載入角色時存
 let vaultRpcBusy = false;      // 伺服器正在改雲端存檔：這段時間不上傳目前的角色（cloudFlushRun）
 function vaultNoteLoaded(data) { vaultBase = { char: lootChar(data.player), seq: Number(data.vaultSeq) || 0 }; }
 // 序號只取這個分頁自己知道的（載入時＋自己存取倉庫後）。不能讀 localStorage 裡的上一份：同一個瀏覽器的另一個分頁存取倉庫後會寫進新序號，
-// 舊分頁借用它就能把已存進倉庫的道具連同正確序號蓋回雲端（2026-10-24 實際發生，第 118 節）。舊分頁序號不對 → 伺服器拒收 → 改用雲端進度
+// 舊分頁借用它就能把已存進倉庫的道具連同正確序號蓋回雲端（2026-10-24 實際發生，第 120 節）。舊分頁序號不對 → 伺服器拒收 → 改用雲端進度
 function vaultEnvelope(data) {
     const ch = lootChar(data.player), mine = v => v && v.char === ch ? v.seq : 0;
     data.vaultSeq = Math.max(mine(vaultBase), mine(vaultLive));
