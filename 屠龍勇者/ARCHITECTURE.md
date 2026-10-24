@@ -6,6 +6,7 @@
 ## 1. 專案結構
 
 | 檔案 | 內容 |
+| `tools/test-morph-level-lock.js`、`tools/morph-level-lock-preview.html` | 變身等級門檻／GM豁免、拒絕不扣卷、帳號切換與RPC失敗的隔離測試及預覽（第125節） |
 | `tools/test-item-lock.js`、`tools/item-lock-preview.html` | 物品防賣鎖隔離測試與記憶體預覽：鎖定、全選、三種賣出、存檔遷移與倉庫合併（第124節） |
 |---|---|
 | `images/sprites/dolls/companions-v1/`、`tools/sprite-src/dolls/companions-v1/`、`tools/magic-doll-preview.html` | 21款魔法娃娃外觀素材、三參考圖／原稿／提示詞與打包、方向／逐格／實際大小預覽；品質T0～T4已定、能力待決定，尚未接遊戲（第115節） |
@@ -162,7 +163,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024m`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024n`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -2515,6 +2516,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 驗證（e 版）：check.ps1、test-item-art、混淆建置與合併語法通過。瀏覽器 Lv.55 測試角色：選單 9 系 30 種、金變 4 種鎖住；選烈焰死亡騎士命中 +4、攻擊間隔 920→800ms、提示「變身：烈焰死亡騎士」；選神聖裁決劍聖回「需要 Lv.70」；Console 無錯誤。拿掉選單內層捲軸，只剩視窗本身一條。
 - **20261022f：02 月光精靈巡林者接上專屬圖**（使用者要求）。素材 `images/sprites/morph/moon-ranger-v1/`（別的工作做好、已由使用者提交 6005cd1；說明在該資料夾 README.md）：格子 320×240（比巡守妖魔神射寬）、**腳底 (160,200)**，walk／attack 各 4 格、cast／hit 各 2 格，時間 130／140／220／150ms。`MORPHS.moonRanger`＋m02 的 sprite 欄位，`sw.js` 預先快取四張圖集。驗證：Lv.55 測試角色選 m02 → 外觀為月光精靈巡林者、四張圖集尺寸 1280×720／640×720 正確載入，野外放大確認腳踩影子不浮空，攻擊 560ms／施法 440ms 動作正常；改選 m05 回到統一外觀；Console 無錯誤。
 - **20261022g：m02 攻擊換用 attack-v2.png**。修正原四格皆拉弓而看不到出手的素材問題；三向各準備／拉弓／放箭／收弓，左鏡像，規格與時間維持不變；第18.5節。未改等級、能力、消耗或 schema。
+- **20261024n：恢復變身等級鎖，GM豁免**：`MORPH_LV_FREE = false`，藍／紅／紫／金需Lv.15／35／52／70；`morphLvOk`共用於選單、手動及自動用卷。登入經現有`dragon_is_admin`確認的GM可略過等級門檻（第125節）。
 - **20261022i：測試期間暫時拿掉變身等級限制**（使用者要求方便測試）。`items.js` 的 `MORPH_LV_FREE = true`＋`morphLvOk(f)`，`usePotion` 與選單的鎖定都改用它；選單提示改成「測試中：暫不限等級」，卡片仍顯示原本的需求等級。**正式開放前把 `MORPH_LV_FREE` 改回 false** 即恢復 Lv.15／35／52／70 限制。
 - **20261022j：03 冥火骷髏神射接上專屬圖**（使用者要求）。`MORPHS.hellfireArcher`：格子 **320×280**、腳底 **(160,240)**（上方多留火焰空間，和 02 的 240 高格子不同），walk／attack 4 格、cast／hit 2 格，130／140／220／150ms；m03 加 sprite，`sw.js` 預快取四張圖集。驗證：Lv.1 測試角色（等級限制已暫拿掉）選 m03 → 外觀冥火骷髏神射、四張圖集 1280×840／640×840 載入、攻擊 560ms、野外放大腳踩影子；test-moon-attack 回歸通過；Console 無錯誤。
 - **20261022k：03射箭動作重製**。attack-v2.png改成低持弓→拉弓→放箭→收弓；規格與560ms總時間不變，新檔名避開舊PNG快取。04女武神另有72格試播素材，尚未接入m04；第18.6、18.7節。
@@ -2913,3 +2915,10 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 鎖定僅防回收賣出，裝備、使用、衝裝、改造、交易所上架與倉庫操作沿原規則。堆疊合併時只要其中一疊有鎖，整疊保留鎖（bagTidy、town.js moveInst／moveQty）；拆疊複製原屬性。marketGiveItem取回堆疊物品時也保留鎖，裝備沿既有欄位複製。新拾取併入已鎖堆疊時同樣受鎖保護。
 - CSS `.bag-item-open` 為背包道具介紹按鈕，和 `.item-lock` 並排，避免按鎖時打開介紹；`.item-lock[aria-pressed="true"]` 金色邊框。無新增script載入依賴。
 - 隔離測試 `tools/test-item-lock.js`：加密saveEncode／saveParse往返、schema5遷移、全選與單件／勾選／一鍵賣出、確認期間加鎖、解鎖可賣、整組與地圖分列、角色倉庫拆疊合併、共用倉庫客戶端交貨。預覽 `tools/item-lock-preview.html` 只用記憶體storage，拒絕fetch、不載main／pwa、不連正式後端。
+
+## 125. 變身恢復等級鎖、GM豁免（2026-10-24，版本 `20261024n`）
+
+- 使用者要求恢復變身卷軸的等級限制，GM權限不受影響。items.js恢復MORPH_LV_FREE=false；新頂層morphGmOk只接受目前登入帳號、未封鎖且cloudMorphAdminUid與cloudUser.id相符。morphLvOk共用原有選單／usePotion驗證，等級不足不扣卷、不替換現有增益；已在進行中的變身不主動取消。
+- cloud.js新增記憶體cloudMorphAdminUid與cloudCheckMorphAdmin：登入通過單裝置檢查後，用既有dragon_is_admin RPC驗證，只有data===true才記住該帳號；查詢失敗維持一般等級限制，晚到回覆不得套給別的帳號，登出／被踢／重新登入清空。未修改Supabase設定、SQL、GM管理權限或角色存檔（schema仍6）。GM須登入並完成權限查詢。
+- 選單一般玩家顯示「等級不夠的不能選」，GM顯示「GM：不限變身等級」。原本32款階級與加成、卷軸消耗／時效均不變。
+- tools/test-morph-level-lock.js隔離驗證32款門檻前一級／剛達標、拒絕不扣卷不改buff、自動使用lastMorph、GM Lv.1全開、一般帳號／換帳號／登出／封鎖／RPC錯誤與延遲回覆；瀏覽器預覽只用記憶體角色和模擬權限，不呼叫正式後端。一般Lv.1全32款停用，模擬GM Lv.1全開且實選金變成功扣1卷，Console無error／warn。

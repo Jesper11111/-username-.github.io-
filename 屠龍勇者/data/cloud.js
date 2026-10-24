@@ -19,6 +19,7 @@ const CLOUD_PUSH_MS = 60 * 1000;     // 兩次上傳至少間隔（同一角色�
 const CLOUD_TIMEOUT_MS = 10 * 1000;
 
 let cloudSb = null;          // Supabase client
+let cloudMorphAdminUid = ''; // 僅本次登入由伺服器確認的GM，可略過變身等級門檻
 let cloudUser = null;        // { id, email }
 let cloudBan = null;         // 被管理者封鎖：{ reason, at }（第 31 節）；封鎖中不上傳
 let cloudReady = false;      // 已經讀過登入狀態
@@ -133,7 +134,7 @@ let cloudSigningOut = false;   // 自己按登出（cloudDoSignOut）時不走�
 function cloudOnPassiveSignOut() {
     onlineStop();
     const email = cloudUser ? cloudUser.email : '';
-    cloudUser = null; cloudBan = null;
+    cloudUser = null; cloudMorphAdminUid = ''; cloudBan = null;
     cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     if (player) {
         if (slotHasSave(currentSlot)) saveGame(true);   // 本機欄位已被別的分頁清掉（主動登出）就不寫回去
@@ -198,7 +199,7 @@ async function onlineKicked() {
         hunt = null; session = null; walkHome = null; player = null;
         showTitle();
     }
-    cloudUser = null; cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {};
+    cloudUser = null; cloudMorphAdminUid = ''; cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {};
     cloudSigningOut = true;
     try { await cloudTimeout(cloudSb.auth.signOut({ scope: 'local' })); } catch (e) { } finally { cloudSigningOut = false; }
     renderCloudEntry(); cloudRefreshScreen();
@@ -213,7 +214,7 @@ function onlineReject(u, info) {
         hunt = null; session = null; walkHome = null; player = null;
         showTitle();
     }
-    cloudUser = null;
+    cloudUser = null; cloudMorphAdminUid = '';
     renderCloudEntry();
     const ago = info.ago < 60 ? `${info.ago} 秒前` : `${Math.floor(info.ago / 60)} 分鐘前`;
     openDialog('⛔ 帳號使用中', `<p>帳號 <b>${esc(u.email || '')}</b> 正在另一台裝置使用中${info.device ? `（${esc(info.device)}，${ago}還在線上）` : `（${ago}還在線上）`}，已拒絕這次登入。</p>
@@ -237,6 +238,7 @@ async function onlineForce(u) {
 
 async function cloudOnSignedIn(u, silent, claimed) {
     if (onlineBlocked) return;   // 「帳號使用中」對話框還開著
+    cloudMorphAdminUid = '';
     cloudUser = { id: u.id, email: u.email || '' };
     renderCloudEntry();
     if (await cloudCheckBan()) return;
@@ -246,6 +248,8 @@ async function cloudOnSignedIn(u, silent, claimed) {
     }
     if (!cloudUser || cloudUser.id !== u.id) return;
     onlineStart();
+    await cloudCheckMorphAdmin();
+    if (!cloudUser || cloudUser.id !== u.id) return;
     const r = await cloudSync();
     if (!silent && r) showToast(r);
     raidResume();   // 團隊副本：回到原本的隊伍、補領離線時打完的獎勵（raid.js）
@@ -255,6 +259,16 @@ async function cloudOnSignedIn(u, silent, claimed) {
 
 // 有沒有被管理者封鎖（dragon_bans 自己那一列；被封鎖的人看得到原因）。封鎖中：不上傳、不能組隊，本機照常遊玩
 let cloudBanShown = false;
+async function cloudCheckMorphAdmin() {
+    cloudMorphAdminUid = '';
+    if (!cloudLoggedIn() || cloudBan) return;
+    const uid = cloudUser.id;
+    try {
+        const { data, error } = await cloudTimeout(cloudSb.rpc('dragon_is_admin'));
+        if (!error && data === true && cloudUser && cloudUser.id === uid && !cloudBan) cloudMorphAdminUid = uid;
+    } catch (e) { /* 查不到權限時維持一般玩家等級限制 */ }
+}
+
 async function cloudCheckBan() {
     if (!cloudLoggedIn()) return false;
     try {
@@ -871,7 +885,7 @@ async function cloudDoSignOutRun(all) {
     for (let i = 0; i < MAX_SLOTS; i++) cloudLs(slotKey(i), null);
     cloudLs(CLOUD_OWNER_KEY, null);
     cloudLs(CLOUD_SEEN_KEY, null);
-    cloudUser = null; cloudBan = null; cloudBanShown = false;
+    cloudUser = null; cloudMorphAdminUid = ''; cloudBan = null; cloudBanShown = false;
     clanReset();
     cloudKnown = {}; cloudSentT = {}; cloudSnapKey = {}; cloudSlotHold = {}; cloudDirty = new Set(); cloudConflict = {}; cloudError = '';
     showTitle();

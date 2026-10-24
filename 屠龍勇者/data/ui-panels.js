@@ -1085,7 +1085,7 @@ function openMorphPicker() {
     const rows = Object.keys(MORPH_GROUPS).map(g => `<h4 class="mf-group">${MORPH_GROUPS[g].name}<small>建議武器：${MORPH_GROUPS[g].weapon}</small></h4>
         <div class="mf-list">${MORPH_FORMS.filter(f => f.group === g).map(opt).join('')}</div>`).join('');
     const html = `<div class="mf-head">${itemIconHtml('polyScroll')}<div>持有 <b>${n}</b> 張・變身 ${ITEMS.polyScroll.sec / 60} 分鐘${cur ? `<br>目前：<b>${esc(MORPH_BY_ID[cur.form] ? MORPH_BY_ID[cur.form].name : '變身')}</b>（剩 ${left} 分）` : ''}</div></div>
-        <small class="muted">選擇要變身的對象；${MORPH_LV_FREE ? '<b>測試中：暫不限等級</b>。' : '等級不夠的不能選。'}再讀一張會換成新的對象並重新計時，死亡解除。部分變身已有專屬外觀。</small>
+        <small class="muted">選擇要變身的對象；${MORPH_LV_FREE ? '<b>測試中：暫不限等級</b>。' : morphGmOk() ? '<b>GM：不限變身等級</b>。' : '等級不夠的不能選。'}再讀一張會換成新的對象並重新計時，死亡解除。部分變身已有專屬外觀。</small>
         <div class="mf-scroll">${rows}</div>${n ? '' : '<small class="muted">身上沒有變形卷軸（村莊商店有賣）</small>'}`;
     const btns = [{ text: '關閉', cls: 'secondary' }];
     if (cur) btns.unshift({ text: '解除變身', cls: 'danger', onClick: morphCancel });

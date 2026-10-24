@@ -136,9 +136,10 @@ const MORPH_TIERS = {
     gold:   { name: '金變', grade: '神話', lv: 70, color: '#ffd56a', hit: 7, dmg: 7, spd: 0.20 },
 };
 const MORPH_TIER_K = { blue: 1, red: 2, purple: 3, gold: 4 };
-// 測試期間先拿掉變身等級限制（2026-10-22 使用者要求，方便測試）；正式開放時改回 false
-const MORPH_LV_FREE = true;
-function morphLvOk(f) { return MORPH_LV_FREE || player.lv >= f.lv; }
+// 恢復變身等級限制（2026-10-24）；伺服器確認的 GM 帳號不受等級限制。
+const MORPH_LV_FREE = false;
+function morphGmOk() { return typeof cloudMorphAdminUid !== 'undefined' && cloudLoggedIn() && !cloudBan && cloudMorphAdminUid === cloudUser.id; }
+function morphLvOk(f) { return MORPH_LV_FREE || morphGmOk() || player.lv >= f.lv; }
 // 系別：weapon＝建議武器（只是提示，不限制）；fx(t, k) 依階級 t 與階數 k（1～4）算加成
 const MORPH_GROUPS = {
     melee:  { name: '近戰通用系', weapon: '近戰武器通用', fx: t => ({ hit: t.hit, dmg: t.dmg, spdMul: t.spd }) },

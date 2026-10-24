@@ -1,0 +1,28 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><base href="../"><meta name="viewport" content="width=device-width, initial-scale=1"><title>變身等級鎖隔離預覽</title>
+<style>body{padding:16px}button{margin:4px}</style></head><body>
+<h3>變身等級鎖隔離預覽</h3><p>記憶體角色／模擬權限，不讀寫真實存檔、不連正式後端。</p>
+<button onclick="levelPreview(false,1)">一般玩家 Lv.1</button><button onclick="levelPreview(false,15)">一般玩家 Lv.15</button><button onclick="levelPreview(false,70)">一般玩家 Lv.70</button><button onclick="levelPreview(true,1)">模擬 GM Lv.1</button>
+<p id="result">載入中</p><div id="dialog-layer"></div><div id="toast-layer"></div>
+<script>
+(async()=>{
+    const memory=new Map();
+    Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)}});
+    const localFetch=window.fetch.bind(window);
+    window.fetch=(u,o)=>{if(new URL(u,location.href).origin!==location.origin)throw Error('隔離預覽禁止連外');return localFetch(u,o);};
+    const index=await(await fetch('index.html')).text(),style=document.createElement('style');
+    style.textContent=index.match(/<style>([\s\S]*?)<\/style>/)[1];document.head.prepend(style);
+    for(const m of index.matchAll(/<script src="(data\/[^"?]+\.js)\?v=([^"]+)"/g)){
+        if(['data/main.js','data/pwa.js'].includes(m[1]))continue;
+        await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=m[1]+'?v='+m[2];s.onload=resolve;s.onerror=reject;document.head.append(s);});
+    }
+    sfx=()=>{};saveGame=()=>{};refreshUI=()=>{document.getElementById('result').textContent='變身成功；卷軸剩 '+countItem('polyScroll')+' 張';};
+    createPlayer('等級鎖預覽','knight',CLASSES.knight.base);addItem('polyScroll',20);
+    window.levelPreview=async(gm,lv)=>{
+        player.lv=lv;cloudUser={id:gm?'preview-gm':'preview-player'};cloudSb={rpc:async()=>({data:gm,error:null})};
+        await cloudCheckMorphAdmin();
+        document.getElementById('result').textContent=(gm?'模擬GM':'一般玩家')+' Lv.'+lv+'；卷軸剩 '+countItem('polyScroll')+' 張';
+        openMorphPicker();
+    };
+    await levelPreview(false,1);
+})().catch(e=>{document.getElementById('result').textContent=e.stack;console.error(e);});
+</script></body></html>
