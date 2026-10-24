@@ -116,11 +116,14 @@ async function vaultRun(fn) {
 // 存入／取出由伺服器在同一筆交易裡直接改雲端存檔，序號 vaultSeq（存檔外層）+1；舊存檔的序號不對，伺服器拒收（hint dragon_vault_seq），
 // 這時遊戲改用雲端進度（cloud.js cloudVaultAdopt）。本機只照伺服器回傳的增減做一樣的修改，並把新序號寫進存檔。
 let vaultLive = null;          // { char, seq }：這次遊戲中最新的倉庫序號（saveGame 用）
+let vaultBase = null;          // { char, seq }：這個分頁載入角色時存檔裡的序號（applySaveData 記下，改用雲端進度時也會重新載入）
 let vaultRpcBusy = false;      // 伺服器正在改雲端存檔：這段時間不上傳目前的角色（cloudFlushRun）
-function vaultEnvelope(data, previous) {
-    const ch = lootChar(data.player);
-    const prev = previous && lootChar(previous.player) === ch ? Number(previous.vaultSeq) || 0 : 0;   // 改用雲端進度後，本機那份可能比 vaultLive 新
-    data.vaultSeq = Math.max(prev, vaultLive && vaultLive.char === ch ? vaultLive.seq : 0);
+function vaultNoteLoaded(data) { vaultBase = { char: lootChar(data.player), seq: Number(data.vaultSeq) || 0 }; }
+// 序號只取這個分頁自己知道的（載入時＋自己存取倉庫後）。不能讀 localStorage 裡的上一份：同一個瀏覽器的另一個分頁存取倉庫後會寫進新序號，
+// 舊分頁借用它就能把已存進倉庫的道具連同正確序號蓋回雲端（2026-10-24 實際發生，第 118 節）。舊分頁序號不對 → 伺服器拒收 → 改用雲端進度
+function vaultEnvelope(data) {
+    const ch = lootChar(data.player), mine = v => v && v.char === ch ? v.seq : 0;
+    data.vaultSeq = Math.max(mine(vaultBase), mine(vaultLive));
     return data;
 }
 // fn＝vault_put2／vault_take2，交易所 market_list2／market_cancel2／market_buy2 也用（market.js，第 95 節）；apply(r) 照伺服器回傳修改本機角色。修改與存檔在同一個同步段落，中間不會插入別的存檔

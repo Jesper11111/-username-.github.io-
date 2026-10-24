@@ -155,6 +155,7 @@ function lootApply(result) {
             messages.push([`🎁 獲得 ${itemName(it)} ×${it.n}`, it.q === 'legend' ? 'boss' : it.q ? 'rare' : 'loot']);
         }
         data.player = target; data.schema = SAVE_SCHEMA; data.t = Date.now(); data.lootProtocol = LOOT_PROTOCOL; data.lootCursor = result.cursor;
+        if (live) vaultEnvelope(data);   // 目前的角色：倉庫序號用這個分頁自己的，不沿用 localStorage 那份（第 118 節）
         localStorage.setItem(slotKey(result.slot), saveEncode(JSON.stringify(data)));
     } catch (e) { target.inv = before.inv; target.nextUid = before.nextUid; target.gold = before.gold; throw e; }
     finally { player = keep; }
