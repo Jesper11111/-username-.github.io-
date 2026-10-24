@@ -5,7 +5,7 @@
 
 ## 1. 現況
 
-- **20261025l：全服掉寶公告（第139節）**。傳說品質／共鳴裝備由伺服器trigger寫入dragon_loot_news，聊天世界頻道混排顯示，設定lootNews可關。**要使用者在Supabase執行tools/loot-news.sql才會出現公告**（沒執行前遊戲照常、不抓）。test-loot-news通過。
+- **20261025l：全服掉寶公告（第139節）**。傳說品質／共鳴裝備由伺服器trigger寫入dragon_loot_news，聊天世界頻道混排顯示，設定lootNews可關。使用者已於2026-10-25在Supabase執行tools/loot-news.sql；待第一則實際公告驗收。test-loot-news通過。
 
 - **20261025k：戰利品過濾新增「🌟 保留共鳴裝備（不論品質）」（第21節，lootKeepRes預設開）**。lootFiltered遇到有res的裝備不過濾，撿到時（本機／後端loot.js）與回收頁一鍵賣出都保留；無schema／SQL。
 
