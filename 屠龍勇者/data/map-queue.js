@@ -103,6 +103,7 @@ function mapQueueStart() {
     }
     const r = player.mapRun || player.mapPortal;
     if (r && (!q.active || r.queueSlot !== q.index)) { showToast('請先完成或關閉目前的異界地圖'); return; }
+    if (player.mapRun && !inMapRun()) { showToast('目前不在排程異界區域，請先返回原區域或取消排程'); return; }
     if (!r && !inTown()) { showToast('請先回村莊開始地圖排程'); return; }
     if (walkHome) { showToast('正在步行回村'); return; }
     const why = mapQueueSupplyReason();
@@ -110,7 +111,8 @@ function mapQueueStart() {
     if (!lootCanPlay()) return;
     q.state = 'running'; q.reason = '';
     if (q.active && r) {
-        if (player.mapPortal) enterMapPortal(); else startHunt();
+        if (player.mapPortal) { scene = null; enterMapPortal(); }
+        else if (!player.hunting) startHunt();
     } else {
         q.active = false;
         mapQueueTick();
@@ -143,6 +145,7 @@ function mapQueueTick() {
     if (q.active) {
         if (!player.mapRun && !player.mapPortal) mapQueueLost('目前地圖已關閉');
         else if (player.mapPortal || !player.hunting) mapQueueAutoPause('已回村或停止掛機，請按繼續');
+        else if (!inMapRun()) { mapQueueAutoPause('已離開排程異界區域'); stopHunt(); }
         return;
     }
     while (q.index < MAP_QUEUE_MAX && (!q.slots[q.index] || !q.slots[q.index].uids.length)) q.index++;
@@ -160,6 +163,8 @@ function mapQueueTick() {
     }
     q.active = true;
     s.uids.shift();
+    // 同一個tick通關回村又開圖，大地圖key可能相同，需清掉前張的角色位置。
+    scene = null;
     openMap(uid, true);
     if (player.mapRun) player.mapRun.queueSlot = q.index;
     else { s.uids.unshift(uid); q.active = false; mapQueueAutoPause('無法開啟地圖'); }

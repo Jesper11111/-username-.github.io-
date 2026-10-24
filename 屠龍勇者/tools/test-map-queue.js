@@ -1,4 +1,4 @@
-// 物品防賣鎖：記憶體角色／存檔，禁止網路與真實 localStorage。
+// 五格異界地圖排程：記憶體角色／存檔，禁止網路與真實 localStorage。
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert/strict');
 const root = path.resolve(__dirname, '..');
 const nodes = { qty: { value: '1' } };
@@ -84,5 +84,18 @@ const legacy=JSON.parse(JSON.stringify(player));delete legacy.mapQueue;assert.eq
 const raw=JSON.parse(JSON.stringify(player));raw.mapQueue.slots.push(...Array(5).fill(raw.mapQueue.slots[0]));mapQueueNormalize(raw);assert.equal(raw.mapQueue.slots.length,5);
 const ids=raw.mapQueue.slots.flatMap(s=>s?s.uids:[]);assert.equal(new Set(ids).size,ids.length);
 SIM_MODE=true;const snap=JSON.stringify(player.mapQueue);mapQueueTick();mapQueueCompleted(player.mapRun);assert.equal(JSON.stringify(player.mapQueue),snap);SIM_MODE=false;
+
+// ⑪ 同一幀通關後換到共用大地圖的另一區，重建場景，不被舊位置拉回前區。
+resetQueue();const sceneFirst=maps(1,1),sceneNext=maps(2,1);setSlot(0,sceneFirst[0],1);setSlot(1,sceneNext[0],1);
+mapQueueStart();buildScene();sceneUpdate(16);assert(inMapRun());
+finish();assert.equal(scene,null);assert.equal(player.mapRun.t,2);buildScene();sceneUpdate(16);assert(inMapRun());assert.equal(player.loc.id,player.mapRun.zone);
+// ⑫ 骷髏停止掛機會暫停排程；最後一張死亡後可結束，不會卡在繼續。
+stopHunt();assert.equal(player.mapQueue.state,'paused');mapQueueStart();onDeath();assert.equal(player.mapQueue.state,'paused');
+mapQueueStart();assert.equal(player.mapQueue.state,'done');
+
+// ⑬ 五個不同地圖都能依序完成，第六種不會排入。
+resetQueue();for(let i=0;i<5;i++){const xs=maps(i+1,1);setSlot(i,xs[0],1);}mapQueueStart();
+for(let i=0;i<5;i++){assert.equal(player.mapRun.t,i+1);finish();}
+assert.equal(player.mapQueue.state,'done');assert(player.mapQueue.slots.every(s=>s.done===1));
 console.log('PASS：3+1順序、5格數量與排序、暫停／繼續／取消、死亡與回卷、缺卷／改造／補給／連線、手動開圖隔離、加密存檔遷移與讀回暫停、模擬不刷下一張。');
 `,ctx);

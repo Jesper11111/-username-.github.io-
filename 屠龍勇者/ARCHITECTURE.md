@@ -6,6 +6,8 @@
 ## 1. 專案結構
 
 | 檔案 | 內容 |
+| `data/map-queue.js` | 五格異界地圖排程：卷軸張數、順序、開始／暫停／取消、通關換圖、存檔轉換與進度面板（第126節） |
+| `tools/test-map-queue.js`、`tools/map-queue-preview.html` | 排程隔離測試與PC／手機實際外框預覽，不讀寫正式存檔、不連正式後端（第126節） |
 | `tools/test-morph-level-lock.js`、`tools/morph-level-lock-preview.html` | 變身等級門檻／GM豁免、拒絕不扣卷、帳號切換與RPC失敗的隔離測試及預覽（第125節） |
 | `tools/test-item-lock.js`、`tools/item-lock-preview.html` | 物品防賣鎖隔離測試與記憶體預覽：鎖定、全選、三種賣出、存檔遷移與倉庫合併（第124節） |
 |---|---|
@@ -153,17 +155,18 @@
 
 ## 2. 載入順序與依賴
 
-`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → loot → main`
+`config → classes → skills → items → spellbook → monsters → zones → quests → resonance → boss-enchant → boss-vfx → world-vfx → player → enchant → affix → craft → maps → combat → town → guard → save → cloud → offline → ui → sfx → bgm → ui-create → ui-panels → codex → raid → clan → chat → rank → wb → market → vault → presence → ui-frame → map-queue → icons → hotbar → scene-art → ui-scene → world-atlas → pwa → loot → main`
 
 - 上層資料檔（config～quests）只在「載入時」用到更前面的檔案；quests 載入時會把獎勵裝備與任務道具寫進 `ITEMS`，所以要在 items 之後。
 - resonance 載入時要改 `ITEMS`（含任務武器）、`MONSTERS` 掉落、`RECIPES`，所以在 quests 之後；`findSkill`（skills.js）在執行期才呼叫它的 `findResonanceSkill`。
 - boss-enchant 在 resonance 後、player 前載入；載入時使用 ITEMS、TOWER_BOSS_MATERIALS，產生 25 種 soul_材料id 封魂石。玩家、戰鬥與介面只在執行期使用。
 - player 之後的檔案互相呼叫（例如 combat 呼叫 `refreshUI`、town 呼叫 `startHunt`），都發生在執行期，全部載完才會跑，所以沒問題。
+- map-queue.js在ui-frame後、icons前載入，載入時使用TABS／PANEL_FNS註冊分頁；maps／combat／save在執行期呼叫排程函式，main啟動前已全部載入。
 - 新檔案依它「載入時」需要的東西插入；只在執行期用到的不影響順序。
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024p`）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024v`）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -349,6 +352,8 @@
 - 原表缺的 21、43 級依 (n+1)⁴ − n⁴ 規律補上（39,775、329,295）；原表 27 級總經驗 14656 為筆誤，應為 614,656。
 
 ## 10. 存檔欄位（`player`）
+
+- schema 7（20261024t）：新增`mapQueue`（預設null），目前排程地圖`mapRun`／`mapPortal`可帶`queueSlot`。使用者明確同意此存檔變更；轉換與恢復規則見第126節。
 
 - schema 6（20261024m）：`inv`／`storage`／`equip` 的物品實體可帶 `sellLocked: true`；舊存檔預設未鎖，`migrateSave` 清除非true旗標。使用者已同意變更存檔。
 
@@ -1063,6 +1068,7 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 | 左 2 圓鈕（中心 x 380、480） | 🧝 人物狀態、✨ 技能 |
 | 12 方格（x 590 起每 70，寬 62） | 📜 任務、🎒 背包、**第 3～8 格＝快捷欄第 17～22 格**（2026-10-15，原本固定的治癒／綠水／勇水類／藍水／回家／瞬移，改成可自由擺放，見第 40 節）、空格（2026-10-20 移除步行回村按鈕）、💾 手動存檔、📖 裝備圖鑑（2026-10-11 拿掉 🏘️ 村莊，最後一格空著；開始／停止掛機改用底部骷髏頭） |
 | 底部石條（y 1036～1098，寬 62、間隔 72） | **快捷欄**（2026-10-15）：骷髏頭左邊 x 318 起 8 格（第 1～8 格，鍵盤 1～8）、右邊 x 1114 起 8 格（第 9～16 格，鍵盤 Q E R F Z X C V）；`#hotbar`（z3）由 hotbar.js 畫，PC 不再顯示地圖上的技能欄 |
+| 排程圓鈕（x1415、y933、58×66） | 📋 地圖排程（20261024t，第126節；位於圖鑑右側、地圖圓鈕左側原空位） |
 | 右 2 圓鈕（中心 x 1520、1616） | 🗺️ 地圖、⚙️ 設定 |
 
 - 分頁格子再按一次＝關閉視窗。PC 外框沒有柱子抽屜（功能都在底部按鈕）。切回其他畫面尺寸時自動回到直式外框與 6 格。
@@ -1160,6 +1166,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
   圖鑑新增「通貨」分類，取得方式顯示掉落機率。
 
 ## 24. 異界地圖 T1～T15（POE 式；`maps.js`；2026-10-09，版本 `20261009s`，存檔 schema 3）
+
+- 20261024t新增五格地圖排程（第126節），每格指定同種地圖張數，通關後依序自動開圖；原異界裝置仍可單張開啟，執行排程時須先暫停或取消。
 
 - 取代第 23 節同日的「自由開關詞綴」（`player.mapMods` 已移除，`migrateSave` 刪掉）。地圖詞綴只在異界裡生效。
 - **地圖道具** `map1`～`map15`（`cat: 'map'`、不堆疊、`wt: 0`，載入時併入 `ITEMS`）：實體帶 `q`（magic 1～2 條／rare 3～4 條）、`mm` 詞綴、`nm` 名稱前綴。
@@ -2935,3 +2943,16 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - cloud.js新增記憶體cloudMorphAdminUid與cloudCheckMorphAdmin：登入通過單裝置檢查後，用既有dragon_is_admin RPC驗證，只有data===true才記住該帳號；查詢失敗維持一般等級限制，晚到回覆不得套給別的帳號，登出／被踢／重新登入清空。未修改Supabase設定、SQL、GM管理權限或角色存檔（schema仍6）。GM須登入並完成權限查詢。
 - 選單一般玩家顯示「等級不夠的不能選」，GM顯示「GM：不限變身等級」。原本32款階級與加成、卷軸消耗／時效均不變。
 - tools/test-morph-level-lock.js隔離驗證32款門檻前一級／剛達標、拒絕不扣卷不改buff、自動使用lastMorph、GM Lv.1全開、一般帳號／換帳號／登出／封鎖／RPC錯誤與延遲回覆；瀏覽器預覽只用記憶體角色和模擬權限，不呼叫正式後端。一般Lv.1全32款停用，模擬GM Lv.1全開且實選金變成功扣1卷，Console無error／warn。
+
+## 126. 五格異界地圖排程（2026-10-24，版本 `20261024v`，開發起版 t，schema 7）
+
+- **需求與操作**：最多5種地圖，第1格先刷完全部張數，再到第2格。每格從背包選同種地圖（mapKindKey＝階級／品質／詞綴／名稱），輸入張數後按設定；↑↓排序、清空一格。開始後固定名單，要修改先取消重排。PC底列圖鑑右、地圖左原空位新增📋圓鈕；手機右側選單及異界裝置也有入口。
+- **存檔**：player.mapQueue預設null；使用時為`{slots:[null|{key,name,uids,done,failed}],state,index,active,reason}`，最多5格且同種不重複。uids只記未使用的卷軸；開始下一張才移除首個uid並實際扣卷，mapRun.queueSlot記所屬格，回卷搬入mapPortal時一併保留。地圖仍留在背包，未使用者不預扣、不複製；賣出／存倉／改造預選卷軸後會暫停，不能自動拿新掉落替換。
+- **執行**：main.gameTick在huntTick返回後呼叫mapQueueTick，避免戰鬥回呼內重入開圖。active時等待目前地圖，completeMap呼叫mapQueueCompleted計完成次數，正常回村後才開下一張；同格uids用完才向後找非空格，全部結束state=done。openMap(uid,true)設定queueSlot，普通openMap執行中禁止插入。新圖開啟前`scene=null`，避免同一幀通關、回村、再開共用大地圖時沿用舊角色位置而被sceneEnterZone拉回前區；排程由傳送門繼續時亦重建場景。
+- **暫停／取消**：暫停立即stopHunt，保留剩怪與bossHp，再開始接原圖、不再扣地圖卷。stopHunt亦令執行中排程暫停；回卷mapPortalOpen暫停且保留active，補給後繼續會enterMapPortal。死亡／步行／放棄／關門透過mapQueueLost記中斷一次、停止排程，不補回已耗卷。取消需gameConfirm，停掉排程目前掛機、移除queueSlot、清空排程；保留目前異界／傳送門與未用卷。對話框確認時檢查角色及原排程身分，避免操作套給另一角色。
+- **補給與連線**：開始／開下一張前，檢查自動紅水已用完、負重達設定回村門檻、遠程彈藥已用完、lootCanPlay。未就緒不扣卷；實際戰鬥的自動補給回村沿既有邏輯，會觸發排程暫停。手動離開異界所在區域亦暫停，返回原區或取消後才能繼續。
+- **遷移與離線**：mapQueueNormalize由migrateSave呼叫，舊檔無排程補null，清掉第6格後資料與重複／非法uid，讀回的running改paused；active進度保留但hunting=false，要手動按繼續。重開後不直接進行排程或結算其離線掛機；頁面背景離線模擬不執行mapQueueTick、不通關換下一張。既有未排程的離線規則不變。資料庫／Supabase設定／SQL不改。
+- **全域**：MAP_QUEUE_MAX；mapQueueGet／mapQueueNormalize／mapQueueChoices／mapQueueSet／mapQueueSelectChanged／mapQueueRemove／mapQueueMove／mapQueueAutoPause／mapQueueLost／mapQueueCompleted／mapQueueSupplyReason／mapQueueStart／mapQueuePause／mapQueueCancel／mapQueueTick／mapQueueLiveHtml／mapQueueRowStatus／updateMapQueueLive／renderMapQueue。TABS及PANEL_FNS註冊mapQueue，renderStatus每250ms只更新進度與控制列，避免重建正在編輯的表單。新增.map-queue-row與#map-queue-live樣式；開始後收起設定欄，只看執行進度。
+- **驗證**：tools/test-map-queue.js記憶體角色與加密存檔，禁止連線：3＋1順序、最多5格／非法數量／去重／排序、暫停繼續取消、死亡回卷、缺卷／改造／補給／斷線、一般開圖隔離、schema6遷移／讀回暫停、SIM不接圖、共用場景換區、骷髏停止與最後一張中斷後結束。tools/map-queue-preview.html取真實index樣式／外框／腳本、排除main／pwa，只用記憶體storage並拒絕連外；PC實點3張T1後進T2低語墓窟、讀檔暫停／繼續、手機完成與取消重設，Console無error／warn。
+
+第126節最終驗證（20261024v）：check.ps1 ALL CHECKS PASSED（48檔／47 scripts）、47檔混淆建置460KB，輸出TEMP/dark-map-queue-20261024t（內部版本v）；test-map-queue、test-map-portal、test-item-lock、test-potion-delay、test-offline-drops、test-server-loot-client皆通過，git diff --check通過。v整合另一對話的變身武器限制與共鳴攻速8%（u），未覆寫該修改。正式帳號實玩仍待使用者確認。
