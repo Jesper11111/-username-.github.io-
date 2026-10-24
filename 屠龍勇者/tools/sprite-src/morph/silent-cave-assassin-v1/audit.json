@@ -1,0 +1,830 @@
+[
+  {
+    "direction": "down",
+    "frame": 0,
+    "file": "frames/walk-down-01.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      0,
+      0,
+      362,
+      397
+    ],
+    "sourceFoot": [
+      198,
+      382
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      131,
+      108,
+      252,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "file": "frames/walk-down-02.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      362,
+      0,
+      724,
+      397
+    ],
+    "sourceFoot": [
+      572,
+      383
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      128,
+      111,
+      244,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "file": "frames/walk-down-03.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      724,
+      0,
+      1086,
+      397
+    ],
+    "sourceFoot": [
+      928,
+      382
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      129,
+      110,
+      240,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "file": "frames/walk-down-04.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      1086,
+      0,
+      1448,
+      397
+    ],
+    "sourceFoot": [
+      1298,
+      387
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      129,
+      109,
+      238,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "file": "frames/walk-right-01.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      0,
+      0,
+      362,
+      365
+    ],
+    "sourceFoot": [
+      178,
+      339
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      132,
+      106,
+      251,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "file": "frames/walk-right-02.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      362,
+      0,
+      724,
+      365
+    ],
+    "sourceFoot": [
+      532,
+      339
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      131,
+      109,
+      255,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "file": "frames/walk-right-03.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      724,
+      0,
+      1086,
+      365
+    ],
+    "sourceFoot": [
+      924,
+      339
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      123,
+      109,
+      257,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "file": "frames/walk-right-04.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      1086,
+      0,
+      1448,
+      365
+    ],
+    "sourceFoot": [
+      1278,
+      339
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      123,
+      108,
+      257,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "file": "frames/walk-up-01.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      0,
+      0,
+      362,
+      390
+    ],
+    "sourceFoot": [
+      184,
+      364
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      141,
+      107,
+      248,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "file": "frames/walk-up-02.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      362,
+      0,
+      724,
+      390
+    ],
+    "sourceFoot": [
+      558,
+      364
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      141,
+      112,
+      251,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "file": "frames/walk-up-03.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      724,
+      0,
+      1086,
+      390
+    ],
+    "sourceFoot": [
+      910,
+      370
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      147,
+      106,
+      249,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "file": "frames/walk-up-04.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      1086,
+      0,
+      1448,
+      390
+    ],
+    "sourceFoot": [
+      1283,
+      362
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      148,
+      111,
+      249,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "file": "frames/attack-down-01.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      0,
+      397,
+      410,
+      723
+    ],
+    "sourceFoot": [
+      180,
+      721
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      131,
+      120,
+      272,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "file": "frames/attack-down-02.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      334,
+      397,
+      772,
+      723
+    ],
+    "sourceFoot": [
+      519,
+      720
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      126,
+      122,
+      300,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 2,
+    "file": "frames/attack-down-03.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      696,
+      397,
+      1134,
+      723
+    ],
+    "sourceFoot": [
+      888,
+      721
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      125,
+      121,
+      296,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 3,
+    "file": "frames/attack-down-04.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      1058,
+      397,
+      1448,
+      723
+    ],
+    "sourceFoot": [
+      1274,
+      719
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      124,
+      130,
+      254,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "file": "frames/attack-right-01.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      0,
+      365,
+      410,
+      710
+    ],
+    "sourceFoot": [
+      166,
+      684
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      118,
+      111,
+      276,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "file": "frames/attack-right-02.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      334,
+      365,
+      772,
+      710
+    ],
+    "sourceFoot": [
+      500,
+      684
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      126,
+      130,
+      336,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 2,
+    "file": "frames/attack-right-03.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      696,
+      365,
+      1134,
+      710
+    ],
+    "sourceFoot": [
+      919,
+      684
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      110,
+      126,
+      308,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 3,
+    "file": "frames/attack-right-04.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      1058,
+      365,
+      1448,
+      710
+    ],
+    "sourceFoot": [
+      1286,
+      684
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      120,
+      140,
+      264,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "file": "frames/attack-up-01.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      0,
+      390,
+      410,
+      724
+    ],
+    "sourceFoot": [
+      189,
+      716
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      120,
+      118,
+      270,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "file": "frames/attack-up-02.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      334,
+      390,
+      772,
+      724
+    ],
+    "sourceFoot": [
+      567,
+      714
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      105,
+      104,
+      276,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 2,
+    "file": "frames/attack-up-03.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      696,
+      390,
+      1134,
+      724
+    ],
+    "sourceFoot": [
+      896,
+      720
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      121,
+      116,
+      304,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 3,
+    "file": "frames/attack-up-04.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      1058,
+      390,
+      1448,
+      724
+    ],
+    "sourceFoot": [
+      1277,
+      718
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      124,
+      127,
+      261,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "file": "frames/cast-down-01.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      0,
+      723,
+      362,
+      1086
+    ],
+    "sourceFoot": [
+      184,
+      1068
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      132,
+      105,
+      262,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "file": "frames/cast-down-02.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      362,
+      723,
+      724,
+      1086
+    ],
+    "sourceFoot": [
+      552,
+      1067
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      110,
+      130,
+      274,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "file": "frames/cast-right-01.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      0,
+      710,
+      362,
+      1086
+    ],
+    "sourceFoot": [
+      150,
+      1041
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      127,
+      121,
+      297,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "file": "frames/cast-right-02.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      362,
+      710,
+      724,
+      1086
+    ],
+    "sourceFoot": [
+      486,
+      1042
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      131,
+      118,
+      320,
+      270
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "file": "frames/cast-up-01.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      0,
+      724,
+      362,
+      1086
+    ],
+    "sourceFoot": [
+      200,
+      1046
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      122,
+      112,
+      265,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "file": "frames/cast-up-02.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      362,
+      724,
+      724,
+      1086
+    ],
+    "sourceFoot": [
+      558,
+      1046
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      118,
+      131,
+      271,
+      270
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 0,
+    "file": "frames/hit-down-01.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      724,
+      723,
+      1086,
+      1086
+    ],
+    "sourceFoot": [
+      986,
+      1072
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      90,
+      107,
+      226,
+      271
+    ]
+  },
+  {
+    "direction": "down",
+    "frame": 1,
+    "file": "frames/hit-down-02.png",
+    "source": "down-generated-v2.png",
+    "sourceRect": [
+      1086,
+      723,
+      1448,
+      1086
+    ],
+    "sourceFoot": [
+      1259,
+      1068
+    ],
+    "sourceBodyHeight": 334.0,
+    "bounds": [
+      134,
+      128,
+      276,
+      270
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 0,
+    "file": "frames/hit-right-01.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      724,
+      710,
+      1086,
+      1086
+    ],
+    "sourceFoot": [
+      934,
+      1041
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      134,
+      104,
+      274,
+      271
+    ]
+  },
+  {
+    "direction": "right",
+    "frame": 1,
+    "file": "frames/hit-right-02.png",
+    "source": "right-generated-v2.png",
+    "sourceRect": [
+      1086,
+      710,
+      1448,
+      1086
+    ],
+    "sourceFoot": [
+      1274,
+      1041
+    ],
+    "sourceBodyHeight": 296.0,
+    "bounds": [
+      130,
+      130,
+      269,
+      271
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 0,
+    "file": "frames/hit-up-01.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      724,
+      724,
+      1086,
+      1086
+    ],
+    "sourceFoot": [
+      994,
+      1046
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      86,
+      112,
+      227,
+      272
+    ]
+  },
+  {
+    "direction": "up",
+    "frame": 1,
+    "file": "frames/hit-up-02.png",
+    "source": "up-generated-v2.png",
+    "sourceRect": [
+      1086,
+      724,
+      1448,
+      1086
+    ],
+    "sourceFoot": [
+      1278,
+      1046
+    ],
+    "sourceBodyHeight": 301.5,
+    "bounds": [
+      138,
+      136,
+      259,
+      270
+    ]
+  }
+]

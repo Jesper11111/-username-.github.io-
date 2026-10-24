@@ -36,6 +36,7 @@
 | `images/sprites/morph/sky-valkyrie-v2/`、`tools/sprite-src/morph/sky-valkyrie-v2/`、`tools/valkyrie-v2-morph-preview.html`、`tools/test-valkyrie-v2-morph.js` | 使用者新版04分鏡替換、36格透明圖集／來源／提示詞／腳點註冊、隔離renderer與卷軸回歸（第18.11、88節） |
 | `images/sprites/morph/dwarf-gunner-v1/`、`tools/sprite-src/morph/dwarf-gunner-v1/` | 05矮人蒸氣火銃兵36格透明分鏡／4圖集、立繪／原表／去背初稿／補畫／提示詞／整理腳本（第18.8節）；m05專屬外觀 |
 | `tools/dwarf-morph-preview.html`、`tools/test-dwarf-morph.js` | 05真實卷軸／renderer隔離預覽與卷軸扣量、四向動作、到期／其他變身回歸（第18.8節） |
+| `images/sprites/morph/silent-cave-assassin-v1/`、`tools/sprite-src/morph/silent-cave-assassin-v1/`、`tools/cave-assassin-morph-preview.html`、`tools/test-cave-assassin-morph.js` | 08沉默洞穴刺客36格透明動畫、來源與驗證（第18.14、88節） |
 | `images/sprites/morph/brudika-shadow-v1/`、`tools/sprite-src/morph/brudika-shadow-v1/`、`tools/brudika-morph-preview.html`、`tools/test-brudika-morph.js` | 10布魯迪卡之影36格透明動畫、原稿／提示詞／腳點註冊、真實renderer隔離頁與卷軸回歸（第18.9、88節） |
 | `images/sprites/morph/rift-dragon-v1/`、`tools/sprite-src/morph/rift-dragon-v1/`、`tools/rift-dragon-morph-preview.html`、`tools/test-rift-dragon-morph.js` | 27裂空魔龍爪皇36格透明動畫、原圖／生成提示詞／腳點註冊、卷軸與renderer隔離驗證（第18.10、88節） |
 | `images/sprites/morph/flame-death-knight-v1/`、`tools/sprite-src/morph/flame-death-knight-v1/`、`tools/flame-death-knight-morph-preview.html`、`tools/test-flame-death-knight-morph.js` | 16烈焰死亡騎士原36格保留；新版走8／攻6、卷軸選單與renderer隔離驗證（第18.12～18.13、88節） |
@@ -167,7 +168,7 @@
 
 ## 3. 開發規則
 
-- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024aa`；使用者2026-10-24同意z後延伸為aa）。
+- **版本號**：改任何 JS 都要把 `index.html` 全部 `?v=` 與 `config.js` 的 `GAME_VERSION` 一起換新（目前 `20261024ad`；使用者2026-10-24同意z後延伸為aa）。
 - **防改檔（第 60 節）**：讀寫 localStorage 存檔一律用 `saveParse(raw)`／`saveEncode(JSON.stringify(…))`，不要直接 `JSON.parse`／`JSON.stringify` 存檔文字；
   `player` 換成新物件時（例如從快照還原）要 `guardWrap(player)`；`onclick="…"` 只呼叫頂層函式（發佈版是混淆過的，`player` 不在 window 上）。
 - **合併衝突**：合併後一定要搜尋 `<<<<<<<`。2026-10-09 曾把衝突標記留在 `index.html`／`config.js`／`ui-scene.js`，
@@ -1030,6 +1031,13 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - 新增來源資料夾flame-death-knight-walk-v2與flame-death-knight-attack-v2，含內建image_gen原稿／完整提示詞／prepare.py／registration.json／README；新版單格、AVIF、contact、各自manifest與舊圖並存於flame-death-knight-v1。attack-v2/preview.py產生本對話flame-death-knight-v2-motion.html，四動作與四方向試播。
 - tools/flame-death-knight-walk-preview.html實際sceneUpdate／sceneDraw地面移動、新舊步態／停止／逐格；test-flame-death-knight-walk.js檢查四向八格、實際位移與新舊速度一致。既有morph-preview／test-flame-death-knight-morph.js更新六格480ms，檢查卷軸扣量、四向renderer／命中／MISS、受傷不打斷、施法／受傷／到期及其他變身。所有測試隔離真實存檔／雲端。
 - 驗證：上述兩測試與test-buff-groups通過，check.ps1 ALL CHECKS PASSED（46檔／45script／20261022s）、git diff --check通過；42格非重複RGBA／透明留邊／圖集逐格對應通過。瀏覽器八格實際地面行走、停止及四向六格480ms攻擊、四動作試播／逐格／鏡像完成，Console無error／warn。待使用者實玩確認才提交。
+
+### 18.14 沉默洞穴刺客（08藍變）專屬動畫（2026-10-24，版本`20261024ad`）
+
+- 使用者提供08.jpg及8-1／8-2／8-3.jfif，原始檔保留在`tools/sprite-src/morph/silent-cave-assassin-v1/`；內建image_gen補繪紫黑兜帽、雙彎刃、藍焰與綠色刀光三向動作。完整提示詞、生成原稿、腳點registration.json、prepare.py及audit.json一起保留。
+- 正式`images/sprites/morph/silent-cave-assassin-v1/`含36獨立RGBA格、walk／attack／cast／hit四張PNG、AVIF試播、contact及manifest。格子384×320、腳點[192,270]、charH160、drawH48；三向每向4／4／2／2格，130／140／220／150ms；左向鏡像右向。
+- `MORPHS.silentCaveAssassin`由m08.sprite使用；SW預載四圖集。沿用既有藍變雙刀Lv.15、命中+2、傷害+2、攻速+6%、閃避+2%，GM及武器判斷不動，SAVE_SCHEMA仍7。
+- `tools/cave-assassin-morph-preview.html`使用真實卷軸、sceneReadEvents及sceneDraw，提供四方向／四動作、播放／暫停／逐格、48px實際大小與放大；只用記憶體存檔且拒絕連外。`tools/test-cave-assassin-morph.js`驗證Lv.14不扣卷、Lv.15可用、加成不變、四向命中／MISS、受傷不打斷攻擊、施法／受傷／到期及RGBA圖集與SW。
 
 ## 19. PC 橫式外框（畫面尺寸「PC 16:9」）
 
@@ -2556,6 +2564,8 @@ python3 tools/cut-sprites.py tools/sprite-src/mage-walk.json --preview 預覽.pn
 - **20261022o：27裂空魔龍爪皇接上專屬圖**。MORPHS.riftDragon、m27.sprite、SW四PNG；三向36格／左鏡像，384×320／腳底[192,270]，4／4／2／2格、130／140／220／150ms。沿用既有紫變鋼爪能力、等級測試開關及schema，第18.10節。
 
 - **20261022p：04替換使用者新版分鏡**。MORPHS.skyValkyrie的四src改sky-valkyrie-v2，4／4／2／2格、160／140／220／160ms維持原總時間，SW同步；舊v1不動，m04與能力不變，第18.11節。
+
+- **20261024ad：08沉默洞穴刺客接上專屬圖**：MORPHS.silentCaveAssassin、m08.sprite、SW四PNG，三向36格／左鏡像，沿用既有Lv.15藍變雙刀能力、GM及武器限制與schema7；素材與測試見第18.14節。
 
 ## 89. 喝水延遲：手動、自動統一 0.8 秒（2026-10-22，版本 `20261022h`；`combat.js` 的 `potReadyAt`／`potionReady`、`config.js` 的 `POTION_CD_MS`）
 

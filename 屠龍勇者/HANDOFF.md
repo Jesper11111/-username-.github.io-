@@ -5,6 +5,8 @@
 
 ## 1. 現況
 
+- **20261024ad（起版ab）：08沉默洞穴刺客藍變專屬動畫（第18.14、88節）**。使用者提供08.jpg與三份jfif；保留原圖，內建image_gen補正／側／背36格透明動作與修正稿，左向鏡像。來源tools/sprite-src/morph/silent-cave-assassin-v1含完整提示詞、原稿、腳點、prepare.py／audit及preview.py；正式images同名目錄含四PNG、單格、manifest與動態GIF。接m08.sprite與SW；沿用Lv.15、命中+2／傷害+2／攻速+6%／閃避+2%、GM與武器限制，schema7不變。test-cave-assassin-morph通過Lv.14不扣卷、Lv.15可用、原加成、四向命中／MISS／受傷不打斷／施法／到期與圖集。真實renderer隔離頁tools/cave-assassin-morph-preview.html四向四動作逐格、透明／腳點完成，Console無error／warn，不讀寫真實存檔或連外。check.ps1 ALL CHECKS PASSED、47檔混淆461KB、git diff --check通過。工作期間另一對話ac技能公共冷卻已提交，現工作區ad保留合併，不回用ab。請使用者Ctrl+F5→變形卷軸→雙刀系→沉默洞穴刺客→走動及打怪，確認外觀與刀光；實玩確認後才commit／請Push。另已回答武器技能目前無持續中毒，劇毒之刃為立即毒素魔法傷害；附魔已有持續傷害、定身、緩速、降攻速、弱化、禁療及暈眩，未改玩法。
+
 - **20261024ac：技能公共冷卻 3 秒 → 1 秒，增益也算；每種技能各自 CD（治癒預設 4 秒、增益 10 秒，攻擊技能照原設定）**。使用者要求技能不能好幾種一起瞬發。瀏覽器實測自動增益每秒只放一個、手動連放被擋，Console 無錯誤。
 - **20261024aa：命運的覺醒石專屬外觀（第80節）**。使用者要求並同意當天版本從z延伸至aa。內建image_gen原創虹彩紫晶＋金色符環＋白金星芒，正式128×128透明PNG images/icons/items/curAwaken-v1.png；原稿／完整提示詞／prepare.ps1在tools/icon-src/items/awakening-stone-v1。背包、圖鑑、倉庫、交易所共用新圖，鍛造通貨列／改造視窗也接上，SW預載。只換美術不改數值或SQL。RGBA／留邊／test-item-art（434道具、287新PNG）通過，圖庫實際顯示缺圖0、Console無error／warn。check.ps1 ALL CHECKS PASSED、混淆建置47檔461KB、新圖確實打包且hash相同、git diff --check通過；請使用者Ctrl+F5→背包或圖鑑搜尋命運的覺醒石→鍛造裝備改造確認新圖；實玩確認後才commit。
 
